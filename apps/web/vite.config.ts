@@ -19,6 +19,11 @@ export default defineConfig({
         input: ["/app/client.ts", "/app/styles/globals.css"],
       },
     }),
-    build(),
+    build({
+      entryContentAfterHooks: [
+        async (appName) =>
+          `import { serve } from '@hono/node-server'\nserve({ fetch: ${appName}.fetch, port: Number(process.env.PORT) || 3000 })`,
+      ],
+    }),
   ],
 });
