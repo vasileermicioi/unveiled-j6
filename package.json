@@ -1,0 +1,27 @@
+{
+  "name": "unveiled",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun --filter @unveiled/web dev",
+    "build": "bun --filter @unveiled/web build",
+    "lint": "biome check .",
+    "typecheck": "bun run --filter '*' typecheck",
+    "db:generate": "bun --filter @unveiled/db generate",
+    "db:migrate": "bun --filter @unveiled/db migrate",
+    "seed:demo": "bun scripts/seed-demo.ts"
+  },
+  "catalog": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "drizzle-orm": "^0.40.0",
+    "typescript": "^5.8.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@unveiled/config": "workspace:*"
+  }
+}

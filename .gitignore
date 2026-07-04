@@ -1,3 +1,10 @@
 .dev-plan/
 docs/migration/
 .env
+node_modules/
+dist/
+.output/
+.turbo/
+*.tsbuildinfo
+.env.local
+.env.*.local

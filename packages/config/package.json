@@ -1,0 +1,12 @@
+{
+  "name": "@unveiled/config",
+  "private": true,
+  "scripts": {
+    "typecheck": "echo 'no types yet'"
+  },
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.react.json": "./tsconfig.react.json",
+    "./biome.json": "./biome.json"
+  }
+}

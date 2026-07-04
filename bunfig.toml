@@ -1,0 +1,3 @@
+[install]
+# Hoist shared dev tools (Biome) to root node_modules
+peer = true
