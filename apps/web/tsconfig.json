@@ -1,0 +1,9 @@
+{
+  "extends": "@unveiled/config/tsconfig.react.json",
+  "compilerOptions": {
+    "jsxImportSource": "react",
+    "rootDir": ".",
+    "noEmit": true
+  },
+  "include": ["app/**/*.ts", "app/**/*.tsx", "vite.config.ts"]
+}

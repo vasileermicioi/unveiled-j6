@@ -1,0 +1,28 @@
+{
+  "name": "@unveiled/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "cd dist && node index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.8",
+    "@hono/react-renderer": "^0.2.0",
+    "hono": "^4.7.0",
+    "honox": "^0.1.56",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@hono/vite-build": "^1.0.0",
+    "@hono/vite-dev-server": "^0.18.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@unveiled/config": "workspace:*",
+    "typescript": "catalog:",
+    "vite": "^6.0.0"
+  }
+}
