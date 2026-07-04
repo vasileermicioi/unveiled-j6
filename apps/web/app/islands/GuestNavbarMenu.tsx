@@ -1,5 +1,5 @@
-import { Button } from "@heroui/react";
-import { useState } from "react";
+import { Drawer, Heading, Link, useOverlayState } from "@heroui/react";
+import { useEffect, useState } from "react";
 
 import { NavLink } from "../components/NavLink";
 
@@ -16,68 +16,82 @@ type GuestNavbarMenuProps = {
   showCta: boolean;
 };
 
+const menuTriggerClassName = "button button--secondary button--md lg:hidden";
+
+function MenuTriggerFallback() {
+  return (
+    <button
+      aria-label="Open navigation menu"
+      className={menuTriggerClassName}
+      disabled
+      type="button"
+    >
+      Menu
+    </button>
+  );
+}
+
 export default function GuestNavbarMenu({
   navLinks,
   ctaHref,
   ctaLabel,
   showCta,
 }: GuestNavbarMenuProps) {
-  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const drawerState = useOverlayState();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <MenuTriggerFallback />;
+  }
 
   return (
-    <>
-      <Button
-        aria-expanded={open}
-        aria-label="Open navigation menu"
-        className="border-2 border-brand-dark bg-white font-bold text-foreground uppercase lg:hidden"
-        onPress={() => setOpen(true)}
-        variant="secondary"
-      >
+    <Drawer state={drawerState}>
+      <Drawer.Trigger aria-label="Open navigation menu" className={menuTriggerClassName}>
         Menu
-      </Button>
+      </Drawer.Trigger>
 
-      {open ? (
-        <div className="fixed inset-0 z-[60] lg:hidden">
-          <button
-            aria-label="Close navigation menu"
-            className="absolute inset-0 bg-brand-dark/40"
-            onClick={() => setOpen(false)}
-            type="button"
-          />
-          <nav className="absolute top-0 right-0 flex h-full w-[min(100%,20rem)] flex-col gap-2 border-brand-dark border-l-4 bg-white p-6 shadow-[-6px_0_0_0_#202621]">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="font-black text-foreground uppercase tracking-[-0.05em]">Menu</p>
-              <Button
+      <Drawer.Backdrop isDismissable>
+        <Drawer.Content className="lg:hidden" placement="right">
+          <Drawer.Dialog>
+            <Drawer.Header className="mb-4 flex items-center justify-between">
+              <Drawer.Heading>
+                <Heading level={2}>Menu</Heading>
+              </Drawer.Heading>
+              <Drawer.CloseTrigger
                 aria-label="Close navigation menu"
-                className="border-2 border-brand-dark bg-white font-bold text-foreground uppercase"
-                onPress={() => setOpen(false)}
-                variant="secondary"
+                className="button button--secondary button--md"
               >
                 Close
-              </Button>
-            </div>
+              </Drawer.CloseTrigger>
+            </Drawer.Header>
 
-            {navLinks.map((link) => (
-              <NavLink
-                className="w-full justify-start"
-                href={link.href}
-                isActive={link.isActive}
-                key={link.href}
-                label={link.label}
-              />
-            ))}
+            <Drawer.Body className="flex flex-col gap-2">
+              {navLinks.map((link) => (
+                <NavLink
+                  className="w-full justify-start"
+                  href={link.href}
+                  isActive={link.isActive}
+                  key={link.href}
+                  label={link.label}
+                />
+              ))}
 
-            {showCta ? (
-              <a
-                className="button--primary mt-4 inline-flex items-center justify-center border-2 border-brand-dark bg-accent px-4 py-2 font-semibold text-foreground uppercase"
-                href={ctaHref}
-              >
-                {ctaLabel}
-              </a>
-            ) : null}
-          </nav>
-        </div>
-      ) : null}
-    </>
+              {showCta ? (
+                <Link
+                  className="button button--primary button--md button--full-width mt-4"
+                  href={ctaHref}
+                >
+                  {ctaLabel}
+                </Link>
+              ) : null}
+            </Drawer.Body>
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
+    </Drawer>
   );
 }

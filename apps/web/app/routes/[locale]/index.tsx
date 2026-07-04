@@ -1,10 +1,10 @@
 import { createRoute } from "honox/factory";
 
-import { Logo } from "../../components/Logo";
+import { LandingPage } from "../../components/marketing/LandingPage";
 import { getPageContent } from "../../lib/content";
-import { getCopy } from "../../lib/copy";
 import type { Locale } from "../../lib/locale";
-import { isValidLocale, localizedPath } from "../../lib/locale";
+import { isValidLocale } from "../../lib/locale";
+import { buildOrganizationJsonLd, landingPageMeta } from "../../lib/seo";
 
 function getLocaleParam(value: string | undefined): Locale {
   return value && isValidLocale(value) ? value : "de";
@@ -12,24 +12,23 @@ function getLocaleParam(value: string | undefined): Locale {
 
 export default createRoute((c) => {
   const locale = getLocaleParam(c.req.param("locale"));
-  const copy = getCopy(locale);
   const landing = getPageContent(locale, "landing");
   const pathname = new URL(c.req.url).pathname;
+  const meta = landingPageMeta(landing);
+  const jsonLd = buildOrganizationJsonLd(locale);
 
   return c.render(
-    <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center gap-8 px-4 py-16 text-center sm:px-6 lg:px-8">
-      <Logo className="text-5xl md:text-7xl" tone="black" />
-      <a
-        className="button--primary inline-flex items-center border-2 border-brand-dark bg-accent px-6 py-3 font-semibold text-foreground uppercase"
-        href={localizedPath(locale, "discover")}
-      >
-        {copy.homeCta}
-      </a>
-    </div>,
+    <>
+      <LandingPage landing={landing} locale={locale} />
+      <script
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        type="application/ld+json"
+      />
+    </>,
     {
       locale,
-      title: landing.headline,
-      description: landing.subheadline,
+      title: meta.title,
+      description: meta.description,
       canonicalPath: pathname,
     },
   );

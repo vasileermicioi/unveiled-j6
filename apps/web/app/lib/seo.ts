@@ -1,5 +1,6 @@
+import type { HowItWorksContent, LandingContent } from "./content/types";
 import type { Locale } from "./locale";
-import { LOCALES, switchLocalePath } from "./locale";
+import { LOCALES, localizedPath, switchLocalePath } from "./locale";
 import { absoluteUrl } from "./site-config";
 
 const SITE_NAME = "Unveiled Berlin";
@@ -62,5 +63,47 @@ export function buildPageMeta(input: PageMetaInput): PageMeta {
     alternates,
     openGraph,
     twitter,
+  };
+}
+
+export function landingPageMeta(content: LandingContent) {
+  return {
+    title: content.headline,
+    description: content.subheadline,
+  };
+}
+
+export function howItWorksPageMeta(content: HowItWorksContent, pageTitle: string) {
+  return {
+    title: pageTitle,
+    description: content.hero.subheadline,
+  };
+}
+
+export type OrganizationJsonLd = {
+  "@context": "https://schema.org";
+  "@type": "Organization";
+  name: string;
+  url: string;
+  email: string;
+  address: {
+    "@type": "PostalAddress";
+    addressLocality: string;
+    addressCountry: string;
+  };
+};
+
+export function buildOrganizationJsonLd(locale: Locale): OrganizationJsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Unveiled Berlin",
+    url: absoluteUrl(localizedPath(locale, "")),
+    email: "support@unveiled.berlin",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Berlin",
+      addressCountry: "DE",
+    },
   };
 }

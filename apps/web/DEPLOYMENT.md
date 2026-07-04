@@ -98,7 +98,7 @@ After deploy, confirm:
 
 ## Assets note
 
-Logo SVGs in `public/logos/` are **placeholder vectors** (correct filenames and viewBox). Replace with final Illustrator exports before client-facing marketing polish in Phase 1.
+Logo SVGs live in `apps/web/public/logos/` (Illustrator exports — black, white, yellow). Served at `/logos/unveiled-logo-{tone}.svg`. Replace only by overwriting those three files; `<Logo />` picks them up automatically.
 
 ## Demo accounts
 

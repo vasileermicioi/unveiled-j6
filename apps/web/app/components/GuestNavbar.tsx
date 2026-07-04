@@ -1,3 +1,5 @@
+import { Header, Link, Paragraph, Surface } from "@heroui/react";
+
 import GuestNavbarMenu from "../islands/GuestNavbarMenu";
 import { getCopy, NAV_ITEMS, NAV_SEGMENTS } from "../lib/copy";
 import type { Locale } from "../lib/locale";
@@ -24,58 +26,59 @@ export function GuestNavbar({ locale, pathname }: GuestNavbarProps) {
   });
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-50 h-16 border-brand-dark border-b-4 bg-white md:h-20">
-      <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="min-w-0">
-          <a
+    <Header className="site-header">
+      <Surface
+        className="mx-auto flex h-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+        variant="transparent"
+      >
+        <Surface className="min-w-0" variant="transparent">
+          <Link
             className="inline-flex items-center text-2xl md:text-3xl"
             href={localizedPath(locale, "")}
           >
             <Logo className="text-2xl md:text-3xl" tone="black" />
-          </a>
-          <p className="mt-1 hidden text-muted text-xs uppercase lg:block">{copy.headerTagline}</p>
-        </div>
+          </Link>
+          <Paragraph className="mt-1 hidden uppercase lg:block" color="muted" size="xs">
+            {copy.headerTagline}
+          </Paragraph>
+        </Surface>
 
-        <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
+        <Surface
+          aria-label="Primary"
+          className="hidden items-center gap-1 lg:flex"
+          role="navigation"
+          variant="transparent"
+        >
           {navLinks.map((link) => (
             <NavLink href={link.href} isActive={link.isActive} key={link.href} label={link.label} />
           ))}
-        </nav>
+        </Surface>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <fieldset className="inline-flex overflow-hidden rounded-full border-2 border-brand-dark bg-white p-0">
-            <legend className="sr-only">Language</legend>
-            <a
+        <Surface className="flex shrink-0 items-center gap-2" variant="transparent">
+          <Surface aria-label="Language" className="lang-toggle" role="group" variant="transparent">
+            <Link
               aria-current={locale === "de" ? "true" : undefined}
-              className={`px-3 py-1.5 font-bold text-sm uppercase transition-colors ${
-                locale === "de"
-                  ? "bg-brand-dark text-brand-yellow"
-                  : "bg-white text-muted hover:text-foreground"
-              }`}
+              className="lang-toggle__option"
               href={switchLocalePath(pathname, "de")}
             >
               DE
-            </a>
-            <a
+            </Link>
+            <Link
               aria-current={locale === "en" ? "true" : undefined}
-              className={`border-brand-dark border-l-2 px-3 py-1.5 font-bold text-sm uppercase transition-colors ${
-                locale === "en"
-                  ? "bg-brand-dark text-brand-yellow"
-                  : "bg-white text-muted hover:text-foreground"
-              }`}
+              className="lang-toggle__option"
               href={switchLocalePath(pathname, "en")}
             >
               EN
-            </a>
-          </fieldset>
+            </Link>
+          </Surface>
 
           {showCta ? (
-            <a
-              className="button--primary hidden items-center border-2 border-brand-dark bg-accent px-4 py-2 font-semibold text-foreground text-sm uppercase sm:inline-flex"
+            <Link
+              className="button button--primary button--md hidden sm:inline-flex"
               href={localizedPath(locale, "membership")}
             >
               {copy.guestCta}
-            </a>
+            </Link>
           ) : null}
 
           <GuestNavbarMenu
@@ -84,8 +87,8 @@ export function GuestNavbar({ locale, pathname }: GuestNavbarProps) {
             navLinks={navLinks}
             showCta={showCta}
           />
-        </div>
-      </div>
-    </header>
+        </Surface>
+      </Surface>
+    </Header>
   );
 }

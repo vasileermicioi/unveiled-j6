@@ -230,24 +230,26 @@ The application SHALL use Work Sans (variable, weight 100–900) as the only fon
 - **WHEN** the application loads fonts
 - **THEN** no `@font-face` or network request references EK Notice Sans
 
-### Requirement: Neo-brutalist shape utilities
+### Requirement: Neo-brutalist shape and HeroUI markup
 
-The global stylesheet SHALL provide hard offset shadow utilities (`.unveiled-shadow`, `.unveiled-card-hover`) and near-zero border radius on cards, with pill/badge exceptions using `rounded-full`.
+The application SHALL render UI with HeroUI components only (no raw HTML elements such as `<section>`, `<p>`, `<a>`, or heading tags in routes or UI components). Visual styling SHALL be controlled via HeroUI theme tokens in `apps/web/app/styles/globals.css`. Tailwind utilities on HeroUI nodes are for layout and spacing only.
 
-#### Scenario: Shadow utility
+The theme SHALL provide flat bordered surfaces (no drop shadows), near-zero border radius on cards, and pill/badge exceptions using `rounded-full`.
 
-- **WHEN** an element uses class `unveiled-shadow`
-- **THEN** it displays a `6px 6px 0 0 #202621` box shadow (12px at `md:` breakpoint)
+#### Scenario: No drop shadows
 
-#### Scenario: Card hover utility
-
-- **WHEN** an element with class `unveiled-card-hover` is hovered
-- **THEN** it translates `-2px, -2px` (mobile) or `-4px, -4px` (≥768px) with a corresponding hard offset shadow increase
+- **WHEN** a HeroUI Card or Surface renders
+- **THEN** `--surface-shadow`, `--overlay-shadow`, and `--field-shadow` resolve to `none` and no hard offset box-shadow is applied
 
 #### Scenario: Sharp corners
 
 - **WHEN** HeroUI Card or Button components render with default styling
 - **THEN** border radius resolves to zero (or near-zero) except for pill/badge variants using `rounded-full`
+
+#### Scenario: HeroUI markup in routes
+
+- **WHEN** a page route or shared UI component renders interactive or typographic content
+- **THEN** it uses `@heroui/react` primitives (e.g. `Card`, `Link`, `Heading`, `Paragraph`) or a page component composed entirely from HeroUI — not raw HTML tags
 
 ### Requirement: Accessibility baseline for theme
 

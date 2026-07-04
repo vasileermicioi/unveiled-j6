@@ -64,7 +64,8 @@ docs/migration/                      — product spec
 
 - **SSR pages and form POSTs** → `apps/web/app/routes/`
 - **Business logic** → `packages/*`, not route files
-- **Client islands only** where unavoidable (maps, etc.) → `apps/web/app/islands/`
+- **Page UI** → `apps/web/app/components/` composed from HeroUI primitives; routes wire data + `c.render()` only
+- **Client islands only** where unavoidable (maps, accordions, drawers, etc.) → `apps/web/app/islands/`
 - **Packages never depend on `apps/web`**
 - **No separate `apps/admin` or `apps/partner`** — role-based routes in the single app (`/admin/*`, `/partner/*`)
 - **No per-domain micro-packages** (`booking`, `waitlist`, …) until logic is painful to keep inline
@@ -95,9 +96,11 @@ bun run seed:demo    # Phase 4+
 5. **Match the spec verbatim** where copy is provided (`static-pages-content.md`, `content-i18n-inventory.md`).
 6. **Yellow page background app-wide** — `#FAFF86` is the page backdrop on every route, not grey. White/cream cards float on top. See `design-tokens.md`.
 7. **Work Sans only** — no EK Notice Sans in the new app.
-8. **Public event detail pages** — `/events/:id` is indexable without auth (Phase 4+). Booking and member feed stay gated.
-9. **Atomic booking transaction** — only the Booking domain writes bookings/ledger for purchases; waitlist promotion calls the same path.
-10. **Partner scoping** — every partner query/write filtered by session `partnerId`; never trust client-supplied `partnerId`.
+8. **HeroUI-only markup** — no raw HTML elements (`<section>`, `<p>`, `<a>`, `<button>`, `<h1>`, etc.) in routes or UI components. Use `@heroui/react` primitives (`Card`, `Link`, `Button`, `Heading`, `Paragraph`, `Surface`, `Chip`, …) or page-level components built entirely from HeroUI. Tailwind on HeroUI nodes is for **layout only** (`flex`, `grid`, `gap`, `max-w-*`, positioning) — never for colors, borders, shadows, or typography that belong in the theme. Exceptions: `<script type="application/ld+json">` for structured data; `<img>` inside HeroUI wrappers where no HeroUI image primitive applies.
+9. **Theme-only visual styling** — colors, borders, radius, shadows, typography, and interactive hover states belong in `apps/web/app/styles/globals.css` (`@theme` tokens + `@layer components` overrides targeting HeroUI BEM classes, after `@import "@heroui/styles"`). Adjust look-and-feel by changing theme tokens — not ad-hoc per-route color/border/shadow/hover classes.
+10. **Public event detail pages** — `/events/:id` is indexable without auth (Phase 4+). Booking and member feed stay gated.
+11. **Atomic booking transaction** — only the Booking domain writes bookings/ledger for purchases; waitlist promotion calls the same path.
+12. **Partner scoping** — every partner query/write filtered by session `partnerId`; never trust client-supplied `partnerId`.
 
 ---
 
@@ -199,12 +202,15 @@ Full permission matrix: `docs/migration/extras/authorization-matrix.md`.
 
 ## UI & design
 
-- **Theme:** HeroUI **Uber** preset from Theme Builder, color variables overridden with brand palette (`design-tokens.md` §2).
+- **Markup:** HeroUI only — see hard rules §8–9. No raw HTML tags in routes or components; compose `Card`, `Link`, `Button`, `Heading`, `Paragraph`, `Surface`, etc. Page-level components in `apps/web/app/components/` (e.g. `LandingPage`, `PageHero`) wrap HeroUI primitives — they are not an excuse to drop down to HTML.
+- **Theme:** HeroUI **Uber** preset reskin in `apps/web/app/styles/globals.css` (`design-tokens.md` §2). All visual changes (colors, borders, radius, shadows, nav/footer chrome, accent hover) go through `@layer components` — not Tailwind color/border utilities on routes.
+- **Primary CTAs:** use `Link` or `Button` with `className="button button--primary …"` — yellow + dark text; hover inverts via theme (`--accent-control-*` tokens).
+- **Secondary CTAs:** use `className="button button--secondary …"` — white + dark text; hover inverts to dark bg + white text via theme (`--surface-control-*` tokens).
+- **Tailwind:** layout and spacing on HeroUI nodes only — flex/grid, gap, padding, max-width, positioning.
 - **Page background:** `brand-yellow` (`#FAFF86`) on every route — the defining brand trait.
-- **Typography:** Work Sans variable, weight 100–900. Display headings: uppercase, `-0.05em` tracking, `line-height: 0.9`.
-- **Shape:** neo-brutalist — thick dark borders, hard offset shadows (`.unveiled-shadow`), near-zero radius on cards.
-- **App shell:** navbar with mobile drawer + footer per `ui/app-shell.md`.
-- **Components:** follow `ui/ui-component-map.md` for page/component inventory and HeroUI mapping.
+- **Typography:** Work Sans via theme; display headings use HeroUI `Heading` with global `.heading` / `.card__title` theme rules (uppercase, `-0.05em` tracking, `line-height: 0.9`).
+- **Shape:** neo-brutalist — thick dark borders, **no drop shadows**, near-zero radius on cards.
+- **App shell:** navbar (HeroUI `Header`, `Drawer`, `Link`) + footer per `ui/app-shell.md`.
 - **Static copy:** verbatim from `ui/static-pages-content.md` and `extras/content-i18n-inventory.md`.
 - **Credits do NOT roll over** — fix any "credits roll over" marketing copy (Phase 9).
 
@@ -251,6 +257,9 @@ Full mapping: `docs/migration/extras/integrations-and-config.md`.
 | Mocked Stripe checkout | Real Stripe Billing (Phase 6+) |
 | Base64 images in DB | R2 + 6 WebP variants via `@unveiled/images` |
 | Scope creep into next phase | Deploy current phase, stop |
+| Custom CSS components or per-route styling | HeroUI primitives + `@layer theme` in `globals.css`; Tailwind layout only |
+| Raw HTML tags in UI (`<p>`, `<a>`, `<section>`, …) | HeroUI `Paragraph`, `Link`, `Card`, `Surface`, etc., or components built from them |
+| Hard offset drop shadows | No shadows — flat bordered surfaces via theme tokens |
 
 ---
 

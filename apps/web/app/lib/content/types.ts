@@ -18,6 +18,10 @@ export type LandingContent = {
   ctaDiscover: string;
   ctaHowItWorks: string;
   trustMicrocopy: string;
+  conversionCard: {
+    loginCta: string;
+    signupCta: string;
+  };
   trustBadges: readonly [string, string, string];
 };
 

@@ -7,6 +7,10 @@ export const landingContent: LocalizedContent<LandingContent> = {
     ctaDiscover: "Entdecken",
     ctaHowItWorks: "So funktioniert's",
     trustMicrocopy: "Live synchronisiert mit den aktuellen Events in Berlin",
+    conversionCard: {
+      loginCta: "Anmelden",
+      signupCta: "Registrieren",
+    },
     trustBadges: ["Member-owned", "Verified Events", "Berlin Focused"],
   },
   en: {
@@ -15,6 +19,10 @@ export const landingContent: LocalizedContent<LandingContent> = {
     ctaDiscover: "Discover",
     ctaHowItWorks: "How it works",
     trustMicrocopy: "Live synced with current events in Berlin",
+    conversionCard: {
+      loginCta: "Login",
+      signupCta: "Register",
+    },
     trustBadges: ["Member-owned", "Verified Events", "Berlin Focused"],
   },
 };

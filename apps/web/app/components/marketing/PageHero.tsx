@@ -1,3 +1,5 @@
+import { Card, Heading, Paragraph } from "@heroui/react";
+
 type PageHeroProps = {
   eyebrow?: string;
   headline: string;
@@ -7,18 +9,18 @@ type PageHeroProps = {
 
 export function PageHero({ eyebrow, headline, description, className }: PageHeroProps) {
   return (
-    <section
-      className={`card--default bg-surface p-6 shadow-[var(--surface-shadow)] md:p-10 ${className ?? ""}`}
-    >
-      {eyebrow ? (
-        <p className="mb-3 font-semibold text-muted text-sm uppercase tracking-wide">{eyebrow}</p>
-      ) : null}
-      <h1 className="font-black text-4xl text-foreground uppercase tracking-[-0.05em] md:text-5xl lg:text-6xl">
-        {headline}
-      </h1>
-      {description ? (
-        <p className="mt-4 max-w-2xl text-base text-muted md:text-lg">{description}</p>
-      ) : null}
-    </section>
+    <Card className={`page-hero ${className ?? ""}`.trim()}>
+      <Card.Header>
+        {eyebrow ? (
+          <Paragraph className="mb-3 uppercase tracking-wide" color="muted" size="sm">
+            {eyebrow}
+          </Paragraph>
+        ) : null}
+        <Card.Title>
+          <Heading level={1}>{headline}</Heading>
+        </Card.Title>
+        {description ? <Card.Description>{description}</Card.Description> : null}
+      </Card.Header>
+    </Card>
   );
 }

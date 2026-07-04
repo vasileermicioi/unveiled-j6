@@ -12,6 +12,7 @@
   --font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Design tokens only — class overrides live in @layer components below HeroUI. */
 @layer theme {
   :root,
   .light,
@@ -35,9 +36,11 @@
 
     --accent: oklch(0.9718 0.1444 110.91);
     --accent-foreground: oklch(0.2608 0.0126 150.14);
+    --accent-soft-foreground: oklch(0.2608 0.0126 150.14);
 
-    --default: oklch(0.9702 0 0);
+    --default: oklch(1 0 0);
     --default-foreground: oklch(0.2608 0.0126 150.14);
+    --default-hover: oklch(0.9702 0 0);
 
     --muted: color-mix(in oklch, oklch(0.2608 0.0126 150.14) 50%, transparent);
 
@@ -55,52 +58,403 @@
     --border-width: 2px;
     --field-border-width: 2px;
 
-    --surface-shadow: 6px 6px 0 0 oklch(0.2608 0.0126 150.14);
-    --overlay-shadow: 6px 6px 0 0 oklch(0.2608 0.0126 150.14);
-    --field-shadow: 2px 2px 0 0 oklch(0.2608 0.0126 150.14);
+    --surface-shadow: none;
+    --overlay-shadow: none;
+    --field-shadow: none;
+
+    /* Yellow accent controls (primary CTAs, active nav): invert on hover */
+    --accent-control-bg: var(--accent);
+    --accent-control-fg: var(--foreground);
+    --accent-control-bg-hover: var(--foreground);
+    --accent-control-fg-hover: var(--surface);
+
+    /* White surface controls (secondary CTAs): invert on hover like primary */
+    --surface-control-bg: var(--surface);
+    --surface-control-fg: var(--foreground);
+    --surface-control-bg-hover: var(--accent-control-bg-hover);
+    --surface-control-fg-hover: var(--accent-control-fg-hover);
   }
 }
 
+/* Brand component overrides — must sit in components layer to beat HeroUI defaults. */
 @layer components {
-  .button--primary {
-    @apply border-2 border-border;
+  .card--default,
+  .card--secondary,
+  .card--tertiary {
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--border);
+    border-radius: 0;
+    box-shadow: none;
+    background-color: var(--surface);
+    padding: 1.5rem;
   }
 
-  a.button--primary {
-    @apply transition-transform duration-150 ease-out;
-  }
-
-  @media (hover: hover) {
-    a.button--primary:hover {
-      transform: translate(-1px, -1px);
+  @media (min-width: 768px) {
+    .card--default,
+    .card--secondary,
+    .card--tertiary {
+      padding: 2rem;
     }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    a.button--primary:hover {
-      transform: none;
+  .card.page-hero {
+    padding: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .card.page-hero {
+      padding: 2.5rem;
     }
   }
 
-  .card--default {
-    @apply border-2 border-border;
+  .card {
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .card__title,
-  :is(h1, h2, h3) {
-    @apply font-black uppercase tracking-[-0.05em] leading-[0.9];
+  .typography--h1,
+  .typography--h2,
+  .typography--h3,
+  .typography--h4,
+  .typography--h5,
+  .typography--h6 {
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    line-height: 0.9;
   }
-}
 
-@media (min-width: 768px) {
-  @layer theme {
-    :root,
-    .light,
-    .default,
-    [data-theme="light"],
-    [data-theme="default"] {
-      --surface-shadow: 12px 12px 0 0 oklch(0.2608 0.0126 150.14);
-      --overlay-shadow: 12px 12px 0 0 oklch(0.2608 0.0126 150.14);
+  .typography--h1 {
+    font-size: 2.25rem;
+  }
+
+  .typography--h2 {
+    font-size: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .typography--h1 {
+      font-size: 3rem;
     }
+  }
+
+  .card__title {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+  }
+
+  .card__title .typography--h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
+  @media (min-width: 768px) {
+    .card__title .typography--h2 {
+      font-size: 1.25rem;
+    }
+  }
+
+  .card.page-hero .typography--h1 {
+    font-size: 2.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .card.page-hero .typography--h1 {
+      font-size: 3rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .card.page-hero .typography--h1 {
+      font-size: 3.75rem;
+    }
+  }
+
+  .card__description {
+    margin-top: 1rem;
+    max-width: 42rem;
+    font-size: 1rem;
+    line-height: 1.625;
+    color: var(--muted);
+  }
+
+  @media (min-width: 768px) {
+    .card__description {
+      font-size: 1.125rem;
+    }
+  }
+
+  .card--secondary {
+    background-color: var(--color-brand-dark);
+    color: var(--color-brand-cream);
+  }
+
+  .card--secondary .card__title .typography--h2 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .card--secondary .card__title .typography--h2 {
+      font-size: 1.875rem;
+    }
+  }
+
+  .value-tile {
+    border: 2px solid var(--color-brand-cream);
+    padding: 1rem;
+  }
+
+  .card--secondary .card__title,
+  .card--secondary .card__title .typography,
+  .card--secondary .value-tile,
+  .card--secondary .value-tile .typography--color-default {
+    color: var(--color-brand-cream);
+  }
+
+  .typography--color-muted {
+    color: var(--muted);
+  }
+
+  .surface--transparent {
+    background-color: transparent;
+    box-shadow: none;
+  }
+
+  .surface--transparent.site-footer {
+    background-color: white;
+    border-top-width: 4px;
+    border-top-style: solid;
+    border-top-color: var(--border);
+  }
+
+  .button,
+  .link.button {
+    border-radius: 0;
+    height: auto;
+    min-height: 2.5rem;
+  }
+
+  .button--primary,
+  .link.button.button--primary {
+    --button-bg: var(--accent-control-bg);
+    --button-bg-hover: var(--accent-control-bg-hover);
+    --button-bg-pressed: var(--accent-control-bg-hover);
+    --button-fg: var(--accent-control-fg);
+    background-color: var(--accent-control-bg);
+    color: var(--accent-control-fg);
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  @media (hover: hover) {
+    .button--primary:hover,
+    .button--primary[data-hovered="true"],
+    .link.button.button--primary:hover,
+    .link.button.button--primary[data-hovered="true"] {
+      background-color: var(--accent-control-bg-hover);
+      color: var(--accent-control-fg-hover);
+      --button-bg: var(--accent-control-bg-hover);
+      --button-fg: var(--accent-control-fg-hover);
+    }
+  }
+
+  .button--primary:active,
+  .button--primary[data-pressed="true"],
+  .link.button.button--primary:active,
+  .link.button.button--primary[data-pressed="true"] {
+    background-color: var(--accent-control-bg-hover);
+    color: var(--accent-control-fg-hover);
+  }
+
+  .button--secondary,
+  .link.button.button--secondary {
+    --button-bg: var(--surface-control-bg);
+    --button-bg-hover: var(--surface-control-bg-hover);
+    --button-bg-pressed: var(--surface-control-bg-hover);
+    --button-fg: var(--surface-control-fg);
+    background-color: var(--surface-control-bg);
+    color: var(--surface-control-fg);
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  @media (hover: hover) {
+    .button--secondary:hover,
+    .button--secondary[data-hovered="true"],
+    .link.button.button--secondary:hover,
+    .link.button.button--secondary[data-hovered="true"] {
+      background-color: var(--surface-control-bg-hover);
+      color: var(--surface-control-fg-hover);
+      --button-bg: var(--surface-control-bg-hover);
+      --button-fg: var(--surface-control-fg-hover);
+    }
+  }
+
+  .button--secondary:active,
+  .button--secondary[data-pressed="true"],
+  .link.button.button--secondary:active,
+  .link.button.button--secondary[data-pressed="true"] {
+    background-color: var(--surface-control-bg-hover);
+    color: var(--surface-control-fg-hover);
+  }
+
+  .button--primary,
+  .button--secondary,
+  .link.button.button--primary,
+  .link.button.button--secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--border);
+    text-transform: uppercase;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .button--md,
+  .link.button.button--md {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .button--full-width,
+  .link.button.button--full-width {
+    width: 100%;
+  }
+
+  .header.site-header,
+  .site-header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 50;
+    height: 4rem;
+    width: 100%;
+    padding: 0;
+    border-bottom-width: 4px;
+    border-bottom-style: solid;
+    border-bottom-color: var(--border);
+    background-color: white;
+    color: var(--foreground);
+    font-size: inherit;
+    font-weight: inherit;
+    text-align: inherit;
+  }
+
+  @media (min-width: 768px) {
+    .site-header {
+      height: 5rem;
+    }
+  }
+
+  .link.nav-link {
+    display: inline-flex;
+    align-items: center;
+    border-width: 2px;
+    border-style: solid;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 0;
+    transition: colors 150ms ease;
+  }
+
+  .link.nav-link[aria-current="page"] {
+    border-color: var(--border);
+    background-color: var(--accent-control-bg);
+    color: var(--accent-control-fg);
+  }
+
+  @media (hover: hover) {
+    .link.nav-link[aria-current="page"]:hover {
+      background-color: var(--accent-control-bg-hover);
+      color: var(--accent-control-fg-hover);
+    }
+  }
+
+  .link.nav-link:not([aria-current="page"]) {
+    border-color: transparent;
+    background-color: white;
+    color: var(--foreground);
+  }
+
+  @media (hover: hover) {
+    .link.nav-link:not([aria-current="page"]):hover {
+      border-color: var(--border);
+      background-color: var(--surface-control-bg-hover);
+      color: var(--surface-control-fg-hover);
+    }
+  }
+
+  .link.footer-link {
+    display: block;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--foreground);
+    text-decoration: none;
+    text-underline-offset: 4px;
+  }
+
+  @media (hover: hover) {
+    .link.footer-link:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .lang-toggle {
+    display: inline-flex;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    border-radius: 9999px;
+    background-color: white;
+  }
+
+  .link.lang-toggle__option {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 0;
+    transition: colors 150ms ease;
+  }
+
+  .link.lang-toggle__option[aria-current="true"] {
+    background-color: var(--color-brand-dark);
+    color: var(--color-brand-yellow);
+  }
+
+  .link.lang-toggle__option:not([aria-current="true"]) {
+    background-color: var(--surface-control-bg);
+    color: var(--muted);
+  }
+
+  @media (hover: hover) {
+    .link.lang-toggle__option:not([aria-current="true"]):hover {
+      background-color: var(--surface-control-bg-hover);
+      color: var(--surface-control-fg-hover);
+    }
+  }
+
+  .link.lang-toggle__option + .link.lang-toggle__option {
+    border-left-width: 2px;
+    border-left-style: solid;
+    border-left-color: var(--border);
+  }
+
+  .site-footer {
+    margin-top: auto;
+    background-color: white;
   }
 }
