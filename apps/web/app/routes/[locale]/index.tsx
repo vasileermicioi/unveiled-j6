@@ -1,6 +1,7 @@
 import { createRoute } from "honox/factory";
 
 import { Logo } from "../../components/Logo";
+import { getPageContent } from "../../lib/content";
 import { getCopy } from "../../lib/copy";
 import type { Locale } from "../../lib/locale";
 import { isValidLocale, localizedPath } from "../../lib/locale";
@@ -12,6 +13,8 @@ function getLocaleParam(value: string | undefined): Locale {
 export default createRoute((c) => {
   const locale = getLocaleParam(c.req.param("locale"));
   const copy = getCopy(locale);
+  const landing = getPageContent(locale, "landing");
+  const pathname = new URL(c.req.url).pathname;
 
   return c.render(
     <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center gap-8 px-4 py-16 text-center sm:px-6 lg:px-8">
@@ -25,7 +28,9 @@ export default createRoute((c) => {
     </div>,
     {
       locale,
-      title: "Unveiled Berlin",
+      title: landing.headline,
+      description: landing.subheadline,
+      canonicalPath: pathname,
     },
   );
 });

@@ -1,0 +1,36 @@
+import type { LocalizedContent, MembershipCheckoutContent } from "./types";
+
+export const membershipContent: LocalizedContent<MembershipCheckoutContent> = {
+  de: {
+    title: "DEIN KULTUR-UPGRADE.",
+    subtitle: "Full Access. 17 Credits/Monat. Jederzeit kündbar.",
+    button: "ABO STARTEN — 29€",
+    secure: "SICHERE ZAHLUNG VIA STRIPE",
+    perks: ["Alle Events inklusive", "Vorkaufsrecht für Highlights", "17 Credits jeden Monat"],
+    guarantee: "Keine versteckten Kosten. Monatlich kündbar.",
+    successTitle: "WILLKOMMEN IM CLUB.",
+    successSubtitle: "Deine Credits sind bereit. Viel Spaß in Berlin!",
+    errorTitle: "DA GING WAS SCHIEF.",
+    errorSubtitle: "Zahlung abgebrochen. Probier's nochmal.",
+    promoCodeLabel: "GUTSCHEIN / RABATTCODE",
+    promoCodePlaceholder: "CODE EINGEBEN",
+    alreadyActive: "DU BIST BEREITS MITGLIED!",
+    activeStatus: "Status: Aktiv",
+  },
+  en: {
+    title: "YOUR CULTURE UPGRADE.",
+    subtitle: "Full Access. 17 Credits/mo. Cancel anytime.",
+    button: "START SUB — 29€",
+    secure: "SECURE PAYMENT VIA STRIPE",
+    perks: ["All events included", "Early access to highlights", "17 fresh credits every month"],
+    guarantee: "No hidden fees. Cancel monthly.",
+    successTitle: "WELCOME TO THE CLUB.",
+    successSubtitle: "Your credits are loaded. Enjoy Berlin!",
+    errorTitle: "SOMETHING WENT WRONG.",
+    errorSubtitle: "Payment cancelled. Give it another shot.",
+    promoCodeLabel: "VOUCHER / PROMO CODE",
+    promoCodePlaceholder: "ENTER CODE",
+    alreadyActive: "YOU ARE ALREADY A MEMBER!",
+    activeStatus: "Status: Active",
+  },
+};

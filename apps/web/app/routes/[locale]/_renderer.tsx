@@ -8,15 +8,24 @@ function getLocaleParam(value: string | undefined): Locale {
   return value && isValidLocale(value) ? value : "de";
 }
 
-export default reactRenderer(({ children, Layout, c, title, locale, robots }) => {
-  const resolvedLocale = getLocaleParam(locale ?? c.req.param("locale"));
-  const pathname = new URL(c.req.url).pathname;
+export default reactRenderer(
+  ({ children, Layout, c, title, locale, robots, description, canonicalPath, ogImage }) => {
+    const resolvedLocale = getLocaleParam(locale ?? c.req.param("locale"));
+    const pathname = new URL(c.req.url).pathname;
 
-  return (
-    <Layout locale={resolvedLocale} robots={robots} title={title}>
-      <AppShell locale={resolvedLocale} pathname={pathname}>
-        {children}
-      </AppShell>
-    </Layout>
-  );
-});
+    return (
+      <Layout
+        canonicalPath={canonicalPath ?? pathname}
+        description={description}
+        locale={resolvedLocale}
+        ogImage={ogImage}
+        robots={robots}
+        title={title}
+      >
+        <AppShell locale={resolvedLocale} pathname={pathname}>
+          {children}
+        </AppShell>
+      </Layout>
+    );
+  },
+);
