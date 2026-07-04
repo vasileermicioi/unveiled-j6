@@ -66,6 +66,22 @@
     @apply border-2 border-border;
   }
 
+  a.button--primary {
+    @apply transition-transform duration-150 ease-out;
+  }
+
+  @media (hover: hover) {
+    a.button--primary:hover {
+      transform: translate(-1px, -1px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a.button--primary:hover {
+      transform: none;
+    }
+  }
+
   .card--default {
     @apply border-2 border-border;
   }
