@@ -1,4 +1,10 @@
-import type { HowItWorksContent, LandingContent } from "./content/types";
+import type {
+  FaqContent,
+  FaqItem,
+  HowItWorksContent,
+  LandingContent,
+  MembershipCheckoutContent,
+} from "./content/types";
 import type { Locale } from "./locale";
 import { LOCALES, localizedPath, switchLocalePath } from "./locale";
 import { absoluteUrl } from "./site-config";
@@ -77,6 +83,48 @@ export function howItWorksPageMeta(content: HowItWorksContent, pageTitle: string
   return {
     title: pageTitle,
     description: content.hero.subheadline,
+  };
+}
+
+export function faqPageMeta(content: FaqContent) {
+  return {
+    title: content.hero.headline,
+    description: content.hero.subheadline,
+  };
+}
+
+export function membershipPageMeta(content: MembershipCheckoutContent, pageTitle: string) {
+  return {
+    title: pageTitle,
+    description: content.subtitle,
+  };
+}
+
+export type FaqPageJsonLd = {
+  "@context": "https://schema.org";
+  "@type": "FAQPage";
+  mainEntity: Array<{
+    "@type": "Question";
+    name: string;
+    acceptedAnswer: {
+      "@type": "Answer";
+      text: string;
+    };
+  }>;
+};
+
+export function buildFaqPageJsonLd(items: readonly FaqItem[]): FaqPageJsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map(({ question, answer }) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: answer,
+      },
+    })),
   };
 }
 
