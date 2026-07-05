@@ -1,0 +1,21 @@
+{
+  "name": "@unveiled/auth",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@unveiled/db": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@unveiled/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

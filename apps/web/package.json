@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@unveiled/auth": "workspace:*",
+    "@unveiled/db": "workspace:*",
     "@heroui/react": "^3.2.1",
     "@heroui/styles": "^3.2.1",
     "@hono/node-server": "^2.0.8",

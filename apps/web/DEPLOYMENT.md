@@ -86,6 +86,19 @@ railway link
 railway up
 ```
 
+## Phase 2 step 02 verification
+
+With `DATABASE_URL` and `AUTH_URL` set:
+
+1. `curl -s http://localhost:3000/api/auth/get-session` returns a Better Auth JSON body (typically `null` when unsigned in), **not** the HTML 404 page
+2. Response headers include Neon Auth / Better Auth upstream markers (e.g. `access-control-allow-credentials`)
+3. `bun run lint` and `bun run typecheck` pass
+4. `cd packages/auth && bun test` — `requireAuth` returns 401 without session; provisioning integration runs when `DATABASE_URL` is set
+
+**Auth proxy wiring:** `/api/auth/*` is registered in `apps/web/app/server.ts` **before** the HonoX locale catch-all (`/:locale/*` would otherwise match `/api/...`). Forward logic lives in `apps/web/app/lib/auth-proxy.ts`.
+
+**Provisioning:** first valid session resolve calls `provisionNewUser` in `@unveiled/auth` (see `packages/auth/README.md`).
+
 ## Phase 2 verification
 
 After deploy (with `DATABASE_URL` and `AUTH_URL` set), confirm:
@@ -96,7 +109,7 @@ After deploy (with `DATABASE_URL` and `AUTH_URL` set), confirm:
 4. Forgot-password flow sends a reset email (Neon Auth)
 5. Google OAuth sign-in works (configured in Neon Auth project settings)
 6. Unauthenticated visit to a protected prefix (e.g. `/de/events`) redirects to `/de/login`
-7. `curl -s http://localhost:3000/api/auth/get-session` (or staging equivalent) returns a Better Auth response, not 404
+7. `curl -s http://localhost:3000/api/auth/get-session` (or staging equivalent) returns Better Auth JSON, not the HTML 404 page
 
 **Neon Auth setup:** Enable Neon Auth on the Postgres project; copy `AUTH_URL` from the Neon dashboard into Railway/env. Enable Google OAuth in Neon Auth project settings if using social login.
 

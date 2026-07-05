@@ -34,12 +34,12 @@ The repository SHALL provide `@unveiled/config` with shared TypeScript (`tsconfi
 
 ### Requirement: Phase 0 package scope
 
-During Phase 2 step 01, `packages/` SHALL include `config/` and `db/`. Auth, billing, images, and UI packages are not created until their respective phases.
+During Phase 2 auth step 02, `packages/` SHALL include `config/`, `db/`, and `auth/`. Billing, images, and UI packages are not created until their respective phases.
 
-#### Scenario: Package directory listing after auth step 01
+#### Scenario: Package directory listing after auth step 02
 
-- **WHEN** auth step 01 is complete
-- **THEN** `packages/` contains `config/` and `db/` and no other domain packages
+- **WHEN** auth step 02 is complete
+- **THEN** `packages/` contains `config/`, `db/`, and `auth/` and no other domain packages
 
 ### Requirement: Database migration scripts
 

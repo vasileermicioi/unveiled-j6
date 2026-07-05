@@ -16,6 +16,8 @@
         "@heroui/styles": "^3.2.1",
         "@hono/node-server": "^2.0.8",
         "@hono/react-renderer": "^0.2.0",
+        "@unveiled/auth": "workspace:*",
+        "@unveiled/db": "workspace:*",
         "hono": "^4.7.0",
         "honox": "^0.1.56",
         "react": "catalog:",
@@ -32,6 +34,18 @@
         "tailwindcss": "^4.3.2",
         "typescript": "catalog:",
         "vite": "^6.0.0",
+      },
+    },
+    "packages/auth": {
+      "name": "@unveiled/auth",
+      "dependencies": {
+        "@unveiled/db": "workspace:*",
+        "drizzle-orm": "catalog:",
+        "hono": "^4.7.0",
+      },
+      "devDependencies": {
+        "@unveiled/config": "workspace:*",
+        "typescript": "catalog:",
       },
     },
     "packages/config": {
@@ -346,6 +360,8 @@
     "@typescript-eslint/typescript-estree": ["@typescript-eslint/typescript-estree@8.62.1", "", { "dependencies": { "@typescript-eslint/project-service": "8.62.1", "@typescript-eslint/tsconfig-utils": "8.62.1", "@typescript-eslint/types": "8.62.1", "@typescript-eslint/visitor-keys": "8.62.1", "debug": "^4.4.3", "minimatch": "^10.2.2", "semver": "^7.7.3", "tinyglobby": "^0.2.15", "ts-api-utils": "^2.5.0" }, "peerDependencies": { "typescript": ">=4.8.4 <6.1.0" } }, "sha512-xMcW9oP9u7fAMXYs9A65CVmtLQe2r//oXINHfi8HV+oiqhih17sbLdhXr4540YWlgpDKQdY854OL5ZrdCiQsAA=="],
 
     "@typescript-eslint/visitor-keys": ["@typescript-eslint/visitor-keys@8.62.1", "", { "dependencies": { "@typescript-eslint/types": "8.62.1", "eslint-visitor-keys": "^5.0.0" } }, "sha512-4g3BLxfdTMy8iZG0MaBkadnlRrCJ74cQiFbyEVMrkwIoqdyaXXQM22cotDvrl4x28wgIZ9rEJRoM+mmhSJpJ1g=="],
+
+    "@unveiled/auth": ["@unveiled/auth@workspace:packages/auth"],
 
     "@unveiled/config": ["@unveiled/config@workspace:packages/config"],
 
