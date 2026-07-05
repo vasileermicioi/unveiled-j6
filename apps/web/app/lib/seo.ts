@@ -9,7 +9,7 @@ import type {
 } from "./content/types";
 import type { Locale } from "./locale";
 import { LOCALES, localizedPath, switchLocalePath } from "./locale";
-import { absoluteUrl } from "./site-config";
+import { absoluteUrl, getDefaultOgImage } from "./site-config";
 
 const SITE_NAME = "Unveiled Berlin";
 
@@ -59,10 +59,9 @@ export function buildPageMeta(input: PageMetaInput): PageMeta {
     "twitter:description": description,
   };
 
-  if (ogImage) {
-    openGraph["og:image"] = ogImage;
-    twitter["twitter:image"] = ogImage;
-  }
+  const resolvedOgImage = ogImage ?? getDefaultOgImage();
+  openGraph["og:image"] = resolvedOgImage;
+  twitter["twitter:image"] = resolvedOgImage;
 
   return {
     documentTitle,

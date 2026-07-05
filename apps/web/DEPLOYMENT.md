@@ -44,11 +44,12 @@ docker run -p 3000:3000 -e PORT=3000 unveiled-web
 
 ## Environment variables
 
-Phase 0 requires **no application secrets**. The host injects `PORT` at runtime.
+Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open Graph, and sitemap URLs. Local development defaults to `http://localhost:3000` when unset.
 
 | Variable | Required | Phase | Description |
 |---|---|---|---|
 | `PORT` | Host-injected | 0 | HTTP listen port (default `3000` locally) |
+| `SITE_URL` | Staging/prod | 1 | Public origin for canonical, OG, robots, and sitemap URLs (e.g. `https://staging.unveiled.berlin`) |
 | `DATABASE_URL` | — | 2+ | Neon Postgres connection string |
 | `NEON_AUTH_BASE_URL` | — | 2+ | Neon Auth project URL |
 | `S3_ENDPOINT` | — | 4+ | Cloudflare R2 endpoint |
@@ -85,6 +86,31 @@ railway link
 railway up
 ```
 
+## Phase 1 verification
+
+After deploy (with `SITE_URL` set to the staging origin), confirm:
+
+1. All public routes render in DE and EN: `/`, `/discover`, `/how-it-works`, `/faq`, `/membership`, `/impressum`, `/privacy`, `/terms`
+2. Footer legal links work on every page
+3. `curl -s $SITE_URL/robots.txt` — shows `Allow`, `Disallow`, and `Sitemap:` lines
+4. `curl -s $SITE_URL/sitemap.xml` — valid XML with 16 URLs (`/de/discover`, `/en/terms`, etc.); no `/events/` URLs
+5. View Source on `/en/faq` — server-rendered `<title>`, description, canonical, hreflang, and `og:image` pointing at `/og-default.png`
+6. Cookie consent banner appears on first visit; Accept/Decline persists across reloads until storage is cleared
+7. Browser console shows no errors on `/de` and `/en`
+
+**Cookie consent note:** In Phase 1, declining non-essential cookies has no visible effect — no Google Maps embed exists yet. The preference is stored in `localStorage` for Phase 5, when the map island will check consent before loading third-party cookies.
+
+Local verification (dev server on port 3000):
+
+```bash
+bun run dev
+curl -s http://localhost:3000/robots.txt
+curl -s http://localhost:3000/sitemap.xml | rg -c '<url>'
+# expect 16
+curl -s http://localhost:3000/favicon.svg -o /dev/null -w '%{http_code}\n'
+curl -s http://localhost:3000/og-default.png -o /dev/null -w '%{http_code}\n'
+```
+
 ## Phase 0 verification
 
 After deploy, confirm:
@@ -100,6 +126,8 @@ After deploy, confirm:
 
 Logo SVGs live in `apps/web/public/logos/` (Illustrator exports — black, white, yellow). Served at `/logos/unveiled-logo-{tone}.svg`. Replace only by overwriting those three files; `<Logo />` picks them up automatically.
 
+Site-wide Open Graph fallback: `apps/web/public/og-default.png` (1200×630, yellow background). Used when a page has no page-specific image.
+
 ## Demo accounts
 
-None for Phase 0 (no auth).
+None for Phase 1 (no auth).
