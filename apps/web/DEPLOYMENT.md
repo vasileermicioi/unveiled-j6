@@ -50,8 +50,8 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 |---|---|---|---|
 | `PORT` | Host-injected | 0 | HTTP listen port (default `3000` locally) |
 | `SITE_URL` | Staging/prod | 1 | Public origin for canonical, OG, robots, and sitemap URLs (e.g. `https://staging.unveiled.berlin`) |
-| `DATABASE_URL` | — | 2+ | Neon Postgres connection string |
-| `NEON_AUTH_BASE_URL` | — | 2+ | Neon Auth project URL |
+| `DATABASE_URL` | Yes (Phase 2+) | 2+ | Neon Postgres connection string |
+| `AUTH_URL` | Yes (Phase 2+) | 2+ | Neon-provided Better Auth backend API URL; `/api/auth/*` forwards to this target |
 | `S3_ENDPOINT` | — | 4+ | Cloudflare R2 endpoint |
 | `S3_REGION` | — | 4+ | R2 region |
 | `S3_BUCKET` | — | 4+ | R2 bucket name |
@@ -85,6 +85,20 @@ railway login
 railway link
 railway up
 ```
+
+## Phase 2 verification
+
+After deploy (with `DATABASE_URL` and `AUTH_URL` set), confirm:
+
+1. `/de/login` and `/en/signup` render HeroUI-styled auth forms on yellow background
+2. Email signup creates a session; navbar shows signed-in state
+3. Logout returns to guest navbar
+4. Forgot-password flow sends a reset email (Neon Auth)
+5. Google OAuth sign-in works (configured in Neon Auth project settings)
+6. Unauthenticated visit to a protected prefix (e.g. `/de/events`) redirects to `/de/login`
+7. `curl -s http://localhost:3000/api/auth/get-session` (or staging equivalent) returns a Better Auth response, not 404
+
+**Neon Auth setup:** Enable Neon Auth on the Postgres project; copy `AUTH_URL` from the Neon dashboard into Railway/env. Enable Google OAuth in Neon Auth project settings if using social login.
 
 ## Phase 1 verification
 
@@ -130,4 +144,6 @@ Site-wide Open Graph fallback: `apps/web/public/og-default.png` (1200×630, yell
 
 ## Demo accounts
 
-None for Phase 1 (no auth).
+Phase 1: none (no auth).
+
+Phase 2+: create a test member via `/de/signup` on staging, or use the Neon Auth console. Document any shared staging credentials here when provisioned.

@@ -31,7 +31,7 @@ When specs conflict, prefer the more specific doc for the topic (e.g. `seo-and-m
 | Runtime / PM | **Bun** (workspaces, scripts, test runner) |
 | App | **HonoX + React SSR** — single deployable app at `apps/web/` |
 | UI | **HeroUI** — re-skinned **Uber** theme preset ([`design-tokens.md`](design-tokens.md)) |
-| Auth backend | **Neon Auth** (Better Auth-compatible), proxied at `/api/auth/*` |
+| Auth backend | **Neon Auth** (Better Auth backend hosted by Neon); `/api/auth/*` forwards to `AUTH_URL` |
 | Auth UI | **`@better-auth-ui/heroui`** + `@better-auth-ui/react` + `@better-auth-ui/core` — **HeroUI variant only, not shadcn** |
 | Database | **Neon Postgres** + **Drizzle ORM** (`@unveiled/db`) |
 | Images | **Cloudflare R2** + `sharp` (`@unveiled/images`) |
@@ -50,7 +50,7 @@ Bun workspaces. **One deployable app**; shared packages appear as phases require
 ```text
 apps/web/          @unveiled/web   — HonoX routes, middleware, islands, API handlers
 packages/config/   @unveiled/config — shared tsconfig + Biome presets
-packages/db/       @unveiled/db     — Drizzle schema, migrations (Phase 2+)
+packages/db/       @unveiled/db     — Drizzle schema + migrations, `public` schema only (Phase 2+)
 packages/auth/     @unveiled/auth   — session + role guards (Phase 2+)
 packages/images/   @unveiled/images — sharp + R2 pipeline (Phase 4+)
 packages/ui/       @unveiled/ui     — EventCard, shared components (Phase 4+)
@@ -170,17 +170,18 @@ Repo conventions: keep `DEPLOYMENT.md` current; document demo credentials; use E
 
 ## Auth setup (Phase 2+)
 
-Neon Auth is proxied same-origin so `better-auth-ui` works without CORS issues.
+Neon Auth hosts the **Better Auth** backend. HonoX `/api/auth/*` **forwards** requests to `AUTH_URL` (Neon-provided env var) so `better-auth-ui` works same-origin without CORS. Do **not** reimplement Better Auth routes or model the `neon_auth` schema in Drizzle — Drizzle manages `public` tables only (`users`, `subscriptions`, …).
 
 ```bash
 cd apps/web && bun add @better-auth-ui/heroui@latest @better-auth-ui/react@latest @better-auth-ui/core@latest
 ```
 
 - Use **`@better-auth-ui/heroui`** components on auth pages — inherits HeroUI Uber theme reskin
-- Use **`@better-auth-ui/react`** hooks for session/state
+- Use **`@better-auth-ui/react`** hooks for session/state; client base path is `/api/auth`
 - Do **not** install `@better-auth-ui/shadcn` or add shadcn/ui for auth
 - Google OAuth: configured in Neon Auth project settings, not app env vars
 - On first signup: `role=USER`, 17 credits, `INACTIVE` subscription, `onboarding_complete=false`
+- `public.users.id` stores the Better Auth user id from the session API (same as Neon Auth user id)
 
 Session middleware and role guards live in `@unveiled/auth`, consumed by `apps/web` middleware.
 
@@ -236,7 +237,7 @@ Document all required vars in `apps/web/DEPLOYMENT.md`. Key vars by phase:
 
 | Phase | Variables |
 |---|---|
-| 2+ | `DATABASE_URL`, `NEON_AUTH_BASE_URL` |
+| 2+ | `DATABASE_URL`, `AUTH_URL` |
 | 4+ | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` |
 | 5+ | `GOOGLE_MAPS_API_KEY` |
 | 6+ | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_BASIC_BERLIN` |
@@ -265,6 +266,7 @@ Full mapping: `docs/migration/extras/integrations-and-config.md`.
 | Grey page background | Yellow (`#FAFF86`) app-wide — see [`design-tokens.md`](design-tokens.md) |
 | Client-side mutation modals | Dedicated SSR pages + form POST |
 | shadcn auth components | `@better-auth-ui/heroui` only |
+| Modeling `neon_auth` in Drizzle | Drizzle manages `public` schema only; Neon Auth owns `neon_auth` |
 | Auth-gated `/events/:id` | Public detail page; gate `/events/:id/book` and `/events` feed |
 | Business logic in route files | Extract to `packages/*` |
 | Trusting client `partnerId` | Derive from session |
