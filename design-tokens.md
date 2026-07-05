@@ -65,7 +65,7 @@ Heading sizes are scaled in `globals.css` (e.g. `.card.page-hero`, `.faq-hero`).
 
 - **Base:** HeroUI v3 **Uber** preset structure (semantic CSS variables in `@layer theme`).
 - **Override:** Only color-bearing slots mapped to brand palette (see `globals.css` `:root` block).
-- **Components:** Brand overrides in `@layer components` **after** `@import "@heroui/styles"`.
+- **Components:** Brand overrides in `@layer components` **after** `@import "@heroui/styles"` and `@import "@better-auth-ui/heroui/styles"`.
 
 ### Semantic mapping (summary)
 
@@ -118,6 +118,16 @@ Most static pages follow:
 3. **CTAs** — primary/secondary button classes; links via `localizedPath()`.
 
 Reuse existing components before inventing new ones: `PageHero`, `SectionCard`, `HelpSection`, `LandingPage`, etc. in `apps/web/app/components/marketing/`.
+
+### Auth page structure (Phase 2+)
+
+Login, signup, forgot-password, and reset-password follow a different pattern from marketing heroes:
+
+1. **Page chrome** — `AuthPageLayout`: localized `Heading` + `Paragraph` on yellow (no extra hero card).
+2. **Form card** — `@better-auth-ui/heroui` view inside a client island, `className="auth-form"`, **`Card variant="default"`** (white). Do **not** use `variant="secondary"` here — that variant is for inverted marketing panels only.
+3. **Library chrome** — hide the library’s duplicate card header via `.auth-form .card__header { display: none }`. Footer cross-links (sign up, forgot password) come from the library — do not duplicate them in the layout.
+4. **Theme block** — scoped rules in `globals.css` under `.auth-form`: social OAuth buttons (`.button--tertiary` → secondary-button look), footer links on white (`--foreground`, not `text-accent` yellow).
+5. **Copy** — page titles in `auth-content.ts`; form strings via `AuthProvider` + `auth-localization.ts` for DE.
 
 ---
 

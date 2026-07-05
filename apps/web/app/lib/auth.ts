@@ -42,6 +42,14 @@ export async function getSession(c: Context): Promise<AppSession | null> {
   return resolveSession(c, getAuthOptions());
 }
 
+export async function getSessionIfConfigured(c: Context): Promise<AppSession | null> {
+  if (!process.env.DATABASE_URL || !process.env.AUTH_URL) {
+    return null;
+  }
+
+  return getSession(c);
+}
+
 export function requireAuth(): MiddlewareHandler {
   return requireAuthMiddleware(getAuthOptions());
 }

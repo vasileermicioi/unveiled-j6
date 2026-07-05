@@ -3,7 +3,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import type { Context } from "hono";
 
 import { provisionNewUser } from "./provision-user";
-import type { AppSession, AuthOptions, NeonAuthUser, SessionUser } from "./types";
+import type { AppSession, AuthOptions, NeonAuthUser, ProvisionProfile, SessionUser } from "./types";
 
 type BetterAuthSessionResponse = {
   session?: {
@@ -60,6 +60,17 @@ async function loadAppUser(db: AuthOptions["db"], userId: string) {
   });
 }
 
+function extractProvisionProfile(neonAuthUser: NeonAuthUser): ProvisionProfile | undefined {
+  const firstName = neonAuthUser.firstName?.trim() || undefined;
+  const lastName = neonAuthUser.lastName?.trim() || undefined;
+
+  if (firstName || lastName) {
+    return { firstName, lastName };
+  }
+
+  return undefined;
+}
+
 export async function getSession(c: Context, options: AuthOptions): Promise<AppSession | null> {
   const betterAuth = await fetchBetterAuthSession(c, options.authUrl);
   if (!betterAuth?.user) {
@@ -69,7 +80,7 @@ export async function getSession(c: Context, options: AuthOptions): Promise<AppS
   let row = await loadAppUser(options.db, betterAuth.user.id);
 
   if (!row) {
-    await provisionNewUser(options.db, betterAuth.user);
+    await provisionNewUser(options.db, betterAuth.user, extractProvisionProfile(betterAuth.user));
     row = await loadAppUser(options.db, betterAuth.user.id);
   }
 

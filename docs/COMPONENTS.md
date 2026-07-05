@@ -184,9 +184,44 @@ Props: `{ content: MembershipCheckoutContent }`
 
 ---
 
+## Auth pages (Phase 2)
+
+Built with `@better-auth-ui/heroui` + `@better-auth-ui/react`. Routes: `[locale]/login`, `signup`, `forgot-password`, `reset-password`. See `design-tokens.md` § Auth page structure.
+
+### `AuthPageLayout`
+
+**Path:** `components/AuthPageLayout.tsx`
+
+SSR shell: localized page title + description on yellow, slot for hydrated auth form. Does not duplicate library footer links.
+
+Props: `{ locale, page: "login" | "signup" | "forgotPassword" | "resetPassword", children }`
+
+### `AppAuthProvider`
+
+**Path:** `components/AppAuthProvider.tsx`
+
+Wraps `@better-auth-ui/heroui` `AuthProvider` with locale-aware paths, Google OAuth, signup name fields, and DE form copy. Used inside auth islands only — not global.
+
+Props: `{ locale, children }`
+
+### Auth islands
+
+| Island | Library view | Route |
+|---|---|---|
+| `AuthSignIn` | `SignIn` | `[locale]/login.tsx` |
+| `AuthSignUp` | `SignUp` | `[locale]/signup.tsx` |
+| `AuthForgotPassword` | `ForgotPassword` | `[locale]/forgot-password.tsx` |
+| `AuthResetPassword` | `ResetPassword` | `[locale]/reset-password.tsx` |
+
+All pass `className="auth-form"` and `variant="default"`. Theme: `.auth-form` block in `globals.css`.
+
+Supporting modules: `lib/auth-client.ts`, `lib/auth-ui-config.ts`, `lib/auth-content.ts`, `lib/auth-localization.ts`.
+
+---
+
 ## Client islands
 
-Islands live in `apps/web/app/islands/`. Import from components; HonoX hydrates automatically.
+Islands live in `apps/web/app/islands/`. Import from components; HonoX hydrates automatically. Auth islands are documented under **Auth pages (Phase 2)** above.
 
 ### `FaqAccordion`
 
@@ -216,7 +251,6 @@ From `docs/migration/ui/ui-component-map.md` — will land in later phases:
 |---|---|---|
 | `EventCard` | 4 | `@unveiled/ui` |
 | `EventMap` | 5 | island in `apps/web` |
-| Auth forms | 2 | `@better-auth-ui/heroui` |
 | Admin tables | 4+ | `apps/web/app/components/admin/` |
 | Booking confirmation | 6 | `apps/web/app/components/` |
 

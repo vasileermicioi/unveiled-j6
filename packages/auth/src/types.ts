@@ -26,6 +26,8 @@ export type NeonAuthUser = {
   emailVerified?: boolean;
   name?: string | null;
   image?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 };
 
 export type ProvisionProfile = {

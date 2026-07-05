@@ -113,6 +113,30 @@ After deploy (with `DATABASE_URL` and `AUTH_URL` set), confirm:
 
 **Neon Auth setup:** Enable Neon Auth on the Postgres project; copy `AUTH_URL` from the Neon dashboard into Railway/env. Enable Google OAuth in Neon Auth project settings if using social login.
 
+### Google OAuth (Neon Auth)
+
+Google sign-in is configured in the **Neon Auth project dashboard**, not via app environment variables.
+
+1. Open the Neon project → **Auth** → **Providers**.
+2. Enable **Google** and paste your Google Cloud OAuth client ID and secret.
+3. Add authorized redirect URIs from the Neon Auth dashboard to your Google OAuth client (Neon shows the callback URL).
+4. Repeat for staging and production Neon branches/projects as needed.
+5. Verify on staging: `/de/login` and `/de/signup` show **Continue with Google**; completing OAuth creates or signs into a `USER` account with starter provisioning (17 credits, `INACTIVE` subscription).
+
+No `GOOGLE_*` env vars are required in `apps/web` — the proxy at `/api/auth/*` forwards OAuth flows to `AUTH_URL`.
+
+## Phase 2 step 03 verification
+
+With `DATABASE_URL` and `AUTH_URL` set:
+
+1. `bun run lint` and `bun run typecheck` pass
+2. `/de/login` and `/en/signup` render HeroUI auth forms on the yellow page background
+3. View Source on auth pages shows `<meta name="robots" content="noindex">`
+4. Email signup with valid data creates a session; `public.users` row has `credits=17`, `role=USER`, and profile names when provided
+5. Invalid signup (bad email, password under 6 chars, empty name) shows client-side validation errors
+6. Forgot-password form submits via Neon Auth; reset-password reads the `token` query param
+7. Google OAuth button visible on login/signup (requires Neon Auth provider config)
+
 ## Phase 1 verification
 
 After deploy (with `SITE_URL` set to the staging origin), confirm:

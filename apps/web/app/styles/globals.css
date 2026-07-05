@@ -2,6 +2,7 @@
 
 @import "tailwindcss" source("../");
 @import "@heroui/styles";
+@import "@better-auth-ui/heroui/styles";
 
 @theme {
   --color-brand-yellow: #faff86;
@@ -722,6 +723,11 @@
     padding: 1rem;
   }
 
+  [data-slot="toast-region"] {
+    z-index: 70;
+    top: 5rem;
+  }
+
   .cookie-consent__inner {
     display: flex;
     flex-direction: column;
@@ -754,5 +760,94 @@
     display: flex;
     flex-shrink: 0;
     gap: 0.75rem;
+  }
+
+  .auth-form {
+    width: 100%;
+    max-width: none;
+  }
+
+  .auth-form--loading {
+    min-height: 18rem;
+  }
+
+  .auth-form__skeleton {
+    border: 2px solid var(--border);
+    background-color: var(--color-brand-grey);
+  }
+
+  .auth-form__skeleton--field {
+    height: 2.75rem;
+  }
+
+  .auth-form__skeleton--button {
+    height: 2.5rem;
+  }
+
+  .auth-form .card__header {
+    display: none;
+  }
+
+  .auth-form .card__footer .link {
+    color: var(--foreground);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  @media (hover: hover) {
+    .auth-form .card__footer .link:hover,
+    .auth-form .card__footer .link[data-hovered="true"] {
+      color: var(--foreground);
+      text-decoration: underline;
+    }
+  }
+
+  .auth-form .card__footer .description {
+    color: var(--muted);
+  }
+
+  .auth-form .button--tertiary {
+    --button-bg: var(--surface-control-bg);
+    --button-bg-hover: var(--surface-control-bg-hover);
+    --button-bg-pressed: var(--surface-control-bg-hover);
+    --button-fg: var(--surface-control-fg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 2.5rem;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--border);
+    border-radius: 0;
+    background-color: var(--surface-control-bg);
+    color: var(--surface-control-fg);
+    font-weight: 600;
+    text-transform: none;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  @media (hover: hover) {
+    .auth-form .button--tertiary:hover,
+    .auth-form .button--tertiary[data-hovered="true"] {
+      background-color: var(--surface-control-bg-hover);
+      color: var(--surface-control-fg-hover);
+    }
+  }
+}
+
+@layer utilities {
+  .auth-form .card__footer .link.text-accent {
+    color: var(--foreground);
+  }
+
+  @media (hover: hover) {
+    .auth-form .card__footer .link.text-accent:hover,
+    .auth-form .card__footer .link.text-accent[data-hovered="true"] {
+      color: var(--foreground);
+    }
   }
 }

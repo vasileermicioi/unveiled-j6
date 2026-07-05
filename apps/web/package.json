@@ -9,17 +9,25 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@unveiled/auth": "workspace:*",
-    "@unveiled/db": "workspace:*",
+    "@better-auth-ui/core": "^1.6.27",
+    "@better-auth-ui/heroui": "^1.6.27",
+    "@better-auth-ui/react": "^1.6.27",
     "@heroui/react": "^3.2.1",
     "@heroui/styles": "^3.2.1",
     "@hono/node-server": "^2.0.8",
     "@hono/react-renderer": "^0.2.0",
+    "@tanstack/react-query": "^5.101.2",
+    "@unveiled/auth": "workspace:*",
+    "@unveiled/db": "workspace:*",
+    "better-auth": "^1.6.23",
+    "clsx": "^2.1.1",
     "hono": "^4.7.0",
     "honox": "^0.1.56",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "tailwind-variants": "^3.2.2"
+    "tailwind-merge": "^3.6.0",
+    "tailwind-variants": "^3.2.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@hono/vite-build": "^1.0.0",

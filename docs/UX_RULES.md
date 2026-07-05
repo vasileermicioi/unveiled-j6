@@ -72,6 +72,11 @@ Do not use accordion for unrelated content (legal sections use static headings, 
 
 Use `@better-auth-ui/heroui` only — **not** shadcn. Proxied at `/api/auth/*`.
 
+- SSR route renders `AuthPageLayout` + client island; library handles form interactivity and footer links
+- White form card (`variant="default"`, `.auth-form`) — never inverted `secondary` on auth pages
+- Page titles localized in `auth-content.ts`; form labels via `auth-localization.ts` on `/de/*`
+- Auth pages use `robots: "noindex"` in route render options
+
 ### Payment
 
 Real Stripe Billing (Phase 6+) — no mocked checkout. Membership page Phase 1 uses disabled button.
