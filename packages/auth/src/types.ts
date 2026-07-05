@@ -1,4 +1,4 @@
-import type { Db, User } from "@unveiled/db";
+import type { Db, User, UserBehavior, UserProfile } from "@unveiled/db";
 
 export type UserRole = User["role"];
 
@@ -14,6 +14,8 @@ export type SessionUser = {
   partnerId: string | null;
   credits: number;
   onboardingComplete: boolean;
+  profile: UserProfile;
+  behavior: UserBehavior;
 };
 
 export type AppSession = {

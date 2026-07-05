@@ -25,6 +25,8 @@ function toSessionUser(row: typeof users.$inferSelect): SessionUser {
     partnerId: row.partnerId,
     credits: row.credits,
     onboardingComplete: row.profile.onboarding_complete ?? false,
+    profile: row.profile,
+    behavior: row.behavior ?? {},
   };
 }
 

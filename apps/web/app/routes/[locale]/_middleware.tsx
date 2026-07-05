@@ -4,6 +4,7 @@ import { NotFoundPage } from "../../components/NotFoundPage";
 import { getSessionIfConfigured } from "../../lib/auth";
 import { evaluateAuthRedirect } from "../../lib/auth-middleware";
 import { isValidLocale, type Locale } from "../../lib/locale";
+import { evaluateOnboardingRedirect } from "../../lib/onboarding-middleware";
 
 export default createRoute(async (c, next) => {
   const locale = c.req.param("locale");
@@ -29,6 +30,18 @@ export default createRoute(async (c, next) => {
 
   if (redirectTo) {
     return c.redirect(redirectTo, 302);
+  }
+
+  if (session) {
+    const onboardingRedirect = evaluateOnboardingRedirect({
+      locale: locale as Locale,
+      pathname,
+      session,
+    });
+
+    if (onboardingRedirect) {
+      return c.redirect(onboardingRedirect, 302);
+    }
   }
 
   await next();

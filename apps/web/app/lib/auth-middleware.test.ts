@@ -48,6 +48,8 @@ describe("auth-middleware", () => {
             partnerId: null,
             credits: 17,
             onboardingComplete: false,
+            profile: { onboarding_complete: false },
+            behavior: {},
           },
         },
       }),
