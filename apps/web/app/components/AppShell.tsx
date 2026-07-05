@@ -2,20 +2,22 @@ import { Surface } from "@heroui/react";
 import type { ReactNode } from "react";
 
 import CookieConsentBanner from "../islands/CookieConsentBanner";
+import type { AppSession } from "../lib/auth";
 import type { Locale } from "../lib/locale";
+import { AppNavbar } from "./AppNavbar";
 import { GuestFooter } from "./GuestFooter";
-import { GuestNavbar } from "./GuestNavbar";
 
 type AppShellProps = {
   locale: Locale;
   pathname: string;
+  session: AppSession | null;
   children: ReactNode;
 };
 
-export function AppShell({ locale, pathname, children }: AppShellProps) {
+export function AppShell({ locale, pathname, session, children }: AppShellProps) {
   return (
     <Surface className="flex min-h-screen flex-col" variant="transparent">
-      <GuestNavbar locale={locale} pathname={pathname} />
+      <AppNavbar locale={locale} pathname={pathname} session={session} />
       <Surface className="flex-1 pt-16 md:pt-20" role="main" variant="transparent">
         {children}
       </Surface>

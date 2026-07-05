@@ -1,20 +1,32 @@
-import { Header, Link, Paragraph, Surface } from "@heroui/react";
-
-import GuestNavbarMenu from "../islands/GuestNavbarMenu";
+import { Chip, Header, Link, Paragraph, Surface } from "@heroui/react";
+import AppNavbarMenu from "../islands/AppNavbarMenu";
+import AuthLogoutButton from "../islands/AuthLogoutButton";
+import type { AppSession } from "../lib/auth";
 import { getCopy, NAV_ITEMS, NAV_SEGMENTS } from "../lib/copy";
 import type { Locale } from "../lib/locale";
-import { isActiveNavPath, isLocaleRoot, localizedPath, switchLocalePath } from "../lib/locale";
+import {
+  isActiveNavPath,
+  isAuthPage,
+  isLocaleRoot,
+  localizedPath,
+  switchLocalePath,
+} from "../lib/locale";
 import { Logo } from "./Logo";
 import { NavLink } from "./NavLink";
 
-type GuestNavbarProps = {
+type AppNavbarProps = {
   locale: Locale;
   pathname: string;
+  session: AppSession | null;
 };
 
-export function GuestNavbar({ locale, pathname }: GuestNavbarProps) {
+export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
   const copy = getCopy(locale);
-  const showCta = !isLocaleRoot(pathname);
+  const showGuestAuthActions = !session && !isAuthPage(pathname);
+  const showCta = showGuestAuthActions && !isLocaleRoot(pathname);
+  const loginHref = localizedPath(locale, "login");
+  const signupHref = localizedPath(locale, "signup");
+  const creditsLabel = session ? copy.formatCredits(session.user.credits) : undefined;
 
   const navLinks = NAV_ITEMS.map((key) => {
     const href = localizedPath(locale, NAV_SEGMENTS[key]);
@@ -72,20 +84,56 @@ export function GuestNavbar({ locale, pathname }: GuestNavbarProps) {
             </Link>
           </Surface>
 
-          {showCta ? (
-            <Link
-              className="button button--primary button--md hidden sm:inline-flex"
-              href={localizedPath(locale, "membership")}
-            >
-              {copy.guestCta}
-            </Link>
+          {session ? (
+            <>
+              {creditsLabel ? (
+                <Chip className="hidden sm:inline-flex" variant="tertiary">
+                  <Chip.Label>{creditsLabel}</Chip.Label>
+                </Chip>
+              ) : null}
+              <AuthLogoutButton
+                className="button button--secondary button--md hidden sm:inline-flex"
+                label={copy.logout}
+              />
+            </>
+          ) : showGuestAuthActions ? (
+            <>
+              <Link
+                className="button button--secondary button--md hidden sm:inline-flex"
+                href={loginHref}
+              >
+                {copy.login}
+              </Link>
+              <Link
+                className="button button--primary button--md hidden sm:inline-flex"
+                href={signupHref}
+              >
+                {copy.signup}
+              </Link>
+              {showCta ? (
+                <Link
+                  className="button button--primary button--md hidden sm:inline-flex"
+                  href={localizedPath(locale, "membership")}
+                >
+                  {copy.guestCta}
+                </Link>
+              ) : null}
+            </>
           ) : null}
 
-          <GuestNavbarMenu
+          <AppNavbarMenu
+            creditsLabel={creditsLabel}
             ctaHref={localizedPath(locale, "membership")}
             ctaLabel={copy.guestCta}
+            isAuthenticated={Boolean(session)}
+            loginHref={loginHref}
+            loginLabel={copy.login}
+            logoutLabel={session ? copy.logout : undefined}
             navLinks={navLinks}
             showCta={showCta}
+            showGuestAuthActions={showGuestAuthActions}
+            signupHref={signupHref}
+            signupLabel={copy.signup}
           />
         </Surface>
       </Surface>

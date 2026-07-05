@@ -27,6 +27,10 @@ export type ShellCopy = {
   headerTagline: string;
   nav: NavLinkCopy;
   guestCta: string;
+  login: string;
+  signup: string;
+  logout: string;
+  formatCredits: (credits: number) => string;
   homeCta: string;
   notFoundTitle: string;
   notFoundBody: string;
@@ -43,6 +47,10 @@ const copy: Record<Locale, ShellCopy> = {
       faq: "FAQ",
     },
     guestCta: "Mitglied werden",
+    login: "Anmelden",
+    signup: "Registrieren",
+    logout: "Abmelden",
+    formatCredits: (credits) => `${credits} Credits`,
     homeCta: "Entdecken",
     notFoundTitle: "Seite nicht gefunden",
     notFoundBody: "Die angeforderte Seite existiert nicht.",
@@ -76,6 +84,10 @@ const copy: Record<Locale, ShellCopy> = {
       faq: "FAQ",
     },
     guestCta: "Become a member",
+    login: "Log in",
+    signup: "Sign up",
+    logout: "Log out",
+    formatCredits: (credits) => `${credits} credits`,
     homeCta: "Discover",
     notFoundTitle: "Page not found",
     notFoundBody: "The page you requested does not exist.",

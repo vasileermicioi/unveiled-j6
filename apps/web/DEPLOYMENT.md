@@ -44,14 +44,16 @@ docker run -p 3000:3000 -e PORT=3000 unveiled-web
 
 ## Environment variables
 
+**Phase 2 staging requires `DATABASE_URL`, `AUTH_URL`, and `SITE_URL`.** Without `DATABASE_URL` and `AUTH_URL`, auth pages render but session resolution, route protection, and provisioning are disabled. Local marketing-only dev works without them; auth demos and staging deploys must set all three.
+
 Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open Graph, and sitemap URLs. Local development defaults to `http://localhost:3000` when unset.
 
 | Variable | Required | Phase | Description |
 |---|---|---|---|
 | `PORT` | Host-injected | 0 | HTTP listen port (default `3000` locally) |
-| `SITE_URL` | Staging/prod | 1 | Public origin for canonical, OG, robots, and sitemap URLs (e.g. `https://staging.unveiled.berlin`) |
-| `DATABASE_URL` | Yes (Phase 2+) | 2+ | Neon Postgres connection string |
-| `AUTH_URL` | Yes (Phase 2+) | 2+ | Neon-provided Better Auth backend API URL; `/api/auth/*` forwards to this target |
+| `SITE_URL` | **Yes (staging/prod)** | 1+ | Public origin for canonical, OG, robots, and sitemap URLs (e.g. `https://staging.unveiled.berlin`) |
+| `DATABASE_URL` | **Yes (Phase 2 staging+)** | 2+ | Neon Postgres connection string |
+| `AUTH_URL` | **Yes (Phase 2 staging+)** | 2+ | Neon-provided Better Auth backend API URL; `/api/auth/*` forwards to this target |
 | `S3_ENDPOINT` | — | 4+ | Cloudflare R2 endpoint |
 | `S3_REGION` | — | 4+ | R2 region |
 | `S3_BUCKET` | — | 4+ | R2 bucket name |
@@ -99,19 +101,24 @@ With `DATABASE_URL` and `AUTH_URL` set:
 
 **Provisioning:** first valid session resolve calls `provisionNewUser` in `@unveiled/auth` (see `packages/auth/README.md`).
 
-## Phase 2 verification
+## Phase 2 release gate (auth step 04)
 
-After deploy (with `DATABASE_URL` and `AUTH_URL` set), confirm:
+Phase 2 is complete when staging supports the full auth loop with route protection and authenticated navbar. **Required env vars on Railway:** `DATABASE_URL`, `AUTH_URL`, `SITE_URL`.
 
-1. `/de/login` and `/en/signup` render HeroUI-styled auth forms on yellow background
-2. Email signup creates a session; navbar shows signed-in state
-3. Logout returns to guest navbar
-4. Forgot-password flow sends a reset email (Neon Auth)
-5. Google OAuth sign-in works (configured in Neon Auth project settings)
-6. Unauthenticated visit to a protected prefix (e.g. `/de/events`) redirects to `/de/login`
-7. `curl -s http://localhost:3000/api/auth/get-session` (or staging equivalent) returns Better Auth JSON, not the HTML 404 page
+### Test user (staging)
 
-**Neon Auth setup:** Enable Neon Auth on the Postgres project; copy `AUTH_URL` from the Neon dashboard into Railway/env. Enable Google OAuth in Neon Auth project settings if using social login.
+Create a test member on staging:
+
+1. Open `https://<staging-host>/de/signup` (replace with staging URL from the table above).
+2. Register with email/password and first/last name, or use **Continue with Google** (Neon Auth provider must be enabled).
+3. After signup, confirm starter state in Neon Postgres (`public.users` + `public.subscriptions`):
+   - `role = USER`
+   - `credits = 17`
+   - `subscriptions.status = INACTIVE`
+   - `profile.onboarding_complete = false`
+4. Alternatively, inspect or create users in the Neon Auth console — app rows are provisioned on first session resolve.
+
+Document any shared staging demo credentials in [Demo accounts](#demo-accounts) when provisioned for client demos.
 
 ### Google OAuth (Neon Auth)
 
@@ -125,6 +132,25 @@ Google sign-in is configured in the **Neon Auth project dashboard**, not via app
 
 No `GOOGLE_*` env vars are required in `apps/web` — the proxy at `/api/auth/*` forwards OAuth flows to `AUTH_URL`.
 
+### Client demo checklist
+
+With `DATABASE_URL` and `AUTH_URL` set on staging:
+
+1. `bun run lint`, `bun run typecheck`, and `bun run build` pass in CI
+2. `/de/login` and `/en/signup` render HeroUI auth forms on yellow background
+3. Email signup creates a session; navbar shows credits badge and logout
+4. Logout returns to guest navbar with login/signup links
+5. Forgot-password flow sends a reset email; reset-password completes
+6. Google OAuth sign-in works (Neon Auth provider configured)
+7. Unauthenticated `/de/events` (or `/en/profile`) → redirect to `/:locale/login`
+8. Signed-in USER visiting `/de/partner` or `/de/admin` → redirect to `/de`
+9. `/de` and `/en` load without browser console errors (guest and signed-in)
+10. `curl -s $SITE_URL/api/auth/get-session` returns Better Auth JSON, not HTML 404
+
+**Neon Auth setup:** Enable Neon Auth on the Postgres project; copy `AUTH_URL` from the Neon dashboard into Railway/env.
+
+**Route protection:** Locale middleware in `apps/web/app/routes/[locale]/_middleware.tsx` uses `apps/web/app/lib/auth-middleware.ts` — guarded prefixes: `events`, `saved`, `bookings`, `profile`, `partner`, `admin`, `onboarding`.
+
 ## Phase 2 step 03 verification
 
 With `DATABASE_URL` and `AUTH_URL` set:
@@ -136,6 +162,18 @@ With `DATABASE_URL` and `AUTH_URL` set:
 5. Invalid signup (bad email, password under 6 chars, empty name) shows client-side validation errors
 6. Forgot-password form submits via Neon Auth; reset-password reads the `token` query param
 7. Google OAuth button visible on login/signup (requires Neon Auth provider config)
+
+## Phase 2 step 04 verification
+
+With `DATABASE_URL` and `AUTH_URL` set:
+
+1. `bun run lint`, `bun run typecheck`, and `bun run build` pass
+2. `cd apps/web && bun test app/lib/auth-middleware.test.ts` — redirect rules for guests and USER role
+3. Unauthenticated `/de/events` → `302` to `/de/login?returnTo=...`
+4. Signed-in USER `/de/partner` → `302` to `/de`
+5. Signed-in member sees credits badge and logout in navbar; guest sees login/signup links
+6. Logout ends session and returns to `/:locale`; subsequent protected prefix visit redirects to login
+7. Complete [Phase 2 release gate](#phase-2-release-gate-auth-step-04) client demo on staging
 
 ## Phase 1 verification
 
@@ -183,4 +221,4 @@ Site-wide Open Graph fallback: `apps/web/public/og-default.png` (1200×630, yell
 
 Phase 1: none (no auth).
 
-Phase 2+: create a test member via `/de/signup` on staging, or use the Neon Auth console. Document any shared staging credentials here when provisioned.
+Phase 2+: create a test member via `/de/signup` on staging (see [Test user (staging)](#test-user-staging)), or use the Neon Auth console. Expected starter state: `USER` role, 17 credits, `INACTIVE` subscription, onboarding incomplete. Document any shared staging credentials here when provisioned for client demos.

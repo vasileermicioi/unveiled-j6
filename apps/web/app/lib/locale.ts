@@ -70,3 +70,16 @@ export function isLocaleRoot(pathname: string): boolean {
   const first = segments[0];
   return segments.length === 1 && Boolean(first && isValidLocale(first));
 }
+
+const AUTH_PATH_SEGMENTS = new Set(["login", "signup", "forgot-password", "reset-password"]);
+
+export function isAuthPage(pathname: string): boolean {
+  const segments = pathname.split("/").filter(Boolean);
+  const maybeLocale = segments[0];
+  if (!maybeLocale || !isValidLocale(maybeLocale)) {
+    return false;
+  }
+
+  const pageSegment = segments[1];
+  return pageSegment !== undefined && AUTH_PATH_SEGMENTS.has(pageSegment);
+}

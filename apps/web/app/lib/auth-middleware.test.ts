@@ -1,0 +1,75 @@
+import { describe, expect, test } from "bun:test";
+
+import { buildLoginRedirectUrl, evaluateAuthRedirect, isProtectedPrefix } from "./auth-middleware";
+
+describe("auth-middleware", () => {
+  const originalDatabaseUrl = process.env.DATABASE_URL;
+  const originalAuthUrl = process.env.AUTH_URL;
+
+  test("isProtectedPrefix matches guarded segments", () => {
+    expect(isProtectedPrefix("events")).toBe(true);
+    expect(isProtectedPrefix("discover")).toBe(false);
+    expect(isProtectedPrefix(null)).toBe(false);
+  });
+
+  test("buildLoginRedirectUrl includes returnTo", () => {
+    expect(buildLoginRedirectUrl("de", "/de/events")).toBe("/de/login?returnTo=%2Fde%2Fevents");
+  });
+
+  test("evaluateAuthRedirect sends guests to login", () => {
+    process.env.DATABASE_URL = "postgres://example";
+    process.env.AUTH_URL = "https://auth.example";
+
+    expect(
+      evaluateAuthRedirect({
+        locale: "de",
+        pathname: "/de/events",
+        session: null,
+      }),
+    ).toBe("/de/login?returnTo=%2Fde%2Fevents");
+
+    process.env.DATABASE_URL = originalDatabaseUrl;
+    process.env.AUTH_URL = originalAuthUrl;
+  });
+
+  test("evaluateAuthRedirect blocks USER from partner prefix", () => {
+    process.env.DATABASE_URL = "postgres://example";
+    process.env.AUTH_URL = "https://auth.example";
+
+    expect(
+      evaluateAuthRedirect({
+        locale: "de",
+        pathname: "/de/partner",
+        session: {
+          user: {
+            id: "user-1",
+            email: "member@example.com",
+            role: "USER",
+            partnerId: null,
+            credits: 17,
+            onboardingComplete: false,
+          },
+        },
+      }),
+    ).toBe("/de");
+
+    process.env.DATABASE_URL = originalDatabaseUrl;
+    process.env.AUTH_URL = originalAuthUrl;
+  });
+
+  test("evaluateAuthRedirect skips when auth env is missing", () => {
+    process.env.DATABASE_URL = "";
+    process.env.AUTH_URL = "";
+
+    expect(
+      evaluateAuthRedirect({
+        locale: "de",
+        pathname: "/de/events",
+        session: null,
+      }),
+    ).toBeNull();
+
+    process.env.DATABASE_URL = originalDatabaseUrl;
+    process.env.AUTH_URL = originalAuthUrl;
+  });
+});

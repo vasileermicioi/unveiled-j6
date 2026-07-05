@@ -1,0 +1,72 @@
+import type { AppSession, UserRole } from "@unveiled/auth";
+
+import type { Locale } from "./locale";
+
+export const PROTECTED_PREFIXES = [
+  "events",
+  "saved",
+  "bookings",
+  "profile",
+  "partner",
+  "admin",
+  "onboarding",
+] as const;
+
+export type ProtectedPrefix = (typeof PROTECTED_PREFIXES)[number];
+
+const ROLE_FORBIDDEN: Record<UserRole, readonly ProtectedPrefix[]> = {
+  USER: ["partner", "admin"],
+  PARTNER: ["admin"],
+  ADMIN: [],
+};
+
+export function isAuthConfigured(): boolean {
+  return Boolean(process.env.DATABASE_URL && process.env.AUTH_URL);
+}
+
+export function getLocalePathSegment(pathname: string, locale: Locale): string | null {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments[0] !== locale) {
+    return null;
+  }
+
+  return segments[1] ?? null;
+}
+
+export function isProtectedPrefix(segment: string | null): segment is ProtectedPrefix {
+  if (!segment) {
+    return false;
+  }
+
+  return (PROTECTED_PREFIXES as readonly string[]).includes(segment);
+}
+
+export function buildLoginRedirectUrl(locale: Locale, pathname: string): string {
+  const params = new URLSearchParams({ returnTo: pathname });
+  return `/${locale}/login?${params.toString()}`;
+}
+
+export function evaluateAuthRedirect(options: {
+  locale: Locale;
+  pathname: string;
+  session: AppSession | null;
+}): string | null {
+  if (!isAuthConfigured()) {
+    return null;
+  }
+
+  const segment = getLocalePathSegment(options.pathname, options.locale);
+  if (!isProtectedPrefix(segment)) {
+    return null;
+  }
+
+  if (!options.session) {
+    return buildLoginRedirectUrl(options.locale, options.pathname);
+  }
+
+  if (ROLE_FORBIDDEN[options.session.user.role].includes(segment)) {
+    return `/${options.locale}`;
+  }
+
+  return null;
+}

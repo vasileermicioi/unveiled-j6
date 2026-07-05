@@ -1,7 +1,9 @@
 import { createRoute } from "honox/factory";
 
 import { NotFoundPage } from "../../components/NotFoundPage";
-import { isValidLocale } from "../../lib/locale";
+import { getSessionIfConfigured } from "../../lib/auth";
+import { evaluateAuthRedirect } from "../../lib/auth-middleware";
+import { isValidLocale, type Locale } from "../../lib/locale";
 
 export default createRoute(async (c, next) => {
   const locale = c.req.param("locale");
@@ -13,6 +15,20 @@ export default createRoute(async (c, next) => {
       robots: "noindex",
       title: "Not Found — Unveiled Berlin",
     });
+  }
+
+  const pathname = new URL(c.req.url).pathname;
+  const session = await getSessionIfConfigured(c);
+  c.set("session", session);
+
+  const redirectTo = evaluateAuthRedirect({
+    locale: locale as Locale,
+    pathname,
+    session,
+  });
+
+  if (redirectTo) {
+    return c.redirect(redirectTo, 302);
   }
 
   await next();

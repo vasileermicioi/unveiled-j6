@@ -12,6 +12,7 @@ export default reactRenderer(
   ({ children, Layout, c, title, locale, robots, description, canonicalPath, ogImage }) => {
     const resolvedLocale = getLocaleParam(locale ?? c.req.param("locale"));
     const pathname = new URL(c.req.url).pathname;
+    const session = c.get("session") ?? null;
 
     return (
       <Layout
@@ -22,7 +23,7 @@ export default reactRenderer(
         robots={robots}
         title={title}
       >
-        <AppShell locale={resolvedLocale} pathname={pathname}>
+        <AppShell locale={resolvedLocale} pathname={pathname} session={session}>
           {children}
         </AppShell>
       </Layout>

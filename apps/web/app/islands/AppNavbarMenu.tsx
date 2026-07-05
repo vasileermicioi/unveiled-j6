@@ -1,7 +1,8 @@
-import { Drawer, Heading, Link, useOverlayState } from "@heroui/react";
+import { Chip, Drawer, Heading, Link, Surface, useOverlayState } from "@heroui/react";
 import { useEffect, useState } from "react";
 
 import { NavLink } from "../components/NavLink";
+import AuthLogoutButton from "./AuthLogoutButton";
 
 export type MobileNavLink = {
   href: string;
@@ -9,11 +10,19 @@ export type MobileNavLink = {
   isActive: boolean;
 };
 
-type GuestNavbarMenuProps = {
+type AppNavbarMenuProps = {
   navLinks: MobileNavLink[];
+  isAuthenticated: boolean;
   ctaHref: string;
   ctaLabel: string;
   showCta: boolean;
+  showGuestAuthActions: boolean;
+  loginHref: string;
+  loginLabel: string;
+  signupHref: string;
+  signupLabel: string;
+  creditsLabel?: string;
+  logoutLabel?: string;
 };
 
 const menuTriggerClassName = "button button--secondary button--md lg:hidden";
@@ -31,12 +40,20 @@ function MenuTriggerFallback() {
   );
 }
 
-export default function GuestNavbarMenu({
+export default function AppNavbarMenu({
   navLinks,
+  isAuthenticated,
   ctaHref,
   ctaLabel,
   showCta,
-}: GuestNavbarMenuProps) {
+  showGuestAuthActions,
+  loginHref,
+  loginLabel,
+  signupHref,
+  signupLabel,
+  creditsLabel,
+  logoutLabel,
+}: AppNavbarMenuProps) {
   const [mounted, setMounted] = useState(false);
   const drawerState = useOverlayState();
 
@@ -80,13 +97,43 @@ export default function GuestNavbarMenu({
                 />
               ))}
 
-              {showCta ? (
-                <Link
-                  className="button button--primary button--md button--full-width mt-4"
-                  href={ctaHref}
-                >
-                  {ctaLabel}
-                </Link>
+              {isAuthenticated ? (
+                <Surface className="mt-4 flex flex-col gap-3" variant="transparent">
+                  {creditsLabel ? (
+                    <Chip variant="tertiary">
+                      <Chip.Label>{creditsLabel}</Chip.Label>
+                    </Chip>
+                  ) : null}
+                  {logoutLabel ? (
+                    <AuthLogoutButton
+                      className="button button--secondary button--md button--full-width"
+                      label={logoutLabel}
+                    />
+                  ) : null}
+                </Surface>
+              ) : showGuestAuthActions ? (
+                <Surface className="mt-4 flex flex-col gap-2" variant="transparent">
+                  <Link
+                    className="button button--secondary button--md button--full-width"
+                    href={loginHref}
+                  >
+                    {loginLabel}
+                  </Link>
+                  <Link
+                    className="button button--primary button--md button--full-width"
+                    href={signupHref}
+                  >
+                    {signupLabel}
+                  </Link>
+                  {showCta ? (
+                    <Link
+                      className="button button--primary button--md button--full-width"
+                      href={ctaHref}
+                    >
+                      {ctaLabel}
+                    </Link>
+                  ) : null}
+                </Surface>
               ) : null}
             </Drawer.Body>
           </Drawer.Dialog>
