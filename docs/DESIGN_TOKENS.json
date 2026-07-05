@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "unveiled-berlin-design-tokens",
+  "version": "1.0.0",
+  "implementation": "apps/web/app/styles/globals.css",
+  "humanReference": "../design-tokens.md",
+  "colors": {
+    "brand": {
+      "yellow": { "hex": "#FAFF86", "cssVar": "--color-brand-yellow", "usage": "Page background, primary CTAs, active nav" },
+      "dark": { "hex": "#202621", "cssVar": "--color-brand-dark", "usage": "Text, borders, inverted panels, hover bg" },
+      "cream": { "hex": "#FEFFE2", "cssVar": "--color-brand-cream", "usage": "Text on dark panels, secondary surfaces" },
+      "grey": { "hex": "#F5F5F5", "cssVar": "--color-brand-grey", "usage": "Form fields only — not page background" },
+      "white": { "hex": "#FFFFFF", "cssVar": "--surface", "usage": "Cards, navbar, footer, secondary buttons" }
+    },
+    "semantic": {
+      "background": { "mapsTo": "brand.yellow", "cssVar": "--background" },
+      "foreground": { "mapsTo": "brand.dark", "cssVar": "--foreground" },
+      "surface": { "mapsTo": "brand.white", "cssVar": "--surface" },
+      "accent": { "mapsTo": "brand.yellow", "cssVar": "--accent" },
+      "muted": { "cssVar": "--muted", "note": "brand.dark at ~50% opacity" },
+      "border": { "mapsTo": "brand.dark", "cssVar": "--border" },
+      "fieldBackground": { "mapsTo": "brand.grey", "cssVar": "--field-background" }
+    },
+    "controlStates": {
+      "accentControl": {
+        "default": { "bg": "brand.yellow", "fg": "brand.dark", "cssPrefix": "--accent-control" },
+        "hover": { "bg": "brand.dark", "fg": "brand.white", "cssSuffix": "-hover" }
+      },
+      "surfaceControl": {
+        "default": { "bg": "brand.white", "fg": "brand.dark", "cssPrefix": "--surface-control" },
+        "hover": { "bg": "brand.dark", "fg": "brand.white", "cssSuffix": "-hover" }
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "sans": { "value": "Work Sans", "cssVar": "--font-sans", "weights": "100-900", "source": "Google Fonts" }
+    },
+    "heading": {
+      "fontWeight": 900,
+      "textTransform": "uppercase",
+      "letterSpacing": "-0.05em",
+      "lineHeight": 0.9,
+      "appliedVia": ".typography--h1 through .typography--h6, .card__title"
+    },
+    "scale": {
+      "h1": { "mobile": "2.25rem", "md": "3rem", "lg": "3.75rem", "context": "page-hero, faq-hero overrides in globals.css" },
+      "h2": { "mobile": "1.5rem", "md": "1.875rem", "context": "card titles, section headings" },
+      "body": { "default": "1rem", "md": "1.125rem", "context": "card descriptions" },
+      "eyebrow": { "size": "sm", "color": "muted", "textTransform": "uppercase", "tracking": "wide" }
+    }
+  },
+  "spacing": {
+    "pageContainer": {
+      "maxWidth": "80rem",
+      "classes": "mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8"
+    },
+    "sectionGap": { "default": "2rem", "lg": "3rem", "classes": "gap-8 lg:gap-12" },
+    "narrowColumn": { "maxWidth": "48rem", "class": "max-w-3xl" },
+    "cardPadding": { "mobile": "1.5rem", "md": "2rem" },
+    "navbarHeight": { "mobile": "4rem", "md": "5rem", "offsetClasses": "pt-16 md:pt-20" }
+  },
+  "shape": {
+    "borderWidth": { "default": "2px", "cssVar": "--border-width", "headerFooter": "4px" },
+    "borderRadius": { "cards": "0", "buttons": "0", "inputs": "0", "cssVar": "--radius", "exceptions": ["lang-toggle pill (9999px)", "Chip badges (theme default)"] },
+    "shadows": { "value": "none", "cssVars": ["--surface-shadow", "--overlay-shadow", "--field-shadow"] }
+  },
+  "breakpoints": {
+    "sm": "640px",
+    "md": "768px",
+    "lg": "1024px",
+    "xl": "1280px",
+    "primaryStep": "md"
+  },
+  "componentClasses": {
+    "primaryButton": "button button--primary button--md",
+    "secondaryButton": "button button--secondary button--md",
+    "fullWidthButton": "button--full-width",
+    "navLink": "nav-link",
+    "footerLink": "footer-link",
+    "langToggle": "lang-toggle",
+    "langOption": "lang-toggle__option",
+    "pageHero": "page-hero",
+    "invertedCard": "card--secondary",
+    "valueTile": "value-tile",
+    "helpSection": "help-section",
+    "faqAccordion": "faq-accordion"
+  },
+  "theme": {
+    "library": "@heroui/react",
+    "preset": "Uber",
+    "mode": "light-only",
+    "layers": ["@theme", "@layer theme", "@layer components"]
+  }
+}

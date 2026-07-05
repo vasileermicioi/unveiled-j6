@@ -30,7 +30,7 @@ When specs conflict, prefer the more specific doc for the topic (e.g. `seo-and-m
 |---|---|
 | Runtime / PM | **Bun** (workspaces, scripts, test runner) |
 | App | **HonoX + React SSR** — single deployable app at `apps/web/` |
-| UI | **HeroUI** — re-skinned **Uber** theme preset (`docs/migration/ui/design-tokens.md`) |
+| UI | **HeroUI** — re-skinned **Uber** theme preset ([`design-tokens.md`](design-tokens.md)) |
 | Auth backend | **Neon Auth** (Better Auth-compatible), proxied at `/api/auth/*` |
 | Auth UI | **`@better-auth-ui/heroui`** + `@better-auth-ui/react` + `@better-auth-ui/core` — **HeroUI variant only, not shadcn** |
 | Database | **Neon Postgres** + **Drizzle ORM** (`@unveiled/db`) |
@@ -94,7 +94,7 @@ bun run seed:demo    # Phase 4+
 3. **Scope to the current phase** — do not implement features from later phases. Deploy before finishing.
 4. **Read before coding** — use the doc reading order below; feature files are behavioral source of truth.
 5. **Match the spec verbatim** where copy is provided (`static-pages-content.md`, `content-i18n-inventory.md`).
-6. **Yellow page background app-wide** — `#FAFF86` is the page backdrop on every route, not grey. White/cream cards float on top. See `design-tokens.md`.
+6. **Yellow page background app-wide** — `#FAFF86` is the page backdrop on every route, not grey. White/cream cards float on top. See [`design-tokens.md`](design-tokens.md).
 7. **Work Sans only** — no EK Notice Sans in the new app.
 8. **HeroUI-only markup** — no raw HTML elements (`<section>`, `<p>`, `<a>`, `<button>`, `<h1>`, etc.) in routes or UI components. Use `@heroui/react` primitives (`Card`, `Link`, `Button`, `Heading`, `Paragraph`, `Surface`, `Chip`, …) or page-level components built entirely from HeroUI. Tailwind on HeroUI nodes is for **layout only** (`flex`, `grid`, `gap`, `max-w-*`, positioning) — never for colors, borders, shadows, or typography that belong in the theme. Exceptions: `<script type="application/ld+json">` for structured data; `<img>` inside HeroUI wrappers where no HeroUI image primitive applies.
 9. **Theme-only visual styling** — colors, borders, radius, shadows, typography, and interactive hover states belong in `apps/web/app/styles/globals.css` (`@theme` tokens + `@layer components` overrides targeting HeroUI BEM classes, after `@import "@heroui/styles"`). Adjust look-and-feel by changing theme tokens — not ad-hoc per-route color/border/shadow/hover classes.
@@ -202,8 +202,22 @@ Full permission matrix: `docs/migration/extras/authorization-matrix.md`.
 
 ## UI & design
 
+**Start here for any UI task:**
+
+1. [`design-tokens.md`](design-tokens.md) — brand tokens, visual rules, theme workflow
+2. [`docs/README.md`](docs/README.md) — full agent UI doc index
+3. [`docs/DESIGN_TOKENS.json`](docs/DESIGN_TOKENS.json) — machine-readable tokens
+
+| Doc | Purpose |
+|---|---|
+| [`docs/DESIGN.md`](docs/DESIGN.md) | App architecture, SSR model, file layout |
+| [`docs/COMPONENTS.md`](docs/COMPONENTS.md) | Existing reusable components |
+| [`docs/PATTERNS.md`](docs/PATTERNS.md) | Route, SEO, content, layout patterns |
+| [`docs/UX_RULES.md`](docs/UX_RULES.md) | Interaction, forms, accessibility |
+| [`docs/examples/`](docs/examples/) | Future-phase page blueprints |
+
 - **Markup:** HeroUI only — see hard rules §8–9. No raw HTML tags in routes or components; compose `Card`, `Link`, `Button`, `Heading`, `Paragraph`, `Surface`, etc. Page-level components in `apps/web/app/components/` (e.g. `LandingPage`, `PageHero`) wrap HeroUI primitives — they are not an excuse to drop down to HTML.
-- **Theme:** HeroUI **Uber** preset reskin in `apps/web/app/styles/globals.css` (`design-tokens.md` §2). All visual changes (colors, borders, radius, shadows, nav/footer chrome, accent hover) go through `@layer components` — not Tailwind color/border utilities on routes.
+- **Theme:** HeroUI **Uber** preset reskin in `apps/web/app/styles/globals.css` — rules and token reference in [`design-tokens.md`](design-tokens.md). All visual changes (colors, borders, radius, shadows, nav/footer chrome, accent hover) go through `@layer components` — not Tailwind color/border utilities on routes.
 - **Primary CTAs:** use `Link` or `Button` with `className="button button--primary …"` — yellow + dark text; hover inverts via theme (`--accent-control-*` tokens).
 - **Secondary CTAs:** use `className="button button--secondary …"` — white + dark text; hover inverts to dark bg + white text via theme (`--surface-control-*` tokens).
 - **Tailwind:** layout and spacing on HeroUI nodes only — flex/grid, gap, padding, max-width, positioning.
@@ -248,7 +262,7 @@ Full mapping: `docs/migration/extras/integrations-and-config.md`.
 
 | Pitfall | Correct approach |
 |---|---|
-| Grey page background | Yellow (`#FAFF86`) app-wide — see `design-tokens.md` correction |
+| Grey page background | Yellow (`#FAFF86`) app-wide — see [`design-tokens.md`](design-tokens.md) |
 | Client-side mutation modals | Dedicated SSR pages + form POST |
 | shadcn auth components | `@better-auth-ui/heroui` only |
 | Auth-gated `/events/:id` | Public detail page; gate `/events/:id/book` and `/events` feed |
@@ -276,6 +290,8 @@ Full mapping: `docs/migration/extras/integrations-and-config.md`.
 
 ## Quick reference links
 
+- **Agent UI docs** → [`docs/README.md`](docs/README.md)
+- **Design tokens & UI theme** → [`design-tokens.md`](design-tokens.md) + [`docs/DESIGN_TOKENS.json`](docs/DESIGN_TOKENS.json)
 - Product vision & domains → `docs/migration/product/vision-and-domains.md`
 - User journeys → `docs/migration/product/user-journeys.md`
 - Route map → `docs/migration/sitemap/sitemap.md`

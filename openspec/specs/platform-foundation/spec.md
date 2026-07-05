@@ -194,7 +194,7 @@ Every route SHALL render with `brand-yellow` (`#FAFF86`) as the page backdrop. W
 
 ### Requirement: HeroUI Uber theme reskin
 
-The application SHALL use HeroUI v3 with the built-in Uber preset as structural baseline, overriding only color-bearing CSS variables with Unveiled brand tokens per `docs/migration/ui/design-tokens.md`.
+The application SHALL use HeroUI v3 with the built-in Uber preset as structural baseline, overriding only color-bearing CSS variables with Unveiled brand tokens per [`design-tokens.md`](../../../design-tokens.md).
 
 #### Scenario: Semantic color mapping
 
