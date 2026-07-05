@@ -21,3 +21,7 @@ bun run db:migrate    # drizzle-kit migrate
 
 - `public.users` — app user profile, role, credits, JSONB profile/behavior
 - `public.subscriptions` — 1:1 subscription state keyed by `user_id`
+
+## JSONB behavior fields (no migration)
+
+`users.behavior` is schemaless JSONB. Typed fields such as `onboarding_step` (`"age" | "interests" | "location" | "timing" | null`) are added at runtime by `@unveiled/auth` onboarding helpers — no Drizzle migration is required when extending `UserBehavior` in TypeScript.

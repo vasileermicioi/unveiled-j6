@@ -39,6 +39,8 @@ export type UserBehaviorFilter = {
   applied_at?: string | null;
 };
 
+export type OnboardingStepKey = "age" | "interests" | "location" | "timing";
+
 export type UserBehavior = {
   session_count?: number;
   event_open_count?: number;
@@ -55,6 +57,8 @@ export type UserBehavior = {
   last_booked_event_id?: string | null;
   last_waitlisted_event_id?: string | null;
   last_saved_event_id?: string | null;
+  /** Next onboarding wizard step after the last save; JSONB-only — no migration required. */
+  onboarding_step?: OnboardingStepKey | null;
   onboarding_completed_at?: string | null;
   preferences_updated_at?: string | null;
   last_filter?: UserBehaviorFilter | null;
