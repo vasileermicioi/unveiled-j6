@@ -597,4 +597,117 @@
     margin-top: auto;
     background-color: white;
   }
+
+  .discover-hero .card__content {
+    padding: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .discover-hero .card__content {
+      padding: 2rem;
+    }
+  }
+
+  .discover-stat-tile {
+    border: 2px solid var(--border);
+    padding: 1rem;
+  }
+
+  .discover-stat-tile--accent {
+    background-color: var(--color-brand-yellow);
+  }
+
+  .discover-stat-tile--surface {
+    background-color: var(--surface);
+  }
+
+  .discover-stat-tile--muted {
+    background-color: var(--color-brand-grey);
+  }
+
+  .discover-stat-tile__value {
+    font-size: 2.25rem;
+    font-weight: 900;
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+  }
+
+  .discover-empty-state {
+    border: 2px dashed var(--border);
+    padding: 2rem;
+    text-align: center;
+    background-color: var(--surface);
+  }
+
+  .discover-category-tile {
+    border: 2px solid var(--border);
+    background-color: var(--surface);
+    padding: 1rem;
+  }
+
+  .discover-category-tile__number {
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 900;
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+  }
+
+  .discover-callout__email {
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .discover-partner-tile {
+    border: 2px solid var(--border);
+    background-color: var(--surface);
+    padding: 1rem;
+  }
+
+  .discover-partner-tile__initial {
+    margin-bottom: 0.75rem;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+  }
+
+  .event-card-preview__header {
+    padding: 0;
+  }
+
+  .event-card-preview__image {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .event-card-preview__image--a {
+    background-color: var(--color-brand-dark);
+  }
+
+  .event-card-preview__image--b {
+    background-color: var(--color-brand-cream);
+  }
+
+  .event-card-preview__image--c {
+    background-color: var(--color-brand-yellow);
+  }
+
+  .event-card-preview__image--d {
+    background-color: var(--color-brand-grey);
+  }
+
+  .event-card-preview__image--e {
+    background-color: var(--color-brand-dark);
+  }
+
+  .event-card-preview__image--f {
+    background-color: var(--color-brand-cream);
+  }
 }

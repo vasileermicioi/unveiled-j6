@@ -1,8 +1,10 @@
 import type {
+  DiscoverContent,
   FaqContent,
   FaqItem,
   HowItWorksContent,
   LandingContent,
+  LegalContent,
   MembershipCheckoutContent,
 } from "./content/types";
 import type { Locale } from "./locale";
@@ -97,6 +99,20 @@ export function membershipPageMeta(content: MembershipCheckoutContent, pageTitle
   return {
     title: pageTitle,
     description: content.subtitle,
+  };
+}
+
+export function discoverPageMeta(content: DiscoverContent, pageTitle: string) {
+  return {
+    title: pageTitle,
+    description: content.hero.subheadline,
+  };
+}
+
+export function legalPageMeta(content: LegalContent) {
+  return {
+    title: content.pageTitle,
+    description: content.intro,
   };
 }
 
