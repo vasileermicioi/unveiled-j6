@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
       "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? mode),
     },
     ssr: {
-      external: ["react", "react-dom", "@heroui/react"],
+      external: ["react", "react-dom", "@heroui/react", "sharp"],
     },
     plugins: [
       tailwindcss(),

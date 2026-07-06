@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./urls": "./src/urls.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -1,6 +1,7 @@
 import { Chip, Header, Link, Paragraph, Surface } from "@heroui/react";
 import AppNavbarMenu from "../islands/AppNavbarMenu";
 import AuthLogoutButton from "../islands/AuthLogoutButton";
+import { getAdminCopy } from "../lib/admin-content";
 import type { AppSession } from "../lib/auth";
 import { getCopy, NAV_ITEMS, NAV_SEGMENTS } from "../lib/copy";
 import type { Locale } from "../lib/locale";
@@ -22,11 +23,14 @@ type AppNavbarProps = {
 
 export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
   const copy = getCopy(locale);
+  const adminCopy = getAdminCopy(locale);
   const showGuestAuthActions = !session && !isAuthPage(pathname);
   const showCta = showGuestAuthActions && !isLocaleRoot(pathname);
   const loginHref = localizedPath(locale, "login");
   const signupHref = localizedPath(locale, "signup");
+  const adminHref = localizedPath(locale, "admin");
   const creditsLabel = session ? copy.formatCredits(session.user.credits) : undefined;
+  const isAdmin = session?.user.role === "ADMIN";
 
   const navLinks = NAV_ITEMS.map((key) => {
     const href = localizedPath(locale, NAV_SEGMENTS[key]);
@@ -86,6 +90,14 @@ export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
 
           {session ? (
             <>
+              {isAdmin ? (
+                <Link
+                  className="button button--secondary button--md hidden sm:inline-flex"
+                  href={adminHref}
+                >
+                  {adminCopy.navDashboard}
+                </Link>
+              ) : null}
               {creditsLabel ? (
                 <Chip className="hidden sm:inline-flex" variant="tertiary">
                   <Chip.Label>{creditsLabel}</Chip.Label>
@@ -122,6 +134,8 @@ export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
           ) : null}
 
           <AppNavbarMenu
+            adminHref={isAdmin ? adminHref : undefined}
+            adminLabel={isAdmin ? adminCopy.navDashboard : undefined}
             creditsLabel={creditsLabel}
             ctaHref={localizedPath(locale, "membership")}
             ctaLabel={copy.guestCta}

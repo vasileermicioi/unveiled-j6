@@ -13,6 +13,8 @@ export type MobileNavLink = {
 type AppNavbarMenuProps = {
   navLinks: MobileNavLink[];
   isAuthenticated: boolean;
+  adminHref?: string;
+  adminLabel?: string;
   ctaHref: string;
   ctaLabel: string;
   showCta: boolean;
@@ -43,6 +45,8 @@ function MenuTriggerFallback() {
 export default function AppNavbarMenu({
   navLinks,
   isAuthenticated,
+  adminHref,
+  adminLabel,
   ctaHref,
   ctaLabel,
   showCta,
@@ -99,6 +103,14 @@ export default function AppNavbarMenu({
 
               {isAuthenticated ? (
                 <Surface className="mt-4 flex flex-col gap-3" variant="transparent">
+                  {adminHref && adminLabel ? (
+                    <Link
+                      className="button button--secondary button--md button--full-width"
+                      href={adminHref}
+                    >
+                      {adminLabel}
+                    </Link>
+                  ) : null}
                   {creditsLabel ? (
                     <Chip variant="tertiary">
                       <Chip.Label>{creditsLabel}</Chip.Label>

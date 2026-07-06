@@ -1062,6 +1062,13 @@
       width: auto;
     }
   }
+
+  .admin-table__logo img {
+    display: block;
+    height: 3rem;
+    width: 3rem;
+    object-fit: cover;
+  }
 }
 
 @layer utilities {

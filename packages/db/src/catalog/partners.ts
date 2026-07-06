@@ -46,19 +46,23 @@ export async function getPartnerById(db: Db, partnerId: string): Promise<Partner
   );
 }
 
+function partnerSearchCondition(q?: string) {
+  const search = q?.trim();
+  if (!search) {
+    return undefined;
+  }
+
+  const pattern = `%${search}%`;
+  return or(ilike(partners.name, pattern), ilike(partners.contactEmail, pattern));
+}
+
 export async function listPartners(db: Db, options: ListPartnersOptions = {}): Promise<Partner[]> {
   const limit = options.limit ?? 25;
   const offset = options.offset ?? 0;
-  const search = options.q?.trim();
+  const searchCondition = partnerSearchCondition(options.q);
 
-  if (search) {
-    const pattern = `%${search}%`;
-    return db
-      .select()
-      .from(partners)
-      .where(or(ilike(partners.name, pattern), ilike(partners.contactEmail, pattern)))
-      .limit(limit)
-      .offset(offset);
+  if (searchCondition) {
+    return db.select().from(partners).where(searchCondition).limit(limit).offset(offset);
   }
 
   return db.select().from(partners).limit(limit).offset(offset);
@@ -219,7 +223,18 @@ export async function deletePartner(
   await db.delete(partners).where(eq(partners.id, partnerId));
 }
 
-export async function countPartners(db: Db): Promise<number> {
+export type CountPartnersOptions = {
+  q?: string;
+};
+
+export async function countPartners(db: Db, options: CountPartnersOptions = {}): Promise<number> {
+  const searchCondition = partnerSearchCondition(options.q);
+
+  if (searchCondition) {
+    const [result] = await db.select({ count: count() }).from(partners).where(searchCondition);
+    return result?.count ?? 0;
+  }
+
   const [result] = await db.select({ count: count() }).from(partners);
   return result?.count ?? 0;
 }
