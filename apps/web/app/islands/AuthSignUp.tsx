@@ -7,9 +7,10 @@ import { useClientMounted } from "./useClientMounted";
 
 type AuthSignUpProps = {
   locale: Locale;
+  authRedirectTo?: string;
 };
 
-export default function AuthSignUp({ locale }: AuthSignUpProps) {
+export default function AuthSignUp({ locale, authRedirectTo }: AuthSignUpProps) {
   const mounted = useClientMounted();
 
   if (!mounted) {
@@ -17,7 +18,7 @@ export default function AuthSignUp({ locale }: AuthSignUpProps) {
   }
 
   return (
-    <AppAuthProvider locale={locale}>
+    <AppAuthProvider authRedirectTo={authRedirectTo} locale={locale}>
       <SignUp className="auth-form" variant="default" />
     </AppAuthProvider>
   );

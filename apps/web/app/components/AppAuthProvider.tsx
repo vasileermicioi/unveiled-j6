@@ -9,10 +9,14 @@ import type { Locale } from "../lib/locale";
 type AppAuthProviderProps = {
   locale: Locale;
   children: ReactNode;
+  authRedirectTo?: string;
 };
 
-export function AppAuthProvider({ locale, children }: AppAuthProviderProps) {
-  const config = createAuthProviderConfig(locale);
+export function AppAuthProvider({ locale, children, authRedirectTo }: AppAuthProviderProps) {
+  const config = {
+    ...createAuthProviderConfig(locale),
+    ...(authRedirectTo ? { redirectTo: authRedirectTo } : {}),
+  };
 
   return (
     <>

@@ -7,9 +7,10 @@ import { useClientMounted } from "./useClientMounted";
 
 type AuthSignInProps = {
   locale: Locale;
+  authRedirectTo?: string;
 };
 
-export default function AuthSignIn({ locale }: AuthSignInProps) {
+export default function AuthSignIn({ locale, authRedirectTo }: AuthSignInProps) {
   const mounted = useClientMounted();
 
   if (!mounted) {
@@ -17,7 +18,7 @@ export default function AuthSignIn({ locale }: AuthSignInProps) {
   }
 
   return (
-    <AppAuthProvider locale={locale}>
+    <AppAuthProvider authRedirectTo={authRedirectTo} locale={locale}>
       <SignIn className="auth-form" variant="default" />
     </AppAuthProvider>
   );

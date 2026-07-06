@@ -65,7 +65,7 @@ export function createAuthProviderConfig(locale: Locale) {
         security: "security",
       },
     },
-    redirectTo: authBase,
+    redirectTo: `${authBase}/auth/continue`,
     socialProviders: ["google"] as SocialProvider[],
     emailAndPassword: {
       enabled: true,
