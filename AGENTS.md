@@ -18,7 +18,7 @@ This is a **greenfield rewrite** on a new stack. The old Firebase SPA in the rep
 | [`.dev-plan/IMPLEMENTATION-PLAN.md`](.dev-plan/IMPLEMENTATION-PLAN.md) | **Phased delivery plan** — scope, agent prompts, monorepo layout |
 | [`docs/migration/extras/gaps-and-decisions.md`](docs/migration/extras/gaps-and-decisions.md) | Consolidated changelog of every decision vs. the old app |
 
-**Ignore `openspec/`** — it documents the old stack.
+**Ignore `openspec/` for product behavior** — canonical spec is `docs/migration/`; phased step plans live in `.dev-plan/current-iteration/`. `openspec/changes/archive/` is optional historical workflow only; **`openspec/specs/` is not used** (removed).
 
 When specs conflict, prefer the more specific doc for the topic (e.g. `seo-and-metadata.md` over `sitemap.md` for indexing rules). All gaps in the old app are **already decided** — do not reopen them unless the user explicitly asks.
 
