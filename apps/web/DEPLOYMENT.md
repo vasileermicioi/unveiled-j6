@@ -151,6 +151,100 @@ With `DATABASE_URL` and `AUTH_URL` set on staging:
 
 **Route protection:** Locale middleware in `apps/web/app/routes/[locale]/_middleware.tsx` uses `apps/web/app/lib/auth-middleware.ts` — guarded prefixes: `events`, `saved`, `bookings`, `profile`, `partner`, `admin`, `onboarding`.
 
+**Onboarding middleware:** Same locale middleware uses `apps/web/app/lib/onboarding-middleware.ts` — incomplete USERs hitting member app prefixes redirect to their current onboarding step; complete USERs hitting `/onboarding/*` redirect to `/events`; PARTNER/ADMIN are never sent into the wizard.
+
+## Phase 3 release gate (onboarding step 04)
+
+Phase 3 is complete when staging supports the full four-step onboarding wizard, skip-age flow, onboarding guards, and membership redirect without console errors on `/de` and `/en`. **Required env vars remain the same as Phase 2:** `DATABASE_URL`, `AUTH_URL`, `SITE_URL` — no new application secrets for Phase 3.
+
+**Client demo line:** *"After signup, we capture vibes, districts, and timing — same as the product vision."*
+
+### Prerequisites
+
+1. Phase 2 release gate passed on staging (auth loop, route protection, navbar).
+2. Drizzle migrations applied (`bun run db:migrate` against staging `DATABASE_URL`).
+3. `robots.txt` disallows `/*/onboarding/`; each onboarding page renders `<meta name="robots" content="noindex">`.
+
+### Full onboarding demo script
+
+Use a **new signup** or reset an existing test user (see [Repeat demo reset](#repeat-demo-reset) below).
+
+1. Open `https://<staging-host>/de/signup` and register a new USER (email/password or Google OAuth).
+2. After signup, confirm redirect to `/de/onboarding/age` (or current resumed step).
+3. **Step 1 — Age:** select an age group (e.g. `26-35`) and continue, **or** skip without selecting.
+4. **Step 2 — Interests:** select at least one interest and mood; submit → `/de/onboarding/location`.
+5. **Step 3 — Location:** select districts and set travel radius (1–25 km); submit → `/de/onboarding/timing`.
+6. **Step 4 — Timing:** select timing, preferred days, languages, and accessibility toggle; submit → `/de/membership`.
+7. In Neon Postgres, inspect `public.users.profile` for the test user:
+   - `onboarding_complete = true`
+   - Captured arrays (`interests`, `moods`, `districts`, `timing`, `preferred_days`, `preferred_languages`) and flags (`accessibility`, optional `age_group`) populated
+   - `behavior.onboarding_completed_at` set (Europe/Berlin ISO timestamp)
+8. Repeat steps 1–7 on `/en/onboarding/*` to confirm EN locale parity.
+
+### Skip-age flow
+
+1. Sign up a fresh USER (or reset profile — see below).
+2. On `/de/onboarding/age`, submit **Skip** without selecting an age group.
+3. Complete steps 2–4; land on `/de/membership`.
+4. Confirm `profile.age_group` is absent/null and `onboarding_complete = true`.
+
+### Returning complete user
+
+1. With a USER who has `onboarding_complete = true`, navigate to `/de/onboarding/age`.
+2. Confirm redirect to `/de/events` (same for any `/onboarding/*` step).
+3. Confirm `/de/events` is reachable without onboarding redirect.
+
+### Repeat demo reset
+
+To run the demo again without creating a new account:
+
+**Option A — fresh signup:** use a new email each time (simplest for client demos).
+
+**Option B — SQL reset** (Neon SQL editor, replace `<user_id>`):
+
+```sql
+UPDATE public.users
+SET
+  profile = jsonb_set(
+    COALESCE(profile, '{}'::jsonb),
+    '{onboarding_complete}',
+    'false'::jsonb
+  )
+  - 'age_group'
+  - 'interests'
+  - 'moods'
+  - 'districts'
+  - 'max_distance'
+  - 'timing'
+  - 'preferred_days'
+  - 'preferred_languages'
+  - 'accessibility',
+  behavior = COALESCE(behavior, '{}'::jsonb)
+    - 'onboarding_step'
+    - 'onboarding_completed_at'
+    - 'preferences_updated_at'
+WHERE id = '<user_id>';
+```
+
+After reset, visiting `/de/events` should redirect back to `/de/onboarding/age`.
+
+### Console and role checks
+
+1. Load `/de/onboarding/age` and `/en/onboarding/timing` while signed in as an incomplete USER — browser console shows **no errors**.
+2. **Optional:** if a PARTNER staging account exists, confirm it is **not** redirected into `/onboarding/*` when visiting member routes.
+
+### Automated verification (local / CI)
+
+```bash
+bun run lint
+bun run typecheck
+bun run build
+cd packages/auth && bun test
+cd apps/web && bun test
+```
+
+Integration tests in `packages/auth/src/onboarding.test.ts` run the full save + complete round-trip when `DATABASE_URL` is set; otherwise they skip with a warning.
+
 ## Phase 2 step 03 verification
 
 With `DATABASE_URL` and `AUTH_URL` set:

@@ -58,6 +58,24 @@ describe("onboarding-middleware", () => {
     process.env.AUTH_URL = originalAuthUrl;
   });
 
+  test("evaluateOnboardingRedirect blocks incomplete USER from member app prefixes in EN", () => {
+    process.env.DATABASE_URL = "postgres://example";
+    process.env.AUTH_URL = "https://auth.example";
+
+    for (const prefix of ["events", "saved", "bookings", "profile"] as const) {
+      expect(
+        evaluateOnboardingRedirect({
+          locale: "en",
+          pathname: `/en/${prefix}`,
+          session: createSession(),
+        }),
+      ).toBe("/en/onboarding/age");
+    }
+
+    process.env.DATABASE_URL = originalDatabaseUrl;
+    process.env.AUTH_URL = originalAuthUrl;
+  });
+
   test("evaluateOnboardingRedirect resumes incomplete USER at saved step", () => {
     process.env.DATABASE_URL = "postgres://example";
     process.env.AUTH_URL = "https://auth.example";

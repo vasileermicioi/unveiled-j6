@@ -140,6 +140,59 @@ describe("saveOnboardingStep and completeOnboarding", () => {
     }
   });
 
+  test("full four-step save and complete round-trip", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const userId = `test-onboarding-full-${crypto.randomUUID()}`;
+    const email = `${userId}@example.com`;
+
+    try {
+      await db.insert(users).values({
+        id: userId,
+        email,
+        profile: { onboarding_complete: false },
+      });
+
+      await saveOnboardingStep(db, userId, "age", { age_group: "26-35" });
+      await saveOnboardingStep(db, userId, "interests", {
+        interests: ["Kino", "Theater"],
+        moods: ["Leicht", "Klassisch"],
+      });
+      await saveOnboardingStep(db, userId, "location", {
+        districts: ["Mitte", "P-Berg"],
+        max_distance: 10,
+      });
+      await saveOnboardingStep(db, userId, "timing", {
+        timing: ["Weekend", "After Work"],
+        preferred_days: ["Friday", "Saturday"],
+        preferred_languages: ["DE", "EN"],
+        accessibility: true,
+      });
+
+      const completed = await completeOnboarding(db, userId);
+
+      expect(completed.profile.onboarding_complete).toBe(true);
+      expect(completed.profile.age_group).toBe("26-35");
+      expect(completed.profile.interests).toEqual(["Kino", "Theater"]);
+      expect(completed.profile.moods).toEqual(["Leicht", "Klassisch"]);
+      expect(completed.profile.districts).toEqual(["Mitte", "P-Berg"]);
+      expect(completed.profile.max_distance).toBe(10);
+      expect(completed.profile.timing).toEqual(["Weekend", "After Work"]);
+      expect(completed.profile.preferred_days).toEqual(["Friday", "Saturday"]);
+      expect(completed.profile.preferred_languages).toEqual(["DE", "EN"]);
+      expect(completed.profile.accessibility).toBe(true);
+      expect(completed.behavior.onboarding_completed_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      expect(completed.behavior.onboarding_step).toBeNull();
+    } finally {
+      await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await db.delete(users).where(eq(users.id, userId));
+    }
+  });
+
   test("completion marks profile complete", async () => {
     if (!databaseUrl) {
       console.warn("DATABASE_URL not set — skipping integration test");

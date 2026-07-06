@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkbox, CheckboxGroup, Form, Label, NumberField, Paragraph } from "@heroui/react";
+import { Checkbox, CheckboxGroup, Description, Form, Label, NumberField } from "@heroui/react";
 import type { UserProfile } from "@unveiled/db";
 
 import type { Locale } from "../../lib/locale";
@@ -57,9 +57,7 @@ export function LocationStepForm({ locale, profile }: LocationStepFormProps) {
           <NumberField.Input />
           <NumberField.IncrementButton>+</NumberField.IncrementButton>
         </NumberField.Group>
-        <Paragraph color="muted" size="sm">
-          {copy.km}
-        </Paragraph>
+        <Description>{copy.km}</Description>
       </NumberField>
 
       <OnboardingFormActions primaryLabel={copy.next} />
