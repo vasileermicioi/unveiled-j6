@@ -8,15 +8,18 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
+    "@unveiled/images": "workspace:*",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {
     "@unveiled/config": "workspace:*",
     "drizzle-kit": "^0.30.5",
+    "sharp": "^0.33.5",
     "typescript": "catalog:"
   }
 }

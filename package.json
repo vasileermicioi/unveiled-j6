@@ -20,6 +20,9 @@
     "drizzle-orm": "^0.40.0",
     "typescript": "^5.8.0"
   },
+  "dependencies": {
+    "@unveiled/db": "workspace:*"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@unveiled/config": "workspace:*"

@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "unveiled",
+      "dependencies": {
+        "@unveiled/db": "workspace:*",
+      },
       "devDependencies": {
         "@biomejs/biome": "^2.0.0",
         "@unveiled/config": "workspace:*",
@@ -63,11 +66,13 @@
       "name": "@unveiled/db",
       "dependencies": {
         "@neondatabase/serverless": "^0.10.4",
+        "@unveiled/images": "workspace:*",
         "drizzle-orm": "catalog:",
       },
       "devDependencies": {
         "@unveiled/config": "workspace:*",
         "drizzle-kit": "^0.30.5",
+        "sharp": "^0.33.5",
         "typescript": "catalog:",
       },
     },
