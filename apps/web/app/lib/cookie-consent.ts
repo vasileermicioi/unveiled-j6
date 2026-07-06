@@ -1,3 +1,4 @@
+/** Phase 5: MapLibre GL JS + OpenStreetMap map island reads `getStoredConsent()` before tile requests. */
 import type { Locale } from "./locale";
 
 export type ConsentDecision = "accepted" | "declined";

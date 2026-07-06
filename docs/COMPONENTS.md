@@ -250,7 +250,7 @@ From `docs/migration/ui/ui-component-map.md` — will land in later phases:
 | Component | Phase | Package / location |
 |---|---|---|
 | `EventCard` | 4 | `@unveiled/ui` |
-| `EventMap` | 5 | island in `apps/web` |
+| `EventMap` | 5 | MapLibre GL JS + OSM tiles — client island in `apps/web/app/islands/` |
 | Admin tables | 4+ | `apps/web/app/components/admin/` |
 | Booking confirmation | 6 | `apps/web/app/components/` |
 

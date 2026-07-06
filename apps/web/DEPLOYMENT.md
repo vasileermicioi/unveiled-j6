@@ -44,23 +44,27 @@ docker run -p 3000:3000 -e PORT=3000 unveiled-web
 
 ## Environment variables
 
+**Local development:** Bun loads a gitignored `.env` at the **repository root** (see [`.env.example`](../../.env.example) for a safe template). Do not commit secrets.
+
 **Phase 2 staging requires `DATABASE_URL`, `AUTH_URL`, and `SITE_URL`.** Without `DATABASE_URL` and `AUTH_URL`, auth pages render but session resolution, route protection, and provisioning are disabled. Local marketing-only dev works without them; auth demos and staging deploys must set all three.
 
 Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open Graph, and sitemap URLs. Local development defaults to `http://localhost:3000` when unset.
 
+**Phase 4 staging+ requires the six R2 variables below** for admin image upload and public event images. Unit tests for `@unveiled/images` can run without R2; end-to-end catalog demos cannot.
+
 | Variable | Required | Phase | Description |
 |---|---|---|---|
 | `PORT` | Host-injected | 0 | HTTP listen port (default `3000` locally) |
-| `SITE_URL` | **Yes (staging/prod)** | 1+ | Public origin for canonical, OG, robots, and sitemap URLs (e.g. `https://staging.unveiled.berlin`) |
+| `SITE_URL` | **Yes (staging/prod)** | 1+ | Public origin for canonical, OG, robots, and sitemap URLs (e.g. `https://staging.unveiled.berlin`; local: `http://localhost:3000`) |
 | `DATABASE_URL` | **Yes (Phase 2 staging+)** | 2+ | Neon Postgres connection string |
 | `AUTH_URL` | **Yes (Phase 2 staging+)** | 2+ | Neon-provided Better Auth backend API URL; `/api/auth/*` forwards to this target |
-| `S3_ENDPOINT` | — | 4+ | Cloudflare R2 endpoint |
-| `S3_REGION` | — | 4+ | R2 region |
-| `S3_BUCKET` | — | 4+ | R2 bucket name |
-| `S3_ACCESS_KEY_ID` | — | 4+ | R2 access key |
-| `S3_SECRET_ACCESS_KEY` | — | 4+ | R2 secret key |
-| `IMAGE_PUBLIC_BASE_URL` | — | 4+ | Public CDN base URL for images |
-| `GOOGLE_MAPS_API_KEY` | — | 5+ | Google Maps for event map island |
+| `S3_ENDPOINT` | **Yes (Phase 4 staging+)** | 4+ | Cloudflare R2 S3 API endpoint — `https://<account-id>.r2.cloudflarestorage.com` only (no bucket path) |
+| `S3_REGION` | **Yes (Phase 4 staging+)** | 4+ | R2 region — use `auto` |
+| `S3_BUCKET` | **Yes (Phase 4 staging+)** | 4+ | R2 bucket name (e.g. `unveiled-j6`) |
+| `S3_ACCESS_KEY_ID` | **Yes (Phase 4 staging+)** | 4+ | R2 API token access key |
+| `S3_SECRET_ACCESS_KEY` | **Yes (Phase 4 staging+)** | 4+ | R2 API token secret |
+| `IMAGE_PUBLIC_BASE_URL` | **Yes (Phase 4 staging+)** | 4+ | Public read base URL for variants (R2.dev subdomain or custom domain) — **not** the S3 API endpoint |
+| _(none for map)_ | — | 5+ | Event map uses **MapLibre GL JS** + **OpenStreetMap** tiles — no API key |
 | `STRIPE_SECRET_KEY` | — | 6+ | Stripe secret key (test mode on staging) |
 | `STRIPE_PUBLISHABLE_KEY` | — | 6+ | Stripe publishable key |
 | `STRIPE_WEBHOOK_SECRET` | — | 6+ | Stripe webhook signing secret |
@@ -68,6 +72,41 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 | `RESEND_API_KEY` | — | 6+ | Resend API key for transactional email |
 | `DAILY_CODES_FROM_EMAIL` | — | 6+ | Sender address for daily code emails |
 | `SENTRY_DSN` | — | 9+ | Sentry error reporting (optional) |
+
+### Cloudflare R2 (Phase 4)
+
+The image pipeline stores six WebP variants per upload under `images/{uuid}/{variant}.webp` in the bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.webp` (and sibling variant filenames — see `docs/migration/extras/image-uploads.md`).
+
+**1. Create bucket** — Cloudflare Dashboard → **R2** → create bucket (e.g. `unveiled-j6`).
+
+**2. S3 API endpoint** — Bucket → **Settings** → **S3 API**. Cloudflare shows a URL like:
+
+```text
+https://<account-id>.r2.cloudflarestorage.com/unveiled-j6
+```
+
+Split it for env vars:
+
+| Cloudflare shows | Env var | Value |
+|---|---|---|
+| Host + account id | `S3_ENDPOINT` | `https://<account-id>.r2.cloudflarestorage.com` |
+| Path segment | `S3_BUCKET` | `unveiled-j6` |
+| (fixed for R2) | `S3_REGION` | `auto` |
+
+**3. API credentials** — **R2 → Manage R2 API Tokens → Create API token** with **Object Read & Write** on the bucket. Copy **Access Key ID** → `S3_ACCESS_KEY_ID`, **Secret Access Key** → `S3_SECRET_ACCESS_KEY` (shown once).
+
+**4. Public access** — Bucket → **Settings** → enable **Public access** / R2.dev subdomain. Copy the public URL (e.g. `https://pub-xxxxxxxx.r2.dev`) → `IMAGE_PUBLIC_BASE_URL` with no trailing slash.
+
+**5. Railway** — Add the same six R2 vars to the staging service environment before catalog image-upload demos.
+
+**Optional sanity check** (after `@unveiled/images` exists):
+
+```bash
+AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY \
+  aws s3 ls "s3://$S3_BUCKET" --endpoint-url "$S3_ENDPOINT"
+```
+
+Expect an empty listing or object keys — not an auth error.
 
 ## Manual Railway setup (first deploy)
 
@@ -245,6 +284,38 @@ cd apps/web && bun test
 
 Integration tests in `packages/auth/src/onboarding.test.ts` run the full save + complete round-trip when `DATABASE_URL` is set; otherwise they skip with a warning.
 
+## Phase 4 release gate (catalog step 05)
+
+Phase 4 is complete when staging supports the admin → public catalog loop with real R2 images. **Required env vars:** Phase 2 trio (`DATABASE_URL`, `AUTH_URL`, `SITE_URL`) **plus** all six R2 vars (see [Cloudflare R2](#cloudflare-r2-phase-4)). Copy local root `.env` R2 values to Railway before the client demo.
+
+**Client demo line:** *"Back office is live. I upload an event photo, publish, and it instantly appears on the public discovery page."*
+
+### Prerequisites
+
+1. Phase 3 release gate passed; Drizzle migrations include `images`, `partners`, `events`.
+2. ADMIN user exists (manual SQL role update or future admin seed).
+3. R2 bucket public access enabled; `IMAGE_PUBLIC_BASE_URL` loads in a browser.
+
+### Catalog demo script
+
+1. `bun run db:migrate` against staging `DATABASE_URL`.
+2. Sign in as ADMIN → `/de/admin`. If DB empty, run **Seed demo data** or `bun run seed:demo`.
+3. Create a partner with logo (upload or URL) → appears on `/de/admin/partners`.
+4. Create an event with image → listed on `/de/admin/events`.
+5. Open `/de/discover` — event appears in preview grid (up to 6 upcoming).
+6. Open `/de/events/:id` **without login** — hero srcset, event copy, `og:image` uses `og-1200x630` variant URL under `IMAGE_PUBLIC_BASE_URL`.
+7. View Source — Event JSON-LD stub and unique `<title>` / meta description.
+
+### Automated verification
+
+```bash
+bun run lint
+bun run typecheck
+bun run build
+cd packages/db && bun test    # when catalog domain tests exist
+cd packages/images && bun test
+```
+
 ## Phase 2 step 03 verification
 
 With `DATABASE_URL` and `AUTH_URL` set:
@@ -281,7 +352,7 @@ After deploy (with `SITE_URL` set to the staging origin), confirm:
 6. Cookie consent banner appears on first visit; Accept/Decline persists across reloads until storage is cleared
 7. Browser console shows no errors on `/de` and `/en`
 
-**Cookie consent note:** In Phase 1, declining non-essential cookies has no visible effect — no Google Maps embed exists yet. The preference is stored in `localStorage` for Phase 5, when the map island will check consent before loading third-party cookies.
+**Cookie consent note:** In Phase 1, declining non-essential cookies has no visible effect — no map island exists yet. The preference is stored in `localStorage` for Phase 5, when the MapLibre + OpenStreetMap map island will check consent before loading third-party tile requests.
 
 Local verification (dev server on port 3000):
 

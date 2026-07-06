@@ -29,7 +29,7 @@ Constraints from `AGENTS.md`:
 
 **Non-Goals:**
 
-- Google Maps consent gating (Phase 5 — store preference now, wire check later)
+- MapLibre GL JS + OpenStreetMap tile consent gating (Phase 5 — store preference now, wire check later)
 - Dynamic sitemap event entries (Phase 4)
 - Sentry, analytics, Search Console setup
 - Auth, database, Stripe
@@ -45,7 +45,7 @@ Create `apps/web/app/lib/cookie-consent.ts`:
 - Expiry: 12 months from decision (reasonable GDPR practice; re-prompt after expiry)
 - Export `getStoredConsent()`, `setStoredConsent(decision)`, `hasValidConsent()`, `CONSENT_COPY` (DE/EN strings)
 
-**Alternative considered:** HTTP cookie. Rejected for Phase 1 — no server-side read needed yet; `localStorage` is simpler and matches feature spec wording. Phase 5 Maps gating reads client-side only.
+**Alternative considered:** HTTP cookie. Rejected for Phase 1 — no server-side read needed yet; `localStorage` is simpler and matches feature spec wording. Phase 5 MapLibre + OSM map gating reads client-side only.
 
 ### 2. CookieConsentBanner island — fixed bottom bar in AppShell
 
@@ -61,7 +61,7 @@ Copy (DE/EN, aligned with GDPR practice):
 - DE: "Wir verwenden Cookies für nicht wesentliche Funktionen wie Karten. Du kannst zustimmen oder ablehnen." + buttons "Akzeptieren" / "Ablehnen"
 - EN: "We use cookies for non-essential features such as maps. You can accept or decline." + buttons "Accept" / "Decline"
 
-**Phase 5 hook:** export `getStoredConsent()` for future Maps island to check `decision === "accepted"` before loading embed.
+**Phase 5 hook:** export `getStoredConsent()` for the MapLibre GL JS + OpenStreetMap map island to check `decision === "accepted"` before loading third-party tile requests.
 
 ### 3. Robots.txt — flat HonoX route at repo root routes level
 
@@ -124,7 +124,7 @@ Existing `/favicon.svg` linked in `_renderer.tsx`. Verify HTTP 200 on staging; n
 - **[localStorage cleared by user]** → Banner reappears — correct behavior per spec.
 - **[OG image generation quality]** → Simple placeholder may look basic in social previews. Mitigation: branded yellow + wordmark is on-brand; replace with designed asset later without code change.
 - **[Sitemap omits bare `/`]** → Correct per SEO doc — crawlers should use `/de/` and `/en/` canonical URLs, not the 302 root.
-- **[Declining consent has no Phase 1 effect]** → Preference stored but unused until Phase 5 Maps. Document in code comment and DEPLOYMENT.md.
+- **[Declining consent has no Phase 1 effect]** → Preference stored but unused until Phase 5 MapLibre + OSM map island. Document in code comment and DEPLOYMENT.md.
 
 ## Migration Plan
 

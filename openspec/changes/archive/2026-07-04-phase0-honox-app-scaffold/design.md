@@ -41,7 +41,7 @@ Use `@hono/react-renderer` with React 19 from the root catalog — not hono/jsx.
 
 ### 2. SSR-only scaffold (no client entry yet)
 
-Omit `app/client.ts` and island hydration for step 02. The `_renderer.tsx` wraps content in a minimal HTML shell without loading client JavaScript. Islands and `app/client.ts` are added when needed (Phase 5 map island).
+Omit `app/client.ts` and island hydration for step 02. The `_renderer.tsx` wraps content in a minimal HTML shell without loading client JavaScript. Islands and `app/client.ts` are added when needed (Phase 5 MapLibre GL JS + OpenStreetMap map island).
 
 **Alternative considered:** Include `client.ts` stub now. Rejected — adds vite client-mode build complexity without verification value in step 02.
 

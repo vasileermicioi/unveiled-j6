@@ -17,7 +17,7 @@ The application SHALL display a cookie consent banner on first visit offering ac
 #### Scenario: Phase 1 no gating yet
 
 - **WHEN** a guest declines non-essential cookies in Phase 1
-- **THEN** no third-party map embed is loaded (none exists yet) and the site remains fully usable
+- **THEN** no MapLibre GL JS map island or OpenStreetMap tile requests are loaded (none exists yet) and the site remains fully usable
 
 ### Requirement: Static sitemap
 

@@ -38,7 +38,7 @@
 
 - [x] 7.1 Add `SITE_URL` to env var table in `apps/web/DEPLOYMENT.md` — required for staging/production, default `http://localhost:3000` locally
 - [x] 7.2 Add Phase 1 verification checklist: robots.txt curl, sitemap.xml curl (16 URLs), cookie banner browser test, OG meta View Source, DE/EN route smoke test
-- [x] 7.3 Document that Maps consent gating wires in Phase 5; declining cookies has no visible effect in Phase 1
+- [x] 7.3 Document that MapLibre + OpenStreetMap map consent gating wires in Phase 5; declining cookies has no visible effect in Phase 1
 
 ## 8. Validation
 

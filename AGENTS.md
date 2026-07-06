@@ -238,8 +238,8 @@ Document all required vars in `apps/web/DEPLOYMENT.md`. Key vars by phase:
 | Phase | Variables |
 |---|---|
 | 2+ | `DATABASE_URL`, `AUTH_URL` |
-| 4+ | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` |
-| 5+ | `GOOGLE_MAPS_API_KEY` |
+| 4+ | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` — repo-root `.env` (see `.env.example`); `S3_ENDPOINT` is R2 host only, `IMAGE_PUBLIC_BASE_URL` is public R2.dev/custom domain |
+| 5+ | _(none)_ — event map uses **MapLibre GL JS** + **OpenStreetMap** tiles; no API key |
 | 6+ | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_BASIC_BERLIN` |
 | 6+ | `RESEND_API_KEY`, `DAILY_CODES_FROM_EMAIL` |
 | 9+ | `SENTRY_DSN` (optional) |

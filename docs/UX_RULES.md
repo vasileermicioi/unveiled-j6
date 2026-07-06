@@ -113,10 +113,11 @@ Guests never see waitlist/unlock/book labels on public discover grid.
 
 ## Maps (Phase 5+)
 
-- Google Maps as lazy client island
+- **MapLibre GL JS** + **OpenStreetMap** tiles as lazy client island — no API key
 - Address always shown as plain text beside map
-- Cookie consent required before loading map embed
-- Declined consent → static placeholder + external maps link
+- Cookie consent required before loading map tile requests
+- Declined consent → static placeholder + external maps link (e.g. OpenStreetMap)
+- Required OSM attribution visible when map is shown
 
 ---
 
@@ -125,7 +126,7 @@ Guests never see waitlist/unlock/book labels on public discover grid.
 - Banner on first visit
 - Decision persisted — not re-asked until cleared/expired
 - Sentry = strictly necessary (not gated)
-- Maps = non-essential (gated)
+- Maps = non-essential (gated) — MapLibre island loading OSM tiles
 
 ---
 
