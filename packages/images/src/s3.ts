@@ -1,5 +1,6 @@
 import {
   DeleteObjectsCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
   type S3ClientConfig,
@@ -67,6 +68,26 @@ export async function uploadImageVariants(
       ),
     ),
   );
+}
+
+export async function imageObjectsExist(
+  imageId: string,
+  client?: S3Client,
+  bucket?: string,
+): Promise<boolean> {
+  const env = readS3Env();
+  const resolvedClient = client ?? createS3Client(env);
+  const resolvedBucket = bucket ?? env.bucket;
+
+  const result = await resolvedClient.send(
+    new ListObjectsV2Command({
+      Bucket: resolvedBucket,
+      Prefix: objectKey(imageId, VARIANT_FILENAMES[0]),
+      MaxKeys: 1,
+    }),
+  );
+
+  return (result.Contents?.length ?? 0) > 0;
 }
 
 export async function deleteImageObjects(

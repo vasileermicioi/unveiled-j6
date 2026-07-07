@@ -4,7 +4,7 @@ import {
   generateImageVariants,
   type ProcessedImageResult,
 } from "./process";
-import { createS3Client, readS3Env, uploadImageVariants } from "./s3";
+import { createS3Client, imageObjectsExist, readS3Env, uploadImageVariants } from "./s3";
 import { ImageValidationError, validateRemoteContentType } from "./validation";
 
 export type ProcessImageOptions = {
@@ -30,6 +30,7 @@ export {
 export {
   createS3Client,
   deleteImageObjects,
+  imageObjectsExist,
   readS3Env,
   type S3Env,
   uploadImageVariants,
@@ -103,4 +104,13 @@ export async function processImageFromUrl(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+/** Re-upload variants when the DB row exists but bucket objects are missing (e.g. seed before R2). */
+export async function repairImageVariants(imageId: string, sourceUrl: string): Promise<void> {
+  if (await imageObjectsExist(imageId)) {
+    return;
+  }
+
+  await processImageFromUrl(sourceUrl, { imageId });
 }

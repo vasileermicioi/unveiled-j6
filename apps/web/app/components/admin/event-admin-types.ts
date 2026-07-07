@@ -24,7 +24,7 @@ export type EventFormDefaults = Partial<{
   targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
-  imageUrl: string | null;
+  currentImageUrl: string | null;
 }>;
 
 export type PartnerOption = {

@@ -56,7 +56,6 @@ describe("admin-event-form helpers", () => {
         ticket_type: "SECRET_CODE",
         secret_code_mode: "MANUAL",
         secret_code: "JAZZ123",
-        image_url: "https://example.com/image.jpg",
       },
       asString,
       asFile,
@@ -68,6 +67,7 @@ describe("admin-event-form helpers", () => {
     expect(values.creditPrice).toBe(2);
     expect(values.totalCapacity).toBe(15);
     expect(values.secretCode).toBe("JAZZ123");
+    expect(values.imageUpload).toBeNull();
   });
 
   test("parseSeriesSlots expands builder weekdays", () => {

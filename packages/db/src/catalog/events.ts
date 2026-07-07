@@ -215,7 +215,12 @@ export async function createEvent(db: Db, input: CreateEventInput): Promise<Even
     skipUpload: input.skipUpload,
   });
 
-  return insertEventRow(db, input, partner.name, imageId);
+  try {
+    return await insertEventRow(db, input, partner.name, imageId);
+  } catch (error) {
+    await deleteImageRecord(db, imageId, { skipBucket: input.skipUpload });
+    throw error;
+  }
 }
 
 export async function createEventSeries(
@@ -274,6 +279,7 @@ export async function updateEvent(
   });
 
   let imageId = existing.imageId;
+  const previousImageId = existing.imageId;
   const hasNewImage =
     (input.imageUpload != null && input.imageUpload.length > 0) ||
     (input.imageUrl != null && input.imageUrl.trim().length > 0);
@@ -356,6 +362,10 @@ export async function updateEvent(
   const event = updated[0];
   if (!event) {
     throw new Error(`Failed to update event ${eventId}`);
+  }
+
+  if (hasNewImage && previousImageId !== imageId) {
+    await deleteImageRecord(db, previousImageId, { skipBucket: input.skipUpload });
   }
 
   return event;

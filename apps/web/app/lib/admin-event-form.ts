@@ -27,7 +27,6 @@ export type EventFormValues = {
   targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
-  imageUrl: string | null;
   imageUpload: Buffer | null;
 };
 
@@ -311,10 +310,9 @@ export type ParsedBody = Record<string, string | File | (string | File)[]>;
 export async function parseEventFormBody(
   body: ParsedBody,
   asString: (value: string | File | (string | File)[] | undefined) => string | undefined,
-  asFile: (value: string | File | (string | File)[] | undefined) => File | undefined,
+  asFile: (value: string | File | (string | File)[] | undefined) => File | Blob | undefined,
 ): Promise<EventFormValues> {
   const timingMode = parseTimingMode(asString(body.timing_mode));
-  const imageUrlRaw = asString(body.image_url)?.trim();
   const imageFile = asFile(body.image);
   let imageUpload: Buffer | null = null;
 
@@ -349,7 +347,6 @@ export async function parseEventFormBody(
     targetAgeGroups: targetAgeGroups.length > 0 ? targetAgeGroups : null,
     lat: asString(body.lat)?.trim() || null,
     lng: asString(body.lng)?.trim() || null,
-    imageUrl: imageUrlRaw ? imageUrlRaw : null,
     imageUpload,
   };
 }

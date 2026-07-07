@@ -1,20 +1,13 @@
 "use client";
 
-import {
-  Description,
-  Input,
-  InputGroup,
-  Label,
-  Paragraph,
-  Surface,
-  TextField,
-} from "@heroui/react";
+import { Description, Input, InputGroup, Label, Surface, TextField } from "@heroui/react";
 import type { SecretCodeMode, TicketType, TimingMode } from "@unveiled/db";
 import { useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 import { AdminFormSelect } from "./AdminFormSelect";
+import { EventImageUpload } from "./EventImageUpload";
 import type { EventFormDefaults, PartnerOption } from "./event-admin-types";
 
 type EventAdminBaseFieldsProps = {
@@ -249,15 +242,11 @@ export function EventAdminBaseFields({
         </Surface>
       </Surface>
 
-      <Surface className="flex flex-col gap-4" variant="transparent">
-        <Paragraph className="onboarding-form__section-label">{copy.imageFileLabel}</Paragraph>
-        <Description>{isEdit ? copy.imageUrlHintEdit : copy.imageUrlHint}</Description>
-        <Input accept="image/jpeg,image/png,image/webp" name="image" type="file" />
-        <TextField defaultValue={defaults?.imageUrl ?? undefined} fullWidth name="image_url">
-          <Label>{copy.imageUrlLabel}</Label>
-          <Input type="url" />
-        </TextField>
-      </Surface>
+      <EventImageUpload
+        currentImageUrl={defaults?.currentImageUrl}
+        isEdit={isEdit}
+        locale={locale}
+      />
     </>
   );
 }

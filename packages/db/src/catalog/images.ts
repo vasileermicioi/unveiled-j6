@@ -1,4 +1,9 @@
-import { deleteImageObjects, processImageFromBuffer, processImageFromUrl } from "@unveiled/images";
+import {
+  deleteImageObjects,
+  processImageFromBuffer,
+  processImageFromUrl,
+  repairImageVariants,
+} from "@unveiled/images";
 import { eq } from "drizzle-orm";
 
 import type { Db } from "../index";
@@ -93,13 +98,7 @@ export async function replacePartnerLogo(
     return currentLogoImageId;
   }
 
-  const newImageId = await persistImageFromSource(db, source, options);
-
-  if (currentLogoImageId && currentLogoImageId !== newImageId) {
-    await deleteImageRecord(db, currentLogoImageId, { skipBucket: options.skipUpload });
-  }
-
-  return newImageId;
+  return persistImageFromSource(db, source, options);
 }
 
 export async function replaceEventImage(
@@ -109,16 +108,22 @@ export async function replaceEventImage(
   url?: string | null,
   options: PersistImageOptions = {},
 ): Promise<string> {
-  const source = validateImageSourceExclusive(upload, url, { required: true });
+  const source = validateImageSourceExclusive(upload, url);
   if (!source) {
-    throw new CatalogValidationError("MISSING_EVENT_IMAGE", "Event image is required");
+    return currentImageId;
   }
 
-  const newImageId = await persistImageFromSource(db, source, options);
+  return persistImageFromSource(db, source, options);
+}
 
-  if (currentImageId !== newImageId) {
-    await deleteImageRecord(db, currentImageId, { skipBucket: options.skipUpload });
+export async function ensureImageVariantsUploaded(db: Db, imageId: string): Promise<void> {
+  const row = await db.query.images.findFirst({
+    where: eq(images.id, imageId),
+  });
+
+  if (!row?.sourceUrl) {
+    return;
   }
 
-  return newImageId;
+  await repairImageVariants(imageId, row.sourceUrl);
 }

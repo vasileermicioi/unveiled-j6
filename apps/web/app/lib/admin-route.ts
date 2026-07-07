@@ -1,5 +1,6 @@
 import type { AppSession } from "@unveiled/auth";
 import { CatalogValidationError } from "@unveiled/db";
+import { ImageValidationError } from "@unveiled/images";
 import type { Context } from "hono";
 
 import { ADMIN_LIST_PAGE_SIZE, getAdminCopy, mapCatalogErrorCode } from "./admin-content";
@@ -24,17 +25,21 @@ function asString(value: string | File | (string | File)[] | undefined): string 
   return typeof value === "string" ? value : undefined;
 }
 
-function asFile(value: string | File | (string | File)[] | undefined): File | undefined {
+function isUploadBlob(value: unknown): value is File | Blob {
+  return value instanceof File || value instanceof Blob;
+}
+
+function asFile(value: string | File | (string | File)[] | undefined): File | Blob | undefined {
   if (value === undefined) {
     return undefined;
   }
 
   if (Array.isArray(value)) {
     const first = value[0];
-    return first instanceof File ? first : undefined;
+    return isUploadBlob(first) ? first : undefined;
   }
 
-  return value instanceof File ? value : undefined;
+  return isUploadBlob(value) ? value : undefined;
 }
 
 export type AdminGuardResult =
@@ -131,12 +136,31 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
   };
 }
 
+function isImageStorageConfigError(error: Error): boolean {
+  return (
+    error.message.includes("S3_ENDPOINT") ||
+    error.message.includes("S3_REGION") ||
+    error.message.includes("S3_BUCKET") ||
+    error.message.includes("S3_ACCESS_KEY_ID") ||
+    error.message.includes("S3_SECRET_ACCESS_KEY") ||
+    error.message.includes("IMAGE_PUBLIC_BASE_URL")
+  );
+}
+
 export function mapCatalogError(error: unknown, locale: Locale): string {
   if (error instanceof CatalogValidationError) {
     const field =
       error.code === "REQUIRED_FIELD" ? error.message.replace(/ is required$/, "") : undefined;
 
     return mapCatalogErrorCode(locale, error.code, field);
+  }
+
+  if (error instanceof ImageValidationError) {
+    return error.message;
+  }
+
+  if (error instanceof Error && isImageStorageConfigError(error)) {
+    return getAdminCopy(locale).imageStorageError;
   }
 
   return getAdminCopy(locale).genericError;

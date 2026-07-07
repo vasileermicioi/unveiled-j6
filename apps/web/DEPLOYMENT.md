@@ -108,6 +108,14 @@ AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY 
 
 Expect an empty listing or object keys — not an auth error.
 
+**Admin event upload smoke test** (Phase 4 catalog):
+
+1. Sign in as ADMIN with all six R2 vars set in root `.env`.
+2. Open `/:locale/admin/events/new`, choose a JPEG ≥ 800×420 px, submit.
+3. Confirm redirect to `/admin/events` and the new row shows a `small-320.webp` thumbnail.
+4. Edit the event without a new file — thumbnail unchanged. Edit with a new file — thumbnail updates.
+5. In the R2 bucket, confirm six objects under `images/{uuid}/` for the event's `image_id`.
+
 ## Manual Railway setup (first deploy)
 
 If CI deploy is not yet configured:

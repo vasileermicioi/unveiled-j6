@@ -148,6 +148,8 @@ export async function updatePartner(
     },
   );
 
+  const previousLogoImageId = existing.logoImageId;
+
   const updated = await db
     .update(partners)
     .set({
@@ -167,6 +169,11 @@ export async function updatePartner(
 
   if (nextName !== existing.name) {
     await renamePartnerSyncEvents(db, partnerId, nextName);
+  }
+
+  const nextLogoImageId = logoImageId ?? existing.logoImageId;
+  if (previousLogoImageId && nextLogoImageId && previousLogoImageId !== nextLogoImageId) {
+    await deleteImageRecord(db, previousLogoImageId, { skipBucket: input.skipUpload });
   }
 
   return partner;
@@ -216,11 +223,13 @@ export async function deletePartner(
     );
   }
 
-  if (existing.logoImageId) {
-    await deleteImageRecord(db, existing.logoImageId, { skipBucket: options?.skipBucket });
-  }
+  const logoImageId = existing.logoImageId;
 
   await db.delete(partners).where(eq(partners.id, partnerId));
+
+  if (logoImageId) {
+    await deleteImageRecord(db, logoImageId, { skipBucket: options?.skipBucket });
+  }
 }
 
 export type CountPartnersOptions = {

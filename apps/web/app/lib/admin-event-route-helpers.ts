@@ -1,5 +1,7 @@
 import type { Event, Partner } from "@unveiled/db";
+import { buildVariantUrl } from "@unveiled/images/urls";
 
+import type { EventFormDefaults } from "../components/admin/event-admin-types";
 import {
   type EventFormValues,
   formatEventDateInput,
@@ -12,9 +14,14 @@ export function toPartnerOptions(partners: Partner[]): PartnerOption[] {
   return partners.map((partner) => ({ id: partner.id, name: partner.name }));
 }
 
-export function eventToFormDefaults(
-  event: Event,
-): Partial<EventFormValues> & { partnerId: string } {
+export function eventToFormDefaults(event: Event): EventFormDefaults & { partnerId: string } {
+  let currentImageUrl: string | null = null;
+  try {
+    currentImageUrl = buildVariantUrl(event.imageId, "small-320.webp");
+  } catch {
+    currentImageUrl = null;
+  }
+
   return {
     partnerId: event.partnerId,
     title: event.title,
@@ -39,12 +46,11 @@ export function eventToFormDefaults(
     targetAgeGroups: event.targetAgeGroups,
     lat: event.lat,
     lng: event.lng,
-    imageUrl: null,
-    imageUpload: null,
+    currentImageUrl,
   };
 }
 
-export function formValuesToDefaults(values: EventFormValues) {
+export function formValuesToDefaults(values: EventFormValues): EventFormDefaults {
   return {
     partnerId: values.partnerId,
     title: values.title,
@@ -69,6 +75,6 @@ export function formValuesToDefaults(values: EventFormValues) {
     targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,
-    imageUrl: values.imageUrl,
+    currentImageUrl: null,
   };
 }

@@ -1,4 +1,4 @@
-import { countEvents, listEvents } from "@unveiled/db";
+import { countEvents, ensureImageVariantsUploaded, listEvents } from "@unveiled/db";
 import { buildVariantUrl } from "@unveiled/images/urls";
 import { createRoute } from "honox/factory";
 
@@ -28,6 +28,14 @@ function buildEventImageUrls(
   return imageUrls;
 }
 
+async function ensureEventImages(
+  db: Parameters<typeof ensureImageVariantsUploaded>[0],
+  events: Awaited<ReturnType<typeof listEvents>>,
+): Promise<void> {
+  const imageIds = [...new Set(events.map((event) => event.imageId))];
+  await Promise.all(imageIds.map((imageId) => ensureImageVariantsUploaded(db, imageId)));
+}
+
 export default createRoute(async (c) => {
   const guard = await guardAdminRoute(c);
   if (!guard.ok) {
@@ -44,6 +52,8 @@ export default createRoute(async (c) => {
     }),
     countEvents(db, { q: listQuery.q || undefined }),
   ]);
+
+  await ensureEventImages(db, events);
 
   const copy = getAdminCopy(guard.locale);
   const queryString = buildAdminListQueryString({

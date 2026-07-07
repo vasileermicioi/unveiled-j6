@@ -35,4 +35,15 @@ describe("admin-route helpers", () => {
     ).toContain("Name is required");
     expect(mapCatalogErrorCode("de", "PARTNER_HAS_EVENTS")).toContain("Events");
   });
+
+  test("mapCatalogError maps image validation and storage errors", async () => {
+    const { ImageValidationError } = await import("@unveiled/images");
+
+    expect(
+      mapCatalogError(new ImageValidationError("Image must be JPEG, PNG, or WebP"), "en"),
+    ).toContain("JPEG");
+    expect(
+      mapCatalogError(new Error("S3_ENDPOINT, S3_REGION, S3_BUCKET are required"), "en"),
+    ).toContain("not configured");
+  });
 });

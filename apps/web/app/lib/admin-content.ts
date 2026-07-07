@@ -108,9 +108,12 @@ export type AdminCopy = {
   latLabel: string;
   lngLabel: string;
   imageFileLabel: string;
-  imageUrlLabel: string;
-  imageUrlHint: string;
-  imageUrlHintEdit: string;
+  imageUploadHint: string;
+  imageUploadHintEdit: string;
+  chooseImageButton: string;
+  imageSelectedLabel: (fileName: string) => string;
+  imageStorageError: string;
+  imagePlaceholderLabel: string;
   slotModeManual: string;
   slotModeBuilder: string;
   manualSlotsLabel: string;
@@ -245,10 +248,13 @@ const copy: Record<Locale, AdminCopy> = {
     latLabel: "Breitengrad",
     lngLabel: "Längengrad",
     imageFileLabel: "Event-Bild hochladen",
-    imageUrlLabel: "Bild-URL",
-    imageUrlHint: "Bilddatei oder URL erforderlich — nicht beides gleichzeitig.",
-    imageUrlHintEdit:
-      "Optional: neues Bild per Upload oder URL — leer lassen, um das aktuelle Bild zu behalten.",
+    imageUploadHint: "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
+    imageUploadHintEdit:
+      "Optional: neues Bild hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten.",
+    chooseImageButton: "Bild auswählen",
+    imageSelectedLabel: (fileName) => `Ausgewählt: ${fileName}`,
+    imageStorageError: "Bildspeicher ist nicht konfiguriert. Bitte Admin kontaktieren.",
+    imagePlaceholderLabel: "Kein Bild",
     slotModeManual: "Manuelle Slots",
     slotModeBuilder: "Datumsbereich",
     manualSlotsLabel: "Datum/Uhrzeit pro Slot",
@@ -381,10 +387,13 @@ const copy: Record<Locale, AdminCopy> = {
     latLabel: "Latitude",
     lngLabel: "Longitude",
     imageFileLabel: "Upload event image",
-    imageUrlLabel: "Image URL",
-    imageUrlHint: "Image file or URL required — not both at once.",
-    imageUrlHintEdit:
-      "Optional: replace image via upload or URL — leave empty to keep current image.",
+    imageUploadHint: "JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
+    imageUploadHintEdit:
+      "Optional: upload a new file to replace the current image — leave empty to keep it.",
+    chooseImageButton: "Choose image",
+    imageSelectedLabel: (fileName) => `Selected: ${fileName}`,
+    imageStorageError: "Image storage is not configured. Contact support.",
+    imagePlaceholderLabel: "No image",
     slotModeManual: "Manual slots",
     slotModeBuilder: "Date range",
     manualSlotsLabel: "Date/time per slot",

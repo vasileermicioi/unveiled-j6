@@ -1,4 +1,4 @@
-import { getEventById, listPartners, updateEvent } from "@unveiled/db";
+import { ensureImageVariantsUploaded, getEventById, listPartners, updateEvent } from "@unveiled/db";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
@@ -97,9 +97,15 @@ export const POST = createRoute(async (c) => {
     await updateEvent(db, eventId, toUpdateEventInput(values, guard.session.user.id));
     return c.redirect(eventListPath(guard.locale), 302);
   } catch (error) {
-    let defaults = eventToFormDefaults(existing);
+    await ensureImageVariantsUploaded(db, existing.imageId);
+    const existingDefaults = eventToFormDefaults(existing);
+    let defaults = existingDefaults;
     try {
-      defaults = formValuesToDefaults(await parseEventFormBodyFromRequest(body));
+      defaults = {
+        ...existingDefaults,
+        ...formValuesToDefaults(await parseEventFormBodyFromRequest(body)),
+        currentImageUrl: existingDefaults.currentImageUrl,
+      };
     } catch {
       // keep existing defaults
     }
@@ -140,6 +146,8 @@ export default createRoute(async (c) => {
       title: "Not Found — Unveiled Berlin",
     });
   }
+
+  await ensureImageVariantsUploaded(db, event.imageId);
 
   const partners = await listPartners(db, { limit: 1000 });
 

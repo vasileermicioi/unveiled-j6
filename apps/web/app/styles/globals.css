@@ -1218,6 +1218,22 @@
     object-fit: cover;
   }
 
+  .admin-table__logo--placeholder {
+    align-items: center;
+    border: var(--border-width) solid var(--color-brand-dark);
+    display: flex;
+    height: 3rem;
+    justify-content: center;
+    width: 3rem;
+  }
+
+  .admin-form__image-preview img {
+    display: block;
+    max-height: 12rem;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
   .admin-table__actions-column,
   .admin-table__actions-cell {
     width: 1%;

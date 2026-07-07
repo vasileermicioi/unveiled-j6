@@ -46,9 +46,15 @@ export function AdminEventsTable({ locale, events, imageUrls }: AdminEventsTable
                       <img alt="" src={imageUrls[event.id]} />
                     </Surface>
                   ) : (
-                    <Paragraph color="muted" size="sm">
-                      —
-                    </Paragraph>
+                    <Surface
+                      aria-hidden
+                      className="admin-table__logo admin-table__logo--placeholder"
+                      variant="transparent"
+                    >
+                      <Paragraph color="muted" size="sm">
+                        {copy.imagePlaceholderLabel}
+                      </Paragraph>
+                    </Surface>
                   )}
                 </Table.Cell>
                 <Table.Cell>{event.title}</Table.Cell>

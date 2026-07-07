@@ -22,6 +22,7 @@
         "@heroui/styles": "^3.2.1",
         "@hono/node-server": "^2.0.8",
         "@hono/react-renderer": "^0.2.0",
+        "@react-aria/ssr": "^3.10.1",
         "@tanstack/react-query": "^5.101.2",
         "@unveiled/auth": "workspace:*",
         "@unveiled/db": "workspace:*",

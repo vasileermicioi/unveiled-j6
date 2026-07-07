@@ -28,7 +28,6 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
     lat: values.lat,
     lng: values.lng,
     imageUpload: values.imageUpload,
-    imageUrl: values.imageUrl,
     uploadedBy,
   };
 }
@@ -58,7 +57,6 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
     lat: values.lat,
     lng: values.lng,
     imageUpload: values.imageUpload,
-    imageUrl: values.imageUrl,
     uploadedBy,
   };
 }

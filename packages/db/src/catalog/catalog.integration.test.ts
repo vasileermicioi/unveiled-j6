@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { createDb, events } from "@unveiled/db";
+import { createDb, events, images } from "@unveiled/db";
 import { eq } from "drizzle-orm";
 import sharp from "sharp";
 
-import { createEvent, deleteEvent, recalculateRemainingCapacity } from "./events";
+import { createEvent, deleteEvent, recalculateRemainingCapacity, updateEvent } from "./events";
 import { createPartner, deletePartner, updatePartner } from "./partners";
 import { runDemoSeed, shouldRunDemoSeed } from "./seed";
 
@@ -60,6 +60,67 @@ describe("catalog integration", () => {
         where: eq(events.id, event.id),
       });
       expect(updatedEvent?.partnerName).toBe("Renamed Venue");
+    } finally {
+      await deleteEvent(db, event.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
+  test("updateEvent replaces image after relinking event FK", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const originalImage = await createTestImageBuffer();
+    const partner = await createPartner(db, {
+      name: "Image Replace Venue",
+      address: "Teststraße 2, Berlin",
+      contactEmail: `image-replace-${crypto.randomUUID()}@example.com`,
+      logoUpload: originalImage,
+      skipUpload: true,
+    });
+
+    const event = await createEvent(db, {
+      partnerId: partner.id,
+      title: "Image Replace Event",
+      description: "Description",
+      address: "Teststraße 2, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date(Date.now() + 86_400_000),
+      creditPrice: 1,
+      secretCode: "REPLACE1",
+      imageUpload: originalImage,
+      skipUpload: true,
+    });
+
+    const replacementImage = await sharp({
+      create: {
+        width: 800,
+        height: 420,
+        channels: 3,
+        background: { r: 20, g: 20, b: 20 },
+      },
+    })
+      .jpeg()
+      .toBuffer();
+
+    try {
+      const previousImageId = event.imageId;
+      const updated = await updateEvent(db, event.id, {
+        imageUpload: replacementImage,
+        skipUpload: true,
+      });
+
+      expect(updated.imageId).not.toBe(previousImageId);
+
+      const oldImage = await db.query.images.findFirst({
+        where: eq(images.id, previousImageId),
+      });
+      expect(oldImage).toBeUndefined();
     } finally {
       await deleteEvent(db, event.id, { skipBucket: true });
       await deletePartner(db, partner.id, { skipBucket: true });
