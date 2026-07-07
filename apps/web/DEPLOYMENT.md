@@ -159,6 +159,20 @@ Create a test member on staging:
 
 Document any shared staging demo credentials in [Demo accounts](#demo-accounts) when provisioned for client demos.
 
+### Admin account setup
+
+Every signup (email or Google) provisions `role = USER` with 17 credits. **There is no self-service admin signup.** To access `/admin/*`, promote an existing user in Postgres:
+
+```sql
+UPDATE public.users
+SET role = 'ADMIN', updated_at = NOW()
+WHERE email = 'your@email.com';
+```
+
+Then **sign out and sign in again** (or open `/de/auth/continue`) so the session reloads the updated role. After login, `/de/auth/continue` redirects `ADMIN` → `/de/admin` and the navbar shows an Admin link.
+
+**Staging/dev shortcut:** set `ADMIN_PROMOTE_EMAILS=your@email.com` in Railway or root `.env`. On the next session resolve, matching `USER` accounts are promoted to `ADMIN` automatically. Use only on non-production environments.
+
 ### Google OAuth (Neon Auth)
 
 Google sign-in is configured in the **Neon Auth project dashboard**, not via app environment variables.
@@ -293,7 +307,7 @@ Phase 4 is complete when staging supports the admin → public catalog loop with
 ### Prerequisites
 
 1. Phase 3 release gate passed; Drizzle migrations include `images`, `partners`, `events`.
-2. ADMIN user exists (manual SQL role update or future admin seed).
+2. ADMIN user exists — promote via SQL or `ADMIN_PROMOTE_EMAILS` (see [Admin account setup](#admin-account-setup)); signing up alone does **not** create an admin.
 3. R2 bucket public access enabled; `IMAGE_PUBLIC_BASE_URL` loads in a browser.
 
 ### Catalog demo script
@@ -387,3 +401,5 @@ Site-wide Open Graph fallback: `apps/web/public/og-default.png` (1200×630, yell
 Phase 1: none (no auth).
 
 Phase 2+: create a test member via `/de/signup` on staging (see [Test user (staging)](#test-user-staging)), or use the Neon Auth console. Expected starter state: `USER` role, 17 credits, `INACTIVE` subscription, onboarding incomplete. Document any shared staging credentials here when provisioned for client demos.
+
+**Admin demos:** promote a staging user with SQL or `ADMIN_PROMOTE_EMAILS` (see [Admin account setup](#admin-account-setup)). After sign-in, expect redirect to `/de/admin`.

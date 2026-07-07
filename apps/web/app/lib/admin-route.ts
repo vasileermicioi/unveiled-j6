@@ -2,36 +2,14 @@ import type { AppSession } from "@unveiled/auth";
 import { CatalogValidationError } from "@unveiled/db";
 import type { Context } from "hono";
 
-import { ADMIN_PARTNERS_PAGE_SIZE, getAdminCopy, mapCatalogErrorCode } from "./admin-content";
+import { ADMIN_LIST_PAGE_SIZE, getAdminCopy, mapCatalogErrorCode } from "./admin-content";
+import { parseEventFormBody, parseSeriesSlots } from "./admin-event-form";
 import { getSession } from "./auth";
 import { buildLoginRedirectUrl } from "./auth-middleware";
 import type { Locale } from "./locale";
 import { isValidLocale } from "./locale";
 
 export type ParsedBody = Record<string, string | File | (string | File)[]>;
-
-export type AdminGuardResult =
-  | { ok: true; session: AppSession; locale: Locale }
-  | { ok: false; response: Response };
-
-export type PartnerFormValues = {
-  name: string;
-  contactEmail: string;
-  address: string;
-  logoUrl: string | null;
-  logoUpload: Buffer | null;
-};
-
-export type AdminListQuery = {
-  q: string;
-  page: number;
-  offset: number;
-  limit: number;
-};
-
-function getLocaleParam(value: string | undefined): Locale {
-  return value && isValidLocale(value) ? value : "de";
-}
 
 function asString(value: string | File | (string | File)[] | undefined): string | undefined {
   if (value === undefined) {
@@ -59,6 +37,49 @@ function asFile(value: string | File | (string | File)[] | undefined): File | un
   return value instanceof File ? value : undefined;
 }
 
+export type AdminGuardResult =
+  | { ok: true; session: AppSession; locale: Locale }
+  | { ok: false; response: Response };
+
+export type PartnerFormValues = {
+  name: string;
+  contactEmail: string;
+  address: string;
+  logoUrl: string | null;
+  logoUpload: Buffer | null;
+};
+
+export type AdminListQuery = {
+  q: string;
+  page: number;
+  offset: number;
+  limit: number;
+};
+
+function getLocaleParam(value: string | undefined): Locale {
+  return value && isValidLocale(value) ? value : "de";
+}
+
+export type { EventFormValues, SeriesSlotMode } from "./admin-event-form";
+export {
+  eventFormValuesToDateTime,
+  formatEventDateInput,
+  formatEventDateTime,
+  formatEventTimeInput,
+  MANUAL_SLOT_ROWS,
+  MAX_SERIES_SLOTS,
+  parseBerlinDateTime,
+  parseIsoSlotDates,
+} from "./admin-event-form";
+
+export async function parseEventFormBodyFromRequest(body: ParsedBody) {
+  return parseEventFormBody(body, asString, asFile);
+}
+
+export function parseSeriesSlotsFromBody(body: ParsedBody) {
+  return parseSeriesSlots(body, asString);
+}
+
 export async function guardAdminRoute(c: Context): Promise<AdminGuardResult> {
   const locale = getLocaleParam(c.req.param("locale"));
   const session = await getSession(c);
@@ -83,8 +104,8 @@ export function parseAdminListQuery(url: URL): AdminListQuery {
   return {
     q,
     page,
-    offset: (page - 1) * ADMIN_PARTNERS_PAGE_SIZE,
-    limit: ADMIN_PARTNERS_PAGE_SIZE,
+    offset: (page - 1) * ADMIN_LIST_PAGE_SIZE,
+    limit: ADMIN_LIST_PAGE_SIZE,
   };
 }
 

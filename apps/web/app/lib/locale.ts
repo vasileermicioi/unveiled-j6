@@ -65,6 +65,22 @@ export function parseLocaleFromPath(pathname: string): Locale | null {
   return first && isValidLocale(first) ? first : null;
 }
 
+type LocaleContext = {
+  req: {
+    param: (name: string) => string | undefined;
+    url: string;
+  };
+};
+
+export function getRequestLocale(c: LocaleContext): Locale {
+  const fromParam = c.req.param("locale");
+  if (fromParam && isValidLocale(fromParam)) {
+    return fromParam;
+  }
+
+  return parseLocaleFromPath(new URL(c.req.url).pathname) ?? DEFAULT_LOCALE;
+}
+
 export function isLocaleRoot(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);
   const first = segments[0];

@@ -1,58 +1,55 @@
-import { Button, Form, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Button, Form, Paragraph } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
-import { localizedPath } from "../../lib/locale";
 
+import { AdminKpiGrid, type AdminMetrics } from "./AdminKpiGrid";
 import { AdminPageShell } from "./AdminPageShell";
 
 type AdminDashboardPageProps = {
   locale: Locale;
+  metrics: AdminMetrics;
   showSeedButton: boolean;
   seedMessage?: "seeded" | "skipped" | null;
 };
 
 export function AdminDashboardPage({
   locale,
+  metrics,
   showSeedButton,
   seedMessage = null,
 }: AdminDashboardPageProps) {
   const copy = getAdminCopy(locale);
 
+  const actions = showSeedButton ? (
+    <Form className="admin-toolbar__form" method="post">
+      <Button
+        className="button button--secondary button--md"
+        name="action"
+        type="submit"
+        value="seed-demo"
+      >
+        {copy.seedDemo}
+      </Button>
+    </Form>
+  ) : null;
+
   return (
-    <AdminPageShell locale={locale} subtitle={copy.dashboardSubtitle} title={copy.dashboardTitle}>
-      {seedMessage === "seeded" ? <Paragraph>{copy.seedSuccess}</Paragraph> : null}
-      {seedMessage === "skipped" ? <Paragraph>{copy.seedSkipped}</Paragraph> : null}
+    <AdminPageShell
+      actions={actions}
+      subtitle={copy.dashboardSubtitle}
+      title={copy.dashboardTitle}
+      wrapInCard={false}
+    >
+      <AdminKpiGrid locale={locale} metrics={metrics} />
 
-      <Surface className="flex flex-col gap-3" variant="transparent">
-        <Heading level={2}>{copy.quickLinksTitle}</Heading>
-        <Surface className="flex flex-wrap gap-3" variant="transparent">
-          <Link
-            className="button button--secondary button--md"
-            href={localizedPath(locale, "admin/partners")}
-          >
-            {copy.partnersLink}
-          </Link>
-          <Link
-            className="button button--secondary button--md"
-            href={localizedPath(locale, "admin/events")}
-          >
-            {copy.eventsLink}
-          </Link>
-        </Surface>
-      </Surface>
-
-      {showSeedButton ? (
-        <Form method="post">
-          <Button
-            className="button button--primary button--md"
-            name="action"
-            type="submit"
-            value="seed-demo"
-          >
-            {copy.seedDemo}
-          </Button>
-        </Form>
+      {seedMessage === "seeded" ? (
+        <Paragraph className="admin-flash admin-flash--success">{copy.seedSuccess}</Paragraph>
+      ) : null}
+      {seedMessage === "skipped" ? (
+        <Paragraph className="admin-flash" color="muted">
+          {copy.seedSkipped}
+        </Paragraph>
       ) : null}
     </AdminPageShell>
   );

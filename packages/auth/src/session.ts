@@ -2,6 +2,7 @@ import { users } from "@unveiled/db";
 import { and, eq, isNull } from "drizzle-orm";
 import type { Context } from "hono";
 
+import { maybePromoteAdminByEmail } from "./promote-admin";
 import { provisionNewUser } from "./provision-user";
 import type { AppSession, AuthOptions, NeonAuthUser, ProvisionProfile, SessionUser } from "./types";
 
@@ -12,6 +13,9 @@ type BetterAuthSessionResponse = {
   } | null;
   user?: NeonAuthUser | null;
 };
+
+/** Prevent SSR middleware from hanging when Neon Auth is slow or unreachable. */
+const SESSION_FETCH_TIMEOUT_MS = 5_000;
 
 function normalizeAuthUrl(authUrl: string): string {
   return authUrl.replace(/\/$/, "");
@@ -34,11 +38,15 @@ async function fetchBetterAuthSession(
   c: Context,
   authUrl: string,
 ): Promise<BetterAuthSessionResponse | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SESSION_FETCH_TIMEOUT_MS);
+
   try {
     const response = await fetch(`${normalizeAuthUrl(authUrl)}/get-session`, {
       headers: {
         cookie: c.req.header("cookie") ?? "",
       },
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -53,6 +61,8 @@ async function fetchBetterAuthSession(
     return data;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -89,6 +99,8 @@ export async function getSession(c: Context, options: AuthOptions): Promise<AppS
   if (!row) {
     return null;
   }
+
+  row = await maybePromoteAdminByEmail(options.db, row);
 
   return { user: toSessionUser(row) };
 }

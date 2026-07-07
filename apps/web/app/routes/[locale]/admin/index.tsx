@@ -1,4 +1,11 @@
-import { runDemoSeed, shouldRunDemoSeed } from "@unveiled/db";
+import {
+  countEvents,
+  countPartners,
+  countUpcomingEvents,
+  runDemoSeed,
+  shouldRunDemoSeed,
+  sumRemainingCapacity,
+} from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { AdminDashboardPage } from "../../../components/admin/AdminDashboardPage";
@@ -41,12 +48,24 @@ export default createRoute(async (c) => {
 
   const { db } = getAuthOptions();
   const showSeedButton = await shouldRunDemoSeed(db);
+  const [partnerCount, eventCount, upcomingEventCount, remainingCapacity] = await Promise.all([
+    countPartners(db),
+    countEvents(db),
+    countUpcomingEvents(db),
+    sumRemainingCapacity(db),
+  ]);
   const copy = getAdminCopy(guard.locale);
 
   return renderAdminPage(
     c,
     <AdminDashboardPage
       locale={guard.locale}
+      metrics={{
+        partnerCount,
+        eventCount,
+        upcomingEventCount,
+        remainingCapacity,
+      }}
       seedMessage={readSeedMessage(new URL(c.req.url))}
       showSeedButton={showSeedButton}
     />,

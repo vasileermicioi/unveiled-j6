@@ -3,11 +3,7 @@ import { deletePartner, getPartnerById } from "@unveiled/db";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
-import {
-  AdminPageShell,
-  adminDashboardPath,
-  adminPartnersPath,
-} from "../../../../../components/admin/AdminPageShell";
+import { AdminPageShell, adminPartnersPath } from "../../../../../components/admin/AdminPageShell";
 import { partnerListPath } from "../../../../../components/admin/PartnerForm";
 import { NotFoundPage } from "../../../../../components/NotFoundPage";
 import { getAdminCopy } from "../../../../../lib/admin-content";
@@ -31,11 +27,9 @@ function renderDeletePage(
     c,
     <AdminPageShell
       breadcrumbs={[
-        { label: copy.navDashboard, href: adminDashboardPath(options.locale) },
         { label: copy.partnersTitle, href: adminPartnersPath(options.locale) },
         { label: copy.deletePartnerTitle },
       ]}
-      locale={options.locale}
       title={copy.deletePartnerTitle}
     >
       {options.error ? <Paragraph>{options.error}</Paragraph> : null}

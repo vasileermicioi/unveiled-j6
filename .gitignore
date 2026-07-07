@@ -5,6 +5,7 @@ node_modules/
 dist/
 .output/
 .turbo/
+apps/web/public/assets/globals.css
 *.tsbuildinfo
 .env.local
 .env.*.local

@@ -2,13 +2,10 @@ import { getPartnerById, updatePartner } from "@unveiled/db";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
-import {
-  AdminPageShell,
-  adminDashboardPath,
-  adminPartnersPath,
-} from "../../../../../components/admin/AdminPageShell";
-import { PartnerForm, partnerListPath } from "../../../../../components/admin/PartnerForm";
+import { AdminPageShell, adminPartnersPath } from "../../../../../components/admin/AdminPageShell";
+import { partnerListPath } from "../../../../../components/admin/PartnerForm";
 import { NotFoundPage } from "../../../../../components/NotFoundPage";
+import PartnerForm from "../../../../../islands/PartnerForm";
 import { getAdminCopy } from "../../../../../lib/admin-content";
 import { renderAdminPage } from "../../../../../lib/admin-render";
 import {
@@ -38,11 +35,9 @@ function renderEditPage(
     c,
     <AdminPageShell
       breadcrumbs={[
-        { label: copy.navDashboard, href: adminDashboardPath(options.locale) },
         { label: copy.partnersTitle, href: adminPartnersPath(options.locale) },
         { label: copy.editPartnerTitle },
       ]}
-      locale={options.locale}
       title={copy.editPartnerTitle}
     >
       <PartnerForm

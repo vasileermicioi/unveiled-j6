@@ -6,7 +6,7 @@ import { buildAdminListQueryString } from "../../lib/admin-route";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
-import { AdminPageShell, adminDashboardPath, adminPartnersPath } from "./AdminPageShell";
+import { AdminPageShell } from "./AdminPageShell";
 import { AdminPagination } from "./AdminPagination";
 import { AdminPartnersTable } from "./AdminPartnersTable";
 import { AdminSearchForm } from "./AdminSearchForm";
@@ -31,7 +31,7 @@ export function AdminPartnersListPage({
   total,
 }: AdminPartnersListPageProps) {
   const copy = getAdminCopy(locale);
-  const listPath = adminPartnersPath(locale);
+  const listPath = `/${locale}/admin/partners`;
   const queryString = buildAdminListQueryString({ q: query.q || undefined, page: query.page });
 
   return (
@@ -44,11 +44,6 @@ export function AdminPartnersListPage({
           {copy.newPartner}
         </Link>
       }
-      breadcrumbs={[
-        { label: copy.navDashboard, href: adminDashboardPath(locale) },
-        { label: copy.partnersTitle },
-      ]}
-      locale={locale}
       subtitle={copy.partnersSubtitle}
       title={copy.partnersTitle}
     >

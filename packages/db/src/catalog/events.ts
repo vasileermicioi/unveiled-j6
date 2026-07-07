@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, or } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
 import {
@@ -106,19 +106,28 @@ export async function getEventById(db: Db, eventId: string): Promise<Event | nul
   );
 }
 
+function eventSearchCondition(q?: string): SQL | undefined {
+  const search = q?.trim();
+  if (!search) {
+    return undefined;
+  }
+
+  const pattern = `%${search}%`;
+  return or(ilike(events.title, pattern), ilike(events.partnerName, pattern));
+}
+
 export async function listEvents(db: Db, options: ListEventsOptions = {}): Promise<Event[]> {
   const limit = options.limit ?? 25;
   const offset = options.offset ?? 0;
-  const search = options.q?.trim();
-  const conditions = [];
+  const conditions: SQL[] = [];
 
   if (options.partnerId) {
     conditions.push(eq(events.partnerId, options.partnerId));
   }
 
-  if (search) {
-    const pattern = `%${search}%`;
-    conditions.push(or(ilike(events.title, pattern), ilike(events.partnerName, pattern)));
+  const searchCondition = eventSearchCondition(options.q);
+  if (searchCondition) {
+    conditions.push(searchCondition);
   }
 
   let query = db.select().from(events).$dynamic();
@@ -128,7 +137,7 @@ export async function listEvents(db: Db, options: ListEventsOptions = {}): Promi
     query = query.where(and(...conditions));
   }
 
-  return query.limit(limit).offset(offset);
+  return query.orderBy(desc(events.dateTime)).limit(limit).offset(offset);
 }
 
 async function resolvePartner(db: Db, partnerId: string) {
@@ -366,7 +375,75 @@ export async function deleteEvent(
   await deleteImageRecord(db, existing.imageId, { skipBucket: options?.skipBucket });
 }
 
-export async function countEvents(db: Db): Promise<number> {
+export type CountEventsOptions = {
+  q?: string;
+};
+
+export async function countEvents(db: Db, options: CountEventsOptions = {}): Promise<number> {
+  const searchCondition = eventSearchCondition(options.q);
+
+  if (searchCondition) {
+    const [result] = await db.select({ count: count() }).from(events).where(searchCondition);
+    return result?.count ?? 0;
+  }
+
   const [result] = await db.select({ count: count() }).from(events);
   return result?.count ?? 0;
+}
+
+export async function countUpcomingEvents(
+  db: Db,
+  referenceDate: Date = new Date(),
+): Promise<number> {
+  const [result] = await db
+    .select({ count: count() })
+    .from(events)
+    .where(gte(events.dateTime, referenceDate));
+
+  return result?.count ?? 0;
+}
+
+export async function sumRemainingCapacity(db: Db): Promise<number> {
+  const [result] = await db
+    .select({
+      total: sql<number>`coalesce(sum(${events.remainingCapacity}), 0)::int`,
+    })
+    .from(events);
+
+  return result?.total ?? 0;
+}
+
+export async function sumTotalCapacity(db: Db): Promise<number> {
+  const [result] = await db
+    .select({
+      total: sql<number>`coalesce(sum(${events.totalCapacity}), 0)::int`,
+    })
+    .from(events);
+
+  return result?.total ?? 0;
+}
+
+export type MonthlyEventCount = {
+  monthKey: string;
+  count: number;
+};
+
+export async function countEventsByMonth(db: Db, months = 6): Promise<MonthlyEventCount[]> {
+  const safeMonths = Math.max(1, Math.min(months, 12));
+
+  const rows = await db
+    .select({
+      monthKey: sql<string>`to_char(${events.dateTime}, 'YYYY-MM')`,
+      count: count(),
+    })
+    .from(events)
+    .where(gte(events.dateTime, sql`date_trunc('month', now())`))
+    .groupBy(sql`to_char(${events.dateTime}, 'YYYY-MM')`)
+    .orderBy(sql`to_char(${events.dateTime}, 'YYYY-MM')`)
+    .limit(safeMonths);
+
+  return rows.map((row) => ({
+    monthKey: row.monthKey,
+    count: row.count,
+  }));
 }

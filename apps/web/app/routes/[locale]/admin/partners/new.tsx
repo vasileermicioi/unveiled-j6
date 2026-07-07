@@ -1,12 +1,9 @@
 import { createPartner } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
-import {
-  AdminPageShell,
-  adminDashboardPath,
-  adminPartnersPath,
-} from "../../../../components/admin/AdminPageShell";
-import { PartnerForm, partnerListPath } from "../../../../components/admin/PartnerForm";
+import { AdminPageShell, adminPartnersPath } from "../../../../components/admin/AdminPageShell";
+import { partnerListPath } from "../../../../components/admin/PartnerForm";
+import PartnerForm from "../../../../islands/PartnerForm";
 import { getAdminCopy } from "../../../../lib/admin-content";
 import { renderAdminPage } from "../../../../lib/admin-render";
 import {
@@ -44,11 +41,9 @@ export const POST = createRoute(async (c) => {
       c,
       <AdminPageShell
         breadcrumbs={[
-          { label: copy.navDashboard, href: adminDashboardPath(guard.locale) },
           { label: copy.partnersTitle, href: adminPartnersPath(guard.locale) },
           { label: copy.newPartnerTitle },
         ]}
-        locale={guard.locale}
         title={copy.newPartnerTitle}
       >
         <PartnerForm
@@ -79,11 +74,9 @@ export default createRoute(async (c) => {
     c,
     <AdminPageShell
       breadcrumbs={[
-        { label: copy.navDashboard, href: adminDashboardPath(guard.locale) },
         { label: copy.partnersTitle, href: adminPartnersPath(guard.locale) },
         { label: copy.newPartnerTitle },
       ]}
-      locale={guard.locale}
       title={copy.newPartnerTitle}
     >
       <PartnerForm

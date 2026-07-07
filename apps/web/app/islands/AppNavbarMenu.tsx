@@ -1,4 +1,4 @@
-import { Chip, Drawer, Heading, Link, Surface, useOverlayState } from "@heroui/react";
+import { Chip, Drawer, Link, Surface, useOverlayState } from "@heroui/react";
 import { useEffect, useState } from "react";
 
 import { NavLink } from "../components/NavLink";
@@ -79,9 +79,7 @@ export default function AppNavbarMenu({
         <Drawer.Content className="lg:hidden" placement="right">
           <Drawer.Dialog>
             <Drawer.Header className="mb-4 flex items-center justify-between">
-              <Drawer.Heading>
-                <Heading level={2}>Menu</Heading>
-              </Drawer.Heading>
+              <Drawer.Heading>Menu</Drawer.Heading>
               <Drawer.CloseTrigger
                 aria-label="Close navigation menu"
                 className="button button--secondary button--md"

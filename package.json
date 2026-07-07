@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "bun --filter @unveiled/web dev",
     "build": "bun --filter @unveiled/web build",
+    "css:build": "bun --filter @unveiled/web css:build",
     "lint": "biome check .",
     "typecheck": "bun run --filter '*' typecheck",
     "db:generate": "bun --filter @unveiled/db generate",

@@ -1,11 +1,13 @@
 "use client";
 
-import { Link, Paragraph, Surface, Table } from "@heroui/react";
+import { Paragraph, Surface, Table } from "@heroui/react";
 import type { Partner } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+
+import { AdminTableActions } from "./AdminTableActions";
 
 type AdminPartnersTableProps = {
   locale: Locale;
@@ -29,7 +31,9 @@ export function AdminPartnersTable({ locale, partners, logoUrls }: AdminPartners
             <Table.Column isRowHeader>{copy.tableName}</Table.Column>
             <Table.Column isRowHeader>{copy.tableEmail}</Table.Column>
             <Table.Column isRowHeader>{copy.tableAddress}</Table.Column>
-            <Table.Column isRowHeader>{copy.tableActions}</Table.Column>
+            <Table.Column className="admin-table__actions-column" isRowHeader>
+              {copy.tableActions}
+            </Table.Column>
           </Table.Header>
           <Table.Body>
             {partners.map((partner) => (
@@ -48,21 +52,21 @@ export function AdminPartnersTable({ locale, partners, logoUrls }: AdminPartners
                 <Table.Cell>{partner.name}</Table.Cell>
                 <Table.Cell>{partner.contactEmail}</Table.Cell>
                 <Table.Cell>{partner.address}</Table.Cell>
-                <Table.Cell>
-                  <Surface className="flex flex-wrap gap-2" variant="transparent">
-                    <Link
-                      className="button button--secondary button--sm"
-                      href={localizedPath(locale, `admin/partners/${partner.id}/edit`)}
-                    >
-                      {copy.editAction}
-                    </Link>
-                    <Link
-                      className="button button--secondary button--sm"
-                      href={localizedPath(locale, `admin/partners/${partner.id}/delete`)}
-                    >
-                      {copy.deleteAction}
-                    </Link>
-                  </Surface>
+                <Table.Cell className="admin-table__actions-cell">
+                  <AdminTableActions
+                    actions={[
+                      {
+                        href: localizedPath(locale, `admin/partners/${partner.id}/edit`),
+                        label: copy.editAction,
+                        icon: "edit",
+                      },
+                      {
+                        href: localizedPath(locale, `admin/partners/${partner.id}/delete`),
+                        label: copy.deleteAction,
+                        icon: "delete",
+                      },
+                    ]}
+                  />
                 </Table.Cell>
               </Table.Row>
             ))}

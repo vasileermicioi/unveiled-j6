@@ -2,12 +2,24 @@ import type { CatalogErrorCode } from "@unveiled/db";
 
 import type { Locale } from "./locale";
 
-export const ADMIN_PARTNERS_PAGE_SIZE = 25;
+export const ADMIN_LIST_PAGE_SIZE = 25;
+export const ADMIN_PARTNERS_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE;
 
 export type AdminCopy = {
   navDashboard: string;
   dashboardTitle: string;
   dashboardSubtitle: string;
+  tabNavLabel: string;
+  tabOverview: string;
+  tabPartners: string;
+  tabEvents: string;
+  kpiPartners: string;
+  kpiEvents: string;
+  kpiUpcoming: string;
+  kpiRemainingCapacity: string;
+  kpiEventsHint: (upcoming: number) => string;
+  kpiUpcomingHint: (total: number) => string;
+  kpiRemainingHint: string;
   quickLinksTitle: string;
   partnersLink: string;
   eventsLink: string;
@@ -17,16 +29,26 @@ export type AdminCopy = {
   partnersTitle: string;
   partnersSubtitle: string;
   newPartner: string;
+  eventsTitle: string;
+  eventsSubtitle: string;
+  newEvent: string;
+  newEventSeries: string;
   searchPlaceholder: string;
   searchSubmit: string;
   tableLogo: string;
   tableName: string;
   tableEmail: string;
   tableAddress: string;
+  tableTitle: string;
+  tablePartner: string;
+  tableDate: string;
+  tableCapacity: string;
   tableActions: string;
   editAction: string;
   deleteAction: string;
+  exportCodesAction: string;
   emptyPartners: string;
+  emptyEvents: string;
   paginationShowing: (from: number, to: number, total: number) => string;
   paginationPrevious: string;
   paginationNext: string;
@@ -34,22 +56,88 @@ export type AdminCopy = {
   editPartnerTitle: string;
   deletePartnerTitle: string;
   deletePartnerBody: (name: string) => string;
+  newEventTitle: string;
+  editEventTitle: string;
+  newEventSeriesTitle: string;
+  deleteEventTitle: string;
+  deleteEventBody: (title: string, date: string) => string;
   deleteConfirm: string;
   cancel: string;
   save: string;
   create: string;
+  previewSeries: string;
+  confirmSeries: (count: number) => string;
+  seriesPreviewTitle: string;
   nameLabel: string;
   emailLabel: string;
   addressLabel: string;
   logoFileLabel: string;
   logoUrlLabel: string;
   logoUrlHint: string;
+  partnerLabel: string;
+  titleLabel: string;
+  descriptionLabel: string;
+  neighborhoodLabel: string;
+  categoryLabel: string;
+  eventTypeLabel: string;
+  tagsLabel: string;
+  tagsHint: string;
+  eventDateLabel: string;
+  eventTimeLabel: string;
+  timingModeLabel: string;
+  timingModeTimeSlot: string;
+  timingModeAllDay: string;
+  creditPriceLabel: string;
+  capacityLabel: string;
+  ticketTypeLabel: string;
+  ticketTypeSecretCode: string;
+  ticketTypeVoucher: string;
+  secretCodeModeLabel: string;
+  secretCodeModeManual: string;
+  secretCodeModeShared: string;
+  secretCodeModeUnique: string;
+  secretCodeLabel: string;
+  promoCodeLabel: string;
+  eventWebsiteUrlLabel: string;
+  barrierFreeLabel: string;
+  selectPlaceholder: string;
+  optionYes: string;
+  optionNo: string;
+  languagesLabel: string;
+  targetAgeGroupsLabel: string;
+  latLabel: string;
+  lngLabel: string;
+  imageFileLabel: string;
+  imageUrlLabel: string;
+  imageUrlHint: string;
+  imageUrlHintEdit: string;
+  slotModeManual: string;
+  slotModeBuilder: string;
+  manualSlotsLabel: string;
+  builderStartLabel: string;
+  builderEndLabel: string;
+  builderWeekdaysLabel: string;
+  builderTimesLabel: string;
+  builderTimesHint: string;
+  builderExcludedLabel: string;
+  builderExcludedHint: string;
+  weekdayLabels: string[];
   genericError: string;
   fieldErrors: {
     name: string;
     contactEmail: string;
     address: string;
     logo: string;
+    image: string;
+    partnerId: string;
+    title: string;
+    description: string;
+    neighborhood: string;
+    category: string;
+    eventType: string;
+    eventDate: string;
+    redemption: string;
+    series: string;
   };
 };
 
@@ -57,7 +145,18 @@ const copy: Record<Locale, AdminCopy> = {
   de: {
     navDashboard: "Admin",
     dashboardTitle: "Admin-Dashboard",
-    dashboardSubtitle: "Partner verwalten und Demo-Daten laden.",
+    dashboardSubtitle: "Katalog-Kennzahlen und Demo-Daten.",
+    tabNavLabel: "Admin-Bereiche",
+    tabOverview: "Übersicht",
+    tabPartners: "Partner",
+    tabEvents: "Events",
+    kpiPartners: "Partner",
+    kpiEvents: "Events gesamt",
+    kpiUpcoming: "Kommende Events",
+    kpiRemainingCapacity: "Verbleibende Plätze",
+    kpiEventsHint: (upcoming) => `${upcoming} kommend`,
+    kpiUpcomingHint: (total) => `von ${total} gesamt`,
+    kpiRemainingHint: "Offene Kapazität",
     quickLinksTitle: "Schnellzugriff",
     partnersLink: "Partner",
     eventsLink: "Events",
@@ -67,16 +166,26 @@ const copy: Record<Locale, AdminCopy> = {
     partnersTitle: "Partner",
     partnersSubtitle: "Venue-Datensätze für Events verwalten.",
     newPartner: "Neuer Partner",
-    searchPlaceholder: "Name oder E-Mail suchen",
+    eventsTitle: "Events",
+    eventsSubtitle: "Katalog-Events erstellen und verwalten.",
+    newEvent: "Neues Event",
+    newEventSeries: "Event-Serie",
+    searchPlaceholder: "Titel oder Partner suchen",
     searchSubmit: "Suchen",
-    tableLogo: "Logo",
+    tableLogo: "Bild",
     tableName: "Name",
     tableEmail: "E-Mail",
     tableAddress: "Adresse",
+    tableTitle: "Titel",
+    tablePartner: "Partner",
+    tableDate: "Datum",
+    tableCapacity: "Kapazität",
     tableActions: "Aktionen",
     editAction: "Bearbeiten",
     deleteAction: "Löschen",
+    exportCodesAction: "Codes",
     emptyPartners: "Noch keine Partner vorhanden.",
+    emptyEvents: "Noch keine Events vorhanden.",
     paginationShowing: (from, to, total) => `${from}–${to} von ${total}`,
     paginationPrevious: "Zurück",
     paginationNext: "Weiter",
@@ -84,28 +193,106 @@ const copy: Record<Locale, AdminCopy> = {
     editPartnerTitle: "Partner bearbeiten",
     deletePartnerTitle: "Partner löschen",
     deletePartnerBody: (name) => `Partner „${name}" endgültig löschen?`,
+    newEventTitle: "Event anlegen",
+    editEventTitle: "Event bearbeiten",
+    newEventSeriesTitle: "Event-Serie anlegen",
+    deleteEventTitle: "Event löschen",
+    deleteEventBody: (title, date) => `Event „${title}" (${date}) endgültig löschen?`,
     deleteConfirm: "Löschen",
     cancel: "Abbrechen",
     save: "Speichern",
     create: "Anlegen",
+    previewSeries: "Slots anzeigen",
+    confirmSeries: (count) => `${count} Events anlegen`,
+    seriesPreviewTitle: "Vorschau der Slots",
     nameLabel: "Name",
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
     logoFileLabel: "Logo hochladen",
     logoUrlLabel: "Logo-URL",
     logoUrlHint: "Optional: Bilddatei oder URL — nicht beides gleichzeitig.",
+    partnerLabel: "Partner",
+    titleLabel: "Titel",
+    descriptionLabel: "Beschreibung",
+    neighborhoodLabel: "Kiez",
+    categoryLabel: "Kategorie",
+    eventTypeLabel: "Event-Typ",
+    tagsLabel: "Tags",
+    tagsHint: "Kommagetrennt",
+    eventDateLabel: "Datum",
+    eventTimeLabel: "Uhrzeit",
+    timingModeLabel: "Zeitmodus",
+    timingModeTimeSlot: "Zeitfenster",
+    timingModeAllDay: "Ganztägig",
+    creditPriceLabel: "Credits",
+    capacityLabel: "Kapazität",
+    ticketTypeLabel: "Ticket-Typ",
+    ticketTypeSecretCode: "Secret Code",
+    ticketTypeVoucher: "Voucher",
+    secretCodeModeLabel: "Code-Modus",
+    secretCodeModeManual: "Manuell",
+    secretCodeModeShared: "Geteilt (generiert)",
+    secretCodeModeUnique: "Pro Buchung",
+    secretCodeLabel: "Secret Code",
+    promoCodeLabel: "Promo-Code",
+    eventWebsiteUrlLabel: "Event-Website",
+    barrierFreeLabel: "Barrierefrei",
+    selectPlaceholder: "Auswählen…",
+    optionYes: "Ja",
+    optionNo: "Nein",
+    languagesLabel: "Sprachen",
+    targetAgeGroupsLabel: "Altersgruppen",
+    latLabel: "Breitengrad",
+    lngLabel: "Längengrad",
+    imageFileLabel: "Event-Bild hochladen",
+    imageUrlLabel: "Bild-URL",
+    imageUrlHint: "Bilddatei oder URL erforderlich — nicht beides gleichzeitig.",
+    imageUrlHintEdit:
+      "Optional: neues Bild per Upload oder URL — leer lassen, um das aktuelle Bild zu behalten.",
+    slotModeManual: "Manuelle Slots",
+    slotModeBuilder: "Datumsbereich",
+    manualSlotsLabel: "Datum/Uhrzeit pro Slot",
+    builderStartLabel: "Startdatum",
+    builderEndLabel: "Enddatum",
+    builderWeekdaysLabel: "Wochentage",
+    builderTimesLabel: "Uhrzeiten",
+    builderTimesHint: "Kommagetrennt, z. B. 19:30, 21:00",
+    builderExcludedLabel: "Ausgeschlossene Daten",
+    builderExcludedHint: "Kommagetrennt, YYYY-MM-DD",
+    weekdayLabels: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
     genericError: "Bitte Eingaben prüfen und erneut versuchen.",
     fieldErrors: {
       name: "Name ist erforderlich.",
       contactEmail: "Gültige E-Mail-Adresse erforderlich.",
       address: "Adresse ist erforderlich.",
       logo: "Logo-Upload und URL können nicht gleichzeitig gesetzt werden.",
+      image: "Event-Bild ist erforderlich.",
+      partnerId: "Partner ist erforderlich.",
+      title: "Titel ist erforderlich.",
+      description: "Beschreibung ist erforderlich.",
+      neighborhood: "Kiez ist erforderlich.",
+      category: "Kategorie ist erforderlich.",
+      eventType: "Event-Typ ist erforderlich.",
+      eventDate: "Datum ist erforderlich.",
+      redemption: "Redemption-Konfiguration unvollständig.",
+      series: "Mindestens ein gültiger Slot erforderlich.",
     },
   },
   en: {
     navDashboard: "Admin",
     dashboardTitle: "Admin dashboard",
-    dashboardSubtitle: "Manage partners and load demo data.",
+    dashboardSubtitle: "Catalog metrics and demo data.",
+    tabNavLabel: "Admin sections",
+    tabOverview: "Overview",
+    tabPartners: "Partners",
+    tabEvents: "Events",
+    kpiPartners: "Partners",
+    kpiEvents: "Total events",
+    kpiUpcoming: "Upcoming events",
+    kpiRemainingCapacity: "Remaining seats",
+    kpiEventsHint: (upcoming) => `${upcoming} upcoming`,
+    kpiUpcomingHint: (total) => `of ${total} total`,
+    kpiRemainingHint: "Open capacity",
     quickLinksTitle: "Quick links",
     partnersLink: "Partners",
     eventsLink: "Events",
@@ -115,16 +302,26 @@ const copy: Record<Locale, AdminCopy> = {
     partnersTitle: "Partners",
     partnersSubtitle: "Manage venue records for events.",
     newPartner: "New partner",
-    searchPlaceholder: "Search name or email",
+    eventsTitle: "Events",
+    eventsSubtitle: "Create and manage catalog events.",
+    newEvent: "New event",
+    newEventSeries: "Event series",
+    searchPlaceholder: "Search title or partner",
     searchSubmit: "Search",
-    tableLogo: "Logo",
+    tableLogo: "Image",
     tableName: "Name",
     tableEmail: "Email",
     tableAddress: "Address",
+    tableTitle: "Title",
+    tablePartner: "Partner",
+    tableDate: "Date",
+    tableCapacity: "Capacity",
     tableActions: "Actions",
     editAction: "Edit",
     deleteAction: "Delete",
+    exportCodesAction: "Codes",
     emptyPartners: "No partners yet.",
+    emptyEvents: "No events yet.",
     paginationShowing: (from, to, total) => `Showing ${from}–${to} of ${total}`,
     paginationPrevious: "Previous",
     paginationNext: "Next",
@@ -132,22 +329,89 @@ const copy: Record<Locale, AdminCopy> = {
     editPartnerTitle: "Edit partner",
     deletePartnerTitle: "Delete partner",
     deletePartnerBody: (name) => `Permanently delete partner “${name}”?`,
+    newEventTitle: "Create event",
+    editEventTitle: "Edit event",
+    newEventSeriesTitle: "Create event series",
+    deleteEventTitle: "Delete event",
+    deleteEventBody: (title, date) => `Permanently delete event “${title}” (${date})?`,
     deleteConfirm: "Delete",
     cancel: "Cancel",
     save: "Save",
     create: "Create",
+    previewSeries: "Preview slots",
+    confirmSeries: (count) => `Create ${count} events`,
+    seriesPreviewTitle: "Slot preview",
     nameLabel: "Name",
     emailLabel: "Contact email",
     addressLabel: "Address",
     logoFileLabel: "Upload logo",
     logoUrlLabel: "Logo URL",
     logoUrlHint: "Optional: upload a file or paste a URL — not both at once.",
+    partnerLabel: "Partner",
+    titleLabel: "Title",
+    descriptionLabel: "Description",
+    neighborhoodLabel: "Neighborhood",
+    categoryLabel: "Category",
+    eventTypeLabel: "Event type",
+    tagsLabel: "Tags",
+    tagsHint: "Comma-separated",
+    eventDateLabel: "Date",
+    eventTimeLabel: "Time",
+    timingModeLabel: "Timing mode",
+    timingModeTimeSlot: "Time slot",
+    timingModeAllDay: "All day",
+    creditPriceLabel: "Credits",
+    capacityLabel: "Capacity",
+    ticketTypeLabel: "Ticket type",
+    ticketTypeSecretCode: "Secret code",
+    ticketTypeVoucher: "Voucher",
+    secretCodeModeLabel: "Code mode",
+    secretCodeModeManual: "Manual",
+    secretCodeModeShared: "Shared generated",
+    secretCodeModeUnique: "Unique per booking",
+    secretCodeLabel: "Secret code",
+    promoCodeLabel: "Promo code",
+    eventWebsiteUrlLabel: "Event website",
+    barrierFreeLabel: "Barrier-free",
+    selectPlaceholder: "Select…",
+    optionYes: "Yes",
+    optionNo: "No",
+    languagesLabel: "Languages",
+    targetAgeGroupsLabel: "Age groups",
+    latLabel: "Latitude",
+    lngLabel: "Longitude",
+    imageFileLabel: "Upload event image",
+    imageUrlLabel: "Image URL",
+    imageUrlHint: "Image file or URL required — not both at once.",
+    imageUrlHintEdit:
+      "Optional: replace image via upload or URL — leave empty to keep current image.",
+    slotModeManual: "Manual slots",
+    slotModeBuilder: "Date range",
+    manualSlotsLabel: "Date/time per slot",
+    builderStartLabel: "Start date",
+    builderEndLabel: "End date",
+    builderWeekdaysLabel: "Weekdays",
+    builderTimesLabel: "Times",
+    builderTimesHint: "Comma-separated, e.g. 19:30, 21:00",
+    builderExcludedLabel: "Excluded dates",
+    builderExcludedHint: "Comma-separated, YYYY-MM-DD",
+    weekdayLabels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     genericError: "Please check your input and try again.",
     fieldErrors: {
       name: "Name is required.",
       contactEmail: "A valid email address is required.",
       address: "Address is required.",
       logo: "Logo upload and URL cannot both be provided.",
+      image: "Event image is required.",
+      partnerId: "Partner is required.",
+      title: "Title is required.",
+      description: "Description is required.",
+      neighborhood: "Neighborhood is required.",
+      category: "Category is required.",
+      eventType: "Event type is required.",
+      eventDate: "Date is required.",
+      redemption: "Redemption configuration is incomplete.",
+      series: "At least one valid slot is required.",
     },
   },
 };
@@ -160,8 +424,13 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   INVALID_EMAIL: "contactEmail",
   REQUIRED_FIELD: "name",
   CONFLICTING_IMAGE_SOURCES: "logo",
+  MISSING_EVENT_IMAGE: "image",
+  INVALID_REDEMPTION_CONFIG: "redemption",
+  DUPLICATE_SERIES_SLOTS: "series",
+  EMPTY_SERIES_SLOTS: "series",
+  EVENT_NOT_FOUND: "title",
   PARTNER_HAS_EVENTS: "name",
-  PARTNER_NOT_FOUND: "name",
+  PARTNER_NOT_FOUND: "partnerId",
 };
 
 export function mapCatalogErrorCode(
@@ -171,8 +440,10 @@ export function mapCatalogErrorCode(
 ): string {
   const adminCopy = getAdminCopy(locale);
 
-  if (code === "REQUIRED_FIELD" && field && field in adminCopy.fieldErrors) {
-    return adminCopy.fieldErrors[field as keyof AdminCopy["fieldErrors"]] ?? adminCopy.genericError;
+  if (code === "REQUIRED_FIELD" && field) {
+    if (field in adminCopy.fieldErrors) {
+      return adminCopy.fieldErrors[field as keyof AdminCopy["fieldErrors"]];
+    }
   }
 
   if (code === "INVALID_EMAIL") {
@@ -181,6 +452,22 @@ export function mapCatalogErrorCode(
 
   if (code === "CONFLICTING_IMAGE_SOURCES") {
     return adminCopy.fieldErrors.logo;
+  }
+
+  if (code === "MISSING_EVENT_IMAGE") {
+    return adminCopy.fieldErrors.image;
+  }
+
+  if (code === "INVALID_REDEMPTION_CONFIG") {
+    return adminCopy.fieldErrors.redemption;
+  }
+
+  if (code === "DUPLICATE_SERIES_SLOTS" || code === "EMPTY_SERIES_SLOTS") {
+    return adminCopy.fieldErrors.series;
+  }
+
+  if (code === "EVENT_NOT_FOUND") {
+    return locale === "de" ? "Event nicht gefunden." : "Event not found.";
   }
 
   if (code === "PARTNER_HAS_EVENTS") {
