@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./catalog/errors": "./src/catalog/errors.ts"
+    "./catalog/errors": "./src/catalog/errors.ts",
+    "./catalog/seed-pagination": "./src/catalog/seed-pagination.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate",

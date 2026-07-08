@@ -39,7 +39,7 @@ When specs conflict, prefer the more specific doc for the topic (e.g. `seo-and-m
 | Email | **Resend** (`@unveiled/email`) |
 | Lint / format | **Biome** |
 
-**Hosting:** Node.js-capable host (Railway, Render, Fly.io) — HonoX SSR + `sharp` require Node.
+**Hosting:** **Cloudflare Workers** for `apps/web` (HonoX SSR). Image processing (`sharp`) is **local Node only** — `bun run dev` and `bun run seed:demo`; admin uploads on the Workers URL are not supported (Option B).
 
 ---
 

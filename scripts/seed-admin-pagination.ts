@@ -1,12 +1,12 @@
+import { createDb } from "@unveiled/db";
 import {
   assertPaginationSeedImageEnv,
-  createDb,
   parseSeedAdminPaginationArgs,
   printSeedAdminPaginationHelp,
   resetPaginationSeed,
   runSeedAdminPagination,
   type SeedAdminPaginationOptions,
-} from "@unveiled/db";
+} from "@unveiled/db/catalog/seed-pagination";
 
 const databaseUrl = process.env.DATABASE_URL;
 

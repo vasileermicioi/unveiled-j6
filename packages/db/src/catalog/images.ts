@@ -1,9 +1,3 @@
-import {
-  deleteImageObjects,
-  processImageFromBuffer,
-  processImageFromUrl,
-  repairImageVariants,
-} from "@unveiled/images";
 import { eq } from "drizzle-orm";
 
 import type { Db } from "../index";
@@ -16,18 +10,32 @@ export type PersistImageOptions = {
   skipUpload?: boolean;
 };
 
+const IMAGE_PROCESSING_UNAVAILABLE =
+  "Image processing is not available on this host. Upload images using local development (bun run dev) or seed data with bun run seed:demo.";
+
+type ImagesModule = typeof import("@unveiled/images");
+
+async function loadImagesModule(): Promise<ImagesModule> {
+  try {
+    return await import(/* @vite-ignore */ "@unveiled/images");
+  } catch {
+    throw new CatalogValidationError("IMAGE_PROCESSING_UNAVAILABLE", IMAGE_PROCESSING_UNAVAILABLE);
+  }
+}
+
 export async function persistImageFromSource(
   db: Db,
   source: ImageAttachInput,
   options: PersistImageOptions = {},
 ): Promise<string> {
+  const imagesModule = await loadImagesModule();
   const processed =
     source.type === "upload"
-      ? await processImageFromBuffer(source.buffer, {
+      ? await imagesModule.processImageFromBuffer(source.buffer, {
           uploadedBy: options.uploadedBy,
           skipUpload: options.skipUpload,
         })
-      : await processImageFromUrl(source.url, {
+      : await imagesModule.processImageFromUrl(source.url, {
           uploadedBy: options.uploadedBy,
           skipUpload: options.skipUpload,
         });
@@ -79,7 +87,8 @@ export async function deleteImageRecord(
   options?: { skipBucket?: boolean },
 ): Promise<void> {
   if (!options?.skipBucket) {
-    await deleteImageObjects(imageId);
+    const imagesModule = await loadImagesModule();
+    await imagesModule.deleteImageObjects(imageId);
   }
 
   await db.delete(images).where(eq(images.id, imageId));
@@ -125,5 +134,10 @@ export async function ensureImageVariantsUploaded(db: Db, imageId: string): Prom
     return;
   }
 
-  await repairImageVariants(imageId, row.sourceUrl);
+  try {
+    const imagesModule = await loadImagesModule();
+    await imagesModule.repairImageVariants(imageId, row.sourceUrl);
+  } catch {
+    // Workers and other hosts without sharp skip repair; list/detail still use existing URLs.
+  }
 }

@@ -6,18 +6,20 @@ Staging deployment for the HonoX SSR application. Update this file every phase w
 
 | Environment | URL | Status |
 |---|---|---|
-| Staging | _TBD — set after first Railway deploy_ | Pending operator setup |
+| Staging | _TBD — set after first Workers deploy_ | Pending operator setup |
 
-Target custom domain: `https://staging.unveiled.berlin` (configure in Railway when DNS is ready).
+Target custom domain: `https://staging.unveiled.berlin` (configure in Cloudflare Workers when DNS is ready).
 
 ## Host
 
-**Railway** — Node.js-capable host for HonoX SSR (required for future `sharp` image processing).
+**Cloudflare Workers** — HonoX SSR via `@hono/vite-build/cloudflare-workers` and `wrangler.toml`.
+
+**Image processing (`sharp`)** runs on **local Node only** (`bun run dev`, `bun run seed:demo`). Admin image uploads on the Workers URL return a clear error; seed the database locally before deploying, or upload images while running local dev.
 
 Deploy artifacts:
-- `Dockerfile` — multi-stage Bun build, Node 22 Alpine runtime
-- `railway.json` — health check on `/de`, restart policy
-- `.github/workflows/deploy-staging.yml` — lint, typecheck, build, deploy on `main` push
+- `apps/web/wrangler.toml` — Workers config, static assets binding
+- `apps/web/vite.config.ts` — Workers production build (Node dev server unchanged for `bun run dev`)
+- Legacy `Dockerfile` / Railway — optional Node reference; not used for web deploy
 
 ## Build and start
 
@@ -25,21 +27,42 @@ From repository root:
 
 ```bash
 bun install
-bun run build    # builds @unveiled/web
+bun run build    # Workers-compatible @unveiled/web bundle
 ```
 
-Production start (local verification):
+Local development (Node — supports admin image upload):
 
 ```bash
-cd apps/web && bun run start
-# listens on PORT (default 3000)
+bun run dev
+# http://localhost:3000
 ```
 
-Docker (matches Railway):
+Workers preview (after build; requires wrangler secrets — see below):
 
 ```bash
-docker build -t unveiled-web .
-docker run -p 3000:3000 -e PORT=3000 unveiled-web
+cd apps/web && bun run dev:workers
+```
+
+Deploy to Cloudflare Workers:
+
+```bash
+cd apps/web && bun run deploy:workers
+```
+
+Set wrangler secrets from repo-root `.env` (one-time per environment):
+
+```bash
+cd apps/web
+wrangler secret put DATABASE_URL
+wrangler secret put AUTH_URL
+wrangler secret put SITE_URL
+wrangler secret put S3_ACCESS_KEY_ID
+wrangler secret put S3_SECRET_ACCESS_KEY
+# Non-secrets can go in wrangler.toml [vars] or wrangler secret put:
+wrangler secret put S3_ENDPOINT
+wrangler secret put S3_REGION
+wrangler secret put S3_BUCKET
+wrangler secret put IMAGE_PUBLIC_BASE_URL
 ```
 
 ## Environment variables
@@ -97,7 +120,7 @@ Split it for env vars:
 
 **4. Public access** — Bucket → **Settings** → enable **Public access** / R2.dev subdomain. Copy the public URL (e.g. `https://pub-xxxxxxxx.r2.dev`) → `IMAGE_PUBLIC_BASE_URL` with no trailing slash.
 
-**5. Railway** — Add the same six R2 vars to the staging service environment before catalog image-upload demos.
+**5. Workers** — Add the same six R2 vars as wrangler secrets (or `[vars]` for non-sensitive) before catalog demos on staging.
 
 **Optional sanity check** (after `@unveiled/images` exists):
 
@@ -108,10 +131,11 @@ AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY 
 
 Expect an empty listing or object keys — not an auth error.
 
-**Admin event upload smoke test** (Phase 4 catalog):
+**Admin event upload smoke test** (Phase 4 catalog — **local Node dev only**):
 
 1. Sign in as ADMIN with all six R2 vars set in root `.env`.
-2. Open `/:locale/admin/events/new`, choose a JPEG ≥ 800×420 px, submit.
+2. Run `bun run dev` (not Workers preview).
+3. Open `/:locale/admin/events/new`, choose a JPEG ≥ 800×420 px, submit.
 3. Confirm redirect to `/admin/events` and the new row shows a `small-320.webp` thumbnail.
 4. Edit the event without a new file — thumbnail unchanged. Edit with a new file — thumbnail updates.
 5. In the R2 bucket, confirm six objects under `images/{uuid}/` for the event's `image_id`.

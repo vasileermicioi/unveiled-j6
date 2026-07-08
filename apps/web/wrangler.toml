@@ -1,0 +1,11 @@
+name = "unveiled-web"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+main = "dist/index.js"
+
+[assets]
+directory = "dist/public"
+binding = "ASSETS"
+
+[observability]
+enabled = true

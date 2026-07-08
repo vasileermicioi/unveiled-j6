@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import build from "@hono/vite-build/node";
+import build from "@hono/vite-build/cloudflare-workers";
 import adapter from "@hono/vite-dev-server/node";
 import honox from "honox/vite";
 import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from "vite";
@@ -59,16 +59,30 @@ function createCachedLoadModule() {
 }
 
 /** Honox sets `ssr.noExternal: true`, rebundling all of node_modules on every SSR load. Override after config merge. */
-function fixHonoxSsrExternals(isDev: boolean): Plugin {
+function fixHonoxSsrExternals(): Plugin {
   return {
     name: "unveiled-fix-honox-ssr-externals",
     enforce: "post",
     configResolved(config) {
-      if (!isDev) {
-        return;
-      }
-      // Empty array: externalize npm deps; Vite still transpiles linked workspace packages for HMR.
       config.ssr.noExternal = [];
+      const existing = config.ssr.external;
+      const external = new Set<string>([
+        "react",
+        "react-dom",
+        "@heroui/react",
+        "sharp",
+        "@unveiled/images",
+      ]);
+      if (Array.isArray(existing)) {
+        for (const item of existing) {
+          if (typeof item === "string") {
+            external.add(item);
+          }
+        }
+      } else if (typeof existing === "string") {
+        external.add(existing);
+      }
+      config.ssr.external = [...external];
     },
   };
 }
@@ -98,8 +112,6 @@ export default defineConfig(({ mode, command }) => {
     }
   }
 
-  const isDev = command === "serve";
-
   return {
     envDir: repoRoot,
     define: {
@@ -123,7 +135,7 @@ export default defineConfig(({ mode, command }) => {
       exclude: ["sharp"],
     },
     ssr: {
-      external: ["react", "react-dom", "@heroui/react", "sharp"],
+      external: ["react", "react-dom", "@heroui/react", "sharp", "@unveiled/images"],
     },
     server: {
       warmup: {
@@ -145,13 +157,10 @@ export default defineConfig(({ mode, command }) => {
           input: ["/app/client.ts"],
         },
       }),
-      fixHonoxSsrExternals(isDev),
+      fixHonoxSsrExternals(),
       warmupSsrEntry(serverEntry),
       build({
-        entryContentAfterHooks: [
-          async (appName) =>
-            `import { serve } from '@hono/node-server'\nserve({ fetch: ${appName}.fetch, port: Number(process.env.PORT) || 3000 })`,
-        ],
+        external: ["sharp", "@unveiled/images"],
       }),
     ],
   };
