@@ -18,6 +18,7 @@
     "ignoreUnknown": true,
     "includes": [
       "apps/**",
+      "e2e/**",
       "packages/**",
       "scripts/**",
       "package.json",

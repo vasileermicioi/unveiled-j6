@@ -8,6 +8,7 @@
     "build": "vite build --mode client && vite build",
     "start": "wrangler dev",
     "deploy:workers": "bunx wrangler deploy",
+    "stories": "ladle serve",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -37,6 +38,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@ladle/react": "^5.1.1",
     "@hono/vite-build": "^1.0.0",
     "@hono/vite-dev-server": "^0.18.0",
     "@tailwindcss/vite": "^4.3.2",

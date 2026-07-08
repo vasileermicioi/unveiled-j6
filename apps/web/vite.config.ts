@@ -138,6 +138,7 @@ export default defineConfig(({ mode }) => {
       external: ["react", "react-dom", "@heroui/react", "sharp", "@unveiled/images"],
     },
     server: {
+      port: 3000,
       warmup: {
         clientFiles: [
           "./app/client.ts",

@@ -16,7 +16,9 @@
     "db:generate": "bun --filter @unveiled/db generate",
     "db:migrate": "bun --filter @unveiled/db migrate",
     "seed:demo": "bun scripts/seed-demo.ts",
-    "seed:admin-pagination": "bun scripts/seed-admin-pagination.ts"
+    "seed:admin-pagination": "bun scripts/seed-admin-pagination.ts",
+    "stories": "bun --filter @unveiled/ui stories & bun --filter @unveiled/web stories",
+    "test:e2e": "bunx playwright test --config e2e/playwright.config.ts"
   },
   "catalog": {
     "react": "^19.0.0",
@@ -29,7 +31,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
+    "@playwright/test": "^1.49.1",
     "@unveiled/config": "workspace:*",
+    "playwright": "^1.49.1",
     "wrangler": "^4.14.0"
   }
 }
