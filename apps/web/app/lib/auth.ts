@@ -10,11 +10,13 @@ import {
 import { createDb, type Db } from "@unveiled/db";
 import type { Context, MiddlewareHandler } from "hono";
 
+import { getEnvVar } from "./runtime-env";
+
 let db: Db | null = null;
 
 function getDb(): Db {
   if (!db) {
-    const connectionString = process.env.DATABASE_URL;
+    const connectionString = getEnvVar("DATABASE_URL");
     if (!connectionString) {
       throw new Error("DATABASE_URL is not set");
     }
@@ -24,7 +26,7 @@ function getDb(): Db {
 }
 
 function getAuthUrl(): string {
-  const authUrl = process.env.AUTH_URL;
+  const authUrl = getEnvVar("AUTH_URL");
   if (!authUrl) {
     throw new Error("AUTH_URL is not set");
   }
@@ -43,7 +45,7 @@ export async function getSession(c: Context): Promise<AppSession | null> {
 }
 
 export async function getSessionIfConfigured(c: Context): Promise<AppSession | null> {
-  if (!process.env.DATABASE_URL || !process.env.AUTH_URL) {
+  if (!getEnvVar("DATABASE_URL") || !getEnvVar("AUTH_URL")) {
     return null;
   }
 

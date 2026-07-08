@@ -2,7 +2,6 @@ import { reactRenderer } from "@hono/react-renderer";
 import { Link, Script } from "honox/server";
 import type { Locale } from "../lib/locale";
 import { buildPageMeta } from "../lib/seo";
-import { APP_STYLESHEET_HREF } from "../lib/stylesheet";
 
 function SeoHead({
   title,
@@ -61,7 +60,7 @@ export default reactRenderer(
           <meta content="width=device-width, initial-scale=1.0" name="viewport" />
           {robots ? <meta content={robots} name="robots" /> : null}
           <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
-          <Link href={APP_STYLESHEET_HREF} rel="stylesheet" />
+          <Link href="/app/styles/globals.css" rel="stylesheet" />
           <Script src="/app/client.ts" />
           <SeoHead
             canonicalPath={canonicalPath}

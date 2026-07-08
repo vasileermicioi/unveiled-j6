@@ -15,6 +15,10 @@ createClient({
   },
   createElement: async (type: unknown, props: unknown) => {
     const { createElement } = await import("react");
-    return createElement(type as never, props as never);
+    const normalizedType =
+      typeof type === "string" && type === type.toUpperCase() && type !== type.toLowerCase()
+        ? type.toLowerCase()
+        : type;
+    return createElement(normalizedType as never, props as never);
   },
 });

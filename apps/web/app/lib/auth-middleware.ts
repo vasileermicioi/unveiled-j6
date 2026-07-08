@@ -1,6 +1,7 @@
 import type { AppSession, UserRole } from "@unveiled/auth";
 
 import type { Locale } from "./locale";
+import { hasRuntimeAuthConfig } from "./runtime-env";
 
 export const PROTECTED_PREFIXES = [
   "events",
@@ -21,7 +22,7 @@ const ROLE_FORBIDDEN: Record<UserRole, readonly ProtectedPrefix[]> = {
 };
 
 export function isAuthConfigured(): boolean {
-  return Boolean(process.env.DATABASE_URL && process.env.AUTH_URL);
+  return hasRuntimeAuthConfig();
 }
 
 export function getLocalePathSegment(pathname: string, locale: Locale): string | null {

@@ -6,6 +6,14 @@ declare global {
   const process: {
     env: {
       SITE_URL?: string;
+      DATABASE_URL?: string;
+      AUTH_URL?: string;
+      S3_ENDPOINT?: string;
+      S3_REGION?: string;
+      S3_BUCKET?: string;
+      S3_ACCESS_KEY_ID?: string;
+      S3_SECRET_ACCESS_KEY?: string;
+      IMAGE_PUBLIC_BASE_URL?: string;
     };
   };
 }

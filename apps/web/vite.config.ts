@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import build from "@hono/vite-build/cloudflare-workers";
 import adapter from "@hono/vite-dev-server/node";
+import tailwindcss from "@tailwindcss/vite";
 import honox from "honox/vite";
 import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from "vite";
 
@@ -19,7 +20,6 @@ const devIgnoreWatching = [
   /\/openspec\//,
   /\/scripts\//,
   /\/\.cursor\//,
-  /\/public\/assets\/globals\.css$/,
 ];
 
 type SsrApp = { fetch: (request: Request, ...args: unknown[]) => Promise<Response> };
@@ -104,7 +104,7 @@ function warmupSsrEntry(entry: string): Plugin {
   };
 }
 
-export default defineConfig(({ mode, command }) => {
+export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, repoRoot, "");
   for (const [key, value] of Object.entries(env)) {
     if (process.env[key] === undefined) {
@@ -141,12 +141,14 @@ export default defineConfig(({ mode, command }) => {
       warmup: {
         clientFiles: [
           "./app/client.ts",
+          "./app/styles/globals.css",
           "./app/routes/index.tsx",
           "./app/routes/[locale]/index.tsx",
         ],
       },
     },
     plugins: [
+      tailwindcss(),
       honox({
         devServer: {
           adapter,
@@ -154,7 +156,7 @@ export default defineConfig(({ mode, command }) => {
           loadModule: createCachedLoadModule(),
         },
         client: {
-          input: ["/app/client.ts"],
+          input: ["/app/client.ts", "/app/styles/globals.css"],
         },
       }),
       fixHonoxSsrExternals(),

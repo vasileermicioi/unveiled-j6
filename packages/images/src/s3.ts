@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 
 import { VARIANT_FILENAMES, type VariantFilename } from "./constants";
+import { resolveRuntimeEnv } from "./resolve-runtime-env";
 
 export type S3Env = {
   endpoint: string;
@@ -16,7 +17,7 @@ export type S3Env = {
   secretAccessKey: string;
 };
 
-export function readS3Env(env: NodeJS.ProcessEnv = process.env): S3Env {
+export function readS3Env(env: NodeJS.ProcessEnv = resolveRuntimeEnv()): S3Env {
   const endpoint = env.S3_ENDPOINT;
   const region = env.S3_REGION;
   const bucket = env.S3_BUCKET;

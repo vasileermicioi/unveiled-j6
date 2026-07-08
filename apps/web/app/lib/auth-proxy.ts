@@ -1,5 +1,7 @@
 import type { Context } from "hono";
 
+import { getEnvVar } from "./runtime-env";
+
 const FORWARD_REQUEST_HEADERS = [
   "accept",
   "authorization",
@@ -11,7 +13,7 @@ const FORWARD_REQUEST_HEADERS = [
 ] as const;
 
 function getAuthBaseUrl(): string | null {
-  const authUrl = process.env.AUTH_URL;
+  const authUrl = getEnvVar("AUTH_URL");
   if (!authUrl) {
     return null;
   }

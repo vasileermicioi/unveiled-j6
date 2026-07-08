@@ -3,12 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "css:build": "tailwindcss -i ./app/styles/globals.css -o ./public/assets/globals.css",
-    "css:watch": "tailwindcss -i ./app/styles/globals.css -o ./public/assets/globals.css --watch",
-    "dev:vite": "vite",
-    "dev": "bun ./scripts/dev.ts",
-    "dev:workers": "bun run css:build && wrangler dev",
-    "build": "bun run css:build && vite build --mode client && vite build",
+    "dev": "vite",
+    "dev:workers": "vite build --mode client && vite build && wrangler dev",
+    "build": "vite build --mode client && vite build",
     "start": "wrangler dev",
     "deploy:workers": "bunx wrangler deploy",
     "typecheck": "tsc --noEmit"
@@ -42,7 +39,7 @@
   "devDependencies": {
     "@hono/vite-build": "^1.0.0",
     "@hono/vite-dev-server": "^0.18.0",
-    "@tailwindcss/cli": "^4.3.2",
+    "@tailwindcss/vite": "^4.3.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@unveiled/config": "workspace:*",
