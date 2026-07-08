@@ -10,7 +10,7 @@
     "dev:workers": "bun run css:build && wrangler dev",
     "build": "bun run css:build && vite build --mode client && vite build",
     "start": "wrangler dev",
-    "deploy:workers": "wrangler deploy",
+    "deploy:workers": "bunx wrangler deploy",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

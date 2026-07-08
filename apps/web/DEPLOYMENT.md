@@ -46,23 +46,23 @@ cd apps/web && bun run dev:workers
 Deploy to Cloudflare Workers:
 
 ```bash
-cd apps/web && bun run deploy:workers
+bun run deploy:workers
 ```
 
 Set wrangler secrets from repo-root `.env` (one-time per environment):
 
 ```bash
 cd apps/web
-wrangler secret put DATABASE_URL
-wrangler secret put AUTH_URL
-wrangler secret put SITE_URL
-wrangler secret put S3_ACCESS_KEY_ID
-wrangler secret put S3_SECRET_ACCESS_KEY
+bunx wrangler secret put DATABASE_URL
+bunx wrangler secret put AUTH_URL
+bunx wrangler secret put SITE_URL
+bunx wrangler secret put S3_ACCESS_KEY_ID
+bunx wrangler secret put S3_SECRET_ACCESS_KEY
 # Non-secrets can go in wrangler.toml [vars] or wrangler secret put:
-wrangler secret put S3_ENDPOINT
-wrangler secret put S3_REGION
-wrangler secret put S3_BUCKET
-wrangler secret put IMAGE_PUBLIC_BASE_URL
+bunx wrangler secret put S3_ENDPOINT
+bunx wrangler secret put S3_REGION
+bunx wrangler secret put S3_BUCKET
+bunx wrangler secret put IMAGE_PUBLIC_BASE_URL
 ```
 
 ## Cloudflare Git import (Workers Builds)
@@ -73,7 +73,9 @@ Connect the GitHub repo in **Workers & Pages → your Worker → Settings → Bu
 |---|---|
 | **Root directory** | `/` (leave empty / repo root) |
 | **Build command** | `bun run build` |
-| **Deploy command** | `cd apps/web && npx wrangler deploy` |
+| **Deploy command** | `bun run deploy:workers` |
+
+Do **not** use `npx wrangler deploy` from the repo root — `wrangler` is not on PATH there and `wrangler.toml` lives in `apps/web/`. The root `deploy:workers` script runs `bunx wrangler deploy` in the `@unveiled/web` workspace.
 
 **Build variables** (Settings → Variables and secrets):
 

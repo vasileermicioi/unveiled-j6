@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "bun --filter @unveiled/web dev",
     "build": "bun --filter @unveiled/web build",
+    "deploy:workers": "bun --filter @unveiled/web deploy:workers",
     "css:build": "bun --filter @unveiled/web css:build",
     "lint": "biome check .",
     "typecheck": "bun run --filter '*' typecheck",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
-    "@unveiled/config": "workspace:*"
+    "@unveiled/config": "workspace:*",
+    "wrangler": "^4.14.0"
   }
 }
