@@ -306,6 +306,31 @@ cd apps/web && bun test
 
 Integration tests in `packages/auth/src/onboarding.test.ts` run the full save + complete round-trip when `DATABASE_URL` is set; otherwise they skip with a warning.
 
+## Admin list pagination testing (dev / staging)
+
+Admin partner and event lists use a fixed page size of **25** (`ADMIN_LIST_PAGE_SIZE` in `apps/web/app/lib/admin-content.ts`). There is no `?pageSize=` query param.
+
+To manually exercise pagination, search, and page clamp:
+
+```bash
+# Default: 30 partners + 30 events (2+ pages each at size 25)
+bun run seed:admin-pagination
+
+# Custom counts; --reset removes prior pagination seed rows first
+bun run seed:admin-pagination -- --reset --partners=35 --events=40
+
+# Remove pagination seed rows only
+bun run seed:admin-pagination -- --reset --partners=0 --events=0
+```
+
+Rows are prefixed **Pagination Partner** / **Pagination Event** so they are easy to find and safe to delete with `--reset`. By default the script uploads generated logo and event images to R2 so admin list thumbnails load (requires all `S3_*` vars and `IMAGE_PUBLIC_BASE_URL` in root `.env`). Pass `--skip-upload` for DB-only rows without thumbnails.
+
+After seeding, sign in as ADMIN and verify:
+
+1. `/de/admin/partners?page=2` — second page of partners
+2. `/de/admin/events?q=Pagination&page=2` — filtered event list
+3. `/de/admin/partners?page=99` — redirects to the last valid page
+
 ## Phase 4 release gate (catalog step 05)
 
 Phase 4 is complete when staging supports the admin → public catalog loop with real R2 images. **Required env vars:** Phase 2 trio (`DATABASE_URL`, `AUTH_URL`, `SITE_URL`) **plus** all six R2 vars (see [Cloudflare R2](#cloudflare-r2-phase-4)). Copy local root `.env` R2 values to Railway before the client demo.

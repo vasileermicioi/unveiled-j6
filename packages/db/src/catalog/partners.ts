@@ -1,4 +1,4 @@
-import { count, eq, ilike, or } from "drizzle-orm";
+import { count, desc, eq, ilike } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { events } from "../schema/events";
@@ -53,7 +53,7 @@ function partnerSearchCondition(q?: string) {
   }
 
   const pattern = `%${search}%`;
-  return or(ilike(partners.name, pattern), ilike(partners.contactEmail, pattern));
+  return ilike(partners.name, pattern);
 }
 
 export async function listPartners(db: Db, options: ListPartnersOptions = {}): Promise<Partner[]> {
@@ -61,11 +61,10 @@ export async function listPartners(db: Db, options: ListPartnersOptions = {}): P
   const offset = options.offset ?? 0;
   const searchCondition = partnerSearchCondition(options.q);
 
-  if (searchCondition) {
-    return db.select().from(partners).where(searchCondition).limit(limit).offset(offset);
-  }
+  const baseQuery = db.select().from(partners).$dynamic();
+  const filtered = searchCondition ? baseQuery.where(searchCondition) : baseQuery;
 
-  return db.select().from(partners).limit(limit).offset(offset);
+  return filtered.orderBy(desc(partners.createdAt), desc(partners.id)).limit(limit).offset(offset);
 }
 
 export async function createPartner(db: Db, input: CreatePartnerInput): Promise<Partner> {

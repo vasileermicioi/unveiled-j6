@@ -11,7 +11,12 @@ import type { Locale } from "./locale";
 import { isValidLocale } from "./locale";
 
 export type { AdminListQuery } from "./admin-list";
-export { buildAdminListQueryString, parseAdminListQuery } from "./admin-list";
+export {
+  adminListPageRedirectPath,
+  buildAdminListQueryString,
+  clampAdminListPage,
+  parseAdminListQuery,
+} from "./admin-list";
 
 export type ParsedBody = Record<string, string | File | (string | File)[]>;
 

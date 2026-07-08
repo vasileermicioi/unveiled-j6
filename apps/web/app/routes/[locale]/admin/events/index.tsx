@@ -6,6 +6,7 @@ import { AdminEventsListPage } from "../../../../components/admin/AdminEventsLis
 import { getAdminCopy } from "../../../../lib/admin-content";
 import { renderAdminPage } from "../../../../lib/admin-render";
 import {
+  adminListPageRedirectPath,
   buildAdminListQueryString,
   guardAdminRoute,
   parseAdminListQuery,
@@ -44,14 +45,18 @@ export default createRoute(async (c) => {
 
   const listQuery = parseAdminListQuery(new URL(c.req.url));
   const { db } = getAuthOptions();
-  const [events, total] = await Promise.all([
-    listEvents(db, {
-      q: listQuery.q || undefined,
-      limit: listQuery.limit,
-      offset: listQuery.offset,
-    }),
-    countEvents(db, { q: listQuery.q || undefined }),
-  ]);
+  const total = await countEvents(db, { q: listQuery.q || undefined });
+  const listPath = `/${guard.locale}/admin/events`;
+  const redirectPath = adminListPageRedirectPath(listPath, listQuery, total);
+  if (redirectPath) {
+    return c.redirect(redirectPath, 302);
+  }
+
+  const events = await listEvents(db, {
+    q: listQuery.q || undefined,
+    limit: listQuery.limit,
+    offset: listQuery.offset,
+  });
 
   await ensureEventImages(db, events);
 

@@ -139,7 +139,7 @@ export async function listEvents(db: Db, options: ListEventsOptions = {}): Promi
     query = query.where(and(...conditions));
   }
 
-  return query.orderBy(desc(events.dateTime)).limit(limit).offset(offset);
+  return query.orderBy(desc(events.createdAt), desc(events.id)).limit(limit).offset(offset);
 }
 
 async function resolvePartner(db: Db, partnerId: string) {

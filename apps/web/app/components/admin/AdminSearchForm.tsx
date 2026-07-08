@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Form, Input, Label, Surface } from "@heroui/react";
+import { Button, Form, Input, Label, TextField } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
@@ -16,16 +16,10 @@ export function AdminSearchForm({ locale, action, defaultQuery = "" }: AdminSear
 
   return (
     <Form action={action} className="flex flex-col gap-3 sm:flex-row sm:items-end" method="get">
-      <Surface className="flex w-full flex-col gap-2 sm:max-w-md" variant="transparent">
+      <TextField className="w-full sm:max-w-md" defaultValue={defaultQuery} fullWidth name="q">
         <Label htmlFor="admin-search">{copy.searchPlaceholder}</Label>
-        <Input
-          defaultValue={defaultQuery}
-          id="admin-search"
-          name="q"
-          placeholder={copy.searchPlaceholder}
-          type="search"
-        />
-      </Surface>
+        <Input id="admin-search" placeholder={copy.searchPlaceholder} type="search" />
+      </TextField>
       <Button className="button button--secondary button--md" type="submit">
         {copy.searchSubmit}
       </Button>

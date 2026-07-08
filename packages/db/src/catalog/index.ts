@@ -5,4 +5,6 @@ export * from "./images";
 export * from "./partners";
 export * from "./seed";
 export * from "./seed-data";
+export * from "./seed-pagination";
+export * from "./seed-pagination-data";
 export * from "./validation";

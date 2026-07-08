@@ -6,6 +6,7 @@ import { AdminPartnersListPage } from "../../../../components/admin/AdminPartner
 import { getAdminCopy } from "../../../../lib/admin-content";
 import { renderAdminPage } from "../../../../lib/admin-render";
 import {
+  adminListPageRedirectPath,
   buildAdminListQueryString,
   guardAdminRoute,
   parseAdminListQuery,
@@ -40,14 +41,18 @@ export default createRoute(async (c) => {
 
   const listQuery = parseAdminListQuery(new URL(c.req.url));
   const { db } = getAuthOptions();
-  const [partners, total] = await Promise.all([
-    listPartners(db, {
-      q: listQuery.q || undefined,
-      limit: listQuery.limit,
-      offset: listQuery.offset,
-    }),
-    countPartners(db, { q: listQuery.q || undefined }),
-  ]);
+  const total = await countPartners(db, { q: listQuery.q || undefined });
+  const listPath = `/${guard.locale}/admin/partners`;
+  const redirectPath = adminListPageRedirectPath(listPath, listQuery, total);
+  if (redirectPath) {
+    return c.redirect(redirectPath, 302);
+  }
+
+  const partners = await listPartners(db, {
+    q: listQuery.q || undefined,
+    limit: listQuery.limit,
+    offset: listQuery.offset,
+  });
 
   const copy = getAdminCopy(guard.locale);
   const queryString = buildAdminListQueryString({

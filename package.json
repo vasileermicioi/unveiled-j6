@@ -13,7 +13,8 @@
     "typecheck": "bun run --filter '*' typecheck",
     "db:generate": "bun --filter @unveiled/db generate",
     "db:migrate": "bun --filter @unveiled/db migrate",
-    "seed:demo": "bun scripts/seed-demo.ts"
+    "seed:demo": "bun scripts/seed-demo.ts",
+    "seed:admin-pagination": "bun scripts/seed-admin-pagination.ts"
   },
   "catalog": {
     "react": "^19.0.0",
