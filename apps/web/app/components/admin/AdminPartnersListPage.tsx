@@ -2,7 +2,7 @@ import { Link } from "@heroui/react";
 import type { Partner } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
-import { buildAdminListQueryString } from "../../lib/admin-route";
+import { buildAdminListQueryString } from "../../lib/admin-list";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 

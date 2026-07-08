@@ -57,6 +57,7 @@ export const events = pgTable(
     targetAgeGroups: text("target_age_groups").array(),
     lat: numeric("lat"),
     lng: numeric("lng"),
+    mapZoom: integer("map_zoom"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

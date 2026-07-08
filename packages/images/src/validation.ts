@@ -7,19 +7,13 @@ import {
   MIN_IMAGE_HEIGHT,
   MIN_IMAGE_WIDTH,
 } from "./constants";
+import { ImageValidationError } from "./errors";
 
 const FORMAT_TO_MIME: Record<string, AcceptedMimeType> = {
   jpeg: "image/jpeg",
   png: "image/png",
   webp: "image/webp",
 };
-
-export class ImageValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ImageValidationError";
-  }
-}
 
 export type ValidatedImage = {
   width: number;
@@ -59,10 +53,4 @@ export async function validateImageBuffer(buffer: Buffer): Promise<ValidatedImag
   return { width, height, mimeType };
 }
 
-export function validateRemoteContentType(contentType: string | null): AcceptedMimeType {
-  const normalized = contentType?.split(";")[0]?.trim().toLowerCase() ?? "";
-  if (!ACCEPTED_MIME_TYPES.includes(normalized as AcceptedMimeType)) {
-    throw new ImageValidationError("Remote URL must point to a JPEG, PNG, or WebP image");
-  }
-  return normalized as AcceptedMimeType;
-}
+export { ImageValidationError } from "./errors";

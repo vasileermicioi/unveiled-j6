@@ -2,6 +2,7 @@ import type { SecretCodeMode, TicketType, TimingMode } from "@unveiled/db";
 
 export const MAX_SERIES_SLOTS = 52;
 export const MANUAL_SLOT_ROWS = 5;
+export const BUILDER_TIME_ROWS = 3;
 
 export type EventFormValues = {
   partnerId: string;
@@ -27,6 +28,7 @@ export type EventFormValues = {
   targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
+  mapZoom: number | null;
   imageUpload: Buffer | null;
 };
 
@@ -169,6 +171,30 @@ function parseInteger(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function parseOptionalInteger(value: string | undefined): number | null {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseBodyStringArrayField(
+  body: ParsedBody,
+  key: string,
+  asString: (value: string | File | (string | File)[] | undefined) => string | undefined,
+): string[] {
+  const value = body[key];
+  if (Array.isArray(value)) {
+    return value.filter(
+      (item): item is string => typeof item === "string" && item.trim().length > 0,
+    );
+  }
+
+  return parseStringArray(asString(value));
+}
+
 function parseTimingMode(value: string | undefined): TimingMode {
   return value === "ALL_DAY" ? "ALL_DAY" : "TIME_SLOT";
 }
@@ -284,6 +310,26 @@ export function expandSeriesSlotsFromBuilder(options: {
   return slots;
 }
 
+export function parseBuilderTimes(
+  body: ParsedBody,
+  asString: (value: string | File | (string | File)[] | undefined) => string | undefined,
+): string[] {
+  const times: string[] = [];
+
+  for (let index = 0; index < BUILDER_TIME_ROWS; index += 1) {
+    const value = asString(body[`builder_time_${index}`])?.trim();
+    if (value) {
+      times.push(value);
+    }
+  }
+
+  if (times.length > 0) {
+    return times;
+  }
+
+  return parseCommaSeparated(asString(body.builder_times) ?? undefined);
+}
+
 export function parseManualSeriesSlots(
   body: Record<string, string | File | (string | File)[]>,
   timingMode: TimingMode,
@@ -320,8 +366,8 @@ export async function parseEventFormBody(
     imageUpload = Buffer.from(await imageFile.arrayBuffer());
   }
 
-  const languages = parseStringArray(asString(body.languages) ?? undefined);
-  const targetAgeGroups = parseStringArray(asString(body.target_age_groups) ?? undefined);
+  const languages = parseBodyStringArrayField(body, "languages", asString);
+  const targetAgeGroups = parseBodyStringArrayField(body, "target_age_groups", asString);
 
   return {
     partnerId: asString(body.partner_id)?.trim() ?? "",
@@ -347,6 +393,7 @@ export async function parseEventFormBody(
     targetAgeGroups: targetAgeGroups.length > 0 ? targetAgeGroups : null,
     lat: asString(body.lat)?.trim() || null,
     lng: asString(body.lng)?.trim() || null,
+    mapZoom: parseOptionalInteger(asString(body.map_zoom)),
     imageUpload,
   };
 }
@@ -392,7 +439,7 @@ export function parseSeriesSlots(
     const weekdays = parseBodyStringArray(body, "builder_weekdays", asString).map((value) =>
       Number.parseInt(value, 10),
     );
-    const times = parseCommaSeparated(asString(body.builder_times) ?? undefined);
+    const times = parseBuilderTimes(body, asString);
 
     return expandSeriesSlotsFromBuilder({
       startDate: asString(body.builder_start)?.trim() ?? "",

@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   expandSeriesSlotsFromBuilder,
   parseBerlinDateTime,
+  parseBuilderTimes,
   parseEventFormBody,
   parseIsoSlotDates,
   parseSeriesSlots,
@@ -70,6 +71,41 @@ describe("admin-event-form helpers", () => {
     expect(values.imageUpload).toBeNull();
   });
 
+  test("parseEventFormBody accepts multi-select arrays and map zoom", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        address: "Main St 1",
+        neighborhood: "Mitte",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "2",
+        total_capacity: "15",
+        ticket_type: "SECRET_CODE",
+        secret_code_mode: "MANUAL",
+        secret_code: "JAZZ123",
+        languages: ["DE", "EN"],
+        target_age_groups: ["18-25", "26-35"],
+        lat: "52.520008",
+        lng: "13.404954",
+        map_zoom: "14",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.languages).toEqual(["DE", "EN"]);
+    expect(values.targetAgeGroups).toEqual(["18-25", "26-35"]);
+    expect(values.lat).toBe("52.520008");
+    expect(values.lng).toBe("13.404954");
+    expect(values.mapZoom).toBe(14);
+  });
+
   test("parseSeriesSlots expands builder weekdays", () => {
     const slots = parseSeriesSlots(
       {
@@ -77,13 +113,26 @@ describe("admin-event-form helpers", () => {
         builder_start: "2026-07-06",
         builder_end: "2026-07-12",
         builder_weekdays: ["1", "3"],
-        builder_times: "19:30",
+        builder_time_0: "19:30",
         timing_mode: "TIME_SLOT",
       },
       asString,
     );
 
     expect(slots.length).toBe(2);
+  });
+
+  test("parseBuilderTimes prefers builder_time fields over legacy comma input", () => {
+    expect(
+      parseBuilderTimes(
+        {
+          builder_time_0: "19:30",
+          builder_time_1: "21:00",
+          builder_times: "18:00",
+        },
+        asString,
+      ),
+    ).toEqual(["19:30", "21:00"]);
   });
 
   test("parseIsoSlotDates parses ISO strings", () => {

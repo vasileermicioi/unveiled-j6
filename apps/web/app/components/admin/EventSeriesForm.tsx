@@ -15,9 +15,18 @@ import {
 import { useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
-import { formatEventDateTime, MANUAL_SLOT_ROWS } from "../../lib/admin-route";
+import {
+  BUILDER_TIME_ROWS,
+  formatEventDateTime,
+  MANUAL_SLOT_ROWS,
+} from "../../lib/admin-event-form";
 import { AdminFormSelect } from "./AdminFormSelect";
 import { EventAdminBaseFields } from "./EventAdminBaseFields";
+import {
+  EventAdminDatePicker,
+  EventAdminDateTimeFields,
+  EventAdminTimeField,
+} from "./EventAdminDateFields";
 import type { EventFormDefaults, PartnerOption } from "./event-admin-types";
 
 type EventSeriesFormProps = {
@@ -127,29 +136,24 @@ export function EventSeriesForm({
       {slotMode === "manual" ? (
         <Surface className="flex flex-col gap-4" variant="transparent">
           {Array.from({ length: MANUAL_SLOT_ROWS }, (_, index) => (
-            <Surface className="grid gap-4 sm:grid-cols-2" key={index} variant="transparent">
-              <TextField fullWidth name={`slot_date_${index}`}>
-                <Label>{copy.eventDateLabel}</Label>
-                <Input type="date" />
-              </TextField>
-              <TextField fullWidth name={`slot_time_${index}`}>
-                <Label>{copy.eventTimeLabel}</Label>
-                <Input type="time" />
-              </TextField>
-            </Surface>
+            <EventAdminDateTimeFields
+              dateName={`slot_date_${index}`}
+              key={index}
+              locale={locale}
+              timeName={`slot_time_${index}`}
+            />
           ))}
         </Surface>
       ) : (
         <Surface className="flex flex-col gap-4" variant="transparent">
           <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
-            <TextField defaultValue={defaults?.eventDate} fullWidth name="builder_start">
-              <Label>{copy.builderStartLabel}</Label>
-              <Input type="date" />
-            </TextField>
-            <TextField fullWidth name="builder_end">
-              <Label>{copy.builderEndLabel}</Label>
-              <Input type="date" />
-            </TextField>
+            <EventAdminDatePicker
+              eventDate={defaults?.eventDate}
+              label={copy.builderStartLabel}
+              locale={locale}
+              name="builder_start"
+            />
+            <EventAdminDatePicker label={copy.builderEndLabel} locale={locale} name="builder_end" />
           </Surface>
           <AdminFormSelect
             defaultSelectedKeys={[]}
@@ -162,16 +166,23 @@ export function EventSeriesForm({
             placeholder={copy.selectPlaceholder}
             selectionMode="multiple"
           />
-          <TextField fullWidth name="builder_times">
-            <Label>{copy.builderTimesLabel}</Label>
-            <Input />
-            <Description>{copy.builderTimesHint}</Description>
-          </TextField>
           <TextField fullWidth name="builder_excluded">
             <Label>{copy.builderExcludedLabel}</Label>
             <Input />
             <Description>{copy.builderExcludedHint}</Description>
           </TextField>
+          <Surface className="flex flex-col gap-4" variant="transparent">
+            <Description>{copy.builderTimesHint}</Description>
+            {Array.from({ length: BUILDER_TIME_ROWS }, (_, index) => (
+              <EventAdminTimeField
+                defaultEmpty={index > 0}
+                key={index}
+                label={copy.builderTimeSlotLabel(index + 1)}
+                locale={locale}
+                name={`builder_time_${index}`}
+              />
+            ))}
+          </Surface>
         </Surface>
       )}
 

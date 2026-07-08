@@ -1,4 +1,5 @@
-import { getPartnerById, updatePartner } from "@unveiled/db";
+import { ensureImageVariantsUploaded, getPartnerById, updatePartner } from "@unveiled/db";
+import { buildVariantUrl } from "@unveiled/images/urls";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
@@ -16,6 +17,18 @@ import {
 import { getAuthOptions } from "../../../../../lib/auth";
 import type { Locale } from "../../../../../lib/locale";
 
+function buildPartnerLogoUrl(logoImageId: string | null): string | null {
+  if (!logoImageId) {
+    return null;
+  }
+
+  try {
+    return buildVariantUrl(logoImageId, "small-320.webp");
+  } catch {
+    return null;
+  }
+}
+
 function renderEditPage(
   c: Context,
   options: {
@@ -26,6 +39,7 @@ function renderEditPage(
       name: string;
       contactEmail: string;
       address: string;
+      currentLogoUrl?: string | null;
     };
   },
 ) {
@@ -45,6 +59,7 @@ function renderEditPage(
         cancelHref={partnerListPath(options.locale)}
         defaults={options.defaults}
         error={options.error ?? null}
+        isEdit
         locale={options.locale}
         submitLabel={copy.save}
       />
@@ -83,29 +98,35 @@ export const POST = createRoute(async (c) => {
     });
   }
 
+  let values: Awaited<ReturnType<typeof parsePartnerFormBody>> | undefined;
+
   try {
     const body = (await c.req.parseBody()) as Record<string, string | File | (string | File)[]>;
-    const values = await parsePartnerFormBody(body);
+    values = await parsePartnerFormBody(body);
 
     await updatePartner(db, partnerId, {
       name: values.name,
       address: values.address,
       contactEmail: values.contactEmail,
       logoUpload: values.logoUpload,
-      logoUrl: values.logoUrl,
       uploadedBy: guard.session.user.id,
     });
 
     return c.redirect(partnerListPath(guard.locale), 302);
   } catch (error) {
+    if (existing.logoImageId) {
+      await ensureImageVariantsUploaded(db, existing.logoImageId);
+    }
+
     return renderEditPage(c, {
       locale: guard.locale,
       partnerId,
       error: mapCatalogError(error, guard.locale),
       defaults: {
-        name: existing.name,
-        contactEmail: existing.contactEmail,
-        address: existing.address,
+        name: values?.name ?? existing.name,
+        contactEmail: values?.contactEmail ?? existing.contactEmail,
+        address: values?.address ?? existing.address,
+        currentLogoUrl: buildPartnerLogoUrl(existing.logoImageId),
       },
     });
   }
@@ -138,6 +159,10 @@ export default createRoute(async (c) => {
     });
   }
 
+  if (partner.logoImageId) {
+    await ensureImageVariantsUploaded(db, partner.logoImageId);
+  }
+
   return renderEditPage(c, {
     locale: guard.locale,
     partnerId,
@@ -145,6 +170,7 @@ export default createRoute(async (c) => {
       name: partner.name,
       contactEmail: partner.contactEmail,
       address: partner.address,
+      currentLogoUrl: buildPartnerLogoUrl(partner.logoImageId),
     },
   });
 });

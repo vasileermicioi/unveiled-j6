@@ -3,6 +3,8 @@
 import { Label, ListBox, Select } from "@heroui/react";
 import type { Key, ReactNode } from "react";
 
+import { AdminFormPopoverAnchor } from "./AdminFormPopoverAnchor";
+
 export type AdminFormSelectOption = {
   id: string;
   label: string;
@@ -36,10 +38,12 @@ function AdminFormSelectContent({
   label,
   options,
   placeholder,
+  portalContainer,
 }: {
   label: string;
   options: AdminFormSelectOption[];
   placeholder?: string;
+  portalContainer: HTMLElement | null;
 }): ReactNode {
   return (
     <>
@@ -52,7 +56,11 @@ function AdminFormSelectContent({
         </Select.Value>
         <Select.Indicator />
       </Select.Trigger>
-      <Select.Popover className="admin-form__select-popover">
+      <Select.Popover
+        UNSTABLE_portalContainer={portalContainer ?? undefined}
+        className="admin-form__select-popover"
+        placement="bottom start"
+      >
         <ListBox>
           {options.map((option) => (
             <ListBox.Item id={option.id} key={option.id} textValue={option.label}>
@@ -83,17 +91,26 @@ function AdminFormSelectSingle({
   };
 
   return (
-    <Select
-      className="admin-form__select"
-      defaultSelectedKey={defaultSelectedKey}
-      fullWidth
-      isRequired={isRequired}
-      name={name}
-      onSelectionChange={onSelectionChange ? handleSingleSelectionChange : undefined}
-      selectionMode="single"
-    >
-      <AdminFormSelectContent label={label} options={options} placeholder={placeholder} />
-    </Select>
+    <AdminFormPopoverAnchor>
+      {(portalContainer) => (
+        <Select
+          className="admin-form__select"
+          defaultSelectedKey={defaultSelectedKey}
+          fullWidth
+          isRequired={isRequired}
+          name={name}
+          onSelectionChange={onSelectionChange ? handleSingleSelectionChange : undefined}
+          selectionMode="single"
+        >
+          <AdminFormSelectContent
+            label={label}
+            options={options}
+            placeholder={placeholder}
+            portalContainer={portalContainer}
+          />
+        </Select>
+      )}
+    </AdminFormPopoverAnchor>
   );
 }
 
@@ -121,17 +138,26 @@ function AdminFormSelectMultiple({
   };
 
   return (
-    <Select
-      className="admin-form__select"
-      defaultValue={defaultSelectedKeys}
-      fullWidth
-      isRequired={isRequired}
-      name={name}
-      onSelectionChange={onSelectionChange ? handleMultipleSelectionChange : undefined}
-      selectionMode="multiple"
-    >
-      <AdminFormSelectContent label={label} options={options} placeholder={placeholder} />
-    </Select>
+    <AdminFormPopoverAnchor>
+      {(portalContainer) => (
+        <Select
+          className="admin-form__select"
+          defaultValue={defaultSelectedKeys}
+          fullWidth
+          isRequired={isRequired}
+          name={name}
+          onSelectionChange={onSelectionChange ? handleMultipleSelectionChange : undefined}
+          selectionMode="multiple"
+        >
+          <AdminFormSelectContent
+            label={label}
+            options={options}
+            placeholder={placeholder}
+            portalContainer={portalContainer}
+          />
+        </Select>
+      )}
+    </AdminFormPopoverAnchor>
   );
 }
 

@@ -2,14 +2,13 @@
 
 import {
   Button,
-  Description,
   Form,
   Input,
-  InputGroup,
   Label,
   Link,
   Paragraph,
   Surface,
+  TextArea,
   TextField,
 } from "@heroui/react";
 
@@ -17,11 +16,13 @@ import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
+import { PartnerLogoUpload } from "./PartnerLogoUpload";
+
 export type PartnerFormDefaults = {
   name?: string;
   contactEmail?: string;
   address?: string;
-  logoUrl?: string;
+  currentLogoUrl?: string | null;
 };
 
 type PartnerFormProps = {
@@ -31,6 +32,7 @@ type PartnerFormProps = {
   cancelHref: string;
   defaults?: PartnerFormDefaults;
   error?: string | null;
+  isEdit?: boolean;
 };
 
 export function PartnerForm({
@@ -40,6 +42,7 @@ export function PartnerForm({
   cancelHref,
   defaults,
   error = null,
+  isEdit = false,
 }: PartnerFormProps) {
   const copy = getAdminCopy(locale);
 
@@ -62,20 +65,16 @@ export function PartnerForm({
         <Input type="email" />
       </TextField>
 
-      <InputGroup fullWidth>
+      <TextField defaultValue={defaults?.address} fullWidth isRequired name="address">
         <Label>{copy.addressLabel}</Label>
-        <InputGroup.TextArea defaultValue={defaults?.address} name="address" rows={3} />
-      </InputGroup>
+        <TextArea rows={3} />
+      </TextField>
 
-      <Surface className="flex flex-col gap-4" variant="transparent">
-        <Paragraph className="onboarding-form__section-label">{copy.logoFileLabel}</Paragraph>
-        <Description>{copy.logoUrlHint}</Description>
-        <Input accept="image/jpeg,image/png,image/webp" name="logo" type="file" />
-        <TextField defaultValue={defaults?.logoUrl} fullWidth name="logo_url">
-          <Label>{copy.logoUrlLabel}</Label>
-          <Input type="url" />
-        </TextField>
-      </Surface>
+      <PartnerLogoUpload
+        currentLogoUrl={defaults?.currentLogoUrl}
+        isEdit={isEdit}
+        locale={locale}
+      />
 
       <Surface className="flex flex-col gap-3 sm:flex-row sm:items-center" variant="transparent">
         <Button className="button button--primary button--md sm:min-w-40" type="submit">

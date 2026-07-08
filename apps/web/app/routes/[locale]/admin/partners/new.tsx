@@ -21,9 +21,11 @@ export const POST = createRoute(async (c) => {
 
   const copy = getAdminCopy(guard.locale);
 
+  let values: Awaited<ReturnType<typeof parsePartnerFormBody>> | undefined;
+
   try {
     const body = (await c.req.parseBody()) as Record<string, string | File | (string | File)[]>;
-    const values = await parsePartnerFormBody(body);
+    values = await parsePartnerFormBody(body);
     const { db } = getAuthOptions();
 
     await createPartner(db, {
@@ -31,7 +33,6 @@ export const POST = createRoute(async (c) => {
       address: values.address,
       contactEmail: values.contactEmail,
       logoUpload: values.logoUpload,
-      logoUrl: values.logoUrl,
       uploadedBy: guard.session.user.id,
     });
 
@@ -49,6 +50,15 @@ export const POST = createRoute(async (c) => {
         <PartnerForm
           action={`/${guard.locale}/admin/partners/new`}
           cancelHref={partnerListPath(guard.locale)}
+          defaults={
+            values
+              ? {
+                  name: values.name,
+                  contactEmail: values.contactEmail,
+                  address: values.address,
+                }
+              : undefined
+          }
           error={mapCatalogError(error, guard.locale)}
           locale={guard.locale}
           submitLabel={copy.create}

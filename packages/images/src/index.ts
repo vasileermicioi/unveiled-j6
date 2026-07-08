@@ -1,11 +1,11 @@
 import { REMOTE_FETCH_TIMEOUT_MS } from "./constants";
+import { ImageValidationError, validateRemoteContentType } from "./errors";
 import {
   type GenerateVariantsOptions,
   generateImageVariants,
   type ProcessedImageResult,
 } from "./process";
 import { createS3Client, imageObjectsExist, readS3Env, uploadImageVariants } from "./s3";
-import { ImageValidationError, validateRemoteContentType } from "./validation";
 
 export type ProcessImageOptions = {
   uploadedBy?: string | null;
@@ -22,6 +22,7 @@ export {
   VARIANT_FILENAMES,
   type VariantFilename,
 } from "./constants";
+export { ImageValidationError, validateRemoteContentType } from "./errors";
 export type { ImageSource, ProcessedImageMetadata, ProcessedImageResult } from "./process";
 export {
   generateImageVariants,
@@ -36,7 +37,7 @@ export {
   uploadImageVariants,
 } from "./s3";
 export { buildVariantUrl, readImagePublicBaseUrl } from "./urls";
-export { ImageValidationError, validateImageBuffer } from "./validation";
+export { validateImageBuffer } from "./validation";
 
 async function processValidatedBuffer(
   buffer: Buffer,

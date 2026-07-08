@@ -1,14 +1,17 @@
 import type { AppSession } from "@unveiled/auth";
 import { CatalogValidationError } from "@unveiled/db";
-import { ImageValidationError } from "@unveiled/images";
+import { ImageValidationError } from "@unveiled/images/errors";
 import type { Context } from "hono";
 
-import { ADMIN_LIST_PAGE_SIZE, getAdminCopy, mapCatalogErrorCode } from "./admin-content";
+import { getAdminCopy, mapCatalogErrorCode } from "./admin-content";
 import { parseEventFormBody, parseSeriesSlots } from "./admin-event-form";
 import { getSession } from "./auth";
 import { buildLoginRedirectUrl } from "./auth-middleware";
 import type { Locale } from "./locale";
 import { isValidLocale } from "./locale";
+
+export type { AdminListQuery } from "./admin-list";
+export { buildAdminListQueryString, parseAdminListQuery } from "./admin-list";
 
 export type ParsedBody = Record<string, string | File | (string | File)[]>;
 
@@ -50,15 +53,7 @@ export type PartnerFormValues = {
   name: string;
   contactEmail: string;
   address: string;
-  logoUrl: string | null;
   logoUpload: Buffer | null;
-};
-
-export type AdminListQuery = {
-  q: string;
-  page: number;
-  offset: number;
-  limit: number;
 };
 
 function getLocaleParam(value: string | undefined): Locale {
@@ -101,25 +96,10 @@ export async function guardAdminRoute(c: Context): Promise<AdminGuardResult> {
   return { ok: true, session, locale };
 }
 
-export function parseAdminListQuery(url: URL): AdminListQuery {
-  const q = url.searchParams.get("q")?.trim() ?? "";
-  const rawPage = Number.parseInt(url.searchParams.get("page") ?? "1", 10);
-  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
-
-  return {
-    q,
-    page,
-    offset: (page - 1) * ADMIN_LIST_PAGE_SIZE,
-    limit: ADMIN_LIST_PAGE_SIZE,
-  };
-}
-
 export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFormValues> {
   const name = asString(body.name)?.trim() ?? "";
   const contactEmail = asString(body.contact_email)?.trim() ?? "";
   const address = asString(body.address)?.trim() ?? "";
-  const logoUrlRaw = asString(body.logo_url)?.trim();
-  const logoUrl = logoUrlRaw ? logoUrlRaw : null;
 
   const logoFile = asFile(body.logo);
   let logoUpload: Buffer | null = null;
@@ -131,7 +111,6 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
     name,
     contactEmail,
     address,
-    logoUrl,
     logoUpload,
   };
 }
@@ -164,17 +143,4 @@ export function mapCatalogError(error: unknown, locale: Locale): string {
   }
 
   return getAdminCopy(locale).genericError;
-}
-
-export function buildAdminListQueryString(options: { q?: string; page?: number }): string {
-  const params = new URLSearchParams();
-  if (options.q) {
-    params.set("q", options.q);
-  }
-  if (options.page && options.page > 1) {
-    params.set("page", String(options.page));
-  }
-
-  const query = params.toString();
-  return query ? `?${query}` : "";
 }

@@ -7,7 +7,7 @@ import {
   PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
   WEEKDAYS,
-} from "@unveiled/auth";
+} from "@unveiled/auth/constants";
 import type { Locale } from "./locale";
 import {
   getAgeGroupLabel,

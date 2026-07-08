@@ -52,6 +52,7 @@ export type CreateEventInput = {
   targetAgeGroups?: string[] | null;
   lat?: string | null;
   lng?: string | null;
+  mapZoom?: number | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
 };
@@ -81,6 +82,7 @@ export type UpdateEventInput = {
   targetAgeGroups?: string[] | null;
   lat?: string | null;
   lng?: string | null;
+  mapZoom?: number | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
 };
@@ -195,6 +197,7 @@ async function insertEventRow(
       targetAgeGroups: input.targetAgeGroups ?? null,
       lat: input.lat ?? null,
       lng: input.lng ?? null,
+      mapZoom: input.mapZoom ?? null,
     })
     .returning();
 
@@ -354,6 +357,7 @@ export async function updateEvent(
         input.targetAgeGroups !== undefined ? input.targetAgeGroups : existing.targetAgeGroups,
       lat: input.lat !== undefined ? input.lat : existing.lat,
       lng: input.lng !== undefined ? input.lng : existing.lng,
+      mapZoom: input.mapZoom !== undefined ? input.mapZoom : existing.mapZoom,
       updatedAt: new Date(),
     })
     .where(eq(events.id, eventId))

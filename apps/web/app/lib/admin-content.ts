@@ -1,6 +1,12 @@
-import type { CatalogErrorCode } from "@unveiled/db";
+import { AGE_GROUPS, EVENT_TYPES, INTERESTS, PREFERRED_LANGUAGES } from "@unveiled/auth/constants";
+import type { CatalogErrorCode } from "@unveiled/db/catalog/errors";
 
 import type { Locale } from "./locale";
+import {
+  getAgeGroupLabel,
+  getInterestLabel,
+  getPreferredLanguageLabel,
+} from "./onboarding-content";
 
 export const ADMIN_LIST_PAGE_SIZE = 25;
 export const ADMIN_PARTNERS_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE;
@@ -72,8 +78,8 @@ export type AdminCopy = {
   emailLabel: string;
   addressLabel: string;
   logoFileLabel: string;
-  logoUrlLabel: string;
-  logoUrlHint: string;
+  logoUploadHint: string;
+  logoUploadHintEdit: string;
   partnerLabel: string;
   titleLabel: string;
   descriptionLabel: string;
@@ -105,8 +111,7 @@ export type AdminCopy = {
   optionNo: string;
   languagesLabel: string;
   targetAgeGroupsLabel: string;
-  latLabel: string;
-  lngLabel: string;
+  mapLocationLabel: string;
   imageFileLabel: string;
   imageUploadHint: string;
   imageUploadHintEdit: string;
@@ -122,6 +127,7 @@ export type AdminCopy = {
   builderWeekdaysLabel: string;
   builderTimesLabel: string;
   builderTimesHint: string;
+  builderTimeSlotLabel: (slot: number) => string;
   builderExcludedLabel: string;
   builderExcludedHint: string;
   weekdayLabels: string[];
@@ -212,8 +218,9 @@ const copy: Record<Locale, AdminCopy> = {
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
     logoFileLabel: "Logo hochladen",
-    logoUrlLabel: "Logo-URL",
-    logoUrlHint: "Optional: Bilddatei oder URL — nicht beides gleichzeitig.",
+    logoUploadHint: "Optional: JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
+    logoUploadHintEdit:
+      "Optional: neues Logo hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten.",
     partnerLabel: "Partner",
     titleLabel: "Titel",
     descriptionLabel: "Beschreibung",
@@ -245,8 +252,7 @@ const copy: Record<Locale, AdminCopy> = {
     optionNo: "Nein",
     languagesLabel: "Sprachen",
     targetAgeGroupsLabel: "Altersgruppen",
-    latLabel: "Breitengrad",
-    lngLabel: "Längengrad",
+    mapLocationLabel: "Standort auf der Karte",
     imageFileLabel: "Event-Bild hochladen",
     imageUploadHint: "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
     imageUploadHintEdit:
@@ -262,7 +268,9 @@ const copy: Record<Locale, AdminCopy> = {
     builderEndLabel: "Enddatum",
     builderWeekdaysLabel: "Wochentage",
     builderTimesLabel: "Uhrzeiten",
-    builderTimesHint: "Kommagetrennt, z. B. 19:30, 21:00",
+    builderTimesHint:
+      "Bis zu drei Startzeiten pro ausgewähltem Wochentag. Leere Felder überspringen.",
+    builderTimeSlotLabel: (slot) => `Uhrzeit ${slot}`,
     builderExcludedLabel: "Ausgeschlossene Daten",
     builderExcludedHint: "Kommagetrennt, YYYY-MM-DD",
     weekdayLabels: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
@@ -351,8 +359,9 @@ const copy: Record<Locale, AdminCopy> = {
     emailLabel: "Contact email",
     addressLabel: "Address",
     logoFileLabel: "Upload logo",
-    logoUrlLabel: "Logo URL",
-    logoUrlHint: "Optional: upload a file or paste a URL — not both at once.",
+    logoUploadHint: "Optional: JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
+    logoUploadHintEdit:
+      "Optional: upload a new logo to replace the current one — leave empty to keep it.",
     partnerLabel: "Partner",
     titleLabel: "Title",
     descriptionLabel: "Description",
@@ -384,8 +393,7 @@ const copy: Record<Locale, AdminCopy> = {
     optionNo: "No",
     languagesLabel: "Languages",
     targetAgeGroupsLabel: "Age groups",
-    latLabel: "Latitude",
-    lngLabel: "Longitude",
+    mapLocationLabel: "Map location",
     imageFileLabel: "Upload event image",
     imageUploadHint: "JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
     imageUploadHintEdit:
@@ -401,7 +409,8 @@ const copy: Record<Locale, AdminCopy> = {
     builderEndLabel: "End date",
     builderWeekdaysLabel: "Weekdays",
     builderTimesLabel: "Times",
-    builderTimesHint: "Comma-separated, e.g. 19:30, 21:00",
+    builderTimesHint: "Up to three start times per selected weekday. Leave unused rows empty.",
+    builderTimeSlotLabel: (slot) => `Time ${slot}`,
     builderExcludedLabel: "Excluded dates",
     builderExcludedHint: "Comma-separated, YYYY-MM-DD",
     weekdayLabels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -495,4 +504,60 @@ export function mapCatalogErrorCode(
   }
 
   return adminCopy.genericError;
+}
+
+export type AdminSelectOption = {
+  id: string;
+  label: string;
+};
+
+export function getEventLanguageOptions(locale: Locale): AdminSelectOption[] {
+  return PREFERRED_LANGUAGES.map((id) => ({
+    id,
+    label: getPreferredLanguageLabel(locale, id),
+  }));
+}
+
+export function getEventAgeGroupOptions(locale: Locale): AdminSelectOption[] {
+  return AGE_GROUPS.map((id) => ({
+    id,
+    label: getAgeGroupLabel(locale, id),
+  }));
+}
+
+export function getEventCategoryOptions(locale: Locale): AdminSelectOption[] {
+  return INTERESTS.map((id) => ({
+    id,
+    label: getInterestLabel(locale, id),
+  }));
+}
+
+const eventTypeLabels: Record<Locale, Record<(typeof EVENT_TYPES)[number], string>> = {
+  de: {
+    Performance: "Performance",
+    Concert: "Konzert",
+    Tour: "Tour",
+    Talk: "Talk",
+    Workshop: "Workshop",
+    Screening: "Vorführung",
+    Reading: "Lesung",
+    Other: "Sonstiges",
+  },
+  en: {
+    Performance: "Performance",
+    Concert: "Concert",
+    Tour: "Tour",
+    Talk: "Talk",
+    Workshop: "Workshop",
+    Screening: "Screening",
+    Reading: "Reading",
+    Other: "Other",
+  },
+};
+
+export function getEventTypeOptions(locale: Locale): AdminSelectOption[] {
+  return EVENT_TYPES.map((id) => ({
+    id,
+    label: eventTypeLabels[locale][id],
+  }));
 }

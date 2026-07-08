@@ -4,7 +4,7 @@ import { Paragraph, Surface, Table } from "@heroui/react";
 import type { Event } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
-import { formatEventDateTime } from "../../lib/admin-route";
+import { formatEventDateTime } from "../../lib/admin-event-form";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 

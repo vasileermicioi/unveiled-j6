@@ -27,6 +27,7 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
     targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,
+    mapZoom: values.mapZoom,
     imageUpload: values.imageUpload,
     uploadedBy,
   };
@@ -56,6 +57,7 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
     targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,
+    mapZoom: values.mapZoom,
     imageUpload: values.imageUpload,
     uploadedBy,
   };

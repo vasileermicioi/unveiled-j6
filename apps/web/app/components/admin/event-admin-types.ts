@@ -24,6 +24,7 @@ export type EventFormDefaults = Partial<{
   targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
+  mapZoom: number | null;
   currentImageUrl: string | null;
 }>;
 

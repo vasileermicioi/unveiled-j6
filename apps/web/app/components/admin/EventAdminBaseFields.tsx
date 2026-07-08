@@ -1,12 +1,21 @@
 "use client";
 
-import { Description, Input, InputGroup, Label, Surface, TextField } from "@heroui/react";
+import { Description, Input, Label, Surface, TextArea, TextField } from "@heroui/react";
 import type { SecretCodeMode, TicketType, TimingMode } from "@unveiled/db";
 import { useState } from "react";
 
-import { getAdminCopy } from "../../lib/admin-content";
+import {
+  getAdminCopy,
+  getEventAgeGroupOptions,
+  getEventCategoryOptions,
+  getEventLanguageOptions,
+  getEventTypeOptions,
+} from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
+import { AdminFormNumberField } from "./AdminFormNumberField";
 import { AdminFormSelect } from "./AdminFormSelect";
+import { EventAdminDateTimeFields } from "./EventAdminDateFields";
+import { EventGeoPicker } from "./EventGeoPicker";
 import { EventImageUpload } from "./EventImageUpload";
 import type { EventFormDefaults, PartnerOption } from "./event-admin-types";
 
@@ -38,6 +47,10 @@ export function EventAdminBaseFields({
   isEdit = false,
 }: EventAdminBaseFieldsProps) {
   const copy = getAdminCopy(locale);
+  const languageOptions = getEventLanguageOptions(locale);
+  const ageGroupOptions = getEventAgeGroupOptions(locale);
+  const categoryOptions = getEventCategoryOptions(locale);
+  const eventTypeOptions = getEventTypeOptions(locale);
   const [ticketType, setTicketType] = useState<TicketType>(defaultTicketType(defaults));
   const [secretCodeMode, setSecretCodeMode] = useState<SecretCodeMode>(
     defaultSecretCodeMode(defaults),
@@ -59,10 +72,10 @@ export function EventAdminBaseFields({
         <Input />
       </TextField>
 
-      <InputGroup fullWidth>
+      <TextField defaultValue={defaults?.description} fullWidth isRequired name="description">
         <Label>{copy.descriptionLabel}</Label>
-        <InputGroup.TextArea defaultValue={defaults?.description} name="description" rows={4} />
-      </InputGroup>
+        <TextArea rows={4} />
+      </TextField>
 
       <TextField defaultValue={defaults?.address} fullWidth isRequired name="address">
         <Label>{copy.addressLabel}</Label>
@@ -75,14 +88,22 @@ export function EventAdminBaseFields({
       </TextField>
 
       <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
-        <TextField defaultValue={defaults?.category} fullWidth isRequired name="category">
-          <Label>{copy.categoryLabel}</Label>
-          <Input />
-        </TextField>
-        <TextField defaultValue={defaults?.eventType} fullWidth isRequired name="event_type">
-          <Label>{copy.eventTypeLabel}</Label>
-          <Input />
-        </TextField>
+        <AdminFormSelect
+          defaultSelectedKey={defaults?.category}
+          isRequired
+          label={copy.categoryLabel}
+          name="category"
+          options={categoryOptions}
+          placeholder={copy.selectPlaceholder}
+        />
+        <AdminFormSelect
+          defaultSelectedKey={defaults?.eventType}
+          isRequired
+          label={copy.eventTypeLabel}
+          name="event_type"
+          options={eventTypeOptions}
+          placeholder={copy.selectPlaceholder}
+        />
       </Surface>
 
       <TextField defaultValue={defaults?.tags?.join(", ")} fullWidth name="tags">
@@ -92,16 +113,12 @@ export function EventAdminBaseFields({
       </TextField>
 
       {includeDateTime ? (
-        <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
-          <TextField defaultValue={defaults?.eventDate} fullWidth isRequired name="event_date">
-            <Label>{copy.eventDateLabel}</Label>
-            <Input type="date" />
-          </TextField>
-          <TextField defaultValue={defaults?.eventTime} fullWidth name="event_time">
-            <Label>{copy.eventTimeLabel}</Label>
-            <Input type="time" />
-          </TextField>
-        </Surface>
+        <EventAdminDateTimeFields
+          eventDate={defaults?.eventDate}
+          eventTime={defaults?.eventTime}
+          isDateRequired
+          locale={locale}
+        />
       ) : null}
 
       <AdminFormSelect
@@ -116,24 +133,20 @@ export function EventAdminBaseFields({
       />
 
       <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
-        <TextField
-          defaultValue={defaults?.creditPrice != null ? String(defaults.creditPrice) : "1"}
-          fullWidth
+        <AdminFormNumberField
+          defaultValue={defaults?.creditPrice ?? 1}
           isRequired
+          label={copy.creditPriceLabel}
+          minValue={1}
           name="credit_price"
-        >
-          <Label>{copy.creditPriceLabel}</Label>
-          <Input inputMode="numeric" type="number" />
-        </TextField>
-        <TextField
-          defaultValue={defaults?.totalCapacity != null ? String(defaults.totalCapacity) : "10"}
-          fullWidth
+        />
+        <AdminFormNumberField
+          defaultValue={defaults?.totalCapacity ?? 10}
           isRequired
+          label={copy.capacityLabel}
+          minValue={1}
           name="total_capacity"
-        >
-          <Label>{copy.capacityLabel}</Label>
-          <Input inputMode="numeric" type="number" />
-        </TextField>
+        />
       </Surface>
 
       <AdminFormSelect
@@ -214,32 +227,28 @@ export function EventAdminBaseFields({
           ]}
           placeholder={copy.selectPlaceholder}
         />
-        <TextField
-          defaultValue={defaults?.languages?.join(", ") ?? undefined}
-          fullWidth
+        <AdminFormSelect
+          defaultSelectedKeys={defaults?.languages ?? []}
+          label={copy.languagesLabel}
           name="languages"
-        >
-          <Label>{copy.languagesLabel}</Label>
-          <Input />
-        </TextField>
-        <TextField
-          defaultValue={defaults?.targetAgeGroups?.join(", ") ?? undefined}
-          fullWidth
+          options={languageOptions}
+          placeholder={copy.selectPlaceholder}
+          selectionMode="multiple"
+        />
+        <AdminFormSelect
+          defaultSelectedKeys={defaults?.targetAgeGroups ?? []}
+          label={copy.targetAgeGroupsLabel}
           name="target_age_groups"
-        >
-          <Label>{copy.targetAgeGroupsLabel}</Label>
-          <Input />
-        </TextField>
-        <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
-          <TextField defaultValue={defaults?.lat ?? undefined} fullWidth name="lat">
-            <Label>{copy.latLabel}</Label>
-            <Input />
-          </TextField>
-          <TextField defaultValue={defaults?.lng ?? undefined} fullWidth name="lng">
-            <Label>{copy.lngLabel}</Label>
-            <Input />
-          </TextField>
-        </Surface>
+          options={ageGroupOptions}
+          placeholder={copy.selectPlaceholder}
+          selectionMode="multiple"
+        />
+        <EventGeoPicker
+          lat={defaults?.lat}
+          lng={defaults?.lng}
+          locale={locale}
+          mapZoom={defaults?.mapZoom}
+        />
       </Surface>
 
       <EventImageUpload

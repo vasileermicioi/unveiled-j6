@@ -46,6 +46,7 @@ export function eventToFormDefaults(event: Event): EventFormDefaults & { partner
     targetAgeGroups: event.targetAgeGroups,
     lat: event.lat,
     lng: event.lng,
+    mapZoom: event.mapZoom,
     currentImageUrl,
   };
 }
@@ -75,6 +76,7 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,
+    mapZoom: values.mapZoom,
     currentImageUrl: null,
   };
 }

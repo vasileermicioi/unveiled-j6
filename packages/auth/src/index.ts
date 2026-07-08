@@ -1,3 +1,17 @@
+export {
+  AGE_GROUPS,
+  type AgeGroup,
+  DISTRICTS,
+  EVENT_TYPES,
+  type EventType,
+  INTERESTS,
+  MAX_DISTANCE_MAX,
+  MAX_DISTANCE_MIN,
+  MOODS,
+  PREFERRED_LANGUAGES,
+  TIMING_OPTIONS,
+  WEEKDAYS,
+} from "./constants";
 export { optionalSession, requireAuth, requireRole } from "./guards";
 export type {
   AgeStepPayload,
@@ -8,21 +22,12 @@ export type {
   TimingStepPayload,
 } from "./onboarding";
 export {
-  AGE_GROUPS,
   berlinIsoNow,
   completeOnboarding,
-  DISTRICTS,
   getOnboardingStepPath,
-  INTERESTS,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
-  MOODS,
   OnboardingValidationError,
-  PREFERRED_LANGUAGES,
   saveOnboardingStep,
-  TIMING_OPTIONS,
   validateOnboardingStepPayload,
-  WEEKDAYS,
 } from "./onboarding";
 export { provisionNewUser } from "./provision-user";
 export { getSession } from "./session";
