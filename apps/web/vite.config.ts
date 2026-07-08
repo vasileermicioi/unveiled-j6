@@ -157,6 +157,7 @@ export default defineConfig(({ mode }) => {
         },
         client: {
           input: ["/app/client.ts", "/app/styles/globals.css"],
+          jsxImportSource: "react",
         },
       }),
       fixHonoxSsrExternals(),
