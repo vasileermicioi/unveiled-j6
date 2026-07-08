@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
 
 /** Runtime env keys mirrored from Cloudflare bindings or local process.env. */
 export const RUNTIME_ENV_KEYS = [
@@ -52,6 +52,26 @@ export function getEnvVar(key: RuntimeEnvKey): string | undefined {
 
   const proc = globalThis.process as { env?: Record<string, string | undefined> } | undefined;
   return proc?.env?.[key];
+}
+
+/** Prefer Worker `c.env` bindings, then the per-request runtime store / process.env. */
+export function resolveEnvVar(
+  key: RuntimeEnvKey,
+  bindings?: RuntimeEnv | null,
+): string | undefined {
+  const fromBindings = bindings?.[key];
+  if (typeof fromBindings === "string" && fromBindings.length > 0) {
+    return fromBindings;
+  }
+
+  return getEnvVar(key);
+}
+
+export function resolveEnvVarFromContext(
+  c: Context<{ Bindings: RuntimeEnv }>,
+  key: RuntimeEnvKey,
+): string | undefined {
+  return resolveEnvVar(key, c.env);
 }
 
 export function hasRuntimeAuthConfig(): boolean {

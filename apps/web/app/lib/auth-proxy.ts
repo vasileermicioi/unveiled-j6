@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 
-import { getEnvVar } from "./runtime-env";
+import { type RuntimeEnv, resolveEnvVarFromContext } from "./runtime-env";
 
 const FORWARD_REQUEST_HEADERS = [
   "accept",
@@ -12,8 +12,8 @@ const FORWARD_REQUEST_HEADERS = [
   "user-agent",
 ] as const;
 
-function getAuthBaseUrl(): string | null {
-  const authUrl = getEnvVar("AUTH_URL");
+function getAuthBaseUrl(c: Context<{ Bindings: RuntimeEnv }>): string | null {
+  const authUrl = resolveEnvVarFromContext(c, "AUTH_URL");
   if (!authUrl) {
     return null;
   }
@@ -27,10 +27,13 @@ function buildTargetUrl(authBaseUrl: string, request: Request): string {
   return suffix ? `${authBaseUrl}/${suffix}${query}` : `${authBaseUrl}${query}`;
 }
 
-export async function authProxyHandler(c: Context) {
-  const authBaseUrl = getAuthBaseUrl();
+export async function authProxyHandler(c: Context<{ Bindings: RuntimeEnv }>) {
+  const authBaseUrl = getAuthBaseUrl(c);
   if (!authBaseUrl) {
-    return c.text("AUTH_URL is not configured", 503);
+    return c.text(
+      "AUTH_URL is not configured. Set it as a Worker runtime secret (not a build variable).",
+      503,
+    );
   }
 
   const targetUrl = buildTargetUrl(authBaseUrl, c.req.raw);

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { getEnvVar, setRuntimeEnv } from "./runtime-env";
+import { getEnvVar, resolveEnvVar, setRuntimeEnv } from "./runtime-env";
 
 describe("runtime-env", () => {
   test("reads Cloudflare bindings from the runtime store", () => {
@@ -18,5 +18,15 @@ describe("runtime-env", () => {
 
     const { getSiteUrl } = await import("./site-config");
     expect(getSiteUrl()).toBe("https://unveiled-j6.deepcode.xyz");
+  });
+
+  test("resolveEnvVar prefers Worker bindings over the runtime store", () => {
+    setRuntimeEnv({ AUTH_URL: "https://from-store.example/auth" });
+
+    expect(
+      resolveEnvVar("AUTH_URL", {
+        AUTH_URL: "https://from-bindings.example/auth",
+      }),
+    ).toBe("https://from-bindings.example/auth");
   });
 });

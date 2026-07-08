@@ -10,7 +10,7 @@ import {
 import { createDb, type Db } from "@unveiled/db";
 import type { Context, MiddlewareHandler } from "hono";
 
-import { getEnvVar } from "./runtime-env";
+import { getEnvVar, resolveEnvVarFromContext, type RuntimeEnv } from "./runtime-env";
 
 let db: Db | null = null;
 
@@ -44,8 +44,11 @@ export async function getSession(c: Context): Promise<AppSession | null> {
   return resolveSession(c, getAuthOptions());
 }
 
-export async function getSessionIfConfigured(c: Context): Promise<AppSession | null> {
-  if (!getEnvVar("DATABASE_URL") || !getEnvVar("AUTH_URL")) {
+export async function getSessionIfConfigured(c: Context<{ Bindings: RuntimeEnv }>): Promise<AppSession | null> {
+  if (
+    !resolveEnvVarFromContext(c, "DATABASE_URL") ||
+    !resolveEnvVarFromContext(c, "AUTH_URL")
+  ) {
     return null;
   }
 

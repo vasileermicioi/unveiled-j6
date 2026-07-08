@@ -77,11 +77,30 @@ Connect the GitHub repo in **Workers & Pages → your Worker → Settings → Bu
 
 Do **not** use `npx wrangler deploy` alone — Wrangler will refuse monorepo roots. The root `deploy:workers` script runs `bunx wrangler deploy --config apps/web/wrangler.toml`.
 
-**Build variables** (Settings → Variables and secrets):
+**Build variables** (Settings → Variables and secrets → **Build**):
 
 | Variable | Value |
 |---|---|
 | `BUN_VERSION` | `1.3.14` (matches root `packageManager`; avoids Bun 1.2.x `catalog:` resolution bugs) |
+
+**Runtime secrets** (Settings → Variables and secrets → **Secrets** — required for auth and DB):
+
+| Secret | Phase | Notes |
+|---|---|---|
+| `DATABASE_URL` | 2+ | Neon Postgres connection string |
+| `AUTH_URL` | 2+ | Neon Auth API base URL (no trailing slash) |
+| `SITE_URL` | 1+ | Public site origin, e.g. `https://unveiled-j6.deepcode.xyz` (no trailing slash) |
+
+`AUTH_URL`, `DATABASE_URL`, and `SITE_URL` must be **runtime secrets** on the Worker named in `apps/web/wrangler.toml` (`unveiled-j6`). Build-time variables are not available to `fetch()` handlers — if login returns **503** on `/api/auth/*`, the Worker is missing `AUTH_URL` at runtime.
+
+Set secrets via dashboard or from repo-root `.env`:
+
+```bash
+cd apps/web
+bunx wrangler secret put DATABASE_URL --config wrangler.toml
+bunx wrangler secret put AUTH_URL --config wrangler.toml
+bunx wrangler secret put SITE_URL --config wrangler.toml
+```
 
 Cloudflare runs `bun install --frozen-lockfile` automatically before your build command. Package versions are pinned explicitly in each `package.json` (not `catalog:`) so install works on CI.
 
