@@ -66,6 +66,9 @@ export async function processImageFromBuffer(
   });
 }
 
+export const REMOTE_IMAGE_USER_AGENT =
+  "UnveiledBerlin/1.0 (image pipeline; contact: support@unveiled.berlin)";
+
 export async function processImageFromUrl(
   url: string,
   options: ProcessImageOptions = {},
@@ -77,6 +80,9 @@ export async function processImageFromUrl(
     const response = await fetch(url, {
       redirect: "follow",
       signal: controller.signal,
+      headers: {
+        "User-Agent": REMOTE_IMAGE_USER_AGENT,
+      },
     });
 
     if (!response.ok) {

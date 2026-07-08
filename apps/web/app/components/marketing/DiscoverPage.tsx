@@ -1,25 +1,26 @@
 import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { EventCard, type EventCardItem } from "@unveiled/ui";
 
+import type { DiscoverPartnerTile } from "../../lib/catalog-mappers";
 import type { DiscoverContent } from "../../lib/content/types";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
-import {
-  MOCK_DISCOVER_EVENTS,
-  MOCK_DISCOVER_PARTNERS,
-  MOCK_DISCOVER_STATS,
-} from "../../lib/mock/discover-data";
-import { EventCardPreview } from "./EventCardPreview";
-import { SectionCard } from "./SectionCard";
+import { SectionCard } from "../marketing/SectionCard";
+
+export type DiscoverStats = {
+  eventCount: number;
+  partnerCount: number;
+};
 
 type DiscoverPageProps = {
   content: DiscoverContent;
   locale: Locale;
+  events: EventCardItem[];
+  partners: DiscoverPartnerTile[];
+  stats: DiscoverStats;
 };
 
-export function DiscoverPage({ content, locale }: DiscoverPageProps) {
-  const events = MOCK_DISCOVER_EVENTS.slice(0, 6);
-  const partners = MOCK_DISCOVER_PARTNERS.slice(0, 8);
-
+export function DiscoverPage({ content, locale, events, partners, stats }: DiscoverPageProps) {
   return (
     <Surface
       className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:gap-12 lg:px-8"
@@ -54,9 +55,7 @@ export function DiscoverPage({ content, locale }: DiscoverPageProps) {
               <Paragraph className="uppercase tracking-wide" size="xs">
                 {content.hero.stats.liveFeed.label}
               </Paragraph>
-              <Paragraph className="discover-stat-tile__value">
-                {MOCK_DISCOVER_STATS.eventCount}
-              </Paragraph>
+              <Paragraph className="discover-stat-tile__value">{stats.eventCount}</Paragraph>
               <Paragraph color="muted" size="sm">
                 {content.hero.stats.liveFeed.suffix}
               </Paragraph>
@@ -68,9 +67,7 @@ export function DiscoverPage({ content, locale }: DiscoverPageProps) {
               <Paragraph className="uppercase tracking-wide" size="xs">
                 {content.hero.stats.partnerVenues.label}
               </Paragraph>
-              <Paragraph className="discover-stat-tile__value">
-                {MOCK_DISCOVER_STATS.partnerCount}
-              </Paragraph>
+              <Paragraph className="discover-stat-tile__value">{stats.partnerCount}</Paragraph>
               <Paragraph color="muted" size="sm">
                 {content.hero.stats.partnerVenues.suffix}
               </Paragraph>
@@ -102,7 +99,12 @@ export function DiscoverPage({ content, locale }: DiscoverPageProps) {
         {events.length > 0 ? (
           <Surface className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" variant="transparent">
             {events.map((event) => (
-              <EventCardPreview event={event} key={event.id} locale={locale} />
+              <EventCard
+                ctaHref={localizedPath(locale, `events/${event.id}`)}
+                event={event}
+                key={event.id}
+                locale={locale}
+              />
             ))}
           </Surface>
         ) : (
@@ -158,9 +160,19 @@ export function DiscoverPage({ content, locale }: DiscoverPageProps) {
         <Surface className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" variant="transparent">
           {partners.map((partner) => (
             <Surface className="discover-partner-tile" key={partner.id} variant="transparent">
-              <Paragraph aria-hidden="true" className="discover-partner-tile__initial">
-                {partner.initial}
-              </Paragraph>
+              {partner.logoUrl ? (
+                <img
+                  alt=""
+                  className="discover-partner-tile__logo"
+                  decoding="async"
+                  loading="lazy"
+                  src={partner.logoUrl}
+                />
+              ) : (
+                <Paragraph aria-hidden="true" className="discover-partner-tile__initial">
+                  {partner.initial}
+                </Paragraph>
+              )}
               <Paragraph className="font-semibold uppercase">{partner.name}</Paragraph>
               <Paragraph color="muted" size="sm">
                 {partner.address}

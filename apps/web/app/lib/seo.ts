@@ -1,3 +1,6 @@
+import type { Event } from "@unveiled/db";
+import { buildVariantUrl } from "@unveiled/images/urls";
+
 import type {
   DiscoverContent,
   FaqContent,
@@ -105,6 +108,88 @@ export function discoverPageMeta(content: DiscoverContent, pageTitle: string) {
   return {
     title: pageTitle,
     description: content.hero.subheadline,
+  };
+}
+
+function truncateDescription(text: string, maxLength = 160): string {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+  return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+export function eventDetailPageMeta(
+  event: Event,
+  referenceDate: Date = new Date(),
+): {
+  title: string;
+  description: string;
+  ogImage?: string;
+  robots?: string;
+} {
+  const title = `${event.title} at ${event.partnerName}`;
+  const description = truncateDescription(event.description);
+  let ogImage: string | undefined;
+
+  try {
+    ogImage = buildVariantUrl(event.imageId, "og-1200x630.webp");
+  } catch {
+    ogImage = undefined;
+  }
+
+  const bookable = event.remainingCapacity > 0 && event.dateTime > referenceDate;
+
+  return {
+    title,
+    description,
+    ogImage,
+    robots: bookable ? undefined : "noindex, follow",
+  };
+}
+
+export type EventJsonLd = {
+  "@context": "https://schema.org";
+  "@type": "Event";
+  name: string;
+  startDate: string;
+  description: string;
+  image: string;
+  location: {
+    "@type": "Place";
+    name: string;
+    address: string;
+  };
+  organizer: {
+    "@type": "Organization";
+    name: string;
+  };
+};
+
+export function buildEventJsonLd(event: Event): EventJsonLd {
+  let image = "";
+  try {
+    image = buildVariantUrl(event.imageId, "hero-1920.webp");
+  } catch {
+    image = getDefaultOgImage();
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.title,
+    startDate: event.dateTime.toISOString(),
+    description: event.description,
+    image,
+    location: {
+      "@type": "Place",
+      name: event.partnerName,
+      address: event.address,
+    },
+    organizer: {
+      "@type": "Organization",
+      name: event.partnerName,
+    },
   };
 }
 

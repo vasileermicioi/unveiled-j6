@@ -41,6 +41,26 @@ export function isProtectedPrefix(segment: string | null): segment is ProtectedP
   return (PROTECTED_PREFIXES as readonly string[]).includes(segment);
 }
 
+const PUBLIC_EVENT_DETAIL_RESERVED = new Set(["book", "waitlist", "map", "series"]);
+
+export function isPublicEventDetailPath(pathname: string, locale: Locale): boolean {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length !== 3) {
+    return false;
+  }
+
+  if (segments[0] !== locale || segments[1] !== "events") {
+    return false;
+  }
+
+  const eventId = segments[2];
+  if (!eventId) {
+    return false;
+  }
+
+  return !PUBLIC_EVENT_DETAIL_RESERVED.has(eventId);
+}
+
 export function buildLoginRedirectUrl(locale: Locale, pathname: string): string {
   const params = new URLSearchParams({ returnTo: pathname });
   return `/${locale}/login?${params.toString()}`;
@@ -57,6 +77,10 @@ export function evaluateAuthRedirect(options: {
 
   const segment = getLocalePathSegment(options.pathname, options.locale);
   if (!isProtectedPrefix(segment)) {
+    return null;
+  }
+
+  if (segment === "events" && isPublicEventDetailPath(options.pathname, options.locale)) {
     return null;
   }
 

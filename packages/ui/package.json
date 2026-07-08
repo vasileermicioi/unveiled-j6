@@ -1,0 +1,22 @@
+{
+  "name": "@unveiled/ui",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@heroui/react": "^3.2.1",
+    "@unveiled/images": "workspace:*",
+    "react": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@unveiled/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

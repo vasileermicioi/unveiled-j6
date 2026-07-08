@@ -25,6 +25,7 @@
     "@unveiled/auth": "workspace:*",
     "@unveiled/db": "workspace:*",
     "@unveiled/images": "workspace:*",
+    "@unveiled/ui": "workspace:*",
     "better-auth": "^1.6.23",
     "clsx": "^2.1.1",
     "hono": "^4.7.0",

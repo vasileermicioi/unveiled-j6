@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, ilike, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
 import {
@@ -106,6 +106,30 @@ export async function getEventById(db: Db, eventId: string): Promise<Event | nul
       where: eq(events.id, eventId),
     })) ?? null
   );
+}
+
+export async function getPublicEventById(db: Db, eventId: string): Promise<Event | null> {
+  return getEventById(db, eventId);
+}
+
+export type ListUpcomingEventsOptions = {
+  limit?: number;
+  now?: Date;
+};
+
+export async function listUpcomingEvents(
+  db: Db,
+  options: ListUpcomingEventsOptions = {},
+): Promise<Event[]> {
+  const now = options.now ?? new Date();
+  const limit = options.limit ?? 6;
+
+  return db
+    .select()
+    .from(events)
+    .where(gte(events.dateTime, now))
+    .orderBy(asc(events.dateTime))
+    .limit(limit);
 }
 
 function eventSearchCondition(q?: string): SQL | undefined {

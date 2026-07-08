@@ -1,6 +1,6 @@
 import { type AppSession, getOnboardingStepPath } from "@unveiled/auth";
 
-import { getLocalePathSegment, isAuthConfigured } from "./auth-middleware";
+import { getLocalePathSegment, isAuthConfigured, isPublicEventDetailPath } from "./auth-middleware";
 import type { Locale } from "./locale";
 
 export const MEMBER_APP_PREFIXES = ["events", "saved", "bookings", "profile"] as const;
@@ -51,6 +51,10 @@ export function evaluateOnboardingRedirect(options: {
   }
 
   if (isMemberAppPrefix(segment)) {
+    if (segment === "events" && isPublicEventDetailPath(options.pathname, options.locale)) {
+      return null;
+    }
+
     const stepPath = getOnboardingStepPath(user.profile, user.behavior);
     return `/${options.locale}${stepPath}`;
   }

@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildLoginRedirectUrl, evaluateAuthRedirect, isProtectedPrefix } from "./auth-middleware";
+import {
+  buildLoginRedirectUrl,
+  evaluateAuthRedirect,
+  isProtectedPrefix,
+  isPublicEventDetailPath,
+} from "./auth-middleware";
 
 describe("auth-middleware", () => {
   const originalDatabaseUrl = process.env.DATABASE_URL;
@@ -27,6 +32,29 @@ describe("auth-middleware", () => {
         session: null,
       }),
     ).toBe("/de/login?returnTo=%2Fde%2Fevents");
+
+    process.env.DATABASE_URL = originalDatabaseUrl;
+    process.env.AUTH_URL = originalAuthUrl;
+  });
+
+  test("isPublicEventDetailPath allows guest event detail", () => {
+    expect(isPublicEventDetailPath("/de/events/abc-123", "de")).toBe(true);
+    expect(isPublicEventDetailPath("/de/events", "de")).toBe(false);
+    expect(isPublicEventDetailPath("/de/events/abc/book", "de")).toBe(false);
+    expect(isPublicEventDetailPath("/de/events/waitlist", "de")).toBe(false);
+  });
+
+  test("evaluateAuthRedirect allows public event detail without session", () => {
+    process.env.DATABASE_URL = "postgres://example";
+    process.env.AUTH_URL = "https://auth.example";
+
+    expect(
+      evaluateAuthRedirect({
+        locale: "de",
+        pathname: "/de/events/f20ef640-5c63-4f16-9335-62277def8087",
+        session: null,
+      }),
+    ).toBeNull();
 
     process.env.DATABASE_URL = originalDatabaseUrl;
     process.env.AUTH_URL = originalAuthUrl;

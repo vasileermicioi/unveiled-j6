@@ -1,4 +1,4 @@
-import { createDb, runDemoSeed } from "@unveiled/db";
+import { createDb, resetCatalogData, runDemoSeed } from "@unveiled/db";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -7,11 +7,30 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
+const args = process.argv.slice(2);
+const force = args.includes("--reset") || args.includes("--force");
+const skipUpload = args.includes("--skip-upload");
+
 const db = createDb(databaseUrl);
-const result = await runDemoSeed(db);
+
+if (force) {
+  const cleared = await resetCatalogData(db, { skipBucket: skipUpload });
+  console.log(
+    `Catalog reset: removed ${cleared.eventsDeleted} events and ${cleared.partnersDeleted} partners.`,
+  );
+}
+
+const result = await runDemoSeed(db, { force, skipBucket: skipUpload });
 
 if (result === "seeded") {
-  console.log("Demo seed complete: created sample partners and events.");
+  console.log(
+    "Demo seed complete: created Berlin cultural partners and events with Wikimedia Commons images.",
+  );
+  if (skipUpload) {
+    console.log("Note: --skip-upload was set; image rows exist but R2 objects were not written.");
+  }
 } else {
-  console.log("Demo seed skipped: partners or events already exist.");
+  console.log(
+    "Demo seed skipped: partners or events already exist. Pass --reset to replace catalog data.",
+  );
 }

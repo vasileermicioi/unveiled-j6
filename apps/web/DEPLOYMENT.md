@@ -346,7 +346,7 @@ Phase 4 is complete when staging supports the admin → public catalog loop with
 ### Catalog demo script
 
 1. `bun run db:migrate` against staging `DATABASE_URL`.
-2. Sign in as ADMIN → `/de/admin`. If DB empty, run **Seed demo data** or `bun run seed:demo`.
+2. Sign in as ADMIN → `/de/admin`. If DB empty, run **Seed demo data** or `bun run seed:demo`. To replace an existing catalog with fresh Berlin venue demo data: `bun run seed:demo -- --reset` (deletes all partners and events first; also removes pagination seed rows).
 3. Create a partner with logo (upload or URL) → appears on `/de/admin/partners`.
 4. Create an event with image → listed on `/de/admin/events`.
 5. Open `/de/discover` — event appears in preview grid (up to 6 upcoming).
@@ -361,7 +361,30 @@ bun run typecheck
 bun run build
 cd packages/db && bun test    # when catalog domain tests exist
 cd packages/images && bun test
+cd packages/ui && bun run typecheck
 ```
+
+Public catalog surfaces (`@unveiled/ui` EventCard, `/discover` live grid, `/events/:id` detail) require `DATABASE_URL` and `IMAGE_PUBLIC_BASE_URL` for full smoke tests locally.
+
+### Demo seed images (Wikimedia Commons)
+
+`bun run seed:demo` inserts six real Berlin cultural partners (Volksbühne, Deutsches Theater, Schaubühne, Gropius Bau, HKW, Konzerthaus) with venue-matched events. Images are fetched from **Wikimedia Commons** via `processImageFromUrl` and stored as six WebP variants in R2.
+
+```bash
+# Fresh catalog on empty DB
+bun run seed:demo
+
+# Replace existing partners/events (destructive)
+bun run seed:demo -- --reset
+
+# DB rows only, skip R2 upload (faster local smoke without images)
+bun run seed:demo -- --reset --skip-upload
+
+# Find new Commons image URLs for seed-data.ts
+bun scripts/resolve-commons-images.ts "Deutsches Theater Berlin building"
+```
+
+Image filenames and licenses are listed in `packages/db/src/catalog/seed-data.ts`. Prefer CC/public-domain Commons files; verify attribution on the file description page before changing production seed data.
 
 ## Phase 2 step 03 verification
 

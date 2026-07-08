@@ -8,6 +8,7 @@ import {
   createEvent,
   deleteEvent,
   listEvents,
+  listUpcomingEvents,
   recalculateRemainingCapacity,
   updateEvent,
 } from "./events";
@@ -334,6 +335,91 @@ describe("catalog integration", () => {
       for (const partner of created) {
         await deletePartner(db, partner.id, { skipBucket: true });
       }
+    }
+  });
+
+  test("listUpcomingEvents returns future events ordered by date_time asc", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const image = await createTestImageBuffer();
+    const partner = await createPartner(db, {
+      name: "Upcoming Test Venue",
+      address: "Teststraße 2, Berlin",
+      contactEmail: `upcoming-${crypto.randomUUID()}@example.com`,
+      skipUpload: true,
+    });
+
+    const laterDate = new Date(Date.now() + 172_800_000);
+    const soonerDate = new Date(Date.now() + 86_400_000);
+    const pastDate = new Date(Date.now() - 86_400_000);
+
+    const laterEvent = await createEvent(db, {
+      partnerId: partner.id,
+      title: "Later Upcoming Event",
+      description: "Description",
+      address: "Teststraße 2, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: laterDate,
+      creditPrice: 1,
+      secretCode: "LATERCODE",
+      imageUpload: image,
+      skipUpload: true,
+    });
+
+    const soonerEvent = await createEvent(db, {
+      partnerId: partner.id,
+      title: "Sooner Upcoming Event",
+      description: "Description",
+      address: "Teststraße 2, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: soonerDate,
+      creditPrice: 1,
+      secretCode: "SOONCODE",
+      imageUpload: image,
+      skipUpload: true,
+    });
+
+    const pastEvent = await createEvent(db, {
+      partnerId: partner.id,
+      title: "Past Event",
+      description: "Description",
+      address: "Teststraße 2, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: pastDate,
+      creditPrice: 1,
+      secretCode: "PASTCODE",
+      imageUpload: image,
+      skipUpload: true,
+    });
+
+    try {
+      const upcoming = await listUpcomingEvents(db, { limit: 10, now: new Date() });
+      const ids = upcoming.map((row) => row.id);
+
+      expect(ids).toContain(soonerEvent.id);
+      expect(ids).toContain(laterEvent.id);
+      expect(ids).not.toContain(pastEvent.id);
+
+      const soonerIndex = ids.indexOf(soonerEvent.id);
+      const laterIndex = ids.indexOf(laterEvent.id);
+      expect(soonerIndex).toBeGreaterThanOrEqual(0);
+      expect(laterIndex).toBeGreaterThanOrEqual(0);
+      expect(soonerIndex).toBeLessThan(laterIndex);
+    } finally {
+      await deleteEvent(db, laterEvent.id, { skipBucket: true });
+      await deleteEvent(db, soonerEvent.id, { skipBucket: true });
+      await deleteEvent(db, pastEvent.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
     }
   });
 });
