@@ -4,7 +4,7 @@ compatibility_flags = ["nodejs_compat"]
 main = "dist/index.js"
 
 [assets]
-directory = "dist/public"
+directory = "dist"
 binding = "ASSETS"
 
 [observability]

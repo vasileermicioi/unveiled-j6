@@ -75,7 +75,7 @@ Connect the GitHub repo in **Workers & Pages → your Worker → Settings → Bu
 | **Build command** | `bun run build` |
 | **Deploy command** | `bun run deploy:workers` |
 
-Do **not** use `npx wrangler deploy` from the repo root — `wrangler` is not on PATH there and `wrangler.toml` lives in `apps/web/`. The root `deploy:workers` script runs `bunx wrangler deploy` in the `@unveiled/web` workspace.
+Do **not** use `npx wrangler deploy` alone — Wrangler will refuse monorepo roots. The root `deploy:workers` script runs `bunx wrangler deploy --config apps/web/wrangler.toml`.
 
 **Build variables** (Settings → Variables and secrets):
 

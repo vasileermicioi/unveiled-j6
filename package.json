@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "bun --filter @unveiled/web dev",
     "build": "bun --filter @unveiled/web build",
-    "deploy:workers": "bun --filter @unveiled/web deploy:workers",
+    "deploy:workers": "bunx wrangler deploy --config apps/web/wrangler.toml",
     "css:build": "bun --filter @unveiled/web css:build",
     "lint": "biome check .",
     "typecheck": "bun run --filter '*' typecheck",
