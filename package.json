@@ -10,6 +10,7 @@
     "dev": "bun --filter @unveiled/web dev",
     "build": "bun --filter @unveiled/web build",
     "deploy:workers": "bunx wrangler deploy --config apps/web/wrangler.toml",
+    "secrets:workers": "bun scripts/set-worker-secrets.ts",
     "lint": "biome check .",
     "typecheck": "bun run --filter '*' typecheck",
     "db:generate": "bun --filter @unveiled/db generate",

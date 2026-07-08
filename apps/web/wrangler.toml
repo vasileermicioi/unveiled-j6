@@ -3,6 +3,9 @@ compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 main = "dist/index.js"
 
+[vars]
+SITE_URL = "https://unveiled-j6.deepcode.xyz"
+
 [assets]
 directory = "dist"
 binding = "ASSETS"
