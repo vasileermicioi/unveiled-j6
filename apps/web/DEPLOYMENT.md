@@ -98,16 +98,16 @@ Do **not** use `npx wrangler deploy` alone — Wrangler will refuse monorepo roo
 | `AUTH_URL` | 2+ | Neon Auth API base URL (no trailing slash) |
 | `SITE_URL` | 1+ | Public site origin, e.g. `https://unveiled-j6.deepcode.xyz` (no trailing slash) |
 
-`AUTH_URL` and `DATABASE_URL` must be **runtime secrets** on the Worker named in `apps/web/wrangler.toml` (`unveiled-j6`). Build-time variables are not available to `fetch()` handlers — if login returns **503** on `/api/auth/*`, the Worker is missing `AUTH_URL` at runtime.
+`SITE_URL`, `AUTH_URL`, and the six R2 vars are set in `apps/web/wrangler.toml` `[vars]` for staging (mirrored from repo-root `.env`). `DATABASE_URL` is also in `[vars]` for this staging Worker — redeploy after changes (`bun run deploy:workers`). For production, prefer `wrangler secret put` / dashboard secrets instead of committing credentials.
 
-**Verify after setting secrets:**
+**Verify after deploy:**
 
 ```bash
 curl https://unveiled-j6.deepcode.xyz/api/health/runtime
 # {"configured":{"AUTH_URL":true,"DATABASE_URL":true,"SITE_URL":true}}
 ```
 
-`SITE_URL` is also set in `wrangler.toml` `[vars]` for this staging host; `AUTH_URL` and `DATABASE_URL` still require secrets.
+If any value is `false`, check `apps/web/wrangler.toml` `[vars]` and redeploy.
 
 Set secrets via dashboard or from repo-root `.env`:
 
