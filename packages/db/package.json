@@ -16,12 +16,12 @@
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
     "@unveiled/images": "workspace:*",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "^0.40.0"
   },
   "devDependencies": {
     "@unveiled/config": "workspace:*",
     "drizzle-kit": "^0.30.5",
     "sharp": "^0.33.5",
-    "typescript": "catalog:"
+    "typescript": "^5.8.0"
   }
 }

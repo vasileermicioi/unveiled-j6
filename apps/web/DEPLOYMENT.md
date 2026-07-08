@@ -65,6 +65,26 @@ wrangler secret put S3_BUCKET
 wrangler secret put IMAGE_PUBLIC_BASE_URL
 ```
 
+## Cloudflare Git import (Workers Builds)
+
+Connect the GitHub repo in **Workers & Pages → your Worker → Settings → Builds**. This monorepo must build from the **repository root** (not `apps/web` alone — `workspace:*` deps require the root workspace).
+
+| Setting | Value |
+|---|---|
+| **Root directory** | `/` (leave empty / repo root) |
+| **Build command** | `bun run build` |
+| **Deploy command** | `cd apps/web && npx wrangler deploy` |
+
+**Build variables** (Settings → Variables and secrets):
+
+| Variable | Value |
+|---|---|
+| `BUN_VERSION` | `1.3.14` (matches root `packageManager`; avoids Bun 1.2.x `catalog:` resolution bugs) |
+
+Cloudflare runs `bun install --frozen-lockfile` automatically before your build command. Package versions are pinned explicitly in each `package.json` (not `catalog:`) so install works on CI.
+
+**After first deploy:** set `SITE_URL` to your `*.workers.dev` URL (or custom domain). Run `bun run db:migrate` and `bun run seed:demo` locally before expecting catalog content on staging.
+
 ## Environment variables
 
 **Local development:** Bun loads a gitignored `.env` at the **repository root** (see [`.env.example`](../../.env.example) for a safe template). Do not commit secrets.

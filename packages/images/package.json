@@ -17,6 +17,6 @@
   },
   "devDependencies": {
     "@unveiled/config": "workspace:*",
-    "typescript": "catalog:"
+    "typescript": "^5.8.0"
   }
 }

@@ -11,12 +11,12 @@
   "dependencies": {
     "@heroui/react": "^3.2.1",
     "@unveiled/images": "workspace:*",
-    "react": "catalog:"
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@unveiled/config": "workspace:*",
-    "typescript": "catalog:"
+    "typescript": "^5.8.0"
   }
 }
