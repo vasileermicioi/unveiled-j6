@@ -16,7 +16,12 @@ const sipDistDir = path.dirname(sipMainPath);
 const sipEmscriptenPath = path.join(sipDistDir, "sip.js");
 const sipWorkerdPath = path.join(sipDistDir, "workerd.js");
 const sipWasmPath = path.join(sipDistDir, "sip.wasm");
+const requireFromSip = createRequire(path.join(sipDistDir, "index.js"));
+const webpDecWasmPath = requireFromSip.resolve("@jsquash/webp/codec/dec/webp_dec.wasm");
+const avifDecWasmPath = requireFromSip.resolve("@jsquash/avif/codec/dec/avif_dec.wasm");
 const sipEmscriptenDevStub = path.join(repoRoot, "packages/images/src/sip-emscripten-dev-stub.ts");
+const sipWorkersInitPath = path.join(repoRoot, "packages/images/src/sip-workers-init.ts");
+const sipWorkersInitStub = path.join(repoRoot, "packages/images/src/sip-workers-init-stub.ts");
 
 const serverEntry = path.join(path.dirname(fileURLToPath(import.meta.url)), "app/server.ts");
 
@@ -150,6 +155,16 @@ function workersWasmAsModule(): Plugin {
         // Always use the real sip dist wasm — package aliases to workerd.js must not
         // make `./sip.wasm` resolve as `…/workerd.js/sip.wasm`.
         absolute = sipWasmPath;
+      } else if (
+        bare === "@jsquash/webp/codec/dec/webp_dec.wasm" ||
+        path.basename(bare) === "webp_dec.wasm"
+      ) {
+        absolute = webpDecWasmPath;
+      } else if (
+        bare === "@jsquash/avif/codec/dec/avif_dec.wasm" ||
+        path.basename(bare) === "avif_dec.wasm"
+      ) {
+        absolute = avifDecWasmPath;
       } else if (path.isAbsolute(bare)) {
         absolute = bare;
       } else if (bare.startsWith(".") || bare.startsWith("/")) {
@@ -216,9 +231,15 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       dedupe: ["react", "react-dom"],
       alias: {
-        // More-specific wasm alias must come before the package→workerd.js alias.
+        // More-specific wasm aliases must come before the package→workerd.js alias.
         "@standardagents/sip/dist/sip.wasm": sipWasmPath,
+        "@jsquash/webp/codec/dec/webp_dec.wasm": webpDecWasmPath,
+        "@jsquash/avif/codec/dec/avif_dec.wasm": avifDecWasmPath,
         "@unveiled/sip-emscripten": workerSsrBuild ? sipEmscriptenPath : sipEmscriptenDevStub,
+        // Replace the stub package export with the real Workers init (codec + sync sip wasm).
+        ...(workerSsrBuild
+          ? { "@unveiled/images/sip-workers-init": sipWorkersInitPath }
+          : {}),
         ...(workerSsrBuild ? { "@standardagents/sip": sipWorkerdPath } : {}),
       },
       conditions: workerSsrBuild

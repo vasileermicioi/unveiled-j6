@@ -14,7 +14,14 @@ Target custom domain: `https://staging.unveiled.berlin` (configure in Cloudflare
 
 **Cloudflare Workers** — HonoX SSR via `@hono/vite-build/cloudflare-workers` and `wrangler.toml`.
 
-**Image processing** uses **`@standardagents/sip`** (WASM) on **Cloudflare Workers and local Node/Bun** (`bun run dev`, `bun run seed:demo`, staging/production Workers). Admin multipart image uploads succeed on the Workers URL in-request — no separate Node-only upload host is required. The Workers production build must resolve sip’s **`workerd`** entry (static `import` of `sip.wasm` as Wrangler `CompiledWasm`) — Vite’s default SSR `node` condition is overridden in `apps/web/vite.config.ts`. If uploads fail with “both async and sync fetching of the wasm failed”, the Worker is using Emscripten’s fetch path instead of CompiledWasm; rebuild/redeploy after confirming `dist/index.js` contains `import … from "./sip.wasm"` and `dist/sip.wasm` is present.
+**Image processing** uses **`@standardagents/sip`** (WASM) on **Cloudflare Workers and local Node/Bun** (`bun run dev`, `bun run seed:demo`, staging/production Workers). Admin multipart image uploads succeed on the Workers URL in-request — no separate Node-only upload host is required.
+
+Workers build requirements (`apps/web/vite.config.ts`):
+- Resolve sip’s **`workerd`** entry (not the Node entry — Vite SSR defaults to `node` conditions).
+- Ship **`sip.wasm`**, **`webp_dec.wasm`**, and **`avif_dec.wasm`** as Wrangler `CompiledWasm` siblings (jsquash codecs are preloaded via `__SIP_CODEC_WASM__`).
+- Use sync `WebAssembly.Instance` for sip’s `__SIP_WASM_LOADER__` so Emscripten never falls through to fetch/XHR.
+
+If uploads fail with “both async and sync fetching of the wasm failed”, rebuild/redeploy and confirm `dist/` contains those three `.wasm` files and `dist/index.js` has static `import … from "./….wasm"`.
 
 **Migrating from the former WebP / sharp pipeline:** variant filenames are now `*.jpg` only. Existing R2 objects under `images/{id}/*.webp` (and DB rows that still resolve to those URLs) will 404 until you **re-seed** (`bun run seed:demo` on an empty catalog, or with `--reset` / force against a disposable DB) and/or **re-upload** partner logos and event images in admin. There is no automatic WebP→JPEG migration job.
 
