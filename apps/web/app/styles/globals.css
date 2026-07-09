@@ -444,6 +444,14 @@
     color: var(--surface-control-fg-hover);
   }
 
+  /* Nested HeroUI typography must follow button fg (incl. hover invert). */
+  .button .typography,
+  .button .typography--color-default,
+  .link.button .typography,
+  .link.button .typography--color-default {
+    color: inherit;
+  }
+
   .button--primary,
   .button--secondary,
   .link.button.button--primary,
