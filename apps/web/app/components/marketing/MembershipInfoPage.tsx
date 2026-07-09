@@ -14,9 +14,7 @@ export function MembershipInfoPage({ content }: MembershipInfoPageProps) {
     >
       <Card className="membership-info w-full max-w-lg text-center">
         <Card.Header className="flex flex-col items-center gap-3">
-          <Card.Title>
-            <Heading level={1}>{content.title}</Heading>
-          </Card.Title>
+          <Heading level={1}>{content.title}</Heading>
           <Card.Description>{content.subtitle}</Card.Description>
         </Card.Header>
 

@@ -130,9 +130,7 @@ export function EventDetailPage({ event, locale }: EventDetailPageProps) {
 
       <Card>
         <Card.Header>
-          <Card.Title>
-            <Heading level={2}>{listLabel(locale)}</Heading>
-          </Card.Title>
+          <Card.Title>{listLabel(locale)}</Card.Title>
         </Card.Header>
         <Card.Content className="flex flex-col gap-4">
           <Paragraph>{event.description}</Paragraph>
@@ -177,9 +175,7 @@ export function EventDetailPage({ event, locale }: EventDetailPageProps) {
 
       <Card>
         <Card.Header>
-          <Card.Title>
-            <Heading level={2}>{locale === "de" ? "Ort" : "Location"}</Heading>
-          </Card.Title>
+          <Card.Title>{locale === "de" ? "Ort" : "Location"}</Card.Title>
         </Card.Header>
         <Card.Content className="flex flex-col gap-3">
           <Paragraph>{event.address}</Paragraph>

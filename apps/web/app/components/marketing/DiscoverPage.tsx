@@ -136,9 +136,7 @@ export function DiscoverPage({ content, locale, events, partners, stats }: Disco
 
         <Card className="discover-callout">
           <Card.Header>
-            <Card.Title>
-              <Heading level={3}>{content.categories.callout.title}</Heading>
-            </Card.Title>
+            <Card.Title>{content.categories.callout.title}</Card.Title>
             <Card.Description>{content.categories.callout.body}</Card.Description>
           </Card.Header>
           <Card.Content>

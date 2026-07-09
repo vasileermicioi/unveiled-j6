@@ -1,4 +1,4 @@
-import { Card, Heading } from "@heroui/react";
+import { Card } from "@heroui/react";
 import type { ReactNode } from "react";
 
 type SectionCardProps = {
@@ -20,11 +20,7 @@ export function SectionCard({
     <Card className={className} variant={inverted ? "secondary" : "default"}>
       {title || description ? (
         <Card.Header>
-          {title ? (
-            <Card.Title>
-              <Heading level={2}>{title}</Heading>
-            </Card.Title>
-          ) : null}
+          {title ? <Card.Title>{title}</Card.Title> : null}
           {description ? <Card.Description>{description}</Card.Description> : null}
         </Card.Header>
       ) : null}

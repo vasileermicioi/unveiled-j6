@@ -1,4 +1,4 @@
-import { Button, Card, Chip, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Button, Card, Chip, Link, Paragraph, Surface } from "@heroui/react";
 
 import { buildCardImageSrc, buildCardImageSrcSet } from "./image-urls";
 import type { CatalogLocale, EventCardItem, EventCardViewerState } from "./types";
@@ -133,11 +133,7 @@ export function EventCard({
         </Surface>
       </Card.Header>
       <Card.Content className="flex flex-col gap-2">
-        <Card.Title>
-          <Heading className="event-card__title" level={3}>
-            {event.title}
-          </Heading>
-        </Card.Title>
+        <Card.Title className="event-card__title">{event.title}</Card.Title>
         <Paragraph color="muted" size="sm">
           {event.partnerName}
         </Paragraph>

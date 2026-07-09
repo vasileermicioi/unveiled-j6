@@ -1,4 +1,4 @@
-import { Card, Heading, Link, Paragraph } from "@heroui/react";
+import { Card, Link, Paragraph } from "@heroui/react";
 
 import FaqAccordion from "../../islands/FaqAccordion";
 import type { FaqContent } from "../../lib/content/types";
@@ -17,9 +17,7 @@ export function HelpSection({ section, compact = false }: HelpSectionProps) {
         <Paragraph className="mb-3 uppercase tracking-wide" color="muted" size="sm">
           {section.eyebrow}
         </Paragraph>
-        <Card.Title>
-          <Heading level={2}>{section.headline}</Heading>
-        </Card.Title>
+        <Card.Title>{section.headline}</Card.Title>
         <Card.Description>
           <Link className="help-section__email" href={`mailto:${section.supportEmail}`}>
             {section.supportEmail}

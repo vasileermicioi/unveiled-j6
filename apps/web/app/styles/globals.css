@@ -148,18 +148,12 @@
   }
 
   .card__title {
-    font-size: inherit;
-    font-weight: inherit;
-    line-height: inherit;
-  }
-
-  .card__title .typography--h2 {
     font-size: 1.125rem;
     font-weight: 700;
   }
 
   @media (min-width: 768px) {
-    .card__title .typography--h2 {
+    .card__title {
       font-size: 1.25rem;
     }
   }
@@ -199,13 +193,13 @@
     color: var(--color-brand-cream);
   }
 
-  .card--secondary .card__title .typography--h2 {
+  .card--secondary .card__title {
     margin-bottom: 1rem;
     font-size: 1.5rem;
   }
 
   @media (min-width: 768px) {
-    .card--secondary .card__title .typography--h2 {
+    .card--secondary .card__title {
       font-size: 1.875rem;
     }
   }
@@ -225,7 +219,7 @@
     }
   }
 
-  .help-section--compact .card__title .typography--h2 {
+  .help-section--compact .card__title {
     font-size: 1rem;
   }
 
@@ -258,13 +252,13 @@
     }
   }
 
-  .help-section .card__title .typography--h2 {
+  .help-section .card__title {
     font-size: 1.5rem;
     font-weight: 900;
   }
 
   @media (min-width: 768px) {
-    .help-section .card__title .typography--h2 {
+    .help-section .card__title {
       font-size: 2rem;
     }
   }
@@ -356,7 +350,6 @@
   }
 
   .card--secondary .card__title,
-  .card--secondary .card__title .typography,
   .card--secondary .value-tile,
   .card--secondary .value-tile .typography--color-default {
     color: var(--color-brand-cream);

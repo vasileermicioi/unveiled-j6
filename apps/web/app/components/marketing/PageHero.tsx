@@ -16,9 +16,7 @@ export function PageHero({ eyebrow, headline, description, className }: PageHero
             {eyebrow}
           </Paragraph>
         ) : null}
-        <Card.Title>
-          <Heading level={1}>{headline}</Heading>
-        </Card.Title>
+        <Heading level={1}>{headline}</Heading>
         {description ? <Card.Description>{description}</Card.Description> : null}
       </Card.Header>
     </Card>
