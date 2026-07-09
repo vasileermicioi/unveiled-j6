@@ -14,7 +14,7 @@ export const Guest: Story = () => (
 Guest.storyName = "AppShell / Guest";
 
 export const SignedInUser: Story = () => (
-  <AppShell locale={storyLocale} pathname={storyPathname} session={mockUserSession}>
+  <AppShell locale={storyLocale} pathname={storyPathname} savedCount={3} session={mockUserSession}>
     <Surface className="mx-auto max-w-7xl px-4 py-12" variant="transparent">
       <Heading level={2}>Sample page content</Heading>
     </Surface>

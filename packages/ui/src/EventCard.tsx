@@ -1,4 +1,4 @@
-import { Button, Card, Chip, Link, Paragraph, Surface } from "@heroui/react";
+import { Button, Card, Chip, Form, Input, Link, Paragraph, Surface } from "@heroui/react";
 
 import { buildCardImageSrc, buildCardImageSrcSet } from "./image-urls";
 import type { CatalogLocale, EventCardItem, EventCardViewerState } from "./types";
@@ -8,7 +8,12 @@ export type EventCardProps = {
   locale: CatalogLocale;
   viewer?: EventCardViewerState;
   ctaHref?: string;
+  /** Client-only toggle (stories / islands). Prefer `bookmarkFormAction` for SSR. */
   onBookmarkToggle?: () => void;
+  /** When set, bookmark renders as a POST form submit (SSR-only mutations). */
+  bookmarkFormAction?: string;
+  /** Hidden `returnTo` field for the bookmark form. */
+  bookmarkReturnTo?: string;
 };
 
 function formatEventDate(dateTime: Date, locale: CatalogLocale): string {
@@ -52,11 +57,12 @@ function bookCtaLabel(locale: CatalogLocale): string {
   return locale === "de" ? "Bin dabei" : "Book Now";
 }
 
+/** Inventory: saveThis / savedThis — Merken/Gemerkt, Save/Saved */
 function saveAriaLabel(saved: boolean, locale: CatalogLocale): string {
   if (locale === "de") {
-    return saved ? "Gespeichertes Event" : "Event speichern";
+    return saved ? "Gemerkt" : "Merken";
   }
-  return saved ? "Saved event" : "Save event";
+  return saved ? "Saved" : "Save";
 }
 
 function availabilityLabel(remainingCapacity: number, locale: CatalogLocale): string {
@@ -89,12 +95,16 @@ export function EventCard({
   viewer = { kind: "guest" },
   ctaHref,
   onBookmarkToggle,
+  bookmarkFormAction,
+  bookmarkReturnTo,
 }: EventCardProps) {
   const soldOut = event.remainingCapacity <= 0;
   const ctaLabel = resolveEventCardCta(viewer, soldOut, locale);
   const isGuest = viewer.kind === "guest";
   const saved = viewer.kind === "member" ? Boolean(viewer.saved) : false;
-  const bookmarkDisabled = isGuest || !onBookmarkToggle;
+  const useFormBookmark = Boolean(bookmarkFormAction) && !isGuest;
+  const bookmarkDisabled = isGuest || (!useFormBookmark && !onBookmarkToggle);
+  const ariaLabel = saveAriaLabel(saved, locale);
 
   let imageSrc = "";
   let imageSrcSet = "";
@@ -105,6 +115,20 @@ export function EventCard({
     imageSrc = "";
     imageSrcSet = "";
   }
+
+  const bookmarkButton = (
+    <Button
+      aria-label={ariaLabel}
+      className="event-card__bookmark"
+      isDisabled={bookmarkDisabled}
+      onPress={useFormBookmark || bookmarkDisabled ? undefined : onBookmarkToggle}
+      size="sm"
+      type={useFormBookmark ? "submit" : "button"}
+      variant="ghost"
+    >
+      {saved ? "★" : "☆"}
+    </Button>
+  );
 
   return (
     <Card className="event-card">
@@ -145,16 +169,16 @@ export function EventCard({
           {creditLabel(event.creditPrice, locale)}
         </Paragraph>
         <Surface className="event-card__actions" variant="transparent">
-          <Button
-            aria-label={saveAriaLabel(saved, locale)}
-            className="event-card__bookmark"
-            isDisabled={bookmarkDisabled}
-            onPress={bookmarkDisabled ? undefined : onBookmarkToggle}
-            size="sm"
-            variant="ghost"
-          >
-            {saved ? "★" : "☆"}
-          </Button>
+          {useFormBookmark && bookmarkFormAction ? (
+            <Form action={bookmarkFormAction} method="post">
+              {bookmarkReturnTo ? (
+                <Input name="returnTo" type="hidden" value={bookmarkReturnTo} />
+              ) : null}
+              {bookmarkButton}
+            </Form>
+          ) : (
+            bookmarkButton
+          )}
           <Link className="button button--secondary button--md" href={ctaHref ?? "#"}>
             {ctaLabel}
           </Link>

@@ -1,7 +1,8 @@
+import { listSavedEventIds } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { NotFoundPage } from "../../components/NotFoundPage";
-import { getSessionIfConfigured } from "../../lib/auth";
+import { getAuthOptions, getSessionIfConfigured } from "../../lib/auth";
 import { evaluateAuthRedirect } from "../../lib/auth-middleware";
 import { isValidLocale, type Locale } from "../../lib/locale";
 import { evaluateOnboardingRedirect } from "../../lib/onboarding-middleware";
@@ -22,6 +23,7 @@ export default createRoute(async (c, next) => {
   const pathname = url.pathname;
   const session = await getSessionIfConfigured(c);
   c.set("session", session);
+  c.set("savedCount", 0);
 
   const redirectTo = evaluateAuthRedirect({
     locale: locale as Locale,
@@ -43,6 +45,16 @@ export default createRoute(async (c, next) => {
 
     if (onboardingRedirect) {
       return c.redirect(onboardingRedirect, 302);
+    }
+
+    if (session.user.role === "USER") {
+      try {
+        const { db } = getAuthOptions();
+        const ids = await listSavedEventIds(db, session.user.id);
+        c.set("savedCount", ids.length);
+      } catch {
+        c.set("savedCount", 0);
+      }
     }
   }
 

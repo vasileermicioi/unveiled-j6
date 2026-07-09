@@ -62,6 +62,21 @@ export function isPublicEventDetailPath(pathname: string, locale: Locale): boole
   return !PUBLIC_EVENT_DETAIL_RESERVED.has(eventId);
 }
 
+/** Guest-reachable save/unsave POST paths so the route can redirect with form `returnTo`. */
+export function isEventSaveUnsavePath(pathname: string, locale: Locale): boolean {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length !== 4) {
+    return false;
+  }
+
+  if (segments[0] !== locale || segments[1] !== "events") {
+    return false;
+  }
+
+  const action = segments[3];
+  return action === "save" || action === "unsave";
+}
+
 export function buildLoginRedirectUrl(locale: Locale, pathname: string): string {
   const params = new URLSearchParams({ returnTo: pathname });
   return `/${locale}/login?${params.toString()}`;
@@ -83,7 +98,11 @@ export function evaluateAuthRedirect(options: {
     return null;
   }
 
-  if (segment === "events" && isPublicEventDetailPath(options.pathname, options.locale)) {
+  if (
+    segment === "events" &&
+    (isPublicEventDetailPath(options.pathname, options.locale) ||
+      isEventSaveUnsavePath(options.pathname, options.locale))
+  ) {
     return null;
   }
 

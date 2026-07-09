@@ -1,5 +1,6 @@
 import "@hono/react-renderer";
 
+import type { AppSession } from "../lib/auth";
 import type { Locale } from "../lib/locale";
 
 declare global {
@@ -16,6 +17,13 @@ declare global {
       IMAGE_PUBLIC_BASE_URL?: string;
     };
   };
+}
+
+declare module "hono" {
+  interface ContextVariableMap {
+    session: AppSession | null;
+    savedCount: number;
+  }
 }
 
 declare module "@hono/react-renderer" {

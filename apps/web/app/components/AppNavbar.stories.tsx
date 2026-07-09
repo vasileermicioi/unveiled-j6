@@ -9,7 +9,12 @@ export const Guest: Story = () => (
 Guest.storyName = "AppNavbar / Guest";
 
 export const SignedInUser: Story = () => (
-  <AppNavbar locale={storyLocale} pathname={storyPathname} session={mockUserSession} />
+  <AppNavbar
+    locale={storyLocale}
+    pathname={storyPathname}
+    savedCount={2}
+    session={mockUserSession}
+  />
 );
 SignedInUser.storyName = "AppNavbar / Signed-in USER";
 

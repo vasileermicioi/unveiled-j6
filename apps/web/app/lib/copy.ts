@@ -29,6 +29,8 @@ export type ShellCopy = {
   login: string;
   signup: string;
   logout: string;
+  /** Inventory `mySaves` — USER navbar Saved link */
+  mySaves: string;
   formatCredits: (credits: number) => string;
   homeCta: string;
   notFoundTitle: string;
@@ -48,6 +50,7 @@ const copy: Record<Locale, ShellCopy> = {
     login: "Anmelden",
     signup: "Registrieren",
     logout: "Abmelden",
+    mySaves: "Gemerkt",
     formatCredits: (credits) => `${credits} Credits`,
     homeCta: "Entdecken",
     notFoundTitle: "Seite nicht gefunden",
@@ -84,6 +87,7 @@ const copy: Record<Locale, ShellCopy> = {
     login: "Log in",
     signup: "Sign up",
     logout: "Log out",
+    mySaves: "Saved",
     formatCredits: (credits) => `${credits} credits`,
     homeCta: "Discover",
     notFoundTitle: "Page not found",

@@ -23,6 +23,10 @@ type AppNavbarMenuProps = {
   signupLabel: string;
   creditsLabel?: string;
   logoutLabel?: string;
+  savedHref?: string;
+  savedLabel?: string;
+  savedCount?: number;
+  savedIsActive?: boolean;
 };
 
 const menuTriggerClassName = "button button--secondary button--md site-nav-icon-button lg:hidden";
@@ -60,6 +64,10 @@ export default function AppNavbarMenu({
   signupLabel,
   creditsLabel,
   logoutLabel,
+  savedHref,
+  savedLabel,
+  savedCount = 0,
+  savedIsActive = false,
 }: AppNavbarMenuProps) {
   const [mounted, setMounted] = useState(false);
   const drawerState = useOverlayState();
@@ -104,6 +112,23 @@ export default function AppNavbarMenu({
                   label={link.label}
                 />
               ))}
+
+              {savedHref && savedLabel ? (
+                <Link
+                  aria-current={savedIsActive ? "page" : undefined}
+                  className="button button--secondary button--md button--full-width inline-flex items-center justify-between gap-2"
+                  href={savedHref}
+                >
+                  <Surface className="inline" variant="transparent">
+                    {savedLabel}
+                  </Surface>
+                  {savedCount > 0 ? (
+                    <Chip size="sm" variant="primary">
+                      <Chip.Label>{savedCount}</Chip.Label>
+                    </Chip>
+                  ) : null}
+                </Link>
+              ) : null}
 
               {isAuthenticated ? (
                 <Surface className="mt-4 flex flex-col gap-3" variant="transparent">

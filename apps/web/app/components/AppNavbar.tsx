@@ -1,4 +1,5 @@
 import { Chip, Header, Link, Paragraph, Surface } from "@heroui/react";
+import { Bookmark } from "lucide-react";
 import AppNavbarMenu from "../islands/AppNavbarMenu";
 import AuthLogoutButton from "../islands/AuthLogoutButton";
 import { getAdminCopy } from "../lib/admin-content";
@@ -13,17 +14,23 @@ type AppNavbarProps = {
   locale: Locale;
   pathname: string;
   session: AppSession | null;
+  /** Live saved-events count for USER badge; omit or 0 hides the badge. */
+  savedCount?: number;
 };
 
-export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
+export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavbarProps) {
   const copy = getCopy(locale);
   const adminCopy = getAdminCopy(locale);
   const showGuestAuthActions = !session && !isAuthPage(pathname);
   const loginHref = localizedPath(locale, "login");
   const signupHref = localizedPath(locale, "signup");
   const adminHref = localizedPath(locale, "admin");
+  const savedHref = localizedPath(locale, "saved");
   const creditsLabel = session ? copy.formatCredits(session.user.credits) : undefined;
   const isAdmin = session?.user.role === "ADMIN";
+  const isUser = session?.user.role === "USER";
+  const showSavedNav = isUser;
+  const savedIsActive = isActiveNavPath(pathname, savedHref);
 
   const navLinks = NAV_ITEMS.map((key) => {
     const href = localizedPath(locale, NAV_SEGMENTS[key]);
@@ -64,6 +71,25 @@ export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
         </Surface>
 
         <Surface className="flex shrink-0 items-center gap-2" variant="transparent">
+          {showSavedNav ? (
+            <Link
+              aria-current={savedIsActive ? "page" : undefined}
+              aria-label={savedCount > 0 ? `${copy.mySaves}, ${savedCount}` : copy.mySaves}
+              className="button button--secondary button--md hidden items-center gap-2 sm:inline-flex"
+              href={savedHref}
+            >
+              <Bookmark aria-hidden size={18} strokeWidth={2.25} />
+              <Paragraph className="hidden lg:inline" size="sm">
+                {copy.mySaves}
+              </Paragraph>
+              {savedCount > 0 ? (
+                <Chip className="site-nav-saved-badge" size="sm" variant="primary">
+                  <Chip.Label>{savedCount}</Chip.Label>
+                </Chip>
+              ) : null}
+            </Link>
+          ) : null}
+
           <Surface aria-label="Language" className="lang-toggle" role="group" variant="transparent">
             <Link
               aria-current={locale === "de" ? "true" : undefined}
@@ -127,6 +153,10 @@ export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
             loginLabel={copy.login}
             logoutLabel={session ? copy.logout : undefined}
             navLinks={navLinks}
+            savedCount={showSavedNav ? savedCount : undefined}
+            savedHref={showSavedNav ? savedHref : undefined}
+            savedIsActive={showSavedNav ? savedIsActive : undefined}
+            savedLabel={showSavedNav ? copy.mySaves : undefined}
             showGuestAuthActions={showGuestAuthActions}
             signupHref={signupHref}
             signupLabel={copy.signup}

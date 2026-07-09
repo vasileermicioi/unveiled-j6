@@ -12,14 +12,15 @@ type AppShellProps = {
   locale: Locale;
   pathname: string;
   session: AppSession | null;
+  savedCount?: number;
   children: ReactNode;
 };
 
-export function AppShell({ locale, pathname, session, children }: AppShellProps) {
+export function AppShell({ locale, pathname, session, savedCount = 0, children }: AppShellProps) {
   return (
     <SSRProvider>
       <Surface className="flex min-h-screen flex-col" variant="transparent">
-        <AppNavbar locale={locale} pathname={pathname} session={session} />
+        <AppNavbar locale={locale} pathname={pathname} savedCount={savedCount} session={session} />
         <Surface className="flex-1 pt-16 md:pt-20" role="main" variant="transparent">
           {children}
         </Surface>

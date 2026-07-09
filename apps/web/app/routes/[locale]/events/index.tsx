@@ -1,4 +1,4 @@
-import { listMemberFeedEvents, listPartners } from "@unveiled/db";
+import { listMemberFeedEvents, listPartners, listSavedEventIds } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { EventFeedPage } from "../../../components/discovery/EventFeedPage";
@@ -26,7 +26,7 @@ export default createRoute(async (c) => {
   const feedPath = `/${guard.locale}/events`;
   const userId = guard.session.user.id;
 
-  const [subscription, feed, partners] = await Promise.all([
+  const [subscription, feed, partners, savedIds] = await Promise.all([
     db.query.subscriptions.findFirst({
       where: (fields, { eq }) => eq(fields.userId, userId),
     }),
@@ -38,6 +38,7 @@ export default createRoute(async (c) => {
       page: feedQuery.page,
     }),
     listPartners(db, { limit: PARTNER_FILTER_LIMIT }),
+    listSavedEventIds(db, userId),
   ]);
 
   const redirectPath = eventFeedPageRedirectPath(feedPath, feedQuery, feed.total);
@@ -65,6 +66,7 @@ export default createRoute(async (c) => {
         label: partner.name,
       }))}
       query={feedQuery}
+      savedEventIds={new Set(savedIds)}
       subscriptionActive={subscriptionActive}
       total={feed.total}
     />,

@@ -9,6 +9,7 @@ import {
 import { getEventFeedCopy } from "../../lib/event-feed-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+import { eventSavePath, eventUnsavePath } from "../../lib/saved-events";
 import type { AdminFormSelectOption } from "../admin/AdminFormSelect";
 
 import { EventFeedFilters } from "./EventFeedFilters";
@@ -20,6 +21,7 @@ export type EventFeedPageProps = {
   events: EventCardItem[];
   total: number;
   subscriptionActive: boolean;
+  savedEventIds: ReadonlySet<string>;
   categoryOptions: AdminFormSelectOption[];
   partnerOptions: AdminFormSelectOption[];
 };
@@ -43,6 +45,7 @@ export function EventFeedPage({
   events,
   total,
   subscriptionActive,
+  savedEventIds,
   categoryOptions,
   partnerOptions,
 }: EventFeedPageProps) {
@@ -55,11 +58,7 @@ export function EventFeedPage({
     to: query.to,
     page: query.page,
   });
-  const viewer: EventCardViewerState = {
-    kind: "member",
-    subscriptionActive,
-    saved: false,
-  };
+  const returnTo = `${feedPath}${queryString}`;
 
   return (
     <Surface
@@ -115,15 +114,28 @@ export function EventFeedPage({
         </Card>
       ) : (
         <Surface className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" variant="transparent">
-          {events.map((event) => (
-            <EventCard
-              ctaHref={resolveEventFeedCtaHref(locale, event, subscriptionActive)}
-              event={event}
-              key={event.id}
-              locale={locale}
-              viewer={viewer}
-            />
-          ))}
+          {events.map((event) => {
+            const saved = savedEventIds.has(event.id);
+            const viewer: EventCardViewerState = {
+              kind: "member",
+              subscriptionActive,
+              saved,
+            };
+
+            return (
+              <EventCard
+                bookmarkFormAction={
+                  saved ? eventUnsavePath(locale, event.id) : eventSavePath(locale, event.id)
+                }
+                bookmarkReturnTo={returnTo}
+                ctaHref={resolveEventFeedCtaHref(locale, event, subscriptionActive)}
+                event={event}
+                key={event.id}
+                locale={locale}
+                viewer={viewer}
+              />
+            );
+          })}
         </Surface>
       )}
 

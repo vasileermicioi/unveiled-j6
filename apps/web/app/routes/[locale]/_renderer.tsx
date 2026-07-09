@@ -13,6 +13,7 @@ export default reactRenderer(
     const resolvedLocale = getLocaleParam(locale ?? c.req.param("locale"));
     const pathname = new URL(c.req.url).pathname;
     const session = c.get("session") ?? null;
+    const savedCount = c.get("savedCount") ?? 0;
 
     return (
       <Layout
@@ -23,7 +24,12 @@ export default reactRenderer(
         robots={robots}
         title={title}
       >
-        <AppShell locale={resolvedLocale} pathname={pathname} session={session}>
+        <AppShell
+          locale={resolvedLocale}
+          pathname={pathname}
+          savedCount={savedCount}
+          session={session}
+        >
           {children}
         </AppShell>
       </Layout>

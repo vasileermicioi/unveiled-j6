@@ -69,20 +69,33 @@ MemberBookNowDe.storyName = "EventCard / Member — Bin dabei (de)";
 
 export const MemberSavedOn: Story = () => (
   <EventCard
+    bookmarkFormAction="/en/events/sample/unsave"
+    bookmarkReturnTo="/en/events"
     event={sampleEventAvailable}
     locale="en"
-    onBookmarkToggle={() => undefined}
     viewer={{ kind: "member", saved: true, subscriptionActive: true }}
   />
 );
-MemberSavedOn.storyName = "EventCard / Member — Saved on";
+MemberSavedOn.storyName = "EventCard / Member — Saved on (form)";
 
 export const MemberSavedOff: Story = () => (
   <EventCard
+    bookmarkFormAction="/en/events/sample/save"
+    bookmarkReturnTo="/en/events"
     event={sampleEventAvailable}
     locale="en"
-    onBookmarkToggle={() => undefined}
     viewer={{ kind: "member", saved: false, subscriptionActive: true }}
   />
 );
-MemberSavedOff.storyName = "EventCard / Member — Saved off";
+MemberSavedOff.storyName = "EventCard / Member — Saved off (form)";
+
+export const MemberSavedOnDe: Story = () => (
+  <EventCard
+    bookmarkFormAction="/de/events/sample/unsave"
+    bookmarkReturnTo="/de/saved"
+    event={sampleEventAvailable}
+    locale="de"
+    viewer={{ kind: "member", saved: true, subscriptionActive: true }}
+  />
+);
+MemberSavedOnDe.storyName = "EventCard / Member — Gemerkt (de form)";

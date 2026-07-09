@@ -69,6 +69,29 @@ describe("auth-middleware", () => {
     process.env.AUTH_URL = originalAuthUrl;
   });
 
+  test("evaluateAuthRedirect allows guest save/unsave paths so handlers can redirect", () => {
+    process.env.DATABASE_URL = "postgres://example";
+    process.env.AUTH_URL = "https://auth.example";
+
+    expect(
+      evaluateAuthRedirect({
+        locale: "de",
+        pathname: "/de/events/abc-123/save",
+        session: null,
+      }),
+    ).toBeNull();
+    expect(
+      evaluateAuthRedirect({
+        locale: "en",
+        pathname: "/en/events/abc-123/unsave",
+        session: null,
+      }),
+    ).toBeNull();
+
+    process.env.DATABASE_URL = originalDatabaseUrl;
+    process.env.AUTH_URL = originalAuthUrl;
+  });
+
   test("evaluateAuthRedirect blocks USER from partner prefix", () => {
     process.env.DATABASE_URL = "postgres://example";
     process.env.AUTH_URL = "https://auth.example";
