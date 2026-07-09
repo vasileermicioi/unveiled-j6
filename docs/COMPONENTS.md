@@ -32,7 +32,7 @@ Fixed header: logo, desktop nav, DE/EN toggle, membership CTA, mobile menu islan
 
 - Nav items from `NAV_ITEMS` + `getCopy(locale).nav`
 - Active state via `isActiveNavPath(pathname, href)`
-- Membership CTA hidden on locale root (`isLocaleRoot`)
+- Guest header shows Login + Sign up only (no separate Become-a-member CTA)
 - Theme: `.site-header`, `.nav-link`, `.lang-toggle`
 
 ---
@@ -180,7 +180,7 @@ Plan card: title, subtitle, perks, guarantee, **disabled** checkout button, secu
 
 Props: `{ content: MembershipCheckoutContent }`
 
-**Note:** `.membership-info` theme block not yet in `globals.css` — add when styling membership page further.
+**Note:** `.membership-hero` shares Discover hero card padding in `globals.css`.
 
 ---
 

@@ -23,7 +23,7 @@ Each step is its own SSR page — **no modal**.
 ## Page structure
 
 ```tsx
-<Surface className="mx-auto max-w-3xl ..." variant="transparent">
+<Surface className="mx-auto max-w-7xl ..." variant="transparent">
   <PageHero eyebrow="Admin" headline="New event" />
 
   <Card>

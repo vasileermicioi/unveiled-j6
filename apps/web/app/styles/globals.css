@@ -593,17 +593,137 @@
     border-left-color: var(--border);
   }
 
+  .button.site-nav-icon-button,
+  .close-button.site-nav-icon-button,
+  .close-button.close-button--default.site-nav-icon-button,
+  [data-slot="drawer-close-trigger"].site-nav-icon-button,
+  [data-slot="drawer-trigger"].site-nav-icon-button {
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+    line-height: 0;
+    /* Match secondary control fg — Lucide stroke follows currentColor */
+    background-color: var(--surface-control-bg);
+    color: var(--surface-control-fg);
+  }
+
+  .site-nav-icon-button__icon,
+  .button.site-nav-icon-button svg,
+  .close-button.site-nav-icon-button svg,
+  .close-button.close-button--default.site-nav-icon-button svg,
+  [data-slot="drawer-close-trigger"] svg,
+  [data-slot="drawer-trigger"].site-nav-icon-button svg {
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    color: inherit;
+    stroke: currentColor;
+  }
+
+  @media (hover: hover) {
+    .button.site-nav-icon-button:hover,
+    .button.site-nav-icon-button[data-hovered="true"],
+    .close-button.site-nav-icon-button:hover,
+    .close-button.site-nav-icon-button[data-hovered="true"],
+    .close-button.close-button--default.site-nav-icon-button:hover,
+    .close-button.close-button--default.site-nav-icon-button[data-hovered="true"],
+    [data-slot="drawer-close-trigger"].site-nav-icon-button:hover,
+    [data-slot="drawer-close-trigger"].site-nav-icon-button[data-hovered="true"],
+    [data-slot="drawer-trigger"].site-nav-icon-button:hover,
+    [data-slot="drawer-trigger"].site-nav-icon-button[data-hovered="true"] {
+      background-color: var(--surface-control-bg-hover);
+      color: var(--surface-control-fg-hover);
+    }
+  }
+
+  .button.site-nav-icon-button:active,
+  .button.site-nav-icon-button[data-pressed="true"],
+  .close-button.site-nav-icon-button:active,
+  .close-button.site-nav-icon-button[data-pressed="true"],
+  .close-button.close-button--default.site-nav-icon-button:active,
+  .close-button.close-button--default.site-nav-icon-button[data-pressed="true"],
+  [data-slot="drawer-close-trigger"].site-nav-icon-button:active,
+  [data-slot="drawer-close-trigger"].site-nav-icon-button[data-pressed="true"],
+  [data-slot="drawer-trigger"].site-nav-icon-button:active,
+  [data-slot="drawer-trigger"].site-nav-icon-button[data-pressed="true"] {
+    background-color: var(--surface-control-bg-hover);
+    color: var(--surface-control-fg-hover);
+  }
+
+  .site-nav-drawer-header {
+    justify-content: flex-end;
+    min-height: 2.5rem;
+  }
+
+  .site-nav-drawer-header .drawer__heading,
+  .site-nav-drawer-header [data-slot="drawer-heading"] {
+    display: none;
+  }
+
+  /* Above fixed .site-header (z-50) so the header menu control cannot cover the close icon */
+  .drawer__backdrop,
+  .drawer__content,
+  .drawer__backdrop.site-nav-drawer-backdrop,
+  .drawer__content.site-nav-drawer-content {
+    z-index: 80;
+  }
+
+  /* Flush mobile nav panel to the viewport edge; pin close to the panel corner */
+  .drawer__backdrop.site-nav-drawer-backdrop,
+  .drawer__content.site-nav-drawer-content {
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .drawer__content--right.site-nav-drawer-content,
+  .drawer__content.site-nav-drawer-content {
+    justify-content: flex-end;
+  }
+
+  .drawer__dialog.site-nav-drawer,
+  .site-nav-drawer.drawer__dialog,
+  .drawer__dialog.site-nav-drawer[data-placement="right"] {
+    margin: 0;
+    margin-inline: 0;
+    border-radius: 0;
+    border-left: 2px solid var(--border);
+    padding: 1rem;
+    width: min(20rem, 100%);
+    max-width: 100%;
+  }
+
+  .site-nav-drawer .drawer__close-trigger,
+  .site-nav-drawer [data-slot="drawer-close-trigger"],
+  .site-nav-drawer-header .drawer__close-trigger,
+  .site-nav-drawer-header [data-slot="drawer-close-trigger"] {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+  }
+
   .site-footer {
     margin-top: auto;
     background-color: white;
   }
 
-  .discover-hero .card__content {
+  .discover-hero .card__content,
+  .membership-hero .card__content {
     padding: 1.5rem;
   }
 
   @media (min-width: 768px) {
-    .discover-hero .card__content {
+    .discover-hero .card__content,
+    .membership-hero .card__content {
       padding: 2rem;
     }
   }

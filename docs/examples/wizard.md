@@ -25,7 +25,7 @@ Each step is a **full SSR page** with form POST — not a client stepper that ne
 ## Page structure
 
 ```tsx
-<Surface className="mx-auto max-w-2xl flex flex-col gap-8 ..." variant="transparent">
+<Surface className="mx-auto max-w-7xl flex flex-col gap-8 ..." variant="transparent">
   {/* Step indicator — SSR, not client state */}
   <Surface className="onboarding-steps" variant="transparent">
     <Paragraph color="muted" size="sm">

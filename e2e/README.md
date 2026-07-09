@@ -143,3 +143,4 @@ Cookie consent storage key: `unveiled:cookie-consent` (localStorage).
 - Set `CI=true` so `e2e/playwright.config.ts` starts `bun run dev` via `webServer`.
 - Google OAuth scenarios may require `test.skip` with an explicit reason when Neon test credentials are unavailable.
 - Admin image-upload scenarios must run against local Node SSR (`bun run dev`), not Cloudflare Workers preview.
+- Event **series** create: after preview the form remounts and the browser clears the file input — tests (and admins) must re-select the image on the confirm step before submitting.

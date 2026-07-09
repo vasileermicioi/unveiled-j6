@@ -26,7 +26,6 @@ export type FooterCopy = {
 export type ShellCopy = {
   headerTagline: string;
   nav: NavLinkCopy;
-  guestCta: string;
   login: string;
   signup: string;
   logout: string;
@@ -46,7 +45,6 @@ const copy: Record<Locale, ShellCopy> = {
       membership: "Mitgliedschaft",
       faq: "FAQ",
     },
-    guestCta: "Mitglied werden",
     login: "Anmelden",
     signup: "Registrieren",
     logout: "Abmelden",
@@ -83,7 +81,6 @@ const copy: Record<Locale, ShellCopy> = {
       membership: "Membership",
       faq: "FAQ",
     },
-    guestCta: "Become a member",
     login: "Log in",
     signup: "Sign up",
     logout: "Log out",

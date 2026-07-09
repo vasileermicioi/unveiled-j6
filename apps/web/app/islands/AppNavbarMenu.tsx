@@ -1,4 +1,5 @@
 import { Chip, Drawer, Link, Surface, useOverlayState } from "@heroui/react";
+import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { NavLink } from "../components/NavLink";
@@ -15,9 +16,6 @@ type AppNavbarMenuProps = {
   isAuthenticated: boolean;
   adminHref?: string;
   adminLabel?: string;
-  ctaHref: string;
-  ctaLabel: string;
-  showCta: boolean;
   showGuestAuthActions: boolean;
   loginHref: string;
   loginLabel: string;
@@ -27,7 +25,15 @@ type AppNavbarMenuProps = {
   logoutLabel?: string;
 };
 
-const menuTriggerClassName = "button button--secondary button--md lg:hidden";
+const menuTriggerClassName = "button button--secondary button--md site-nav-icon-button lg:hidden";
+
+function NavMenuIcon() {
+  return <Menu aria-hidden className="site-nav-icon-button__icon" size={20} strokeWidth={2.25} />;
+}
+
+function NavCloseIcon() {
+  return <X aria-hidden className="site-nav-icon-button__icon" size={20} strokeWidth={2.25} />;
+}
 
 function MenuTriggerFallback() {
   return (
@@ -37,7 +43,7 @@ function MenuTriggerFallback() {
       disabled
       type="button"
     >
-      Menu
+      <NavMenuIcon />
     </button>
   );
 }
@@ -47,9 +53,6 @@ export default function AppNavbarMenu({
   isAuthenticated,
   adminHref,
   adminLabel,
-  ctaHref,
-  ctaLabel,
-  showCta,
   showGuestAuthActions,
   loginHref,
   loginLabel,
@@ -72,19 +75,22 @@ export default function AppNavbarMenu({
   return (
     <Drawer state={drawerState}>
       <Drawer.Trigger aria-label="Open navigation menu" className={menuTriggerClassName}>
-        Menu
+        <NavMenuIcon />
       </Drawer.Trigger>
 
-      <Drawer.Backdrop isDismissable>
-        <Drawer.Content className="lg:hidden" placement="right">
-          <Drawer.Dialog>
-            <Drawer.Header className="mb-4 flex items-center justify-between">
-              <Drawer.Heading>Menu</Drawer.Heading>
+      <Drawer.Backdrop className="site-nav-drawer-backdrop" isDismissable>
+        <Drawer.Content
+          aria-label="Navigation menu"
+          className="site-nav-drawer-content lg:hidden"
+          placement="right"
+        >
+          <Drawer.Dialog className="site-nav-drawer">
+            <Drawer.Header className="site-nav-drawer-header mb-4 flex items-center justify-end">
               <Drawer.CloseTrigger
                 aria-label="Close navigation menu"
-                className="button button--secondary button--md"
+                className="button button--secondary button--md site-nav-icon-button"
               >
-                Close
+                <NavCloseIcon />
               </Drawer.CloseTrigger>
             </Drawer.Header>
 
@@ -135,14 +141,6 @@ export default function AppNavbarMenu({
                   >
                     {signupLabel}
                   </Link>
-                  {showCta ? (
-                    <Link
-                      className="button button--primary button--md button--full-width"
-                      href={ctaHref}
-                    >
-                      {ctaLabel}
-                    </Link>
-                  ) : null}
                 </Surface>
               ) : null}
             </Drawer.Body>

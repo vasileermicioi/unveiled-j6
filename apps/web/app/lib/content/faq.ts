@@ -29,7 +29,6 @@ export const faqContent: LocalizedContent<FaqContent> = {
         },
       ],
     },
-    backButton: "Zurück",
   },
   en: {
     hero: {
@@ -59,6 +58,5 @@ export const faqContent: LocalizedContent<FaqContent> = {
         },
       ],
     },
-    backButton: "Back",
   },
 };

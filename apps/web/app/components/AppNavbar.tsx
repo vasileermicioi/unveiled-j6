@@ -5,13 +5,7 @@ import { getAdminCopy } from "../lib/admin-content";
 import type { AppSession } from "../lib/auth";
 import { getCopy, NAV_ITEMS, NAV_SEGMENTS } from "../lib/copy";
 import type { Locale } from "../lib/locale";
-import {
-  isActiveNavPath,
-  isAuthPage,
-  isLocaleRoot,
-  localizedPath,
-  switchLocalePath,
-} from "../lib/locale";
+import { isActiveNavPath, isAuthPage, localizedPath, switchLocalePath } from "../lib/locale";
 import { Logo } from "./Logo";
 import { NavLink } from "./NavLink";
 
@@ -25,7 +19,6 @@ export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
   const copy = getCopy(locale);
   const adminCopy = getAdminCopy(locale);
   const showGuestAuthActions = !session && !isAuthPage(pathname);
-  const showCta = showGuestAuthActions && !isLocaleRoot(pathname);
   const loginHref = localizedPath(locale, "login");
   const signupHref = localizedPath(locale, "signup");
   const adminHref = localizedPath(locale, "admin");
@@ -122,14 +115,6 @@ export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
               >
                 {copy.signup}
               </Link>
-              {showCta ? (
-                <Link
-                  className="button button--primary button--md hidden sm:inline-flex"
-                  href={localizedPath(locale, "membership")}
-                >
-                  {copy.guestCta}
-                </Link>
-              ) : null}
             </>
           ) : null}
 
@@ -137,14 +122,11 @@ export function AppNavbar({ locale, pathname, session }: AppNavbarProps) {
             adminHref={isAdmin ? adminHref : undefined}
             adminLabel={isAdmin ? adminCopy.navDashboard : undefined}
             creditsLabel={creditsLabel}
-            ctaHref={localizedPath(locale, "membership")}
-            ctaLabel={copy.guestCta}
             isAuthenticated={Boolean(session)}
             loginHref={loginHref}
             loginLabel={copy.login}
             logoutLabel={session ? copy.logout : undefined}
             navLinks={navLinks}
-            showCta={showCta}
             showGuestAuthActions={showGuestAuthActions}
             signupHref={signupHref}
             signupLabel={copy.signup}

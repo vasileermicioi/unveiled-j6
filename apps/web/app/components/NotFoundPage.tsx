@@ -20,7 +20,7 @@ export function NotFoundPage({ locale }: NotFoundPageProps) {
 
   return (
     <Surface
-      className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-16 text-center sm:px-6 lg:px-8"
+      className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-16 text-center sm:px-6 lg:px-8"
       variant="transparent"
     >
       <Heading level={1}>404</Heading>

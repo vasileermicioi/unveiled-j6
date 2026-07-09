@@ -99,7 +99,7 @@ export function EventDetailPage({ event, locale }: EventDetailPageProps) {
 
   return (
     <Surface
-      className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
+      className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
       variant="transparent"
     >
       <Surface className="event-detail__hero" variant="transparent">

@@ -201,14 +201,13 @@ test.describe("admin-events.feature", () => {
     await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
     await page.getByRole("button", { name: /slots anzeigen|show slots|preview/i }).click();
 
-    // Preview is the Gherkin-critical step ("preview generated slots before confirming").
-    // Full confirm is flaky: HeroUI Select re-render on the confirm step often drops partner_id.
     await expect(page.getByRole("heading", { name: /vorschau|preview/i })).toBeVisible({
       timeout: 30_000,
     });
-    await expect(
-      page.getByRole("button", { name: /events anlegen|create .*events/i }),
-    ).toBeVisible();
+    // File inputs clear on remount between preview and confirm — re-attach before submit.
+    await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await page.getByRole("button", { name: /events anlegen|create .*events/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 60_000 });
     await expect(page.getByText(title).first()).toBeVisible();
   });
 
@@ -235,9 +234,9 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("heading", { name: /vorschau|preview/i })).toBeVisible({
       timeout: 30_000,
     });
-    await expect(
-      page.getByRole("button", { name: /events anlegen|create .*events/i }),
-    ).toBeVisible();
+    await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await page.getByRole("button", { name: /events anlegen|create .*events/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 60_000 });
     await expect(page.getByText(title).first()).toBeVisible();
   });
 

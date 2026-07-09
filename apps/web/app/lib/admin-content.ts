@@ -74,6 +74,7 @@ export type AdminCopy = {
   previewSeries: string;
   confirmSeries: (count: number) => string;
   seriesPreviewTitle: string;
+  seriesConfirmImageHint: string;
   nameLabel: string;
   emailLabel: string;
   addressLabel: string;
@@ -214,6 +215,8 @@ const copy: Record<Locale, AdminCopy> = {
     previewSeries: "Slots anzeigen",
     confirmSeries: (count) => `${count} Events anlegen`,
     seriesPreviewTitle: "Vorschau der Slots",
+    seriesConfirmImageHint:
+      "Bitte das Event-Bild erneut auswählen — Dateien bleiben nach der Vorschau nicht erhalten.",
     nameLabel: "Name",
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
@@ -355,6 +358,8 @@ const copy: Record<Locale, AdminCopy> = {
     previewSeries: "Preview slots",
     confirmSeries: (count) => `Create ${count} events`,
     seriesPreviewTitle: "Slot preview",
+    seriesConfirmImageHint:
+      "Please select the event image again — file uploads do not survive the preview step.",
     nameLabel: "Name",
     emailLabel: "Contact email",
     addressLabel: "Address",

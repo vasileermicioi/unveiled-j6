@@ -15,7 +15,7 @@ export function AuthPageLayout({ locale, page, children }: AuthPageLayoutProps) 
 
   return (
     <Surface
-      className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-10 md:py-14"
+      className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 md:py-14"
       variant="transparent"
     >
       <Surface className="flex flex-col gap-3" variant="transparent">

@@ -19,7 +19,7 @@ export default createRoute((c) => {
 
   return c.render(
     <>
-      <FaqPage content={content} locale={locale} />
+      <FaqPage content={content} />
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         type="application/ld+json"

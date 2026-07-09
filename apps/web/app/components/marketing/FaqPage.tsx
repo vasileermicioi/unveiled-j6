@@ -1,16 +1,13 @@
-import { Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Heading, Paragraph, Surface } from "@heroui/react";
 
 import type { FaqContent } from "../../lib/content/types";
-import type { Locale } from "../../lib/locale";
-import { localizedPath } from "../../lib/locale";
 import { HelpSection } from "./HelpSection";
 
 type FaqPageProps = {
-  locale: Locale;
   content: FaqContent;
 };
 
-export function FaqPage({ locale, content }: FaqPageProps) {
+export function FaqPage({ content }: FaqPageProps) {
   return (
     <Surface
       className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:gap-12 lg:px-8"
@@ -27,12 +24,6 @@ export function FaqPage({ locale, content }: FaqPageProps) {
       </Surface>
 
       <HelpSection section={content.section} />
-
-      <Surface className="flex justify-center" variant="transparent">
-        <Link className="button button--secondary button--md" href={localizedPath(locale, "")}>
-          {content.backButton}
-        </Link>
-      </Surface>
     </Surface>
   );
 }

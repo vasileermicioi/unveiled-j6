@@ -103,7 +103,6 @@ export type FaqContent = {
     supportEmail: string;
     items: FaqItem[];
   };
-  backButton: string;
 };
 
 export type MembershipCheckoutContent = {

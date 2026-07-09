@@ -78,6 +78,7 @@ export function EventSeriesForm({
             value={slot.toISOString()}
           />
         ))}
+        <Description>{copy.seriesConfirmImageHint}</Description>
         <EventAdminBaseFields
           defaults={defaults}
           includeDateTime={false}

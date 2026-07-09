@@ -20,7 +20,7 @@ export function OnboardingLayout({ locale, step, children, error = null }: Onboa
 
   return (
     <Surface
-      className="mx-auto flex w-full max-w-2xl flex-col px-4 py-10 md:py-14"
+      className="mx-auto flex w-full max-w-7xl flex-col px-4 py-10 md:py-14"
       variant="transparent"
     >
       <Card className="onboarding-card w-full">
