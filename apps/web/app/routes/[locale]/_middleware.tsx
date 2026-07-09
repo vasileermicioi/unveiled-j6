@@ -18,13 +18,15 @@ export default createRoute(async (c, next) => {
     });
   }
 
-  const pathname = new URL(c.req.url).pathname;
+  const url = new URL(c.req.url);
+  const pathname = url.pathname;
   const session = await getSessionIfConfigured(c);
   c.set("session", session);
 
   const redirectTo = evaluateAuthRedirect({
     locale: locale as Locale,
     pathname,
+    search: url.search,
     session,
   });
 

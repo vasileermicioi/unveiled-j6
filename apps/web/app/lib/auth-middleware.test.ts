@@ -33,6 +33,15 @@ describe("auth-middleware", () => {
       }),
     ).toBe("/de/login?returnTo=%2Fde%2Fevents");
 
+    expect(
+      evaluateAuthRedirect({
+        locale: "de",
+        pathname: "/de/events",
+        search: "?category=Theater&page=2",
+        session: null,
+      }),
+    ).toBe("/de/login?returnTo=%2Fde%2Fevents%3Fcategory%3DTheater%26page%3D2");
+
     process.env.DATABASE_URL = originalDatabaseUrl;
     process.env.AUTH_URL = originalAuthUrl;
   });

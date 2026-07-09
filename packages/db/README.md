@@ -39,6 +39,10 @@ Integration tests skip automatically when `DATABASE_URL` is unset.
 - `public.partners` — venue records
 - `public.events` — catalog events with denormalized `partner_name`
 
+### Phase 5 discovery (step 01+)
+
+- `public.saved_events` — member bookmarks keyed by `(user_id, event_id)`
+
 ## Catalog domain exports
 
 Business logic for admin catalog operations lives in `packages/db/src/catalog/` and is re-exported from `@unveiled/db`:
@@ -46,6 +50,8 @@ Business logic for admin catalog operations lives in `packages/db/src/catalog/` 
 **Partners:** `createPartner`, `updatePartner`, `deletePartner`, `listPartners`, `getPartnerById`, `regenerateVenueCheckInToken`, `renamePartnerSyncEvents`
 
 **Events:** `createEvent`, `createEventSeries`, `updateEvent`, `deleteEvent`, `listEvents`, `getEventById`, `recalculateRemainingCapacity`, `exportRedemptionCodesCsv`
+
+**Discovery:** `listMemberFeedEvents`, `MEMBER_FEED_PAGE_SIZE`, `saveEvent`, `unsaveEvent`, `isEventSaved`, `listSavedEventIds`, `listSavedUpcomingEvents`, `berlinTodayRange`, `berlinInclusiveDateRange`, `getBerlinCalendarDate`
 
 **Images:** `attachImageToPartner`, `attachImageToEvent`, `deleteImageRecord`, `persistImageFromSource`
 

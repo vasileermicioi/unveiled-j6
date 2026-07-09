@@ -70,6 +70,8 @@ export function buildLoginRedirectUrl(locale: Locale, pathname: string): string 
 export function evaluateAuthRedirect(options: {
   locale: Locale;
   pathname: string;
+  /** Optional query string including leading `?` — preserved on login returnTo. */
+  search?: string;
   session: AppSession | null;
 }): string | null {
   if (!isAuthConfigured()) {
@@ -86,7 +88,8 @@ export function evaluateAuthRedirect(options: {
   }
 
   if (!options.session) {
-    return buildLoginRedirectUrl(options.locale, options.pathname);
+    const returnPath = options.search ? `${options.pathname}${options.search}` : options.pathname;
+    return buildLoginRedirectUrl(options.locale, returnPath);
   }
 
   if (ROLE_FORBIDDEN[options.session.user.role].includes(segment)) {

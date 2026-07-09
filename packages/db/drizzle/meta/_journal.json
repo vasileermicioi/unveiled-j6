@@ -22,6 +22,13 @@
       "when": 1783447927973,
       "tag": "0002_hot_dracula",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783574919152,
+      "tag": "0003_warm_wiccan",
+      "breakpoints": true
     }
   ]
 }

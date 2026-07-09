@@ -1,4 +1,5 @@
 export * from "./datetime";
+export * from "./discovery";
 export * from "./errors";
 export * from "./events";
 export * from "./images";
