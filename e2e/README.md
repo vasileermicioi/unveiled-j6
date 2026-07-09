@@ -33,6 +33,14 @@ SITE_URL=https://your-staging-host bun run test:e2e
 | `E2E_USER_PASSWORD` | For auth specs | Member test account password |
 | `E2E_ADMIN_EMAIL` | For admin specs | Admin test account email |
 | `E2E_ADMIN_PASSWORD` | For admin specs | Admin test account password |
+| `S3_ENDPOINT` | For image upload specs | R2 S3 API host (no path) |
+| `S3_REGION` | For image upload specs | Usually `auto` |
+| `S3_BUCKET` | For image upload specs | Bucket name |
+| `S3_ACCESS_KEY_ID` | For image upload specs | R2 access key |
+| `S3_SECRET_ACCESS_KEY` | For image upload specs | R2 secret |
+| `IMAGE_PUBLIC_BASE_URL` | For image upload specs | Public R2.dev / custom domain |
+
+Image create/edit tests call `test.skip('R2 vars not configured')` when any of the six R2 vars is missing. **Admin uploads require local Node SSR** (`bun run dev` + `sharp`) — they do not work on Cloudflare Workers preview.
 
 **Fallbacks (local only):**
 
@@ -101,13 +109,15 @@ bun --filter @unveiled/web stories
 
 Both servers use the production HeroUI Uber theme (`globals.css`) and yellow page background.
 
-## Spec inventory (Phases 0–3)
+## Spec inventory
 
 | Spec | Feature file | Notes |
 |---|---|---|
 | `specs/static-pages.spec.ts` | `static-pages.feature` | 9 scenarios; map embed asserts consent decline only (Phase 5 for MapLibre) |
 | `specs/auth.spec.ts` | `auth.feature` | Core auth + outlines; see skip inventory below |
 | `specs/onboarding.spec.ts` | `onboarding.feature` | 8 scenarios; fresh signup per mutating test |
+| `specs/admin-partners.spec.ts` | `admin-partners.feature` | Partner CRUD; portal/QR scenarios skipped (no Phase 4 UI) |
+| `specs/admin-events.spec.ts` | `admin-events.feature` | Event CRUD + public `/discover` / `/events/:id`; image tests need R2 |
 
 ## Skip inventory
 
@@ -120,6 +130,11 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | Request account deletion | `auth.spec.ts` | Phase 9 — self-service deletion |
 | Account deletion vs subscription cancellation | `auth.spec.ts` | Phase 9 |
 | Admin can process account deletion | `auth.spec.ts` | Phase 9 |
+| Regenerate venue check-in QR token | `admin-partners.spec.ts` | Phase 4 — no admin UI (domain helper only) |
+| Portal access (create / exists / email) | `admin-partners.spec.ts` | Phase 4 — portal access UI not built (Phase 8) |
+| Event image as remote URL | `admin-events.spec.ts` | Admin form is upload-only; URL path is seed/CLI |
+| Seed demo (empty env) | `admin-events.spec.ts` | Skips when catalog not empty (seed button hidden) |
+| Image upload / logo processing | `admin-*.spec.ts` | `R2 vars not configured` when any of six R2 vars missing |
 
 Cookie consent storage key: `unveiled:cookie-consent` (localStorage).
 

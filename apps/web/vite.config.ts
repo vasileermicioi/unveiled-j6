@@ -64,22 +64,17 @@ function fixHonoxSsrExternals(): Plugin {
     name: "unveiled-fix-honox-ssr-externals",
     enforce: "post",
     configResolved(config) {
-      config.ssr.noExternal = [];
+      // Keep workspace TS packages on Vite's transform path; only native deps stay external.
+      config.ssr.noExternal = ["@unveiled/images"];
       const existing = config.ssr.external;
-      const external = new Set<string>([
-        "react",
-        "react-dom",
-        "@heroui/react",
-        "sharp",
-        "@unveiled/images",
-      ]);
+      const external = new Set<string>(["react", "react-dom", "@heroui/react", "sharp"]);
       if (Array.isArray(existing)) {
         for (const item of existing) {
-          if (typeof item === "string") {
+          if (typeof item === "string" && item !== "@unveiled/images") {
             external.add(item);
           }
         }
-      } else if (typeof existing === "string") {
+      } else if (typeof existing === "string" && existing !== "@unveiled/images") {
         external.add(existing);
       }
       config.ssr.external = [...external];
@@ -135,7 +130,8 @@ export default defineConfig(({ mode }) => {
       exclude: ["sharp"],
     },
     ssr: {
-      external: ["react", "react-dom", "@heroui/react", "sharp", "@unveiled/images"],
+      external: ["react", "react-dom", "@heroui/react", "sharp"],
+      noExternal: ["@unveiled/images"],
     },
     server: {
       port: 3000,

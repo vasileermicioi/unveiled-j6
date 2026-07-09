@@ -133,6 +133,10 @@ function isImageStorageConfigError(error: Error): boolean {
 
 export function mapCatalogError(error: unknown, locale: Locale): string {
   if (error instanceof CatalogValidationError) {
+    if (error.code === "IMAGE_PROCESSING_UNAVAILABLE") {
+      return error.message;
+    }
+
     const field =
       error.code === "REQUIRED_FIELD" ? error.message.replace(/ is required$/, "") : undefined;
 

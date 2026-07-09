@@ -38,7 +38,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: "list",
-  timeout: 60_000,
+  timeout: 90_000,
   use: {
     baseURL,
     trace: "on-first-retry",
@@ -51,10 +51,12 @@ export default defineConfig({
   ],
   // Always manage the SSR server so E2E does not depend on a manually started (and
   // potentially hung) `bun run dev`. Locally reuse an existing healthy server on SITE_URL.
+  // Pass through root `.env` (loaded above) so R2 / auth vars reach the Vite SSR process.
   webServer: {
     command: "bun run dev",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: { ...process.env },
   },
 });

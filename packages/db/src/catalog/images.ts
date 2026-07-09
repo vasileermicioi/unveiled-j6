@@ -17,9 +17,14 @@ type ImagesModule = typeof import("@unveiled/images");
 
 async function loadImagesModule(): Promise<ImagesModule> {
   try {
-    return await import(/* @vite-ignore */ "@unveiled/images");
-  } catch {
-    throw new CatalogValidationError("IMAGE_PROCESSING_UNAVAILABLE", IMAGE_PROCESSING_UNAVAILABLE);
+    // Vite SSR transforms this workspace package (see apps/web vite `ssr.noExternal`).
+    // Do not use createRequire — Node cannot load the package's TypeScript entry.
+    return await import("@unveiled/images");
+  } catch (error) {
+    throw new CatalogValidationError(
+      "IMAGE_PROCESSING_UNAVAILABLE",
+      `${IMAGE_PROCESSING_UNAVAILABLE} (${error instanceof Error ? error.message : String(error)})`,
+    );
   }
 }
 
