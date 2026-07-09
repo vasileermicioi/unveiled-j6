@@ -30,4 +30,13 @@ export const MIN_IMAGE_HEIGHT = 420;
 export const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export type AcceptedMimeType = (typeof ACCEPTED_MIME_TYPES)[number];
 
+/** HTML `accept` for file inputs — MIME types plus extensions for OS picker filtering. */
+export const ACCEPTED_IMAGE_FILE_ACCEPT = [
+  ...ACCEPTED_MIME_TYPES,
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+].join(",");
+
 export const REMOTE_FETCH_TIMEOUT_MS = 15_000;

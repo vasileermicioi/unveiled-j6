@@ -3,6 +3,7 @@ import { deletePartner, getPartnerById } from "@unveiled/db";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
+import { AdminFormError } from "../../../../../components/admin/AdminFormError";
 import { AdminPageShell, adminPartnersPath } from "../../../../../components/admin/AdminPageShell";
 import { partnerListPath } from "../../../../../components/admin/PartnerForm";
 import { NotFoundPage } from "../../../../../components/NotFoundPage";
@@ -32,7 +33,7 @@ function renderDeletePage(
       ]}
       title={copy.deletePartnerTitle}
     >
-      {options.error ? <Paragraph>{options.error}</Paragraph> : null}
+      {options.error ? <AdminFormError message={options.error} /> : null}
       <Paragraph>{copy.deletePartnerBody(options.partnerName)}</Paragraph>
       <Surface className="flex flex-col gap-3 sm:flex-row sm:items-center" variant="transparent">
         <Form

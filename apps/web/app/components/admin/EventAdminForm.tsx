@@ -1,11 +1,12 @@
 "use client";
 
-import { Button, Form, Link, Paragraph, Surface } from "@heroui/react";
+import { Button, Form, Link, Surface } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
+import { AdminFormError } from "./AdminFormError";
 import { EventAdminBaseFields } from "./EventAdminBaseFields";
 import type { EventFormDefaults, PartnerOption } from "./event-admin-types";
 
@@ -39,7 +40,7 @@ export function EventAdminForm({
       encType="multipart/form-data"
       method="post"
     >
-      {error ? <Paragraph>{error}</Paragraph> : null}
+      {error ? <AdminFormError message={error} /> : null}
       <EventAdminBaseFields
         defaults={defaults}
         includeDateTime

@@ -1,21 +1,12 @@
 "use client";
 
-import {
-  Button,
-  Form,
-  Input,
-  Label,
-  Link,
-  Paragraph,
-  Surface,
-  TextArea,
-  TextField,
-} from "@heroui/react";
+import { Button, Form, Input, Label, Link, Surface, TextArea, TextField } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
+import { AdminFormError } from "./AdminFormError";
 import { PartnerLogoUpload } from "./PartnerLogoUpload";
 
 export type PartnerFormDefaults = {
@@ -53,7 +44,7 @@ export function PartnerForm({
       encType="multipart/form-data"
       method="post"
     >
-      {error ? <Paragraph>{error}</Paragraph> : null}
+      {error ? <AdminFormError message={error} /> : null}
 
       <TextField defaultValue={defaults?.name} fullWidth isRequired name="name">
         <Label>{copy.nameLabel}</Label>

@@ -20,6 +20,7 @@ import {
   formatEventDateTime,
   MANUAL_SLOT_ROWS,
 } from "../../lib/admin-event-form";
+import { AdminFormError } from "./AdminFormError";
 import { AdminFormSelect } from "./AdminFormSelect";
 import { EventAdminBaseFields } from "./EventAdminBaseFields";
 import {
@@ -63,7 +64,7 @@ export function EventSeriesForm({
         encType="multipart/form-data"
         method="post"
       >
-        {error ? <Paragraph>{error}</Paragraph> : null}
+        {error ? <AdminFormError message={error} /> : null}
         <Heading level={2}>{copy.seriesPreviewTitle}</Heading>
         <Surface className="flex flex-col gap-2" variant="transparent">
           {previewSlots.map((slot) => (
@@ -110,7 +111,7 @@ export function EventSeriesForm({
       encType="multipart/form-data"
       method="post"
     >
-      {error ? <Paragraph>{error}</Paragraph> : null}
+      {error ? <AdminFormError message={error} /> : null}
       <EventAdminBaseFields
         defaults={defaults}
         includeDateTime={false}

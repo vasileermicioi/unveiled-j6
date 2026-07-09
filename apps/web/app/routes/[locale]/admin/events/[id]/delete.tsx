@@ -3,6 +3,7 @@ import { deleteEvent, getEventById } from "@unveiled/db";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
+import { AdminFormError } from "../../../../../components/admin/AdminFormError";
 import { AdminPageShell, adminEventsPath } from "../../../../../components/admin/AdminPageShell";
 import { eventListPath } from "../../../../../components/admin/EventAdminForm";
 import { NotFoundPage } from "../../../../../components/NotFoundPage";
@@ -37,7 +38,7 @@ function renderDeletePage(
       ]}
       title={copy.deleteEventTitle}
     >
-      {options.error ? <Paragraph>{options.error}</Paragraph> : null}
+      {options.error ? <AdminFormError message={options.error} /> : null}
       <Paragraph>{copy.deleteEventBody(options.eventTitle, options.eventDate)}</Paragraph>
       <Surface className="flex flex-col gap-3 sm:flex-row sm:items-center" variant="transparent">
         <Form action={`/${options.locale}/admin/events/${options.eventId}/delete`} method="post">

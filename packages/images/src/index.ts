@@ -14,6 +14,7 @@ export type ProcessImageOptions = {
 };
 
 export {
+  ACCEPTED_IMAGE_FILE_ACCEPT,
   ACCEPTED_MIME_TYPES,
   type AcceptedMimeType,
   MAX_UPLOAD_BYTES,

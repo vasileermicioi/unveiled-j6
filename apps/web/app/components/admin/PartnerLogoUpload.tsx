@@ -1,6 +1,7 @@
 "use client";
 
 import { Description, Input, Paragraph, Surface } from "@heroui/react";
+import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
@@ -29,7 +30,7 @@ export function PartnerLogoUpload({
         </Surface>
       ) : null}
 
-      <Input accept="image/jpeg,image/png,image/webp" name="logo" type="file" />
+      <Input accept={ACCEPTED_IMAGE_FILE_ACCEPT} name="logo" type="file" />
     </Surface>
   );
 }
