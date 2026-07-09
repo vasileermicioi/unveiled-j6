@@ -74,7 +74,7 @@ The routes `/:locale/impressum`, `/:locale/privacy`, and `/:locale/terms` SHALL 
 
 ### Requirement: Cookie consent banner
 
-The application SHALL display a cookie consent banner on first visit offering accept or decline for non-essential cookies, persist the decision, and not re-prompt until the decision expires or storage is cleared.
+The application SHALL display a cookie consent banner on first visit offering accept or decline for non-essential cookies, persist the decision, and not re-prompt until the decision expires or storage is cleared. Accepting consent SHALL allow the event map island to load MapLibre GL JS and OpenStreetMap tiles. Declining (or lacking an accepted decision) SHALL replace the map with a static fallback and MUST NOT load MapLibre or third-party map tiles. Error tracking remains ungated (unchanged).
 
 #### Scenario: Banner on first visit
 
@@ -86,10 +86,12 @@ The application SHALL display a cookie consent banner on first visit offering ac
 - **WHEN** a guest accepts or declines cookies
 - **THEN** the banner is hidden on subsequent page loads until storage is cleared or expires
 
-#### Scenario: Phase 1 no gating yet
+#### Scenario: Declining consent disables map tiles
 
-- **WHEN** a guest declines non-essential cookies in Phase 1
-- **THEN** no MapLibre GL JS map island or OpenStreetMap tile requests are loaded (none exists yet) and the site remains fully usable
+- **WHEN** a user declines non-essential cookies and views a page that would show the event map
+- **THEN** no MapLibre GL JS map island or OpenStreetMap tile requests are loaded
+- **AND** a static fallback is shown instead
+- **AND** the site remains fully usable
 
 ### Requirement: Static sitemap
 
@@ -116,7 +118,7 @@ The application SHALL provide a default Open Graph image at `apps/web/public/og-
 
 ### Requirement: Automated browser coverage for static pages
 
-Each Gherkin scenario in `docs/migration/features/static-pages.feature` SHALL have a Playwright test in `e2e/specs/static-pages.spec.ts` whose title matches the scenario line (including the `Scenario:` prefix). Tests SHALL use proximity-only selectors and default locale `de` unless the scenario requires bilingual coverage.
+Each Gherkin scenario in `docs/migration/features/static-pages.feature` SHALL have a Playwright test in `e2e/specs/static-pages.spec.ts` whose title matches the scenario line (including the `Scenario:` prefix). Tests SHALL use proximity-only selectors and default locale `de` unless the scenario requires bilingual coverage. Once the Phase 5 event map exists, the declining-consent map scenario SHALL assert against a real map surface (fallback shown, no tile requests) rather than a permanent Phase 5 skip — full assertion may land in `discovery-05-stories-e2e-release`.
 
 #### Scenario: Marketing and legal flows are E2E-verified
 
@@ -128,7 +130,7 @@ Each Gherkin scenario in `docs/migration/features/static-pages.feature` SHALL ha
 - **WHEN** a static-pages cookie scenario requires a first visit
 - **THEN** the test clears the `unveiled:cookie-consent` decision before asserting the banner
 
-#### Scenario: Map placeholder when map UI is absent
+#### Scenario: Declining consent disables map embed (Phase 5)
 
-- **WHEN** no map slot exists on seeded pages yet
-- **THEN** the declining-consent map scenario still exists as a named test and either asserts consent decline with a Phase 5 deferral comment or uses an explicit skip reason naming Phase 5
+- **WHEN** the event map UI exists and the user has declined non-essential cookies
+- **THEN** the declining-consent map scenario asserts that the map embed is not loaded and a fallback is shown (implemented or updated in discovery step 05 E2E)

@@ -10,6 +10,9 @@ export type StoredConsent = {
 
 export const CONSENT_STORAGE_KEY = "unveiled:cookie-consent";
 
+/** Same-tab listeners (e.g. EventMap) can react when the banner stores a decision. */
+export const CONSENT_CHANGE_EVENT = "unveiled:cookie-consent-change";
+
 const CONSENT_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
 export const CONSENT_COPY = {
@@ -82,8 +85,13 @@ export function setStoredConsent(decision: ConsentDecision): void {
   };
 
   localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(stored));
+  window.dispatchEvent(new CustomEvent(CONSENT_CHANGE_EVENT, { detail: stored }));
 }
 
 export function hasValidConsent(): boolean {
   return getStoredConsent() !== null;
+}
+
+export function hasAcceptedConsent(): boolean {
+  return getStoredConsent()?.decision === "accepted";
 }

@@ -7,8 +7,10 @@ import { getBerlinCalendarDate } from "./datetime";
 import {
   isEventSaved,
   listMemberFeedEvents,
+  listMemberFeedMapEvents,
   listSavedEventIds,
   listSavedUpcomingEvents,
+  MEMBER_FEED_MAP_MAX,
   saveEvent,
   unsaveEvent,
 } from "./discovery";
@@ -242,6 +244,105 @@ describe("discovery integration", () => {
       await deleteEvent(db, theaterB.id, { skipBucket: true });
       await deletePartner(db, partnerA.id, { skipBucket: true });
       await deletePartner(db, partnerB.id, { skipBucket: true });
+    }
+  });
+
+  test("listMemberFeedMapEvents returns full filtered set without page slice and includes events without coords", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const image = await createTestImageBuffer();
+    const partner = await createPartner(db, {
+      name: `Discovery Map ${suffix}`,
+      address: "Mapstraße 1, Berlin",
+      contactEmail: `discovery-map-${suffix}@example.com`,
+      logoUpload: image,
+      skipUpload: true,
+    });
+
+    const now = new Date("2026-07-09T08:00:00.000Z");
+
+    const withCoords = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Map Coords ${suffix}`,
+      description: "Description",
+      address: "Mapstraße 1, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date("2026-07-12T18:00:00.000Z"),
+      creditPrice: 1,
+      secretCode: `MPC${suffix.slice(0, 5)}`,
+      imageUpload: image,
+      skipUpload: true,
+      lat: "52.520000",
+      lng: "13.405000",
+    });
+
+    const withoutCoords = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Map NoCoords ${suffix}`,
+      description: "Description",
+      address: "Mapstraße 2, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date("2026-07-12T19:00:00.000Z"),
+      creditPrice: 1,
+      secretCode: `MPN${suffix.slice(0, 5)}`,
+      imageUpload: image,
+      skipUpload: true,
+    });
+
+    const past = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Map Past ${suffix}`,
+      description: "Description",
+      address: "Mapstraße 3, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date("2026-07-09T06:00:00.000Z"),
+      creditPrice: 1,
+      secretCode: `MPP${suffix.slice(0, 5)}`,
+      imageUpload: image,
+      skipUpload: true,
+      lat: "52.510000",
+      lng: "13.400000",
+    });
+
+    try {
+      const mapResult = await listMemberFeedMapEvents(db, {
+        from: "2026-07-12",
+        to: "2026-07-12",
+        now,
+      });
+      const ids = mapResult.items.map((row) => row.id);
+      expect(ids).toContain(withCoords.id);
+      expect(ids).toContain(withoutCoords.id);
+      expect(ids).not.toContain(past.id);
+      expect(mapResult.total).toBeGreaterThanOrEqual(2);
+      expect(mapResult.items.length).toBeLessThanOrEqual(MEMBER_FEED_MAP_MAX);
+
+      const byCategory = await listMemberFeedMapEvents(db, {
+        from: "2026-07-12",
+        to: "2026-07-12",
+        category: "Theater",
+        partnerId: partner.id,
+        now,
+      });
+      expect(byCategory.items.map((row) => row.id).sort()).toEqual(
+        [withCoords.id, withoutCoords.id].sort(),
+      );
+    } finally {
+      await deleteEvent(db, withCoords.id, { skipBucket: true });
+      await deleteEvent(db, withoutCoords.id, { skipBucket: true });
+      await deleteEvent(db, past.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
     }
   });
 

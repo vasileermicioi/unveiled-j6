@@ -7,6 +7,9 @@ import { berlinInclusiveDateRange, berlinTodayRange } from "./datetime";
 
 export const MEMBER_FEED_PAGE_SIZE = 24;
 
+/** Max markers returned for the member map view (full filtered set, no page slice). */
+export const MEMBER_FEED_MAP_MAX = 500;
+
 export type MemberFeedFilters = {
   category?: string;
   partnerId?: string;
@@ -24,6 +27,9 @@ export type MemberFeedResult = {
   items: Event[];
   total: number;
 };
+
+/** Map list omits feed `page`; same filter window / past exclusion as the feed. */
+export type MemberFeedMapFilters = Omit<MemberFeedFilters, "page">;
 
 function resolveFeedWindow(filters: MemberFeedFilters, now: Date) {
   const hasFrom = Boolean(filters.from?.trim());
@@ -76,6 +82,34 @@ export async function listMemberFeedEvents(
       .orderBy(asc(events.dateTime), asc(events.id))
       .limit(MEMBER_FEED_PAGE_SIZE)
       .offset(offset),
+    db.select({ count: count() }).from(events).where(where),
+  ]);
+
+  return {
+    items,
+    total: countRows[0]?.count ?? 0,
+  };
+}
+
+/**
+ * Full filtered feed set for the map (no page offset), capped at {@link MEMBER_FEED_MAP_MAX}.
+ * Does not require lat/lng — callers omit events without coordinates when building markers.
+ */
+export async function listMemberFeedMapEvents(
+  db: Db,
+  filters: MemberFeedMapFilters = {},
+): Promise<MemberFeedResult> {
+  const now = filters.now ?? new Date();
+  const conditions = memberFeedConditions(filters, now);
+  const where = and(...conditions);
+
+  const [items, countRows] = await Promise.all([
+    db
+      .select()
+      .from(events)
+      .where(where)
+      .orderBy(asc(events.dateTime), asc(events.id))
+      .limit(MEMBER_FEED_MAP_MAX),
     db.select({ count: count() }).from(events).where(where),
   ]);
 
