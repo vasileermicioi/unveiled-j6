@@ -14,7 +14,7 @@ export const White: Story = () => (
 White.storyName = "Logo / White";
 
 export const Yellow: Story = () => (
-  <Surface className="rounded border-2 border-foreground bg-brand-yellow p-6" variant="transparent">
+  <Surface className="rounded border-2 border-foreground bg-brand-dark p-6" variant="transparent">
     <Logo className="text-4xl" tone="yellow" />
   </Surface>
 );
