@@ -23,7 +23,7 @@ function buildPartnerLogoUrl(logoImageId: string | null): string | null {
   }
 
   try {
-    return buildVariantUrl(logoImageId, "small-320.webp");
+    return buildVariantUrl(logoImageId, "small-320.jpg");
   } catch {
     return null;
   }

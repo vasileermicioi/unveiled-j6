@@ -64,7 +64,10 @@ test.describe("admin-events.feature", () => {
       imagePath: SAMPLE_EVENT_IMAGE,
     });
     await page.goto(event.detailPath);
-    await expect(page.getByRole("img").first()).toBeVisible({ timeout: 15_000 });
+    // Nav logo is also role=img — assert a catalog JPEG variant, not the first image on the page.
+    const hero = page.locator('img[src*=".jpg"]').first();
+    await expect(hero).toBeVisible({ timeout: 15_000 });
+    await expect(hero).toHaveAttribute("src", /(?:hero-1920|large-1280|medium-640)\.jpg(?:\?|$)/);
   });
 
   test("Scenario: Supply the event image as a remote URL", { tag: "@skip-no-ui" }, async () => {

@@ -133,10 +133,6 @@ function isImageStorageConfigError(error: Error): boolean {
 
 export function mapCatalogError(error: unknown, locale: Locale): string {
   if (error instanceof CatalogValidationError) {
-    if (error.code === "IMAGE_PROCESSING_UNAVAILABLE") {
-      return error.message;
-    }
-
     const field =
       error.code === "REQUIRED_FIELD" ? error.message.replace(/ is required$/, "") : undefined;
 
@@ -149,6 +145,11 @@ export function mapCatalogError(error: unknown, locale: Locale): string {
 
   if (error instanceof Error && isImageStorageConfigError(error)) {
     return getAdminCopy(locale).imageStorageError;
+  }
+
+  // Surface unexpected runtime messages (e.g. Workers sip/WASM/R2) for admin operators.
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
   }
 
   return getAdminCopy(locale).genericError;

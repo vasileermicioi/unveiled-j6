@@ -1,10 +1,10 @@
 export const VARIANT_FILENAMES = [
-  "original.webp",
-  "hero-1920.webp",
-  "large-1280.webp",
-  "medium-640.webp",
-  "small-320.webp",
-  "og-1200x630.webp",
+  "original.jpg",
+  "hero-1920.jpg",
+  "large-1280.jpg",
+  "medium-640.jpg",
+  "small-320.jpg",
+  "og-1200x630.jpg",
 ] as const;
 
 export type VariantFilename = (typeof VARIANT_FILENAMES)[number];

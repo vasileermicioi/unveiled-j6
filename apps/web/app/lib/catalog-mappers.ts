@@ -31,7 +31,7 @@ export function toDiscoverPartnerTile(partner: Partner): DiscoverPartnerTile {
 
   if (partner.logoImageId) {
     try {
-      logoUrl = buildVariantUrl(partner.logoImageId, "medium-640.webp");
+      logoUrl = buildVariantUrl(partner.logoImageId, "medium-640.jpg");
     } catch {
       logoUrl = undefined;
     }

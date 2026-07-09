@@ -6,7 +6,7 @@ Monorepo structure, package rollout, database tooling, and deployment documentat
 
 ### Requirement: Phase 0 package scope
 
-During Phase 4 catalog step 01, `packages/` SHALL include `config/`, `db/`, `auth/`, and `images/`. `@unveiled/db` SHALL extend beyond `users` and `subscriptions` with catalog tables (`images`, `partners`, `events`). `@unveiled/images` SHALL provide sharp-based server-side image processing without importing `apps/web`. Billing and UI packages are not created until their respective phases.
+During Phase 4 catalog step 01, `packages/` SHALL include `config/`, `db/`, `auth/`, and `images/`. `@unveiled/db` SHALL extend beyond `users` and `subscriptions` with catalog tables (`images`, `partners`, `events`). `@unveiled/images` SHALL provide server-side image processing into the six fixed JPEG variants without importing `apps/web`. Billing and UI packages are not created until their respective phases.
 
 #### Scenario: Package directory listing after catalog step 01
 
@@ -22,6 +22,58 @@ During Phase 4 catalog step 01, `packages/` SHALL include `config/`, `db/`, `aut
 
 - **WHEN** a consumer imports schema symbols from `@unveiled/db`
 - **THEN** `images`, `partners`, and `events` tables and related enums are exported alongside existing auth tables
+
+### Requirement: Image processing runtime target
+
+The application SHALL target Cloudflare Workers for `apps/web` SSR and SHALL process admin image uploads in-request on that host using `@standardagents/sip`. Product and operator documentation (`docs/migration/extras/image-uploads.md`, `AGENTS.md`, `apps/web/DEPLOYMENT.md`) SHALL name `@standardagents/sip` as the processing approach and SHALL describe JPEG variant filenames. The historical “Node-only sharp / Option B local uploads” hosting assumption is superseded and SHALL NOT be presented as the required happy path for staging or production uploads.
+
+#### Scenario: Documentation states the target processor
+
+- **WHEN** an operator reads `docs/migration/extras/image-uploads.md` after this change
+- **THEN** the doc names `@standardagents/sip` (or equivalent Workers-native library) as the processing approach and describes JPEG variant filenames
+
+#### Scenario: Deployment docs do not require local-only uploads
+
+- **WHEN** an operator reads `apps/web/DEPLOYMENT.md` image-processing notes after this change
+- **THEN** the notes do not instruct that Workers admin uploads must use `bun run dev` / Option B as the only path
+
+#### Scenario: AGENTS.md hosting matches Workers+sip
+
+- **WHEN** an agent reads the `AGENTS.md` hosting and Images stack rows
+- **THEN** they state Cloudflare Workers + `@standardagents/sip` with six JPEG variants and do not claim admin uploads on the Workers URL are unavailable
+
+### Requirement: Documented image upload operations
+
+Operator documentation (`AGENTS.md`, `apps/web/DEPLOYMENT.md`, `packages/images/README.md`, `e2e/README.md`) SHALL describe `@standardagents/sip` on Cloudflare Workers as the supported upload path, including JPEG variant filenames and the need to re-seed or re-upload after migrating from the former WebP/sharp pipeline. Those docs SHALL NOT present Option B local-only uploads or `sharp` as the required happy path for staging or production.
+
+#### Scenario: Operator follows DEPLOYMENT.md
+
+- **WHEN** an operator configures R2 and deploys `apps/web` to Workers
+- **THEN** documentation instructs them that admin image uploads work on that deployment and does not direct them to Option B local-only uploads as the primary path
+
+#### Scenario: Agent and e2e docs match Workers+sip
+
+- **WHEN** an operator or agent reads `AGENTS.md` hosting/images notes and `e2e/README.md` image-test guidance
+- **THEN** both describe sip on Workers (and local Bun/Node) with `.jpg` variants and do not require `bun run dev` + `sharp` as the only upload host
+
+#### Scenario: Legacy WebP migration is documented
+
+- **WHEN** an operator has existing R2 objects or DB rows from the former `.webp` pipeline
+- **THEN** `apps/web/DEPLOYMENT.md` (or linked image docs) instructs them to re-run `bun run seed:demo` and/or re-upload images so public URLs resolve to `.jpg` variants
+
+### Requirement: sip WASM available in the Worker isolate
+
+The `apps/web` Cloudflare Workers build SHALL include the `@standardagents/sip` WASM module (or sip’s workerd-supported loader) so `await ready()` succeeds inside the isolate before image transforms run. The production bundle SHALL NOT depend on unresolved `sharp` (or other Node-native image addons) for admin upload processing.
+
+#### Scenario: Worker cold start upload
+
+- **WHEN** the first admin image upload runs on a fresh Worker isolate
+- **THEN** sip initializes successfully and processes the image without native-addon errors
+
+#### Scenario: Production build ships sip without sharp
+
+- **WHEN** an operator runs `bun run build` for `apps/web`
+- **THEN** the Worker bundle references sip/wasm successfully and does not require a `sharp` native addon at runtime
 
 ### Requirement: Database migration scripts
 

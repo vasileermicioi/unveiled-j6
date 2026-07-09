@@ -38,16 +38,22 @@ async function fetchBetterAuthSession(
   c: Context,
   authUrl: string,
 ): Promise<BetterAuthSessionResponse | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), SESSION_FETCH_TIMEOUT_MS);
-
+  // Promise.race avoids AbortSignal clashes between @types/node and DOM libs
+  // pulled in transitively via @unveiled/images → @standardagents/sip.
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    const response = await fetch(`${normalizeAuthUrl(authUrl)}/get-session`, {
-      headers: {
-        cookie: c.req.header("cookie") ?? "",
-      },
-      signal: controller.signal,
-    });
+    const response = await Promise.race([
+      fetch(`${normalizeAuthUrl(authUrl)}/get-session`, {
+        headers: {
+          cookie: c.req.header("cookie") ?? "",
+        },
+      }),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error("session fetch timeout"));
+        }, SESSION_FETCH_TIMEOUT_MS);
+      }),
+    ]);
 
     if (!response.ok) {
       return null;
@@ -62,7 +68,9 @@ async function fetchBetterAuthSession(
   } catch {
     return null;
   } finally {
-    clearTimeout(timeout);
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
   }
 }
 

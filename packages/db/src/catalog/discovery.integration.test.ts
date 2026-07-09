@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createDb, users } from "@unveiled/db";
+import { createSolidJpeg } from "@unveiled/images";
 import { eq } from "drizzle-orm";
-import sharp from "sharp";
 
 import { getBerlinCalendarDate } from "./datetime";
 import {
@@ -20,16 +20,7 @@ import { createPartner, deletePartner } from "./partners";
 const databaseUrl = process.env.DATABASE_URL;
 
 async function createTestImageBuffer(): Promise<Buffer> {
-  return sharp({
-    create: {
-      width: 800,
-      height: 420,
-      channels: 3,
-      background: { r: 250, g: 255, b: 134 },
-    },
-  })
-    .jpeg()
-    .toBuffer();
+  return createSolidJpeg(800, 420, { r: 250, g: 255, b: 134 });
 }
 
 async function insertTestUser(db: ReturnType<typeof createDb>, suffix: string) {

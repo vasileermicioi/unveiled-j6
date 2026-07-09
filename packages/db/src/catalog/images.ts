@@ -1,3 +1,9 @@
+import {
+  deleteImageObjects,
+  processImageFromBuffer,
+  processImageFromUrl,
+  repairImageVariants,
+} from "@unveiled/images";
 import { eq } from "drizzle-orm";
 
 import type { Db } from "../index";
@@ -10,37 +16,18 @@ export type PersistImageOptions = {
   skipUpload?: boolean;
 };
 
-const IMAGE_PROCESSING_UNAVAILABLE =
-  "Image processing is not available on this host. Upload images using local development (bun run dev) or seed data with bun run seed:demo.";
-
-type ImagesModule = typeof import("@unveiled/images");
-
-async function loadImagesModule(): Promise<ImagesModule> {
-  try {
-    // Vite SSR transforms this workspace package (see apps/web vite `ssr.noExternal`).
-    // Do not use createRequire — Node cannot load the package's TypeScript entry.
-    return await import("@unveiled/images");
-  } catch (error) {
-    throw new CatalogValidationError(
-      "IMAGE_PROCESSING_UNAVAILABLE",
-      `${IMAGE_PROCESSING_UNAVAILABLE} (${error instanceof Error ? error.message : String(error)})`,
-    );
-  }
-}
-
 export async function persistImageFromSource(
   db: Db,
   source: ImageAttachInput,
   options: PersistImageOptions = {},
 ): Promise<string> {
-  const imagesModule = await loadImagesModule();
   const processed =
     source.type === "upload"
-      ? await imagesModule.processImageFromBuffer(source.buffer, {
+      ? await processImageFromBuffer(source.buffer, {
           uploadedBy: options.uploadedBy,
           skipUpload: options.skipUpload,
         })
-      : await imagesModule.processImageFromUrl(source.url, {
+      : await processImageFromUrl(source.url, {
           uploadedBy: options.uploadedBy,
           skipUpload: options.skipUpload,
         });
@@ -92,8 +79,7 @@ export async function deleteImageRecord(
   options?: { skipBucket?: boolean },
 ): Promise<void> {
   if (!options?.skipBucket) {
-    const imagesModule = await loadImagesModule();
-    await imagesModule.deleteImageObjects(imageId);
+    await deleteImageObjects(imageId);
   }
 
   await db.delete(images).where(eq(images.id, imageId));
@@ -140,9 +126,8 @@ export async function ensureImageVariantsUploaded(db: Db, imageId: string): Prom
   }
 
   try {
-    const imagesModule = await loadImagesModule();
-    await imagesModule.repairImageVariants(imageId, row.sourceUrl);
+    await repairImageVariants(imageId, row.sourceUrl);
   } catch {
-    // Workers and other hosts without sharp skip repair; list/detail still use existing URLs.
+    // Repair is best-effort; list/detail still use existing URLs if R2 is temporarily unavailable.
   }
 }

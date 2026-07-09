@@ -14,11 +14,13 @@ Target custom domain: `https://staging.unveiled.berlin` (configure in Cloudflare
 
 **Cloudflare Workers** — HonoX SSR via `@hono/vite-build/cloudflare-workers` and `wrangler.toml`.
 
-**Image processing (`sharp`)** runs on **local Node only** (`bun run dev`, `bun run seed:demo`). Admin image uploads on the Workers URL return a clear error; seed the database locally before deploying, or upload images while running local dev.
+**Image processing** uses **`@standardagents/sip`** (WASM) on **Cloudflare Workers and local Node/Bun** (`bun run dev`, `bun run seed:demo`, staging/production Workers). Admin multipart image uploads succeed on the Workers URL in-request — no separate Node-only upload host is required. The Workers production build must ship sip’s WASM (`sip.wasm` via sip’s `workerd` export); if `await ready()` fails in the isolate, check that `@unveiled/images` is not externalized and the bundle includes the WASM asset.
+
+**Migrating from the former WebP / sharp pipeline:** variant filenames are now `*.jpg` only. Existing R2 objects under `images/{id}/*.webp` (and DB rows that still resolve to those URLs) will 404 until you **re-seed** (`bun run seed:demo` on an empty catalog, or with `--reset` / force against a disposable DB) and/or **re-upload** partner logos and event images in admin. There is no automatic WebP→JPEG migration job.
 
 Deploy artifacts:
 - `apps/web/wrangler.toml` — Workers config, static assets binding
-- `apps/web/vite.config.ts` — Workers production build (Node dev server unchanged for `bun run dev`)
+- `apps/web/vite.config.ts` — Workers production build (Node/Bun `bun run dev` unchanged for local SSR)
 - Legacy `Dockerfile` / Railway — optional Node reference; not used for web deploy
 
 ## Build and start
@@ -30,14 +32,14 @@ bun install
 bun run build    # Workers-compatible @unveiled/web bundle
 ```
 
-Local development (Node — supports admin image upload):
+Local development (Bun/Node — same sip pipeline as Workers; supports admin image upload):
 
 ```bash
 bun run dev
 # http://localhost:3000
 ```
 
-Workers preview (after build; requires wrangler secrets — see below):
+Workers preview (after build; requires wrangler secrets — see below; admin image uploads work here too):
 
 ```bash
 cd apps/web && bun run dev:workers
@@ -155,7 +157,9 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 
 ### Cloudflare R2 (Phase 4)
 
-The image pipeline stores six WebP variants per upload under `images/{uuid}/{variant}.webp` in the bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.webp` (and sibling variant filenames — see `docs/migration/extras/image-uploads.md`).
+The image pipeline stores six JPEG variants per upload under `images/{uuid}/{variant}.jpg` in the bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.jpg` (and sibling variant filenames — see `docs/migration/extras/image-uploads.md`). Demo seed (`bun run seed:demo`) uses the same `@unveiled/images` sip path and writes `.jpg` keys.
+
+If the bucket still has objects from the old WebP pipeline (`*.webp`), re-seed or re-upload so public/admin pages resolve `.jpg` variants — see the Host section migration note above.
 
 **1. Create bucket** — Cloudflare Dashboard → **R2** → create bucket (e.g. `unveiled-j6`).
 
@@ -188,14 +192,14 @@ AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY 
 
 Expect an empty listing or object keys — not an auth error.
 
-**Admin event upload smoke test** (Phase 4 catalog — **local Node dev only**):
+**Admin event/partner upload smoke test** (Phase 4 catalog — Workers or local):
 
-1. Sign in as ADMIN with all six R2 vars set in root `.env`.
-2. Run `bun run dev` (not Workers preview).
-3. Open `/:locale/admin/events/new`, choose a JPEG ≥ 800×420 px, submit.
-3. Confirm redirect to `/admin/events` and the new row shows a `small-320.webp` thumbnail.
-4. Edit the event without a new file — thumbnail unchanged. Edit with a new file — thumbnail updates.
-5. In the R2 bucket, confirm six objects under `images/{uuid}/` for the event's `image_id`.
+1. Sign in as ADMIN with all six R2 vars set (Workers `[vars]` or root `.env`).
+2. Use the staging Workers URL (`bun run deploy:workers` / `dev:workers`) or `bun run dev`.
+3. Open `/:locale/admin/partners/new` (or `/:locale/admin/events/new`), choose a JPEG ≥ 800×420 px, submit.
+4. Confirm redirect success and the new row shows a `small-320.jpg` thumbnail.
+5. Edit without a new file — thumbnail unchanged. Edit with a new file — thumbnail updates.
+6. In the R2 bucket, confirm six objects under `images/{uuid}/` for the image id.
 
 ## Manual Railway setup (first deploy)
 
@@ -348,9 +352,9 @@ Use a **new signup** or reset an existing test user (see [Repeat demo reset](#re
 
 To run the demo again without creating a new account:
 
-**Option A — fresh signup:** use a new email each time (simplest for client demos).
+**Path A — fresh signup:** use a new email each time (simplest for client demos).
 
-**Option B — SQL reset** (Neon SQL editor, replace `<user_id>`):
+**Path B — SQL reset** (Neon SQL editor, replace `<user_id>`):
 
 ```sql
 UPDATE public.users
@@ -457,7 +461,7 @@ Public catalog surfaces (`@unveiled/ui` EventCard, locale-home Discover live gri
 
 ### Demo seed images (Wikimedia Commons)
 
-`bun run seed:demo` inserts six real Berlin cultural partners (Volksbühne, Deutsches Theater, Schaubühne, Gropius Bau, HKW, Konzerthaus) with venue-matched events. Images are fetched from **Wikimedia Commons** via `processImageFromUrl` and stored as six WebP variants in R2.
+`bun run seed:demo` inserts six real Berlin cultural partners (Volksbühne, Deutsches Theater, Schaubühne, Gropius Bau, HKW, Konzerthaus) with venue-matched events. Images are fetched from **Wikimedia Commons** via `processImageFromUrl` and stored as six JPEG variants in R2.
 
 ```bash
 # Fresh catalog on empty DB
@@ -512,7 +516,7 @@ Selector policy, spec inventory, and skip inventory: [`e2e/README.md`](../../e2e
 
 On push to `main`: **quality** (lint → typecheck → build) → **e2e** (timeout 20m) → **deploy** (Railway when `RAILWAY_TOKEN` is set). E2E failure blocks deploy.
 
-The e2e job uses `SITE_URL=http://localhost:3000` and `CI=true` so Playwright’s `webServer` starts local Node SSR (`bun run dev` + `sharp`). It runs `bun run db:migrate` against the CI `DATABASE_URL` (use a **CI-dedicated** Neon branch — never `seed:demo -- --reset` against shared staging). Image specs self-skip when R2 secrets are absent.
+The e2e job uses `SITE_URL=http://localhost:3000` and `CI=true` so Playwright’s `webServer` starts local Node SSR (`bun run dev` + sip). It runs `bun run db:migrate` against the CI `DATABASE_URL` (use a **CI-dedicated** Neon branch — never `seed:demo -- --reset` against shared staging). Image specs self-skip when R2 secrets are absent.
 
 #### GitHub Actions secrets (names only)
 

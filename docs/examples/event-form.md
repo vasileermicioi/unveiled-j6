@@ -52,7 +52,7 @@ Each step is its own SSR page — **no modal**.
 | Capacity | `Input type="number"` | |
 | Partner | `Select` | Admin picks partner |
 | Category | `Select` | |
-| Hero image | file input + URL paste | `@unveiled/images` → 6 WebP variants |
+| Hero image | file input + URL paste | `@unveiled/images` → 6 JPEG variants |
 | Ticket type | `RadioGroup` | SECRET_CODE / VOUCHER |
 
 ---

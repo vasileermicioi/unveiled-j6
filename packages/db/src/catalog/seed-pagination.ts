@@ -1,6 +1,5 @@
-import { readS3Env } from "@unveiled/images";
+import { createSolidJpeg, readS3Env } from "@unveiled/images";
 import { ilike } from "drizzle-orm";
-import sharp from "sharp";
 
 import type { Db } from "../index";
 import { events } from "../schema/events";
@@ -37,20 +36,11 @@ export type SeedAdminPaginationResult = {
 };
 
 async function createSeedImageBuffer(index: number): Promise<Buffer> {
-  return sharp({
-    create: {
-      width: 800,
-      height: 420,
-      channels: 3,
-      background: {
-        r: 40 + ((index * 17) % 200),
-        g: 80 + ((index * 23) % 150),
-        b: 100 + ((index * 29) % 120),
-      },
-    },
-  })
-    .jpeg()
-    .toBuffer();
+  return createSolidJpeg(800, 420, {
+    r: 40 + ((index * 17) % 200),
+    g: 80 + ((index * 23) % 150),
+    b: 100 + ((index * 29) % 120),
+  });
 }
 
 export function assertPaginationSeedImageEnv(skipUpload: boolean): void {

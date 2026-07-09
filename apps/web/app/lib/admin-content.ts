@@ -481,12 +481,6 @@ export function mapCatalogErrorCode(
     return adminCopy.fieldErrors.image;
   }
 
-  if (code === "IMAGE_PROCESSING_UNAVAILABLE") {
-    return locale === "de"
-      ? "Bildverarbeitung ist auf diesem Host nicht verfügbar. Bilder lokal mit bun run dev hochladen oder bun run seed:demo nutzen."
-      : "Image processing is not available on this host. Upload images locally with bun run dev or use bun run seed:demo.";
-  }
-
   if (code === "INVALID_REDEMPTION_CONFIG") {
     return adminCopy.fieldErrors.redemption;
   }

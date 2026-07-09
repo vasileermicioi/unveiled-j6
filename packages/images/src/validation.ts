@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { inspect } from "@standardagents/sip";
 
 import {
   ACCEPTED_MIME_TYPES,
@@ -8,6 +8,7 @@ import {
   MIN_IMAGE_WIDTH,
 } from "./constants";
 import { ImageValidationError } from "./errors";
+import { sipReady } from "./sip-ready";
 
 const FORMAT_TO_MIME: Record<string, AcceptedMimeType> = {
   jpeg: "image/jpeg",
@@ -30,12 +31,19 @@ export async function validateImageBuffer(buffer: Buffer): Promise<ValidatedImag
     throw new ImageValidationError(`Image exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`);
   }
 
-  const metadata = await sharp(buffer).metadata();
-  const width = metadata.width;
-  const height = metadata.height;
-  const format = metadata.format;
+  await sipReady;
 
-  if (!width || !height || !format) {
+  let info: { format: string; width: number; height: number };
+  try {
+    const result = await inspect(new Uint8Array(buffer));
+    info = result.info;
+  } catch {
+    throw new ImageValidationError("Unable to read image dimensions or format");
+  }
+
+  const { width, height, format } = info;
+
+  if (!width || !height || !format || format === "unknown") {
     throw new ImageValidationError("Unable to read image dimensions or format");
   }
 

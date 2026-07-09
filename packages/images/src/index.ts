@@ -22,6 +22,7 @@ export {
   VARIANT_FILENAMES,
   type VariantFilename,
 } from "./constants";
+export { createSolidJpeg, type RgbColor } from "./create-solid-jpeg";
 export { ImageValidationError, validateRemoteContentType } from "./errors";
 export type { ImageSource, ProcessedImageMetadata, ProcessedImageResult } from "./process";
 export {
@@ -73,17 +74,23 @@ export async function processImageFromUrl(
   url: string,
   options: ProcessImageOptions = {},
 ): Promise<ProcessedImageResult> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REMOTE_FETCH_TIMEOUT_MS);
-
+  // Promise.race avoids AbortSignal type clashes between @types/node and DOM libs
+  // pulled in transitively by @standardagents/sip.
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    const response = await fetch(url, {
-      redirect: "follow",
-      signal: controller.signal,
-      headers: {
-        "User-Agent": REMOTE_IMAGE_USER_AGENT,
-      },
-    });
+    const response = await Promise.race([
+      fetch(url, {
+        redirect: "follow",
+        headers: {
+          "User-Agent": REMOTE_IMAGE_USER_AGENT,
+        },
+      }),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new ImageValidationError("Timed out fetching remote image URL"));
+        }, REMOTE_FETCH_TIMEOUT_MS);
+      }),
+    ]);
 
     if (!response.ok) {
       throw new ImageValidationError(`Failed to fetch image URL (${response.status})`);
@@ -104,12 +111,11 @@ export async function processImageFromUrl(
     if (error instanceof ImageValidationError) {
       throw error;
     }
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new ImageValidationError("Timed out fetching remote image URL");
-    }
     throw new ImageValidationError("Failed to fetch remote image URL");
   } finally {
-    clearTimeout(timeout);
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
   }
 }
 

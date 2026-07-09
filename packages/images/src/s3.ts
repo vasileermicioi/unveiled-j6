@@ -64,7 +64,7 @@ export async function uploadImageVariants(
           Bucket: bucket,
           Key: objectKey(imageId, filename),
           Body: variants[filename],
-          ContentType: "image/webp",
+          ContentType: "image/jpeg",
         }),
       ),
     ),

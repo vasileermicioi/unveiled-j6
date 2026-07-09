@@ -133,7 +133,7 @@ export function eventDetailPageMeta(
   let ogImage: string | undefined;
 
   try {
-    ogImage = buildVariantUrl(event.imageId, "og-1200x630.webp");
+    ogImage = buildVariantUrl(event.imageId, "og-1200x630.jpg");
   } catch {
     ogImage = undefined;
   }
@@ -169,7 +169,7 @@ export type EventJsonLd = {
 export function buildEventJsonLd(event: Event): EventJsonLd {
   let image = "";
   try {
-    image = buildVariantUrl(event.imageId, "hero-1920.webp");
+    image = buildVariantUrl(event.imageId, "hero-1920.jpg");
   } catch {
     image = getDefaultOgImage();
   }

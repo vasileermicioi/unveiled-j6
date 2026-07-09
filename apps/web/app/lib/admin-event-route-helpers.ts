@@ -17,7 +17,7 @@ export function toPartnerOptions(partners: Partner[]): PartnerOption[] {
 export function eventToFormDefaults(event: Event): EventFormDefaults & { partnerId: string } {
   let currentImageUrl: string | null = null;
   try {
-    currentImageUrl = buildVariantUrl(event.imageId, "small-320.webp");
+    currentImageUrl = buildVariantUrl(event.imageId, "small-320.jpg");
   } catch {
     currentImageUrl = null;
   }

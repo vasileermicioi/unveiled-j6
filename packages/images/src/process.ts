@@ -1,4 +1,12 @@
-import sharp from "sharp";
+import {
+  collect,
+  decode,
+  encodeJpeg,
+  inspect,
+  type PixelStream,
+  type Scanline,
+  transform,
+} from "@standardagents/sip";
 
 import {
   HERO_MAX_WIDTH,
@@ -17,6 +25,7 @@ import {
   VARIANT_FILENAMES,
   type VariantFilename,
 } from "./constants";
+import { sipReady } from "./sip-ready";
 import { validateImageBuffer } from "./validation";
 
 export type ImageSource = "UPLOAD" | "REMOTE_URL";
@@ -40,42 +49,141 @@ export type GenerateVariantsOptions = {
   imageId?: string;
 };
 
-async function createOriginalVariant(input: Buffer): Promise<Buffer> {
-  return sharp(input)
-    .rotate()
-    .resize({
-      width: ORIGINAL_MAX_EDGE,
-      height: ORIGINAL_MAX_EDGE,
-      fit: "inside",
-      withoutEnlargement: true,
-    })
-    .webp({ quality: ORIGINAL_QUALITY })
-    .toBuffer();
+function toBuffer(data: ArrayBuffer): Buffer {
+  return Buffer.from(data);
 }
 
-async function createMaxWidthVariant(
-  input: Buffer,
+async function createMaxBoundVariant(
+  input: Uint8Array,
   maxWidth: number,
+  maxHeight: number | undefined,
   quality: number,
 ): Promise<Buffer> {
-  return sharp(input)
-    .rotate()
-    .resize({ width: maxWidth, withoutEnlargement: true })
-    .webp({ quality })
-    .toBuffer();
+  const encoded = transform(input, {
+    width: maxWidth,
+    ...(maxHeight !== undefined ? { height: maxHeight } : {}),
+    quality,
+  });
+  const { data } = await collect(encoded);
+  return toBuffer(data);
 }
 
-async function createOgVariant(input: Buffer): Promise<Buffer> {
-  return sharp(input)
-    .rotate()
-    .resize({
+async function collectRgbBitmap(stream: PixelStream): Promise<{
+  width: number;
+  height: number;
+  originalFormat: "jpeg" | "png" | "webp" | "avif";
+  pixels: Uint8Array;
+}> {
+  // sip resolves `stream.info` only after iteration starts — do not await info first.
+  const rows: Uint8Array[] = [];
+  let width = 0;
+  for await (const scanline of stream) {
+    width = scanline.width;
+    rows.push(Uint8Array.from(scanline.data));
+  }
+  const info = await stream.info;
+  const height = rows.length;
+  const pixels = new Uint8Array(width * height * 3);
+  for (let y = 0; y < height; y++) {
+    const row = rows[y];
+    if (row) {
+      pixels.set(row, y * width * 3);
+    }
+  }
+  return {
+    width: info.width,
+    height: info.height,
+    originalFormat: info.originalFormat,
+    pixels,
+  };
+}
+
+function sampleBilinear(
+  pixels: Uint8Array,
+  srcWidth: number,
+  srcHeight: number,
+  x: number,
+  y: number,
+  out: Uint8Array,
+  outOffset: number,
+): void {
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const x1 = Math.min(x0 + 1, srcWidth - 1);
+  const y1 = Math.min(y0 + 1, srcHeight - 1);
+  const tx = x - x0;
+  const ty = y - y0;
+
+  const i00 = (y0 * srcWidth + x0) * 3;
+  const i10 = (y0 * srcWidth + x1) * 3;
+  const i01 = (y1 * srcWidth + x0) * 3;
+  const i11 = (y1 * srcWidth + x1) * 3;
+
+  for (let c = 0; c < 3; c++) {
+    const p00 = pixels[i00 + c] ?? 0;
+    const p10 = pixels[i10 + c] ?? 0;
+    const p01 = pixels[i01 + c] ?? 0;
+    const p11 = pixels[i11 + c] ?? 0;
+    const top = p00 * (1 - tx) + p10 * tx;
+    const bottom = p01 * (1 - tx) + p11 * tx;
+    out[outOffset + c] = Math.round(top * (1 - ty) + bottom * ty);
+  }
+}
+
+/**
+ * Center cover-crop to exactly OG_WIDTH × OG_HEIGHT (upscale allowed).
+ * sip `transform`/`resize` never upscale and do not cover-crop, so this path
+ * buffers RGB once for the OG variant only.
+ */
+async function createOgVariant(input: Uint8Array): Promise<Buffer> {
+  const bitmap = await collectRgbBitmap(decode(input));
+  const scale = Math.max(OG_WIDTH / bitmap.width, OG_HEIGHT / bitmap.height);
+  const scaledWidth = Math.max(1, Math.round(bitmap.width * scale));
+  const scaledHeight = Math.max(1, Math.round(bitmap.height * scale));
+  const offsetX = (scaledWidth - OG_WIDTH) / 2;
+  const offsetY = (scaledHeight - OG_HEIGHT) / 2;
+
+  const cropped = new Uint8Array(OG_WIDTH * OG_HEIGHT * 3);
+  for (let y = 0; y < OG_HEIGHT; y++) {
+    for (let x = 0; x < OG_WIDTH; x++) {
+      const srcX = (x + offsetX + 0.5) / scale - 0.5;
+      const srcY = (y + offsetY + 0.5) / scale - 0.5;
+      const clampedX = Math.min(Math.max(srcX, 0), bitmap.width - 1);
+      const clampedY = Math.min(Math.max(srcY, 0), bitmap.height - 1);
+      sampleBilinear(
+        bitmap.pixels,
+        bitmap.width,
+        bitmap.height,
+        clampedX,
+        clampedY,
+        cropped,
+        (y * OG_WIDTH + x) * 3,
+      );
+    }
+  }
+
+  const rowSize = OG_WIDTH * 3;
+  const pixelStream: PixelStream = {
+    info: Promise.resolve({
       width: OG_WIDTH,
       height: OG_HEIGHT,
-      fit: "cover",
-      position: "centre",
-    })
-    .webp({ quality: OG_QUALITY })
-    .toBuffer();
+      originalFormat: bitmap.originalFormat,
+    }),
+    [Symbol.asyncIterator]() {
+      return (async function* (): AsyncGenerator<Scanline> {
+        for (let y = 0; y < OG_HEIGHT; y++) {
+          yield {
+            data: cropped.subarray(y * rowSize, (y + 1) * rowSize),
+            width: OG_WIDTH,
+            y,
+          };
+        }
+      })();
+    },
+  };
+
+  const { data } = await collect(encodeJpeg(pixelStream, { quality: OG_QUALITY }));
+  return toBuffer(data);
 }
 
 export async function generateImageVariants(
@@ -83,25 +191,27 @@ export async function generateImageVariants(
   options: GenerateVariantsOptions,
 ): Promise<ProcessedImageResult> {
   const validated = await validateImageBuffer(buffer);
-  const oriented = await sharp(buffer).rotate().toBuffer();
+  await sipReady;
+
+  const input = new Uint8Array(buffer);
   const imageId = options.imageId ?? crypto.randomUUID();
 
   const [original, hero1920, large1280, medium640, small320, og1200x630] = await Promise.all([
-    createOriginalVariant(oriented),
-    createMaxWidthVariant(oriented, HERO_MAX_WIDTH, HERO_QUALITY),
-    createMaxWidthVariant(oriented, LARGE_MAX_WIDTH, LARGE_QUALITY),
-    createMaxWidthVariant(oriented, MEDIUM_MAX_WIDTH, MEDIUM_QUALITY),
-    createMaxWidthVariant(oriented, SMALL_MAX_WIDTH, SMALL_QUALITY),
-    createOgVariant(oriented),
+    createMaxBoundVariant(input, ORIGINAL_MAX_EDGE, ORIGINAL_MAX_EDGE, ORIGINAL_QUALITY),
+    createMaxBoundVariant(input, HERO_MAX_WIDTH, undefined, HERO_QUALITY),
+    createMaxBoundVariant(input, LARGE_MAX_WIDTH, undefined, LARGE_QUALITY),
+    createMaxBoundVariant(input, MEDIUM_MAX_WIDTH, undefined, MEDIUM_QUALITY),
+    createMaxBoundVariant(input, SMALL_MAX_WIDTH, undefined, SMALL_QUALITY),
+    createOgVariant(input),
   ]);
 
   const variants = {
-    "original.webp": original,
-    "hero-1920.webp": hero1920,
-    "large-1280.webp": large1280,
-    "medium-640.webp": medium640,
-    "small-320.webp": small320,
-    "og-1200x630.webp": og1200x630,
+    "original.jpg": original,
+    "hero-1920.jpg": hero1920,
+    "large-1280.jpg": large1280,
+    "medium-640.jpg": medium640,
+    "small-320.jpg": small320,
+    "og-1200x630.jpg": og1200x630,
   } satisfies Record<VariantFilename, Buffer>;
 
   for (const filename of VARIANT_FILENAMES) {
@@ -125,14 +235,16 @@ export async function generateImageVariants(
 export async function getVariantDimensions(
   variants: Record<VariantFilename, Buffer>,
 ): Promise<Record<VariantFilename, { width: number; height: number }>> {
+  await sipReady;
+
   const entries = await Promise.all(
     VARIANT_FILENAMES.map(async (filename) => {
-      const metadata = await sharp(variants[filename]).metadata();
+      const { info } = await inspect(new Uint8Array(variants[filename]));
       return [
         filename,
         {
-          width: metadata.width ?? 0,
-          height: metadata.height ?? 0,
+          width: info.width,
+          height: info.height,
         },
       ] as const;
     }),

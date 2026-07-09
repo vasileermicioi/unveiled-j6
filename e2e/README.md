@@ -40,7 +40,7 @@ SITE_URL=https://your-staging-host bun run test:e2e
 | `S3_SECRET_ACCESS_KEY` | For image upload specs | R2 secret |
 | `IMAGE_PUBLIC_BASE_URL` | For image upload specs | Public R2.dev / custom domain |
 
-Image create/edit tests call `test.skip('R2 vars not configured')` when any of the six R2 vars is missing. **Admin uploads require local Node SSR** (`bun run dev` + `sharp`) — they do not work on Cloudflare Workers preview.
+Image create/edit tests call `test.skip('R2 vars not configured')` when any of the six R2 vars is missing. Admin uploads use **`@standardagents/sip`** and work against **`bun run dev`** (default) and, when configured, against a **Workers preview or staging** base URL (`SITE_URL` / Playwright `baseURL` + the same six R2 vars). Do not skip image specs solely because the host is Workers.
 
 **Fallbacks (local only):**
 
@@ -144,5 +144,5 @@ Cookie consent storage key: `unveiled:cookie-consent` (localStorage).
 - On `main`, `.github/workflows/deploy-staging.yml` runs **quality → e2e → deploy**. E2E uses `SITE_URL=http://localhost:3000` and `CI=true` so `webServer` starts `bun run dev`.
 - Required GitHub secrets and Phase 4½ operator docs: `apps/web/DEPLOYMENT.md` § Phase 4½ — Testing foundation.
 - Google OAuth scenarios may require `test.skip` with an explicit reason when Neon test credentials are unavailable.
-- Admin image-upload scenarios must run against local Node SSR (`bun run dev`), not Cloudflare Workers preview.
+- Admin image-upload scenarios need R2 env vars; default CI/local target is `bun run dev`. Pointing Playwright at Workers preview/staging is supported when secrets and `SITE_URL` are set.
 - Event **series** create: after preview the form remounts and the browser clears the file input — tests (and admins) must re-select the image on the confirm step before submitting.

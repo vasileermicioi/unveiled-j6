@@ -34,12 +34,12 @@ When specs conflict, prefer the more specific doc for the topic (e.g. `seo-and-m
 | Auth backend | **Neon Auth** (Better Auth backend hosted by Neon); `/api/auth/*` forwards to `AUTH_URL` |
 | Auth UI | **`@better-auth-ui/heroui`** + `@better-auth-ui/react` + `@better-auth-ui/core` — **HeroUI variant only, not shadcn** |
 | Database | **Neon Postgres** + **Drizzle ORM** (`@unveiled/db`) |
-| Images | **Cloudflare R2** + `sharp` (`@unveiled/images`) |
+| Images | **Cloudflare R2** + `@unveiled/images` (six JPEG variants via `@standardagents/sip` on Workers and local Bun/Node) |
 | Payments | **Stripe Billing** (`@unveiled/billing`) |
 | Email | **Resend** (`@unveiled/email`) |
 | Lint / format | **Biome** |
 
-**Hosting:** **Cloudflare Workers** for `apps/web` (HonoX SSR). Image processing (`sharp`) is **local Node only** — `bun run dev` and `bun run seed:demo`; admin uploads on the Workers URL are not supported (Option B).
+**Hosting:** **Cloudflare Workers** for `apps/web` (HonoX SSR). Image **variant contract** is six JPEG files (`*.jpg`). Processing uses **`@standardagents/sip`** (WASM) in-request on Workers and the same pipeline under `bun run dev` / `bun run seed:demo`. Admin multipart image uploads work on the Workers URL — no separate Node-only upload host.
 
 ---
 
@@ -52,7 +52,7 @@ apps/web/          @unveiled/web   — HonoX routes, middleware, islands, API ha
 packages/config/   @unveiled/config — shared tsconfig + Biome presets
 packages/db/       @unveiled/db     — Drizzle schema + migrations, `public` schema only (Phase 2+)
 packages/auth/     @unveiled/auth   — session + role guards (Phase 2+)
-packages/images/   @unveiled/images — sharp + R2 pipeline (Phase 4+)
+packages/images/   @unveiled/images — R2 + six JPEG variants via `@standardagents/sip` (Phase 4+)
 packages/ui/       @unveiled/ui     — EventCard, shared components (Phase 4+)
 packages/billing/  @unveiled/billing — Stripe (Phase 6+)
 packages/email/    @unveiled/email  — Resend templates (Phase 6+)
@@ -271,7 +271,7 @@ Full mapping: `docs/migration/extras/integrations-and-config.md`.
 | Business logic in route files | Extract to `packages/*` |
 | Trusting client `partnerId` | Derive from session |
 | Mocked Stripe checkout | Real Stripe Billing (Phase 6+) |
-| Base64 images in DB | R2 + 6 WebP variants via `@unveiled/images` |
+| Base64 images in DB | R2 + 6 JPEG variants via `@unveiled/images` |
 | Scope creep into next phase | Deploy current phase, stop |
 | Custom CSS components or per-route styling | HeroUI primitives + `@layer theme` in `globals.css`; Tailwind layout only |
 | Raw HTML tags in UI (`<p>`, `<a>`, `<section>`, …) | HeroUI `Paragraph`, `Link`, `Card`, `Surface`, etc., or components built from them |

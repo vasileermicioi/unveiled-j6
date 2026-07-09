@@ -20,7 +20,7 @@ function buildEventImageUrls(
 
   for (const event of events) {
     try {
-      imageUrls[event.id] = buildVariantUrl(event.imageId, "small-320.webp");
+      imageUrls[event.id] = buildVariantUrl(event.imageId, "small-320.jpg");
     } catch {
       imageUrls[event.id] = undefined;
     }

@@ -23,14 +23,14 @@ The `@unveiled/db` package SHALL define Drizzle schema and migrations for `publi
 - **WHEN** an `events` row is inserted without `image_id`
 - **THEN** the database rejects the insert
 
-### Requirement: Six-variant WebP image pipeline
+### Requirement: Six-variant JPEG image pipeline
 
-The `@unveiled/images` package SHALL process a valid JPEG, PNG, or WebP source into exactly six WebP objects under `images/{id}/{variant}.webp` per `docs/migration/extras/image-uploads.md`, upload them to S3-compatible storage, and expose helpers to compute public URLs from `IMAGE_PUBLIC_BASE_URL`.
+The `@unveiled/images` package SHALL process a valid JPEG, PNG, or WebP source into exactly six JPEG objects under `images/{id}/{variant}.jpg` per `docs/migration/extras/image-uploads.md`, upload them to S3-compatible storage with Content-Type `image/jpeg`, and expose helpers to compute public URLs from `IMAGE_PUBLIC_BASE_URL`. Fixed filenames SHALL be: `original.jpg`, `hero-1920.jpg`, `large-1280.jpg`, `medium-640.jpg`, `small-320.jpg`, `og-1200x630.jpg`.
 
 #### Scenario: Direct buffer processing
 
 - **WHEN** `processImageFromBuffer` receives a valid image at least 800×420 and under 8 MB
-- **THEN** six variants are produced with correct max-width or cover-crop behavior and no upscaling except `og-1200x630`
+- **THEN** six JPEG variants are produced with correct max-width or cover-crop behavior and no upscaling except `og-1200x630`
 
 #### Scenario: Undersized source rejected
 
@@ -39,18 +39,32 @@ The `@unveiled/images` package SHALL process a valid JPEG, PNG, or WebP source i
 
 #### Scenario: Public variant URL
 
-- **WHEN** `buildVariantUrl(imageId, "medium-640.webp")` is called with `IMAGE_PUBLIC_BASE_URL` set
-- **THEN** the returned URL follows `{base}/images/{id}/medium-640.webp`
+- **WHEN** `buildVariantUrl(imageId, "medium-640.jpg")` is called with `IMAGE_PUBLIC_BASE_URL` set
+- **THEN** the returned URL follows `{base}/images/{id}/medium-640.jpg`
 
 #### Scenario: Remote URL processing
 
 - **WHEN** `processImageFromUrl` receives a reachable JPEG, PNG, or WebP URL meeting size and dimension rules
-- **THEN** the same six variants are produced as a direct buffer upload
+- **THEN** the same six JPEG variants are produced as a direct buffer upload
 
 #### Scenario: Image object deletion
 
 - **WHEN** `deleteImageObjects(imageId)` is called for an image that was uploaded
 - **THEN** all six objects under `images/{imageId}/` are removed from the bucket
+
+### Requirement: Server-side image processor
+
+The `@unveiled/images` package SHALL generate the six JPEG variants using `@standardagents/sip` (WASM/scanline processing). The package SHALL NOT depend on `sharp` or other Node-native image addons.
+
+#### Scenario: Unit test generates variants without sharp
+
+- **WHEN** `bun test` runs in `packages/images`
+- **THEN** variant generation succeeds using sip and asserts JPEG outputs and correct dimensions
+
+#### Scenario: OG cover-crop
+
+- **WHEN** a source image is processed
+- **THEN** `og-1200x630.jpg` is exactly 1200×630 pixels (center cover-crop; upscale allowed only for this variant)
 
 ### Requirement: Partner catalog domain rules
 
@@ -105,6 +119,25 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 - **WHEN** an event is created or its `date_time` is updated
 - **THEN** `start_time_minutes` and `weekday` are computed from `date_time` using Europe/Berlin local time
 
+### Requirement: Admin image upload on the application host
+
+Admin partner and event image uploads SHALL succeed on the primary deployed host (Cloudflare Workers). The system SHALL NOT require a separate Node-only process for variant generation in the happy path. Multipart uploads remain SSR form POST only.
+
+#### Scenario: Partner create with logo on Workers
+
+- **WHEN** an admin submits a valid logo file to `/:locale/admin/partners/new` on the Workers deployment
+- **THEN** the request completes successfully, six JPEG variants are stored in object storage, and the partner detail/list shows the logo thumbnail
+
+#### Scenario: Event create with image on Workers
+
+- **WHEN** an admin submits a valid event image file to `/:locale/admin/events/new` on the Workers deployment
+- **THEN** the request completes successfully, six JPEG variants are stored in object storage, and admin/public surfaces can resolve the image thumbnail URL
+
+#### Scenario: Validation failures still reject uploads
+
+- **WHEN** an admin submits a file that is too large, below minimum dimensions, or provides both upload and remote URL
+- **THEN** the request fails with a clear validation error and no incomplete image row/objects are left for that attempt
+
 ### Requirement: Image attach orchestration
 
 The catalog domain layer SHALL orchestrate `@unveiled/images` processing, `images` row insertion, S3 upload, and old-image cleanup in a single transaction where applicable: `attachImageToPartner` and `attachImageToEvent` call `processImageFromBuffer` or `processImageFromUrl`, insert an `images` row, upload six variants, and when replacing an existing image delete the prior `images` row and all six bucket objects synchronously.
@@ -121,12 +154,12 @@ The catalog domain layer SHALL orchestrate `@unveiled/images` processing, `image
 
 ### Requirement: Admin event image upload pipeline
 
-Admin event create and edit SHALL persist images exclusively via multipart file upload through the catalog domain layer and `@unveiled/images` pipeline. On successful create, the system SHALL store six WebP variants in object storage, insert an `images` row with `source=UPLOAD`, and set `events.image_id`. Public variant URLs SHALL be computed via `buildVariantUrl` — not stored as free-text URLs on the event row.
+Admin event create and edit SHALL persist images exclusively via multipart file upload through the catalog domain layer and `@unveiled/images` pipeline. On successful create, the system SHALL store six JPEG variants in object storage, insert an `images` row with `source=UPLOAD`, and set `events.image_id`. Public variant URLs SHALL be computed via `buildVariantUrl` — not stored as free-text URLs on the event row.
 
 #### Scenario: Create stores six R2 variants
 
 - **WHEN** an ADMIN submits a valid create form with an accepted image file
-- **THEN** the event references a new `image_id` and six WebP objects exist at `images/{image_id}/` in the configured bucket
+- **THEN** the event references a new `image_id` and six JPEG objects exist at `images/{image_id}/` in the configured bucket
 
 #### Scenario: Create rejects missing image
 
@@ -201,12 +234,12 @@ The admin event form SHALL provide a map-based geolocation picker (MapLibre GL J
 
 ### Requirement: Admin event list thumbnails
 
-The admin events list SHALL display a thumbnail for each event with an `image_id`, using the `small-320.webp` variant URL from `@unveiled/images`.
+The admin events list SHALL display a thumbnail for each event with an `image_id`, using the `small-320.jpg` variant URL from `@unveiled/images`.
 
 #### Scenario: List thumbnail from small-320 variant
 
 - **WHEN** an ADMIN views `/admin/events` and an event has a persisted image
-- **THEN** the list row shows a thumbnail loaded from `{IMAGE_PUBLIC_BASE_URL}/images/{image_id}/small-320.webp`
+- **THEN** the list row shows a thumbnail loaded from `{IMAGE_PUBLIC_BASE_URL}/images/{image_id}/small-320.jpg`
 
 ### Requirement: Demo seed idempotency
 
@@ -222,6 +255,20 @@ The `scripts/seed-demo.ts` script invoked by `bun run seed:demo` SHALL insert de
 - **WHEN** at least one partner or event exists and seed runs
 - **THEN** row counts are unchanged
 
+### Requirement: Demo seed writes JPEG variants
+
+`bun run seed:demo` SHALL populate catalog images through `@unveiled/images` so seeded objects use the six `.jpg` filenames and are viewable on Workers without a separate local upload pass.
+
+#### Scenario: Fresh demo seed
+
+- **WHEN** an operator runs `bun run seed:demo` against a database with R2 configured
+- **THEN** seeded events/partners reference images whose public variant URLs end in `.jpg` and resolve successfully
+
+#### Scenario: Seed uses the shared image pipeline
+
+- **WHEN** demo seed creates partners and events with remote or generated image sources
+- **THEN** image persistence goes through the catalog domain + `@unveiled/images` sip pipeline (not a sharp-only or WebP-filename side path)
+
 ### Requirement: Admin partner SSR CRUD
 
 The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/partners/*` for list, create, edit, and delete of partner **venue records** (not partner login accounts), using dedicated form POST pages without client-side modals, matching `docs/migration/sitemap/sitemap.md`. List route SHALL support `?q=` search on **partner name only** and `?page=` pagination (page size 25) per `docs/migration/extras/pagination-and-search.md`. List results SHALL be ordered by `created_at` descending, then `id` descending. Create and edit forms SHALL accept multipart logo file upload or remote logo URL (exactly one source when provided) and delegate validation and image processing to the catalog domain layer.
@@ -234,7 +281,7 @@ The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/partners/*`
 #### Scenario: Admin creates partner with file upload
 
 - **WHEN** an ADMIN submits the new partner form with valid fields and a logo image file (no URL)
-- **THEN** a partner row is created and the uploaded logo is processed into six WebP variants in object storage
+- **THEN** a partner row is created and the uploaded logo is processed into six JPEG variants in object storage
 
 #### Scenario: Partner list shows logo thumbnail
 
@@ -297,7 +344,7 @@ The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` f
 #### Scenario: Admin creates event with required image upload
 
 - **WHEN** an ADMIN submits a valid new event form with a file upload
-- **THEN** the event is persisted with `image_id` set and six WebP variants stored in object storage
+- **THEN** the event is persisted with `image_id` set and six JPEG variants stored in object storage
 
 #### Scenario: Event image required on create
 
@@ -457,7 +504,7 @@ The web app SHALL serve `/:locale/events/:id` without requiring authentication, 
 
 ### Requirement: Automated browser coverage for admin catalog management
 
-Each Gherkin scenario in `docs/migration/features/admin-events.feature` and `docs/migration/features/admin-partners.feature` SHALL have a Playwright test with a title matching the scenario line (or Scenario Outline plus example row). Partner scenarios SHALL live in `e2e/specs/admin-partners.spec.ts` and event scenarios in `e2e/specs/admin-events.spec.ts`. Tests SHALL sign in as ADMIN via `loginAsAdmin` / `E2E_ADMIN_*`, use proximity selectors only, and use unique timestamp suffixes for created partner/event names and portal emails. Image upload/URL processing tests SHALL call `test.skip` with reason `R2 vars not configured` when any required R2 env var (`S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL`) is missing.
+Each Gherkin scenario in `docs/migration/features/admin-events.feature` and `docs/migration/features/admin-partners.feature` SHALL have a Playwright test with a title matching the scenario line (or Scenario Outline plus example row). Partner scenarios SHALL live in `e2e/specs/admin-partners.spec.ts` and event scenarios in `e2e/specs/admin-events.spec.ts`. Tests SHALL sign in as ADMIN via `loginAsAdmin` / `E2E_ADMIN_*`, use proximity selectors only, and use unique timestamp suffixes for created partner/event names and portal emails. Image upload/URL processing tests SHALL call `test.skip` with reason `R2 vars not configured` when any required R2 env var (`S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL`) is missing. Image specs SHALL NOT skip solely because the target host is Cloudflare Workers; `e2e/README.md` SHALL allow running image uploads against `bun run dev` and, when configured, against a Workers preview or staging base URL.
 
 #### Scenario: Admin partner CRUD is E2E-verified
 
@@ -480,3 +527,8 @@ Each Gherkin scenario in `docs/migration/features/admin-events.feature` and `doc
 - **WHEN** R2 / image env vars are not fully configured
 - **THEN** image upload and remote-URL processing tests skip with an explicit reason string
 - **AND** they do not fail the suite
+
+#### Scenario: E2E docs do not require sharp-only local uploads
+
+- **WHEN** an operator reads `e2e/README.md` image-test guidance
+- **THEN** the docs do not state that admin uploads require `bun run dev` + `sharp` or that Workers preview cannot upload

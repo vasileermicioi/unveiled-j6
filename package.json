@@ -30,6 +30,7 @@
     "@unveiled/db": "workspace:*"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.758.0",
     "@biomejs/biome": "^2.0.0",
     "@playwright/test": "^1.49.1",
     "@unveiled/config": "workspace:*",

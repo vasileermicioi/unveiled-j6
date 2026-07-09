@@ -3,6 +3,12 @@ compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 main = "dist/index.js"
 
+# Bundle sip WASM imported by @standardagents/sip's workerd entry.
+[[rules]]
+globs = ["**/*.wasm"]
+type = "CompiledWasm"
+fallthrough = true
+
 # Staging runtime vars — mirrored from repo-root `.env` (+ SITE_URL for this host).
 # Redeploy after changes: `bun run deploy:workers`
 [vars]

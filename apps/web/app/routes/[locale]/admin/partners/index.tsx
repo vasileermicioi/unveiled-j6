@@ -24,7 +24,7 @@ function buildPartnerLogoUrls(
     }
 
     try {
-      logoUrls[partner.id] = buildVariantUrl(partner.logoImageId, "small-320.webp");
+      logoUrls[partner.id] = buildVariantUrl(partner.logoImageId, "small-320.jpg");
     } catch {
       logoUrls[partner.id] = undefined;
     }

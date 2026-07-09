@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import sharp from "sharp";
 
 import {
   HERO_MAX_WIDTH,
@@ -11,27 +10,24 @@ import {
   OG_WIDTH,
   ORIGINAL_MAX_EDGE,
   SMALL_MAX_WIDTH,
+  VARIANT_FILENAMES,
 } from "./constants";
+import { createSolidJpeg } from "./create-solid-jpeg";
 import { generateImageVariants, getVariantDimensions } from "./process";
 import { buildVariantUrl } from "./urls";
 import { ImageValidationError, validateImageBuffer } from "./validation";
 
-async function createTestImage(width: number, height: number): Promise<Buffer> {
-  return sharp({
-    create: {
-      width,
-      height,
-      channels: 3,
-      background: { r: 120, g: 180, b: 220 },
-    },
-  })
-    .jpeg()
-    .toBuffer();
-}
+describe("VARIANT_FILENAMES", () => {
+  test("exports exactly six JPEG filenames (no WebP)", () => {
+    expect(VARIANT_FILENAMES).toHaveLength(6);
+    expect(VARIANT_FILENAMES.every((name) => name.endsWith(".jpg"))).toBe(true);
+    expect(VARIANT_FILENAMES.some((name) => name.endsWith(".webp"))).toBe(false);
+  });
+});
 
 describe("validateImageBuffer", () => {
   test("accepts a valid JPEG at minimum dimensions", async () => {
-    const buffer = await createTestImage(MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT);
+    const buffer = await createSolidJpeg(MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT);
     const result = await validateImageBuffer(buffer);
     expect(result.width).toBe(MIN_IMAGE_WIDTH);
     expect(result.height).toBe(MIN_IMAGE_HEIGHT);
@@ -39,16 +35,16 @@ describe("validateImageBuffer", () => {
   });
 
   test("rejects undersized images", async () => {
-    const buffer = await createTestImage(MIN_IMAGE_WIDTH - 1, MIN_IMAGE_HEIGHT);
+    const buffer = await createSolidJpeg(MIN_IMAGE_WIDTH - 1, MIN_IMAGE_HEIGHT);
     await expect(validateImageBuffer(buffer)).rejects.toBeInstanceOf(ImageValidationError);
   });
 });
 
 describe("generateImageVariants", () => {
-  test("produces six WebP variants with expected resize behavior", async () => {
+  test("produces six JPEG variants with expected resize behavior", async () => {
     const sourceWidth = 2400;
     const sourceHeight = 1260;
-    const buffer = await createTestImage(sourceWidth, sourceHeight);
+    const buffer = await createSolidJpeg(sourceWidth, sourceHeight);
 
     const result = await generateImageVariants(buffer, { source: "UPLOAD" });
     const dimensions = await getVariantDimensions(result.variants);
@@ -59,33 +55,34 @@ describe("generateImageVariants", () => {
     expect(result.metadata.width).toBe(sourceWidth);
     expect(result.metadata.height).toBe(sourceHeight);
 
-    expect(dimensions["original.webp"].width).toBeLessThanOrEqual(ORIGINAL_MAX_EDGE);
-    expect(dimensions["original.webp"].height).toBeLessThanOrEqual(ORIGINAL_MAX_EDGE);
-    expect(dimensions["hero-1920.webp"].width).toBeLessThanOrEqual(HERO_MAX_WIDTH);
-    expect(dimensions["large-1280.webp"].width).toBeLessThanOrEqual(LARGE_MAX_WIDTH);
-    expect(dimensions["medium-640.webp"].width).toBeLessThanOrEqual(MEDIUM_MAX_WIDTH);
-    expect(dimensions["small-320.webp"].width).toBeLessThanOrEqual(SMALL_MAX_WIDTH);
-    expect(dimensions["og-1200x630.webp"].width).toBe(OG_WIDTH);
-    expect(dimensions["og-1200x630.webp"].height).toBe(OG_HEIGHT);
+    expect(dimensions["original.jpg"].width).toBeLessThanOrEqual(ORIGINAL_MAX_EDGE);
+    expect(dimensions["original.jpg"].height).toBeLessThanOrEqual(ORIGINAL_MAX_EDGE);
+    expect(dimensions["hero-1920.jpg"].width).toBeLessThanOrEqual(HERO_MAX_WIDTH);
+    expect(dimensions["large-1280.jpg"].width).toBeLessThanOrEqual(LARGE_MAX_WIDTH);
+    expect(dimensions["medium-640.jpg"].width).toBeLessThanOrEqual(MEDIUM_MAX_WIDTH);
+    expect(dimensions["small-320.jpg"].width).toBeLessThanOrEqual(SMALL_MAX_WIDTH);
+    expect(dimensions["og-1200x630.jpg"].width).toBe(OG_WIDTH);
+    expect(dimensions["og-1200x630.jpg"].height).toBe(OG_HEIGHT);
+    expect(Object.keys(result.variants).sort()).toEqual([...VARIANT_FILENAMES].sort());
   });
 
   test("does not upscale width-ladder variants for small valid sources", async () => {
-    const buffer = await createTestImage(MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT);
+    const buffer = await createSolidJpeg(MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT);
     const result = await generateImageVariants(buffer, { source: "UPLOAD" });
     const dimensions = await getVariantDimensions(result.variants);
 
-    expect(dimensions["hero-1920.webp"].width).toBeLessThanOrEqual(MIN_IMAGE_WIDTH);
-    expect(dimensions["small-320.webp"].width).toBeLessThanOrEqual(MIN_IMAGE_WIDTH);
+    expect(dimensions["hero-1920.jpg"].width).toBeLessThanOrEqual(MIN_IMAGE_WIDTH);
+    expect(dimensions["small-320.jpg"].width).toBeLessThanOrEqual(MIN_IMAGE_WIDTH);
   });
 });
 
 describe("buildVariantUrl", () => {
   test("builds public URLs from IMAGE_PUBLIC_BASE_URL", () => {
-    const url = buildVariantUrl("11111111-1111-4111-8111-111111111111", "medium-640.webp", {
+    const url = buildVariantUrl("11111111-1111-4111-8111-111111111111", "medium-640.jpg", {
       IMAGE_PUBLIC_BASE_URL: "https://pub-example.r2.dev/",
     });
     expect(url).toBe(
-      "https://pub-example.r2.dev/images/11111111-1111-4111-8111-111111111111/medium-640.webp",
+      "https://pub-example.r2.dev/images/11111111-1111-4111-8111-111111111111/medium-640.jpg",
     );
   });
 });

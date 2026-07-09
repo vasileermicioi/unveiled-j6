@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createDb, events, images, partners } from "@unveiled/db";
+import { createSolidJpeg } from "@unveiled/images";
 import { eq } from "drizzle-orm";
-import sharp from "sharp";
 
 import {
   countEvents,
@@ -24,16 +24,7 @@ import { runDemoSeed, shouldRunDemoSeed } from "./seed";
 const databaseUrl = process.env.DATABASE_URL;
 
 async function createTestImageBuffer(): Promise<Buffer> {
-  return sharp({
-    create: {
-      width: 800,
-      height: 420,
-      channels: 3,
-      background: { r: 250, g: 255, b: 134 },
-    },
-  })
-    .jpeg()
-    .toBuffer();
+  return createSolidJpeg(800, 420, { r: 250, g: 255, b: 134 });
 }
 
 describe("catalog integration", () => {
@@ -111,16 +102,7 @@ describe("catalog integration", () => {
       skipUpload: true,
     });
 
-    const replacementImage = await sharp({
-      create: {
-        width: 800,
-        height: 420,
-        channels: 3,
-        background: { r: 20, g: 20, b: 20 },
-      },
-    })
-      .jpeg()
-      .toBuffer();
+    const replacementImage = await createSolidJpeg(800, 420, { r: 20, g: 20, b: 20 });
 
     try {
       const previousImageId = event.imageId;

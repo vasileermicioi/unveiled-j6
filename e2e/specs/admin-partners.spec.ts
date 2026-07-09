@@ -40,7 +40,9 @@ test.describe("admin-partners.feature", () => {
     await expect(page.getByText(partner.name).first()).toBeVisible();
     const row = page.getByRole("row").filter({ hasText: partner.name });
     // Logo <img alt=""> is decorative — not exposed as role=img; assert DOM presence.
-    await expect(row.locator("img").first()).toBeVisible({ timeout: 15_000 });
+    const logo = row.locator("img").first();
+    await expect(logo).toBeVisible({ timeout: 15_000 });
+    await expect(logo).toHaveAttribute("src", /small-320\.jpg(?:\?|$)/);
   });
 
   test('Scenario Outline: Partner creation validation — name = ""', async ({ page, locale }) => {

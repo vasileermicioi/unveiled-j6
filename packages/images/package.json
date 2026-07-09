@@ -13,9 +13,10 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",
-    "sharp": "^0.33.5"
+    "@standardagents/sip": "^1.0.1"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "@unveiled/config": "workspace:*",
     "typescript": "^5.8.0"
   }
