@@ -289,7 +289,15 @@ With `DATABASE_URL` and `AUTH_URL` set on staging:
 9. `/de` and `/en` load without browser console errors (guest and signed-in)
 10. `curl -s $SITE_URL/api/auth/get-session` returns Better Auth JSON, not HTML 404
 
-**Neon Auth setup:** Enable Neon Auth on the Postgres project; copy `AUTH_URL` from the Neon dashboard into Railway/env.
+**Neon Auth setup:** Enable Neon Auth on the Postgres project; copy `AUTH_URL` from the Neon dashboard into Worker env.
+
+**Trusted domains (required for staging/production):** Neon Auth (Better Auth) rejects cookie-backed POSTs (`sign-out`, `sign-in`, etc.) with **403 `INVALID_ORIGIN`** unless the browser origin is allowlisted. Localhost is pre-approved; custom hosts are not.
+
+1. Neon Console → **Auth** → **Configuration** → **Domains**
+2. Add exact origins (protocol, no trailing slash), e.g. `https://unveiled-j6.deepcode.xyz`
+3. Add any other public hosts (`*.workers.dev`, custom domain) the same way
+
+Verify: signed-in logout from `/en/admin` should return 200 (not 403). Without cookies, `POST /api/auth/sign-out` can still return 200 — the CSRF origin check only runs when session cookies are present.
 
 **Route protection:** Locale middleware in `apps/web/app/routes/[locale]/_middleware.tsx` uses `apps/web/app/lib/auth-middleware.ts` — guarded prefixes: `events`, `saved`, `bookings`, `profile`, `partner`, `admin`, `onboarding`.
 
