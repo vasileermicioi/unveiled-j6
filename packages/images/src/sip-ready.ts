@@ -9,8 +9,8 @@ type WasmInstance = WebAssembly.Instance;
 type SipEmscriptenFactory = (options: {
   instantiateWasm: (
     imports: WasmImports,
-    receiveInstance: (instance: WasmInstance) => void,
-  ) => Record<string, never>;
+    receiveInstance: (instance: WasmInstance, module?: WebAssembly.Module) => void,
+  ) => WebAssembly.Exports | Record<string, never>;
 }) => Promise<unknown>;
 
 type GlobalWithSipLoader = typeof globalThis & {
@@ -20,14 +20,23 @@ type GlobalWithSipLoader = typeof globalThis & {
 /**
  * Module-level WASM init; await before any sip call. Idempotent.
  *
- * Workers: Vite aliases `@unveiled/sip-emscripten` and rewrites the wasm import to a
- * sibling CompiledWasm module. Install `__SIP_WASM_LOADER__` (sip workerd pattern)
- * so `nodejs_compat` does not take sip's `fs.readFile` path.
+ * Workers build aliases `@standardagents/sip` → `workerd.js`, which statically imports
+ * `sip.wasm` as a CompiledWasm module and installs `__SIP_WASM_LOADER__`. This helper
+ * also installs the loader (sync `WebAssembly.Instance`) when the emscripten factory +
+ * wasm module are available, so Emscripten never falls back to fetch/XHR.
  *
- * Vite SSR / Bun / Node: emscripten alias is absent (or wasm load fails) → default `ready()`.
- * Wasm must not be a static top-level import — Vite serve rejects ESM Wasm integration.
+ * Local Vite/Bun: emscripten is stubbed and wasm import is stubbed → default `ready()`
+ * uses sip's Node/Bun `fs.readFile` path.
  */
 async function initSip(): Promise<void> {
+  const globalScope = globalThis as GlobalWithSipLoader;
+
+  // workerd entry may already have installed the loader via static wasm import.
+  if (globalScope.__SIP_WASM_LOADER__) {
+    await ready();
+    return;
+  }
+
   let createSipModule: SipEmscriptenFactory;
   try {
     createSipModule = (await import("@unveiled/sip-emscripten")).default as SipEmscriptenFactory;
@@ -51,16 +60,14 @@ async function initSip(): Promise<void> {
     return;
   }
 
-  const globalScope = globalThis as GlobalWithSipLoader;
+  // Sync instantiate — Workers disallow compile-from-bytes; CompiledWasm Module is required.
+  // Prefer sync Instance so Emscripten's instantiateWasm hook never falls through to fetch.
   globalScope.__SIP_WASM_LOADER__ = async () =>
     createSipModule({
       instantiateWasm(imports, receiveInstance) {
-        void WebAssembly.instantiate(sipWasm, imports).then(
-          (result: WasmInstance | WebAssembly.WebAssemblyInstantiatedSource) => {
-            receiveInstance(result instanceof WebAssembly.Instance ? result : result.instance);
-          },
-        );
-        return {};
+        const instance = new WebAssembly.Instance(sipWasm, imports);
+        receiveInstance(instance, sipWasm);
+        return instance.exports;
       },
     });
 

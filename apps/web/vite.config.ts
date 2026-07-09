@@ -12,7 +12,10 @@ import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from "vite";
 const repoRoot = path.resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
 const requireFromImages = createRequire(path.join(repoRoot, "packages/images/src/index.ts"));
 const sipMainPath = requireFromImages.resolve("@standardagents/sip");
-const sipEmscriptenPath = path.join(path.dirname(sipMainPath), "sip.js");
+const sipDistDir = path.dirname(sipMainPath);
+const sipEmscriptenPath = path.join(sipDistDir, "sip.js");
+const sipWorkerdPath = path.join(sipDistDir, "workerd.js");
+const sipWasmPath = path.join(sipDistDir, "sip.wasm");
 const sipEmscriptenDevStub = path.join(repoRoot, "packages/images/src/sip-emscripten-dev-stub.ts");
 
 const serverEntry = path.join(path.dirname(fileURLToPath(import.meta.url)), "app/server.ts");
@@ -139,12 +142,19 @@ function workersWasmAsModule(): Plugin {
       }
 
       let absolute: string;
-      if (path.isAbsolute(bare)) {
+      if (
+        bare === "@standardagents/sip/dist/sip.wasm" ||
+        bare === sipWasmPath ||
+        path.basename(bare) === "sip.wasm"
+      ) {
+        // Always use the real sip dist wasm — package aliases to workerd.js must not
+        // make `./sip.wasm` resolve as `…/workerd.js/sip.wasm`.
+        absolute = sipWasmPath;
+      } else if (path.isAbsolute(bare)) {
         absolute = bare;
       } else if (bare.startsWith(".") || bare.startsWith("/")) {
         absolute = path.resolve(path.dirname(importer ?? process.cwd()), bare);
       } else {
-        // Package specifier e.g. `@standardagents/sip/dist/sip.wasm`
         const resolved = await this.resolve(bare, importer, { skipSelf: true });
         if (!resolved?.id) {
           return null;
@@ -193,8 +203,9 @@ export default defineConfig(({ command, mode }) => {
     }
   }
 
-  // Workers SSR build gets the real Emscripten factory; serve/client get a stub so
-  // Vite never needs to resolve sip's non-exported path (and wasm stays stubbed).
+  // Workers SSR build: force sip's workerd entry (static CompiledWasm import). Vite SSR
+  // defaults to `externalConditions: ["node"]`, which would otherwise resolve the Node
+  // entry and let Emscripten try to fetch sip.wasm at runtime (fails on Workers).
   const workerSsrBuild = command === "build" && mode !== "client";
 
   return {
@@ -205,8 +216,14 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       dedupe: ["react", "react-dom"],
       alias: {
+        // More-specific wasm alias must come before the package→workerd.js alias.
+        "@standardagents/sip/dist/sip.wasm": sipWasmPath,
         "@unveiled/sip-emscripten": workerSsrBuild ? sipEmscriptenPath : sipEmscriptenDevStub,
+        ...(workerSsrBuild ? { "@standardagents/sip": sipWorkerdPath } : {}),
       },
+      conditions: workerSsrBuild
+        ? ["workerd", "worker", "module", "browser", "development|production"]
+        : undefined,
     },
     optimizeDeps: {
       include: [
@@ -224,6 +241,15 @@ export default defineConfig(({ command, mode }) => {
     ssr: {
       external: ["react", "react-dom", "@heroui/react"],
       noExternal: ["@unveiled/images", "@standardagents/sip"],
+      ...(workerSsrBuild
+        ? {
+            target: "webworker" as const,
+            resolve: {
+              conditions: ["workerd", "worker", "module", "browser", "development|production"],
+              externalConditions: ["workerd", "worker"],
+            },
+          }
+        : {}),
     },
     server: {
       port: 3000,

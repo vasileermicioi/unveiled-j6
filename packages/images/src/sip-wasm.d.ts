@@ -2,8 +2,8 @@ declare module "@unveiled/sip-emscripten" {
   type SipEmscriptenFactory = (options: {
     instantiateWasm: (
       imports: WebAssembly.Imports,
-      receiveInstance: (instance: WebAssembly.Instance) => void,
-    ) => Record<string, never>;
+      receiveInstance: (instance: WebAssembly.Instance, module?: WebAssembly.Module) => void,
+    ) => WebAssembly.Exports | Record<string, never>;
   }) => Promise<unknown>;
 
   const createSipModule: SipEmscriptenFactory;
