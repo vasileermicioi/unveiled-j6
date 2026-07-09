@@ -1,6 +1,6 @@
 # Example: Dashboard / List Page
 
-**Status:** Not implemented — Phase 4+ (admin) / Phase 5+ (member feed) blueprint.  
+**Status:** Blueprint — admin list patterns (Phase 4+) and member feed/saved (Phase 5) follow this layout.  
 **Spec:** `docs/migration/extras/pagination-and-search.md`, `docs/migration/features/event-discovery.feature`
 
 ---

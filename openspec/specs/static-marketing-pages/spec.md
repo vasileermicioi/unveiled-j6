@@ -118,7 +118,7 @@ The application SHALL provide a default Open Graph image at `apps/web/public/og-
 
 ### Requirement: Automated browser coverage for static pages
 
-Each Gherkin scenario in `docs/migration/features/static-pages.feature` SHALL have a Playwright test in `e2e/specs/static-pages.spec.ts` whose title matches the scenario line (including the `Scenario:` prefix). Tests SHALL use proximity-only selectors and default locale `de` unless the scenario requires bilingual coverage. Once the Phase 5 event map exists, the declining-consent map scenario SHALL assert against a real map surface (fallback shown, no tile requests) rather than a permanent Phase 5 skip — full assertion may land in `discovery-05-stories-e2e-release`.
+Each Gherkin scenario in `docs/migration/features/static-pages.feature` SHALL have a Playwright test in `e2e/specs/static-pages.spec.ts` whose title matches the scenario line (including the `Scenario:` prefix). Tests SHALL use proximity-only selectors and default locale `de` unless the scenario requires bilingual coverage. The declining-consent map scenario SHALL assert against a real map surface (consent fallback shown, no OpenStreetMap tile requests) on a public event detail page that mounts `EventMap`.
 
 #### Scenario: Marketing and legal flows are E2E-verified
 
@@ -130,7 +130,7 @@ Each Gherkin scenario in `docs/migration/features/static-pages.feature` SHALL ha
 - **WHEN** a static-pages cookie scenario requires a first visit
 - **THEN** the test clears the `unveiled:cookie-consent` decision before asserting the banner
 
-#### Scenario: Declining consent disables map embed (Phase 5)
+#### Scenario: Declining consent disables map embed
 
-- **WHEN** the event map UI exists and the user has declined non-essential cookies
-- **THEN** the declining-consent map scenario asserts that the map embed is not loaded and a fallback is shown (implemented or updated in discovery step 05 E2E)
+- **WHEN** the user has declined non-essential cookies and views a public event detail page with coordinates
+- **THEN** the map embed is not loaded, a static fallback (including an external OpenStreetMap link) is shown, and no OpenStreetMap tile requests are made

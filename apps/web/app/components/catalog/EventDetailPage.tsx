@@ -2,6 +2,7 @@ import { Card, Chip, Heading, Link, Paragraph, Surface } from "@heroui/react";
 import type { Event } from "@unveiled/db";
 import { buildDetailHeroSrc, buildDetailHeroSrcSet } from "@unveiled/ui";
 
+import EventMap, { type EventMapMarker } from "../../islands/EventMap";
 import { isEventBookable } from "../../lib/catalog-mappers";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
@@ -54,10 +55,32 @@ function membershipLabel(locale: Locale): string {
   return locale === "de" ? "Mitgliedschaft" : "Membership";
 }
 
-function mapPlaceholder(locale: Locale): string {
-  return locale === "de"
-    ? "Karte verfügbar in der Mitglieder-App (Phase 5)."
-    : "Map available in the member experience (Phase 5).";
+function parseCoord(value: string | null | undefined): number | null {
+  if (value == null || value.trim() === "") {
+    return null;
+  }
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function eventDetailMarkers(event: Event, locale: Locale): EventMapMarker[] {
+  const lat = parseCoord(event.lat);
+  const lng = parseCoord(event.lng);
+  if (lat == null || lng == null) {
+    return [];
+  }
+
+  return [
+    {
+      id: event.id,
+      title: event.title,
+      partnerName: event.partnerName,
+      address: event.address,
+      lat,
+      lng,
+      href: localizedPath(locale, `events/${event.id}`),
+    },
+  ];
 }
 
 function metadataLabel(key: string, locale: Locale): string {
@@ -86,6 +109,7 @@ export function EventDetailPage({ event, locale }: EventDetailPageProps) {
   const bookable = isEventBookable(event);
   const isPast = event.dateTime <= new Date();
   const isSoldOut = event.remainingCapacity <= 0 && !isPast;
+  const mapMarkers = eventDetailMarkers(event, locale);
 
   let heroSrc = "";
   let heroSrcSet = "";
@@ -177,11 +201,9 @@ export function EventDetailPage({ event, locale }: EventDetailPageProps) {
         <Card.Header>
           <Card.Title>{locale === "de" ? "Ort" : "Location"}</Card.Title>
         </Card.Header>
-        <Card.Content className="flex flex-col gap-3">
+        <Card.Content className="flex flex-col gap-4">
           <Paragraph>{event.address}</Paragraph>
-          <Paragraph color="muted" size="sm">
-            {mapPlaceholder(locale)}
-          </Paragraph>
+          {mapMarkers.length > 0 ? <EventMap locale={locale} markers={mapMarkers} /> : null}
         </Card.Content>
       </Card>
 

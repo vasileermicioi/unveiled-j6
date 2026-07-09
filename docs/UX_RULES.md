@@ -111,7 +111,7 @@ Guests never see waitlist/unlock/book labels on public discover grid.
 
 ---
 
-## Maps (Phase 5+)
+## Maps
 
 - **MapLibre GL JS** + **OpenStreetMap** tiles as lazy client island — no API key
 - Address always shown as plain text beside map
@@ -121,7 +121,7 @@ Guests never see waitlist/unlock/book labels on public discover grid.
 
 ---
 
-## Cookie consent (Phase 5+)
+## Cookie consent
 
 - Banner on first visit
 - Decision persisted — not re-asked until cleared/expired

@@ -45,6 +45,10 @@ function createMarkerElement(): HTMLDivElement {
   return el;
 }
 
+function osmExternalHref(lat: number, lng: number): string {
+  return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`;
+}
+
 function createPopupContent(marker: EventMapMarker, openLabel: string): HTMLDivElement {
   const root = document.createElement("div");
   root.className = "event-map__popup";
@@ -113,11 +117,21 @@ function EventMapFallbackList({
                 <Card.Title>{marker.title}</Card.Title>
                 <Card.Description>{marker.partnerName}</Card.Description>
               </Card.Header>
-              <Card.Content>
+              <Card.Content className="flex flex-col gap-2">
                 {marker.address?.trim() ? <Paragraph>{marker.address.trim()}</Paragraph> : null}
-                <Link className="button button--secondary button--sm" href={marker.href}>
-                  {copy.popupOpen}
-                </Link>
+                <Surface className="flex flex-col gap-2 sm:flex-row" variant="transparent">
+                  <Link className="button button--secondary button--sm" href={marker.href}>
+                    {copy.popupOpen}
+                  </Link>
+                  <Link
+                    className="button button--secondary button--sm"
+                    href={osmExternalHref(marker.lat, marker.lng)}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {copy.externalMaps}
+                  </Link>
+                </Surface>
               </Card.Content>
             </Card>
           ))}

@@ -10,6 +10,7 @@ export type EventMapCopy = {
   consentTitle: string;
   consentBody: string;
   consentPrivacy: string;
+  externalMaps: string;
   loadError: string;
   popupOpen: string;
   attribution: string;
@@ -29,6 +30,7 @@ const copyByLocale: Record<Locale, EventMapCopy> = {
     consentBody:
       "Die interaktive Karte lädt Kartenkacheln von OpenStreetMap. Stimme nicht wesentlichen Cookies zu, um die Karte zu sehen — oder nutze die Adressliste unten.",
     consentPrivacy: "Datenschutz",
+    externalMaps: "Auf OpenStreetMap öffnen",
     loadError: "Die Karte konnte nicht geladen werden.",
     popupOpen: "Event öffnen",
     attribution: "© OpenStreetMap contributors",
@@ -46,6 +48,7 @@ const copyByLocale: Record<Locale, EventMapCopy> = {
     consentBody:
       "The interactive map loads tiles from OpenStreetMap. Accept non-essential cookies to view the map — or use the address list below.",
     consentPrivacy: "Privacy",
+    externalMaps: "Open in OpenStreetMap",
     loadError: "The map could not be loaded.",
     popupOpen: "Open event",
     attribution: "© OpenStreetMap contributors",

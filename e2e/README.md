@@ -113,11 +113,12 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 
 | Spec | Feature file | Notes |
 |---|---|---|
-| `specs/static-pages.spec.ts` | `static-pages.feature` | 9 scenarios; map embed asserts consent decline only (Phase 5 for MapLibre) |
+| `specs/static-pages.spec.ts` | `static-pages.feature` | 9 scenarios; declining consent asserts fallback + no OSM tiles on public `/events/:id` |
 | `specs/auth.spec.ts` | `auth.feature` | Core auth + outlines; see skip inventory below |
 | `specs/onboarding.spec.ts` | `onboarding.feature` | 8 scenarios; fresh signup per mutating test |
 | `specs/admin-partners.spec.ts` | `admin-partners.feature` | Partner CRUD; portal/QR scenarios skipped (no Phase 4 UI) |
 | `specs/admin-events.spec.ts` | `admin-events.feature` | Event CRUD + public home (Discover) / `/events/:id`; image tests need R2 |
+| `specs/event-discovery.spec.ts` | `event-discovery.feature` | 12 scenarios; member feed, filters, saved, map |
 
 ## Skip inventory
 

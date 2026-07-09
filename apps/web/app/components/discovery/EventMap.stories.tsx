@@ -49,11 +49,21 @@ export const ConsentFallback: Story = () => {
               <Card.Title>{marker.title}</Card.Title>
               <Card.Description>{marker.partnerName}</Card.Description>
             </Card.Header>
-            <Card.Content>
+            <Card.Content className="flex flex-col gap-2">
               {marker.address ? <Paragraph>{marker.address}</Paragraph> : null}
-              <Link className="button button--secondary button--sm" href={marker.href}>
-                {copy.popupOpen}
-              </Link>
+              <Surface className="flex flex-col gap-2 sm:flex-row" variant="transparent">
+                <Link className="button button--secondary button--sm" href={marker.href}>
+                  {copy.popupOpen}
+                </Link>
+                <Link
+                  className="button button--secondary button--sm"
+                  href={`https://www.openstreetmap.org/?mlat=${marker.lat}&mlon=${marker.lng}#map=16/${marker.lat}/${marker.lng}`}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {copy.externalMaps}
+                </Link>
+              </Surface>
             </Card.Content>
           </Card>
         ))}

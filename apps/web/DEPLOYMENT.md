@@ -650,7 +650,7 @@ After deploy (with `SITE_URL` set to the staging origin), confirm:
 
 **Cookie consent note:** Declining non-essential cookies stores the preference in `localStorage` (`unveiled:cookie-consent`). On `/:locale/events/map`, MapLibre + OpenStreetMap tiles load only when consent is **accepted**; otherwise a static address-list fallback is shown and no OSM tile requests are made. Sentry (when added) remains ungated.
 
-**Event map (Phase 5):** No map API keys. Tiles are requested from `https://tile.openstreetmap.org/{z}/{x}/{y}.png` (same as admin geo picker). If a future Workers Content-Security-Policy is added, allow `img-src` / `connect-src` for that host and MapLibre worker scripts as needed. OSM attribution must remain visible when the map loads.
+**Event map:** No map API keys. Tiles are requested from `https://tile.openstreetmap.org/{z}/{x}/{y}.png` (same as admin geo picker). Declined consent shows an address-list fallback with an external OpenStreetMap link (no tile requests). If a future Workers Content-Security-Policy is added, allow `img-src` / `connect-src` for that host and MapLibre worker scripts as needed. OSM attribution must remain visible when the map loads.
 
 Local verification (dev server on port 3000):
 

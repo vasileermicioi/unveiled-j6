@@ -1,18 +1,25 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "../fixtures/base";
+import { getEventIdByTitle } from "../fixtures/catalog";
 
 /** Mirrors `CONSENT_STORAGE_KEY` in apps/web — keep in sync. */
 const CONSENT_STORAGE_KEY = "unveiled:cookie-consent";
 
-async function clearConsent(page: Page): Promise<void> {
-  await page.addInitScript((key: string) => {
+/** Stable demo seed title with lat/lng (public detail map). */
+const SEEDED_MAP_EVENT_TITLE = "Tonight: Stadt ohne Schlaf";
+
+/** Clear consent once on the current origin (does not re-clear on later navigations). */
+async function clearConsentOnce(page: Page, locale: string): Promise<void> {
+  await page.goto(`/${locale}`);
+  await page.evaluate((key) => {
     try {
       localStorage.removeItem(key);
     } catch {
       // ignore
     }
   }, CONSENT_STORAGE_KEY);
+  await page.reload();
 }
 
 test.describe("static-pages.feature", () => {
@@ -100,8 +107,7 @@ test.describe("static-pages.feature", () => {
   });
 
   test("Scenario: Cookie consent banner on first visit", async ({ page, locale }) => {
-    await clearConsent(page);
-    await page.goto(`/${locale}`);
+    await clearConsentOnce(page, locale);
 
     const accept = page.getByRole("button", { name: /akzeptieren|accept/i });
     const decline = page.getByRole("button", { name: /ablehnen|decline/i });
@@ -120,10 +126,7 @@ test.describe("static-pages.feature", () => {
   });
 
   test("Scenario: Declining consent disables the map embed", async ({ page, locale }) => {
-    // Phase 5: MapLibre member map is not on public pages yet. Assert consent decline
-    // persistence; map tile blocking / static placeholder coverage ships with discovery E2E.
-    await clearConsent(page);
-    await page.goto(`/${locale}`);
+    await clearConsentOnce(page, locale);
 
     const decline = page.getByRole("button", { name: /ablehnen|decline/i });
     await expect(decline).toBeVisible({ timeout: 10_000 });
@@ -133,15 +136,32 @@ test.describe("static-pages.feature", () => {
     expect(stored).toBeTruthy();
     expect(JSON.parse(stored as string).decision).toBe("declined");
 
-    await page.goto(`/${locale}`);
-    await expect(page.getByRole("button", { name: /ablehnen|decline/i })).toHaveCount(0);
+    const eventId = await getEventIdByTitle(SEEDED_MAP_EVENT_TITLE);
+    const tileHits: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("tile.openstreetmap.org")) {
+        tileHits.push(request.url());
+      }
+    });
+
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByText(/karte benötigt cookie-zustimmung|map needs cookie consent/i),
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByRole("link", { name: /auf openstreetmap öffnen|open in openstreetmap/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: /karte der gefilterten events|map of filtered events/i }),
+    ).toHaveCount(0);
+    expect(tileHits).toEqual([]);
   });
 
   test("Scenario: Error tracking is not gated behind consent", async ({ page, locale }) => {
     // Phase 9: Sentry is not wired yet. Assert declining consent does not inject a Sentry SDK
     // and that no consent gate exists for error tracking today.
-    await clearConsent(page);
-    await page.goto(`/${locale}`);
+    await clearConsentOnce(page, locale);
     await page.getByRole("button", { name: /ablehnen|decline/i }).click();
 
     const sentryGlobal = await page.evaluate(() => {
