@@ -101,6 +101,28 @@ bun --filter @unveiled/web stories
 
 Both servers use the production HeroUI Uber theme (`globals.css`) and yellow page background.
 
+## Spec inventory (Phases 0–3)
+
+| Spec | Feature file | Notes |
+|---|---|---|
+| `specs/static-pages.spec.ts` | `static-pages.feature` | 9 scenarios; map embed asserts consent decline only (Phase 5 for MapLibre) |
+| `specs/auth.spec.ts` | `auth.feature` | Core auth + outlines; see skip inventory below |
+| `specs/onboarding.spec.ts` | `onboarding.feature` | 8 scenarios; fresh signup per mutating test |
+
+## Skip inventory
+
+| Scenario | Spec | Reason / owner |
+|---|---|---|
+| Post-login routing — PARTNER | `auth.spec.ts` | No demo PARTNER credentials in seed; admin-provisioned only |
+| Sign up or log in with Google | `auth.spec.ts` | Google OAuth — Neon test provider; verify manually on staging |
+| Social login never creates PARTNER/ADMIN | `auth.spec.ts` | Same OAuth blocker |
+| Request a data export | `auth.spec.ts` | Phase 9 — GDPR export |
+| Request account deletion | `auth.spec.ts` | Phase 9 — self-service deletion |
+| Account deletion vs subscription cancellation | `auth.spec.ts` | Phase 9 |
+| Admin can process account deletion | `auth.spec.ts` | Phase 9 |
+
+Cookie consent storage key: `unveiled:cookie-consent` (localStorage).
+
 ## CI notes
 
 - Set `CI=true` so `e2e/playwright.config.ts` starts `bun run dev` via `webServer`.
