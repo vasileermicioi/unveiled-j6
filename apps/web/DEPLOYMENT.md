@@ -467,6 +467,90 @@ bun scripts/resolve-commons-images.ts "Deutsches Theater Berlin building"
 
 Image filenames and licenses are listed in `packages/db/src/catalog/seed-data.ts`. Prefer CC/public-domain Commons files; verify attribution on the file description page before changing production seed data.
 
+## Phase 4½ — Testing foundation
+
+Phase 4½ is complete when Ladle stories cover Phase 0–4 UI, Playwright covers the five Phase 0–4 Gherkin feature files (with marked skips only), and CI runs `bun run test:e2e` against local SSR before staging deploy. Root scripts: `bun run stories`, `bun run test:e2e` (see also [`e2e/README.md`](../../e2e/README.md)).
+
+**Client demo line:** *"Every page and component we built so far has isolated stories; every Gherkin scenario from the spec has an automated browser test."*
+
+### Stories (Ladle)
+
+```bash
+bun run stories
+# @unveiled/ui  → http://localhost:61000
+# @unveiled/web → http://localhost:61001
+```
+
+Single package: `bun --filter @unveiled/ui stories` or `bun --filter @unveiled/web stories`.
+
+### Playwright E2E (local)
+
+Prerequisites: root `.env` with `DATABASE_URL`, `AUTH_URL`, `SITE_URL`, and `E2E_USER_*` / `E2E_ADMIN_*` (see [`.env.example`](../../.env.example)). One-time: `bunx playwright install chromium`. Optional six R2 vars enable image-upload specs; without them those tests call `test.skip('R2 vars not configured')`.
+
+```bash
+# Playwright starts `bun run dev` via webServer (reuses a healthy local server when CI is unset)
+SITE_URL=http://localhost:3000 bun run test:e2e
+```
+
+Against staging (manual gate — not the primary CI target):
+
+```bash
+SITE_URL=https://<staging-host> bun run test:e2e
+```
+
+Selector policy, spec inventory, and skip inventory: [`e2e/README.md`](../../e2e/README.md).
+
+### CI behavior (`.github/workflows/deploy-staging.yml`)
+
+On push to `main`: **quality** (lint → typecheck → build) → **e2e** (timeout 20m) → **deploy** (Railway when `RAILWAY_TOKEN` is set). E2E failure blocks deploy.
+
+The e2e job uses `SITE_URL=http://localhost:3000` and `CI=true` so Playwright’s `webServer` starts local Node SSR (`bun run dev` + `sharp`). It runs `bun run db:migrate` against the CI `DATABASE_URL` (use a **CI-dedicated** Neon branch — never `seed:demo -- --reset` against shared staging). Image specs self-skip when R2 secrets are absent.
+
+#### GitHub Actions secrets (names only)
+
+| Secret | Required for CI e2e | Purpose |
+|---|---|---|
+| `DATABASE_URL` | **Yes** | Neon Postgres (prefer a CI-dedicated branch) |
+| `AUTH_URL` | **Yes** | Neon Auth Better Auth URL |
+| `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` | **Yes** | Member test account |
+| `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | **Yes** | Admin test account |
+| `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` | Optional | Enables admin image-upload E2E |
+| `RAILWAY_TOKEN` / `RAILWAY_SERVICE_ID` | Deploy only | Existing Railway deploy |
+
+If required E2E secrets are empty, the e2e job fails early with a clear error (does not silently skip auth). **Follow-up owner:** repo admin — provision the six required secrets in GitHub → Settings → Secrets and variables → Actions before the first green `main` run after this workflow lands.
+
+### Known marked skips (allowed)
+
+| Area | Deferral / owner |
+|---|---|
+| GDPR export / delete / admin deletion (`auth.spec.ts`) | Phase 9 |
+| Google OAuth signup/login (`auth.spec.ts`) | Manual staging + Neon Google provider; not automatable in headless CI without a test OAuth client |
+| Partner portal access / QR regenerate (`admin-partners.spec.ts`) | Phase 8 / no Phase 4 admin UI |
+| Image upload when R2 secrets missing | Conditional skip — provision optional R2 secrets to enable |
+| PARTNER post-login routing | No demo PARTNER seed credentials |
+
+Unmarked skips or hard failures fail the Phase 4½ gate.
+
+### Phase 4½ demo script
+
+1. `bun run stories` — open UI and web Ladle; spot-check EventCard CTA states and a marketing/admin layout story.
+2. Ensure demo USER/ADMIN exist (or sign up + promote admin); set `E2E_*` in root `.env`.
+3. `bun run db:migrate` (and `bun run seed:demo` if the catalog is empty).
+4. `SITE_URL=http://localhost:3000 bun run test:e2e` — suite green aside from documented marked skips.
+5. Optional: `SITE_URL=https://<staging-host> bun run test:e2e` for a staging smoke pass (admin image upload still needs local Node SSR, not Workers).
+
+### Automated verification
+
+```bash
+bun run lint
+bun run typecheck
+bun run build
+bun run stories   # spot-check servers
+bun run test:e2e
+```
+
+**Local gate note (2026-07-09):** `bun run build` and Ladle story servers (`:61000` / `:61001`) succeed. `bun run lint` / `bun run typecheck` currently fail on pre-existing repo issues outside this step’s scope. `bun run test:e2e` reported 34 passed / 14 skipped / 24 failed (auth login timeouts and admin form flows) — investigate credentials/Neon Auth and admin UI stability before treating Phase 4½ as fully green on CI. Provision GitHub E2E secrets (repo admin) so the new workflow can run on `main`.
+
 ## Phase 2 step 03 verification
 
 With `DATABASE_URL` and `AUTH_URL` set:
