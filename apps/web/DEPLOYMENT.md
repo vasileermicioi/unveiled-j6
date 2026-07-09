@@ -551,6 +551,59 @@ bun run test:e2e
 
 **Local gate note (2026-07-09):** `bun run build` and Ladle story servers (`:61000` / `:61001`) succeed. `bun run lint` / `bun run typecheck` currently fail on pre-existing repo issues outside this step’s scope. `bun run test:e2e` reported 34 passed / 14 skipped / 24 failed (auth login timeouts and admin form flows) — investigate credentials/Neon Auth and admin UI stability before treating Phase 4½ as fully green on CI. Provision GitHub E2E secrets (repo admin) so the new workflow can run on `main`.
 
+## Phase 5 — Member discovery
+
+Phase 5 is complete when signed-in members can filter today's events (Europe/Berlin), paginate, save/unsave, open event detail, and view the filtered set on the MapLibre + OSM map — with Ladle stories and Playwright coverage for every scenario in `docs/migration/features/event-discovery.feature`. **Booking / Stripe remains Phase 6** — CTAs link to membership or detail with a “booking coming soon” banner only.
+
+**Client demo line:** *"This is the member app — filter by neighborhood, save favorites, map view."* (Booking still locked until Phase 6.)
+
+### Routes
+
+| Route | Auth | Notes |
+|---|---|---|
+| `/:locale/events` | USER / ADMIN | Today default; GET filters `category`, `partnerId`, `from`, `to`, `page` |
+| `/:locale/saved` | USER / ADMIN | Upcoming saved events (not today-only) |
+| `/:locale/events/map` | USER / ADMIN | Same filters as feed (no `page`); MapLibre after cookie consent |
+| `POST /:locale/events/:id/save` / `unsave` | Session user | Guest → login with `returnTo` |
+
+### Demo seed titles (stable E2E anchors)
+
+After `bun run seed:demo` (use `-- --reset` only on a disposable DB):
+
+| Title | Role |
+|---|---|
+| `Tonight: Stadt ohne Schlaf` | Today (Berlin evening) + coords — default feed |
+| `Past Premiere: Archive Night` | Past — must stay hidden from feed/map |
+| `Tartuffe — Molière` | Future Theater + coords |
+| `Exhibition Opening: Material Echoes` | Future Ausstellung (Gropius Bau) |
+| `Global Sound Forum` | Future Konzert |
+
+Categories align with onboarding `INTERESTS` (`Theater`, `Ausstellung`, `Konzert`, …). All published demo events include `lat`/`lng` for map markers.
+
+### Phase 5 demo script
+
+1. Sign in as the demo USER (`E2E_USER_*` or staging member).
+2. Open `/:locale/events` — confirm **Today (Europe/Berlin)** and `Tonight: Stadt ohne Schlaf`.
+3. Apply filters (category / partner / date range) → reset → empty range shows no-results copy.
+4. Save an event → open **Saved** (`/:locale/saved`) → unsave.
+5. From the feed, open **Map view** (accept cookies if prompted) → markers match filters → **Open event** / list link (no booking POST).
+6. Confirm book/unlock CTAs go to membership or detail only — no Stripe checkout yet.
+
+### Map / CSP notes
+
+Declining non-essential cookies stores `unveiled:cookie-consent` and shows a static address-list fallback on `/events/map` (no OSM tile requests). Accepting consent loads MapLibre + `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. No map API keys. If Workers CSP is added later, allow that tile host (and MapLibre workers) — see Phase 1 cookie note above.
+
+### Automated verification (Phase 5)
+
+```bash
+bun run lint
+bun run typecheck
+bun run stories   # discovery stories under apps/web (port 61001)
+SITE_URL=http://localhost:3000 bun run test:e2e  # includes e2e/specs/event-discovery.spec.ts
+```
+
+**Local gate note (2026-07-09):** Discovery deliverables are in place. Touched files pass `biome check`. Repo-wide `bun run lint` / `bun run typecheck` still fail on pre-existing issues (AbortSignal / Hono Context) outside this step. Ladle `@unveiled/web` serves discovery stories on `:61001`. `e2e/specs/event-discovery.spec.ts` — 12/12 scenarios green (Neon Auth signup can flake once; suite uses `retries: 1`). Re-seed with `bun run seed:demo -- --reset` after pulling seed changes so tonight/past/coords titles exist. Staging Workers deploy requires `CLOUDFLARE_API_TOKEN` (`bun run deploy:workers`); build succeeds without it.
+
 ## Phase 2 step 03 verification
 
 With `DATABASE_URL` and `AUTH_URL` set:

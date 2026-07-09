@@ -349,7 +349,7 @@ test.describe("admin-events.feature", () => {
     await expect(
       page.getByText(/demo-daten wurden erstellt|demo data (was )?created/i),
     ).toBeVisible({ timeout: 120_000 });
-    await expectEventOnDiscover(page, locale, "Premiere: Stadt ohne Schlaf");
+    await expectEventOnDiscover(page, locale, "Tonight: Stadt ohne Schlaf");
   });
 
   test("Scenario: Seed demo data is a no-op when data exists", async ({ page, locale }) => {
