@@ -424,12 +424,12 @@ The `@unveiled/ui` package SHALL export an `EventCard` component matching `docs/
 
 ### Requirement: Discover page live event preview
 
-The public `/:locale/discover` route SHALL render up to six upcoming events from the database using EventCard components instead of static placeholder content.
+The public locale home `/:locale` (Discover) SHALL render up to six upcoming events from the database using EventCard components instead of static placeholder content.
 
 #### Scenario: Discover shows upcoming catalog events
 
 - **WHEN** at least one future event exists in the catalog
-- **THEN** `/discover` displays up to six EventCards ordered by ascending `date_time`
+- **THEN** `/` (locale home) displays up to six EventCards ordered by ascending `date_time`
 
 ### Requirement: Public event detail page
 
@@ -472,7 +472,7 @@ Each Gherkin scenario in `docs/migration/features/admin-events.feature` and `doc
 #### Scenario: Published events surface on public pages
 
 - **WHEN** an admin creates or edits an event via the E2E flow
-- **THEN** the event appears on `/discover` and is viewable on `/events/:id` without authentication
+- **THEN** the event appears on the locale home (Discover) and is viewable on `/events/:id` without authentication
 - **AND** after a partner rename, the updated partner name is visible on discover for that partner's events
 
 #### Scenario: Image tests skip when R2 is unavailable

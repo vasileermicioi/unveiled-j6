@@ -16,13 +16,12 @@ async function clearConsent(page: Page): Promise<void> {
 }
 
 test.describe("static-pages.feature", () => {
-  test("Scenario: Landing page", async ({ page, locale }) => {
+  test("Scenario: Discover is the home page", async ({ page, locale }) => {
     await page.goto(`/${locale}`);
-    await expect(page.getByRole("heading", { name: /unveiled berlin/i })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /so funktioniert's|how it works/i }).first(),
+      page.getByText(/finde dinge|find things|buche spontan|book spontaneously|community/i).first(),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: /entdecken|discover/i }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: /anmelden|log ?in/i }).first()).toBeVisible();
     await expect(
       page.getByRole("link", { name: /registrieren|sign up|register/i }).first(),
@@ -60,12 +59,10 @@ test.describe("static-pages.feature", () => {
     ).toBeVisible();
   });
 
-  test("Scenario: Discover / marketing preview page", async ({ page, locale }) => {
+  test("Scenario: Legacy /discover redirects to locale home", async ({ page, locale }) => {
     await page.goto(`/${locale}/discover`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/?$`));
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(
-      page.getByText(/finde dinge|find things|buche spontan|book spontaneously|community/i).first(),
-    ).toBeVisible();
   });
 
   test("Scenario: Bilingual content", async ({ page }) => {
@@ -136,7 +133,7 @@ test.describe("static-pages.feature", () => {
     expect(stored).toBeTruthy();
     expect(JSON.parse(stored as string).decision).toBe("declined");
 
-    await page.goto(`/${locale}/discover`);
+    await page.goto(`/${locale}`);
     await expect(page.getByRole("button", { name: /ablehnen|decline/i })).toHaveCount(0);
   });
 

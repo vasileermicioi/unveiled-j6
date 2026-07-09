@@ -49,14 +49,16 @@ Use **flat route files** (`faq.tsx`) — not nested `faq/index.tsx` (HonoX routi
 
 ---
 
-## 2. Landing with JSON-LD
+## 2. Discover home with JSON-LD
 
 **Reference:** `[locale]/index.tsx`
+
+Discover is the locale home (`/:locale`). Legacy `/:locale/discover` redirects here.
 
 ```tsx
 return c.render(
   <>
-    <LandingPage landing={landing} locale={locale} />
+    <DiscoverPage content={content} events={events} locale={locale} partners={partners} stats={stats} />
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(buildOrganizationJsonLd(locale)) }}

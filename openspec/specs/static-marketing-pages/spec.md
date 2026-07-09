@@ -6,11 +6,11 @@ Phase 1–4 public marketing routes, legal pages, and discover preview integrati
 
 ### Requirement: Discover marketing preview page
 
-The route `/:locale/discover` SHALL render a public marketing preview with hero stats, three value proposition cards, a preview grid of up to six upcoming catalog events (soonest first), membership category highlights, partner venue highlights with logos where available, and a "missing venue" callout, using verbatim static copy from `static-pages-content.md` for hero and value sections while sourcing event and partner preview data from the database.
+The locale home route `/:locale` SHALL render the Discover marketing preview with hero stats, three value proposition cards, a preview grid of up to six upcoming catalog events (soonest first), membership category highlights, partner venue highlights with logos where available, and a "missing venue" callout, using verbatim static copy from `static-pages-content.md` for hero and value sections while sourcing event and partner preview data from the database. The legacy path `/:locale/discover` SHALL redirect to `/:locale`.
 
 #### Scenario: Discover page sections
 
-- **WHEN** a guest visits `/de/discover`
+- **WHEN** a guest visits `/de`
 - **THEN** they see the hero panel, value cards, event preview grid, membership categories, and partner venues sections
 
 #### Scenario: Live event grid
@@ -30,8 +30,13 @@ The route `/:locale/discover` SHALL render a public marketing preview with hero 
 
 #### Scenario: Discover page SEO
 
-- **WHEN** a crawler requests `/de/discover`
+- **WHEN** a crawler requests `/de`
 - **THEN** the response includes a unique `<title>`, `<meta name="description">`, canonical, hreflang alternates, and Open Graph tags in the initial HTML
+
+#### Scenario: Legacy discover path redirects home
+
+- **WHEN** a guest visits `/de/discover`
+- **THEN** they are redirected to `/de`
 
 #### Scenario: Partner logos from catalog
 
@@ -93,7 +98,7 @@ The application SHALL serve `/sitemap.xml` listing absolute URLs for both locale
 #### Scenario: Sitemap includes marketing routes
 
 - **WHEN** a crawler requests `/sitemap.xml`
-- **THEN** the response is valid XML containing `/de/discover` and `/en/terms` among other static page URLs
+- **THEN** the response is valid XML containing `/de` and `/en/terms` among other static page URLs
 
 #### Scenario: No event URLs in Phase 1
 
@@ -116,7 +121,7 @@ Each Gherkin scenario in `docs/migration/features/static-pages.feature` SHALL ha
 #### Scenario: Marketing and legal flows are E2E-verified
 
 - **WHEN** `bun run test:e2e` executes `e2e/specs/static-pages.spec.ts`
-- **THEN** landing, how-it-works, FAQ, discover preview, bilingual toggle, legal footer links, and cookie consent behaviors are asserted in a real browser
+- **THEN** discover home, how-it-works, FAQ, legacy `/discover` redirect, bilingual toggle, legal footer links, and cookie consent behaviors are asserted in a real browser
 
 #### Scenario: Cookie first-visit isolation
 

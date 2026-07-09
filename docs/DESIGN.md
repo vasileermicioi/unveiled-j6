@@ -24,7 +24,7 @@ apps/web/app/
 │   └── [locale]/
 │       ├── _renderer.tsx      # AppShell wrapper
 │       ├── _middleware.tsx    # Locale validation
-│       ├── index.tsx          # Landing
+│       ├── index.tsx          # Discover (home)
 │       ├── how-it-works.tsx
 │       ├── faq.tsx
 │       ├── membership.tsx

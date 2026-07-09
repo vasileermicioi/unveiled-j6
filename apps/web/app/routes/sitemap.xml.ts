@@ -5,7 +5,6 @@ import { absoluteUrl } from "../lib/site-config";
 
 const SITEMAP_STATIC_PATHS = [
   "",
-  "discover",
   "how-it-works",
   "faq",
   "membership",

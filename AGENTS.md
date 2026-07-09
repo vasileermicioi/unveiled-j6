@@ -130,7 +130,7 @@ Work **one phase per agent session**. Branch: `phase-N-short-name`. Merge to `ma
 | Phase | Focus | Key routes |
 |---|---|---|
 | **0** | Monorepo bootstrap, shell, locale routing, deploy | `/`, `/de`, `/en` |
-| **1** | Marketing site, legal, cookie banner, SEO basics | `/discover`, `/how-it-works`, `/faq`, `/impressum` |
+| **1** | Marketing site, legal, cookie banner, SEO basics | `/` (Discover home), `/how-it-works`, `/faq`, `/impressum` |
 | **2** | Auth — Neon Auth, `@better-auth-ui/heroui`, `@unveiled/db`, `@unveiled/auth` | `/login`, `/signup` |
 | **3** | Onboarding (4 SSR steps) | `/onboarding/*` |
 | **4** | Catalog, admin CRUD, images, public event detail | `/admin/events`, `/events/:id` |

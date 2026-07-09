@@ -157,4 +157,4 @@ export const mockPartnerLogoUrls: Record<string, string | undefined> = {
 };
 
 export const storyLocale = "de" as const;
-export const storyPathname = "/de/discover";
+export const storyPathname = "/de";

@@ -293,7 +293,7 @@ test.describe("admin-events.feature", () => {
     const event = await createEventViaUI(page, locale, { partnerName: partner.name });
     await deleteEventViaUI(page, locale, event.title);
 
-    await page.goto(`/${locale}/discover`);
+    await page.goto(`/${locale}`);
     await expect(page.getByText(event.title)).toHaveCount(0);
   });
 

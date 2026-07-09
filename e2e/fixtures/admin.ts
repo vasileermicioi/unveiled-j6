@@ -334,7 +334,7 @@ export async function expectEventOnDiscover(
 ): Promise<void> {
   // Discover preview shows only the next 6 upcoming events — assert via public detail
   // when the title is crowded off the grid (common after many E2E creates).
-  await page.goto(`/${locale}/discover`);
+  await page.goto(`/${locale}`);
   const onDiscover = page.getByText(eventTitle);
   if ((await onDiscover.count()) > 0) {
     await expect(onDiscover.first()).toBeVisible({ timeout: 10_000 });

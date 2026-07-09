@@ -23,7 +23,7 @@ export function OnboardingLayout({ locale, step, children, error = null }: Onboa
       className="mx-auto flex w-full max-w-7xl flex-col px-4 py-10 md:py-14"
       variant="transparent"
     >
-      <Card className="onboarding-card w-full">
+      <Card className="onboarding-card mx-auto w-full max-w-2xl">
         <Card.Header className="flex flex-col gap-6">
           <OnboardingStepIndicator locale={locale} step={meta.stepNumber} />
           <Surface className="flex flex-col gap-3" variant="transparent">

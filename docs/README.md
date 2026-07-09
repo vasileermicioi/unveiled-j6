@@ -18,7 +18,7 @@ Also read [`../AGENTS.md`](../AGENTS.md) for hard rules and phase scope. Product
 
 ## Current implementation status (Phase 1)
 
-**Shipped:** guest app shell, landing, how-it-works, FAQ, membership info, 404.
+**Shipped:** guest app shell, discover (home), how-it-works, FAQ, membership info, 404.
 
 **Not yet built:** discover, legal pages, auth, onboarding, events, booking, admin, partner portal, forms.
 

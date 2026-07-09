@@ -430,7 +430,7 @@ Phase 4 is complete when staging supports the admin → public catalog loop with
 2. Sign in as ADMIN → `/de/admin`. If DB empty, run **Seed demo data** or `bun run seed:demo`. To replace an existing catalog with fresh Berlin venue demo data: `bun run seed:demo -- --reset` (deletes all partners and events first; also removes pagination seed rows).
 3. Create a partner with logo (upload or URL) → appears on `/de/admin/partners`.
 4. Create an event with image → listed on `/de/admin/events`.
-5. Open `/de/discover` — event appears in preview grid (up to 6 upcoming).
+5. Open `/de` — event appears in Discover preview grid (up to 6 upcoming).
 6. Open `/de/events/:id` **without login** — hero srcset, event copy, `og:image` uses `og-1200x630` variant URL under `IMAGE_PUBLIC_BASE_URL`.
 7. View Source — Event JSON-LD stub and unique `<title>` / meta description.
 
@@ -445,7 +445,7 @@ cd packages/images && bun test
 cd packages/ui && bun run typecheck
 ```
 
-Public catalog surfaces (`@unveiled/ui` EventCard, `/discover` live grid, `/events/:id` detail) require `DATABASE_URL` and `IMAGE_PUBLIC_BASE_URL` for full smoke tests locally.
+Public catalog surfaces (`@unveiled/ui` EventCard, locale-home Discover live grid, `/events/:id` detail) require `DATABASE_URL` and `IMAGE_PUBLIC_BASE_URL` for full smoke tests locally.
 
 ### Demo seed images (Wikimedia Commons)
 
@@ -495,10 +495,10 @@ With `DATABASE_URL` and `AUTH_URL` set:
 
 After deploy (with `SITE_URL` set to the staging origin), confirm:
 
-1. All public routes render in DE and EN: `/`, `/discover`, `/how-it-works`, `/faq`, `/membership`, `/impressum`, `/privacy`, `/terms`
+1. All public routes render in DE and EN: `/` (Discover home), `/how-it-works`, `/faq`, `/membership`, `/impressum`, `/privacy`, `/terms` (`/discover` redirects to `/`)
 2. Footer legal links work on every page
 3. `curl -s $SITE_URL/robots.txt` — shows `Allow`, `Disallow`, and `Sitemap:` lines
-4. `curl -s $SITE_URL/sitemap.xml` — valid XML with 16 URLs (`/de/discover`, `/en/terms`, etc.); no `/events/` URLs
+4. `curl -s $SITE_URL/sitemap.xml` — valid XML with 14 URLs (`/de`, `/en/terms`, etc.); no `/events/` URLs
 5. View Source on `/en/faq` — server-rendered `<title>`, description, canonical, hreflang, and `og:image` pointing at `/og-default.png`
 6. Cookie consent banner appears on first visit; Accept/Decline persists across reloads until storage is cleared
 7. Browser console shows no errors on `/de` and `/en`

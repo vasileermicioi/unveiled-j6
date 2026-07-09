@@ -138,9 +138,10 @@ Embeds `FaqAccordion` island. Reuse on standalone FAQ and future checkout help w
 
 ## Marketing pages
 
-### `LandingPage`
+### `LandingPage` (unused route)
 
 **Path:** `components/marketing/LandingPage.tsx`  
+**Note:** Locale home is Discover (`/:locale`). This component remains for Ladle/reference only.  
 **Route:** `[locale]/index.tsx`
 
 Logo hero, subheadline, discover/how-it-works CTAs, conversion card (signup/login links), trust badges.

@@ -35,7 +35,7 @@ export function LandingPage({ locale, landing }: LandingPageProps) {
           >
             <Link
               className="button button--secondary button--md"
-              href={localizedPath(locale, "discover")}
+              href={localizedPath(locale, "")}
             >
               {landing.ctaDiscover}
             </Link>

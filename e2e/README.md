@@ -117,7 +117,7 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | `specs/auth.spec.ts` | `auth.feature` | Core auth + outlines; see skip inventory below |
 | `specs/onboarding.spec.ts` | `onboarding.feature` | 8 scenarios; fresh signup per mutating test |
 | `specs/admin-partners.spec.ts` | `admin-partners.feature` | Partner CRUD; portal/QR scenarios skipped (no Phase 4 UI) |
-| `specs/admin-events.spec.ts` | `admin-events.feature` | Event CRUD + public `/discover` / `/events/:id`; image tests need R2 |
+| `specs/admin-events.spec.ts` | `admin-events.feature` | Event CRUD + public home (Discover) / `/events/:id`; image tests need R2 |
 
 ## Skip inventory
 

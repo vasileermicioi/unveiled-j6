@@ -98,7 +98,7 @@ describe("onboarding-middleware", () => {
     process.env.DATABASE_URL = "postgres://example";
     process.env.AUTH_URL = "https://auth.example";
 
-    for (const pathname of ["/de/membership", "/de/discover", "/de/onboarding/age"] as const) {
+    for (const pathname of ["/de/membership", "/de", "/de/onboarding/age"] as const) {
       expect(
         evaluateOnboardingRedirect({
           locale: "de",
