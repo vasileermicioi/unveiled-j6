@@ -26,9 +26,10 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
   const signupHref = localizedPath(locale, "signup");
   const adminHref = localizedPath(locale, "admin");
   const savedHref = localizedPath(locale, "saved");
-  const creditsLabel = session ? copy.formatCredits(session.user.credits) : undefined;
   const isAdmin = session?.user.role === "ADMIN";
   const isUser = session?.user.role === "USER";
+  // Credits are a member (USER) concept — hide for ADMIN / PARTNER.
+  const creditsLabel = isUser ? copy.formatCredits(session.user.credits) : undefined;
   const showSavedNav = isUser;
   const savedIsActive = isActiveNavPath(pathname, savedHref);
 
