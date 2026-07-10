@@ -24,10 +24,11 @@ type GlobalWithSipLoader = typeof globalThis & {
 /**
  * Module-level WASM init; await before any sip call. Idempotent.
  *
- * Workers: `@unveiled/sip-workers-init` installs sync `__SIP_WASM_LOADER__` +
+ * Workers: `@unveiled/images/sip-workers-init` installs sync `__SIP_WASM_LOADER__` +
  * `__SIP_CODEC_WASM__` (jsquash WebP/AVIF) before `ready()`.
  *
- * Local Vite/Bun: workers-init is stubbed → default `ready()` uses sip's Node path.
+ * Local Vite/Bun/Ladle: sip-emscripten package export is a stub → default `ready()`
+ * uses sip's Node path.
  */
 async function initSip(): Promise<void> {
   const globalScope = globalThis as GlobalWithSipLoader;
@@ -40,7 +41,12 @@ async function initSip(): Promise<void> {
   // Fallback for Workers builds if the side-effect import was tree-shaken oddly.
   let createSipModule: SipEmscriptenFactory;
   try {
-    createSipModule = (await import("@unveiled/sip-emscripten")).default as SipEmscriptenFactory;
+    const emscripten = await import("@unveiled/images/sip-emscripten");
+    if ("isSipEmscriptenStub" in emscripten && emscripten.isSipEmscriptenStub) {
+      await ready();
+      return;
+    }
+    createSipModule = emscripten.default as SipEmscriptenFactory;
   } catch {
     await ready();
     return;

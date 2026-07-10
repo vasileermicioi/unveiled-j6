@@ -19,9 +19,7 @@ const sipWasmPath = path.join(sipDistDir, "sip.wasm");
 const requireFromSip = createRequire(path.join(sipDistDir, "index.js"));
 const webpDecWasmPath = requireFromSip.resolve("@jsquash/webp/codec/dec/webp_dec.wasm");
 const avifDecWasmPath = requireFromSip.resolve("@jsquash/avif/codec/dec/avif_dec.wasm");
-const sipEmscriptenDevStub = path.join(repoRoot, "packages/images/src/sip-emscripten-dev-stub.ts");
 const sipWorkersInitPath = path.join(repoRoot, "packages/images/src/sip-workers-init.ts");
-const sipWorkersInitStub = path.join(repoRoot, "packages/images/src/sip-workers-init-stub.ts");
 
 const serverEntry = path.join(path.dirname(fileURLToPath(import.meta.url)), "app/server.ts");
 
@@ -235,12 +233,14 @@ export default defineConfig(({ command, mode }) => {
         "@standardagents/sip/dist/sip.wasm": sipWasmPath,
         "@jsquash/webp/codec/dec/webp_dec.wasm": webpDecWasmPath,
         "@jsquash/avif/codec/dec/avif_dec.wasm": avifDecWasmPath,
-        "@unveiled/sip-emscripten": workerSsrBuild ? sipEmscriptenPath : sipEmscriptenDevStub,
-        // Replace the stub package export with the real Workers init (codec + sync sip wasm).
+        // Package export is the stub; Workers build swaps in real Emscripten + codec init.
         ...(workerSsrBuild
-          ? { "@unveiled/images/sip-workers-init": sipWorkersInitPath }
+          ? {
+              "@unveiled/images/sip-emscripten": sipEmscriptenPath,
+              "@unveiled/images/sip-workers-init": sipWorkersInitPath,
+              "@standardagents/sip": sipWorkerdPath,
+            }
           : {}),
-        ...(workerSsrBuild ? { "@standardagents/sip": sipWorkerdPath } : {}),
       },
       conditions: workerSsrBuild
         ? ["workerd", "worker", "module", "browser", "development|production"]

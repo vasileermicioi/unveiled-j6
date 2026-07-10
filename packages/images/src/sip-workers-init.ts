@@ -5,7 +5,7 @@
  * `ready()`. Uses sync `WebAssembly.Instance` on CompiledWasm modules so Emscripten
  * never falls through to fetch/XHR ("both async and sync fetching of the wasm failed").
  */
-import createSipModule from "@unveiled/sip-emscripten";
+import createSipModule from "@unveiled/images/sip-emscripten";
 import sipWasm from "@standardagents/sip/dist/sip.wasm";
 import avifDecWasm from "@jsquash/avif/codec/dec/avif_dec.wasm";
 import webpDecWasm from "@jsquash/webp/codec/dec/webp_dec.wasm";
