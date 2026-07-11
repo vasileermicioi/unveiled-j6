@@ -1,7 +1,7 @@
 # Example: Multi-Step Wizard (Onboarding)
 
 **Status:** Not implemented — Phase 3 blueprint.  
-**Spec:** `docs/migration/features/onboarding.feature`, `docs/migration/sitemap/sitemap.md`
+**Spec:** `docs/product/features/onboarding.feature`, `docs/product/sitemap/sitemap.md`
 
 ---
 

@@ -14,6 +14,10 @@ type LogoProps = {
 
 export function Logo({ tone = "black", className = "", alt = "Unveiled Berlin" }: LogoProps) {
   return (
-    <img alt={alt} className={`h-[1.1em] w-auto ${className}`.trim()} src={LOGO_PATHS[tone]} />
+    <img
+      alt={alt}
+      className={["brand-logo", className].filter(Boolean).join(" ")}
+      src={LOGO_PATHS[tone]}
+    />
   );
 }

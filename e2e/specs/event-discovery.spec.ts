@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 
 import { signupFreshUser } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
-import { getPartnerIdByName } from "../fixtures/catalog";
+import { getEventIdByTitle, getPartnerIdByName } from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
 
 /** Mirrors `CONSENT_STORAGE_KEY` in apps/web — keep in sync. */
@@ -86,6 +86,38 @@ async function acceptMapConsent(page: Page): Promise<void> {
 test.describe("event-discovery.feature", () => {
   // Neon Auth signup can flake under load; one retry keeps the suite green without unmarked skips.
   test.describe.configure({ retries: 1 });
+
+  test("Scenario: Guest can view public event detail without authentication", async ({
+    page,
+    locale,
+  }) => {
+    await page.context().clearCookies();
+    // Prefer Discover → public detail (no test-process DB). Fall back to seeded id if preview empty.
+    await page.goto(`/${locale}`);
+    const detailCta = page.getByRole("link", { name: /mehr sehen|see details/i }).first();
+    if ((await detailCta.count()) > 0) {
+      await detailCta.click();
+    } else {
+      const eventId = await getEventIdByTitle(TITLES.tonight);
+      await page.goto(`/${locale}/events/${eventId}`);
+    }
+
+    await expect(page).toHaveURL(new RegExp(`/${locale}/events/[^/?#]+`));
+    await expect(page).not.toHaveURL(/\/(login|signup)/);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByRole("link", { name: /anmelden zum buchen|sign in to book/i }).first(),
+    ).toBeVisible();
+  });
+
+  test("Scenario: Guest path to full browse requires signup or login", async ({ page, locale }) => {
+    await page.context().clearCookies();
+    await page.goto(`/${locale}/events`);
+
+    await expect(page).toHaveURL(new RegExp(`/${locale}/(login|signup)`), { timeout: 15_000 });
+    await expect(page).toHaveURL(/returnTo=/);
+    expect(decodeURIComponent(page.url())).toMatch(new RegExp(`/${locale}/events`));
+  });
 
   test("Scenario: Default feed shows today's events only", async ({ page, locale }) => {
     await loginMember(page, locale);

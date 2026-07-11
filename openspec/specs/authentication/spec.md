@@ -6,7 +6,7 @@ Member signup, login, logout, password reset, route protection, and role-based p
 
 ### Requirement: Automated browser coverage for auth flows
 
-Each implementable Gherkin scenario in `docs/migration/features/auth.feature` SHALL have a Playwright test in `e2e/specs/auth.spec.ts` with a title matching the scenario line (or Scenario Outline plus example row). Deferred scenarios (GDPR export/delete, admin-processed deletion) and Google OAuth when CI cannot complete the provider flow SHALL use `test.skip` with an explicit reason string naming the target phase or blocker.
+Each implementable Gherkin scenario in `docs/product/features/auth.feature` SHALL have a Playwright test in `e2e/specs/auth.spec.ts` with a title matching the scenario line (or Scenario Outline plus example row). Deferred scenarios (GDPR export/delete, admin-processed deletion) and Google OAuth when CI cannot complete the provider flow SHALL use `test.skip` with an explicit reason string naming the target phase or blocker.
 
 #### Scenario: Core auth loop is E2E-verified
 

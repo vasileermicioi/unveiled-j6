@@ -164,7 +164,7 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 
 ### Cloudflare R2 (Phase 4)
 
-The image pipeline stores six JPEG variants per upload under `images/{uuid}/{variant}.jpg` in the bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.jpg` (and sibling variant filenames — see `docs/migration/extras/image-uploads.md`). Demo seed (`bun run seed:demo`) uses the same `@unveiled/images` sip path and writes `.jpg` keys.
+The image pipeline stores six JPEG variants per upload under `images/{uuid}/{variant}.jpg` in the bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.jpg` (and sibling variant filenames — see `docs/product/extras/image-uploads.md`). Demo seed (`bun run seed:demo`) uses the same `@unveiled/images` sip path and writes `.jpg` keys.
 
 If the bucket still has objects from the old WebP pipeline (`*.webp`), re-seed or re-upload so public/admin pages resolve `.jpg` variants — see the Host section migration note above.
 
@@ -572,7 +572,7 @@ bun run test:e2e
 
 ## Phase 5 — Member discovery
 
-Phase 5 is complete when signed-in members can filter today's events (Europe/Berlin), paginate, save/unsave, open event detail, and view the filtered set on the MapLibre + OSM map — with Ladle stories and Playwright coverage for every scenario in `docs/migration/features/event-discovery.feature`. **Booking / Stripe remains Phase 6** — CTAs link to membership or detail with a “booking coming soon” banner only.
+Phase 5 is complete when signed-in members can filter today's events (Europe/Berlin), paginate, save/unsave, open event detail, and view the filtered set on the MapLibre + OSM map — with Ladle stories and Playwright coverage for every scenario in `docs/product/features/event-discovery.feature`. **Booking / Stripe remains Phase 6** — CTAs link to membership or detail with a “booking coming soon” banner only.
 
 **Client demo line:** *"This is the member app — filter by neighborhood, save favorites, map view."* (Booking still locked until Phase 6.)
 
@@ -622,6 +622,50 @@ SITE_URL=http://localhost:3000 bun run test:e2e  # includes e2e/specs/event-disc
 ```
 
 **Local gate note (2026-07-09):** Discovery deliverables are in place. Touched files pass `biome check`. Repo-wide `bun run lint` / `bun run typecheck` still fail on pre-existing issues (AbortSignal / Hono Context) outside this step. Ladle `@unveiled/web` serves discovery stories on `:61001`. `e2e/specs/event-discovery.spec.ts` — 12/12 scenarios green (Neon Auth signup can flake once; suite uses `retries: 1`). Re-seed with `bun run seed:demo -- --reset` after pulling seed changes so tonight/past/coords titles exist. Staging Workers deploy requires `CLOUDFLARE_API_TOKEN` (`bun run deploy:workers`); build succeeds without it.
+
+## Phase 5.5 — Spec alignment & debt remediation
+
+Phase 5.5 closes UI DS ownership, BDD locator/coverage debt, and sitemap/journey alignment **before** Stripe/booking (Phase 6). **No** `packages/billing`, booking mutation routes, Stripe Checkout, or Resend were introduced in this phase. Env vars are unchanged from Phase 5.
+
+### Sitemap / journey alignment (already aligned + one fix)
+
+Spot-check vs `docs/product/sitemap/sitemap.md` (2026-07-11):
+
+| Check | Result |
+|---|---|
+| `/:locale` = Discover (marketing + curated preview) | Aligned |
+| `/:locale/discover` → **301** `/:locale` | Aligned |
+| Bare `/discover` → **301** locale home (`Accept-Language`) | **Fixed** in step 05 (`apps/web/app/routes/discover.tsx`) |
+| Preview EventCard → public `/events/:id` (no auth) | Aligned |
+| Browse CTA → `signup?returnTo=/:locale/events` | Aligned (step 04) |
+| Guest `/events` → login with `returnTo` | Aligned |
+| Guests have no public full feed | Aligned |
+
+**Named deferrals** (do not block Phase 6): see `.dev-plan/current-iteration/spec-alignment-parent-guide.md` — Google OAuth/GDPR e2e → Phase 8; onboarding finish ignores `returnTo` (lands on `/membership`) → Phase 8; typography utility polish → Phase 8; booking/credits/waitlist/profile/admin-users e2e → Phases 6–8; partner portal/QR → post-MVP.
+
+### Phase 5.5 demo script
+
+1. `bun run stories` — open **Theme Overview** under `@unveiled/ui` (brand yellow `#FAFF86`, primary/secondary CTAs, sample card/chips).
+2. As a guest, open `/:locale` (Discover) → click a preview “See details” / “Mehr sehen” → land on public `/events/:id` without login.
+3. Confirm `/:locale/discover` and `/discover` **301** to locale home.
+4. Confirm guest `/events` redirects to signup/login; e2e Scenario titles match Gherkin (`docs/product/testing/coverage-matrix.md`).
+
+### Automated verification (Phase 5.5)
+
+```bash
+bun run lint
+bun run typecheck
+bun run stories   # Theme Overview under @unveiled/ui (port 61000)
+SITE_URL=http://localhost:3000 bun run test:e2e
+```
+
+**Local gate note (2026-07-11):** Touched route `apps/web/app/routes/discover.tsx` passes `biome check`. Theme Overview reachable on Ladle `:61000`. Sitemap-related Playwright scenarios (Discover preview/CTA, guest public detail, guest `/events` gate, legacy `/discover`) — **6/6 passed**. Full `static-pages` + `event-discovery` suite: 21 passed / 4 failed on Neon Auth signup→onboarding flake in member feed/save/map scenarios (pre-existing flake class; not introduced by sitemap redirect). Repo-wide `bun run lint` / `typecheck` still fail on pre-existing Hono Context / biome debt outside this step. Staging Workers deploy requires `CLOUDFLARE_API_TOKEN`.
+
+Deploy with `bun run deploy:workers` when `CLOUDFLARE_API_TOKEN` is available. Record the Workers URL / date below after a successful deploy. If the token is missing, treat staging as an operator action — local smoke of Discover + public detail + `/discover` 301 still required.
+
+| Environment | URL / evidence | Date |
+|---|---|---|
+| Staging | Blocked — `CLOUDFLARE_API_TOKEN` unset (`bun run deploy:workers` failed 2026-07-11). Local smoke OK: Discover → public detail 200; `/de/discover` + `/discover` 301 → locale home; guest `/events` → login. | 2026-07-11 |
 
 ## Phase 2 step 03 verification
 

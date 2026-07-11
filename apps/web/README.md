@@ -41,7 +41,7 @@ apps/web/
 
 ## Spec and design docs
 
-Product spec and UI copy live in [`docs/migration/`](../../docs/migration/README.md). Implementation phases: [`.dev-plan/IMPLEMENTATION-PLAN.md`](../../.dev-plan/IMPLEMENTATION-PLAN.md).
+Product spec and UI copy live in [`docs/product/`](../../docs/product/README.md). Implementation phases: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](../../.dev-plan/IMPLEMENTATION-PLAN.mvp.md). Visual identity: [`DESIGN.md`](../../DESIGN.md).
 
 ## Deployment
 

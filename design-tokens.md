@@ -2,7 +2,7 @@
 
 **Read this before any UI work.** This is the git-tracked source of truth for visual design. Implementation lives in [`apps/web/app/styles/globals.css`](apps/web/app/styles/globals.css).
 
-For page copy, section structure, and component inventory, also read the migration UI docs when available locally (`docs/migration/ui/` — may be gitignored in your checkout; ask or copy from product spec if missing).
+For page copy, section structure, and component inventory, also read [`docs/product/ui/`](docs/product/ui/design-tokens.md) and root [`DESIGN.md`](DESIGN.md).
 
 ---
 
@@ -176,10 +176,11 @@ When building a new page or component pattern:
 | **Components catalog** | [`docs/COMPONENTS.md`](docs/COMPONENTS.md) |
 | **UI patterns** | [`docs/PATTERNS.md`](docs/PATTERNS.md) |
 | **Agent hard rules** | `AGENTS.md` § UI & design |
-| **Page copy & sections** | `docs/migration/ui/static-pages-content.md` |
-| **Component → route map** | `docs/migration/ui/ui-component-map.md` |
-| **Navbar / footer** | `docs/migration/ui/app-shell.md` |
-| **i18n keys (checkout, etc.)** | `docs/migration/extras/content-i18n-inventory.md` |
+| **Page copy & sections** | [`docs/product/ui/static-pages-content.md`](docs/product/ui/static-pages-content.md) |
+| **Component → route map** | [`docs/product/ui/ui-component-map.md`](docs/product/ui/ui-component-map.md) |
+| **Navbar / footer** | [`docs/product/ui/app-shell.md`](docs/product/ui/app-shell.md) |
+| **i18n keys (checkout, etc.)** | [`docs/product/extras/content-i18n-inventory.md`](docs/product/extras/content-i18n-inventory.md) |
+| **Visual identity (DESIGN.md format)** | [`DESIGN.md`](DESIGN.md) |
 | **HeroUI skill** | `.agents/skills/heroui-react/SKILL.md` |
 
-When `docs/migration/` is unavailable, use `.dev-plan/IMPLEMENTATION-PLAN.md` and OpenSpec change artifacts for the current phase scope.
+Phase scope: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](.dev-plan/IMPLEMENTATION-PLAN.mvp.md).

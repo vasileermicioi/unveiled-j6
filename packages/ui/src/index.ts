@@ -5,6 +5,7 @@ export {
   buildDetailHeroSrc,
   buildDetailHeroSrcSet,
 } from "./image-urls";
+export { LOGO_PATHS, Logo, type LogoTone } from "./Logo";
 export type {
   CatalogLocale,
   EventCardItem,

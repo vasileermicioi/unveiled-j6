@@ -1,13 +1,23 @@
 import type { Page } from "@playwright/test";
 
+import { signupFreshUser } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
 import { getEventIdByTitle } from "../fixtures/catalog";
+import { completeOnboardingWizard } from "../fixtures/onboarding";
 
 /** Mirrors `CONSENT_STORAGE_KEY` in apps/web — keep in sync. */
 const CONSENT_STORAGE_KEY = "unveiled:cookie-consent";
 
 /** Stable demo seed title with lat/lng (public detail map). */
 const SEEDED_MAP_EVENT_TITLE = "Tonight: Stadt ohne Schlaf";
+
+async function fillSignupPasswords(page: Page, password: string): Promise<void> {
+  await page.getByLabel(/^passwort$|^password$/i).fill(password);
+  const confirm = page.getByLabel(/passwort bestätigen|confirm password/i);
+  if ((await confirm.count()) > 0) {
+    await confirm.fill(password);
+  }
+}
 
 /** Clear consent once on the current origin (does not re-clear on later navigations). */
 async function clearConsentOnce(page: Page, locale: string): Promise<void> {
@@ -23,6 +33,9 @@ async function clearConsentOnce(page: Page, locale: string): Promise<void> {
 }
 
 test.describe("static-pages.feature", () => {
+  // Neon Auth signup can flake under load (Discover CTA path).
+  test.describe.configure({ retries: 1 });
+
   test("Scenario: Discover is the home page", async ({ page, locale }) => {
     await page.goto(`/${locale}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -33,6 +46,67 @@ test.describe("static-pages.feature", () => {
     await expect(
       page.getByRole("link", { name: /registrieren|sign up|register/i }).first(),
     ).toBeVisible();
+  });
+
+  test("Scenario: Discover preview links to public event detail", async ({ page, locale }) => {
+    await page.context().clearCookies();
+    await page.goto(`/${locale}`);
+
+    const detailCta = page.getByRole("link", { name: /mehr sehen|see details/i }).first();
+    await expect(detailCta).toBeVisible({ timeout: 15_000 });
+    await detailCta.click();
+
+    await expect(page).toHaveURL(new RegExp(`/${locale}/events/[^/?#]+`));
+    await expect(page).not.toHaveURL(/\/(login|signup)/);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("Scenario: Discover CTA path to the full member events feed", async ({ page, locale }) => {
+    await page.context().clearCookies();
+    await page.goto(`/${locale}`);
+
+    // Guests must not see a public full feed equivalent to /events on Discover.
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page).not.toHaveURL(new RegExp(`/${locale}/events/?$`));
+
+    const browseCta = page.getByRole("link", { name: /live events ansehen|browse live events/i });
+    await expect(browseCta).toBeVisible();
+    await browseCta.click();
+
+    await expect(page).toHaveURL(new RegExp(`/${locale}/(signup|login)`));
+    await expect(page).toHaveURL(/returnTo=/);
+    expect(decodeURIComponent(page.url())).toMatch(new RegExp(`/${locale}/events`));
+
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const password = "e2e-test-pass-123";
+    await page.getByLabel(/vorname|first name/i).fill("E2E");
+    await page.getByLabel(/nachname|last name/i).fill("Browse");
+    await page.getByLabel(/e-?mail/i).fill(`e2e.browse.${stamp}@unveiled.test`);
+    await fillSignupPasswords(page, password);
+    await page.getByRole("button", { name: /registrieren|sign up|create/i }).click();
+
+    try {
+      await page.waitForURL(/\/(onboarding|auth\/continue)/, { timeout: 45_000 });
+    } catch {
+      // fall through
+    }
+    if (!page.url().includes("/onboarding")) {
+      await page.goto(`/${locale}/onboarding/age`, { waitUntil: "domcontentloaded" });
+    }
+    // Signup session can lag: if we bounced to login, complete a fresh signup via fixture.
+    if (page.url().includes("/login")) {
+      await signupFreshUser(page, locale);
+    }
+    await expect(page).toHaveURL(/\/onboarding\//, { timeout: 20_000 });
+
+    await completeOnboardingWizard(page, locale);
+    // Onboarding finish currently lands on membership; member feed is reachable after auth.
+    await page.goto(`/${locale}/events`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/events`));
+    await expect(page).not.toHaveURL(/\/(login|signup)/);
+    await expect(page.getByRole("heading", { level: 1, name: /events/i })).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test("Scenario: How it works", async ({ page, locale }) => {

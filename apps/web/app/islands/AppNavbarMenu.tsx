@@ -1,4 +1,4 @@
-import { Chip, Drawer, Link, Surface, useOverlayState } from "@heroui/react";
+import { Button, Chip, Drawer, Link, Surface, useOverlayState } from "@heroui/react";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -41,14 +41,14 @@ function NavCloseIcon() {
 
 function MenuTriggerFallback() {
   return (
-    <button
+    <Button
       aria-label="Open navigation menu"
       className={menuTriggerClassName}
-      disabled
+      isDisabled
       type="button"
     >
       <NavMenuIcon />
-    </button>
+    </Button>
   );
 }
 

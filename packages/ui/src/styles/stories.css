@@ -1,0 +1,11 @@
+/**
+ * Ladle entry for `@unveiled/ui` stories — Tailwind + shared brand theme.
+ * Do not import `apps/web` globals here.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap");
+@import "tailwindcss" source(none);
+@import "@heroui/styles";
+@import "./brand-theme.css";
+
+@source "../**/*.{ts,tsx}";

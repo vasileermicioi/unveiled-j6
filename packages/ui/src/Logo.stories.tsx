@@ -7,14 +7,16 @@ export const Black: Story = () => <Logo className="text-4xl" tone="black" />;
 Black.storyName = "Logo / Black";
 
 export const White: Story = () => (
-  <Surface className="rounded border-2 border-foreground bg-foreground p-6" variant="transparent">
-    <Logo className="text-4xl" tone="white" />
+  <Surface className="flex items-center justify-center p-6" variant="default">
+    <Surface className="bg-brand-dark p-6" variant="transparent">
+      <Logo className="text-4xl" tone="white" />
+    </Surface>
   </Surface>
 );
 White.storyName = "Logo / White";
 
 export const Yellow: Story = () => (
-  <Surface className="rounded border-2 border-foreground bg-brand-dark p-6" variant="transparent">
+  <Surface className="bg-brand-dark p-6" variant="transparent">
     <Logo className="text-4xl" tone="yellow" />
   </Surface>
 );

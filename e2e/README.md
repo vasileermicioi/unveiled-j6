@@ -2,6 +2,8 @@
 
 Repo-root Playwright harness for Gherkin-traced browser tests against the HonoX SSR app.
 
+**Coverage inventory:** [`docs/product/testing/coverage-matrix.md`](../docs/product/testing/coverage-matrix.md) (Scenario → Playwright status). Selector and title rules: [`docs/product/testing/bdd-and-e2e.md`](../docs/product/testing/bdd-and-e2e.md).
+
 ## Prerequisites
 
 - Root `.env` with `DATABASE_URL`, `AUTH_URL`, and `SITE_URL` for auth/catalog flows (see `.env.example`).
@@ -50,6 +52,8 @@ Image create/edit tests call `test.skip('R2 vars not configured')` when any of t
 Never commit real passwords. Placeholders live in `.env.example`.
 
 ## Selector policy (mandatory)
+
+**Contract SoT:** [`docs/product/testing/bdd-and-e2e.md`](../docs/product/testing/bdd-and-e2e.md) (Gherkin Scenario titles + proximity/layout selectors).
 
 Playwright tests use **proximity and layout selectors only**:
 

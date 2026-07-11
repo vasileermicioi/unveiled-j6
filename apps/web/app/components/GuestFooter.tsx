@@ -1,9 +1,9 @@
 import { Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Logo } from "@unveiled/ui";
 
 import { getCopy } from "../lib/copy";
 import type { Locale } from "../lib/locale";
 import { localizedPath } from "../lib/locale";
-import { Logo } from "./Logo";
 
 type GuestFooterProps = {
   locale: Locale;

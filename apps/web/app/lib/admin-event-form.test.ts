@@ -69,6 +69,29 @@ describe("admin-event-form helpers", () => {
     expect(values.totalCapacity).toBe(15);
     expect(values.secretCode).toBe("JAZZ123");
     expect(values.imageUpload).toBeNull();
+    expect(values.imageUrl).toBeNull();
+  });
+
+  test("parseEventFormBody extracts image_url", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        address: "Main St 1",
+        neighborhood: "Mitte",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        image_url: "https://example.com/poster.jpg",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.imageUrl).toBe("https://example.com/poster.jpg");
+    expect(values.imageUpload).toBeNull();
   });
 
   test("parseEventFormBody accepts multi-select arrays and map zoom", async () => {

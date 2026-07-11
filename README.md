@@ -9,9 +9,11 @@ Greenfield rewrite of the Unveiled Berlin cultural-access membership platform.
 | Runtime / PM | Bun workspaces |
 | App | HonoX + React SSR (`apps/web`) |
 | UI | HeroUI v3 (Uber preset + brand tokens) |
+| Data / auth | Neon Postgres + Neon Auth + Drizzle |
+| Images | Cloudflare R2 + `@standardagents/sip` |
 | Lint / format | Biome |
 
-Future phases add Neon Postgres, Neon Auth, Cloudflare R2, Stripe, and Resend via shared packages under `packages/`.
+Payments (Stripe) and email (Resend) land in remaining MVP phases via `packages/billing` and `packages/email`.
 
 ## Quick start
 
@@ -27,18 +29,22 @@ bun run typecheck
 
 ```text
 apps/web/              @unveiled/web — deployable SSR app
-packages/config/       @unveiled/config — shared tsconfig + Biome presets
-docs/migration/        Product spec (source of truth)
-.dev-plan/             Phased implementation plan
+packages/*             shared packages (db, auth, images, ui, …)
+docs/product/          Product spec (active SoT)
+.dev-plan/             IMPLEMENTATION-PLAN.mvp.md + openspec_5step_proposals_guide.v2.md
+e2e/                   Playwright ↔ docs/product/features
+DESIGN.md              Visual identity (Google Labs format)
 ```
 
 ## Documentation
 
 - **Agent instructions:** [`AGENTS.md`](./AGENTS.md)
-- **Phased delivery plan:** [`.dev-plan/IMPLEMENTATION-PLAN.md`](./.dev-plan/IMPLEMENTATION-PLAN.md)
-- **Product spec:** [`docs/migration/README.md`](./docs/migration/README.md)
+- **Visual identity (DESIGN.md format):** [`DESIGN.md`](./DESIGN.md)
+- **Product spec:** [`docs/product/README.md`](./docs/product/README.md)
+- **MVP delivery plan:** [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](./.dev-plan/IMPLEMENTATION-PLAN.mvp.md)
+- **App UI architecture:** [`docs/DESIGN.md`](./docs/DESIGN.md)
 - **Deployment:** [`apps/web/DEPLOYMENT.md`](./apps/web/DEPLOYMENT.md)
 
 ## Phase status
 
-**Phase 0** — Foundation: monorepo, branded shell, locale routing, staging deploy pipeline.
+**Phases 0–5 shipped.** Next: Phase 5.5 remediation, then Phases 6–8 — see [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](./.dev-plan/IMPLEMENTATION-PLAN.mvp.md).

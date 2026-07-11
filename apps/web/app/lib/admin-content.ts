@@ -113,7 +113,11 @@ export type AdminCopy = {
   languagesLabel: string;
   targetAgeGroupsLabel: string;
   mapLocationLabel: string;
+  imageSectionLabel: string;
   imageFileLabel: string;
+  imageUrlLabel: string;
+  imageUrlPlaceholder: string;
+  imageUrlHint: string;
   imageUploadHint: string;
   imageUploadHintEdit: string;
   chooseImageButton: string;
@@ -256,10 +260,14 @@ const copy: Record<Locale, AdminCopy> = {
     languagesLabel: "Sprachen",
     targetAgeGroupsLabel: "Altersgruppen",
     mapLocationLabel: "Standort auf der Karte",
+    imageSectionLabel: "Event-Bild",
     imageFileLabel: "Event-Bild hochladen",
-    imageUploadHint: "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
+    imageUrlLabel: "Bild-URL",
+    imageUrlPlaceholder: "https://…",
+    imageUrlHint: "Statt Upload: öffentliche Bild-URL einfügen. Nicht beides gleichzeitig.",
+    imageUploadHint: "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB. Upload oder URL.",
     imageUploadHintEdit:
-      "Optional: neues Bild hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten.",
+      "Optional: neues Bild per Upload oder URL ersetzen — beides leer lassen, um das aktuelle zu behalten.",
     chooseImageButton: "Bild auswählen",
     imageSelectedLabel: (fileName) => `Ausgewählt: ${fileName}`,
     imageStorageError: "Bildspeicher ist nicht konfiguriert. Bitte Admin kontaktieren.",
@@ -283,7 +291,7 @@ const copy: Record<Locale, AdminCopy> = {
       contactEmail: "Gültige E-Mail-Adresse erforderlich.",
       address: "Adresse ist erforderlich.",
       logo: "Logo-Upload und URL können nicht gleichzeitig gesetzt werden.",
-      image: "Event-Bild ist erforderlich.",
+      image: "Event-Bild ist erforderlich (Upload oder URL — nicht beides).",
       partnerId: "Partner ist erforderlich.",
       title: "Titel ist erforderlich.",
       description: "Beschreibung ist erforderlich.",
@@ -399,10 +407,14 @@ const copy: Record<Locale, AdminCopy> = {
     languagesLabel: "Languages",
     targetAgeGroupsLabel: "Age groups",
     mapLocationLabel: "Map location",
+    imageSectionLabel: "Event image",
     imageFileLabel: "Upload event image",
-    imageUploadHint: "JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
+    imageUrlLabel: "Image URL",
+    imageUrlPlaceholder: "https://…",
+    imageUrlHint: "Paste a public image URL instead of uploading. Do not provide both.",
+    imageUploadHint: "JPEG, PNG, or WebP — min 800×420 px, max 8 MB. Upload or URL.",
     imageUploadHintEdit:
-      "Optional: upload a new file to replace the current image — leave empty to keep it.",
+      "Optional: replace the current image via upload or URL — leave both empty to keep it.",
     chooseImageButton: "Choose image",
     imageSelectedLabel: (fileName) => `Selected: ${fileName}`,
     imageStorageError: "Image storage is not configured. Contact support.",
@@ -425,7 +437,7 @@ const copy: Record<Locale, AdminCopy> = {
       contactEmail: "A valid email address is required.",
       address: "Address is required.",
       logo: "Logo upload and URL cannot both be provided.",
-      image: "Event image is required.",
+      image: "Event image is required (upload or URL — not both).",
       partnerId: "Partner is required.",
       title: "Title is required.",
       description: "Description is required.",
@@ -474,7 +486,9 @@ export function mapCatalogErrorCode(
   }
 
   if (code === "CONFLICTING_IMAGE_SOURCES") {
-    return adminCopy.fieldErrors.logo;
+    return locale === "de"
+      ? "Upload und URL können nicht gleichzeitig gesetzt werden."
+      : "Upload and URL cannot both be provided.";
   }
 
   if (code === "MISSING_EVENT_IMAGE") {

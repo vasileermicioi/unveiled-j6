@@ -1,4 +1,5 @@
 import { Chip, Header, Link, Paragraph, Surface } from "@heroui/react";
+import { Logo } from "@unveiled/ui";
 import { Bookmark } from "lucide-react";
 import AppNavbarMenu from "../islands/AppNavbarMenu";
 import AuthLogoutButton from "../islands/AuthLogoutButton";
@@ -7,7 +8,6 @@ import type { AppSession } from "../lib/auth";
 import { getCopy, NAV_ITEMS, NAV_SEGMENTS } from "../lib/copy";
 import type { Locale } from "../lib/locale";
 import { isActiveNavPath, isAuthPage, localizedPath, switchLocalePath } from "../lib/locale";
-import { Logo } from "./Logo";
 import { NavLink } from "./NavLink";
 
 type AppNavbarProps = {

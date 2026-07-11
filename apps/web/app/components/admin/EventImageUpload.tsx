@@ -1,6 +1,6 @@
 "use client";
 
-import { Description, Input, Paragraph, Surface } from "@heroui/react";
+import { Description, Input, Label, Paragraph, Surface, TextField } from "@heroui/react";
 import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images";
 
 import { getAdminCopy } from "../../lib/admin-content";
@@ -21,7 +21,7 @@ export function EventImageUpload({
 
   return (
     <Surface className="flex flex-col gap-4" variant="transparent">
-      <Paragraph className="onboarding-form__section-label">{copy.imageFileLabel}</Paragraph>
+      <Paragraph className="onboarding-form__section-label">{copy.imageSectionLabel}</Paragraph>
       <Description>{isEdit ? copy.imageUploadHintEdit : copy.imageUploadHint}</Description>
 
       {isEdit && currentImageUrl ? (
@@ -30,7 +30,17 @@ export function EventImageUpload({
         </Surface>
       ) : null}
 
-      <Input accept={ACCEPTED_IMAGE_FILE_ACCEPT} name="image" required={!isEdit} type="file" />
+      <Surface className="flex flex-col gap-2" variant="transparent">
+        <Label htmlFor="event-image-file">{copy.imageFileLabel}</Label>
+        {/* Server enforces upload XOR URL; omit HTML required so URL-only create works. */}
+        <Input accept={ACCEPTED_IMAGE_FILE_ACCEPT} id="event-image-file" name="image" type="file" />
+      </Surface>
+
+      <TextField fullWidth name="image_url">
+        <Label>{copy.imageUrlLabel}</Label>
+        <Input placeholder={copy.imageUrlPlaceholder} type="url" />
+        <Description>{copy.imageUrlHint}</Description>
+      </TextField>
     </Surface>
   );
 }

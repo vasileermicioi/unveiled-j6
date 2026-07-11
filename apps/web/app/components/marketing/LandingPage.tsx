@@ -1,8 +1,8 @@
 import { Card, Chip, Heading, Link, Paragraph, Separator, Surface } from "@heroui/react";
+import { Logo } from "@unveiled/ui";
 import type { LandingContent } from "../../lib/content/types";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
-import { Logo } from "../Logo";
 
 type LandingPageProps = {
   locale: Locale;
@@ -33,10 +33,7 @@ export function LandingPage({ locale, landing }: LandingPageProps) {
             className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center"
             variant="transparent"
           >
-            <Link
-              className="button button--secondary button--md"
-              href={localizedPath(locale, "")}
-            >
+            <Link className="button button--secondary button--md" href={localizedPath(locale, "")}>
               {landing.ctaDiscover}
             </Link>
             <Link

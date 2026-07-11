@@ -1,4 +1,4 @@
-import { Input, Label, Surface } from "@heroui/react";
+import { Input, Label, Surface, TextField } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
@@ -48,16 +48,16 @@ export function EventAdminDatePicker({
   const copy = getAdminCopy(locale);
 
   return (
-    <Surface className="admin-form__native-date-field w-full" variant="transparent">
+    <TextField
+      className="admin-form__native-date-field w-full"
+      defaultValue={eventDate ?? ""}
+      fullWidth
+      isRequired={isRequired}
+      name={name}
+    >
       <Label>{label ?? copy.eventDateLabel}</Label>
-      <Input
-        className="admin-form__native-input"
-        defaultValue={eventDate ?? ""}
-        name={name}
-        required={isRequired}
-        type="date"
-      />
-    </Surface>
+      <Input className="admin-form__native-input" type="date" />
+    </TextField>
   );
 }
 
@@ -71,15 +71,15 @@ export function EventAdminTimeField({
   const copy = getAdminCopy(locale);
 
   return (
-    <Surface className="admin-form__native-time-field w-full" variant="transparent">
+    <TextField
+      className="admin-form__native-time-field w-full"
+      defaultValue={getDefaultTimeValue(eventTime, defaultEmpty)}
+      fullWidth
+      name={name}
+    >
       <Label>{label ?? copy.eventTimeLabel}</Label>
-      <Input
-        className="admin-form__native-input"
-        defaultValue={getDefaultTimeValue(eventTime, defaultEmpty)}
-        name={name}
-        type="time"
-      />
-    </Surface>
+      <Input className="admin-form__native-input" type="time" />
+    </TextField>
   );
 }
 

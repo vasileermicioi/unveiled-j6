@@ -30,6 +30,7 @@ export type EventFormValues = {
   lng: string | null;
   mapZoom: number | null;
   imageUpload: Buffer | null;
+  imageUrl: string | null;
 };
 
 export type SeriesSlotMode = "manual" | "builder";
@@ -368,6 +369,7 @@ export async function parseEventFormBody(
 
   const languages = parseBodyStringArrayField(body, "languages", asString);
   const targetAgeGroups = parseBodyStringArrayField(body, "target_age_groups", asString);
+  const imageUrl = asString(body.image_url)?.trim() || null;
 
   return {
     partnerId: asString(body.partner_id)?.trim() ?? "",
@@ -395,6 +397,7 @@ export async function parseEventFormBody(
     lng: asString(body.lng)?.trim() || null,
     mapZoom: parseOptionalInteger(asString(body.map_zoom)),
     imageUpload,
+    imageUrl,
   };
 }
 

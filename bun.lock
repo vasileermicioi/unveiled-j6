@@ -103,11 +103,11 @@
       "name": "@unveiled/ui",
       "dependencies": {
         "@heroui/react": "^3.2.1",
+        "@heroui/styles": "^3.2.1",
         "@unveiled/images": "workspace:*",
         "react": "^19.0.0",
       },
       "devDependencies": {
-        "@heroui/styles": "^3.2.1",
         "@ladle/react": "^5.1.1",
         "@react-aria/ssr": "^3.10.1",
         "@tailwindcss/vite": "^4.3.2",

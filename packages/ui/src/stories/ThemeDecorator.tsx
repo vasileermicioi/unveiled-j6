@@ -1,7 +1,7 @@
 import { Surface } from "@heroui/react";
 import type { ReactNode } from "react";
 
-import "../../../../apps/web/app/styles/globals.css";
+import "../styles/stories.css";
 
 type ThemeDecoratorProps = {
   children: ReactNode;

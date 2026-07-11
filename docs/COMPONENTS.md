@@ -246,7 +246,7 @@ Mobile drawer nav. SSR fallback: disabled Menu button until mounted.
 
 ## Future components (not built — do not invent locally)
 
-From `docs/migration/ui/ui-component-map.md` — will land in later phases:
+From `docs/product/ui/ui-component-map.md` — will land in later phases:
 
 | Component | Phase | Package / location |
 |---|---|---|

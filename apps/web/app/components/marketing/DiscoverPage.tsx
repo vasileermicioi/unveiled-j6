@@ -41,7 +41,10 @@ export function DiscoverPage({ content, locale, events, partners, stats }: Disco
               >
                 {content.hero.ctaMembership}
               </Link>
-              <Link className="button button--secondary button--md" href="#events">
+              <Link
+                className="button button--secondary button--md"
+                href={`${localizedPath(locale, "signup")}?returnTo=${encodeURIComponent(localizedPath(locale, "events"))}`}
+              >
                 {content.hero.ctaBrowseEvents}
               </Link>
             </Surface>

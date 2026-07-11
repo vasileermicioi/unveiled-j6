@@ -122,7 +122,9 @@ See `PATTERNS.md` § SEO.
 
 ## Related docs
 
-- [`../design-tokens.md`](../design-tokens.md) — visual rules and tokens
+- [`../DESIGN.md`](../DESIGN.md) — visual identity (Google Labs DESIGN.md format)
+- [`../design-tokens.md`](../design-tokens.md) — visual rules narrative (root mirror)
+- [`product/ui/design-tokens.md`](product/ui/design-tokens.md) — product SoT token narrative
 - [`COMPONENTS.md`](COMPONENTS.md) — what exists today
 - [`../AGENTS.md`](../AGENTS.md) — agent hard rules and phase scope
-- `docs/migration/sitemap/sitemap.md` — full route map
+- [`product/sitemap/sitemap.md`](product/sitemap/sitemap.md) — full MVP route map

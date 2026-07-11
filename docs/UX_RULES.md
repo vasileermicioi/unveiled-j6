@@ -1,6 +1,6 @@
 # UX Rules
 
-Interaction and behavior rules for Unveiled Berlin UI. Behavioral truth: `docs/migration/features/*.feature`.
+Interaction and behavior rules for Unveiled Berlin UI. Behavioral truth: `docs/product/features/*.feature`.
 
 ---
 
@@ -83,7 +83,7 @@ Real Stripe Billing (Phase 6+) — no mocked checkout. Membership page Phase 1 u
 
 ### Image upload
 
-Dual path: file upload or paste URL → `@unveiled/images` pipeline. See `docs/migration/extras/image-uploads.md`.
+Dual path: file upload or paste URL → `@unveiled/images` pipeline. See `docs/product/extras/image-uploads.md`.
 
 ---
 
@@ -196,4 +196,4 @@ See `AGENTS.md` § v1 non-goals.
 
 - [`PATTERNS.md`](PATTERNS.md) — implementation patterns
 - [`examples/`](examples/) — page blueprints
-- `docs/migration/features/*.feature` — Gherkin scenarios
+- `docs/product/features/*.feature` — Gherkin scenarios

@@ -1,7 +1,7 @@
 # Example: Event Form (Admin CRUD)
 
 **Status:** Not implemented — Phase 4+ blueprint.  
-**Spec:** `docs/migration/features/admin-events.feature`, `docs/migration/extras/image-uploads.md`
+**Spec:** `docs/product/features/admin-events.feature`, `docs/product/extras/image-uploads.md`
 
 ---
 

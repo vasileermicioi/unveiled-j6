@@ -6,7 +6,7 @@ Four-step SSR onboarding wizard for incomplete USERs, gate/skip behavior for oth
 
 ### Requirement: Automated browser coverage for onboarding wizard
 
-Each Gherkin scenario in `docs/migration/features/onboarding.feature` SHALL have a Playwright test in `e2e/specs/onboarding.spec.ts` tracing the four-step SSR wizard (`age`, `interests`, `location`, `timing`). Tests that mutate onboarding state SHALL use a fresh USER (prefer new signup) for isolation.
+Each Gherkin scenario in `docs/product/features/onboarding.feature` SHALL have a Playwright test in `e2e/specs/onboarding.spec.ts` tracing the four-step SSR wizard (`age`, `interests`, `location`, `timing`). Tests that mutate onboarding state SHALL use a fresh USER (prefer new signup) for isolation.
 
 #### Scenario: Onboarding gate and completion are E2E-verified
 

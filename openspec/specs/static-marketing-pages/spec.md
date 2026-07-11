@@ -6,7 +6,7 @@ Phase 1–4 public marketing routes, legal pages, and discover preview integrati
 
 ### Requirement: Discover marketing preview page
 
-The locale home route `/:locale` SHALL render the Discover marketing preview with hero stats, three value proposition cards, a preview grid of up to six upcoming catalog events (soonest first), membership category highlights, partner venue highlights with logos where available, and a "missing venue" callout, using verbatim static copy from `static-pages-content.md` for hero and value sections while sourcing event and partner preview data from the database. The legacy path `/:locale/discover` SHALL redirect to `/:locale`.
+The locale home route `/:locale` SHALL render the Discover marketing preview with hero stats, three value proposition cards, a preview grid of up to six upcoming catalog events (soonest first), membership category highlights, partner venue highlights with logos where available, and a "missing venue" callout, using verbatim static copy from `static-pages-content.md` for hero and value sections while sourcing event and partner preview data from the database. Legacy `/:locale/discover` SHALL **301** redirect to `/:locale`. Bare `/discover` (no locale segment), when requested, SHALL **301** to the visitor's locale home (`/:locale` via `Accept-Language`, same resolution as `/`) so sitemap legacy paths do not 404.
 
 #### Scenario: Discover page sections
 
@@ -36,12 +36,41 @@ The locale home route `/:locale` SHALL render the Discover marketing preview wit
 #### Scenario: Legacy discover path redirects home
 
 - **WHEN** a guest visits `/de/discover`
-- **THEN** they are redirected to `/de`
+- **THEN** they receive a **301** redirect to `/de`
+
+#### Scenario: Bare discover path redirects to locale home
+
+- **WHEN** a visitor requests `/discover` without a locale segment
+- **THEN** they receive a **301** to `/:locale` (locale from `Accept-Language`, fallback `de`)
 
 #### Scenario: Partner logos from catalog
 
 - **WHEN** a partner in the venue grid has a `logo_image_id`
 - **THEN** the grid displays the partner logo using the `medium-640` variant URL
+
+### Requirement: Discover to events navigation
+
+The public Discover experience (locale home `/:locale`) SHALL present marketing content and a curated event preview and SHALL provide a clear path into fuller event browsing: preview EventCard CTAs ("See details" / "Mehr sehen") link to public `/events/:id` without forcing login, and a primary CTA path leads guests to signup or login that lands on member `/events` after auth (and onboarding if incomplete). Guests SHALL NOT receive a public full upcoming-events list equivalent to `/events` in MVP. Product docs (`docs/product/sitemap/sitemap.md`, `ui/app-shell.md`, `ui/static-pages-content.md`) SHALL document these CTAs without dead ends. Phase 5.5 release spot-checks SHALL confirm these CTA hrefs and journeys (or record a named deferral with target phase).
+
+#### Scenario: Discover preview links to public event detail
+
+- **WHEN** a guest follows a Discover preview event CTA ("See details" / "Mehr sehen")
+- **THEN** they land on public `/events/:id` without being forced to log in
+
+#### Scenario: Discover CTA path to the full member events feed
+
+- **WHEN** a guest follows the primary browse-all-events CTA path to signup or login
+- **THEN** they are taken to signup or login and after auth (and onboarding if incomplete) land on `/events`, never receiving a public full feed equivalent
+
+#### Scenario: Guest has no public full feed
+
+- **WHEN** a guest is not signed in
+- **THEN** product docs and Discover CTAs do not offer an ungated `/events` browse list; the full feed remains member-gated
+
+#### Scenario: Guest journey matches sitemap
+
+- **WHEN** a guest follows Discover preview CTAs and auth CTAs during Phase 5.5 release verification
+- **THEN** preview CTAs open public `/events/:id` and the full-browse path goes through signup/login toward member `/events` without exposing a public full feed
 
 ### Requirement: Legal pages
 
@@ -118,12 +147,12 @@ The application SHALL provide a default Open Graph image at `apps/web/public/og-
 
 ### Requirement: Automated browser coverage for static pages
 
-Each Gherkin scenario in `docs/migration/features/static-pages.feature` SHALL have a Playwright test in `e2e/specs/static-pages.spec.ts` whose title matches the scenario line (including the `Scenario:` prefix). Tests SHALL use proximity-only selectors and default locale `de` unless the scenario requires bilingual coverage. The declining-consent map scenario SHALL assert against a real map surface (consent fallback shown, no OpenStreetMap tile requests) on a public event detail page that mounts `EventMap`.
+Each Gherkin scenario in `docs/product/features/static-pages.feature` SHALL have a Playwright test in `e2e/specs/static-pages.spec.ts` whose title matches the scenario line (including the `Scenario:` prefix). Tests SHALL use proximity-only selectors and default locale `de` unless the scenario requires bilingual coverage. Coverage SHALL include Discover preview→public detail and Discover CTA→auth→member `/events` in addition to home, how-it-works, FAQ, legacy `/discover`, bilingual, legal, and cookie scenarios. The declining-consent map scenario SHALL assert against a real map surface (consent fallback shown, no OpenStreetMap tile requests) on a public event detail page that mounts `EventMap`.
 
 #### Scenario: Marketing and legal flows are E2E-verified
 
 - **WHEN** `bun run test:e2e` executes `e2e/specs/static-pages.spec.ts`
-- **THEN** discover home, how-it-works, FAQ, legacy `/discover` redirect, bilingual toggle, legal footer links, and cookie consent behaviors are asserted in a real browser
+- **THEN** discover home, Discover preview→detail, Discover CTA→auth→`/events`, how-it-works, FAQ, legacy `/discover` redirect, bilingual toggle, legal footer links, and cookie consent behaviors are asserted in a real browser (or listed as named deferrals in the coverage matrix)
 
 #### Scenario: Cookie first-visit isolation
 

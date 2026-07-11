@@ -8,6 +8,7 @@ import {
   deleteEventViaUI,
   expectEventOnDiscover,
   expectPublicEventDetail,
+  fillLabeledDateOrTime,
   fillTextbox,
   futureDateISO,
   navigateAdminTab,
@@ -20,7 +21,15 @@ import {
 import { loginAsAdmin } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
 
+/** Stable Wikimedia Commons URL used by seed data (fetchable for processImageFromUrl). */
+const SAMPLE_REMOTE_IMAGE_URL =
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Berlin%2C_Mitte%2C_Rosa-Luxemburg-Platz%2C_Volksbuehne_02.jpg/1280px-Berlin%2C_Mitte%2C_Rosa-Luxemburg-Platz%2C_Volksbuehne_02.jpg";
+
 async function fillEventBaseFields(page: Page, partnerName: string, title: string): Promise<void> {
+  await expect(page.getByRole("heading", { name: /serie|series|event/i })).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.waitForLoadState("networkidle");
   const suffix = uniqueSuffix();
   await selectOptionByLabel(page, adminLabels.partner, partnerName);
   await fillTextbox(page, adminLabels.title, title);
@@ -30,6 +39,11 @@ async function fillEventBaseFields(page: Page, partnerName: string, title: strin
   await selectOptionByLabel(page, adminLabels.category, "Theater");
   await selectOptionByLabel(page, adminLabels.eventType, "Performance");
   await fillTextbox(page, adminLabels.secretCode, `SER${suffix.slice(0, 6).toUpperCase()}`);
+}
+
+async function attachEventImageFile(page: Page): Promise<void> {
+  // BDD exception: file-input
+  await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
 }
 
 test.describe("admin-events.feature", () => {
@@ -64,22 +78,32 @@ test.describe("admin-events.feature", () => {
       imagePath: SAMPLE_EVENT_IMAGE,
     });
     await page.goto(event.detailPath);
-    // Nav logo is also role=img — assert a catalog JPEG variant, not the first image on the page.
-    const hero = page.locator('img[src*=".jpg"]').first();
+    // Hero alt is the event title — prefer role over CSS/src attribute selectors.
+    const hero = page.getByRole("img", { name: event.title });
     await expect(hero).toBeVisible({ timeout: 15_000 });
     await expect(hero).toHaveAttribute("src", /(?:hero-1920|large-1280|medium-640)\.jpg(?:\?|$)/);
   });
 
-  test("Scenario: Supply the event image as a remote URL", { tag: "@skip-no-ui" }, async () => {
-    test.skip(
-      true,
-      "Admin event form is upload-only — remote URL image path is seed/CLI (processImageFromUrl), not exposed in UI",
-    );
+  test("Scenario: Supply the event image as a remote URL", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      imageUrl: SAMPLE_REMOTE_IMAGE_URL,
+    });
+    await page.goto(event.detailPath);
+    const hero = page.getByRole("img", { name: event.title });
+    await expect(hero).toBeVisible({ timeout: 15_000 });
+    await expect(hero).toHaveAttribute("src", /(?:hero-1920|large-1280|medium-640)\.jpg(?:\?|$)/);
   });
 
   test("Scenario: Event image is required", async ({ page, locale }) => {
     const partner = await createPartnerViaUI(page, locale);
     await page.goto(`/${locale}/admin/events/new`);
+    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
     await fillTextbox(page, adminLabels.title, `No Image ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing image");
@@ -87,15 +111,13 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.neighborhood, "Mitte");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
-    await page.locator('input[name="event_date"]').fill(futureDateISO(10));
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await fillTextbox(page, adminLabels.secretCode, "NOIMG001");
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
-    const imageInput = page.locator('input[name="image"]');
-    const missing = await imageInput.evaluate(
-      (el) => (el as HTMLInputElement).validity.valueMissing,
-    );
-    expect(missing || page.url().includes("/events/new")).toBeTruthy();
+    await expect(
+      page.getByText(/event-bild ist erforderlich|event image is required/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("Scenario Outline: Redemption configuration validation on create — ticketType = SECRET_CODE, mode = MANUAL, requiredField = secretCode", async ({
@@ -112,8 +134,8 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.neighborhood, "Mitte");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
-    await page.locator('input[name="event_date"]').fill(futureDateISO(10));
-    await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
+    await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
     await expect(
@@ -135,10 +157,10 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.neighborhood, "Mitte");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
-    await page.locator('input[name="event_date"]').fill(futureDateISO(10));
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await selectOptionByLabel(page, adminLabels.ticketType, "Voucher");
     await fillTextbox(page, adminLabels.eventWebsite, "https://example.com/event");
-    await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
     await expect(
@@ -160,10 +182,10 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.neighborhood, "Mitte");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
-    await page.locator('input[name="event_date"]').fill(futureDateISO(10));
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await selectOptionByLabel(page, adminLabels.ticketType, "Voucher");
     await fillTextbox(page, adminLabels.promoCode, "PROMO123");
-    await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
     await expect(
@@ -197,18 +219,18 @@ test.describe("admin-events.feature", () => {
 
     await page.goto(`/${locale}/admin/events/series/new`);
     await fillEventBaseFields(page, partner.name, title);
-    await page.locator('input[name="slot_date_0"]').fill(futureDateISO(20));
-    await page.locator('input[name="slot_time_0"]').fill("19:00");
-    await page.locator('input[name="slot_date_1"]').fill(futureDateISO(21));
-    await page.locator('input[name="slot_time_1"]').fill("20:00");
-    await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await fillLabeledDateOrTime(page, adminLabels.slotDate, futureDateISO(20), { nth: 0 });
+    await fillLabeledDateOrTime(page, adminLabels.slotTime, "19:00", { nth: 0 });
+    await fillLabeledDateOrTime(page, adminLabels.slotDate, futureDateISO(21), { nth: 1 });
+    await fillLabeledDateOrTime(page, adminLabels.slotTime, "20:00", { nth: 1 });
+    await attachEventImageFile(page);
     await page.getByRole("button", { name: /slots anzeigen|show slots|preview/i }).click();
 
     await expect(page.getByRole("heading", { name: /vorschau|preview/i })).toBeVisible({
       timeout: 30_000,
     });
     // File inputs clear on remount between preview and confirm — re-attach before submit.
-    await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await attachEventImageFile(page);
     await page.getByRole("button", { name: /events anlegen|create .*events/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 60_000 });
     await expect(page.getByText(title).first()).toBeVisible();
@@ -225,19 +247,19 @@ test.describe("admin-events.feature", () => {
     await page.goto(`/${locale}/admin/events/series/new`);
     await fillEventBaseFields(page, partner.name, title);
     await selectOptionByLabel(page, adminLabels.slotMode, /datumsbereich|date range/i);
-    await page.locator('input[name="builder_start"]').fill(start);
-    await page.locator('input[name="builder_end"]').fill(end);
+    await fillLabeledDateOrTime(page, adminLabels.builderStart, start);
+    await fillLabeledDateOrTime(page, adminLabels.builderEnd, end);
     await page.getByRole("button", { name: adminLabels.weekdays }).click();
     await page.getByRole("option", { name: "Mo" }).click();
     await page.keyboard.press("Escape");
-    await page.locator('input[name="builder_time_0"]').fill("19:30");
-    await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await fillLabeledDateOrTime(page, adminLabels.builderTime1, "19:30");
+    await attachEventImageFile(page);
     await page.getByRole("button", { name: /slots anzeigen|show slots|preview/i }).click();
 
     await expect(page.getByRole("heading", { name: /vorschau|preview/i })).toBeVisible({
       timeout: 30_000,
     });
-    await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await attachEventImageFile(page);
     await page.getByRole("button", { name: /events anlegen|create .*events/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 60_000 });
     await expect(page.getByText(title).first()).toBeVisible();

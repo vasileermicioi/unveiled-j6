@@ -1,3 +1,5 @@
+import { Button } from "@heroui/react";
+
 import { signOut } from "../lib/auth-client";
 
 type AuthLogoutButtonProps = {
@@ -7,14 +9,14 @@ type AuthLogoutButtonProps = {
 
 export default function AuthLogoutButton({ label, className }: AuthLogoutButtonProps) {
   return (
-    <button
+    <Button
       className={className ?? "button button--secondary button--md"}
-      onClick={() => {
+      onPress={() => {
         void signOut();
       }}
       type="button"
     >
       {label}
-    </button>
+    </Button>
   );
 }

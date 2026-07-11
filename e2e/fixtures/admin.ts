@@ -28,6 +28,14 @@ export const adminLabels = {
   neighborhood: "Kiez*",
   category: "Kategorie*",
   eventType: "Event-Typ*",
+  eventDate: "Datum*",
+  eventTime: "Uhrzeit",
+  slotDate: "Datum",
+  slotTime: "Uhrzeit",
+  builderStart: "Startdatum",
+  builderEnd: "Enddatum",
+  builderTime1: "Uhrzeit 1",
+  imageUrl: "Bild-URL",
   credits: "Credits*",
   capacity: "Kapazität*",
   secretCode: "Secret Code",
@@ -41,6 +49,19 @@ export const adminLabels = {
   slotMode: "Datum/Uhrzeit pro Slot",
   weekdays: "Wochentage",
 } as const;
+
+/** Fill a native date/time field by accessible name (gap G7). */
+export async function fillLabeledDateOrTime(
+  page: Page,
+  label: string | RegExp,
+  value: string,
+  options?: { nth?: number },
+): Promise<void> {
+  // Chromium exposes HeroUI TextField date/time inputs as textboxes with the label name.
+  const field = page.getByRole("textbox", { name: label }).nth(options?.nth ?? 0);
+  await expect(field).toBeVisible({ timeout: 15_000 });
+  await field.fill(value);
+}
 
 export function uniqueSuffix(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -110,8 +131,16 @@ export async function fillTextbox(
 ): Promise<void> {
   const field = page.getByRole("textbox", { name: accessibleName, exact: true });
   await expect(field).toBeVisible({ timeout: 15_000 });
-  await field.click({ timeout: 15_000 });
-  await field.fill(value);
+  // Client islands can remount once after hydration and wipe an early fill — retry once.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await field.click({ timeout: 15_000 });
+    await field.fill(value);
+    if ((await field.inputValue()) === value) {
+      return;
+    }
+    await page.waitForTimeout(250);
+  }
+  await expect(field).toHaveValue(value, { timeout: 5_000 });
 }
 
 export type CreatedPartner = {
@@ -137,11 +166,20 @@ export async function createPartnerViaUI(
   };
 
   await page.goto(`/${locale}/admin/partners/new`);
+  await expect(page.getByRole("heading", { name: /partner anlegen|create partner/i })).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.waitForLoadState("networkidle");
+  await fillTextbox(page, adminLabels.name, partner.name);
+  await fillTextbox(page, adminLabels.email, partner.contactEmail);
+  await fillTextbox(page, adminLabels.address, partner.address);
+  // Hydration can wipe the first TextField after later fills — re-apply before submit.
   await fillTextbox(page, adminLabels.name, partner.name);
   await fillTextbox(page, adminLabels.email, partner.contactEmail);
   await fillTextbox(page, adminLabels.address, partner.address);
 
   if (overrides.logoPath) {
+    // BDD exception: file-input
     await page.locator('input[name="logo"]').setInputFiles(overrides.logoPath);
   }
 
@@ -191,6 +229,7 @@ export type CreateEventOverrides = {
   promoCode?: string;
   eventWebsiteUrl?: string;
   imagePath?: string;
+  imageUrl?: string;
   skipImage?: boolean;
   barrierFree?: "Ja" | "Nein" | "Yes" | "No";
   language?: string | RegExp;
@@ -204,9 +243,17 @@ export async function createEventViaUI(
 ): Promise<CreatedEvent> {
   const suffix = uniqueSuffix();
   const title = overrides.title ?? `E2E Event ${suffix}`;
-  const imagePath = overrides.skipImage ? undefined : (overrides.imagePath ?? SAMPLE_EVENT_IMAGE);
+  const imagePath = overrides.skipImage
+    ? undefined
+    : overrides.imageUrl
+      ? undefined
+      : (overrides.imagePath ?? SAMPLE_EVENT_IMAGE);
 
   await page.goto(`/${locale}/admin/events/new`);
+  await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.waitForLoadState("networkidle");
   await selectOptionByLabel(page, adminLabels.partner, overrides.partnerName);
   await fillTextbox(page, adminLabels.title, title);
   await fillTextbox(
@@ -220,9 +267,9 @@ export async function createEventViaUI(
   await selectOptionByLabel(page, adminLabels.eventType, overrides.eventType ?? "Performance");
 
   const eventDate = overrides.eventDate ?? futureDateISO(14);
-  await page.locator('input[name="event_date"]').fill(eventDate);
+  await fillLabeledDateOrTime(page, adminLabels.eventDate, eventDate);
   if (overrides.eventTime) {
-    await page.locator('input[name="event_time"]').fill(overrides.eventTime);
+    await fillLabeledDateOrTime(page, adminLabels.eventTime, overrides.eventTime);
   }
 
   if (overrides.creditPrice) {
@@ -288,7 +335,10 @@ export async function createEventViaUI(
   // Multi-select popovers can leave an overlay that intercepts the submit click.
   await page.keyboard.press("Escape").catch(() => undefined);
 
-  if (imagePath) {
+  if (overrides.imageUrl) {
+    await fillTextbox(page, adminLabels.imageUrl, overrides.imageUrl);
+  } else if (imagePath) {
+    // BDD exception: file-input
     await page.locator('input[name="image"]').setInputFiles(imagePath);
   }
 

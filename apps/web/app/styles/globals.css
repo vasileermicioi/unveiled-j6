@@ -1,7 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap");
-
 @import "tailwindcss" source(none);
 @import "@heroui/styles";
+/* Shared brand tokens + core CTAs/surfaces — owned by @unveiled/ui */
+@import "../../../../packages/ui/src/styles/brand-theme.css";
 @import "@better-auth-ui/heroui/styles";
 @import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -9,101 +10,11 @@
 @source "../islands";
 @source "../routes";
 @source "../lib";
-
-@theme {
-  --color-brand-yellow: #faff86;
-  --color-brand-cream: #feffe2;
-  --color-brand-grey: #f5f5f5;
-  --color-brand-dark: #202621;
-
-  --font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif;
-}
-
-/* Design tokens only — class overrides live in @layer components below HeroUI. */
-@layer theme {
-  :root,
-  .light,
-  .default,
-  [data-theme="light"],
-  [data-theme="default"] {
-    color-scheme: light;
-
-    --background: oklch(0.9718 0.1444 110.91);
-    --foreground: oklch(0.2608 0.0126 150.14);
-
-    --surface: oklch(1 0 0);
-    --surface-foreground: oklch(0.2608 0.0126 150.14);
-    --surface-secondary: oklch(0.9917 0.0377 108.68);
-    --surface-secondary-foreground: oklch(0.2608 0.0126 150.14);
-    --surface-tertiary: oklch(0.9702 0 0);
-    --surface-tertiary-foreground: oklch(0.2608 0.0126 150.14);
-
-    --overlay: oklch(1 0 0);
-    --overlay-foreground: oklch(0.2608 0.0126 150.14);
-
-    --accent: oklch(0.9718 0.1444 110.91);
-    --accent-foreground: oklch(0.2608 0.0126 150.14);
-    --accent-soft-foreground: oklch(0.2608 0.0126 150.14);
-
-    --default: oklch(1 0 0);
-    --default-foreground: oklch(0.2608 0.0126 150.14);
-    --default-hover: oklch(0.9702 0 0);
-
-    --muted: color-mix(in oklch, oklch(0.2608 0.0126 150.14) 50%, transparent);
-
-    --border: oklch(0.2608 0.0126 150.14);
-    --separator: oklch(0.2608 0.0126 150.14);
-    --focus: oklch(0.2608 0.0126 150.14);
-    --link: oklch(0.2608 0.0126 150.14);
-
-    --field-background: oklch(0.9702 0 0);
-    --field-foreground: oklch(0.2608 0.0126 150.14);
-    --field-border: oklch(0.2608 0.0126 150.14);
-
-    --radius: 0;
-    --field-radius: 0;
-    --border-width: 2px;
-    --field-border-width: 2px;
-
-    --surface-shadow: none;
-    --overlay-shadow: none;
-    --field-shadow: none;
-
-    /* Yellow accent controls (primary CTAs, active nav): invert on hover */
-    --accent-control-bg: var(--accent);
-    --accent-control-fg: var(--foreground);
-    --accent-control-bg-hover: var(--foreground);
-    --accent-control-fg-hover: var(--surface);
-
-    /* White surface controls (secondary CTAs): invert on hover like primary */
-    --surface-control-bg: var(--surface);
-    --surface-control-fg: var(--foreground);
-    --surface-control-bg-hover: var(--accent-control-bg-hover);
-    --surface-control-fg-hover: var(--accent-control-fg-hover);
-  }
-}
+@source "../../../../packages/ui/src";
 
 /* Brand component overrides — must sit in components layer to beat HeroUI defaults. */
 @layer components {
-  .card--default,
-  .card--secondary,
-  .card--tertiary {
-    border-width: 2px;
-    border-style: solid;
-    border-color: var(--border);
-    border-radius: 0;
-    box-shadow: none;
-    background-color: var(--surface);
-    padding: 1.5rem;
-  }
-
-  @media (min-width: 768px) {
-    .card--default,
-    .card--secondary,
-    .card--tertiary {
-      padding: 2rem;
-    }
-  }
+  /* App/page composition overrides — core brand rules live in @unveiled/ui brand-theme.css */
 
   .card.page-hero {
     padding: 1.5rem;
@@ -112,49 +23,6 @@
   @media (min-width: 768px) {
     .card.page-hero {
       padding: 2.5rem;
-    }
-  }
-
-  .card {
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .card__title,
-  .typography--h1,
-  .typography--h2,
-  .typography--h3,
-  .typography--h4,
-  .typography--h5,
-  .typography--h6 {
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: -0.05em;
-    line-height: 0.9;
-  }
-
-  .typography--h1 {
-    font-size: 2.25rem;
-  }
-
-  .typography--h2 {
-    font-size: 1.5rem;
-  }
-
-  @media (min-width: 768px) {
-    .typography--h1 {
-      font-size: 3rem;
-    }
-  }
-
-  .card__title {
-    font-size: 1.125rem;
-    font-weight: 700;
-  }
-
-  @media (min-width: 768px) {
-    .card__title {
-      font-size: 1.25rem;
     }
   }
 
@@ -171,36 +39,6 @@
   @media (min-width: 1024px) {
     .card.page-hero .typography--h1 {
       font-size: 3.75rem;
-    }
-  }
-
-  .card__description {
-    margin-top: 1rem;
-    max-width: 42rem;
-    font-size: 1rem;
-    line-height: 1.625;
-    color: var(--muted);
-  }
-
-  @media (min-width: 768px) {
-    .card__description {
-      font-size: 1.125rem;
-    }
-  }
-
-  .card--secondary {
-    background-color: var(--color-brand-dark);
-    color: var(--color-brand-cream);
-  }
-
-  .card--secondary .card__title {
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-  }
-
-  @media (min-width: 768px) {
-    .card--secondary .card__title {
-      font-size: 1.875rem;
     }
   }
 
@@ -349,133 +187,11 @@
     display: block;
   }
 
-  .card--secondary .card__title,
-  .card--secondary .value-tile,
-  .card--secondary .value-tile .typography--color-default {
-    color: var(--color-brand-cream);
-  }
-
-  .typography--color-muted {
-    color: var(--muted);
-  }
-
-  .surface--transparent {
-    background-color: transparent;
-    box-shadow: none;
-  }
-
   .surface--transparent.site-footer {
     background-color: white;
     border-top-width: 4px;
     border-top-style: solid;
     border-top-color: var(--border);
-  }
-
-  .button,
-  .link.button {
-    border-radius: 0;
-    height: auto;
-    min-height: 2.5rem;
-  }
-
-  .button--primary,
-  .link.button.button--primary {
-    --button-bg: var(--accent-control-bg);
-    --button-bg-hover: var(--accent-control-bg-hover);
-    --button-bg-pressed: var(--accent-control-bg-hover);
-    --button-fg: var(--accent-control-fg);
-    background-color: var(--accent-control-bg);
-    color: var(--accent-control-fg);
-    transition:
-      background-color 150ms ease,
-      color 150ms ease;
-  }
-
-  @media (hover: hover) {
-    .button--primary:hover,
-    .button--primary[data-hovered="true"],
-    .link.button.button--primary:hover,
-    .link.button.button--primary[data-hovered="true"] {
-      background-color: var(--accent-control-bg-hover);
-      color: var(--accent-control-fg-hover);
-      --button-bg: var(--accent-control-bg-hover);
-      --button-fg: var(--accent-control-fg-hover);
-    }
-  }
-
-  .button--primary:active,
-  .button--primary[data-pressed="true"],
-  .link.button.button--primary:active,
-  .link.button.button--primary[data-pressed="true"] {
-    background-color: var(--accent-control-bg-hover);
-    color: var(--accent-control-fg-hover);
-  }
-
-  .button--secondary,
-  .link.button.button--secondary {
-    --button-bg: var(--surface-control-bg);
-    --button-bg-hover: var(--surface-control-bg-hover);
-    --button-bg-pressed: var(--surface-control-bg-hover);
-    --button-fg: var(--surface-control-fg);
-    background-color: var(--surface-control-bg);
-    color: var(--surface-control-fg);
-    transition:
-      background-color 150ms ease,
-      color 150ms ease;
-  }
-
-  @media (hover: hover) {
-    .button--secondary:hover,
-    .button--secondary[data-hovered="true"],
-    .link.button.button--secondary:hover,
-    .link.button.button--secondary[data-hovered="true"] {
-      background-color: var(--surface-control-bg-hover);
-      color: var(--surface-control-fg-hover);
-      --button-bg: var(--surface-control-bg-hover);
-      --button-fg: var(--surface-control-fg-hover);
-    }
-  }
-
-  .button--secondary:active,
-  .button--secondary[data-pressed="true"],
-  .link.button.button--secondary:active,
-  .link.button.button--secondary[data-pressed="true"] {
-    background-color: var(--surface-control-bg-hover);
-    color: var(--surface-control-fg-hover);
-  }
-
-  /* Nested HeroUI typography must follow button fg (incl. hover invert). */
-  .button .typography,
-  .button .typography--color-default,
-  .link.button .typography,
-  .link.button .typography--color-default {
-    color: inherit;
-  }
-
-  .button--primary,
-  .button--secondary,
-  .link.button.button--primary,
-  .link.button.button--secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-width: 2px;
-    border-style: solid;
-    border-color: var(--border);
-    text-transform: uppercase;
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .button--md,
-  .link.button.button--md {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-  }
-
-  .button--full-width,
-  .link.button.button--full-width {
-    width: 100%;
   }
 
   .header.site-header,

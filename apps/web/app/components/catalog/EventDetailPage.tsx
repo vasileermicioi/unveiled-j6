@@ -129,7 +129,7 @@ export function EventDetailPage({ event, locale }: EventDetailPageProps) {
       <Surface className="event-detail__hero" variant="transparent">
         {heroSrc ? (
           <img
-            alt=""
+            alt={event.title}
             className="event-detail__hero-image"
             decoding="async"
             sizes="(max-width: 640px) 100vw, (max-width: 1280px) 100vw, 1920px"

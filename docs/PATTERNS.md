@@ -102,7 +102,7 @@ c.render(<Page />, {
 });
 ```
 
-Public pages: unique title + description per `docs/migration/extras/seo-and-metadata.md`.
+Public pages: unique title + description per `docs/product/extras/seo-and-metadata.md`.
 
 ---
 
@@ -210,7 +210,7 @@ Static fallback uses same theme classes as interactive version.
 
 ## 12. Form GET filters (future — event feed)
 
-**Spec:** `docs/migration/extras/pagination-and-search.md`
+**Spec:** `docs/product/extras/pagination-and-search.md`
 
 List pages use query params + SSR — not client filter state:
 
@@ -224,7 +224,7 @@ Filters submit via `<form method="get">` — page re-renders server-side.
 
 ## 13. Form POST mutation (future — all CRUD)
 
-**Spec:** `docs/migration/sitemap/sitemap.md`
+**Spec:** `docs/product/sitemap/sitemap.md`
 
 Every mutation = dedicated page + POST handler:
 
