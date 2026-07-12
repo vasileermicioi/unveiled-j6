@@ -63,36 +63,36 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `auth.feature` | Request account deletion | `e2e/specs/auth.spec.ts` · `Scenario: Request account deletion` | `deferred` | Phase 8 — Google OAuth / GDPR named deferral |
 | `auth.feature` | Account deletion is distinct from subscription cancellation | `e2e/specs/auth.spec.ts` · `Scenario: Account deletion is distinct from subscription cancellation` | `deferred` | Phase 8 — Google OAuth / GDPR named deferral |
 | `auth.feature` | Admin can process account deletion on a member's behalf | `e2e/specs/auth.spec.ts` · `Scenario: Admin can process account deletion on a member's behalf` | `deferred` | Phase 8 — Google OAuth / GDPR named deferral |
-| `booking.feature` | Booking requires authentication | — | `unshipped` | Phase 6 |
-| `booking.feature` | Booking requires an active subscription | — | `unshipped` | Phase 6 |
-| `booking.feature` | Successful booking | — | `unshipped` | Phase 6 |
-| `booking.feature` | Redemption info by ticket type and secret code mode | — | `unshipped` | Phase 6 |
-| `booking.feature` | Sold out — automatic waitlist offer | — | `unshipped` | Phase 6 |
-| `booking.feature` | Booking fails — insufficient credits | — | `unshipped` | Phase 6 |
-| `booking.feature` | Booking fails — subscription frozen (past due) | — | `unshipped` | Phase 6 |
-| `booking.feature` | Idempotent retry | — | `unshipped` | Phase 6 |
-| `booking.feature` | Post-booking actions | — | `unshipped` | Phase 6 |
-| `booking.feature` | Booking confirmation email | — | `unshipped` | Phase 6 |
-| `booking.feature` | Admin cancels a confirmed booking | — | `unshipped` | Phase 6 |
-| `booking.feature` | Cannot cancel a booking that is not confirmed | — | `unshipped` | Phase 6 |
-| `booking.feature` | Members cannot self-cancel or self-refund | — | `unshipped` | Phase 6 |
-| `credits-subscription.feature` | New signups start inactive with starter credits | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Activating a subscription via real Stripe Checkout | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Checkout blocked while frozen | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Already-active member revisits checkout | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Failed payment marks the account past due | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Recovering from past due | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Monthly renewal resets credits (no rollover) | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Cancelling a subscription | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Cancellation takes effect at period end | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Reactivating after cancellation | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Booking gate by subscription status | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Admin manually adjusts a member's credits | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Admin adjustment rejects a zero amount | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Admin issues a manual credit refund (support gesture) | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Admin freezes a member's account | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Admin unfreezes a member's account | — | `unshipped` | Phase 6–7 |
-| `credits-subscription.feature` | Admin creates a complimentary ticket | — | `unshipped` | Phase 6–7 |
+| `booking.feature` | Booking requires authentication | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires authentication` | `pass` | Needs `DATABASE_URL` for seeded event id |
+| `booking.feature` | Booking requires an active subscription | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires an active subscription` | `pass` |  |
+| `booking.feature` | Successful booking | `e2e/specs/booking.spec.ts` · `Scenario: Successful booking` | `pass` | Seeds ACTIVE via billing fixture |
+| `booking.feature` | Redemption info by ticket type and secret code mode | `e2e/specs/booking.spec.ts` · outline rows | `pass` | SECRET_CODE/MANUAL pass; SHARED/UNIQUE/VOUCHER deferred (no seed) |
+| `booking.feature` | Sold out — automatic waitlist offer | `e2e/specs/booking.spec.ts` · `Scenario: Sold out — automatic waitlist offer` | `deferred` | Phase 7 — waitlist UI |
+| `booking.feature` | Booking fails — insufficient credits | `e2e/specs/booking.spec.ts` · `Scenario: Booking fails — insufficient credits` | `pass` |  |
+| `booking.feature` | Booking fails — subscription frozen (past due) | `e2e/specs/booking.spec.ts` · `Scenario: Booking fails — subscription frozen (past due)` | `pass` |  |
+| `booking.feature` | Idempotent retry | `e2e/specs/booking.spec.ts` · `Scenario: Idempotent retry` | `skip` | Covered by `book-event.integration.test` |
+| `booking.feature` | Post-booking actions | `e2e/specs/booking.spec.ts` · `Scenario: Post-booking actions` | `pass` |  |
+| `booking.feature` | Booking confirmation email | `e2e/specs/booking.spec.ts` · `Scenario: Booking confirmation email` | `skip` | Staging Resend checklist — no inbox harness |
+| `booking.feature` | Admin cancels a confirmed booking | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels a confirmed booking` | `deferred` | Phase 8 |
+| `booking.feature` | Cannot cancel a booking that is not confirmed | `e2e/specs/booking.spec.ts` · `Scenario: Cannot cancel a booking that is not confirmed` | `deferred` | Phase 8 |
+| `booking.feature` | Members cannot self-cancel or self-refund | `e2e/specs/booking.spec.ts` · `Scenario: Members cannot self-cancel or self-refund` | `pass` |  |
+| `credits-subscription.feature` | New signups start inactive with starter credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: New signups start inactive with starter credits` | `pass` |  |
+| `credits-subscription.feature` | Activating a subscription via real Stripe Checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Activating a subscription via real Stripe Checkout` | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
+| `credits-subscription.feature` | Checkout blocked while frozen | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Checkout blocked while frozen` | `pass` | Seeds `UNPAID` |
+| `credits-subscription.feature` | Already-active member revisits checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Already-active member revisits checkout` | `pass` |  |
+| `credits-subscription.feature` | Failed payment marks the account past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Failed payment marks the account past due` | `pass` | Seeds `PAST_DUE` + book gate; full Stripe fail = staging webhook |
+| `credits-subscription.feature` | Recovering from past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Recovering from past due` | `deferred` | Phase 7 — Customer Portal |
+| `credits-subscription.feature` | Monthly renewal resets credits (no rollover) | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Monthly renewal resets credits (no rollover)` | `skip` | Billing package / webhook tests |
+| `credits-subscription.feature` | Cancelling a subscription | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancelling a subscription` | `deferred` | Phase 7 |
+| `credits-subscription.feature` | Cancellation takes effect at period end | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancellation takes effect at period end` | `deferred` | Phase 7 |
+| `credits-subscription.feature` | Reactivating after cancellation | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Reactivating after cancellation` | `deferred` | Phase 7 |
+| `credits-subscription.feature` | Booking gate by subscription status | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Booking gate by subscription status` | `pass` |  |
+| `credits-subscription.feature` | Admin manually adjusts a member's credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin manually adjusts a member's credits` | `deferred` | Phase 8 |
+| `credits-subscription.feature` | Admin adjustment rejects a zero amount | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin adjustment rejects a zero amount` | `deferred` | Phase 8 |
+| `credits-subscription.feature` | Admin issues a manual credit refund (support gesture) | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin issues a manual credit refund (support gesture)` | `deferred` | Phase 8 |
+| `credits-subscription.feature` | Admin freezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin freezes a member's account` | `deferred` | Phase 8 |
+| `credits-subscription.feature` | Admin unfreezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin unfreezes a member's account` | `deferred` | Phase 8 |
+| `credits-subscription.feature` | Admin creates a complimentary ticket | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin creates a complimentary ticket` | `deferred` | Phase 8 |
 | `event-discovery.feature` | Public discovery preview for guests | `e2e/specs/event-discovery.spec.ts` · `Scenario: Public discovery preview for guests` | `pass` |  |
 | `event-discovery.feature` | Guest can view public event detail without authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest can view public event detail without authentication` | `pass` |  |
 | `event-discovery.feature` | Guest path to full browse requires signup or login | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest path to full browse requires signup or login` | `pass` |  |

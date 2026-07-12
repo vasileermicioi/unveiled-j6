@@ -1,4 +1,4 @@
-import type { Context, MiddlewareHandler } from "hono";
+import type { MiddlewareHandler } from "hono";
 
 /** Runtime env keys mirrored from Cloudflare bindings or local process.env. */
 export const RUNTIME_ENV_KEYS = [
@@ -68,7 +68,7 @@ export function resolveEnvVar(
 }
 
 export function resolveEnvVarFromContext(
-  c: Context<{ Bindings: RuntimeEnv }>,
+  c: { env?: RuntimeEnv | null },
   key: RuntimeEnvKey,
 ): string | undefined {
   return resolveEnvVar(key, c.env);

@@ -12,7 +12,7 @@
 | Route-specific page compositions (e.g. Discover sections, admin list chrome) | `apps/web/app/components/` — optional page-level Ladle stories allowed in `apps/web` |
 | App shell (navbar/footer) | `apps/web` compositions using HeroUI + shared pieces from `@unveiled/ui` when extracted |
 
-**Allowed page-level story groups in `apps/web`:** app shell (`AppShell`, `AppNavbar`, `NavLink`, `GuestFooter`), marketing pages/sections, discovery (feed/filters/map/saved), onboarding steps/layouts, admin chrome/tables/forms, auth layouts/fallbacks, `NotFoundPage`. These are **not** design-system primitives and MUST NOT be forced into `packages/ui`.
+**Allowed page-level story groups in `apps/web`:** app shell (`AppShell`, `AppNavbar`, `NavLink`, `GuestFooter`), marketing pages/sections, discovery (feed/filters/map/saved), booking (confirm, ticket card, My Tickets, book gate), onboarding steps/layouts, admin chrome/tables/forms, auth layouts/fallbacks, `NotFoundPage`. These are **not** design-system primitives and MUST NOT be forced into `packages/ui`.
 
 **Ban:** Do not add design-system primitive stories only under `apps/web`. Do not split the same primitive’s stories across packages without updating this doc.
 

@@ -46,7 +46,8 @@ export default createRoute(async (c) => {
     return c.redirect(redirectPath, 302);
   }
 
-  const subscriptionActive = subscription?.status === "ACTIVE";
+  const subscriptionActive =
+    subscription?.status === "ACTIVE" || subscription?.status === "CANCELLED_PENDING";
   const copy = getEventFeedCopy(guard.locale);
   const queryString = buildEventFeedQueryString({
     category: feedQuery.category,

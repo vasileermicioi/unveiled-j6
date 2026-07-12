@@ -97,14 +97,7 @@ export function EventFeedPage({
             {copy.subscriptionGateCta}
           </Link>
         </Alert>
-      ) : (
-        <Alert status="accent">
-          <Alert.Content>
-            <Alert.Title>{copy.bookingComingTitle}</Alert.Title>
-            <Alert.Description>{copy.bookingComingBody}</Alert.Description>
-          </Alert.Content>
-        </Alert>
-      )}
+      ) : null}
 
       <Card>
         <Card.Content>

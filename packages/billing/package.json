@@ -1,0 +1,20 @@
+{
+  "name": "@unveiled/billing",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun --env-file=../../.env test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@unveiled/db": "workspace:*",
+    "stripe": "^18.0.0"
+  },
+  "devDependencies": {
+    "@unveiled/config": "workspace:*",
+    "typescript": "^5.8.0"
+  }
+}

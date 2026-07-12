@@ -9,6 +9,7 @@ import {
   runtimeEnvMiddleware,
   seedRuntimeEnvFromProcess,
 } from "./lib/runtime-env";
+import { stripeWebhookHandler } from "./lib/stripe-webhook";
 
 seedRuntimeEnvFromProcess();
 
@@ -28,6 +29,7 @@ app.get("/api/health/runtime", (c) => {
 
 // Register before locale catch-all (`/:locale/*` would otherwise match `/api/...`).
 app.all("/api/auth/*", authProxyHandler);
+app.post("/api/webhooks/stripe", stripeWebhookHandler);
 app.route("/", mainApp);
 
 showRoutes(app);

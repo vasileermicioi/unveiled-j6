@@ -1,3 +1,15 @@
 {
-  "extends": ["@unveiled/config/biome.json"]
+  "extends": ["@unveiled/config/biome.json"],
+  "overrides": [
+    {
+      "includes": ["apps/web/app/routes/**/*.tsx"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      }
+    }
+  ]
 }

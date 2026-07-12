@@ -120,6 +120,14 @@ export type MembershipCheckoutContent = {
   promoCodePlaceholder: string;
   alreadyActive: string;
   activeStatus: string;
+  paymentStoppedTitle: string;
+  paymentStoppedBody: string;
+  supportEmail: string;
+  supportCta: string;
+  loginCta: string;
+  signupCta: string;
+  guestPrompt: string;
+  checkoutError: string;
 };
 
 export type LegalSection = {
