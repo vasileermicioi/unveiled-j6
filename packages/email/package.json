@@ -1,0 +1,16 @@
+{
+  "name": "@unveiled/email",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@unveiled/config": "workspace:*",
+    "typescript": "^5.8.0"
+  }
+}

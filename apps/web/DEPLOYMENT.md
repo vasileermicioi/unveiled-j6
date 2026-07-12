@@ -154,12 +154,12 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 | `S3_SECRET_ACCESS_KEY` | **Yes (Phase 4 staging+)** | 4+ | R2 API token secret |
 | `IMAGE_PUBLIC_BASE_URL` | **Yes (Phase 4 staging+)** | 4+ | Public read base URL for variants (R2.dev subdomain or custom domain) — **not** the S3 API endpoint |
 | _(none for map)_ | — | 5+ | Event map uses **MapLibre GL JS** + **OpenStreetMap** tiles — no API key |
-| `STRIPE_SECRET_KEY` | — | 6+ | Stripe secret key (test mode on staging) |
-| `STRIPE_PUBLISHABLE_KEY` | — | 6+ | Stripe publishable key |
-| `STRIPE_WEBHOOK_SECRET` | — | 6+ | Stripe webhook signing secret |
-| `STRIPE_PRICE_ID_BASIC_BERLIN` | — | 6+ | Stripe price ID for Basic Berlin plan |
-| `RESEND_API_KEY` | — | 6+ | Resend API key for transactional email |
-| `DAILY_CODES_FROM_EMAIL` | — | 6+ | Sender address for daily code emails |
+| `STRIPE_SECRET_KEY` | **Yes (Phase 6 staging+)** | 6+ | Stripe secret key (**test mode** on staging) |
+| `STRIPE_PUBLISHABLE_KEY` | **Yes (Phase 6 staging+)** | 6+ | Stripe publishable key |
+| `STRIPE_WEBHOOK_SECRET` | **Yes (Phase 6 staging+)** | 6+ | Stripe webhook signing secret |
+| `STRIPE_PRICE_ID_BASIC_BERLIN` | **Yes (Phase 6 staging+)** | 6+ | Stripe price ID for Basic Berlin plan |
+| `RESEND_API_KEY` | **Yes (Phase 6 staging+)** | 6+ | Resend API key for transactional email |
+| `DAILY_CODES_FROM_EMAIL` | **Yes (Phase 6 staging+)** | 6+ | Sender address for booking confirmation + daily code emails |
 | `SENTRY_DSN` | — | 9+ | Sentry error reporting (optional) |
 
 ### Cloudflare R2 (Phase 4)
@@ -666,6 +666,65 @@ Deploy with `bun run deploy:workers` when `CLOUDFLARE_API_TOKEN` is available. R
 | Environment | URL / evidence | Date |
 |---|---|---|
 | Staging | Blocked — `CLOUDFLARE_API_TOKEN` unset (`bun run deploy:workers` failed 2026-07-11). Local smoke OK: Discover → public detail 200; `/de/discover` + `/discover` 301 → locale home; guest `/events` → login. | 2026-07-11 |
+
+## Phase 6 — Payments & booking
+
+Phase 6 closes the member money loop: **Stripe Checkout** (Basic Berlin) → `ACTIVE` + credit refill → atomic **book** → confirm redemption + Resend email with `.ics`. Partner portal / waitlist / profile billing remain **out of scope** (Phase 7+ / post-MVP).
+
+**Client demo line:** *"Subscribe with a test card, spend credits, get your door code."*
+
+### Stripe + Resend (staging / local)
+
+| Item | Value |
+|---|---|
+| Webhook endpoint | `POST {SITE_URL}/api/webhooks/stripe` |
+| Local forward | `stripe listen --forward-to localhost:3000/api/webhooks/stripe` |
+| Test card (success) | `4242 4242 4242 4242` — any future expiry, any CVC, any postal code |
+| Test mode | Use `sk_test_` / `pk_test_` keys on staging; never live keys for demos |
+| Env vars | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_BASIC_BERLIN`, `RESEND_API_KEY`, `DAILY_CODES_FROM_EMAIL` |
+
+Workers: set the same Stripe/Resend secrets via `bun run secrets:workers` (or wrangler) before staging demos.
+
+### Demo accounts / subscription notes
+
+1. **Inactive member (Checkout)** — fresh signup → onboarding → lands on `/:locale/membership` with `INACTIVE` + 17 starter credits; use test card to activate.
+2. **Active member (booking-only demos)** — after webhook activation, or seed `subscriptions.status = 'ACTIVE'` + credits for local Playwright (`e2e/fixtures/billing.ts`). Prefer Checkout on staging for the client script.
+3. **Past due / frozen** — `PAST_DUE` shows frozen book messaging; `UNPAID` blocks Checkout with payment-stopped + `support@unveiled.berlin`. Customer Portal recovery is Phase 7.
+
+### Staging smoke checklist
+
+1. Sign up → complete onboarding → `/membership` shows checkout CTA.
+2. Start Checkout → pay with `4242…` → webhook sets `ACTIVE` and refills credits to 17.
+3. Open a seeded upcoming event → **Tickets buchen** → confirm booking.
+4. Confirm page shows redemption code + copy + `.ics` download; `/bookings` lists the ticket.
+5. In Resend dashboard, confirm booking email with `.ics` attachment (when `RESEND_*` set).
+6. **Stop** — do not start Phase 7 (waitlist / profile billing) in this release.
+
+### Playwright (Phase 6)
+
+```bash
+SITE_URL=http://localhost:3000 bunx playwright test --config e2e/playwright.config.ts \
+  e2e/specs/credits-subscription.spec.ts e2e/specs/booking.spec.ts
+```
+
+Stripe hosted Checkout is **opt-in** (`E2E_STRIPE_CHECKOUT=1` + `stripe listen`). Default CI seeds subscription state via `DATABASE_URL`. Policy: [`e2e/README.md`](../../e2e/README.md) § Stripe / payments. Coverage: [`docs/product/testing/coverage-matrix.md`](../../docs/product/testing/coverage-matrix.md).
+
+### Automated verification (Phase 6)
+
+```bash
+bun run lint   # repo-wide may still report pre-existing debt outside this step
+bun run typecheck
+SITE_URL=http://localhost:3000 bunx playwright test --config e2e/playwright.config.ts \
+  e2e/specs/credits-subscription.spec.ts e2e/specs/booking.spec.ts --workers=1
+```
+
+**Local gate note (2026-07-12):** `bun run typecheck` exit 0. Phase 6 Playwright: **13 passed / 20 skipped** (named deferrals + `E2E_STRIPE_CHECKOUT` opt-in). Vite SSR fixed for Stripe via `apps/web/ssr-shims/qs.js` alias (CJS `qs` → ESM shim). Staging Workers deploy requires `CLOUDFLARE_API_TOKEN` — complete the smoke checklist above when available.
+
+### Staging deploy record
+
+| Environment | URL / evidence | Date |
+|---|---|---|
+| Staging | Blocked — `CLOUDFLARE_API_TOKEN` unset. Local smoke OK: `/de` 200 after qs shim; booking + credits-subscription e2e 13/13 in-scope passed. | 2026-07-12 |
 
 ## Phase 2 step 03 verification
 

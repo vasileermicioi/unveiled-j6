@@ -27,6 +27,9 @@ type AppNavbarMenuProps = {
   savedLabel?: string;
   savedCount?: number;
   savedIsActive?: boolean;
+  bookingsHref?: string;
+  bookingsLabel?: string;
+  bookingsIsActive?: boolean;
 };
 
 const menuTriggerClassName = "button button--secondary button--md site-nav-icon-button lg:hidden";
@@ -68,6 +71,9 @@ export default function AppNavbarMenu({
   savedLabel,
   savedCount = 0,
   savedIsActive = false,
+  bookingsHref,
+  bookingsLabel,
+  bookingsIsActive = false,
 }: AppNavbarMenuProps) {
   const [mounted, setMounted] = useState(false);
   const drawerState = useOverlayState();
@@ -112,6 +118,16 @@ export default function AppNavbarMenu({
                   label={link.label}
                 />
               ))}
+
+              {bookingsHref && bookingsLabel ? (
+                <Link
+                  aria-current={bookingsIsActive ? "page" : undefined}
+                  className="button button--secondary button--md button--full-width"
+                  href={bookingsHref}
+                >
+                  {bookingsLabel}
+                </Link>
+              ) : null}
 
               {savedHref && savedLabel ? (
                 <Link

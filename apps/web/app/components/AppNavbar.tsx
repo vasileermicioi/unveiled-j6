@@ -26,12 +26,15 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
   const signupHref = localizedPath(locale, "signup");
   const adminHref = localizedPath(locale, "admin");
   const savedHref = localizedPath(locale, "saved");
+  const bookingsHref = localizedPath(locale, "bookings");
   const isAdmin = session?.user.role === "ADMIN";
   const isUser = session?.user.role === "USER";
   // Credits are a member (USER) concept — hide for ADMIN / PARTNER.
   const creditsLabel = isUser ? copy.formatCredits(session.user.credits) : undefined;
   const showSavedNav = isUser;
+  const showBookingsNav = isUser;
   const savedIsActive = isActiveNavPath(pathname, savedHref);
+  const bookingsIsActive = isActiveNavPath(pathname, bookingsHref);
 
   const navLinks = NAV_ITEMS.map((key) => {
     const href = localizedPath(locale, NAV_SEGMENTS[key]);
@@ -72,6 +75,17 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
         </Surface>
 
         <Surface className="flex shrink-0 items-center gap-2" variant="transparent">
+          {showBookingsNav ? (
+            <Link
+              aria-current={bookingsIsActive ? "page" : undefined}
+              aria-label={copy.myBookings}
+              className="button button--secondary button--md hidden sm:inline-flex"
+              href={bookingsHref}
+            >
+              {copy.myBookings}
+            </Link>
+          ) : null}
+
           {showSavedNav ? (
             <Link
               aria-current={savedIsActive ? "page" : undefined}
@@ -154,6 +168,9 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
             loginLabel={copy.login}
             logoutLabel={session ? copy.logout : undefined}
             navLinks={navLinks}
+            bookingsHref={showBookingsNav ? bookingsHref : undefined}
+            bookingsIsActive={showBookingsNav ? bookingsIsActive : undefined}
+            bookingsLabel={showBookingsNav ? copy.myBookings : undefined}
             savedCount={showSavedNav ? savedCount : undefined}
             savedHref={showSavedNav ? savedHref : undefined}
             savedIsActive={showSavedNav ? savedIsActive : undefined}

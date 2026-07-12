@@ -1,8 +1,12 @@
-import { getPublicEventById } from "@unveiled/db";
+import { getPublicEventById, isBookingEligibleStatus } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
-import { EventDetailPage } from "../../../components/catalog/EventDetailPage";
+import {
+  EventDetailPage,
+  type EventDetailViewer,
+} from "../../../components/catalog/EventDetailPage";
 import { NotFoundPage } from "../../../components/NotFoundPage";
+import { getAuthOptions, getSessionIfConfigured } from "../../../lib/auth";
 import { getCatalogDb } from "../../../lib/catalog-db";
 import type { Locale } from "../../../lib/locale";
 import { isValidLocale } from "../../../lib/locale";
@@ -46,12 +50,28 @@ export default createRoute(async (c) => {
     });
   }
 
+  let viewer: EventDetailViewer = { kind: "guest" };
+  const session = await getSessionIfConfigured(c);
+  if (session?.user) {
+    const { db: authDb } = getAuthOptions();
+    const subscription = await authDb.query.subscriptions.findFirst({
+      where: (fields, { eq }) => eq(fields.userId, session.user.id),
+    });
+    if (subscription?.status === "PAST_DUE") {
+      viewer = { kind: "past_due" };
+    } else if (isBookingEligibleStatus(subscription?.status)) {
+      viewer = { kind: "eligible" };
+    } else {
+      viewer = { kind: "membership_required" };
+    }
+  }
+
   const meta = eventDetailPageMeta(event);
   const jsonLd = buildEventJsonLd(event);
 
   return c.render(
     <>
-      <EventDetailPage event={event} locale={locale} />
+      <EventDetailPage event={event} locale={locale} viewer={viewer} />
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         type="application/ld+json"

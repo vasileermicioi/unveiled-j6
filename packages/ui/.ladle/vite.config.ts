@@ -21,8 +21,7 @@ export default defineConfig({
     fs: {
       allow: [repoRoot],
     },
-    hmr: {
-      clientPort: 61000,
-    },
+    // Do not hardcode HMR clientPort — Ladle may bind 61000+N when the
+    // preferred port is taken; a fixed port leaves the canvas blank.
   },
 });

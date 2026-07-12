@@ -8,6 +8,17 @@ Neon Auth hosts the Better Auth backend in the same Postgres project under the `
 
 `public.users.id` stores the same id as the Better Auth session API. Link records in application code at signup; there is no Drizzle FK to `neon_auth`.
 
+## Database clients
+
+| Export | Driver | Use |
+|---|---|---|
+| `createDb(url)` | Neon HTTP (`drizzle-orm/neon-http`) | Reads and simple single-statement writes |
+| `createTxDb(url)` | Neon `Pool` + WebSocket (`drizzle-orm/neon-serverless`) | Multi-statement transactions and `SELECT … FOR UPDATE` |
+
+Booking and webhook ledger writes **must** use `createTxDb` (or a transaction opened from it). Catalog reads may keep using `createDb`.
+
+`createTxDb` returns a Drizzle client with a `.pool` property. On Cloudflare Workers, create the client per request and call `pool.end()` when the request finishes (e.g. via `waitUntil`) so connections do not leak. Bun/Node scripts should also end the pool after the script completes.
+
 ## Scripts
 
 From the repository root (requires `DATABASE_URL`):
@@ -42,6 +53,11 @@ Integration tests skip automatically when `DATABASE_URL` is unset.
 ### Phase 5 discovery (step 01+)
 
 - `public.saved_events` — member bookmarks keyed by `(user_id, event_id)`
+
+### Phase 6 payments & booking (step 01+)
+
+- `public.bookings` — event bookings with `(user_id, idempotency_key)` uniqueness
+- `public.credit_ledger` — credit movements; unique `idempotency_key` where not null
 
 ## Catalog domain exports
 

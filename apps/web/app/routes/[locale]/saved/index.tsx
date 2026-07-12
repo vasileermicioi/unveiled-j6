@@ -23,7 +23,8 @@ export default createRoute(async (c) => {
     listSavedUpcomingEvents(db, userId),
   ]);
 
-  const subscriptionActive = subscription?.status === "ACTIVE";
+  const subscriptionActive =
+    subscription?.status === "ACTIVE" || subscription?.status === "CANCELLED_PENDING";
   const copy = getSavedEventsCopy(guard.locale);
 
   return c.render(

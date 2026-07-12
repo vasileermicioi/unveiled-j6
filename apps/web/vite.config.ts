@@ -20,6 +20,7 @@ const requireFromSip = createRequire(path.join(sipDistDir, "index.js"));
 const webpDecWasmPath = requireFromSip.resolve("@jsquash/webp/codec/dec/webp_dec.wasm");
 const avifDecWasmPath = requireFromSip.resolve("@jsquash/avif/codec/dec/avif_dec.wasm");
 const sipWorkersInitPath = path.join(repoRoot, "packages/images/src/sip-workers-init.ts");
+const qsShimPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "ssr-shims/qs.js");
 
 const serverEntry = path.join(path.dirname(fileURLToPath(import.meta.url)), "app/server.ts");
 
@@ -229,6 +230,8 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       dedupe: ["react", "react-dom"],
       alias: {
+        // Stripe ESM → CJS `qs` blows up Vite SSR (`require is not defined`).
+        qs: qsShimPath,
         // More-specific wasm aliases must come before the package→workerd.js alias.
         "@standardagents/sip/dist/sip.wasm": sipWasmPath,
         "@jsquash/webp/codec/dec/webp_dec.wasm": webpDecWasmPath,

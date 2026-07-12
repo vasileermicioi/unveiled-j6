@@ -1,5 +1,5 @@
 import type { AppSession } from "@unveiled/auth";
-import type { Event, Partner, UserBehavior, UserProfile } from "@unveiled/db";
+import type { Booking, Event, Partner, UserBehavior, UserProfile } from "@unveiled/db";
 import type { EventCardItem } from "@unveiled/ui";
 
 import type { DiscoverPartnerTile } from "../../lib/catalog-mappers";
@@ -154,6 +154,35 @@ export const mockEventImageUrls: Record<string, string | undefined> = {
 
 export const mockPartnerLogoUrls: Record<string, string | undefined> = {
   [mockPartner.id]: undefined,
+};
+
+export const mockBookingId = "00000000-0000-4000-8000-000000000010";
+
+export const mockBooking: Booking = {
+  id: mockBookingId,
+  userId: mockUserSession.user.id,
+  eventId: mockEvent.id,
+  partnerId: mockPartnerId,
+  ticketsCount: 2,
+  totalCredits: 4,
+  status: "CONFIRMED",
+  redemptionType: "SECRET_CODE",
+  redemptionInfo: "UV-DEMO42",
+  redemptionUrl: null,
+  idempotencyKey: "story-idempotency-key",
+  checkedInAt: null,
+  cancelledAt: null,
+  cancellationReason: null,
+  createdAt: storyNow,
+  updatedAt: storyNow,
+};
+
+export const mockVoucherBooking: Booking = {
+  ...mockBooking,
+  id: "00000000-0000-4000-8000-000000000011",
+  redemptionType: "VOUCHER",
+  redemptionInfo: "PARTNER10",
+  redemptionUrl: "https://example.com/voucher",
 };
 
 export const storyLocale = "de" as const;

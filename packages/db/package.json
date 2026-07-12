@@ -10,7 +10,7 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
-    "test": "bun test",
+    "test": "bun --env-file=../../.env test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

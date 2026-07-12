@@ -9,9 +9,5 @@ export default defineConfig({
   define: {
     "process.env.IMAGE_PUBLIC_BASE_URL": JSON.stringify(storyImageBaseUrl),
   },
-  server: {
-    hmr: {
-      clientPort: 61001,
-    },
-  },
+  // Do not hardcode HMR clientPort — Ladle may remount on 61001+N when busy.
 });

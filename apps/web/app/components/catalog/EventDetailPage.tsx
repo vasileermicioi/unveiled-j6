@@ -10,7 +10,14 @@ import { localizedPath } from "../../lib/locale";
 type EventDetailPageProps = {
   event: Event;
   locale: Locale;
+  viewer?: EventDetailViewer;
 };
+
+export type EventDetailViewer =
+  | { kind: "guest" }
+  | { kind: "eligible" }
+  | { kind: "membership_required" }
+  | { kind: "past_due" };
 
 function formatEventDateTime(dateTime: Date, locale: Locale): string {
   return new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", {
@@ -36,9 +43,7 @@ function listLabel(locale: Locale): string {
 }
 
 function soldOutMessage(locale: Locale): string {
-  return locale === "de"
-    ? "Dieses Event ist ausverkauft. Melde dich an, um auf die Warteliste zu kommen."
-    : "This event is sold out. Sign in to join the waitlist.";
+  return locale === "de" ? "Dieses Event ist ausverkauft." : "This event is sold out.";
 }
 
 function pastMessage(locale: Locale): string {
@@ -53,6 +58,14 @@ function guestCtaLabel(locale: Locale): string {
 
 function membershipLabel(locale: Locale): string {
   return locale === "de" ? "Mitgliedschaft" : "Membership";
+}
+
+function bookLabel(locale: Locale): string {
+  return locale === "de" ? "Tickets buchen" : "Book tickets";
+}
+
+function pastDueLabel(locale: Locale): string {
+  return locale === "de" ? "Credits eingefroren" : "Credits frozen";
 }
 
 function parseCoord(value: string | null | undefined): number | null {
@@ -105,7 +118,11 @@ function accessibilityValue(barrierFree: boolean | null, locale: Locale): string
   return locale === "de" ? "Keine Angabe" : "Not specified";
 }
 
-export function EventDetailPage({ event, locale }: EventDetailPageProps) {
+export function EventDetailPage({
+  event,
+  locale,
+  viewer = { kind: "guest" },
+}: EventDetailPageProps) {
   const bookable = isEventBookable(event);
   const isPast = event.dateTime <= new Date();
   const isSoldOut = event.remainingCapacity <= 0 && !isPast;
@@ -120,6 +137,37 @@ export function EventDetailPage({ event, locale }: EventDetailPageProps) {
     heroSrc = "";
     heroSrcSet = "";
   }
+
+  let ctaMessage: string;
+  if (isPast) {
+    ctaMessage = pastMessage(locale);
+  } else if (isSoldOut || !bookable) {
+    ctaMessage = soldOutMessage(locale);
+  } else if (viewer.kind === "eligible") {
+    ctaMessage =
+      locale === "de"
+        ? "Reserviere Tickets mit deinen Credits."
+        : "Reserve tickets with your credits.";
+  } else if (viewer.kind === "past_due") {
+    ctaMessage =
+      locale === "de"
+        ? "Dein Abo ist zahlungsgestört. Aktualisiere deine Zahlung, bevor du buchst."
+        : "Your subscription is past due. Update payment before booking.";
+  } else if (viewer.kind === "membership_required") {
+    ctaMessage =
+      locale === "de"
+        ? "Aktiviere deine Mitgliedschaft, um zu buchen."
+        : "Activate your membership to book.";
+  } else {
+    ctaMessage =
+      locale === "de" ? "Melde dich an, um dieses Event zu buchen." : "Sign in to book this event.";
+  }
+
+  const showBookCta = !isPast && bookable && !isSoldOut && viewer.kind === "eligible";
+  const showPastDueCta = !isPast && bookable && !isSoldOut && viewer.kind === "past_due";
+  const showMembershipCta =
+    !isPast && bookable && !isSoldOut && viewer.kind === "membership_required";
+  const showGuestCta = !isPast && bookable && !isSoldOut && viewer.kind === "guest";
 
   return (
     <Surface
@@ -209,32 +257,48 @@ export function EventDetailPage({ event, locale }: EventDetailPageProps) {
 
       <Card className="event-detail__cta-card">
         <Card.Content className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {isPast ? (
-            <Paragraph>{pastMessage(locale)}</Paragraph>
-          ) : isSoldOut ? (
-            <Paragraph>{soldOutMessage(locale)}</Paragraph>
-          ) : bookable ? (
-            <Paragraph>
-              {locale === "de"
-                ? "Melde dich an, um dieses Event zu buchen."
-                : "Sign in to book this event."}
-            </Paragraph>
-          ) : (
-            <Paragraph>{soldOutMessage(locale)}</Paragraph>
-          )}
+          <Paragraph>{ctaMessage}</Paragraph>
           <Surface className="flex flex-col gap-3 sm:flex-row" variant="transparent">
-            <Link
-              className="button button--primary button--md"
-              href={localizedPath(locale, "login")}
-            >
-              {guestCtaLabel(locale)}
-            </Link>
-            <Link
-              className="button button--secondary button--md"
-              href={localizedPath(locale, "membership")}
-            >
-              {membershipLabel(locale)}
-            </Link>
+            {showBookCta ? (
+              <Link
+                className="button button--primary button--md"
+                href={localizedPath(locale, `events/${event.id}/book`)}
+              >
+                {bookLabel(locale)}
+              </Link>
+            ) : null}
+            {showPastDueCta ? (
+              <Link
+                className="button button--primary button--md"
+                href={localizedPath(locale, `events/${event.id}/book`)}
+              >
+                {pastDueLabel(locale)}
+              </Link>
+            ) : null}
+            {showMembershipCta ? (
+              <Link
+                className="button button--primary button--md"
+                href={localizedPath(locale, "membership")}
+              >
+                {membershipLabel(locale)}
+              </Link>
+            ) : null}
+            {showGuestCta ? (
+              <>
+                <Link
+                  className="button button--primary button--md"
+                  href={localizedPath(locale, "login")}
+                >
+                  {guestCtaLabel(locale)}
+                </Link>
+                <Link
+                  className="button button--secondary button--md"
+                  href={localizedPath(locale, "membership")}
+                >
+                  {membershipLabel(locale)}
+                </Link>
+              </>
+            ) : null}
           </Surface>
         </Card.Content>
       </Card>
