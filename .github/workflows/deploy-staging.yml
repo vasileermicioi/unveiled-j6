@@ -30,6 +30,10 @@ jobs:
 
       - name: Build
         run: bun run build
+        env:
+          # Required — root `build` runs `db:migrate` before the Workers bundle
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_URL: ${{ secrets.AUTH_URL }}
 
   e2e:
     needs: quality
