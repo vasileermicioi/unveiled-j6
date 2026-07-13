@@ -786,6 +786,45 @@ bun run stories
 |---|---|---|
 | Staging | Pending operator deploy (`CLOUDFLARE_API_TOKEN`). Local: Ladle `@unveiled/web` :61001 OK; Playwright Phase 7 scope — waitlist/profile/booking waitlist-offer + credits cancel/portal CTAs pass (promotion needs `E2E_ADMIN_*`; 2 flaky Phase 6 membership tests are pre-existing Neon Auth redirect flakes). | 2026-07-12 |
 
+## Phase 8 — Admin ops (Membership HQ)
+
+Admin Membership HQ + capacity ops: `/admin/users`, mutation pages (adjust-credits, freeze, refund, comp-ticket), `/admin/waitlist` (+ promote), `/admin/bookings/:id/cancel`. Closed by `admin-ops-05-ladle-e2e`.
+
+**Client demo line:** *"Search a member, adjust credits, freeze, issue a comp ticket, promote waitlist, cancel a booking without refunding credits."*
+
+### Freeze vs Stripe `PAST_DUE` (operators)
+
+- Admin **freeze** only from subscription `ACTIVE` → sets `UNPAID` (does not call Stripe).
+- Admin **unfreeze** from `UNPAID` → always sets `ACTIVE` (no Stripe call).
+- If Stripe is still past_due, the **next webhook** may set `PAST_DUE` again after unfreeze. Treat admin freeze and Stripe past-due as separate causes/recoveries.
+
+### Staging smoke checklist
+
+1. Admin → **Mitglieder / Users** → search by email → open detail (preferences / history / behavior sections).
+2. Adjust credits (+ reason) → ledger / balance update; freeze ACTIVE → `UNPAID`; unfreeze → `ACTIVE`.
+3. Comp ticket for an upcoming event → confirmed booking, credits unchanged.
+4. Waitlist tab → see WAITING entries; promote one entry with available capacity.
+5. From member detail, cancel a confirmed booking with reason → status `CANCELLED`, credits unchanged.
+6. GDPR delete-account and SEO polish remain later Phase 8 features (`gdpr-rights`, `seo-launch-polish`).
+
+### Playwright (admin-ops)
+
+```bash
+SITE_URL=http://localhost:3000 bunx playwright test --config e2e/playwright.config.ts \
+  e2e/specs/admin-users.spec.ts e2e/specs/waitlist.spec.ts \
+  e2e/specs/booking.spec.ts e2e/specs/credits-subscription.spec.ts --workers=1
+```
+
+Requires `DATABASE_URL`, `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`. Coverage: [`docs/product/testing/coverage-matrix.md`](../../docs/product/testing/coverage-matrix.md).
+
+### Ladle
+
+```bash
+bun run stories
+# AdminAdjustCreditsForm, AdminFreezeForm, AdminRefundForm, AdminCompTicketForm,
+# AdminWaitlistListPage, AdminWaitlistPromotePage, AdminCancelBookingPage
+```
+
 ## Phase 2 step 03 verification
 
 With `DATABASE_URL` and `AUTH_URL` set:

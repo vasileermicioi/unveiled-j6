@@ -39,13 +39,13 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-partners.feature` | Edit a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Edit a partner` | `pass` |  |
 | `admin-partners.feature` | Renaming a partner propagates to its events | `e2e/specs/admin-partners.spec.ts` · `Scenario: Renaming a partner propagates to its events` | `pass` |  |
 | `admin-partners.feature` | Delete a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Delete a partner` | `skip` | post-MVP portal/QR — leave skipped |
-| `admin-users.feature` | List all members | — | `unshipped` | Phase 8 |
-| `admin-users.feature` | Search members | — | `unshipped` | Phase 8 |
-| `admin-users.feature` | View a member's collapsed summary | — | `unshipped` | Phase 8 |
-| `admin-users.feature` | Expand a member's detail / "intel" panel | — | `unshipped` | Phase 8 |
-| `admin-users.feature` | Adjust a member's credits from their detail panel | — | `unshipped` | Phase 8 |
-| `admin-users.feature` | Freeze or unfreeze a member from their detail panel | — | `unshipped` | Phase 8 |
-| `admin-users.feature` | Issue a complimentary ticket to a member | — | `unshipped` | Phase 8 |
+| `admin-users.feature` | List all members | `e2e/specs/admin-users.spec.ts` · `Scenario: List all members` | `pass` | Needs `DATABASE_URL` + `E2E_ADMIN_*` |
+| `admin-users.feature` | Search members | `e2e/specs/admin-users.spec.ts` · `Scenario: Search members` | `pass` |  |
+| `admin-users.feature` | View a member's collapsed summary | `e2e/specs/admin-users.spec.ts` · `Scenario: View a member's collapsed summary` | `pass` | List row columns (role, subscription, credits, …) |
+| `admin-users.feature` | Expand a member's detail / "intel" panel | `e2e/specs/admin-users.spec.ts` · `Scenario: Expand a member's detail / "intel" panel` | `pass` | Maps to `/admin/users/:id` (not in-list expand) |
+| `admin-users.feature` | Adjust a member's credits from their detail panel | `e2e/specs/admin-users.spec.ts` · `Scenario: Adjust a member's credits from their detail panel` | `pass` | SSR adjust-credits page |
+| `admin-users.feature` | Freeze or unfreeze a member from their detail panel | `e2e/specs/admin-users.spec.ts` · `Scenario: Freeze or unfreeze a member from their detail panel` | `pass` | SSR freeze page |
+| `admin-users.feature` | Issue a complimentary ticket to a member | `e2e/specs/admin-users.spec.ts` · `Scenario: Issue a complimentary ticket to a member` | `pass` | SSR comp-ticket page |
 | `auth.feature` | Sign up as a new member | `e2e/specs/auth.spec.ts` · `Scenario: Sign up as a new member` | `pass` |  |
 | `auth.feature` | Signup validation | `e2e/specs/auth.spec.ts` · `Scenario Outline: Signup validation — …` | `pass` | Outline examples covered as separate titled tests |
 | `auth.feature` | Log in with valid credentials | `e2e/specs/auth.spec.ts` · `Scenario: Log in with valid credentials` | `pass` |  |
@@ -73,8 +73,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `booking.feature` | Idempotent retry | `e2e/specs/booking.spec.ts` · `Scenario: Idempotent retry` | `skip` | Covered by `book-event.integration.test` |
 | `booking.feature` | Post-booking actions | `e2e/specs/booking.spec.ts` · `Scenario: Post-booking actions` | `pass` |  |
 | `booking.feature` | Booking confirmation email | `e2e/specs/booking.spec.ts` · `Scenario: Booking confirmation email` | `skip` | Staging Resend checklist — no inbox harness |
-| `booking.feature` | Admin cancels a confirmed booking | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels a confirmed booking` | `deferred` | Phase 8 |
-| `booking.feature` | Cannot cancel a booking that is not confirmed | `e2e/specs/booking.spec.ts` · `Scenario: Cannot cancel a booking that is not confirmed` | `deferred` | Phase 8 |
+| `booking.feature` | Admin cancels a confirmed booking | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels a confirmed booking` | `pass` | Needs `E2E_ADMIN_*`; no credit refund on cancel |
+| `booking.feature` | Cannot cancel a booking that is not confirmed | `e2e/specs/booking.spec.ts` · `Scenario: Cannot cancel a booking that is not confirmed` | `pass` | Re-open cancel URL after first cancel |
 | `booking.feature` | Members cannot self-cancel or self-refund | `e2e/specs/booking.spec.ts` · `Scenario: Members cannot self-cancel or self-refund` | `pass` |  |
 | `credits-subscription.feature` | New signups start inactive with starter credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: New signups start inactive with starter credits` | `pass` |  |
 | `credits-subscription.feature` | Activating a subscription via real Stripe Checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Activating a subscription via real Stripe Checkout` | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
@@ -87,12 +87,12 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `credits-subscription.feature` | Cancellation takes effect at period end | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancellation takes effect at period end` | `pass` | `CANCELLED_PENDING` still bookable |
 | `credits-subscription.feature` | Reactivating after cancellation | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Reactivating after cancellation` | `pass` | INACTIVE → membership CTA |
 | `credits-subscription.feature` | Booking gate by subscription status | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Booking gate by subscription status` | `pass` |  |
-| `credits-subscription.feature` | Admin manually adjusts a member's credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin manually adjusts a member's credits` | `deferred` | Phase 8 |
-| `credits-subscription.feature` | Admin adjustment rejects a zero amount | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin adjustment rejects a zero amount` | `deferred` | Phase 8 |
-| `credits-subscription.feature` | Admin issues a manual credit refund (support gesture) | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin issues a manual credit refund (support gesture)` | `deferred` | Phase 8 |
-| `credits-subscription.feature` | Admin freezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin freezes a member's account` | `deferred` | Phase 8 |
-| `credits-subscription.feature` | Admin unfreezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin unfreezes a member's account` | `deferred` | Phase 8 |
-| `credits-subscription.feature` | Admin creates a complimentary ticket | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin creates a complimentary ticket` | `deferred` | Phase 8 |
+| `credits-subscription.feature` | Admin manually adjusts a member's credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin manually adjusts a member's credits` | `pass` | Membership HQ adjust-credits |
+| `credits-subscription.feature` | Admin adjustment rejects a zero amount | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin adjustment rejects a zero amount` | `pass` |  |
+| `credits-subscription.feature` | Admin issues a manual credit refund (support gesture) | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin issues a manual credit refund (support gesture)` | `pass` |  |
+| `credits-subscription.feature` | Admin freezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin freezes a member's account` | `pass` | ACTIVE → UNPAID via admin freeze |
+| `credits-subscription.feature` | Admin unfreezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin unfreezes a member's account` | `pass` | UNPAID → ACTIVE; no Stripe call |
+| `credits-subscription.feature` | Admin creates a complimentary ticket | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin creates a complimentary ticket` | `pass` | Shared booking path, no credit charge |
 | `event-discovery.feature` | Public discovery preview for guests | `e2e/specs/event-discovery.spec.ts` · `Scenario: Public discovery preview for guests` | `pass` |  |
 | `event-discovery.feature` | Guest can view public event detail without authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest can view public event detail without authentication` | `pass` |  |
 | `event-discovery.feature` | Guest path to full browse requires signup or login | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest path to full browse requires signup or login` | `pass` |  |
@@ -142,8 +142,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `waitlist.feature` | Automatic promotion when capacity frees up | `e2e/specs/waitlist.spec.ts` · `Scenario: Automatic promotion when capacity frees up` | `pass` | Needs `E2E_ADMIN_*`; admin capacity bump |
 | `waitlist.feature` | Promotion is skipped if I'm no longer eligible | `e2e/specs/waitlist.spec.ts` · `Scenario: Promotion is skipped if I'm no longer eligible` | `pass` | Needs `E2E_ADMIN_*` |
 | `waitlist.feature` | Promotion respects queue order and partial capacity | `e2e/specs/waitlist.spec.ts` · `Scenario: Promotion respects queue order and partial capacity` | `skip` | Covered by `waitlist.integration.test`; multi-user e2e harness limit |
-| `waitlist.feature` | Admin can manually trigger promotion for a specific entry | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin can manually trigger promotion for a specific entry` | `deferred` | Phase 8 — admin waitlist promote UI |
-| `waitlist.feature` | Admin visibility | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin visibility` | `deferred` | Phase 8 — admin waitlist HQ |
+| `waitlist.feature` | Admin can manually trigger promotion for a specific entry | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin can manually trigger promotion for a specific entry` | `pass` | Capacity freed via DB (no auto-promote), then `/admin/waitlist/:id/promote` |
+| `waitlist.feature` | Admin visibility | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin visibility` | `pass` | `/admin/waitlist` list |
 | `waitlist.feature` | User visibility is scoped to their own entries | `e2e/specs/waitlist.spec.ts` · `Scenario: User visibility is scoped to their own entries` | `pass` | Entry-scoped status/cancel only |
 
 ## Post-MVP (`features/post-mvp/`)

@@ -20,7 +20,7 @@ The system SHALL assert MVP Playwright scenarios with proximity/layout selectors
 - **THEN** that locator is listed as a named deferral (file path, purpose, reason, target phase)
 
 ### Requirement: MVP @skip-no-ui gate
-Phase 5.5 SHALL NOT leave MVP-required scenarios tagged `@skip-no-ui` without an explicit deferral recording scenario name, reason, and target phase. Post-MVP portal/check-in/QR skips MAY remain. For Phase 7 close-out, admin waitlist visibility/manual promote and GDPR export/delete page mechanics SHALL be recorded as `deferred` → Phase 8 (with reason) rather than left as silent skips or `unshipped` without a target phase. Stripe Customer Portal deep hosted interactions MAY use an opt-in/seed pattern documented in `e2e/README.md` (analogous to `E2E_STRIPE_CHECKOUT`).
+Phase 5.5 SHALL NOT leave MVP-required scenarios tagged `@skip-no-ui` without an explicit deferral recording scenario name, reason, and target phase. Post-MVP portal/check-in/QR skips MAY remain. Admin waitlist visibility/manual promote SHALL be covered by Playwright once `/admin/waitlist` ships (admin-ops), or recorded as a named env/harness deferral owned by `seo-launch-polish-03` — not left as “UI not built.” GDPR export/delete page mechanics remain deferred to `gdpr-rights` until that feature ships. Stripe Customer Portal deep hosted interactions MAY use an opt-in/seed pattern documented in `e2e/README.md` (analogous to `E2E_STRIPE_CHECKOUT`).
 
 #### Scenario: Remote URL event image
 - **WHEN** Phase 5.5 step 03 completes
@@ -30,13 +30,13 @@ Phase 5.5 SHALL NOT leave MVP-required scenarios tagged `@skip-no-ui` without an
 - **WHEN** Phase 5.5 step 03 completes
 - **THEN** `admin-partners` portal-access and venue QR scenarios may remain tagged `@skip-no-ui` without being treated as MVP gate failures
 
-#### Scenario: Admin waitlist deferred
-- **WHEN** `Admin visibility` or `Admin can manually trigger promotion` cannot be exercised without Phase 8 UI
-- **THEN** the coverage matrix lists `deferred` → Phase 8 with reason
+#### Scenario: Admin waitlist covered or named-deferred after admin-ops
+- **WHEN** `Admin visibility` or `Admin can manually trigger promotion` is evaluated after admin-ops ships `/admin/waitlist`
+- **THEN** the scenarios pass via Playwright, skip only for documented env prerequisites, or are listed as `deferred` → `seo-launch-polish-03` with a non-UI reason
 
 #### Scenario: Profile GDPR mechanics deferred
 - **WHEN** full data-export or delete-account page mechanics are not shipped in Phase 7
-- **THEN** the coverage matrix lists those rows as `deferred` → Phase 8 (entry-link visibility MAY still pass)
+- **THEN** the coverage matrix lists those rows as `deferred` → Phase 8 / `gdpr-rights` (entry-link visibility MAY still pass)
 
 ### Requirement: Coverage matrix
 The repository SHALL include a checked-in coverage matrix at `docs/product/testing/coverage-matrix.md` mapping each MVP `docs/product/features/*.feature` Scenario to its Playwright test (or explicit `skip` / `deferred` / `unshipped` status). The matrix SHALL also note post-MVP `features/post-mvp/` scenarios that remain `@skip-no-ui` in shipped e2e. `docs/product/testing/bdd-and-e2e.md` Known coverage gaps SHALL point at this matrix as the single inventory once it is accurate.
@@ -86,3 +86,18 @@ The system SHALL map `waitlist.feature` → `e2e/specs/waitlist.spec.ts` and `pr
 #### Scenario: Phase 6 deferred rows are resolved or renamed
 - **WHEN** Phase 7 closes
 - **THEN** booking “Sold out — automatic waitlist offer” and credits-subscription portal/cancel/reactivate rows are `pass`, documented `skip`, or `deferred` with an updated reason — not left as “Phase 7 — UI not built”
+
+### Requirement: Admin users Playwright coverage
+The system SHALL map `docs/product/features/admin-users.feature` scenarios to `e2e/specs/admin-users.spec.ts` using verbatim Gherkin `Scenario:` titles as Playwright `test()` titles and proximity/layout selectors per `docs/product/testing/bdd-and-e2e.md`. Admin waitlist promote, admin booking cancel, and admin credit/freeze/comp/refund scenarios SHALL pass in their feature-mapped specs (`waitlist.spec.ts`, `booking.spec.ts`, `credits-subscription.spec.ts`) or be listed as named deferrals with reason and owner limited to remaining Phase 8 / `seo-launch-polish-03` when blocked by env or harness — not by missing UI. The coverage matrix and `e2e/README.md` SHALL reflect the updated inventory with no silent skips and no lingering “Phase 8 — UI not built” reasons for shipped admin-ops surfaces.
+
+#### Scenario: Admin users spec exists
+- **WHEN** Phase 8 admin-ops hardens
+- **THEN** `admin-users.spec.ts` is present and executable in CI/local e2e
+
+#### Scenario: Coverage matrix reflects admin-ops close-out
+- **WHEN** an implementer opens `docs/product/testing/coverage-matrix.md` after this change
+- **THEN** `admin-users.feature` rows point at `admin-users.spec.ts` (or named env skips) instead of `unshipped`, and admin waitlist/cancel/credit rows are `pass`, env `skip`, or `deferred` → `seo-launch-polish-03` with an explicit non-UI reason
+
+#### Scenario: Phase 7 admin UI skips are resolved
+- **WHEN** admin-ops step 05 completes
+- **THEN** waitlist admin visibility/promote, booking admin cancel, and credits-subscription admin adjust/freeze/comp/refund scenarios no longer skip solely because “Phase 8 — … UI” is missing

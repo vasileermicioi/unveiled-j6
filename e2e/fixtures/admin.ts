@@ -78,12 +78,14 @@ export function futureDateISO(daysAhead: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-export type AdminTab = "overview" | "partners" | "events";
+export type AdminTab = "overview" | "partners" | "events" | "users" | "waitlist";
 
 const TAB_HREF: Record<AdminTab, string> = {
   overview: "admin",
   partners: "admin/partners",
   events: "admin/events",
+  users: "admin/users",
+  waitlist: "admin/waitlist",
 };
 
 export async function navigateAdminTab(page: Page, locale: Locale, tab: AdminTab): Promise<void> {

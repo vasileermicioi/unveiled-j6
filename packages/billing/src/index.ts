@@ -39,6 +39,13 @@ export {
   createCheckoutSession,
   MONTHLY_CREDIT_ALLOWANCE,
 } from "./checkout";
+export type { FreezeMemberErrorCode, FreezeMemberInput } from "./freeze-member";
+export {
+  FreezeMemberError,
+  freezeMember,
+  isFreezeMemberError,
+  unfreezeMember,
+} from "./freeze-member";
 export type { BillingPackageId } from "./package-id";
 export { BILLING_PACKAGE } from "./package-id";
 export type { CreateBillingPortalSessionInput } from "./portal";

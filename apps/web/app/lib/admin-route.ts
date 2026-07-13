@@ -10,13 +10,20 @@ import { buildLoginRedirectUrl } from "./auth-middleware";
 import type { Locale } from "./locale";
 import { isValidLocale } from "./locale";
 
-export type { AdminListQuery } from "./admin-list";
+export type { AdminListQuery, AdminUsersListQuery, AdminWaitlistListQuery } from "./admin-list";
 export {
   adminListPageRedirectPath,
+  adminWaitlistListPageRedirectPath,
   buildAdminListQueryString,
+  buildAdminWaitlistQueryString,
   clampAdminListPage,
   parseAdminListQuery,
+  parseAdminUsersListQuery,
+  parseAdminWaitlistListQuery,
 } from "./admin-list";
+
+export { mapAdminOpsError } from "./admin-ops-errors";
+export { withAdminTxDb } from "./admin-ops-tx";
 
 export type ParsedBody = Record<string, string | File | (string | File)[]>;
 

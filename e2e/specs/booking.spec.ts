@@ -1,9 +1,16 @@
 import type { Page } from "@playwright/test";
 
+import { settleAdminSession } from "../fixtures/admin";
+import {
+  hasAdminCredentials,
+  loginAdminForMembershipHq,
+  openMemberDetailByEmail,
+} from "../fixtures/admin-users";
 import { signupFreshUser } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
 import {
   activateMemberForBooking,
+  getUserCredits,
   hasDatabaseUrl,
   setSubscriptionStatus,
 } from "../fixtures/billing";
@@ -197,12 +204,70 @@ test.describe("booking.feature", () => {
     );
   });
 
-  test("Scenario: Admin cancels a confirmed booking", async () => {
-    test.skip(true, "Phase 8 — admin cancel booking UI");
+  test("Scenario: Admin cancels a confirmed booking", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required for admin cancel");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+
+    const eventPath = await bookableEventPath(locale);
+    await page.goto(`${eventPath}/book`);
+    await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
+    await expect(page).toHaveURL(/\/book\/confirm/);
+
+    const creditsBefore = await getUserCredits(user.email);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    await openMemberDetailByEmail(page, locale, user.email);
+
+    await page
+      .getByRole("link", { name: /stornieren|cancel/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/bookings/.+/cancel`));
+    await page.getByRole("textbox", { name: /begründung|reason/i }).fill("E2E admin cancel");
+    await page.getByRole("button", { name: /buchung stornieren|cancel booking/i }).click();
+
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/users/`));
+    await expect(page.getByText(/buchung wurde storniert|booking was cancelled/i)).toBeVisible();
+    expect(await getUserCredits(user.email)).toBe(creditsBefore);
   });
 
-  test("Scenario: Cannot cancel a booking that is not confirmed", async () => {
-    test.skip(true, "Phase 8 — admin cancel booking UI");
+  test("Scenario: Cannot cancel a booking that is not confirmed", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required for admin cancel");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+
+    const eventPath = await bookableEventPath(locale);
+    await page.goto(`${eventPath}/book`);
+    await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
+    await expect(page).toHaveURL(/\/book\/confirm/);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    await openMemberDetailByEmail(page, locale, user.email);
+
+    await page
+      .getByRole("link", { name: /stornieren|cancel/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/bookings/.+/cancel`));
+    const cancelUrl = page.url();
+    await page.getByRole("textbox", { name: /begründung|reason/i }).fill("E2E first cancel");
+    await page.getByRole("button", { name: /buchung stornieren|cancel booking/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/users/`));
+
+    await page.goto(cancelUrl);
+    await expect(page.getByText(/nur bestätigte buchungen|only confirmed bookings/i)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /buchung stornieren|cancel booking/i }),
+    ).toBeDisabled();
   });
 
   test("Scenario: Members cannot self-cancel or self-refund", async ({ page, locale }) => {

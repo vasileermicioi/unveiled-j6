@@ -1,8 +1,18 @@
 import type { Page } from "@playwright/test";
 
-import { signupFreshUser } from "../fixtures/auth";
+import {
+  getWaitingEntryIdForUserEvent,
+  promoteWaitlistEntryViaAdmin,
+  setEventRemainingCapacity,
+} from "../fixtures/admin-users";
+import { loginAsAdmin, logout, signupFreshUser, waitForPostLogin } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
-import { activateMemberForBooking, hasDatabaseUrl, setCreditBalance } from "../fixtures/billing";
+import {
+  activateMemberForBooking,
+  getUserIdByEmail,
+  hasDatabaseUrl,
+  setCreditBalance,
+} from "../fixtures/billing";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
 import {
   bumpEventCapacityViaAdmin,
@@ -169,12 +179,62 @@ test.describe("waitlist.feature", () => {
     );
   });
 
-  test("Scenario: Admin can manually trigger promotion for a specific entry", async () => {
-    test.skip(true, "Phase 8 — admin waitlist promote UI");
+  test("Scenario: Admin can manually trigger promotion for a specific entry", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required for admin promote");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+
+    const { eventId, path } = await soldOutWaitlistPath(locale);
+    await page.goto(path);
+    await page.getByRole("button", { name: /warteliste beitreten|join waitlist/i }).click();
+    await expect(page.getByText(/status:\s*waiting/i)).toBeVisible();
+
+    const userId = await getUserIdByEmail(user.email);
+    const entryId = await getWaitingEntryIdForUserEvent(userId, eventId);
+    // Free capacity without auto-promotion so manual promote can run.
+    await setEventRemainingCapacity(eventId, 1);
+
+    await page.context().clearCookies();
+    await promoteWaitlistEntryViaAdmin(page, locale, entryId);
+
+    await loginAsAdmin(page, locale);
+    await waitForPostLogin(page, locale);
+    await page.goto(`/${locale}/admin/waitlist?status=PROMOTED`);
+    await expect(page.getByRole("heading", { name: /warteliste|waitlist/i })).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: userId })).toBeVisible();
+    await expect(page.getByText("PROMOTED").first()).toBeVisible();
+    await logout(page, locale);
   });
 
-  test("Scenario: Admin visibility", async () => {
-    test.skip(true, "Phase 8 — admin waitlist HQ UI");
+  test("Scenario: Admin visibility", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required for admin waitlist HQ");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+
+    const { path } = await soldOutWaitlistPath(locale);
+    await page.goto(path);
+    await page.getByRole("button", { name: /warteliste beitreten|join waitlist/i }).click();
+    await expect(page.getByText(/status:\s*waiting/i)).toBeVisible();
+
+    const userId = await getUserIdByEmail(user.email);
+    await page.context().clearCookies();
+
+    await loginAsAdmin(page, locale);
+    await waitForPostLogin(page, locale);
+    await page.goto(`/${locale}/admin/waitlist`);
+    await expect(page.getByRole("heading", { name: /warteliste|waitlist/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByRole("table", { name: /warteliste|waitlist/i })).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: userId })).toBeVisible();
+    await expect(page.getByText("WAITING").first()).toBeVisible();
   });
 
   test("Scenario: User visibility is scoped to their own entries", async ({ page, locale }) => {

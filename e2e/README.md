@@ -172,10 +172,11 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | `specs/onboarding.spec.ts` | `onboarding.feature` | 8 scenarios; fresh signup per mutating test |
 | `specs/admin-partners.spec.ts` | `admin-partners.feature` | Partner CRUD; portal/QR scenarios skipped (no Phase 4 UI) |
 | `specs/admin-events.spec.ts` | `admin-events.feature` | Event CRUD + public home (Discover) / `/events/:id`; image tests need R2 |
+| `specs/admin-users.spec.ts` | `admin-users.feature` | Membership HQ list/detail + adjust/freeze/comp; needs `E2E_ADMIN_*` + `DATABASE_URL` |
 | `specs/event-discovery.spec.ts` | `event-discovery.feature` | 12 scenarios; member feed, filters, saved, map |
-| `specs/credits-subscription.spec.ts` | `credits-subscription.feature` | Phase 6–7 member gates + profile billing cancel/portal CTAs; Checkout opt-in via `E2E_STRIPE_CHECKOUT=1` |
-| `specs/booking.spec.ts` | `booking.feature` | Phase 6 book/confirm; waitlist offer covered; admin cancel deferred Phase 8 |
-| `specs/waitlist.spec.ts` | `waitlist.feature` | Phase 7 join/cancel/promote; admin HQ deferred Phase 8; serial on shared sold-out seed |
+| `specs/credits-subscription.spec.ts` | `credits-subscription.feature` | Phase 6–8 member gates + admin credit/freeze/comp via Membership HQ; Checkout opt-in via `E2E_STRIPE_CHECKOUT=1` |
+| `specs/booking.spec.ts` | `booking.feature` | Phase 6 book/confirm; waitlist offer; admin cancel via `/admin/bookings/:id/cancel` |
+| `specs/waitlist.spec.ts` | `waitlist.feature` | Join/cancel/auto-promote + admin waitlist HQ/promote; serial on shared sold-out seed |
 | `specs/profile.spec.ts` | `profile.feature` | Phase 7 identity/preferences/wallet/billing; GDPR pages deferred Phase 8 |
 
 ## Skip inventory
@@ -196,15 +197,12 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | Image upload / logo processing | `admin-*.spec.ts` | `R2 vars not configured` when any of six R2 vars missing |
 | Activating via real Stripe Checkout | `credits-subscription.spec.ts` | Skips unless `E2E_STRIPE_CHECKOUT=1`; staging smoke is SoT |
 | Monthly renewal resets credits | `credits-subscription.spec.ts` | Billing package / webhook tests; no e2e renewal clock |
-| Admin credit / freeze / comp scenarios | `credits-subscription.spec.ts` | Phase 8 — admin ops |
 | Deep Stripe Customer Portal hosted UI | `profile.spec.ts` / credits | Fake `cus_*` asserts CTA/error; staging for real portal; optional future `E2E_STRIPE_PORTAL=1` |
 | Redemption outline (SHARED / UNIQUE / VOUCHER) | `booking.spec.ts` | Seed lacks those modes; MANUAL covered |
 | Idempotent retry | `booking.spec.ts` | Covered by `book-event.integration.test` |
 | Booking confirmation email | `booking.spec.ts` | No inbox harness; staging Resend checklist |
-| Admin cancel booking scenarios | `booking.spec.ts` | Phase 8 — admin cancel |
 | Promotion queue / partial capacity | `waitlist.spec.ts` | Covered by `waitlist.integration.test` |
-| Admin waitlist visibility / manual promote | `waitlist.spec.ts` | Phase 8 — admin waitlist HQ |
-| Profile GDPR export/delete pages | `profile.spec.ts` | Entry links asserted; page mechanics → Phase 8 |
+| Profile GDPR export/delete pages | `profile.spec.ts` | Entry links asserted; page mechanics → `gdpr-rights` |
 
 Cookie consent storage key: `unveiled:cookie-consent` (localStorage).
 
