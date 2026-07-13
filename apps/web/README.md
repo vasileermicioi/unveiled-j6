@@ -45,4 +45,4 @@ Product spec and UI copy live in [`docs/product/`](../../docs/product/README.md)
 
 ## Deployment
 
-See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for Railway staging setup, env vars, and verification checklist.
+See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for Cloudflare Workers staging setup, env vars, and verification checklist.

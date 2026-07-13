@@ -33,16 +33,16 @@ packages/*             shared packages (db, auth, images, ui, …)
 docs/product/          Product spec (active SoT)
 .dev-plan/             IMPLEMENTATION-PLAN.mvp.md + openspec_5step_proposals_guide.v2.md
 e2e/                   Playwright ↔ docs/product/features
-DESIGN.md              Visual identity (Google Labs format)
+DESIGN.md              UI visual identity only (tokens / brand)
 ```
 
 ## Documentation
 
 - **Agent instructions:** [`AGENTS.md`](./AGENTS.md)
-- **Visual identity (DESIGN.md format):** [`DESIGN.md`](./DESIGN.md)
 - **Product spec:** [`docs/product/README.md`](./docs/product/README.md)
 - **MVP delivery plan:** [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](./.dev-plan/IMPLEMENTATION-PLAN.mvp.md)
-- **App UI architecture:** [`docs/DESIGN.md`](./docs/DESIGN.md)
+- **UI visual identity:** [`DESIGN.md`](./DESIGN.md) (brand tokens — not product or app architecture)
+- **App SSR / file layout:** [`docs/DESIGN.md`](./docs/DESIGN.md)
 - **Deployment:** [`apps/web/DEPLOYMENT.md`](./apps/web/DEPLOYMENT.md)
 
 ## Phase status
