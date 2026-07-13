@@ -76,4 +76,17 @@ export function AdminPageShell({
 }
 
 export type { AdminTab } from "./admin-tabs";
-export { adminDashboardPath, adminEventsPath, adminPartnersPath } from "./admin-tabs";
+export {
+  adminBookingCancelPath,
+  adminDashboardPath,
+  adminEventsPath,
+  adminPartnersPath,
+  adminUserAdjustCreditsPath,
+  adminUserCompTicketPath,
+  adminUserDetailPath,
+  adminUserFreezePath,
+  adminUserRefundPath,
+  adminUsersPath,
+  adminWaitlistPath,
+  adminWaitlistPromotePath,
+} from "./admin-tabs";

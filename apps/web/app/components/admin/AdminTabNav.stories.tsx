@@ -10,3 +10,9 @@ Partners.storyName = "AdminTabNav / Partners";
 
 export const Events: Story = () => <AdminTabNav activeTab="events" locale={storyLocale} />;
 Events.storyName = "AdminTabNav / Events";
+
+export const Users: Story = () => <AdminTabNav activeTab="users" locale={storyLocale} />;
+Users.storyName = "AdminTabNav / Users";
+
+export const Waitlist: Story = () => <AdminTabNav activeTab="waitlist" locale={storyLocale} />;
+Waitlist.storyName = "AdminTabNav / Waitlist";

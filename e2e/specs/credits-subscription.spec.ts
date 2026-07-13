@@ -1,5 +1,11 @@
 import type { Page } from "@playwright/test";
 
+import { selectOptionByLabel, settleAdminSession } from "../fixtures/admin";
+import {
+  hasAdminCredentials,
+  loginAdminForMembershipHq,
+  openMemberDetailByEmail,
+} from "../fixtures/admin-users";
 import { signupFreshUser } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
 import {
@@ -224,27 +230,135 @@ test.describe("credits-subscription.feature", () => {
     ).toBeVisible();
   });
 
-  test("Scenario: Admin manually adjusts a member's credits", async () => {
-    test.skip(true, "Phase 8 — admin credit adjust UI");
+  test("Scenario: Admin manually adjusts a member's credits", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email, 10);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    const userId = await openMemberDetailByEmail(page, locale, user.email);
+
+    await page.getByRole("link", { name: /credits anpassen|adjust credits/i }).click();
+    await page.getByRole("textbox", { name: /betrag|amount/i }).fill("2");
+    await page.getByRole("textbox", { name: /begründung|reason/i }).fill("E2E ADMIN_ADJUST");
+    await page.getByRole("button", { name: /credits anpassen|adjust credits/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/users/${userId}`));
+    expect(await getUserCredits(user.email)).toBe(12);
   });
 
-  test("Scenario: Admin adjustment rejects a zero amount", async () => {
-    test.skip(true, "Phase 8 — admin credit adjust UI");
+  test("Scenario: Admin adjustment rejects a zero amount", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email, 10);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    const userId = await openMemberDetailByEmail(page, locale, user.email);
+
+    await page.getByRole("link", { name: /credits anpassen|adjust credits/i }).click();
+    await page.getByRole("textbox", { name: /betrag|amount/i }).fill("0");
+    await page.getByRole("textbox", { name: /begründung|reason/i }).fill("E2E zero");
+    await page.getByRole("button", { name: /credits anpassen|adjust credits/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/users/${userId}/adjust-credits`));
+    await expect(page.getByText(/betrag darf nicht null|must not be zero|zero/i)).toBeVisible();
+    expect(await getUserCredits(user.email)).toBe(10);
   });
 
-  test("Scenario: Admin issues a manual credit refund (support gesture)", async () => {
-    test.skip(true, "Phase 8 — admin credit refund UI");
+  test("Scenario: Admin issues a manual credit refund (support gesture)", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email, 5);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    const userId = await openMemberDetailByEmail(page, locale, user.email);
+
+    await page.getByRole("link", { name: /manuelle erstattung|manual refund/i }).click();
+    await page.getByRole("textbox", { name: /betrag|amount/i }).fill("4");
+    await page.getByRole("textbox", { name: /begründung|reason/i }).fill("E2E support refund");
+    await page.getByRole("button", { name: /erstattung ausführen|issue refund|refund/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/users/${userId}`));
+    expect(await getUserCredits(user.email)).toBe(9);
   });
 
-  test("Scenario: Admin freezes a member's account", async () => {
-    test.skip(true, "Phase 8 — admin freeze UI");
+  test("Scenario: Admin freezes a member's account", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    const userId = await openMemberDetailByEmail(page, locale, user.email);
+
+    await page
+      .getByRole("link", { name: /einfrieren\s*\/\s*auftauen|freeze\s*\/\s*unfreeze/i })
+      .click();
+    await page.getByRole("button", { name: /^einfrieren$|^freeze$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/users/${userId}`));
+    expect(await getSubscriptionStatus(user.email)).toBe("UNPAID");
   });
 
-  test("Scenario: Admin unfreezes a member's account", async () => {
-    test.skip(true, "Phase 8 — admin unfreeze UI");
+  test("Scenario: Admin unfreezes a member's account", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    await setSubscriptionStatus(user.email, "UNPAID");
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    const userId = await openMemberDetailByEmail(page, locale, user.email);
+
+    await page
+      .getByRole("link", { name: /einfrieren\s*\/\s*auftauen|freeze\s*\/\s*unfreeze/i })
+      .click();
+    await page.getByRole("button", { name: /^auftauen$|^unfreeze$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/users/${userId}`));
+    expect(await getSubscriptionStatus(user.email)).toBe("ACTIVE");
   });
 
-  test("Scenario: Admin creates a complimentary ticket", async () => {
-    test.skip(true, "Phase 8 — admin comp ticket UI");
+  test("Scenario: Admin creates a complimentary ticket", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    await page.context().clearCookies();
+
+    await ensureEventHasCapacity(BOOKABLE_TITLE, 3);
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    const userId = await openMemberDetailByEmail(page, locale, user.email);
+    const creditsBefore = await getUserCredits(user.email);
+
+    await page.getByRole("link", { name: /comp-ticket|comp ticket/i }).click();
+    await selectOptionByLabel(page, /event\*/i, new RegExp(BOOKABLE_TITLE));
+    await page.getByRole("button", { name: /comp-ticket ausstellen|issue comp ticket/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/users/${userId}`), {
+      timeout: 60_000,
+    });
+    await expect(
+      page.getByText(/comp-ticket wurde erstellt|comp ticket was created/i),
+    ).toBeVisible();
+    expect(await getUserCredits(user.email)).toBe(creditsBefore);
   });
 });

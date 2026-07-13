@@ -1,5 +1,14 @@
 import type { AppSession } from "@unveiled/auth";
-import type { Booking, Event, Partner, UserBehavior, UserProfile } from "@unveiled/db";
+import type {
+  Booking,
+  Event,
+  MemberDetail,
+  MemberListItem,
+  Partner,
+  UserBehavior,
+  UserProfile,
+  WaitlistEntry,
+} from "@unveiled/db";
 import type { EventCardItem } from "@unveiled/ui";
 
 import type { DiscoverPartnerTile } from "../../lib/catalog-mappers";
@@ -148,6 +157,63 @@ export const mockAdminListQuery = {
   limit: 10,
 };
 
+export const mockMemberId = "00000000-0000-4000-8000-000000000020";
+
+export const mockMemberListItem: MemberListItem = {
+  id: mockMemberId,
+  email: "member@example.com",
+  role: "USER",
+  credits: 12,
+  subscriptionStatus: "ACTIVE",
+  bookingCount: 2,
+  eventOpenCount: 5,
+  profile: mockProfile,
+  behavior: mockBehavior,
+};
+
+export const mockMemberDetail: MemberDetail = {
+  user: {
+    id: mockMemberId,
+    email: "member@example.com",
+    emailVerified: true,
+    role: "USER",
+    credits: 12,
+    partnerId: null,
+    profile: mockProfile,
+    behavior: {
+      ...mockBehavior,
+      event_open_count: 5,
+      filter_apply_count: 2,
+      saved_count: 1,
+      unsaved_count: 0,
+      last_view: "2026-08-14T18:00:00+02:00",
+      last_seen_at: "2026-08-15T10:00:00+02:00",
+      last_booked_event_id: mockEventId,
+      recent_event_ids: [mockEventId],
+    },
+    createdAt: storyNow,
+    updatedAt: storyNow,
+    deletedAt: null,
+  },
+  subscription: {
+    userId: mockMemberId,
+    status: "ACTIVE",
+    periodEnd: storyNow,
+    plan: "basic_berlin",
+    stripeCustomerId: "cus_story",
+    stripeSubscriptionId: "sub_story",
+    paymentMethod: "CARD",
+    billingAddress: null,
+    createdAt: storyNow,
+    updatedAt: storyNow,
+  },
+  counts: {
+    bookings: 2,
+    waitlistEntries: 1,
+    savedEvents: 3,
+  },
+};
+
 export const mockEventImageUrls: Record<string, string | undefined> = {
   [mockEvent.id]: undefined,
 };
@@ -183,6 +249,19 @@ export const mockVoucherBooking: Booking = {
   redemptionType: "VOUCHER",
   redemptionInfo: "PARTNER10",
   redemptionUrl: "https://example.com/voucher",
+};
+
+export const mockWaitlistEntryId = "00000000-0000-4000-8000-000000000030";
+
+export const mockWaitlistEntry: WaitlistEntry = {
+  id: mockWaitlistEntryId,
+  eventId: mockEventId,
+  userId: mockMemberId,
+  requestedQty: 1,
+  status: "WAITING",
+  skippedOnce: false,
+  createdAt: storyNow,
+  updatedAt: storyNow,
 };
 
 export const storyLocale = "de" as const;

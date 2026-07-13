@@ -59,6 +59,32 @@ The system SHALL export a single-entry promote function that runs the same booki
 - **WHEN** `promoteWaitlistEntry` is called for a `WAITING` entry whose quantity fits current capacity and the member is eligible
 - **THEN** the system books via `bookEvent` and sets the entry to `PROMOTED`
 
+### Requirement: Admin waitlist list and manual promote
+The system SHALL allow admins to list waitlist entries across events (status and skip history visible) and to manually promote a specific `WAITING` entry via the same promotion transaction as automatic promotion, even out of normal queue order.
+
+#### Scenario: List waitlist entries for admin
+- **WHEN** an admin lists waitlist entries with optional event and status filters
+- **THEN** matching entries are returned including status and skip history (`skipped_once`)
+
+#### Scenario: Manual promote
+- **WHEN** an admin triggers promotion for a waiting entry with available capacity
+- **THEN** the shared promote path runs immediately for that entry
+
+### Requirement: Admin waitlist SSR surfaces
+The system SHALL provide `/:locale/admin/waitlist` listing and `/:locale/admin/waitlist/:id/promote` confirm/POST pages for ADMIN users, with `robots: noindex`. The list page SHALL support optional `eventId` and `status` filters and pagination. Manual promote SHALL call the shared promote domain path (including out-of-queue support) and MUST NOT use client-only mutation modals.
+
+#### Scenario: List admin waitlist
+- **WHEN** an admin opens `/:locale/admin/waitlist` with optional event and status filters
+- **THEN** matching waitlist entries are listed with status and skip-history visible and filters preserved across pagination
+
+#### Scenario: Promote from admin waitlist
+- **WHEN** an admin confirms manual promote on a `WAITING` entry
+- **THEN** the shared promote domain runs and the admin sees the updated entry state on the waitlist list (or promote page error if promotion fails)
+
+#### Scenario: Admin waitlist surfaces are admin-only
+- **WHEN** a non-admin requests `/admin/waitlist` or `/admin/waitlist/:id/promote`
+- **THEN** access is denied
+
 ### Requirement: SSR waitlist join and cancel
 The system SHALL expose locale-prefixed SSR pages for joining an event waitlist and cancelling one's own waiting entry via form POST. Mutations SHALL use dedicated pages with form POST (no client-only dialogs). Ticket quantity on the join form SHALL use HeroUI `Select` (not radios or checkboxes). Unauthenticated join attempts SHALL redirect to sign-in with a return path.
 
@@ -124,3 +150,18 @@ The system SHALL demonstrate on staging: sold-out join → capacity frees → au
 #### Scenario: Waitlist Ladle stories load
 - **WHEN** `bun run stories` (or `@unveiled/web` Ladle) is started after this change
 - **THEN** waitlist join/cancel story states are available without runtime errors
+
+### Requirement: Admin waitlist Playwright coverage
+The system SHALL implement Playwright coverage for `waitlist.feature` scenarios `Admin visibility` and `Admin can manually trigger promotion for a specific entry` in `e2e/specs/waitlist.spec.ts` now that `/admin/waitlist` and promote confirm pages exist. Specs SHALL use verbatim Gherkin titles and proximity selectors. Skips SHALL only use documented env/harness reasons (not “UI not built”). Ladle SHALL include stories for admin waitlist list and promote confirm states.
+
+#### Scenario: Admin waitlist visibility is executable
+- **WHEN** an ADMIN opens `/admin/waitlist` in e2e with seeded waitlist data
+- **THEN** entries across events are visible with status (and skip history when present)
+
+#### Scenario: Admin manual promote is executable
+- **WHEN** an ADMIN promotes a WAITING entry that fits available capacity via the promote confirm page
+- **THEN** the promotion transaction runs for that entry and the scenario passes (or skips only for documented env prerequisites)
+
+#### Scenario: Admin waitlist Ladle stories load
+- **WHEN** Ladle is started after this change
+- **THEN** admin waitlist list and promote confirm stories are available without runtime errors

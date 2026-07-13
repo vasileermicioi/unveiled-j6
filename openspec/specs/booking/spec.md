@@ -130,3 +130,44 @@ The system SHALL expose a signed-in member navigation link labeled per locale in
 #### Scenario: Member opens My Tickets from nav
 - **WHEN** a signed-in USER uses the app shell navigation
 - **THEN** a My Tickets link is available and navigates to their bookings list
+
+### Requirement: Admin booking cancellation domain
+The system SHALL allow an admin to cancel a `CONFIRMED` booking with a reason, set status `CANCELLED`, increase event remaining capacity by the ticket count, trigger waitlist processing for that event, and MUST NOT refund credits as part of cancellation.
+
+#### Scenario: Cancel confirmed booking
+- **WHEN** an admin cancels a confirmed booking
+- **THEN** the booking is `CANCELLED`, capacity increases by the booking's ticket count, waitlist processing runs for that event, and credits are unchanged by the cancel itself
+
+#### Scenario: Reject non-confirmed cancel
+- **WHEN** an admin attempts to cancel a booking that is not `CONFIRMED`
+- **THEN** the operation is rejected and capacity, credits, and booking status are unchanged
+
+### Requirement: Admin cancel booking page
+The system SHALL provide `/:locale/admin/bookings/:id/cancel` as an SSR confirm + POST page for ADMIN users (`robots: noindex`) that cancels a `CONFIRMED` booking with a required reason, restores capacity, triggers waitlist processing, and MUST NOT refund credits as part of cancellation. The page MUST NOT use client-only mutation modals. Membership HQ member detail SHALL expose links to cancel confirmed bookings for that member.
+
+#### Scenario: Cancel via admin page
+- **WHEN** an admin submits cancel with a reason for a confirmed booking
+- **THEN** booking status becomes `CANCELLED`, capacity and waitlist side effects run, credits are unchanged by the cancel, and the admin is redirected away from the confirm page
+
+#### Scenario: Cancel page rejects non-confirmed booking
+- **WHEN** an admin opens or submits cancel for a booking that is not `CONFIRMED`
+- **THEN** the cancel does not change booking status and an on-page error or not-allowed state is shown
+
+#### Scenario: Cancel page is admin-only
+- **WHEN** a non-admin requests `/admin/bookings/:id/cancel`
+- **THEN** access is denied
+
+### Requirement: Admin booking cancel Playwright coverage
+The system SHALL implement Playwright coverage for `booking.feature` scenarios `Admin cancels a confirmed booking` and `Cannot cancel a booking that is not confirmed` in `e2e/specs/booking.spec.ts` now that `/:locale/admin/bookings/:id/cancel` exists. Specs SHALL use verbatim Gherkin titles and proximity selectors, assert `CANCELLED` status and that credits are not refunded by cancel itself, and skip only for documented env prerequisites. Ladle SHALL include a cancel confirm story for `AdminCancelBookingPage`.
+
+#### Scenario: Admin cancel booking is executable
+- **WHEN** an ADMIN cancels a CONFIRMED booking with a reason via the cancel page in e2e
+- **THEN** the booking becomes CANCELLED, capacity side effects are observable as the harness allows, member credits are unchanged by the cancel, and the test does not skip solely for missing UI
+
+#### Scenario: Non-confirmed cancel rejection is executable
+- **WHEN** an ADMIN attempts to cancel a non-CONFIRMED booking via the cancel page
+- **THEN** cancellation is rejected (on-page error or unchanged status) without silent skip for missing UI
+
+#### Scenario: Cancel booking Ladle story loads
+- **WHEN** Ladle is started after this change
+- **THEN** the admin cancel booking confirm story renders without runtime errors

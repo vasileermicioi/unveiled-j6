@@ -1,9 +1,13 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
+import { bookings } from "../schema/bookings";
 import { events } from "../schema/events";
-import { countEvents, createEvent, deleteEvent, listEvents } from "./events";
-import { countPartners, createPartner, deletePartner, listPartners } from "./partners";
+import { partners } from "../schema/partners";
+import { waitlistEntries } from "../schema/waitlist-entries";
+import { countEvents, createEvent, listEvents } from "./events";
+import { deleteImageRecord } from "./images";
+import { countPartners, createPartner, listPartners } from "./partners";
 import { DEMO_CATALOG, DEMO_DISCOVERY_TITLES } from "./seed-data";
 
 export type DemoSeedResult = "seeded" | "skipped";
@@ -13,21 +17,49 @@ export async function shouldRunDemoSeed(db: Db): Promise<boolean> {
   return partnerCount === 0 && eventCount === 0;
 }
 
+/**
+ * Wipe catalog seed data. Clears RESTRICT dependents first, then events/partners,
+ * then images (events may share image ids from e2e fixtures, so images go last).
+ * `saved_events` cascade when events are deleted.
+ */
 export async function resetCatalogData(
   db: Db,
   options: { skipBucket?: boolean } = {},
 ): Promise<{ partnersDeleted: number; eventsDeleted: number }> {
+  // Neon HTTP driver rejects DELETE without WHERE — use a tautology.
+  await db.delete(bookings).where(sql`true`);
+  await db.delete(waitlistEntries).where(sql`true`);
+
   const eventsList = await listEvents(db, { limit: 10_000 });
+  const partnersList = await listPartners(db, { limit: 10_000 });
+
+  const imageIds = new Set<string>();
   for (const event of eventsList) {
-    await deleteEvent(db, event.id, { skipBucket: options.skipBucket });
+    imageIds.add(event.imageId);
+  }
+  for (const partner of partnersList) {
+    if (partner.logoImageId) {
+      imageIds.add(partner.logoImageId);
+    }
   }
 
-  const partners = await listPartners(db, { limit: 10_000 });
-  for (const partner of partners) {
-    await deletePartner(db, partner.id, { skipBucket: options.skipBucket });
+  // Delete rows without per-row image cleanup (shared images would fail mid-loop).
+  for (const event of eventsList) {
+    await db.delete(events).where(eq(events.id, event.id));
+  }
+  for (const partner of partnersList) {
+    await db.delete(partners).where(eq(partners.id, partner.id));
   }
 
-  return { partnersDeleted: partners.length, eventsDeleted: eventsList.length };
+  for (const imageId of imageIds) {
+    try {
+      await deleteImageRecord(db, imageId, { skipBucket: options.skipBucket });
+    } catch {
+      // Image may already be gone or still referenced by non-catalog rows — ignore.
+    }
+  }
+
+  return { partnersDeleted: partnersList.length, eventsDeleted: eventsList.length };
 }
 
 const SEED_IMAGE_PAUSE_MS = 750;

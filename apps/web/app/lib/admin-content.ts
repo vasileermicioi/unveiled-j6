@@ -19,6 +19,8 @@ export type AdminCopy = {
   tabOverview: string;
   tabPartners: string;
   tabEvents: string;
+  tabUsers: string;
+  tabWaitlist: string;
   kpiPartners: string;
   kpiEvents: string;
   kpiUpcoming: string;
@@ -55,6 +57,133 @@ export type AdminCopy = {
   exportCodesAction: string;
   emptyPartners: string;
   emptyEvents: string;
+  emptyUsers: string;
+  usersTitle: string;
+  usersSubtitle: string;
+  usersDetailTitle: string;
+  usersSearchPlaceholder: string;
+  usersRoleLabel: string;
+  usersRoleAll: string;
+  usersRoleUser: string;
+  usersRoleAdmin: string;
+  usersRolePartner: string;
+  usersColRole: string;
+  usersColSubscription: string;
+  usersColCredits: string;
+  usersColBookings: string;
+  usersColEventOpens: string;
+  usersViewAction: string;
+  usersSectionSummary: string;
+  usersSectionPreferences: string;
+  usersSectionHistory: string;
+  usersSectionBehavior: string;
+  usersEmptyPreferences: string;
+  usersEmptyBehavior: string;
+  usersPrefInterests: string;
+  usersPrefMoods: string;
+  usersPrefDistricts: string;
+  usersPrefTiming: string;
+  usersPrefDays: string;
+  usersPrefLanguages: string;
+  usersPrefAgeGroup: string;
+  usersPrefRadius: string;
+  usersPrefAccessibility: string;
+  usersHistoryBookings: string;
+  usersHistoryWaitlist: string;
+  usersHistorySaved: string;
+  usersHistorySessions: string;
+  usersBehaviorEventOpens: string;
+  usersBehaviorFilterApplies: string;
+  usersBehaviorSaves: string;
+  usersBehaviorUnsaves: string;
+  usersBehaviorLastView: string;
+  usersBehaviorLastSeen: string;
+  usersBehaviorLastBooked: string;
+  usersBehaviorLastWaitlisted: string;
+  usersBehaviorRecentEvents: string;
+  usersAdjustCredits: string;
+  usersFreeze: string;
+  usersCompTicket: string;
+  usersRefund: string;
+  usersNoValue: string;
+  usersSectionBookings: string;
+  usersEmptyBookings: string;
+  usersCancelBooking: string;
+  adjustCreditsTitle: string;
+  adjustCreditsBody: string;
+  adjustCreditsAmountLabel: string;
+  adjustCreditsReasonLabel: string;
+  adjustCreditsSubmit: string;
+  adjustCreditsSuccess: string;
+  freezeTitle: string;
+  freezeBody: (name: string) => string;
+  unfreezeTitle: string;
+  unfreezeBody: (name: string) => string;
+  freezeSubmit: string;
+  unfreezeSubmit: string;
+  freezeUnavailable: string;
+  freezeSuccess: string;
+  unfreezeSuccess: string;
+  refundTitle: string;
+  refundBody: string;
+  refundAmountLabel: string;
+  refundReasonLabel: string;
+  refundSubmit: string;
+  refundSuccess: string;
+  compTicketTitle: string;
+  compTicketBody: string;
+  compTicketEventLabel: string;
+  compTicketTicketsLabel: string;
+  compTicketSubmit: string;
+  compTicketSuccess: string;
+  compTicketNoEvents: string;
+  waitlistTitle: string;
+  waitlistSubtitle: string;
+  waitlistEmpty: string;
+  waitlistEventIdLabel: string;
+  waitlistStatusLabel: string;
+  waitlistStatusAll: string;
+  waitlistStatusWaiting: string;
+  waitlistStatusPromoted: string;
+  waitlistStatusCancelled: string;
+  waitlistColUser: string;
+  waitlistColEvent: string;
+  waitlistColStatus: string;
+  waitlistColQty: string;
+  waitlistColSkipped: string;
+  waitlistColCreated: string;
+  waitlistPromoteAction: string;
+  waitlistPromoteTitle: string;
+  waitlistPromoteBody: string;
+  waitlistPromoteSubmit: string;
+  waitlistPromoteSuccess: string;
+  cancelBookingTitle: string;
+  cancelBookingBody: (eventTitle: string) => string;
+  cancelBookingReasonLabel: string;
+  cancelBookingSubmit: string;
+  cancelBookingSuccess: string;
+  cancelBookingNotConfirmed: string;
+  adminOpsErrors: {
+    USER_NOT_FOUND: string;
+    ZERO_AMOUNT: string;
+    INSUFFICIENT_CREDITS: string;
+    INVALID_AMOUNT: string;
+    INVALID_DESCRIPTION: string;
+    BOOKING_NOT_FOUND: string;
+    NOT_CONFIRMED: string;
+    INVALID_REASON: string;
+    EVENT_NOT_FOUND: string;
+    SUBSCRIPTION_NOT_FOUND: string;
+    INVALID_STATUS: string;
+    SOLD_OUT: string;
+    INELIGIBLE_SUBSCRIPTION: string;
+    PAST_DUE: string;
+    INVALID_TICKET_COUNT: string;
+    WAITLIST_NOT_FOUND: string;
+    WAITLIST_NOT_WAITING: string;
+    WAITLIST_FORBIDDEN: string;
+    WAITLIST_INVALID_QTY: string;
+  };
   paginationShowing: (from: number, to: number, total: number) => string;
   paginationPrevious: string;
   paginationNext: string;
@@ -164,6 +293,8 @@ const copy: Record<Locale, AdminCopy> = {
     tabOverview: "Übersicht",
     tabPartners: "Partner",
     tabEvents: "Events",
+    tabUsers: "Mitglieder",
+    tabWaitlist: "Warteliste",
     kpiPartners: "Partner",
     kpiEvents: "Events gesamt",
     kpiUpcoming: "Kommende Events",
@@ -200,6 +331,139 @@ const copy: Record<Locale, AdminCopy> = {
     exportCodesAction: "Codes",
     emptyPartners: "Noch keine Partner vorhanden.",
     emptyEvents: "Noch keine Events vorhanden.",
+    emptyUsers: "Keine Mitglieder gefunden.",
+    usersTitle: "Mitglieder",
+    usersSubtitle: "Membership HQ — Mitglieder suchen und prüfen.",
+    usersDetailTitle: "Mitglied",
+    usersSearchPlaceholder: "Name oder E-Mail suchen",
+    usersRoleLabel: "Rolle",
+    usersRoleAll: "Alle Rollen",
+    usersRoleUser: "USER",
+    usersRoleAdmin: "ADMIN",
+    usersRolePartner: "PARTNER",
+    usersColRole: "Rolle",
+    usersColSubscription: "Abo-Status",
+    usersColCredits: "Credits",
+    usersColBookings: "Buchungen",
+    usersColEventOpens: "Event-Öffnungen",
+    usersViewAction: "Öffnen",
+    usersSectionSummary: "Übersicht",
+    usersSectionPreferences: "Präferenzen",
+    usersSectionHistory: "Verlauf",
+    usersSectionBehavior: "Verhalten",
+    usersEmptyPreferences: "Keine Präferenzen hinterlegt.",
+    usersEmptyBehavior: "Keine Verhaltensdaten vorhanden.",
+    usersPrefInterests: "Interessen",
+    usersPrefMoods: "Stimmungen",
+    usersPrefDistricts: "Bezirke",
+    usersPrefTiming: "Tageszeit",
+    usersPrefDays: "Wochentage",
+    usersPrefLanguages: "Sprachen",
+    usersPrefAgeGroup: "Altersgruppe",
+    usersPrefRadius: "Radius",
+    usersPrefAccessibility: "Barrierefreiheit",
+    usersHistoryBookings: "Buchungen",
+    usersHistoryWaitlist: "Warteliste",
+    usersHistorySaved: "Gespeichert",
+    usersHistorySessions: "Sitzungen",
+    usersBehaviorEventOpens: "Event-Öffnungen",
+    usersBehaviorFilterApplies: "Filter angewendet",
+    usersBehaviorSaves: "Speichern",
+    usersBehaviorUnsaves: "Entfernen",
+    usersBehaviorLastView: "Zuletzt angesehen",
+    usersBehaviorLastSeen: "Zuletzt aktiv",
+    usersBehaviorLastBooked: "Zuletzt gebucht",
+    usersBehaviorLastWaitlisted: "Zuletzt Warteliste",
+    usersBehaviorRecentEvents: "Kürzlich angesehen",
+    usersAdjustCredits: "Credits anpassen",
+    usersFreeze: "Einfrieren / Auftauen",
+    usersCompTicket: "Comp-Ticket",
+    usersRefund: "Manuelle Erstattung",
+    usersNoValue: "—",
+    usersSectionBookings: "Bestätigte Buchungen",
+    usersEmptyBookings: "Keine bestätigten Buchungen.",
+    usersCancelBooking: "Stornieren",
+    adjustCreditsTitle: "Credits anpassen",
+    adjustCreditsBody: "Gutschrift oder Abzug (negative Zahl). Begründung erforderlich.",
+    adjustCreditsAmountLabel: "Betrag (ganze Zahl)",
+    adjustCreditsReasonLabel: "Begründung",
+    adjustCreditsSubmit: "Credits anpassen",
+    adjustCreditsSuccess: "Credits wurden angepasst.",
+    freezeTitle: "Mitglied einfrieren",
+    freezeBody: (name) =>
+      `„${name}" einfrieren? Status wechselt von ACTIVE zu UNPAID (unabhängig von Stripe).`,
+    unfreezeTitle: "Mitglied auftauen",
+    unfreezeBody: (name) =>
+      `„${name}" auftauen? Status wechselt von UNPAID zu ACTIVE (kein Stripe-Aufruf).`,
+    freezeSubmit: "Einfrieren",
+    unfreezeSubmit: "Auftauen",
+    freezeUnavailable:
+      "Einfrieren/Auftauen ist nur bei ACTIVE bzw. UNPAID möglich. Aktueller Status erlaubt die Aktion nicht.",
+    freezeSuccess: "Mitglied wurde eingefroren.",
+    unfreezeSuccess: "Mitglied wurde aufgetaut.",
+    refundTitle: "Manuelle Erstattung",
+    refundBody: "Positive Credits gutschreiben (REFUND-Ledger). Unabhängig von Buchungsstornos.",
+    refundAmountLabel: "Betrag (positiv)",
+    refundReasonLabel: "Begründung",
+    refundSubmit: "Erstattung ausführen",
+    refundSuccess: "Erstattung wurde verbucht.",
+    compTicketTitle: "Comp-Ticket",
+    compTicketBody:
+      "Kostenlose bestätigte Buchung über den normalen Booking-Pfad (ohne Credit-Abbuchung).",
+    compTicketEventLabel: "Event",
+    compTicketTicketsLabel: "Tickets",
+    compTicketSubmit: "Comp-Ticket ausstellen",
+    compTicketSuccess: "Comp-Ticket wurde erstellt.",
+    compTicketNoEvents: "Keine bevorstehenden Events für die Auswahl.",
+    waitlistTitle: "Warteliste",
+    waitlistSubtitle: "Einträge filtern und manuell befördern.",
+    waitlistEmpty: "Keine Wartelisteneinträge.",
+    waitlistEventIdLabel: "Event-ID",
+    waitlistStatusLabel: "Status",
+    waitlistStatusAll: "Alle Status",
+    waitlistStatusWaiting: "WAITING",
+    waitlistStatusPromoted: "PROMOTED",
+    waitlistStatusCancelled: "CANCELLED",
+    waitlistColUser: "Nutzer-ID",
+    waitlistColEvent: "Event-ID",
+    waitlistColStatus: "Status",
+    waitlistColQty: "Tickets",
+    waitlistColSkipped: "Übersprungen",
+    waitlistColCreated: "Erstellt",
+    waitlistPromoteAction: "Befördern",
+    waitlistPromoteTitle: "Warteliste befördern",
+    waitlistPromoteBody:
+      "Diesen Eintrag manuell befördern? Die Aktion kann die normale Warteschlangenreihenfolge überspringen.",
+    waitlistPromoteSubmit: "Befördern",
+    waitlistPromoteSuccess: "Eintrag wurde befördert.",
+    cancelBookingTitle: "Buchung stornieren",
+    cancelBookingBody: (eventTitle) =>
+      `Buchung für „${eventTitle}" stornieren? Kapazität wird freigegeben und die Warteliste verarbeitet. Credits werden nicht erstattet.`,
+    cancelBookingReasonLabel: "Begründung",
+    cancelBookingSubmit: "Buchung stornieren",
+    cancelBookingSuccess: "Buchung wurde storniert.",
+    cancelBookingNotConfirmed: "Nur bestätigte Buchungen können storniert werden.",
+    adminOpsErrors: {
+      USER_NOT_FOUND: "Mitglied nicht gefunden.",
+      ZERO_AMOUNT: "Betrag darf nicht null sein.",
+      INSUFFICIENT_CREDITS: "Nicht genügend Credits.",
+      INVALID_AMOUNT: "Ungültiger Betrag.",
+      INVALID_DESCRIPTION: "Begründung ist erforderlich.",
+      BOOKING_NOT_FOUND: "Buchung nicht gefunden.",
+      NOT_CONFIRMED: "Nur bestätigte Buchungen können storniert werden.",
+      INVALID_REASON: "Begründung ist erforderlich.",
+      EVENT_NOT_FOUND: "Event nicht gefunden.",
+      SUBSCRIPTION_NOT_FOUND: "Kein Abo für dieses Mitglied.",
+      INVALID_STATUS: "Abo-Status erlaubt diese Aktion nicht.",
+      SOLD_OUT: "Event ist ausverkauft.",
+      INELIGIBLE_SUBSCRIPTION: "Mitglied ist nicht buchungsberechtigt.",
+      PAST_DUE: "Mitglied hat überfälliges Abo.",
+      INVALID_TICKET_COUNT: "Ungültige Ticketanzahl.",
+      WAITLIST_NOT_FOUND: "Wartelisteneintrag nicht gefunden.",
+      WAITLIST_NOT_WAITING: "Eintrag ist nicht im Status WAITING.",
+      WAITLIST_FORBIDDEN: "Aktion für diesen Eintrag nicht erlaubt.",
+      WAITLIST_INVALID_QTY: "Ungültige Ticketanzahl auf dem Eintrag.",
+    },
     paginationShowing: (from, to, total) => `${from}–${to} von ${total}`,
     paginationPrevious: "Zurück",
     paginationNext: "Weiter",
@@ -311,6 +575,8 @@ const copy: Record<Locale, AdminCopy> = {
     tabOverview: "Overview",
     tabPartners: "Partners",
     tabEvents: "Events",
+    tabUsers: "Users",
+    tabWaitlist: "Waitlist",
     kpiPartners: "Partners",
     kpiEvents: "Total events",
     kpiUpcoming: "Upcoming events",
@@ -347,6 +613,138 @@ const copy: Record<Locale, AdminCopy> = {
     exportCodesAction: "Codes",
     emptyPartners: "No partners yet.",
     emptyEvents: "No events yet.",
+    emptyUsers: "No members found.",
+    usersTitle: "Users",
+    usersSubtitle: "Membership HQ — search and inspect members.",
+    usersDetailTitle: "Member",
+    usersSearchPlaceholder: "Search name or email",
+    usersRoleLabel: "Role",
+    usersRoleAll: "All roles",
+    usersRoleUser: "USER",
+    usersRoleAdmin: "ADMIN",
+    usersRolePartner: "PARTNER",
+    usersColRole: "Role",
+    usersColSubscription: "Subscription",
+    usersColCredits: "Credits",
+    usersColBookings: "Bookings",
+    usersColEventOpens: "Event opens",
+    usersViewAction: "Open",
+    usersSectionSummary: "Summary",
+    usersSectionPreferences: "Preferences",
+    usersSectionHistory: "History",
+    usersSectionBehavior: "Behavior",
+    usersEmptyPreferences: "No preferences on file.",
+    usersEmptyBehavior: "No behavior analytics available.",
+    usersPrefInterests: "Interests",
+    usersPrefMoods: "Moods",
+    usersPrefDistricts: "Districts",
+    usersPrefTiming: "Timing",
+    usersPrefDays: "Days",
+    usersPrefLanguages: "Languages",
+    usersPrefAgeGroup: "Age group",
+    usersPrefRadius: "Radius",
+    usersPrefAccessibility: "Accessibility",
+    usersHistoryBookings: "Bookings",
+    usersHistoryWaitlist: "Waitlist",
+    usersHistorySaved: "Saved events",
+    usersHistorySessions: "Sessions",
+    usersBehaviorEventOpens: "Event opens",
+    usersBehaviorFilterApplies: "Filter applies",
+    usersBehaviorSaves: "Saves",
+    usersBehaviorUnsaves: "Unsaves",
+    usersBehaviorLastView: "Last view",
+    usersBehaviorLastSeen: "Last seen",
+    usersBehaviorLastBooked: "Last booked event",
+    usersBehaviorLastWaitlisted: "Last waitlisted event",
+    usersBehaviorRecentEvents: "Recently viewed",
+    usersAdjustCredits: "Adjust credits",
+    usersFreeze: "Freeze / unfreeze",
+    usersCompTicket: "Comp ticket",
+    usersRefund: "Manual refund",
+    usersNoValue: "—",
+    usersSectionBookings: "Confirmed bookings",
+    usersEmptyBookings: "No confirmed bookings.",
+    usersCancelBooking: "Cancel",
+    adjustCreditsTitle: "Adjust credits",
+    adjustCreditsBody: "Credit or debit (negative number). A reason is required.",
+    adjustCreditsAmountLabel: "Amount (integer)",
+    adjustCreditsReasonLabel: "Reason",
+    adjustCreditsSubmit: "Adjust credits",
+    adjustCreditsSuccess: "Credits were adjusted.",
+    freezeTitle: "Freeze member",
+    freezeBody: (name) =>
+      `Freeze “${name}”? Status changes from ACTIVE to UNPAID (independent of Stripe).`,
+    unfreezeTitle: "Unfreeze member",
+    unfreezeBody: (name) =>
+      `Unfreeze “${name}”? Status changes from UNPAID to ACTIVE (no Stripe call).`,
+    freezeSubmit: "Freeze",
+    unfreezeSubmit: "Unfreeze",
+    freezeUnavailable:
+      "Freeze/unfreeze is only available for ACTIVE or UNPAID. The current status does not allow this action.",
+    freezeSuccess: "Member was frozen.",
+    unfreezeSuccess: "Member was unfrozen.",
+    refundTitle: "Manual refund",
+    refundBody: "Add positive credits (REFUND ledger). Decoupled from booking cancellation.",
+    refundAmountLabel: "Amount (positive)",
+    refundReasonLabel: "Reason",
+    refundSubmit: "Issue refund",
+    refundSuccess: "Refund was recorded.",
+    compTicketTitle: "Comp ticket",
+    compTicketBody:
+      "Complimentary confirmed booking via the shared booking path (no credit charge).",
+    compTicketEventLabel: "Event",
+    compTicketTicketsLabel: "Tickets",
+    compTicketSubmit: "Issue comp ticket",
+    compTicketSuccess: "Comp ticket was created.",
+    compTicketNoEvents: "No upcoming events available to select.",
+    waitlistTitle: "Waitlist",
+    waitlistSubtitle: "Filter entries and promote manually.",
+    waitlistEmpty: "No waitlist entries.",
+    waitlistEventIdLabel: "Event ID",
+    waitlistStatusLabel: "Status",
+    waitlistStatusAll: "All statuses",
+    waitlistStatusWaiting: "WAITING",
+    waitlistStatusPromoted: "PROMOTED",
+    waitlistStatusCancelled: "CANCELLED",
+    waitlistColUser: "User ID",
+    waitlistColEvent: "Event ID",
+    waitlistColStatus: "Status",
+    waitlistColQty: "Tickets",
+    waitlistColSkipped: "Skipped",
+    waitlistColCreated: "Created",
+    waitlistPromoteAction: "Promote",
+    waitlistPromoteTitle: "Promote waitlist entry",
+    waitlistPromoteBody: "Manually promote this entry? This may skip normal queue order.",
+    waitlistPromoteSubmit: "Promote",
+    waitlistPromoteSuccess: "Entry was promoted.",
+    cancelBookingTitle: "Cancel booking",
+    cancelBookingBody: (eventTitle) =>
+      `Cancel booking for “${eventTitle}”? Capacity is restored and the waitlist is processed. Credits are not refunded.`,
+    cancelBookingReasonLabel: "Reason",
+    cancelBookingSubmit: "Cancel booking",
+    cancelBookingSuccess: "Booking was cancelled.",
+    cancelBookingNotConfirmed: "Only confirmed bookings can be cancelled.",
+    adminOpsErrors: {
+      USER_NOT_FOUND: "Member not found.",
+      ZERO_AMOUNT: "Amount must be non-zero.",
+      INSUFFICIENT_CREDITS: "Insufficient credits.",
+      INVALID_AMOUNT: "Invalid amount.",
+      INVALID_DESCRIPTION: "A reason is required.",
+      BOOKING_NOT_FOUND: "Booking not found.",
+      NOT_CONFIRMED: "Only confirmed bookings can be cancelled.",
+      INVALID_REASON: "A reason is required.",
+      EVENT_NOT_FOUND: "Event not found.",
+      SUBSCRIPTION_NOT_FOUND: "No subscription for this member.",
+      INVALID_STATUS: "Subscription status does not allow this action.",
+      SOLD_OUT: "Event is sold out.",
+      INELIGIBLE_SUBSCRIPTION: "Member is not eligible to book.",
+      PAST_DUE: "Member has a past-due subscription.",
+      INVALID_TICKET_COUNT: "Invalid ticket count.",
+      WAITLIST_NOT_FOUND: "Waitlist entry not found.",
+      WAITLIST_NOT_WAITING: "Entry is not in WAITING status.",
+      WAITLIST_FORBIDDEN: "Action not allowed for this entry.",
+      WAITLIST_INVALID_QTY: "Invalid ticket quantity on the entry.",
+    },
     paginationShowing: (from, to, total) => `Showing ${from}–${to} of ${total}`,
     paginationPrevious: "Previous",
     paginationNext: "Next",

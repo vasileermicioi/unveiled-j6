@@ -24,6 +24,7 @@ export function createTxDb(connectionString: string) {
 
 export type TxDb = ReturnType<typeof createTxDb>;
 
+export * from "./admin";
 export * from "./booking";
 export * from "./catalog";
 export * from "./schema";
