@@ -16,6 +16,8 @@ export type BookEventPageProps = {
   idempotencyKey: string;
   defaultTickets?: string;
   errorMessage?: string | null;
+  /** When true, show waitlist join CTA (sold-out / insufficient capacity). */
+  offerWaitlist?: boolean;
   availableCredits?: number;
 };
 
@@ -27,10 +29,12 @@ export function BookEventPage({
   idempotencyKey,
   defaultTickets = "1",
   errorMessage,
+  offerWaitlist = false,
   availableCredits,
 }: BookEventPageProps) {
   const eventHref = localizedPath(locale, `events/${event.id}`);
   const action = localizedPath(locale, `events/${event.id}/book`);
+  const waitlistHref = `${localizedPath(locale, `events/${event.id}/waitlist`)}?qty=${encodeURIComponent(defaultTickets)}`;
   const unitPrice = event.creditPrice;
 
   if (view === "past_due") {
@@ -77,6 +81,12 @@ export function BookEventPage({
             <Alert.Description>{errorMessage}</Alert.Description>
           </Alert.Content>
         </Alert>
+      ) : null}
+
+      {offerWaitlist ? (
+        <Link className="button button--primary button--md" href={waitlistHref}>
+          {copy.waitlistCta}
+        </Link>
       ) : null}
 
       <Card>

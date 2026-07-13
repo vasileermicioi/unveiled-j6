@@ -10,6 +10,7 @@ export const ROBOTS_DISALLOW_PATHS = [
   "/*/checkin",
   "/*/events/*/book",
   "/*/events/*/waitlist",
+  "/*/waitlist/",
   "/*/login",
   "/*/signup",
   "/*/forgot-password",

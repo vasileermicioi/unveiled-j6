@@ -7,7 +7,9 @@ import {
   applyStripeEvent,
   applySubscriptionDeleted,
   applySubscriptionUpdated,
+  cancelSubscriptionAtPeriodEnd,
   constructStripeEvent,
+  createBillingPortalSession,
   createStripeClient,
   MONTHLY_CREDIT_ALLOWANCE,
   markPastDue,
@@ -99,6 +101,115 @@ describe("Stripe payload helpers", () => {
   });
 });
 
+describe("createBillingPortalSession", () => {
+  test("calls billingPortal.sessions.create with customer and return_url", async () => {
+    const create = async (params: Stripe.BillingPortal.SessionCreateParams) => {
+      expect(params.customer).toBe("cus_portal_test");
+      expect(params.return_url).toBe("https://example.test/en/profile/billing");
+      return {
+        id: "bps_test",
+        object: "billing_portal.session",
+        url: "https://billing.stripe.com/session/test",
+        customer: params.customer,
+        return_url: params.return_url,
+      } as Stripe.BillingPortal.Session;
+    };
+
+    const stripe = {
+      billingPortal: { sessions: { create } },
+    } as unknown as Stripe;
+
+    const session = await createBillingPortalSession({
+      stripe,
+      customerId: "cus_portal_test",
+      returnUrl: "https://example.test/en/profile/billing",
+    });
+
+    expect(session.id).toBe("bps_test");
+    expect(session.url).toBe("https://billing.stripe.com/session/test");
+  });
+});
+
+describe("cancelSubscriptionAtPeriodEnd", () => {
+  test("sets cancel_at_period_end and syncs CANCELLED_PENDING via lifecycle", async () => {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      console.warn("Skipping cancelSubscriptionAtPeriodEnd integration test (DATABASE_URL unset)");
+      return;
+    }
+
+    const httpDb = createDb(databaseUrl);
+    const txDb = createTxDb(databaseUrl);
+    const userId = `billing-cancel-${crypto.randomUUID()}`;
+    const email = `${userId}@example.com`;
+    const stripeSubscriptionId = `sub_${userId}`;
+    const stripeCustomerId = `cus_${userId}`;
+
+    const update = async (
+      id: string,
+      params: Stripe.SubscriptionUpdateParams,
+    ): Promise<Stripe.Subscription> => {
+      expect(id).toBe(stripeSubscriptionId);
+      expect(params.cancel_at_period_end).toBe(true);
+      return {
+        id: stripeSubscriptionId,
+        object: "subscription",
+        status: "active",
+        cancel_at_period_end: true,
+        customer: stripeCustomerId,
+        items: {
+          object: "list",
+          data: [{ current_period_end: 1_900_000_000 }],
+          has_more: false,
+          url: "",
+        },
+      } as unknown as Stripe.Subscription;
+    };
+
+    const stripe = {
+      subscriptions: { update },
+    } as unknown as Stripe;
+
+    try {
+      await httpDb.insert(users).values({
+        id: userId,
+        email,
+        emailVerified: true,
+        credits: MONTHLY_CREDIT_ALLOWANCE,
+      });
+      await httpDb.insert(subscriptions).values({
+        userId,
+        status: "ACTIVE",
+        plan: "Basic Berlin",
+        stripeCustomerId,
+        stripeSubscriptionId,
+        periodEnd: new Date("2030-01-01T00:00:00.000Z"),
+      });
+
+      const result = await cancelSubscriptionAtPeriodEnd({
+        stripe,
+        stripeSubscriptionId,
+        stripeCustomerId,
+        db: txDb,
+      });
+
+      expect(result.subscription.cancel_at_period_end).toBe(true);
+      expect(result.local?.applied).toBe(true);
+      expect(result.local?.status).toBe("CANCELLED_PENDING");
+
+      const after = await httpDb.query.subscriptions.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.userId, userId),
+      });
+      expect(after?.status).toBe("CANCELLED_PENDING");
+    } finally {
+      await httpDb.delete(creditLedger).where(eq(creditLedger.userId, userId));
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await httpDb.delete(users).where(eq(users.id, userId));
+      await txDb.pool.end().catch(() => undefined);
+    }
+  });
+});
+
 describe("subscription lifecycle (integration)", () => {
   const databaseUrl = process.env.DATABASE_URL;
 
@@ -169,6 +280,13 @@ describe("subscription lifecycle (integration)", () => {
         where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
       });
       expect(afterRenewal?.credits).toBe(MONTHLY_CREDIT_ALLOWANCE);
+
+      const ledgerAfterRenewal = await httpDb.query.creditLedger.findMany({
+        where: (fields, { eq: eqOp }) => eqOp(fields.userId, userId),
+      });
+      const expiryRows = ledgerAfterRenewal.filter((row) => row.type === "EXPIRY");
+      expect(expiryRows.length).toBeGreaterThanOrEqual(2);
+      expect(ledgerAfterRenewal.filter((row) => row.type === "SUBSCRIPTION_REFILL").length).toBe(2);
 
       const pastDue = await markPastDue(txDb, {
         stripeSubscriptionId: `sub_${userId}`,

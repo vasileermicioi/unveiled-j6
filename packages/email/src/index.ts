@@ -26,6 +26,14 @@ export {
   type SendBookingConfirmationInput,
   sendBookingConfirmation,
 } from "./send-booking-confirmation";
+export {
+  type SendWaitlistPromotionInput,
+  sendWaitlistPromotion,
+} from "./send-waitlist-promotion";
+export {
+  type BuildWaitlistPromotionInput,
+  buildWaitlistPromotionContent,
+} from "./waitlist-promotion";
 
 export const EMAIL_PACKAGE = "@unveiled/email" as const;
 export type EmailPackageId = typeof EMAIL_PACKAGE;

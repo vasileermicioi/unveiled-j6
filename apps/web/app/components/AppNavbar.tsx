@@ -27,14 +27,17 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
   const adminHref = localizedPath(locale, "admin");
   const savedHref = localizedPath(locale, "saved");
   const bookingsHref = localizedPath(locale, "bookings");
+  const profileHref = localizedPath(locale, "profile");
   const isAdmin = session?.user.role === "ADMIN";
   const isUser = session?.user.role === "USER";
   // Credits are a member (USER) concept — hide for ADMIN / PARTNER.
   const creditsLabel = isUser ? copy.formatCredits(session.user.credits) : undefined;
   const showSavedNav = isUser;
   const showBookingsNav = isUser;
+  const showProfileNav = isUser;
   const savedIsActive = isActiveNavPath(pathname, savedHref);
   const bookingsIsActive = isActiveNavPath(pathname, bookingsHref);
+  const profileIsActive = pathname === profileHref || pathname.startsWith(`${profileHref}/`);
 
   const navLinks = NAV_ITEMS.map((key) => {
     const href = localizedPath(locale, NAV_SEGMENTS[key]);
@@ -137,6 +140,16 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
                   <Chip.Label>{creditsLabel}</Chip.Label>
                 </Chip>
               ) : null}
+              {showProfileNav ? (
+                <Link
+                  aria-current={profileIsActive ? "page" : undefined}
+                  aria-label={copy.profile}
+                  className="button button--secondary button--md hidden sm:inline-flex"
+                  href={profileHref}
+                >
+                  {copy.profile}
+                </Link>
+              ) : null}
               <AuthLogoutButton
                 className="button button--secondary button--md hidden sm:inline-flex"
                 label={copy.logout}
@@ -171,6 +184,9 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
             bookingsHref={showBookingsNav ? bookingsHref : undefined}
             bookingsIsActive={showBookingsNav ? bookingsIsActive : undefined}
             bookingsLabel={showBookingsNav ? copy.myBookings : undefined}
+            profileHref={showProfileNav ? profileHref : undefined}
+            profileIsActive={showProfileNav ? profileIsActive : undefined}
+            profileLabel={showProfileNav ? copy.profile : undefined}
             savedCount={showSavedNav ? savedCount : undefined}
             savedHref={showSavedNav ? savedHref : undefined}
             savedIsActive={showSavedNav ? savedIsActive : undefined}

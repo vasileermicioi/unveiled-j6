@@ -7,8 +7,13 @@ import {
   hasDatabaseUrl,
   setSubscriptionStatus,
 } from "../fixtures/billing";
-import { getEventIdByTitle } from "../fixtures/catalog";
+import { ensureEventHasCapacity } from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
+import {
+  forceEventSoldOut,
+  getSoldOutWaitlistEventId,
+  SOLD_OUT_WAITLIST_TITLE,
+} from "../fixtures/waitlist";
 
 /** Stable demo seed — SECRET_CODE / MANUAL, creditPrice 2, future date. */
 const BOOKABLE_TITLE = "Tartuffe — Molière";
@@ -31,7 +36,7 @@ async function onboardFreshMember(page: Page, locale: Locale) {
 }
 
 async function bookableEventPath(locale: Locale): Promise<string> {
-  const eventId = await getEventIdByTitle(BOOKABLE_TITLE);
+  const eventId = await ensureEventHasCapacity(BOOKABLE_TITLE, 5);
   return `/${locale}/events/${eventId}`;
 }
 
@@ -111,8 +116,21 @@ test.describe("booking.feature", () => {
     );
   });
 
-  test("Scenario: Sold out — automatic waitlist offer", async () => {
-    test.skip(true, "Phase 7 — waitlist offer UI; Phase 6 sold-out rejects without waitlist join");
+  test("Scenario: Sold out — automatic waitlist offer", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required for sold-out seed");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+
+    const eventId = await getSoldOutWaitlistEventId();
+    await forceEventSoldOut(eventId);
+
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByText(SOLD_OUT_WAITLIST_TITLE).first()).toBeVisible();
+    await expect(page.getByText(/ausverkauft|sold out|warteliste|waitlist/i).first()).toBeVisible();
+    await page.getByRole("link", { name: /auf die warteliste|join waitlist/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/events/${eventId}/waitlist`));
+    await expect(page.getByRole("heading", { name: /warteliste|waitlist/i })).toBeVisible();
   });
 
   test("Scenario: Booking fails — insufficient credits", async ({ page, locale }) => {

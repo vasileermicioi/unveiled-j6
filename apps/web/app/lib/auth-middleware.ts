@@ -7,6 +7,7 @@ export const PROTECTED_PREFIXES = [
   "events",
   "saved",
   "bookings",
+  "waitlist",
   "profile",
   "partner",
   "admin",

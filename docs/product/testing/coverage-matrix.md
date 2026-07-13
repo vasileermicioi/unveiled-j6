@@ -67,7 +67,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `booking.feature` | Booking requires an active subscription | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires an active subscription` | `pass` |  |
 | `booking.feature` | Successful booking | `e2e/specs/booking.spec.ts` · `Scenario: Successful booking` | `pass` | Seeds ACTIVE via billing fixture |
 | `booking.feature` | Redemption info by ticket type and secret code mode | `e2e/specs/booking.spec.ts` · outline rows | `pass` | SECRET_CODE/MANUAL pass; SHARED/UNIQUE/VOUCHER deferred (no seed) |
-| `booking.feature` | Sold out — automatic waitlist offer | `e2e/specs/booking.spec.ts` · `Scenario: Sold out — automatic waitlist offer` | `deferred` | Phase 7 — waitlist UI |
+| `booking.feature` | Sold out — automatic waitlist offer | `e2e/specs/booking.spec.ts` · `Scenario: Sold out — automatic waitlist offer` | `pass` | Seed title `Sold Out: Waitlist Demo Night` |
 | `booking.feature` | Booking fails — insufficient credits | `e2e/specs/booking.spec.ts` · `Scenario: Booking fails — insufficient credits` | `pass` |  |
 | `booking.feature` | Booking fails — subscription frozen (past due) | `e2e/specs/booking.spec.ts` · `Scenario: Booking fails — subscription frozen (past due)` | `pass` |  |
 | `booking.feature` | Idempotent retry | `e2e/specs/booking.spec.ts` · `Scenario: Idempotent retry` | `skip` | Covered by `book-event.integration.test` |
@@ -81,11 +81,11 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `credits-subscription.feature` | Checkout blocked while frozen | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Checkout blocked while frozen` | `pass` | Seeds `UNPAID` |
 | `credits-subscription.feature` | Already-active member revisits checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Already-active member revisits checkout` | `pass` |  |
 | `credits-subscription.feature` | Failed payment marks the account past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Failed payment marks the account past due` | `pass` | Seeds `PAST_DUE` + book gate; full Stripe fail = staging webhook |
-| `credits-subscription.feature` | Recovering from past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Recovering from past due` | `deferred` | Phase 7 — Customer Portal |
+| `credits-subscription.feature` | Recovering from past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Recovering from past due` | `pass` | Asserts `/profile/billing` PAST_DUE + portal CTA; deep Portal = staging |
 | `credits-subscription.feature` | Monthly renewal resets credits (no rollover) | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Monthly renewal resets credits (no rollover)` | `skip` | Billing package / webhook tests |
-| `credits-subscription.feature` | Cancelling a subscription | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancelling a subscription` | `deferred` | Phase 7 |
-| `credits-subscription.feature` | Cancellation takes effect at period end | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancellation takes effect at period end` | `deferred` | Phase 7 |
-| `credits-subscription.feature` | Reactivating after cancellation | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Reactivating after cancellation` | `deferred` | Phase 7 |
+| `credits-subscription.feature` | Cancelling a subscription | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancelling a subscription` | `pass` | Cancel confirm UI + seeded `CANCELLED_PENDING`; live Stripe cancel = package/staging |
+| `credits-subscription.feature` | Cancellation takes effect at period end | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancellation takes effect at period end` | `pass` | `CANCELLED_PENDING` still bookable |
+| `credits-subscription.feature` | Reactivating after cancellation | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Reactivating after cancellation` | `pass` | INACTIVE → membership CTA |
 | `credits-subscription.feature` | Booking gate by subscription status | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Booking gate by subscription status` | `pass` |  |
 | `credits-subscription.feature` | Admin manually adjusts a member's credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin manually adjusts a member's credits` | `deferred` | Phase 8 |
 | `credits-subscription.feature` | Admin adjustment rejects a zero amount | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin adjustment rejects a zero amount` | `deferred` | Phase 8 |
@@ -115,15 +115,15 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `onboarding.feature` | Step 3 — districts and travel radius | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 3 — districts and travel radius` | `pass` |  |
 | `onboarding.feature` | Step 4 — timing, days, languages, accessibility | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 4 — timing, days, languages, accessibility` | `pass` |  |
 | `onboarding.feature` | Completing onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Completing onboarding` | `pass` |  |
-| `profile.feature` | View and edit identity | — | `unshipped` | Phase 7 |
-| `profile.feature` | Change password | — | `unshipped` | Phase 7 |
-| `profile.feature` | View billing information | — | `unshipped` | Phase 7 |
-| `profile.feature` | Update billing information | — | `unshipped` | Phase 7 |
-| `profile.feature` | Cancel subscription | — | `unshipped` | Phase 7 |
-| `profile.feature` | Access account deletion and data export | — | `unshipped` | Phase 7 |
-| `profile.feature` | Edit cultural preferences ("Vibes") | — | `unshipped` | Phase 7 |
-| `profile.feature` | View credit wallet | — | `unshipped` | Phase 7 |
-| `profile.feature` | Refill credits | — | `unshipped` | Phase 7 |
+| `profile.feature` | View and edit identity | `e2e/specs/profile.spec.ts` · `Scenario: View and edit identity` | `pass` |  |
+| `profile.feature` | Change password | `e2e/specs/profile.spec.ts` · `Scenario: Change password` | `pass` | Asserts `/profile/security` entry; Neon Auth owns mutation |
+| `profile.feature` | View billing information | `e2e/specs/profile.spec.ts` · `Scenario: View billing information` | `pass` |  |
+| `profile.feature` | Update billing information | `e2e/specs/profile.spec.ts` · `Scenario: Update billing information` | `pass` | Portal CTA + error path with fake `cus_*`; deep Portal = staging |
+| `profile.feature` | Cancel subscription | `e2e/specs/profile.spec.ts` · `Scenario: Cancel subscription` | `pass` | Confirm page + seeded `CANCELLED_PENDING` |
+| `profile.feature` | Access account deletion and data export | `e2e/specs/profile.spec.ts` · `Scenario: Access account deletion and data export` | `deferred` | Entry links pass; GDPR page mechanics → Phase 8 |
+| `profile.feature` | Edit cultural preferences ("Vibes") | `e2e/specs/profile.spec.ts` · `Scenario: Edit cultural preferences ("Vibes")` | `pass` |  |
+| `profile.feature` | View credit wallet | `e2e/specs/profile.spec.ts` · `Scenario: View credit wallet` | `pass` |  |
+| `profile.feature` | Refill credits | `e2e/specs/profile.spec.ts` · `Scenario: Refill credits` | `pass` |  |
 | `static-pages.feature` | Discover is the home page | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover is the home page` | `pass` |  |
 | `static-pages.feature` | Discover preview links to public event detail | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover preview links to public event detail` | `pass` |  |
 | `static-pages.feature` | Discover CTA path to the full member events feed | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover CTA path to the full member events feed` | `pass` | CTA → signup?returnTo=/events; onboarding finish still → membership; auto returnTo polish → Phase 8 |
@@ -135,16 +135,16 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `static-pages.feature` | Cookie consent banner on first visit | `e2e/specs/static-pages.spec.ts` · `Scenario: Cookie consent banner on first visit` | `pass` |  |
 | `static-pages.feature` | Declining consent disables the map embed | `e2e/specs/static-pages.spec.ts` · `Scenario: Declining consent disables the map embed` | `pass` |  |
 | `static-pages.feature` | Error tracking is not gated behind consent | `e2e/specs/static-pages.spec.ts` · `Scenario: Error tracking is not gated behind consent` | `pass` | Phase 9 Sentry not wired; asserts no consent gate today |
-| `waitlist.feature` | Join the waitlist | — | `unshipped` | Phase 7 |
-| `waitlist.feature` | Joining the waitlist requires authentication | — | `unshipped` | Phase 7 |
-| `waitlist.feature` | Duplicate waitlist join is prevented | — | `unshipped` | Phase 7 |
-| `waitlist.feature` | I can cancel my own waitlist entry | — | `unshipped` | Phase 7 |
-| `waitlist.feature` | Automatic promotion when capacity frees up | — | `unshipped` | Phase 7 |
-| `waitlist.feature` | Promotion is skipped if I'm no longer eligible | — | `unshipped` | Phase 7 |
-| `waitlist.feature` | Promotion respects queue order and partial capacity | — | `unshipped` | Phase 7 |
-| `waitlist.feature` | Admin can manually trigger promotion for a specific entry | — | `unshipped` | Phase 7 |
-| `waitlist.feature` | Admin visibility | — | `unshipped` | Phase 7 |
-| `waitlist.feature` | User visibility is scoped to their own entries | — | `unshipped` | Phase 7 |
+| `waitlist.feature` | Join the waitlist | `e2e/specs/waitlist.spec.ts` · `Scenario: Join the waitlist` | `pass` | Seed `Sold Out: Waitlist Demo Night` |
+| `waitlist.feature` | Joining the waitlist requires authentication | `e2e/specs/waitlist.spec.ts` · `Scenario: Joining the waitlist requires authentication` | `pass` |  |
+| `waitlist.feature` | Duplicate waitlist join is prevented | `e2e/specs/waitlist.spec.ts` · `Scenario: Duplicate waitlist join is prevented` | `pass` |  |
+| `waitlist.feature` | I can cancel my own waitlist entry | `e2e/specs/waitlist.spec.ts` · `Scenario: I can cancel my own waitlist entry` | `pass` |  |
+| `waitlist.feature` | Automatic promotion when capacity frees up | `e2e/specs/waitlist.spec.ts` · `Scenario: Automatic promotion when capacity frees up` | `pass` | Needs `E2E_ADMIN_*`; admin capacity bump |
+| `waitlist.feature` | Promotion is skipped if I'm no longer eligible | `e2e/specs/waitlist.spec.ts` · `Scenario: Promotion is skipped if I'm no longer eligible` | `pass` | Needs `E2E_ADMIN_*` |
+| `waitlist.feature` | Promotion respects queue order and partial capacity | `e2e/specs/waitlist.spec.ts` · `Scenario: Promotion respects queue order and partial capacity` | `skip` | Covered by `waitlist.integration.test`; multi-user e2e harness limit |
+| `waitlist.feature` | Admin can manually trigger promotion for a specific entry | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin can manually trigger promotion for a specific entry` | `deferred` | Phase 8 — admin waitlist promote UI |
+| `waitlist.feature` | Admin visibility | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin visibility` | `deferred` | Phase 8 — admin waitlist HQ |
+| `waitlist.feature` | User visibility is scoped to their own entries | `e2e/specs/waitlist.spec.ts` · `Scenario: User visibility is scoped to their own entries` | `pass` | Entry-scoped status/cancel only |
 
 ## Post-MVP (`features/post-mvp/`)
 

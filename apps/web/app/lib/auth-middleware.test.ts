@@ -13,6 +13,7 @@ describe("auth-middleware", () => {
 
   test("isProtectedPrefix matches guarded segments", () => {
     expect(isProtectedPrefix("events")).toBe(true);
+    expect(isProtectedPrefix("waitlist")).toBe(true);
     expect(isProtectedPrefix("discover")).toBe(false);
     expect(isProtectedPrefix(null)).toBe(false);
   });

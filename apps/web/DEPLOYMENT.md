@@ -726,6 +726,66 @@ SITE_URL=http://localhost:3000 bunx playwright test --config e2e/playwright.conf
 |---|---|---|
 | Staging | Blocked — `CLOUDFLARE_API_TOKEN` unset. Local smoke OK: `/de` 200 after qs shim; booking + credits-subscription e2e 13/13 in-scope passed. | 2026-07-12 |
 
+## Phase 7 — Waitlist & member account
+
+Phase 7 closes waitlist join/cancel + auto-promotion (capacity bump), profile identity/preferences/wallet, and `/profile/billing` (Customer Portal CTA + in-app cancel → `CANCELLED_PENDING`). **Do not start Phase 8** (admin waitlist HQ, GDPR pages, SEO polish).
+
+**Client demo line:** *"Sold out? Join the waitlist. Manage subscription and preferences in profile."*
+
+### Sold-out demo seed
+
+| Item | Value |
+|---|---|
+| Title | `Sold Out: Waitlist Demo Night` |
+| Constant | `DEMO_DISCOVERY_TITLES.soldOutWaitlist` in `packages/db` seed |
+| Capacity | `remainingCapacity = 0` after seed |
+| Promotion trigger | Admin **edit event** → raise **Kapazität** (total capacity) → `processWaitlistForEvent` + promotion email |
+
+```bash
+bun run seed:demo
+```
+
+### Stripe Customer Portal (dashboard)
+
+Enable in Stripe Dashboard (**test + live**):
+
+1. Payment method updates — on
+2. Billing address / customer information — on
+3. Cancellation — **at end of billing period** (not immediate)
+
+App env: existing `STRIPE_SECRET_KEY` + `SITE_URL` for portal `return_url` (`/{locale}/profile/billing`). No new secrets — see `packages/billing/README.md`.
+
+### Staging smoke checklist
+
+1. Open seeded sold-out event → **Auf die Warteliste** → join with ticket count → confirmation `WAITING`.
+2. As admin, edit the event and increase capacity by 1 → member is auto-promoted → ticket on `/bookings`; Resend promotion email when configured.
+3. Profile → edit name → save; Vibes → save preferences; wallet shows credits; refill → `/membership`.
+4. Billing → portal CTA visible when Stripe customer linked; cancel confirm → `CANCELLED_PENDING` (access until period end).
+5. **Stop** — do not start Phase 8.
+
+### Playwright (Phase 7)
+
+```bash
+SITE_URL=http://localhost:3000 bunx playwright test --config e2e/playwright.config.ts \
+  e2e/specs/waitlist.spec.ts e2e/specs/profile.spec.ts \
+  e2e/specs/credits-subscription.spec.ts e2e/specs/booking.spec.ts --workers=1
+```
+
+Promotion scenarios need `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`. Coverage: [`docs/product/testing/coverage-matrix.md`](../../docs/product/testing/coverage-matrix.md). Portal/cancel policy: [`e2e/README.md`](../../e2e/README.md) § Stripe Customer Portal.
+
+### Ladle
+
+```bash
+bun run stories
+# @unveiled/web :61001 — WaitlistJoinPage, WaitlistCancelPage, BillingPage, PreferencesPage, ProfilePage
+```
+
+### Staging deploy record
+
+| Environment | URL / evidence | Date |
+|---|---|---|
+| Staging | Pending operator deploy (`CLOUDFLARE_API_TOKEN`). Local: Ladle `@unveiled/web` :61001 OK; Playwright Phase 7 scope — waitlist/profile/booking waitlist-offer + credits cancel/portal CTAs pass (promotion needs `E2E_ADMIN_*`; 2 flaky Phase 6 membership tests are pre-existing Neon Auth redirect flakes). | 2026-07-12 |
+
 ## Phase 2 step 03 verification
 
 With `DATABASE_URL` and `AUTH_URL` set:

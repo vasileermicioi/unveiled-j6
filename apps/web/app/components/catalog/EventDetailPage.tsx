@@ -46,6 +46,18 @@ function soldOutMessage(locale: Locale): string {
   return locale === "de" ? "Dieses Event ist ausverkauft." : "This event is sold out.";
 }
 
+function waitlistOfferMessage(locale: Locale): string {
+  return locale === "de"
+    ? "Dieses Event ist ausverkauft. Du kannst dich auf die Warteliste setzen."
+    : "This event is sold out. You can join the waitlist.";
+}
+
+function waitlistGuestMessage(locale: Locale): string {
+  return locale === "de"
+    ? "Dieses Event ist ausverkauft. Melde dich an, um auf die Warteliste zu kommen."
+    : "This event is sold out. Sign in to join the waitlist.";
+}
+
 function pastMessage(locale: Locale): string {
   return locale === "de"
     ? "Dieses Event hat bereits stattgefunden."
@@ -54,6 +66,14 @@ function pastMessage(locale: Locale): string {
 
 function guestCtaLabel(locale: Locale): string {
   return locale === "de" ? "Anmelden zum Buchen" : "Sign in to book";
+}
+
+function waitlistGuestCtaLabel(locale: Locale): string {
+  return locale === "de" ? "Anmelden für Warteliste" : "Sign in for waitlist";
+}
+
+function waitlistJoinLabel(locale: Locale): string {
+  return locale === "de" ? "Auf die Warteliste" : "Join waitlist";
 }
 
 function membershipLabel(locale: Locale): string {
@@ -141,6 +161,10 @@ export function EventDetailPage({
   let ctaMessage: string;
   if (isPast) {
     ctaMessage = pastMessage(locale);
+  } else if (isSoldOut && viewer.kind === "eligible") {
+    ctaMessage = waitlistOfferMessage(locale);
+  } else if (isSoldOut && viewer.kind === "guest") {
+    ctaMessage = waitlistGuestMessage(locale);
   } else if (isSoldOut || !bookable) {
     ctaMessage = soldOutMessage(locale);
   } else if (viewer.kind === "eligible") {
@@ -164,10 +188,15 @@ export function EventDetailPage({
   }
 
   const showBookCta = !isPast && bookable && !isSoldOut && viewer.kind === "eligible";
+  const showWaitlistCta = !isPast && isSoldOut && viewer.kind === "eligible";
+  const showWaitlistGuestCta = !isPast && isSoldOut && viewer.kind === "guest";
   const showPastDueCta = !isPast && bookable && !isSoldOut && viewer.kind === "past_due";
   const showMembershipCta =
     !isPast && bookable && !isSoldOut && viewer.kind === "membership_required";
   const showGuestCta = !isPast && bookable && !isSoldOut && viewer.kind === "guest";
+
+  const waitlistPath = localizedPath(locale, `events/${event.id}/waitlist`);
+  const waitlistLoginHref = `${localizedPath(locale, "login")}?returnTo=${encodeURIComponent(waitlistPath)}`;
 
   return (
     <Surface
@@ -266,6 +295,24 @@ export function EventDetailPage({
               >
                 {bookLabel(locale)}
               </Link>
+            ) : null}
+            {showWaitlistCta ? (
+              <Link className="button button--primary button--md" href={waitlistPath}>
+                {waitlistJoinLabel(locale)}
+              </Link>
+            ) : null}
+            {showWaitlistGuestCta ? (
+              <>
+                <Link className="button button--primary button--md" href={waitlistLoginHref}>
+                  {waitlistGuestCtaLabel(locale)}
+                </Link>
+                <Link
+                  className="button button--secondary button--md"
+                  href={localizedPath(locale, "membership")}
+                >
+                  {membershipLabel(locale)}
+                </Link>
+              </>
             ) : null}
             {showPastDueCta ? (
               <Link

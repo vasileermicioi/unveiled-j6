@@ -36,6 +36,13 @@
       "when": 1783781162223,
       "tag": "0004_easy_cable",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783882987083,
+      "tag": "0005_dry_stark_industries",
+      "breakpoints": true
     }
   ]
 }

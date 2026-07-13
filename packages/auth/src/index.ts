@@ -29,6 +29,17 @@ export {
   saveOnboardingStep,
   validateOnboardingStepPayload,
 } from "./onboarding";
+export type {
+  CulturalPreferencesPayload,
+  ProfileIdentityPayload,
+  SyncAuthEmailFn,
+} from "./profile";
+export {
+  ProfileValidationError,
+  updateCulturalPreferences,
+  updateProfileIdentity,
+  validateCulturalPreferencesPayload,
+} from "./profile";
 export { provisionNewUser } from "./provision-user";
 export { getSession } from "./session";
 export type {

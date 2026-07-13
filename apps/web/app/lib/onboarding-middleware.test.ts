@@ -44,7 +44,7 @@ describe("onboarding-middleware", () => {
     process.env.DATABASE_URL = "postgres://example";
     process.env.AUTH_URL = "https://auth.example";
 
-    for (const prefix of ["events", "saved", "bookings", "profile"] as const) {
+    for (const prefix of ["events", "saved", "bookings", "waitlist", "profile"] as const) {
       expect(
         evaluateOnboardingRedirect({
           locale: "de",
@@ -62,7 +62,7 @@ describe("onboarding-middleware", () => {
     process.env.DATABASE_URL = "postgres://example";
     process.env.AUTH_URL = "https://auth.example";
 
-    for (const prefix of ["events", "saved", "bookings", "profile"] as const) {
+    for (const prefix of ["events", "saved", "bookings", "waitlist", "profile"] as const) {
       expect(
         evaluateOnboardingRedirect({
           locale: "en",

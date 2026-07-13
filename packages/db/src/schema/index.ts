@@ -6,3 +6,4 @@ export * from "./partners";
 export * from "./saved-events";
 export * from "./subscriptions";
 export * from "./users";
+export * from "./waitlist-entries";
