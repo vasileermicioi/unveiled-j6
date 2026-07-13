@@ -295,11 +295,13 @@ export const POST = createRoute(async (c) => {
     );
   } catch (error) {
     let errorMessage = copy.errorGeneric;
+    let offerWaitlist = false;
     if (error instanceof BookingError) {
       if (error.code === "INSUFFICIENT_CREDITS") {
         errorMessage = copy.errorInsufficientCredits;
       } else if (error.code === "SOLD_OUT") {
         errorMessage = copy.errorSoldOut;
+        offerWaitlist = true;
       } else if (error.code === "PAST_DUE") {
         errorMessage = copy.errorPastDue;
       } else if (error.code === "INELIGIBLE_SUBSCRIPTION") {
@@ -320,6 +322,7 @@ export const POST = createRoute(async (c) => {
         event={event}
         idempotencyKey={idempotencyKey}
         locale={locale}
+        offerWaitlist={offerWaitlist}
         view="form"
       />,
       {

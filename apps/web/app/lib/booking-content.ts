@@ -15,6 +15,7 @@ export type BookPageCopy = {
   errorSoldOut: string;
   errorPastDue: string;
   errorGeneric: string;
+  waitlistCta: string;
   support: string;
 };
 
@@ -51,6 +52,7 @@ const bookCopy: Record<Locale, BookPageCopy> = {
     errorSoldOut: "Nicht genug Restplätze für diese Buchung.",
     errorPastDue: "Credits sind eingefroren — bitte Zahlung aktualisieren.",
     errorGeneric: "Buchung fehlgeschlagen. Bitte erneut versuchen.",
+    waitlistCta: "Auf die Warteliste",
     support: "support@unveiled.berlin",
   },
   en: {
@@ -68,6 +70,7 @@ const bookCopy: Record<Locale, BookPageCopy> = {
     errorSoldOut: "Not enough remaining capacity for this booking.",
     errorPastDue: "Credits are frozen — update your payment method.",
     errorGeneric: "Booking failed. Please try again.",
+    waitlistCta: "Join waitlist",
     support: "support@unveiled.berlin",
   },
 };

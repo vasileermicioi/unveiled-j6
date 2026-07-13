@@ -1,7 +1,10 @@
+import { eq } from "drizzle-orm";
+
 import type { Db } from "../index";
+import { events } from "../schema/events";
 import { countEvents, createEvent, deleteEvent, listEvents } from "./events";
 import { countPartners, createPartner, deletePartner, listPartners } from "./partners";
-import { DEMO_CATALOG } from "./seed-data";
+import { DEMO_CATALOG, DEMO_DISCOVERY_TITLES } from "./seed-data";
 
 export type DemoSeedResult = "seeded" | "skipped";
 
@@ -14,8 +17,8 @@ export async function resetCatalogData(
   db: Db,
   options: { skipBucket?: boolean } = {},
 ): Promise<{ partnersDeleted: number; eventsDeleted: number }> {
-  const events = await listEvents(db, { limit: 10_000 });
-  for (const event of events) {
+  const eventsList = await listEvents(db, { limit: 10_000 });
+  for (const event of eventsList) {
     await deleteEvent(db, event.id, { skipBucket: options.skipBucket });
   }
 
@@ -24,7 +27,7 @@ export async function resetCatalogData(
     await deletePartner(db, partner.id, { skipBucket: options.skipBucket });
   }
 
-  return { partnersDeleted: partners.length, eventsDeleted: events.length };
+  return { partnersDeleted: partners.length, eventsDeleted: eventsList.length };
 }
 
 const SEED_IMAGE_PAUSE_MS = 750;
@@ -50,7 +53,11 @@ export async function runDemoSeed(
     await sleep(pauseMs);
 
     for (const eventInput of entry.events) {
-      await createEvent(db, { ...eventInput, partnerId: partner.id });
+      const created = await createEvent(db, { ...eventInput, partnerId: partner.id });
+      // DEMO_SOLD_OUT_WAITLIST: force zero remaining for Phase 7 waitlist demos
+      if (created.title === DEMO_DISCOVERY_TITLES.soldOutWaitlist) {
+        await db.update(events).set({ remainingCapacity: 0 }).where(eq(events.id, created.id));
+      }
       await sleep(pauseMs);
     }
   }

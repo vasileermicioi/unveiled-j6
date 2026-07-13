@@ -1,4 +1,4 @@
-import { createDb, listEvents, listPartners } from "@unveiled/db";
+import { createDb, eq, events, listEvents, listPartners } from "@unveiled/db";
 
 /**
  * Resolve a demo partner id for GET `partnerId=` filters.
@@ -33,4 +33,31 @@ export async function getEventIdByTitle(title: string): Promise<string> {
     throw new Error(`Event not found in catalog: ${title}`);
   }
   return hit.id;
+}
+
+/** Restore bookable capacity when prior e2e runs depleted a seed event. */
+export async function ensureEventHasCapacity(title: string, minRemaining = 5): Promise<string> {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error("DATABASE_URL is required to restore event capacity for E2E");
+  }
+  const db = createDb(url);
+  const row = await db.query.events.findFirst({
+    where: eq(events.title, title),
+  });
+  if (!row) {
+    throw new Error(`Event not found in catalog: ${title}`);
+  }
+  if (row.remainingCapacity < minRemaining) {
+    const nextTotal = Math.max(row.totalCapacity, minRemaining);
+    await db
+      .update(events)
+      .set({
+        totalCapacity: nextTotal,
+        remainingCapacity: minRemaining,
+        updatedAt: new Date(),
+      })
+      .where(eq(events.id, row.id));
+  }
+  return row.id;
 }

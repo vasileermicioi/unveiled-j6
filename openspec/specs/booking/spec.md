@@ -99,11 +99,15 @@ The system SHALL expose SSR pages at `/:locale/events/:id/book` (GET form + POST
 - **THEN** no member-facing action exists to cancel the booking or request a refund
 
 ### Requirement: Sold-out without waitlist (Phase 6)
-The system SHALL reject bookings that exceed remaining capacity without offering waitlist join until Phase 7.
+The Phase 6 requirement that sold-out bookings reject without a waitlist offer is superseded for Phase 7 member UX. The system SHALL still reject the booking transaction itself when remaining capacity is less than the requested ticket count (no booking row created). For authenticated eligible members, the system SHALL offer waitlist join instead of only showing a closed sold-out error with no member path.
 
-#### Scenario: Insufficient capacity
+#### Scenario: Sold out — automatic waitlist offer
 - **WHEN** remaining capacity is less than the requested ticket count
-- **THEN** the booking is rejected with a sold-out / capacity error and no waitlist join UI is shown
+- **THEN** the booking is not created and the member is offered waitlist join
+
+#### Scenario: Insufficient capacity still rejects booking
+- **WHEN** a book POST fails with sold-out / capacity error
+- **THEN** no booking or credit ledger mutation occurs for that attempt
 
 ### Requirement: My Tickets list
 The system SHALL provide an authenticated, paginated SSR `/bookings` list of the member’s bookings ordered by most recent, with empty state and redemption-oriented ticket presentation. Page size SHALL be 20. Pagination SHALL use GET `?page=` with SSR links and SHALL work without client-only fetching. The list SHALL NOT offer member self-cancel or refund actions.

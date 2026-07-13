@@ -21,6 +21,8 @@ import {
 } from "../../../../../lib/admin-route";
 import { getAuthOptions } from "../../../../../lib/auth";
 import type { Locale } from "../../../../../lib/locale";
+import { resolveEnvVarFromContext } from "../../../../../lib/runtime-env";
+import { maybeProcessWaitlistAfterCapacityIncrease } from "../../../../../lib/waitlist-capacity-hook";
 
 function renderEditPage(
   c: Context,
@@ -94,7 +96,40 @@ export const POST = createRoute(async (c) => {
 
   try {
     const values = await parseEventFormBodyFromRequest(body);
-    await updateEvent(db, eventId, toUpdateEventInput(values, guard.session.user.id));
+    const previousRemaining = existing.remainingCapacity;
+    const updated = await updateEvent(
+      db,
+      eventId,
+      toUpdateEventInput(values, guard.session.user.id),
+    );
+
+    // Phase 7 demo trigger: capacity increase → processWaitlistForEvent + promotion email.
+    // Phase 8 admin booking-cancel must call the same processor after capacity frees.
+    const databaseUrl = resolveEnvVarFromContext(c, "DATABASE_URL");
+    if (databaseUrl && updated.remainingCapacity > previousRemaining) {
+      await maybeProcessWaitlistAfterCapacityIncrease({
+        c,
+        databaseUrl,
+        eventId,
+        previousRemaining,
+        nextRemaining: updated.remainingCapacity,
+        locale: guard.locale,
+        event: {
+          id: updated.id,
+          title: updated.title,
+          address: updated.address,
+          dateTime: updated.dateTime,
+          partnerName: updated.partnerName,
+        },
+        resolveToEmail: async (userId) => {
+          const user = await db.query.users.findFirst({
+            where: (fields, { eq }) => eq(fields.id, userId),
+          });
+          return user?.email;
+        },
+      });
+    }
+
     return c.redirect(eventListPath(guard.locale), 302);
   } catch (error) {
     await ensureImageVariantsUploaded(db, existing.imageId);

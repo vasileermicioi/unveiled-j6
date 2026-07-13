@@ -30,6 +30,9 @@ type AppNavbarMenuProps = {
   bookingsHref?: string;
   bookingsLabel?: string;
   bookingsIsActive?: boolean;
+  profileHref?: string;
+  profileLabel?: string;
+  profileIsActive?: boolean;
 };
 
 const menuTriggerClassName = "button button--secondary button--md site-nav-icon-button lg:hidden";
@@ -74,6 +77,9 @@ export default function AppNavbarMenu({
   bookingsHref,
   bookingsLabel,
   bookingsIsActive = false,
+  profileHref,
+  profileLabel,
+  profileIsActive = false,
 }: AppNavbarMenuProps) {
   const [mounted, setMounted] = useState(false);
   const drawerState = useOverlayState();
@@ -160,6 +166,15 @@ export default function AppNavbarMenu({
                     <Chip variant="tertiary">
                       <Chip.Label>{creditsLabel}</Chip.Label>
                     </Chip>
+                  ) : null}
+                  {profileHref && profileLabel ? (
+                    <Link
+                      aria-current={profileIsActive ? "page" : undefined}
+                      className="button button--secondary button--md button--full-width"
+                      href={profileHref}
+                    >
+                      {profileLabel}
+                    </Link>
                   ) : null}
                   {logoutLabel ? (
                     <AuthLogoutButton

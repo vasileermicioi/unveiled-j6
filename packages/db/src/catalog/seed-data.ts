@@ -98,6 +98,26 @@ export const DEMO_CATALOG: DemoCatalogEntry[] = [
         lng: "13.412000",
         imageUrl: WIKIMEDIA_SEED_IMAGES.volksbuehnePlatz.url,
       },
+      // DEMO_SOLD_OUT_WAITLIST — Phase 7 waitlist demo (remainingCapacity forced to 0 in seed.ts)
+      {
+        title: "Sold Out: Waitlist Demo Night",
+        description:
+          "Seed sold-out event for waitlist demos — join waitlist, then raise capacity in admin edit to auto-promote.",
+        address: "Rosa-Luxemburg-Platz, 10178 Berlin",
+        neighborhood: "Mitte",
+        category: "Theater",
+        eventType: "Performance",
+        tags: ["waitlist", "sold-out", "demo"],
+        dateTime: berlinDaysFromToday(12, 20, 0),
+        creditPrice: 2,
+        totalCapacity: 20,
+        secretCode: "WAITLIST26",
+        languages: ["de", "en"],
+        barrierFree: true,
+        lat: "52.526500",
+        lng: "13.412000",
+        imageUrl: WIKIMEDIA_SEED_IMAGES.volksbuehnePlatz.url,
+      },
     ],
   },
   {
@@ -249,6 +269,8 @@ export const DEMO_DISCOVERY_TITLES = {
   theaterFuture: "Tartuffe — Molière",
   ausstellung: "Exhibition Opening: Material Echoes",
   konzert: "Global Sound Forum",
+  /** Phase 7 waitlist demo — remainingCapacity set to 0 after create in seed.ts */
+  soldOutWaitlist: "Sold Out: Waitlist Demo Night",
 } as const;
 
 /** @deprecated Use DEMO_CATALOG — kept for tests referencing partner list length. */

@@ -3,7 +3,7 @@ import { type AppSession, getOnboardingStepPath } from "@unveiled/auth";
 import { getLocalePathSegment, isAuthConfigured, isPublicEventDetailPath } from "./auth-middleware";
 import type { Locale } from "./locale";
 
-export const MEMBER_APP_PREFIXES = ["events", "saved", "bookings", "profile"] as const;
+export const MEMBER_APP_PREFIXES = ["events", "saved", "bookings", "waitlist", "profile"] as const;
 
 export type MemberAppPrefix = (typeof MEMBER_APP_PREFIXES)[number];
 
