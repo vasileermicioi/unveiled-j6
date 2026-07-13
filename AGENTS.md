@@ -75,11 +75,11 @@ Phased rollout: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](.dev-plan/IMPLEMENTATIO
 ```bash
 bun install
 bun run dev          # start apps/web
-bun run build
+bun run build        # db:migrate then apps/web Workers bundle (needs DATABASE_URL)
 bun run lint
 bun run typecheck
 bun run db:generate  # Phase 2+
-bun run db:migrate   # Phase 2+
+bun run db:migrate   # Phase 2+ (also invoked by `bun run build`)
 bun run seed:demo    # Phase 4+
 bun run stories      # Ladle
 bun run test:e2e     # Playwright

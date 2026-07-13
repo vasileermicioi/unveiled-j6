@@ -35,7 +35,7 @@ From repository root:
 
 ```bash
 bun install
-bun run build    # Workers-compatible @unveiled/web bundle
+bun run build    # db:migrate (needs DATABASE_URL) + Workers-compatible @unveiled/web bundle
 ```
 
 Local development (Bun/Node — same sip pipeline as Workers; supports admin image upload):
@@ -90,6 +90,8 @@ Connect the GitHub repo in **Workers & Pages → your Worker → Settings → Bu
 | **Build command** | `bun run build` |
 | **Deploy command** | `bun run deploy:workers` |
 
+`bun run build` runs **`db:migrate` first** (Drizzle against `DATABASE_URL`), then the Workers bundle. Migrations fail the build if `DATABASE_URL` is missing or migrate errors.
+
 Do **not** use `npx wrangler deploy` alone — Wrangler will refuse monorepo roots. The root `deploy:workers` script runs `bunx wrangler deploy --config apps/web/wrangler.toml`.
 
 **Build variables** (Settings → Variables and secrets → **Build**):
@@ -97,6 +99,10 @@ Do **not** use `npx wrangler deploy` alone — Wrangler will refuse monorepo roo
 | Variable | Value |
 |---|---|
 | `BUN_VERSION` | `1.3.14` (matches root `packageManager`; avoids Bun 1.2.x `catalog:` resolution bugs) |
+| `DATABASE_URL` | Neon Postgres URL for the target environment (required — migrate runs at build) |
+| `AUTH_URL` | Neon Auth API base URL (recommended on Build so build env matches runtime; not read by Drizzle migrate) |
+
+Locally, root `.env` supplies the same vars (`bun --env-file=.env` on `db:migrate`).
 
 **Runtime secrets** (Settings → Variables and secrets → **Secrets** — required for auth and DB):
 
@@ -128,7 +134,7 @@ bunx wrangler secret put SITE_URL --config wrangler.toml
 
 Cloudflare runs `bun install --frozen-lockfile` automatically before your build command. Package versions are pinned explicitly in each `package.json` (not `catalog:`) so install works on CI.
 
-**After first deploy:** set `SITE_URL` to your `*.workers.dev` URL (or custom domain). Run `bun run db:migrate` and `bun run seed:demo` locally before expecting catalog content on staging.
+**After first deploy:** set `SITE_URL` to your `*.workers.dev` URL (or custom domain). Schema migrations apply automatically on each `bun run build` (Cloudflare Builds / local) when `DATABASE_URL` is set. Run `bun run seed:demo` locally (or out-of-band) when the catalog is empty — seed is **not** part of build.
 
 ## Environment variables
 
@@ -316,7 +322,7 @@ Phase 3 is complete when staging supports the full four-step onboarding wizard, 
 ### Prerequisites
 
 1. Phase 2 release gate passed on staging (auth loop, route protection, navbar).
-2. Drizzle migrations applied (`bun run db:migrate` against staging `DATABASE_URL`).
+2. Drizzle migrations applied (via `bun run build` / Cloudflare Builds with Build-time `DATABASE_URL`, or `bun run db:migrate`).
 3. `robots.txt` disallows `/*/onboarding/`; each onboarding page renders `<meta name="robots" content="noindex">`.
 
 ### Full onboarding demo script
@@ -438,7 +444,7 @@ Phase 4 is complete when staging supports the admin → public catalog loop with
 
 ### Catalog demo script
 
-1. `bun run db:migrate` against staging `DATABASE_URL`.
+1. Schema migrated via `bun run build` (or `bun run db:migrate`) against staging `DATABASE_URL`.
 2. Sign in as ADMIN → `/de/admin`. If DB empty, run **Seed demo data** or `bun run seed:demo`. To replace an existing catalog with fresh Berlin venue demo data: `bun run seed:demo -- --reset` (deletes all partners and events first; also removes pagination seed rows).
 3. Create a partner with logo (upload or URL) → appears on `/de/admin/partners`.
 4. Create an event with image → listed on `/de/admin/events`.
@@ -514,7 +520,7 @@ Selector policy, spec inventory, and skip inventory: [`e2e/README.md`](../../e2e
 
 ### CI behavior (`.github/workflows/deploy-staging.yml`)
 
-On push to `main`: **quality** (lint → typecheck → build) → **e2e** (timeout 20m). E2E failure fails the workflow. **Workers deploy is separate** — Cloudflare GitHub repo import / Workers Builds deploys on push; this workflow does not run `wrangler deploy` and does not use `CLOUDFLARE_API_TOKEN`.
+On push to `main`: **quality** (lint → typecheck → build, including `db:migrate`) → **e2e** (timeout 20m). E2E failure fails the workflow. **Workers deploy is separate** — Cloudflare GitHub repo import / Workers Builds deploys on push; this workflow does not run `wrangler deploy` and does not use `CLOUDFLARE_API_TOKEN`. Quality **Build** needs GitHub secrets `DATABASE_URL` (+ `AUTH_URL` recommended).
 
 The e2e job uses `SITE_URL=http://localhost:3000` and `CI=true` so Playwright’s `webServer` starts local Node SSR (`bun run dev` + sip). It runs `bun run db:migrate` against the CI `DATABASE_URL` (use a **CI-dedicated** Neon branch — never `seed:demo -- --reset` against shared staging). Image specs self-skip when R2 secrets are absent.
 
@@ -884,7 +890,7 @@ bun run stories
 
 Use before promoting a production Workers host (replace staging origin with production).
 
-1. **Neon Postgres** — Production branch/project; run `bun run db:migrate`; decide empty vs curated catalog (prefer curated seed or admin-created venues — avoid demo-only junk).
+1. **Neon Postgres** — Production branch/project; ensure production `DATABASE_URL` is a **Build** variable so `bun run build` migrates schema; decide empty vs curated catalog (prefer curated seed or admin-created venues — avoid demo-only junk).
 2. **Neon Auth** — Production `AUTH_URL`; add production origin to **trusted domains** (exact URL, no trailing slash); configure Google OAuth if offering social login; enable Admin plugin + `user.deleteUser` for GDPR disable paths.
 3. **Worker secrets / vars** — `DATABASE_URL`, `AUTH_URL`, `SITE_URL` (production origin); six R2 vars + `IMAGE_PUBLIC_BASE_URL`; Stripe **live** keys + `STRIPE_PRICE_ID_BASIC_BERLIN` + webhook secret; `RESEND_API_KEY` + `DAILY_CODES_FROM_EMAIL` (verified domain); optional `SENTRY_DSN`. Prefer secrets over committed `[vars]` for credentials.
 4. **Stripe** — Live mode Checkout + Customer Portal (cancel at period end); webhook endpoint → `https://<prod>/api/webhooks/stripe` (`checkout.session.completed`, subscription/invoice events as wired).
