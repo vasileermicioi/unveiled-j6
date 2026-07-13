@@ -91,6 +91,17 @@ The system SHALL support cancelling from profile billing such that Stripe `cance
 - **WHEN** a subscription renews successfully via Stripe webhook
 - **THEN** an `EXPIRY` entry records forfeited credits (0 allowed) and balance becomes exactly 17 after refill
 
+### Requirement: Credits marketing copy accuracy
+Marketing and membership perk copy SHALL state that members receive fresh monthly credits and MUST NOT claim that credits roll over. App content modules and the `content-i18n-inventory.md` membership `perks[2]` entry SHALL agree on the corrected wording (for example DE: "17 Credits jeden Monat" / EN: "17 fresh credits every month").
+
+#### Scenario: No rollover claim
+- **WHEN** a guest views membership perks
+- **THEN** copy does not say credits roll over
+
+#### Scenario: Inventory documents corrected perk
+- **WHEN** an agent reads `docs/product/extras/content-i18n-inventory.md` membership `perks[2]`
+- **THEN** the entry reflects the corrected no-rollover wording and is not marked as needing copy correction
+
 ### Requirement: Staging payment configuration
 Staging and local operator docs SHALL list Stripe and Resend environment variables and the Stripe test card used for membership demos. `apps/web/DEPLOYMENT.md` SHALL document webhook endpoint URL expectations, demo accounts, Phase 6 subscribe→book→door-code smoke, **and** a Phase 7 section covering Stripe Customer Portal dashboard settings (payment method + billing address updates; cancellation **at period end**), profile billing cancel → `CANCELLED_PENDING`, sold-out waitlist demo seed, and an explicit note that Phase 7 is complete — do **not** start Phase 8. No new app secrets are required for portal beyond existing `STRIPE_SECRET_KEY` and `SITE_URL` for `return_url`.
 

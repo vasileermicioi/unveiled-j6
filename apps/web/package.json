@@ -21,6 +21,7 @@
     "@hono/react-renderer": "^0.2.0",
     "@internationalized/date": "^3.12.2",
     "@react-aria/ssr": "^3.10.1",
+    "@sentry/cloudflare": "^10.65.0",
     "@tanstack/react-query": "^5.101.2",
     "@unveiled/auth": "workspace:*",
     "@unveiled/billing": "workspace:*",

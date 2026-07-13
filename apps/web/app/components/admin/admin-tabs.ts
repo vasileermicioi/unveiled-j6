@@ -45,6 +45,10 @@ export function adminUserRefundPath(locale: Locale, userId: string): string {
   return localizedPath(locale, `admin/users/${userId}/refund`);
 }
 
+export function adminUserDeleteAccountPath(locale: Locale, userId: string): string {
+  return localizedPath(locale, `admin/users/${userId}/delete-account`);
+}
+
 export function adminWaitlistPromotePath(locale: Locale, entryId: string): string {
   return localizedPath(locale, `admin/waitlist/${entryId}/promote`);
 }

@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, ilike, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, gte, ilike, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
 import {
@@ -128,6 +128,36 @@ export async function listUpcomingEvents(
     .select()
     .from(events)
     .where(gte(events.dateTime, now))
+    .orderBy(asc(events.dateTime))
+    .limit(limit);
+}
+
+/** Bookable = future date_time and remaining_capacity > 0 (same as public event indexability). */
+export type SitemapEventRow = {
+  id: string;
+  updatedAt: Date;
+};
+
+export type ListBookableEventsForSitemapOptions = {
+  now?: Date;
+  /** Soft upper bound for MVP catalog size; default 5000. */
+  limit?: number;
+};
+
+export async function listBookableEventsForSitemap(
+  db: Db,
+  options: ListBookableEventsForSitemapOptions = {},
+): Promise<SitemapEventRow[]> {
+  const now = options.now ?? new Date();
+  const limit = options.limit ?? 5000;
+
+  return db
+    .select({
+      id: events.id,
+      updatedAt: events.updatedAt,
+    })
+    .from(events)
+    .where(and(gt(events.dateTime, now), gt(events.remainingCapacity, 0)))
     .orderBy(asc(events.dateTime))
     .limit(limit);
 }

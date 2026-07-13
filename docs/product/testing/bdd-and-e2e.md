@@ -78,19 +78,19 @@ Any other `page.locator` usage must be justified against this exception list in 
 
 ## Known coverage gaps
 
-**Inventory:** [`coverage-matrix.md`](./coverage-matrix.md) — Scenario → Playwright status for all MVP features, post-MVP skips, and Phase 6–8 unshipped rows. Prefer the matrix over duplicating gap tables here.
+**Inventory:** [`coverage-matrix.md`](./coverage-matrix.md) — Scenario → Playwright status for all MVP features (Phase 8 close-out). Prefer the matrix over duplicating gap tables here.
 
-### Residual notes (after Phase 5.5 step 04)
+### Residual notes (Phase 8 close)
 
 | Area | Notes |
 |---|---|
-| Discover CTA → `/events` | Browse CTA goes to `signup?returnTo=/:locale/events`; onboarding finish still lands on membership. Auto `returnTo` after onboarding polish → step 05 / Phase 8. |
-| `auth` / GDPR | Google OAuth + data export/deletion remain `deferred` → Phase 8 (stubs in `auth.spec.ts`). |
+| Discover CTA → `/events` | Browse CTA goes to `signup?returnTo=/:locale/events`; onboarding finish still lands on `/membership`. Auto `returnTo` after onboarding → **named deferral** (post-MVP polish). |
+| `auth` / Google OAuth | Google OAuth scenarios remain `deferred` — Neon test provider; staging manual. |
+| GDPR Neon Auth disable | Export/delete Playwright exists; credential-reject after anonymize may skip when Auth plugins incomplete — ops cutover in `DEPLOYMENT.md`. |
 | Post-MVP | `admin-partners` portal/QR `@skip-no-ui` stubs — leave until post-MVP. |
 | Locator polish | `e2e/fixtures/onboarding.ts` `page.locator("label").filter` — proximity-adjacent; optional later cleanup. |
-| Unshipped | `booking`, `credits-subscription`, `waitlist`, `profile`, `admin-users` — matrix rows `unshipped`; ship e2e with Phases 6–8. |
 
-Admin event G7 date/time locators and remote-URL image were remediated in step 03. File inputs keep `// BDD exception: file-input`.
+Admin event G7 date/time locators and remote-URL image were remediated in Phase 5.5. File inputs keep `// BDD exception: file-input`.
 
 ---
 

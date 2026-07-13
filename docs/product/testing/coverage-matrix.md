@@ -38,7 +38,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-partners.feature` | Partner creation validation | `e2e/specs/admin-partners.spec.ts` (validation paths in create flows) | `pass` | Covered alongside create partner |
 | `admin-partners.feature` | Edit a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Edit a partner` | `pass` |  |
 | `admin-partners.feature` | Renaming a partner propagates to its events | `e2e/specs/admin-partners.spec.ts` · `Scenario: Renaming a partner propagates to its events` | `pass` |  |
-| `admin-partners.feature` | Delete a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Delete a partner` | `skip` | post-MVP portal/QR — leave skipped |
+| `admin-partners.feature` | Delete a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Delete a partner` | `pass` | Venue CRUD (MVP); portal/QR scenarios below stay post-MVP |
 | `admin-users.feature` | List all members | `e2e/specs/admin-users.spec.ts` · `Scenario: List all members` | `pass` | Needs `DATABASE_URL` + `E2E_ADMIN_*` |
 | `admin-users.feature` | Search members | `e2e/specs/admin-users.spec.ts` · `Scenario: Search members` | `pass` |  |
 | `admin-users.feature` | View a member's collapsed summary | `e2e/specs/admin-users.spec.ts` · `Scenario: View a member's collapsed summary` | `pass` | List row columns (role, subscription, credits, …) |
@@ -57,12 +57,12 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `auth.feature` | Log out | `e2e/specs/auth.spec.ts` · `Scenario: Log out` | `pass` |  |
 | `auth.feature` | Route protection for authenticated-only areas | `e2e/specs/auth.spec.ts` · `Scenario: Route protection for authenticated-only areas` | `pass` |  |
 | `auth.feature` | Route protection by role | `e2e/specs/auth.spec.ts` · `Scenario: Route protection by role` | `pass` |  |
-| `auth.feature` | Sign up or log in with Google | `e2e/specs/auth.spec.ts` · `Scenario: Sign up or log in with Google` | `deferred` | Phase 8 — Google OAuth / GDPR named deferral |
-| `auth.feature` | Social login never creates a PARTNER or ADMIN account | `e2e/specs/auth.spec.ts` · `Scenario: Social login never creates a PARTNER or ADMIN account` | `deferred` | Phase 8 — Google OAuth / GDPR named deferral |
-| `auth.feature` | Request a data export | `e2e/specs/auth.spec.ts` · `Scenario: Request a data export` | `deferred` | Phase 8 — Google OAuth / GDPR named deferral |
-| `auth.feature` | Request account deletion | `e2e/specs/auth.spec.ts` · `Scenario: Request account deletion` | `deferred` | Phase 8 — Google OAuth / GDPR named deferral |
-| `auth.feature` | Account deletion is distinct from subscription cancellation | `e2e/specs/auth.spec.ts` · `Scenario: Account deletion is distinct from subscription cancellation` | `deferred` | Phase 8 — Google OAuth / GDPR named deferral |
-| `auth.feature` | Admin can process account deletion on a member's behalf | `e2e/specs/auth.spec.ts` · `Scenario: Admin can process account deletion on a member's behalf` | `deferred` | Phase 8 — Google OAuth / GDPR named deferral |
+| `auth.feature` | Sign up or log in with Google | `e2e/specs/auth.spec.ts` · `Scenario: Sign up or log in with Google` | `deferred` | Google OAuth — Neon test provider; staging manual |
+| `auth.feature` | Social login never creates a PARTNER or ADMIN account | `e2e/specs/auth.spec.ts` · `Scenario: Social login never creates a PARTNER or ADMIN account` | `deferred` | Google OAuth — Neon test provider; staging manual |
+| `auth.feature` | Request a data export | `e2e/specs/auth.spec.ts` · `Scenario: Request a data export` | `pass` | Needs `DATABASE_URL`; on-demand JSON download |
+| `auth.feature` | Request account deletion | `e2e/specs/auth.spec.ts` · `Scenario: Request account deletion` | `pass` | Disposable member; may skip credential check if Neon Auth disable incomplete |
+| `auth.feature` | Account deletion is distinct from subscription cancellation | `e2e/specs/auth.spec.ts` · `Scenario: Account deletion is distinct from subscription cancellation` | `pass` | Cancel-alone vs delete; no fake Stripe ids on delete path |
+| `auth.feature` | Admin can process account deletion on a member's behalf | `e2e/specs/auth.spec.ts` · `Scenario: Admin can process account deletion on a member's behalf` | `pass` | Needs `E2E_ADMIN_*`; may skip credential check if Neon Auth admin remove incomplete |
 | `booking.feature` | Booking requires authentication | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires authentication` | `pass` | Needs `DATABASE_URL` for seeded event id |
 | `booking.feature` | Booking requires an active subscription | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires an active subscription` | `pass` |  |
 | `booking.feature` | Successful booking | `e2e/specs/booking.spec.ts` · `Scenario: Successful booking` | `pass` | Seeds ACTIVE via billing fixture |
@@ -120,13 +120,13 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `profile.feature` | View billing information | `e2e/specs/profile.spec.ts` · `Scenario: View billing information` | `pass` |  |
 | `profile.feature` | Update billing information | `e2e/specs/profile.spec.ts` · `Scenario: Update billing information` | `pass` | Portal CTA + error path with fake `cus_*`; deep Portal = staging |
 | `profile.feature` | Cancel subscription | `e2e/specs/profile.spec.ts` · `Scenario: Cancel subscription` | `pass` | Confirm page + seeded `CANCELLED_PENDING` |
-| `profile.feature` | Access account deletion and data export | `e2e/specs/profile.spec.ts` · `Scenario: Access account deletion and data export` | `deferred` | Entry links pass; GDPR page mechanics → Phase 8 |
+| `profile.feature` | Access account deletion and data export | `e2e/specs/profile.spec.ts` · `Scenario: Access account deletion and data export` | `pass` | Entry links + page headings; full mechanics in `auth.spec.ts` |
 | `profile.feature` | Edit cultural preferences ("Vibes") | `e2e/specs/profile.spec.ts` · `Scenario: Edit cultural preferences ("Vibes")` | `pass` |  |
 | `profile.feature` | View credit wallet | `e2e/specs/profile.spec.ts` · `Scenario: View credit wallet` | `pass` |  |
 | `profile.feature` | Refill credits | `e2e/specs/profile.spec.ts` · `Scenario: Refill credits` | `pass` |  |
 | `static-pages.feature` | Discover is the home page | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover is the home page` | `pass` |  |
 | `static-pages.feature` | Discover preview links to public event detail | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover preview links to public event detail` | `pass` |  |
-| `static-pages.feature` | Discover CTA path to the full member events feed | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover CTA path to the full member events feed` | `pass` | CTA → signup?returnTo=/events; onboarding finish still → membership; auto returnTo polish → Phase 8 |
+| `static-pages.feature` | Discover CTA path to the full member events feed | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover CTA path to the full member events feed` | `pass` | CTA → signup?returnTo=/events; after onboarding test navigates to `/events`. Auto honor `returnTo` on onboarding finish → `deferred` (post-MVP polish) |
 | `static-pages.feature` | How it works | `e2e/specs/static-pages.spec.ts` · `Scenario: How it works` | `pass` |  |
 | `static-pages.feature` | FAQ | `e2e/specs/static-pages.spec.ts` · `Scenario: FAQ` | `pass` |  |
 | `static-pages.feature` | Legacy /discover redirects to locale home | `e2e/specs/static-pages.spec.ts` · `Scenario: Legacy /discover redirects to locale home` | `pass` |  |
@@ -134,7 +134,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `static-pages.feature` | Legal pages exist and are linked from the footer | `e2e/specs/static-pages.spec.ts` · `Scenario: Legal pages exist and are linked from the footer` | `pass` |  |
 | `static-pages.feature` | Cookie consent banner on first visit | `e2e/specs/static-pages.spec.ts` · `Scenario: Cookie consent banner on first visit` | `pass` |  |
 | `static-pages.feature` | Declining consent disables the map embed | `e2e/specs/static-pages.spec.ts` · `Scenario: Declining consent disables the map embed` | `pass` |  |
-| `static-pages.feature` | Error tracking is not gated behind consent | `e2e/specs/static-pages.spec.ts` · `Scenario: Error tracking is not gated behind consent` | `pass` | Phase 9 Sentry not wired; asserts no consent gate today |
+| `static-pages.feature` | Error tracking is not gated behind consent | `e2e/specs/static-pages.spec.ts` · `Scenario: Error tracking is not gated behind consent` | `pass` | Server-only Sentry (`SENTRY_DSN`); no `window.Sentry` — asserts tracking is not consent-gated |
 | `waitlist.feature` | Join the waitlist | `e2e/specs/waitlist.spec.ts` · `Scenario: Join the waitlist` | `pass` | Seed `Sold Out: Waitlist Demo Night` |
 | `waitlist.feature` | Joining the waitlist requires authentication | `e2e/specs/waitlist.spec.ts` · `Scenario: Joining the waitlist requires authentication` | `pass` |  |
 | `waitlist.feature` | Duplicate waitlist join is prevented | `e2e/specs/waitlist.spec.ts` · `Scenario: Duplicate waitlist join is prevented` | `pass` |  |
@@ -183,11 +183,26 @@ Partner portal / check-in is **out of MVP**. Overlapping stubs in `e2e/specs/adm
 | `post-mvp/partner-and-checkin.feature` | Re-scanning an already-used venue QR check-in | — | `skip` | post-MVP |
 | `post-mvp/partner-and-checkin.feature` | Venue token mismatch | — | `skip` | post-MVP |
 
-## Locator / harness notes (step 03)
+## Phase 8 close-out (`seo-launch-polish-03`)
+
+All 11 top-level MVP `docs/product/features/*.feature` files are mapped above to `pass` / `skip` / `deferred`. No `unshipped` MVP rows remain. Silent skips are forbidden; named MVP deferrals:
+
+| Scenario | Status | Owner / reason |
+|---|---|---|
+| Google OAuth (+ social never creates PARTNER/ADMIN) | `deferred` | Neon test provider; staging manual |
+| Stripe Checkout activation | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
+| Monthly renewal / no rollover | `skip` | Billing package + webhook tests |
+| Booking confirmation email | `skip` | No inbox harness; staging Resend |
+| Idempotent retry / waitlist queue order | `skip` | Covered by package integration tests |
+| Onboarding auto-`returnTo` after finish | `deferred` | post-MVP polish — finish still → `/membership` |
+| GDPR credential reject after anonymize | conditional skip | Neon Auth delete/remove plugins; ops cutover |
+| Partner portal / QR / check-in | `skip` | `features/post-mvp/` |
+
+## Locator / harness notes
 
 | Item | Status | Notes |
 |---|---|---|
 | Admin event date/time `input[name=…]` (G7) | remediated | `getByLabel` / roles in admin-events + fixtures |
 | File inputs (`image`, `logo`) | exception | `// BDD exception: file-input` |
-| `e2e/fixtures/onboarding.ts` `page.locator("label").filter` | deferred polish | proximity-adjacent; left as-is in step 03 |
-| Remote-URL event image | pass | unskipped in step 03 |
+| `e2e/fixtures/onboarding.ts` `page.locator("label").filter` | deferred polish | proximity-adjacent; left as-is |
+| Remote-URL event image | pass | |

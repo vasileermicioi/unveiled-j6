@@ -12,6 +12,7 @@ export {
   TIMING_OPTIONS,
   WEEKDAYS,
 } from "./constants";
+export type { DisableAuthUserFn } from "./disable-auth-user";
 export { optionalSession, requireAuth, requireRole } from "./guards";
 export type {
   AgeStepPayload,

@@ -43,6 +43,8 @@ export default createRoute(async (c) => {
     page: listQuery.page,
     role: listQuery.role,
   });
+  const ok = new URL(c.req.url).searchParams.get("ok");
+  const successMessage = ok === "delete-account" ? copy.deleteAccountSuccess : null;
 
   return renderAdminPage(
     c,
@@ -55,6 +57,7 @@ export default createRoute(async (c) => {
         limit: listQuery.limit,
         role: listQuery.role,
       }}
+      successMessage={successMessage}
       total={total}
     />,
     {

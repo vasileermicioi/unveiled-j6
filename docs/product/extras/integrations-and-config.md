@@ -11,7 +11,7 @@ Env vars and third-party services for the production MVP. Partner-portal-only fl
 | 5+ | _(none)_ — MapLibre + OSM; no API key |
 | 6+ | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_BASIC_BERLIN` |
 | 6+ | `RESEND_API_KEY`, `DAILY_CODES_FROM_EMAIL` |
-| 9+ | `SENTRY_DSN` (optional) |
+| 8+ | `SENTRY_DSN` (optional; server-side `@sentry/cloudflare`) |
 
 ## Environment variables (current app / historical)
 
@@ -43,7 +43,7 @@ Env vars and third-party services for the production MVP. Partner-portal-only fl
 | **Firebase Functions** | 5 callable/scheduled functions (see below) | Reimplement as HonoX server route handlers (callable-equivalents) and a scheduled job (cron equivalent — e.g. a platform cron trigger or an external scheduler hitting a protected route) |
 | **Firebase Hosting** | Frontend deploy | Replace with whatever host runs the HonoX SSR app |
 | **Google Maps** (`@react-google-maps/api`) | Event map | **Decided:** replace with **MapLibre GL JS** + **OpenStreetMap** raster/vector tiles — no Google API key, no `@react-google-maps/api`. Isolate as a small client-hydrated island (see `ui/ui-component-map.md`); include required OSM attribution. Cookie consent gates loading third-party tile requests (Phase 5) |
-| **Sentry** (`@sentry/react`) | Error tracking | Keep; add server-side Sentry for HonoX if desired |
+| **Sentry** (`@sentry/cloudflare`) | Error tracking (server/Workers) | Optional `SENTRY_DSN`; PII-free; ungated by cookie consent. Client `@sentry/react` not required for MVP polish. |
 | **Resend** | Daily partner passcode emails (raw `fetch`, no SDK used) | Keep — same integration, ported to a server route/cron. **Expanded scope for the rewrite:** also used for booking confirmation emails (new, decided: `features/booking.feature`) and waitlist promotion emails (`features/waitlist.feature`) — the old app sent neither, both were purely in-app notifications. Password reset emails (`features/auth.feature`) are sent by Neon Auth's own email hook, which can also be wired to Resend rather than introducing a second email provider |
 | **TanStack React Query** | Lightly used (one query in `AdminPanel`) | Optional in an SSR-only app — most data now loads server-side; keep only if specific islands need client-side refetching |
 

@@ -20,6 +20,7 @@ import {
 } from "../fixtures/admin";
 import { loginAsAdmin } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
+import { hasAdminCredentials } from "../fixtures/waitlist";
 
 /** Stable Wikimedia Commons URL used by seed data (fetchable for processImageFromUrl). */
 const SAMPLE_REMOTE_IMAGE_URL =
@@ -48,6 +49,7 @@ async function attachEventImageFile(page: Page): Promise<void> {
 
 test.describe("admin-events.feature", () => {
   test.beforeEach(async ({ page, locale }, testInfo) => {
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required for admin events e2e");
     if (testInfo.tags.includes("@skip-no-ui")) {
       return;
     }

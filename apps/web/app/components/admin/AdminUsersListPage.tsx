@@ -1,3 +1,4 @@
+import { Paragraph } from "@heroui/react";
 import type { MemberListItem, UserRole } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
@@ -19,9 +20,16 @@ type AdminUsersListPageProps = {
     role?: UserRole;
   };
   total: number;
+  successMessage?: string | null;
 };
 
-export function AdminUsersListPage({ locale, members, query, total }: AdminUsersListPageProps) {
+export function AdminUsersListPage({
+  locale,
+  members,
+  query,
+  total,
+  successMessage = null,
+}: AdminUsersListPageProps) {
   const copy = getAdminCopy(locale);
   const listPath = `/${locale}/admin/users`;
   const queryString = buildAdminListQueryString({
@@ -32,6 +40,9 @@ export function AdminUsersListPage({ locale, members, query, total }: AdminUsers
 
   return (
     <AdminPageShell subtitle={copy.usersSubtitle} title={copy.usersTitle}>
+      {successMessage ? (
+        <Paragraph className="admin-flash admin-flash--success">{successMessage}</Paragraph>
+      ) : null}
       <AdminUsersSearchForm
         action={listPath}
         defaultQuery={query.q}

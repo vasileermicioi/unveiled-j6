@@ -159,7 +159,7 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 | `STRIPE_PRICE_ID_BASIC_BERLIN` | **Yes (Phase 6 staging+)** | 6+ | Stripe price ID for Basic Berlin plan |
 | `RESEND_API_KEY` | **Yes (Phase 6 staging+)** | 6+ | Resend API key for transactional email |
 | `DAILY_CODES_FROM_EMAIL` | **Yes (Phase 6 staging+)** | 6+ | Sender address for booking confirmation + daily code emails |
-| `SENTRY_DSN` | — | 9+ | Sentry error reporting (optional) |
+| `SENTRY_DSN` | — | 8+ (optional) | Server-side Sentry via `@sentry/cloudflare` — PII-free; app boots when unset. Not gated by cookie consent. |
 
 ### Cloudflare R2 (Phase 4)
 
@@ -784,6 +784,37 @@ Admin Membership HQ + capacity ops: `/admin/users`, mutation pages (adjust-credi
 
 **Client demo line:** *"Search a member, adjust credits, freeze, issue a comp ticket, promote waitlist, cancel a booking without refunding credits."*
 
+### GDPR domain (step 01 — package APIs)
+
+Phase 8 also includes GDPR rights (`gdpr-rights-*`) in parallel. Package APIs live in `@unveiled/db` (`buildUserDataExport`, `anonymizeUserAccount`). Auth disable is an injectable `DisableAuthUserFn` (type from `@unveiled/auth` / `@unveiled/db`).
+
+### GDPR UI (step 02 — member + admin pages)
+
+SSR surfaces (all `noindex`):
+
+| Route | Role | Behavior |
+|---|---|---|
+| `/:locale/profile/data-export` | USER | Explainer + `?download=1` JSON attachment via `buildUserDataExport` |
+| `/:locale/profile/delete-account` | USER | Confirm POST → `anonymizeUserAccount` (actor `self`) → proxy `/sign-out` → redirect home |
+| `/:locale/admin/users/:id/delete-account` | ADMIN | Confirm POST → same anonymize path (actor `admin`) → redirect users list |
+
+**Auth disable (wired in `apps/web/app/lib/disable-auth-user.ts`):**
+
+1. **Self-service:** `POST {AUTH_URL}/delete-user` with the member session cookie. If that endpoint is unavailable (404/403/501), falls through to admin remove/ban using the same cookie (only works for Auth-side admins).
+2. **Admin-assisted:** Prefer `POST {AUTH_URL}/admin/remove-user` with `{ userId }` and the admin session cookie.
+3. **Fallback:** `POST {AUTH_URL}/admin/ban-user` then `POST {AUTH_URL}/admin/update-user` with email `deleted-{userId}@deleted.local` (must match `public.users` placeholder).
+4. Enable Neon Auth **Admin plugin** for ban/remove; Console “Make admin” may be required so the operator’s Auth session can call admin endpoints.
+5. Enable Better Auth **`user.deleteUser`** on the Neon Auth project if self-service `/delete-user` should succeed for regular members (otherwise self-delete depends on Auth-side admin cookie fallback).
+6. No new app env vars beyond existing `AUTH_URL`.
+
+Subscription cancel on deletion reuses `@unveiled/billing` `cancelSubscriptionAtPeriodEnd` (inject at call site); billing-only cancel must not set `deleted_at`.
+
+**GDPR staging smoke:**
+
+1. Member → Profile → **Export data** → download JSON (profile + bookings + ledger).
+2. On a disposable seed member → Profile → **Delete account** → confirm → signed out; re-login with old credentials fails.
+3. Admin → Users → member detail → **Delete account** → confirm → member gone from list; bookings/ledger retained under anonymized id.
+
 ### Freeze vs Stripe `PAST_DUE` (operators)
 
 - Admin **freeze** only from subscription `ACTIVE` → sets `UNPAID` (does not call Stripe).
@@ -797,7 +828,17 @@ Admin Membership HQ + capacity ops: `/admin/users`, mutation pages (adjust-credi
 3. Comp ticket for an upcoming event → confirmed booking, credits unchanged.
 4. Waitlist tab → see WAITING entries; promote one entry with available capacity.
 5. From member detail, cancel a confirmed booking with reason → status `CANCELLED`, credits unchanged.
-6. GDPR delete-account and SEO polish remain later Phase 8 features (`gdpr-rights`, `seo-launch-polish`).
+6. GDPR delete-account: see **GDPR staging smoke** above.
+7. SEO polish (`seo-launch-polish-02`): branded 403/500 pages + optional Sentry — see **Error pages & Sentry** below.
+
+### Error pages & Sentry (`seo-launch-polish-02`)
+
+- **404** — existing `NotFoundPage` (locale `_404`).
+- **403** — `ForbiddenPage` for true forbidden HTML; wrong-role `/admin` still **redirects** non-ADMIN members to `/:locale` (does not leak admin URL existence via a distinct 403).
+- **500** — `ServerErrorPage` via HonoX `_error.tsx` + outer `onError` (no stack traces to users). `/api/*` returns JSON `{ error: "Internal Server Error" }`.
+- **Sentry** — optional `SENTRY_DSN` Worker secret / env; `@sentry/cloudflare` wraps the Worker export; `sendDefaultPii: false`. When unset, init is disabled and the app still boots. Server-only in this step (no client `window.Sentry`); cookie consent does not gate error tracking.
+- **Smoke 500:** set `ENABLE_ERROR_SMOKE=1` locally, then `GET /api/health/error` — expect JSON 500 from outer handler (API path). Unset the flag afterward. Do **not** set `ENABLE_ERROR_SMOKE` on production.
+- **Staging DSN (cutover):** optional but recommended for `seo-launch-polish-03` — create a Sentry project, set Worker secret `SENTRY_DSN`, redeploy; leave unset if monitoring is deferred.
 
 ### Playwright (admin-ops)
 
@@ -814,8 +855,48 @@ Requires `DATABASE_URL`, `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`. Coverage: [`do
 ```bash
 bun run stories
 # AdminAdjustCreditsForm, AdminFreezeForm, AdminRefundForm, AdminCompTicketForm,
-# AdminWaitlistListPage, AdminWaitlistPromotePage, AdminCancelBookingPage
+# AdminWaitlistListPage, AdminWaitlistPromotePage, AdminCancelBookingPage,
+# AdminUsersListPage, AdminUserDetailPage, AdminDeleteAccountForm,
+# DataExportPage, DeleteAccountPage, ForbiddenPage, ServerErrorPage, NotFoundPage
 ```
+
+### Phase 8 MVP audit + cutover (`seo-launch-polish-03`)
+
+**Client demo line:** *"Production-ready member MVP — admin support tools, GDPR, SEO, monitoring."*
+
+#### Staging walkthrough record (2026-07-13)
+
+| Step | Result | Notes |
+|---|---|---|
+| Guest Discover `https://unveiled-j6.deepcode.xyz/de` | **pass** | Brand yellow SSR; preview cards; CTA to membership + signup?returnTo=/de/events |
+| Public event detail | **pass** | HTTP 200 for seeded event ids |
+| `robots.txt` / health | **pass** | Disallows + Sitemap line; `/api/health/runtime` all configured |
+| `sitemap.xml` bookable events | **partial** | Marketing/legal locales present; **event URLs absent on current Worker** — local DB returns 6 bookable ids via `listBookableEventsForSitemap`. Redeploy Worker (`bun run deploy:workers` with `CLOUDFLARE_API_TOKEN`, or Cloudflare Git Builds on `main`) to ship seo-01 sitemap code, then re-check `rg '/events/'` on sitemap |
+| Member signup → onboarding → Checkout → book | **manual / seeded** | Full auth loop needs browser + Stripe test mode; Playwright covers seeded ACTIVE booking locally. Staging Checkout smoke remains operator SoT (`E2E_STRIPE_CHECKOUT` / Dashboard) |
+| Admin Membership HQ support | **manual** | Covered by Playwright when `E2E_ADMIN_*` set; staging: Users search → adjust/freeze/comp/waitlist/cancel per smoke checklist above |
+| Error pages / Sentry | **pass (code)** | 403/500 compositions + optional `SENTRY_DSN`; staging DSN optional |
+
+**Outcome:** Partial — guest SEO surfaces + catalog live; Worker redeploy required for event URLs in sitemap; authenticated member/admin demo remains operator browser smoke (or local `bun run test:e2e` with `E2E_ADMIN_*` / `E2E_USER_*` set).
+
+**E2E note (2026-07-13):** Admin events/partners suites now **skip** when `E2E_ADMIN_*` is unset (named env skip) instead of throwing. Focused smoke + static-pages: 12 passed / 31 skipped. Full suite needs credentials + stable `bun run dev` on `SITE_URL`.
+
+#### Production cutover checklist
+
+Use before promoting a production Workers host (replace staging origin with production).
+
+1. **Neon Postgres** — Production branch/project; run `bun run db:migrate`; decide empty vs curated catalog (prefer curated seed or admin-created venues — avoid demo-only junk).
+2. **Neon Auth** — Production `AUTH_URL`; add production origin to **trusted domains** (exact URL, no trailing slash); configure Google OAuth if offering social login; enable Admin plugin + `user.deleteUser` for GDPR disable paths.
+3. **Worker secrets / vars** — `DATABASE_URL`, `AUTH_URL`, `SITE_URL` (production origin); six R2 vars + `IMAGE_PUBLIC_BASE_URL`; Stripe **live** keys + `STRIPE_PRICE_ID_BASIC_BERLIN` + webhook secret; `RESEND_API_KEY` + `DAILY_CODES_FROM_EMAIL` (verified domain); optional `SENTRY_DSN`. Prefer secrets over committed `[vars]` for credentials.
+4. **Stripe** — Live mode Checkout + Customer Portal (cancel at period end); webhook endpoint → `https://<prod>/api/webhooks/stripe` (`checkout.session.completed`, subscription/invoice events as wired).
+5. **R2** — Production bucket (or same with separate prefix policy); public read base URL; CORS if needed for uploads.
+6. **Resend** — Domain/from verification; send a booking confirmation on staging/prod smoke.
+7. **DNS / Cloudflare** — Custom domain route to Worker; TLS; confirm `SITE_URL` matches browser origin (Auth + Stripe return URLs).
+8. **Admin provisioning** — Create ADMIN out-of-band (SQL promote or Neon Auth admin). **Do not** set `ADMIN_PROMOTE_EMAILS` on production.
+9. **Sentry** — Optional; create project, set `SENTRY_DSN`, redeploy; confirm boot without DSN still works.
+10. **Post-deploy smoke** — `/` → locale; Discover + public `/events/:id`; signup; Checkout test/live as appropriate; book → ticket/code; admin HQ login; `sitemap.xml` includes bookable event URLs; GDPR export on disposable user.
+11. **Stop** — Member/admin MVP is complete. **Partner portal / check-in / partner-codes cron are post-MVP** — do not start in this cutover.
+
+Coverage inventory: [`docs/product/testing/coverage-matrix.md`](../../docs/product/testing/coverage-matrix.md). Planning: `.dev-plan/current-iteration/seo-launch-polish-parent-guide.md`.
 
 ## Phase 2 step 03 verification
 
