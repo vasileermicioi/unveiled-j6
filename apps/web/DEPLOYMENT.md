@@ -28,7 +28,6 @@ If uploads fail with “both async and sync fetching of the wasm failed”, rebu
 Deploy artifacts:
 - `apps/web/wrangler.toml` — Workers config, static assets binding
 - `apps/web/vite.config.ts` — Workers production build (Node/Bun `bun run dev` unchanged for local SSR)
-- Legacy `Dockerfile` / Railway — optional Node reference; not used for web deploy
 
 ## Build and start
 
@@ -208,23 +207,17 @@ Expect an empty listing or object keys — not an auth error.
 5. Edit without a new file — thumbnail unchanged. Edit with a new file — thumbnail updates.
 6. In the R2 bucket, confirm six objects under `images/{uuid}/` for the image id.
 
-## Manual Railway setup (first deploy)
+## Cloudflare Workers setup (GitHub import)
 
-If CI deploy is not yet configured:
+**Staging deploy is not done from GitHub Actions.** Connect the repo in Cloudflare (**Workers & Pages → Create → Import a repository** / Worker Builds) and let Cloudflare build + deploy on push. See [Cloudflare Git import (Workers Builds)](#cloudflare-git-import-workers-builds) for root directory, build/deploy commands, and `BUN_VERSION`.
 
-1. Create a Railway project and link this repository (or use `railway init`).
-2. Add GitHub secret `RAILWAY_TOKEN` (Railway dashboard → Account → Tokens).
-3. Optionally add `RAILWAY_SERVICE_ID` if the project has multiple services.
-4. Push to `main` — the workflow runs lint, typecheck, build, then `railway up`.
-5. Copy the generated `*.up.railway.app` URL into the staging table above.
+GitHub Actions (`.github/workflows/deploy-staging.yml`) only runs **quality + e2e** on `main`. It does **not** call `wrangler deploy` and does **not** need `CLOUDFLARE_API_TOKEN`.
 
-Alternative CLI deploy from repo root:
+Optional local/CLI helpers (operator machine, after `wrangler login` or a personal API token):
 
 ```bash
-npm install -g @railway/cli
-railway login
-railway link
-railway up
+bun run secrets:workers   # one-time / when env changes
+bun run deploy:workers    # manual deploy outside Git import
 ```
 
 ## Phase 2 step 02 verification
@@ -242,7 +235,7 @@ With `DATABASE_URL` and `AUTH_URL` set:
 
 ## Phase 2 release gate (auth step 04)
 
-Phase 2 is complete when staging supports the full auth loop with route protection and authenticated navbar. **Required env vars on Railway:** `DATABASE_URL`, `AUTH_URL`, `SITE_URL`.
+Phase 2 is complete when staging supports the full auth loop with route protection and authenticated navbar. **Required env vars on Workers:** `DATABASE_URL`, `AUTH_URL`, `SITE_URL`.
 
 ### Test user (staging)
 
@@ -271,7 +264,7 @@ WHERE email = 'your@email.com';
 
 Then **sign out and sign in again** (or open `/de/auth/continue`) so the session reloads the updated role. After login, `/de/auth/continue` redirects `ADMIN` → `/de/admin` and the navbar shows an Admin link.
 
-**Staging/dev shortcut:** set `ADMIN_PROMOTE_EMAILS=your@email.com` in Railway or root `.env`. On the next session resolve, matching `USER` accounts are promoted to `ADMIN` automatically. Use only on non-production environments.
+**Staging/dev shortcut:** set `ADMIN_PROMOTE_EMAILS=your@email.com` in Workers `[vars]` / secrets or root `.env`. On the next session resolve, matching `USER` accounts are promoted to `ADMIN` automatically. Use only on non-production environments.
 
 ### Google OAuth (Neon Auth)
 
@@ -433,7 +426,7 @@ After seeding, sign in as ADMIN and verify:
 
 ## Phase 4 release gate (catalog step 05)
 
-Phase 4 is complete when staging supports the admin → public catalog loop with real R2 images. **Required env vars:** Phase 2 trio (`DATABASE_URL`, `AUTH_URL`, `SITE_URL`) **plus** all six R2 vars (see [Cloudflare R2](#cloudflare-r2-phase-4)). Copy local root `.env` R2 values to Railway before the client demo.
+Phase 4 is complete when staging supports the admin → public catalog loop with real R2 images. **Required env vars:** Phase 2 trio (`DATABASE_URL`, `AUTH_URL`, `SITE_URL`) **plus** all six R2 vars (see [Cloudflare R2](#cloudflare-r2-phase-4)). Copy local root `.env` R2 values to Workers (`bun run secrets:workers` or `[vars]`) before the client demo.
 
 **Client demo line:** *"Back office is live. I upload an event photo, publish, and it instantly appears on the public discovery page."*
 
@@ -521,7 +514,7 @@ Selector policy, spec inventory, and skip inventory: [`e2e/README.md`](../../e2e
 
 ### CI behavior (`.github/workflows/deploy-staging.yml`)
 
-On push to `main`: **quality** (lint → typecheck → build) → **e2e** (timeout 20m) → **deploy** (Railway when `RAILWAY_TOKEN` is set). E2E failure blocks deploy.
+On push to `main`: **quality** (lint → typecheck → build) → **e2e** (timeout 20m). E2E failure fails the workflow. **Workers deploy is separate** — Cloudflare GitHub repo import / Workers Builds deploys on push; this workflow does not run `wrangler deploy` and does not use `CLOUDFLARE_API_TOKEN`.
 
 The e2e job uses `SITE_URL=http://localhost:3000` and `CI=true` so Playwright’s `webServer` starts local Node SSR (`bun run dev` + sip). It runs `bun run db:migrate` against the CI `DATABASE_URL` (use a **CI-dedicated** Neon branch — never `seed:demo -- --reset` against shared staging). Image specs self-skip when R2 secrets are absent.
 
@@ -534,7 +527,6 @@ The e2e job uses `SITE_URL=http://localhost:3000` and `CI=true` so Playwright’
 | `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` | **Yes** | Member test account |
 | `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | **Yes** | Admin test account |
 | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` | Optional | Enables admin image-upload E2E |
-| `RAILWAY_TOKEN` / `RAILWAY_SERVICE_ID` | Deploy only | Existing Railway deploy |
 
 If required E2E secrets are empty, the e2e job fails early with a clear error (does not silently skip auth). **Follow-up owner:** repo admin — provision the six required secrets in GitHub → Settings → Secrets and variables → Actions before the first green `main` run after this workflow lands.
 
@@ -621,7 +613,7 @@ bun run stories   # discovery stories under apps/web (port 61001)
 SITE_URL=http://localhost:3000 bun run test:e2e  # includes e2e/specs/event-discovery.spec.ts
 ```
 
-**Local gate note (2026-07-09):** Discovery deliverables are in place. Touched files pass `biome check`. Repo-wide `bun run lint` / `bun run typecheck` still fail on pre-existing issues (AbortSignal / Hono Context) outside this step. Ladle `@unveiled/web` serves discovery stories on `:61001`. `e2e/specs/event-discovery.spec.ts` — 12/12 scenarios green (Neon Auth signup can flake once; suite uses `retries: 1`). Re-seed with `bun run seed:demo -- --reset` after pulling seed changes so tonight/past/coords titles exist. Staging Workers deploy requires `CLOUDFLARE_API_TOKEN` (`bun run deploy:workers`); build succeeds without it.
+**Local gate note (2026-07-09):** Discovery deliverables are in place. Touched files pass `biome check`. Repo-wide `bun run lint` / `bun run typecheck` still fail on pre-existing issues (AbortSignal / Hono Context) outside this step. Ladle `@unveiled/web` serves discovery stories on `:61001`. `e2e/specs/event-discovery.spec.ts` — 12/12 scenarios green (Neon Auth signup can flake once; suite uses `retries: 1`). Re-seed with `bun run seed:demo -- --reset` after pulling seed changes so tonight/past/coords titles exist. Staging deploys via Cloudflare GitHub import (Workers Builds), not a GitHub Actions wrangler token.
 
 ## Phase 5.5 — Spec alignment & debt remediation
 
@@ -659,13 +651,13 @@ bun run stories   # Theme Overview under @unveiled/ui (port 61000)
 SITE_URL=http://localhost:3000 bun run test:e2e
 ```
 
-**Local gate note (2026-07-11):** Touched route `apps/web/app/routes/discover.tsx` passes `biome check`. Theme Overview reachable on Ladle `:61000`. Sitemap-related Playwright scenarios (Discover preview/CTA, guest public detail, guest `/events` gate, legacy `/discover`) — **6/6 passed**. Full `static-pages` + `event-discovery` suite: 21 passed / 4 failed on Neon Auth signup→onboarding flake in member feed/save/map scenarios (pre-existing flake class; not introduced by sitemap redirect). Repo-wide `bun run lint` / `typecheck` still fail on pre-existing Hono Context / biome debt outside this step. Staging Workers deploy requires `CLOUDFLARE_API_TOKEN`.
+**Local gate note (2026-07-11):** Touched route `apps/web/app/routes/discover.tsx` passes `biome check`. Theme Overview reachable on Ladle `:61000`. Sitemap-related Playwright scenarios (Discover preview/CTA, guest public detail, guest `/events` gate, legacy `/discover`) — **6/6 passed**. Full `static-pages` + `event-discovery` suite: 21 passed / 4 failed on Neon Auth signup→onboarding flake in member feed/save/map scenarios (pre-existing flake class; not introduced by sitemap redirect). Repo-wide `bun run lint` / `typecheck` still fail on pre-existing Hono Context / biome debt outside this step. Staging deploys via Cloudflare GitHub import (Workers Builds).
 
-Deploy with `bun run deploy:workers` when `CLOUDFLARE_API_TOKEN` is available. Record the Workers URL / date below after a successful deploy. If the token is missing, treat staging as an operator action — local smoke of Discover + public detail + `/discover` 301 still required.
+Confirm staging after Cloudflare Builds finishes on `main`. Record the Workers URL / date below after a successful deploy. Local smoke of Discover + public detail + `/discover` 301 still required when reviewing locally.
 
 | Environment | URL / evidence | Date |
 |---|---|---|
-| Staging | Blocked — `CLOUDFLARE_API_TOKEN` unset (`bun run deploy:workers` failed 2026-07-11). Local smoke OK: Discover → public detail 200; `/de/discover` + `/discover` 301 → locale home; guest `/events` → login. | 2026-07-11 |
+| Staging | Blocked at the time — Cloudflare Git import / Builds not verified in that session. Local smoke OK: Discover → public detail 200; `/de/discover` + `/discover` 301 → locale home; guest `/events` → login. | 2026-07-11 |
 
 ## Phase 6 — Payments & booking
 
@@ -718,13 +710,13 @@ SITE_URL=http://localhost:3000 bunx playwright test --config e2e/playwright.conf
   e2e/specs/credits-subscription.spec.ts e2e/specs/booking.spec.ts --workers=1
 ```
 
-**Local gate note (2026-07-12):** `bun run typecheck` exit 0. Phase 6 Playwright: **13 passed / 20 skipped** (named deferrals + `E2E_STRIPE_CHECKOUT` opt-in). Vite SSR fixed for Stripe via `apps/web/ssr-shims/qs.js` alias (CJS `qs` → ESM shim). Staging Workers deploy requires `CLOUDFLARE_API_TOKEN` — complete the smoke checklist above when available.
+**Local gate note (2026-07-12):** `bun run typecheck` exit 0. Phase 6 Playwright: **13 passed / 20 skipped** (named deferrals + `E2E_STRIPE_CHECKOUT` opt-in). Vite SSR fixed for Stripe via `apps/web/ssr-shims/qs.js` alias (CJS `qs` → ESM shim). Staging deploys via Cloudflare GitHub import — complete the smoke checklist above when Builds has published.
 
 ### Staging deploy record
 
 | Environment | URL / evidence | Date |
 |---|---|---|
-| Staging | Blocked — `CLOUDFLARE_API_TOKEN` unset. Local smoke OK: `/de` 200 after qs shim; booking + credits-subscription e2e 13/13 in-scope passed. | 2026-07-12 |
+| Staging | Blocked at the time — Cloudflare Builds publish not verified in that session. Local smoke OK: `/de` 200 after qs shim; booking + credits-subscription e2e 13/13 in-scope passed. | 2026-07-12 |
 
 ## Phase 7 — Waitlist & member account
 
@@ -784,7 +776,7 @@ bun run stories
 
 | Environment | URL / evidence | Date |
 |---|---|---|
-| Staging | Pending operator deploy (`CLOUDFLARE_API_TOKEN`). Local: Ladle `@unveiled/web` :61001 OK; Playwright Phase 7 scope — waitlist/profile/booking waitlist-offer + credits cancel/portal CTAs pass (promotion needs `E2E_ADMIN_*`; 2 flaky Phase 6 membership tests are pre-existing Neon Auth redirect flakes). | 2026-07-12 |
+| Staging | Pending operator confirm of Cloudflare Git Builds on `main`. Local: Ladle `@unveiled/web` :61001 OK; Playwright Phase 7 scope — waitlist/profile/booking waitlist-offer + credits cancel/portal CTAs pass (promotion needs `E2E_ADMIN_*`; 2 flaky Phase 6 membership tests are pre-existing Neon Auth redirect flakes). | 2026-07-12 |
 
 ## Phase 8 — Admin ops (Membership HQ)
 
