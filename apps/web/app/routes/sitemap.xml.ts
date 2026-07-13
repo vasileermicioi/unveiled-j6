@@ -1,7 +1,10 @@
+import { listBookableEventsForSitemap } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
+import { getCatalogDb } from "../lib/catalog-db";
 import { LOCALES, localizedPath } from "../lib/locale";
 import { absoluteUrl } from "../lib/site-config";
+import { buildSitemapXml, type SitemapUrlEntry, toSitemapLastmod } from "../lib/sitemap";
 
 const SITEMAP_STATIC_PATHS = [
   "",
@@ -13,27 +16,36 @@ const SITEMAP_STATIC_PATHS = [
   "terms",
 ] as const;
 
-function escapeXml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&apos;");
-}
-
-function buildSitemapXml(): string {
-  const urls = LOCALES.flatMap((locale) =>
-    SITEMAP_STATIC_PATHS.map((segment) => absoluteUrl(localizedPath(locale, segment))),
+function buildStaticEntries(): SitemapUrlEntry[] {
+  return LOCALES.flatMap((locale) =>
+    SITEMAP_STATIC_PATHS.map((segment) => ({
+      loc: absoluteUrl(localizedPath(locale, segment)),
+    })),
   );
-
-  const urlEntries = urls.map((loc) => `  <url><loc>${escapeXml(loc)}</loc></url>`).join("\n");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries}\n</urlset>\n`;
 }
 
-export default createRoute((c) => {
-  return c.body(buildSitemapXml(), 200, {
+export default createRoute(async (c) => {
+  const entries = buildStaticEntries();
+
+  const db = getCatalogDb();
+  if (db) {
+    try {
+      const bookable = await listBookableEventsForSitemap(db);
+      for (const event of bookable) {
+        const lastmod = toSitemapLastmod(event.updatedAt);
+        for (const locale of LOCALES) {
+          entries.push({
+            loc: absoluteUrl(localizedPath(locale, `events/${event.id}`)),
+            lastmod,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("sitemap bookable events fetch failed", error);
+    }
+  }
+
+  return c.body(buildSitemapXml(entries), 200, {
     "Content-Type": "application/xml; charset=utf-8",
   });
 });

@@ -233,8 +233,9 @@ test.describe("static-pages.feature", () => {
   });
 
   test("Scenario: Error tracking is not gated behind consent", async ({ page, locale }) => {
-    // Phase 9: Sentry is not wired yet. Assert declining consent does not inject a Sentry SDK
-    // and that no consent gate exists for error tracking today.
+    // Server-only Sentry (`@sentry/cloudflare` behind SENTRY_DSN) — no client SDK shipped yet,
+    // so window.Sentry stays undefined. Declining consent must not inject a client Sentry SDK;
+    // error tracking is strictly necessary / ungated per integrations-and-config.md.
     await clearConsentOnce(page, locale);
     await page.getByRole("button", { name: /ablehnen|decline/i }).click();
 

@@ -170,14 +170,14 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | `specs/static-pages.spec.ts` | `static-pages.feature` | 9 scenarios; declining consent asserts fallback + no OSM tiles on public `/events/:id` |
 | `specs/auth.spec.ts` | `auth.feature` | Core auth + outlines; see skip inventory below |
 | `specs/onboarding.spec.ts` | `onboarding.feature` | 8 scenarios; fresh signup per mutating test |
-| `specs/admin-partners.spec.ts` | `admin-partners.feature` | Partner CRUD; portal/QR scenarios skipped (no Phase 4 UI) |
+| `specs/admin-partners.spec.ts` | `admin-partners.feature` | Partner CRUD; portal/QR scenarios skipped (post-MVP) |
 | `specs/admin-events.spec.ts` | `admin-events.feature` | Event CRUD + public home (Discover) / `/events/:id`; image tests need R2 |
 | `specs/admin-users.spec.ts` | `admin-users.feature` | Membership HQ list/detail + adjust/freeze/comp; needs `E2E_ADMIN_*` + `DATABASE_URL` |
 | `specs/event-discovery.spec.ts` | `event-discovery.feature` | 12 scenarios; member feed, filters, saved, map |
 | `specs/credits-subscription.spec.ts` | `credits-subscription.feature` | Phase 6–8 member gates + admin credit/freeze/comp via Membership HQ; Checkout opt-in via `E2E_STRIPE_CHECKOUT=1` |
 | `specs/booking.spec.ts` | `booking.feature` | Phase 6 book/confirm; waitlist offer; admin cancel via `/admin/bookings/:id/cancel` |
 | `specs/waitlist.spec.ts` | `waitlist.feature` | Join/cancel/auto-promote + admin waitlist HQ/promote; serial on shared sold-out seed |
-| `specs/profile.spec.ts` | `profile.feature` | Phase 7 identity/preferences/wallet/billing; GDPR pages deferred Phase 8 |
+| `specs/profile.spec.ts` | `profile.feature` | Identity/preferences/wallet/billing + GDPR entry links to export/delete pages |
 
 ## Skip inventory
 
@@ -186,23 +186,22 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | Post-login routing — PARTNER | `auth.spec.ts` | No demo PARTNER credentials in seed; admin-provisioned only |
 | Sign up or log in with Google | `auth.spec.ts` | Google OAuth — Neon test provider; verify manually on staging |
 | Social login never creates PARTNER/ADMIN | `auth.spec.ts` | Same OAuth blocker |
-| Request a data export | `auth.spec.ts` | Phase 8/9 — GDPR export |
-| Request account deletion | `auth.spec.ts` | Phase 8/9 — self-service deletion |
-| Account deletion vs subscription cancellation | `auth.spec.ts` | Phase 8/9 |
-| Admin can process account deletion | `auth.spec.ts` | Phase 8/9 |
-| Regenerate venue check-in QR token | `admin-partners.spec.ts` | Phase 4 — no admin UI (domain helper only) |
-| Portal access (create / exists / email) | `admin-partners.spec.ts` | Portal access UI not built (post-MVP) |
-| Event image as remote URL | `admin-events.spec.ts` | Admin form is upload-only; URL path is seed/CLI |
+| GDPR deletion credential reject (conditional) | `auth.spec.ts` | Named skip only when `public.users` is anonymized but Neon Auth `delete-user` / admin `remove-user` still allows login — enable Auth plugins per `DEPLOYMENT.md` |
+| Regenerate venue check-in QR token | `admin-partners.spec.ts` | post-MVP — no admin UI (domain helper only) |
+| Portal access (create / exists / email) | `admin-partners.spec.ts` | post-MVP — portal access UI not built |
 | Seed demo (empty env) | `admin-events.spec.ts` | Skips when catalog not empty (seed button hidden) |
 | Image upload / logo processing | `admin-*.spec.ts` | `R2 vars not configured` when any of six R2 vars missing |
+| Admin events / partners suite | `admin-events` / `admin-partners` | Skips when `E2E_ADMIN_*` unset (named env skip; was a throw before Phase 8 close) |
 | Activating via real Stripe Checkout | `credits-subscription.spec.ts` | Skips unless `E2E_STRIPE_CHECKOUT=1`; staging smoke is SoT |
 | Monthly renewal resets credits | `credits-subscription.spec.ts` | Billing package / webhook tests; no e2e renewal clock |
 | Deep Stripe Customer Portal hosted UI | `profile.spec.ts` / credits | Fake `cus_*` asserts CTA/error; staging for real portal; optional future `E2E_STRIPE_PORTAL=1` |
-| Redemption outline (SHARED / UNIQUE / VOUCHER) | `booking.spec.ts` | Seed lacks those modes; MANUAL covered |
+| Redemption outline (SHARED / UNIQUE / VOUCHER) | `booking.spec.ts` | Seed lacks those modes; MANUAL / SHARED_GENERATED covered where seeded |
 | Idempotent retry | `booking.spec.ts` | Covered by `book-event.integration.test` |
 | Booking confirmation email | `booking.spec.ts` | No inbox harness; staging Resend checklist |
 | Promotion queue / partial capacity | `waitlist.spec.ts` | Covered by `waitlist.integration.test` |
-| Profile GDPR export/delete pages | `profile.spec.ts` | Entry links asserted; page mechanics → `gdpr-rights` |
+| Onboarding auto-`returnTo` after finish | (product polish) | Finish still → `/membership`; named deferral post-MVP — see coverage matrix |
+
+**Phase 8 close:** Full Scenario → status inventory is [`docs/product/testing/coverage-matrix.md`](../docs/product/testing/coverage-matrix.md). GDPR export/delete + Membership HQ e2e are implemented; env skips (`DATABASE_URL` / `E2E_ADMIN_*`) remain prerequisites.
 
 Cookie consent storage key: `unveiled:cookie-consent` (localStorage).
 

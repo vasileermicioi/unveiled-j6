@@ -122,19 +122,24 @@ The application SHALL display a cookie consent banner on first visit offering ac
 - **AND** a static fallback is shown instead
 - **AND** the site remains fully usable
 
-### Requirement: Static sitemap
+### Requirement: Dynamic sitemap includes bookable events
 
-The application SHALL serve `/sitemap.xml` listing absolute URLs for both locale versions of every Phase 1 static/marketing/legal page.
+The application SHALL serve `/sitemap.xml` containing absolute URLs for both locale versions of marketing and legal pages and both locale versions of currently bookable public event detail URLs (`/:locale/events/:id`). Event entries SHALL include `lastmod` derived from the event's `updated_at`. An event is bookable when `date_time` is in the future and `remaining_capacity` is greater than zero. The sitemap MUST NOT include the member-gated `/:locale/events` feed (path without an event id), sold-out or past events, bare `/`, or private/auth/admin paths.
+
+#### Scenario: Bookable event listed
+
+- **WHEN** an event is in the future with remaining capacity greater than zero
+- **THEN** both `/de/events/:id` and `/en/events/:id` appear in sitemap.xml with a `lastmod` value
+
+#### Scenario: Member feed excluded
+
+- **WHEN** sitemap.xml is generated
+- **THEN** it does not list `/:locale/events` without an event id
 
 #### Scenario: Sitemap includes marketing routes
 
 - **WHEN** a crawler requests `/sitemap.xml`
-- **THEN** the response is valid XML containing `/de` and `/en/terms` among other static page URLs
-
-#### Scenario: No event URLs in Phase 1
-
-- **WHEN** Phase 1 sitemap is generated
-- **THEN** it does not include `/events/:id` URLs
+- **THEN** the response is valid XML containing locale marketing/legal URLs such as `/de` and `/en/terms`
 
 ### Requirement: Site-wide Open Graph fallback
 

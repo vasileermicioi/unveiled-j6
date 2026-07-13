@@ -20,7 +20,7 @@ The system SHALL assert MVP Playwright scenarios with proximity/layout selectors
 - **THEN** that locator is listed as a named deferral (file path, purpose, reason, target phase)
 
 ### Requirement: MVP @skip-no-ui gate
-Phase 5.5 SHALL NOT leave MVP-required scenarios tagged `@skip-no-ui` without an explicit deferral recording scenario name, reason, and target phase. Post-MVP portal/check-in/QR skips MAY remain. Admin waitlist visibility/manual promote SHALL be covered by Playwright once `/admin/waitlist` ships (admin-ops), or recorded as a named env/harness deferral owned by `seo-launch-polish-03` — not left as “UI not built.” GDPR export/delete page mechanics remain deferred to `gdpr-rights` until that feature ships. Stripe Customer Portal deep hosted interactions MAY use an opt-in/seed pattern documented in `e2e/README.md` (analogous to `E2E_STRIPE_CHECKOUT`).
+Phase 5.5 SHALL NOT leave MVP-required scenarios tagged `@skip-no-ui` without an explicit deferral recording scenario name, reason, and target phase. Post-MVP portal/check-in/QR skips MAY remain. Admin waitlist visibility/manual promote SHALL be covered by Playwright once `/admin/waitlist` ships (admin-ops), or recorded as a named env/harness deferral owned by `seo-launch-polish-03` — not left as “UI not built.” GDPR export/delete page mechanics SHALL be covered by Playwright once `gdpr-rights` ships, or recorded as a named Neon Auth / env / harness deferral owned by `seo-launch-polish-03` — not left as “not built.” Stripe Customer Portal deep hosted interactions MAY use an opt-in/seed pattern documented in `e2e/README.md` (analogous to `E2E_STRIPE_CHECKOUT`).
 
 #### Scenario: Remote URL event image
 - **WHEN** Phase 5.5 step 03 completes
@@ -34,9 +34,9 @@ Phase 5.5 SHALL NOT leave MVP-required scenarios tagged `@skip-no-ui` without an
 - **WHEN** `Admin visibility` or `Admin can manually trigger promotion` is evaluated after admin-ops ships `/admin/waitlist`
 - **THEN** the scenarios pass via Playwright, skip only for documented env prerequisites, or are listed as `deferred` → `seo-launch-polish-03` with a non-UI reason
 
-#### Scenario: Profile GDPR mechanics deferred
-- **WHEN** full data-export or delete-account page mechanics are not shipped in Phase 7
-- **THEN** the coverage matrix lists those rows as `deferred` → Phase 8 / `gdpr-rights` (entry-link visibility MAY still pass)
+#### Scenario: Profile GDPR mechanics covered or named-deferred after gdpr-rights
+- **WHEN** data-export or delete-account page mechanics are evaluated after gdpr-rights ships
+- **THEN** the scenarios pass via Playwright, skip only for documented Neon Auth / env / harness reasons, or are listed as `deferred` → `seo-launch-polish-03` with an explicit non-UI reason
 
 ### Requirement: Coverage matrix
 The repository SHALL include a checked-in coverage matrix at `docs/product/testing/coverage-matrix.md` mapping each MVP `docs/product/features/*.feature` Scenario to its Playwright test (or explicit `skip` / `deferred` / `unshipped` status). The matrix SHALL also note post-MVP `features/post-mvp/` scenarios that remain `@skip-no-ui` in shipped e2e. `docs/product/testing/bdd-and-e2e.md` Known coverage gaps SHALL point at this matrix as the single inventory once it is accurate.
@@ -101,3 +101,33 @@ The system SHALL map `docs/product/features/admin-users.feature` scenarios to `e
 #### Scenario: Phase 7 admin UI skips are resolved
 - **WHEN** admin-ops step 05 completes
 - **THEN** waitlist admin visibility/promote, booking admin cancel, and credits-subscription admin adjust/freeze/comp/refund scenarios no longer skip solely because “Phase 8 — … UI” is missing
+
+### Requirement: GDPR Playwright coverage
+The system SHALL cover `auth.feature` GDPR scenarios (export, deletion, admin-assisted deletion, distinct from subscription cancel) in Playwright with verbatim titles, and SHALL assert profile entry points from `profile.feature`. After gdpr-rights hardening, remaining GDPR auth/profile e2e rows SHALL pass or be named-deferred with explicit reasons (Neon Auth / env / harness only — never “not built” or “Phase 9”). The coverage matrix and `e2e/README.md` SHALL reflect the updated inventory with Google OAuth deferrals kept separate from GDPR rows.
+
+#### Scenario: GDPR scenarios executable
+- **WHEN** gdpr-rights hardening completes
+- **THEN** remaining GDPR auth/profile e2e rows pass or are named-deferred with reasons
+
+#### Scenario: Coverage matrix reflects gdpr-rights close-out
+- **WHEN** an implementer opens `docs/product/testing/coverage-matrix.md` after this change
+- **THEN** auth GDPR scenario rows and profile “Access account deletion and data export” are `pass`, env `skip`, or named deferral — not `deferred` solely because GDPR UI is missing
+
+#### Scenario: No silent or outdated GDPR skips
+- **WHEN** `e2e/specs/auth.spec.ts` GDPR tests are reviewed after this change
+- **THEN** no scenario skips solely with “Phase 9 — … not built” or equivalent “UI not built” wording
+
+### Requirement: MVP feature coverage audit
+The system SHALL map every top-level `docs/product/features/*.feature` file (excluding `features/post-mvp/`) to Playwright coverage that either passes or is explicitly named-deferred with reason. Phase 8 release MUST NOT leave silent skips for MVP scenarios. The coverage matrix at `docs/product/testing/coverage-matrix.md` and `e2e/README.md` skip inventory SHALL agree on pass vs named deferral for each MVP feature file.
+
+#### Scenario: Coverage matrix complete
+- **WHEN** Phase 8 launch polish completes
+- **THEN** the coverage matrix lists pass or named deferral (`skip` / `deferred` with notes) for each MVP feature file and does not leave MVP-required scenarios as undocumented or silent skips
+
+#### Scenario: Named deferrals are explicit
+- **WHEN** an MVP Scenario cannot pass in Playwright (third-party harness, integration SoT, env/plugin blocker)
+- **THEN** it is recorded with scenario name, reason, and owner/target in the coverage matrix and/or `e2e/README.md` skip inventory
+
+#### Scenario: Post-MVP remains excluded from the MVP gate
+- **WHEN** Phase 8 launch polish completes
+- **THEN** `features/post-mvp/` scenarios MAY remain skipped and MUST NOT be treated as MVP coverage failures

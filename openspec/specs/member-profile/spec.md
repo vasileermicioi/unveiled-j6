@@ -59,17 +59,31 @@ The system SHALL allow members to change their password through the Neon Auth / 
 
 ### Requirement: Profile navigation entry points
 
-The system SHALL expose navigation from `/profile` to preferences, membership refill, **billing** (`/:locale/profile/billing` — implemented page, not a stub-only path), and password change. The system MAY expose entry links to GDPR data-export and delete-account paths without implementing those handlers in this change. The member app shell SHALL provide a Profile control linking to `/:locale/profile` for signed-in USERs.
+The system SHALL expose navigation from `/profile` to preferences, membership refill, **billing** (`/:locale/profile/billing` — implemented page, not a stub-only path), password change, **data export** (`/:locale/profile/data-export`), and **account deletion** (`/:locale/profile/delete-account`). The member app shell SHALL provide a Profile control linking to `/:locale/profile` for signed-in USERs.
 
 #### Scenario: Profile links to preferences and billing
 
 - **WHEN** a member views `/profile`
 - **THEN** they can navigate to `/profile/preferences` and to `/profile/billing`
 
+#### Scenario: Profile links to GDPR flows
+
+- **WHEN** a member views `/profile`
+- **THEN** they can navigate to `/profile/data-export` and to `/profile/delete-account`
+
 #### Scenario: Navbar profile entry
 
 - **WHEN** a signed-in USER views the app shell
 - **THEN** a Profile control links to `/:locale/profile`
+
+### Requirement: Profile entry points for GDPR
+
+The system SHALL expose navigation from the member profile area to data export and account deletion flows that resolve to working SSR pages (not stub-only 404 paths).
+
+#### Scenario: Access export and deletion
+
+- **WHEN** a member opens profile settings
+- **THEN** they can reach data export and account deletion
 
 ### Requirement: Profile billing page
 
@@ -102,19 +116,33 @@ The system SHALL provide authenticated `/:locale/profile/billing` showing curren
 
 ### Requirement: Phase 7 profile Playwright and Ladle coverage
 
-The system SHALL ship Playwright coverage at `e2e/specs/profile.spec.ts` for in-scope `profile.feature` scenarios (identity, password-change entry, preferences, wallet, refill, billing view/update/cancel entry points) using verbatim Scenario titles and proximity selectors. Ladle SHALL include stories for profile billing and preferences compositions (and related profile pages as needed). GDPR export/delete page mechanics remain Phase 8; entry-link visibility MAY be asserted when links are present. Customer Portal deep hosted flows MAY assert SSR redirect / opt-in policy documented in `e2e/README.md` rather than requiring full Stripe Portal automation in default CI.
+The system SHALL ship Playwright coverage at `e2e/specs/profile.spec.ts` for in-scope `profile.feature` scenarios (identity, password-change entry, preferences, wallet, refill, billing view/update/cancel entry points, and GDPR entry points) using verbatim Scenario titles and proximity selectors. Ladle SHALL include stories for profile billing, preferences, and GDPR export/delete confirm compositions (and related profile pages as needed). `Scenario: Access account deletion and data export` SHALL pass by asserting reachable export/delete entry points (and MAY assert page headings after navigation). Full export download and deletion mechanics MAY remain covered primarily in `auth.spec.ts`. Customer Portal deep hosted flows MAY assert SSR redirect / opt-in policy documented in `e2e/README.md` rather than requiring full Stripe Portal automation in default CI.
 
-#### Scenario: Profile spec covers in-scope scenarios
+#### Scenario: Profile spec covers shipped surfaces
 
-- **WHEN** `bun run test:e2e` runs `e2e/specs/profile.spec.ts` against the configured test environment
-- **THEN** in-scope Phase 7 profile scenarios pass, or are skipped only for documented CI/env prerequisites or named Phase 8 deferrals
+- **WHEN** `bun run test:e2e` executes `e2e/specs/profile.spec.ts`
+- **THEN** identity, preferences, wallet, refill, billing entry, and GDPR entry scenarios pass or record named env skips only
 
-#### Scenario: Profile billing and preferences stories load
+#### Scenario: Profile Ladle includes GDPR compositions
 
-- **WHEN** web Ladle stories are opened after this change
-- **THEN** billing and preferences (and cancel confirm) states render without runtime errors
+- **WHEN** Ladle stories for profile are reviewed after gdpr-rights step 03
+- **THEN** export/delete confirm states are present alongside billing/preferences stories
+
+#### Scenario: GDPR entry is not Phase-8 deferred
+
+- **WHEN** coverage matrix lists `Access account deletion and data export` after this change
+- **THEN** status is `pass` (or env skip) — not deferred for missing GDPR UI
 
 #### Scenario: Coverage matrix profile rows leave unshipped
 
 - **WHEN** Phase 7 closes
 - **THEN** `profile.feature` rows are `pass`, `skip`, or `deferred` — not `unshipped`
+
+### Requirement: GDPR profile Ladle coverage
+
+The system SHALL provide Ladle stories for member GDPR compositions `DataExportPage` and `DeleteAccountPage` (confirm + error where applicable) under `apps/web/app/components/profile/`, and for `AdminDeleteAccountForm` confirm/error under `apps/web/app/components/admin/`.
+
+#### Scenario: Export and delete confirm stories exist
+
+- **WHEN** an implementer opens Ladle after this change
+- **THEN** DataExport, DeleteAccount confirm/error, and AdminDeleteAccount confirm/error stories load

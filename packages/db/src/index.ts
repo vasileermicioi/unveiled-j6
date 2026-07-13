@@ -27,6 +27,7 @@ export type TxDb = ReturnType<typeof createTxDb>;
 export * from "./admin";
 export * from "./booking";
 export * from "./catalog";
+export * from "./gdpr";
 export * from "./schema";
 export * from "./waitlist";
 /** Re-export for packages that write against `@unveiled/db` schema without a second drizzle-orm copy. */

@@ -82,6 +82,8 @@ function successCopy(copy: AdminCopy, ok: string | null | undefined): string | n
       return copy.compTicketSuccess;
     case "cancel-booking":
       return copy.cancelBookingSuccess;
+    case "delete-account":
+      return copy.deleteAccountSuccess;
     default:
       return null;
   }
@@ -117,6 +119,10 @@ export function AdminUserDetailPage({
     {
       href: localizedPath(locale, `${userBase}/refund`),
       label: copy.usersRefund,
+    },
+    {
+      href: localizedPath(locale, `${userBase}/delete-account`),
+      label: copy.usersDeleteAccount,
     },
   ];
 

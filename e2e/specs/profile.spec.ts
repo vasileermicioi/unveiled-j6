@@ -134,7 +134,19 @@ test.describe("profile.feature", () => {
     await page.goto(`/${locale}/profile`);
     await expect(page.getByRole("link", { name: /daten exportieren|export data/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /konto löschen|delete account/i })).toBeVisible();
-    // Full GDPR page mechanics → Phase 8.
+
+    await page.getByRole("link", { name: /daten exportieren|export data/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/profile/data-export`));
+    await expect(
+      page.getByRole("heading", { name: /daten exportieren|export your data/i }),
+    ).toBeVisible();
+
+    await page.goto(`/${locale}/profile`);
+    await page.getByRole("link", { name: /konto löschen|delete account/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/profile/delete-account`));
+    await expect(
+      page.getByRole("heading", { name: /konto löschen|delete account/i }),
+    ).toBeVisible();
   });
 
   test('Scenario: Edit cultural preferences ("Vibes")', async ({ page, locale }) => {

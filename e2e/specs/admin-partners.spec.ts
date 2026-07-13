@@ -13,9 +13,11 @@ import {
 } from "../fixtures/admin";
 import { loginAsAdmin } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
+import { hasAdminCredentials } from "../fixtures/waitlist";
 
 test.describe("admin-partners.feature", () => {
   test.beforeEach(async ({ page, locale }, testInfo) => {
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required for admin partners e2e");
     if (testInfo.tags.includes("@skip-no-ui")) {
       return;
     }
@@ -132,28 +134,28 @@ test.describe("admin-partners.feature", () => {
   test("Scenario: Regenerate a partner's venue check-in QR token", {
     tag: "@skip-no-ui",
   }, async () => {
-    test.skip(true, "Phase 4 — no admin UI for venue check-in QR regenerate (domain helper only)");
+    test.skip(true, "post-MVP — no admin UI for venue check-in QR regenerate (domain helper only)");
   });
 
   test("Scenario: Create partner portal login access", { tag: "@skip-no-ui" }, async () => {
-    test.skip(true, "Phase 4 — partner portal access UI not built (admin-provisioned in Phase 8)");
+    test.skip(true, "post-MVP — partner portal access UI not built");
   });
 
   test("Scenario: Creating portal access when it already exists", {
     tag: "@skip-no-ui",
   }, async () => {
-    test.skip(true, "Phase 4 — partner portal access UI not built");
+    test.skip(true, "post-MVP — partner portal access UI not built");
   });
 
   test("Scenario: Creating portal access requires a valid email", {
     tag: "@skip-no-ui",
   }, async () => {
-    test.skip(true, "Phase 4 — partner portal access UI not built");
+    test.skip(true, "post-MVP — partner portal access UI not built");
   });
 
   test("Scenario: Creating portal access with an email already in use", {
     tag: "@skip-no-ui",
   }, async () => {
-    test.skip(true, "Phase 4 — partner portal access UI not built");
+    test.skip(true, "post-MVP — partner portal access UI not built");
   });
 });

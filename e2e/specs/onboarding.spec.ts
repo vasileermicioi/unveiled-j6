@@ -7,6 +7,7 @@ import {
   completeOnboardingWizard,
   completeTimingStep,
 } from "../fixtures/onboarding";
+import { hasAdminCredentials } from "../fixtures/waitlist";
 
 test.describe("onboarding.feature", () => {
   test("Scenario: Onboarding is required before using the app", async ({ page, locale }) => {
@@ -16,6 +17,7 @@ test.describe("onboarding.feature", () => {
   });
 
   test("Scenario: Non-USER roles skip onboarding", async ({ page, locale }) => {
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required for ADMIN onboarding skip");
     // ADMIN via ADMIN_PROMOTE_EMAILS — never shown the wizard after promotion.
     await loginAsAdmin(page, locale);
     // If admin account was just created as USER, first login may hit onboarding before promote.

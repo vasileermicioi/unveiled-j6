@@ -105,6 +105,7 @@ export type AdminCopy = {
   usersFreeze: string;
   usersCompTicket: string;
   usersRefund: string;
+  usersDeleteAccount: string;
   usersNoValue: string;
   usersSectionBookings: string;
   usersEmptyBookings: string;
@@ -163,6 +164,10 @@ export type AdminCopy = {
   cancelBookingSubmit: string;
   cancelBookingSuccess: string;
   cancelBookingNotConfirmed: string;
+  deleteAccountTitle: string;
+  deleteAccountBody: (name: string) => string;
+  deleteAccountSubmit: string;
+  deleteAccountSuccess: string;
   adminOpsErrors: {
     USER_NOT_FOUND: string;
     ZERO_AMOUNT: string;
@@ -379,6 +384,7 @@ const copy: Record<Locale, AdminCopy> = {
     usersFreeze: "Einfrieren / Auftauen",
     usersCompTicket: "Comp-Ticket",
     usersRefund: "Manuelle Erstattung",
+    usersDeleteAccount: "Konto löschen",
     usersNoValue: "—",
     usersSectionBookings: "Bestätigte Buchungen",
     usersEmptyBookings: "Keine bestätigten Buchungen.",
@@ -443,6 +449,11 @@ const copy: Record<Locale, AdminCopy> = {
     cancelBookingSubmit: "Buchung stornieren",
     cancelBookingSuccess: "Buchung wurde storniert.",
     cancelBookingNotConfirmed: "Nur bestätigte Buchungen können storniert werden.",
+    deleteAccountTitle: "Konto löschen",
+    deleteAccountBody: (name) =>
+      `Konto von „${name}" endgültig löschen? Name, E-Mail und Präferenzen werden anonymisiert. Buchungs- und Credit-Historie bleiben anonymisiert erhalten. Die Anmeldung wird deaktiviert. Ein aktives Abo wird mitgekündigt. Diese Aktion kann nicht rückgängig gemacht werden.`,
+    deleteAccountSubmit: "Konto endgültig löschen",
+    deleteAccountSuccess: "Mitgliedskonto wurde anonymisiert.",
     adminOpsErrors: {
       USER_NOT_FOUND: "Mitglied nicht gefunden.",
       ZERO_AMOUNT: "Betrag darf nicht null sein.",
@@ -661,6 +672,7 @@ const copy: Record<Locale, AdminCopy> = {
     usersFreeze: "Freeze / unfreeze",
     usersCompTicket: "Comp ticket",
     usersRefund: "Manual refund",
+    usersDeleteAccount: "Delete account",
     usersNoValue: "—",
     usersSectionBookings: "Confirmed bookings",
     usersEmptyBookings: "No confirmed bookings.",
@@ -724,6 +736,11 @@ const copy: Record<Locale, AdminCopy> = {
     cancelBookingSubmit: "Cancel booking",
     cancelBookingSuccess: "Booking was cancelled.",
     cancelBookingNotConfirmed: "Only confirmed bookings can be cancelled.",
+    deleteAccountTitle: "Delete account",
+    deleteAccountBody: (name) =>
+      `Permanently delete “${name}”? Name, email, and preferences will be anonymized. Booking and credit history are retained in anonymized form. Login will be disabled. Any active subscription is cancelled. This cannot be undone.`,
+    deleteAccountSubmit: "Permanently delete account",
+    deleteAccountSuccess: "Member account was anonymized.",
     adminOpsErrors: {
       USER_NOT_FOUND: "Member not found.",
       ZERO_AMOUNT: "Amount must be non-zero.",

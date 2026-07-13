@@ -236,7 +236,7 @@ Document all required vars in `apps/web/DEPLOYMENT.md`. Key vars by phase:
 | 5+ | _(none)_ — event map uses **MapLibre GL JS** + **OpenStreetMap** tiles; no API key |
 | 6+ | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_BASIC_BERLIN` |
 | 6+ | `RESEND_API_KEY`, `DAILY_CODES_FROM_EMAIL` |
-| 9+ | `SENTRY_DSN` (optional) |
+| 8+ | `SENTRY_DSN` (optional) |
 
 Full mapping: [`docs/product/extras/integrations-and-config.md`](docs/product/extras/integrations-and-config.md).
 

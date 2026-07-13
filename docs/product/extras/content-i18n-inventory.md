@@ -81,7 +81,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `secure` | SICHERE ZAHLUNG VIA STRIPE | SECURE PAYMENT VIA STRIPE |
 | `perks[0]` | Alle Events inklusive | All events included |
 | `perks[1]` | Vorkaufsrecht für Highlights | Early access to highlights |
-| `perks[2]` | Credits rollen mit | Credits roll over |
+| `perks[2]` | 17 Credits jeden Monat | 17 fresh credits every month |
 | `guarantee` | Keine versteckten Kosten. Monatlich kündbar. | No hidden fees. Cancel monthly. |
 | `successTitle` | WILLKOMMEN IM CLUB. | WELCOME TO THE CLUB. |
 | `successSubtitle` | Deine Credits sind bereit. Viel Spaß in Berlin! | Your credits are loaded. Enjoy Berlin! |
@@ -93,7 +93,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `activeStatus` | Status: Aktiv | Status: Active |
 
 > ✅ **Resolved:** `secure: "SICHERE ZAHLUNG VIA STRIPE" / "SECURE PAYMENT VIA STRIPE"` referenced Stripe despite no integration existing in the old app. **Decided:** the rewrite implements real Stripe Billing (see `features/credits-subscription.feature`), so this copy is now accurate as-is and can be kept unchanged.
-> ⚠️ **Needs copy correction:** `perks[2]` ("Credits roll over" / "Credits rollen mit") — **decided:** credits do **not** roll over in the rewrite (see `features/credits-subscription.feature`). This specific line must be rewritten before launch, e.g. DE: "17 Credits jeden Monat" / EN: "17 fresh credits every month" — do not ship the old "roll over" claim, it is now actively false rather than just unimplemented.
+> ✅ **Resolved:** `perks[2]` — app + inventory now use DE: "17 Credits jeden Monat" / EN: "17 fresh credits every month". Credits do **not** roll over (see `features/credits-subscription.feature`); the old "Credits roll over" / "Credits rollen mit" claim must not return.
 
 ## `redemption`
 
