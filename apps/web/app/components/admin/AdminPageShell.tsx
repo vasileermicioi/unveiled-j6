@@ -32,7 +32,7 @@ export function AdminPageShell({
             {breadcrumbs.map((crumb, index) => (
               <Surface
                 className="flex items-center gap-2"
-                key={`${crumb.label}-${index}`}
+                key={crumb.href ?? `current:${crumb.label}`}
                 variant="transparent"
               >
                 {crumb.href ? (

@@ -43,6 +43,19 @@ type EventSeriesFormProps = {
 
 const WEEKDAY_VALUES = ["0", "1", "2", "3", "4", "5", "6"];
 
+const MANUAL_SLOTS = Array.from({ length: MANUAL_SLOT_ROWS }, (_, slot) => ({
+  id: `manual-slot-${slot}`,
+  dateName: `slot_date_${slot}`,
+  timeName: `slot_time_${slot}`,
+}));
+
+const BUILDER_TIMES = Array.from({ length: BUILDER_TIME_ROWS }, (_, slot) => ({
+  id: `builder-time-${slot}`,
+  name: `builder_time_${slot}`,
+  labelIndex: slot + 1,
+  defaultEmpty: slot > 0,
+}));
+
 export function EventSeriesForm({
   locale,
   action,
@@ -137,12 +150,12 @@ export function EventSeriesForm({
 
       {slotMode === "manual" ? (
         <Surface className="flex flex-col gap-4" variant="transparent">
-          {Array.from({ length: MANUAL_SLOT_ROWS }, (_, index) => (
+          {MANUAL_SLOTS.map((slot) => (
             <EventAdminDateTimeFields
-              dateName={`slot_date_${index}`}
-              key={index}
+              dateName={slot.dateName}
+              key={slot.id}
               locale={locale}
-              timeName={`slot_time_${index}`}
+              timeName={slot.timeName}
             />
           ))}
         </Surface>
@@ -175,13 +188,13 @@ export function EventSeriesForm({
           </TextField>
           <Surface className="flex flex-col gap-4" variant="transparent">
             <Description>{copy.builderTimesHint}</Description>
-            {Array.from({ length: BUILDER_TIME_ROWS }, (_, index) => (
+            {BUILDER_TIMES.map((slot) => (
               <EventAdminTimeField
-                defaultEmpty={index > 0}
-                key={index}
-                label={copy.builderTimeSlotLabel(index + 1)}
+                defaultEmpty={slot.defaultEmpty}
+                key={slot.id}
+                label={copy.builderTimeSlotLabel(slot.labelIndex)}
                 locale={locale}
-                name={`builder_time_${index}`}
+                name={slot.name}
               />
             ))}
           </Surface>

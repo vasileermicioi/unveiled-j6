@@ -23,7 +23,8 @@
       "scripts/**",
       "package.json",
       "biome.json",
-      "bunfig.toml"
+      "bunfig.toml",
+      "!!**/public"
     ]
   },
   "css": {

@@ -195,12 +195,8 @@
           "name": "bookings_user_id_users_id_fk",
           "tableFrom": "bookings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -208,12 +204,8 @@
           "name": "bookings_event_id_events_id_fk",
           "tableFrom": "bookings",
           "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -221,12 +213,8 @@
           "name": "bookings_partner_id_partners_id_fk",
           "tableFrom": "bookings",
           "tableTo": "partners",
-          "columnsFrom": [
-            "partner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["partner_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -337,12 +325,8 @@
           "name": "credit_ledger_user_id_users_id_fk",
           "tableFrom": "credit_ledger",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -615,12 +599,8 @@
           "name": "events_partner_id_partners_id_fk",
           "tableFrom": "events",
           "tableTo": "partners",
-          "columnsFrom": [
-            "partner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["partner_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -628,12 +608,8 @@
           "name": "events_image_id_images_id_fk",
           "tableFrom": "events",
           "tableTo": "images",
-          "columnsFrom": [
-            "image_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["image_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -705,12 +681,8 @@
           "name": "images_uploaded_by_users_id_fk",
           "tableFrom": "images",
           "tableTo": "users",
-          "columnsFrom": [
-            "uploaded_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uploaded_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -795,12 +767,8 @@
           "name": "partners_logo_image_id_images_id_fk",
           "tableFrom": "partners",
           "tableTo": "images",
-          "columnsFrom": [
-            "logo_image_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["logo_image_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -808,12 +776,8 @@
           "name": "partners_portal_user_id_users_id_fk",
           "tableFrom": "partners",
           "tableTo": "users",
-          "columnsFrom": [
-            "portal_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["portal_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -823,9 +787,7 @@
         "partners_venue_check_in_token_unique": {
           "name": "partners_venue_check_in_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "venue_check_in_token"
-          ]
+          "columns": ["venue_check_in_token"]
         }
       },
       "policies": {},
@@ -878,12 +840,8 @@
           "name": "saved_events_user_id_users_id_fk",
           "tableFrom": "saved_events",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -891,12 +849,8 @@
           "name": "saved_events_event_id_events_id_fk",
           "tableFrom": "saved_events",
           "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -904,10 +858,7 @@
       "compositePrimaryKeys": {
         "saved_events_user_id_event_id_pk": {
           "name": "saved_events_user_id_event_id_pk",
-          "columns": [
-            "user_id",
-            "event_id"
-          ]
+          "columns": ["user_id", "event_id"]
         }
       },
       "uniqueConstraints": {},
@@ -991,12 +942,8 @@
           "name": "subscriptions_user_id_users_id_fk",
           "tableFrom": "subscriptions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1006,16 +953,12 @@
         "subscriptions_stripe_customer_id_unique": {
           "name": "subscriptions_stripe_customer_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "stripe_customer_id"
-          ]
+          "columns": ["stripe_customer_id"]
         },
         "subscriptions_stripe_subscription_id_unique": {
           "name": "subscriptions_stripe_subscription_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "stripe_subscription_id"
-          ]
+          "columns": ["stripe_subscription_id"]
         }
       },
       "policies": {},
@@ -1108,9 +1051,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -1251,12 +1192,8 @@
           "name": "waitlist_entries_event_id_events_id_fk",
           "tableFrom": "waitlist_entries",
           "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1264,12 +1201,8 @@
           "name": "waitlist_entries_user_id_users_id_fk",
           "tableFrom": "waitlist_entries",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1285,94 +1218,52 @@
     "public.booking_status": {
       "name": "booking_status",
       "schema": "public",
-      "values": [
-        "CONFIRMED",
-        "WAITLIST",
-        "CANCELLED",
-        "USED"
-      ]
+      "values": ["CONFIRMED", "WAITLIST", "CANCELLED", "USED"]
     },
     "public.credit_ledger_type": {
       "name": "credit_ledger_type",
       "schema": "public",
-      "values": [
-        "SUBSCRIPTION_REFILL",
-        "BOOKING",
-        "EXPIRY",
-        "REFUND",
-        "ADMIN_ADJUST"
-      ]
+      "values": ["SUBSCRIPTION_REFILL", "BOOKING", "EXPIRY", "REFUND", "ADMIN_ADJUST"]
     },
     "public.secret_code_mode": {
       "name": "secret_code_mode",
       "schema": "public",
-      "values": [
-        "MANUAL",
-        "SHARED_GENERATED",
-        "UNIQUE_PER_BOOKING"
-      ]
+      "values": ["MANUAL", "SHARED_GENERATED", "UNIQUE_PER_BOOKING"]
     },
     "public.ticket_type": {
       "name": "ticket_type",
       "schema": "public",
-      "values": [
-        "VOUCHER",
-        "SECRET_CODE"
-      ]
+      "values": ["VOUCHER", "SECRET_CODE"]
     },
     "public.timing_mode": {
       "name": "timing_mode",
       "schema": "public",
-      "values": [
-        "TIME_SLOT",
-        "ALL_DAY"
-      ]
+      "values": ["TIME_SLOT", "ALL_DAY"]
     },
     "public.image_source": {
       "name": "image_source",
       "schema": "public",
-      "values": [
-        "UPLOAD",
-        "REMOTE_URL"
-      ]
+      "values": ["UPLOAD", "REMOTE_URL"]
     },
     "public.payment_method": {
       "name": "payment_method",
       "schema": "public",
-      "values": [
-        "CARD",
-        "PAYPAL",
-        "SEPA"
-      ]
+      "values": ["CARD", "PAYPAL", "SEPA"]
     },
     "public.subscription_status": {
       "name": "subscription_status",
       "schema": "public",
-      "values": [
-        "ACTIVE",
-        "CANCELLED_PENDING",
-        "INACTIVE",
-        "PAST_DUE",
-        "UNPAID"
-      ]
+      "values": ["ACTIVE", "CANCELLED_PENDING", "INACTIVE", "PAST_DUE", "UNPAID"]
     },
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": [
-        "USER",
-        "ADMIN",
-        "PARTNER"
-      ]
+      "values": ["USER", "ADMIN", "PARTNER"]
     },
     "public.waitlist_status": {
       "name": "waitlist_status",
       "schema": "public",
-      "values": [
-        "WAITING",
-        "PROMOTED",
-        "CANCELLED"
-      ]
+      "values": ["WAITING", "PROMOTED", "CANCELLED"]
     }
   },
   "schemas": {},

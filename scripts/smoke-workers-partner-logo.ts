@@ -44,7 +44,8 @@ async function main(): Promise<void> {
   const cookieJar = new Map<string, string>();
 
   const mergeCookies = (res: Response) => {
-    const headers = typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [];
+    const headers =
+      typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [];
     for (const raw of headers) {
       const [pair] = raw.split(";");
       const eq = pair.indexOf("=");
@@ -52,8 +53,7 @@ async function main(): Promise<void> {
       cookieJar.set(pair.slice(0, eq), pair.slice(eq + 1));
     }
   };
-  const cookieHeader = () =>
-    [...cookieJar.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
+  const cookieHeader = () => [...cookieJar.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
 
   // CSRF / origin: Better Auth needs Origin allowlisted; localhost/127.0.0.1 usually ok.
   const signIn = await fetch(`${baseURL}/api/auth/sign-in/email`, {
