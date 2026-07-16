@@ -10,44 +10,22 @@ Exact DE/EN copy and section structure for marketing pages. Rebuild with HeroUI.
 
 Public page without login. Navbar “Discover” / “Entdecken” points here. Sections, top to bottom:
 
-### 1. Hero panel (bordered card, large)
-Two-column layout (stacks on mobile):
-- **Left column:**
-  - Eyebrow: "Das kannst du aktuell mit unveiled erleben" / "This is what you can currently access with unveiled"
-  - Large headline: "Berlin entdecken, wie du es willst." / "Discover Berlin the way you want."
-  - Subheadline: "Deine Mitgliedschaft für Theater, Kino, Ausstellungen und neue Leute in Berlin." / "Your membership for theatre, cinema, exhibitions, and new people in Berlin."
-  - Two buttons:
-    - "Mitgliedschaft ansehen" / "View membership" → `/membership`
-    - "Live Events ansehen" / "Browse live events" → **signup or login** (after auth + onboarding → member `/events`). Guests do **not** get an ungated `/events` list. Preview cards below still link to public `/events/:id`.
-- **Right column: three stacked stat/info tiles**
-  - Tile 1 (yellow): live count of upcoming events, labeled "Live im Feed" / "Live in the feed" above the number and "kommende Events" / "upcoming events" below
-  - Tile 2 (white): live count of featured partner venues, labeled "Partnerorte" / "Partner venues" above, "aktive Häuser" / "active venues" below
-  - Tile 3 (grey): a static reassurance statement — "Mitgliedschaft" / "Membership" label, then "Alles, was du brauchst, um Berlin zu entdecken." / "Everything you need to discover Berlin."
-
-### 2. Value proposition cards (3-column grid)
-Three cards, each with a bold title and supporting text:
-1. "Finde Dinge, die zu dir passen" / "Find things that fit you" — "Theater, Kino, Ausstellungen und Events in Berlin, die man sonst leicht verpasst." / "Theatre, cinema, exhibitions, and events in Berlin that are easy to miss otherwise."
-2. "Buche spontan mit deinen Credits" / "Book spontaneously with your credits" — "Mit deiner Mitgliedschaft kannst du jederzeit flexibel buchen, worauf du gerade Lust hast." / "With your membership, you can book flexibly whenever something feels right."
-3. "Werde Teil der unveiled Community" / "Become part of the unveiled community" — "Triff Leute, die genauso Lust haben, Neues zu entdecken wie du." / "Meet people who are just as eager to discover something new as you are."
-
-### 3. Live event preview grid
-- Section header: eyebrow "Live synchronisiert" / "Live synced", headline "unveiled App: Event-Übersicht in Berlin" / "unveiled app: live event selection in Berlin"
+### 1. Live event preview grid
+- Section header (`h1`): eyebrow "Mit deiner Mitgliedschaft buchbar" / "Bookable with your membership", headline "Aktuelle Events in Berlin." / "Current events in Berlin." (full-width rule under the title)
 - Grid of up to 6 upcoming events (soonest first), each an `EventCard` with guest CTA **"See details" / "Mehr sehen"** → public `/events/:id` (not booking modal)
 - Empty state (dashed border box): "Aktuell keine kommenden Events." / "No upcoming events right now."
+- Guests do **not** get an ungated `/events` list; signup/login for the full feed is via auth routes (`/signup`, `/login`).
 
-### 4. Membership categories
-- Section header: eyebrow "Mitgliedschaft" / "Memberships", headline "Was du mit unveiled entdecken kannst" / "What you can discover with unveiled", subtext "Mit deiner Mitgliedschaft entdeckst du Dinge in Berlin, die zu dir passen." / "With your membership, you discover things in Berlin that match your interests."
-- Grid of numbered category tiles (numbered `01`–`06`): Kino/Cinema, Ausstellungen/Exhibitions, Theater/Theatre, Museen/Museums, Konzerte/Concerts, Besondere Orte/Special venues
-- A callout box below the grid: "Fehlt dein Lieblingsort?" / "Missing your favorite venue?" with body text inviting suggestions ("Dein Lieblingskino, Theater oder Museum fehlt noch?..." / "If your favorite cinema, theatre, or museum is missing...") and a "Schreib uns" / "Write to us" mailto link to `support@unveiled.berlin`
-
-### 5. Partner venues grid
+### 2. Partner venues grid
 - Section header: eyebrow "Partnerorte" / "Partner venues" (no big headline here, just the eyebrow)
 - Grid of up to 8 partner tiles, each showing the partner's logo (or a large initial letter if no logo), name, and address
 
 ### Dropped from old landing (not on Discover)
+- Hero panel (stats + membership / browse CTAs)
+- Value proposition cards and membership category tiles / venue callout (parked — not shown on Discover)
 - Venue check-in success banner (check-in is **post-MVP**)
 - Inline auth card / GUEST EXPLORER / ADMIN ACCESS — use `/login` and `/signup` instead
-- Separate `/` marketing page distinct from Discover
+- Separate `/` marketing page distinct from Discover`
 
 ---
 

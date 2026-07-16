@@ -72,17 +72,17 @@ The Discover control in the sticky header and mobile navigation drawer SHALL be 
 
 ### Requirement: Relocated destinations remain reachable
 
-How it works (`/how-it-works`) and Membership (`/membership`) SHALL remain listed in the site footer Navigation column. Sign up SHALL remain reachable via Discover page CTAs and auth routes — not via guest header auth controls. Footer brand tagline MAY remain; it is not a header requirement.
+How it works (`/how-it-works`) and Membership (`/membership`) SHALL remain available as routes (direct URL / in-flow CTAs) but SHALL NOT appear in the sticky header or footer Navigation column. Footer Navigation SHALL list Discover and FAQ only. Sign up SHALL remain reachable via auth routes — not via guest header auth controls. Footer brand tagline MAY remain; it is not a header requirement.
 
-#### Scenario: Footer still lists How it works and Membership
+#### Scenario: Footer Navigation is Discover and FAQ only
 
-- **WHEN** a visitor reads the Footer Navigation column in product docs
-- **THEN** How it works and Membership (or equivalent locale labels) are still listed
+- **WHEN** a visitor reads the Footer Navigation column
+- **THEN** Discover and FAQ (or equivalent locale labels) are listed and How it works / Membership are not
 
 #### Scenario: Sign up remains outside header
 
 - **WHEN** a guest needs to create an account
-- **THEN** product docs do not require a Sign up control in the sticky header and still document signup via Discover/auth CTAs
+- **THEN** product docs do not require a Sign up control in the sticky header and still document signup via auth routes
 
 ### Requirement: Discover to Events CTA contract unchanged
 
@@ -95,7 +95,7 @@ The Discover → Events nav / CTA contract in `docs/product/ui/app-shell.md` SHA
 
 ### Requirement: Header regression coverage
 
-Ladle (or equivalent) stories SHALL cover guest slim header, member tools chrome, and admin entry. Automated e2e that previously asserted header links for How it works, Membership, or Sign up SHALL be updated to the new reachability paths (footer Navigation and/or in-page CTAs) or removed if obsolete. Stories and e2e SHALL NOT re-expand header IA. Proximity/layout selectors SHALL remain the only allowed e2e locator style per `docs/product/testing/bdd-and-e2e.md`.
+Ladle (or equivalent) stories SHALL cover guest slim header, member tools chrome, and admin entry. Automated e2e that previously asserted header/footer links for How it works, Membership, or Sign up SHALL be updated to direct URL / in-flow CTAs or removed if obsolete. Stories and e2e SHALL NOT re-expand header/footer IA. Proximity/layout selectors SHALL remain the only allowed e2e locator style per `docs/product/testing/bdd-and-e2e.md`.
 
 #### Scenario: Stories show slim guest chrome
 
@@ -107,10 +107,10 @@ Ladle (or equivalent) stories SHALL cover guest slim header, member tools chrome
 - **WHEN** a developer opens AppNavbar (or AppShell) member and admin stories
 - **THEN** marketing nav is Discover + FAQ and role tools / admin entry remain visible as applicable
 
-#### Scenario: E2e does not require relocated links in the header
+#### Scenario: E2e does not require relocated links in the header or footer nav
 
 - **WHEN** Playwright asserts reachability of How it works, Membership, or Sign up after this change
-- **THEN** those assertions target footer or in-page CTAs (or are removed), not the sticky header primary/auth chrome
+- **THEN** those assertions target direct URLs or in-flow CTAs (or are removed), not the sticky header or footer Navigation column
 
 #### Scenario: Header absence can be asserted with proximity selectors
 

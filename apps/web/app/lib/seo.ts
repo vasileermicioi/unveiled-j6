@@ -107,7 +107,7 @@ export function membershipPageMeta(content: MembershipCheckoutContent, pageTitle
 export function discoverPageMeta(content: DiscoverContent, pageTitle: string) {
   return {
     title: pageTitle,
-    description: content.hero.subheadline,
+    description: `${content.livePreview.eyebrow} ${content.livePreview.headline}`,
   };
 }
 

@@ -42,7 +42,7 @@ test("Scenario: <exact Gherkin scenario title>", …)
 | Parent walks | `getByRole('main').getByRole('link')`; also `banner` / `contentinfo` for header/footer chrome |
 | `nth()` | `getByRole('row').nth(1)` |
 
-After Simplified Header, How it works / Membership / Sign up are **not** in the sticky header — assert them via footer (`contentinfo`) or in-page CTAs; do not re-expand header IA to satisfy a test.
+How it works / Membership / Sign up are **not** in the sticky header or footer Navigation — assert via direct URL or in-flow CTAs; do not re-expand header/footer IA to satisfy a test.
 
 **Forbidden:**
 

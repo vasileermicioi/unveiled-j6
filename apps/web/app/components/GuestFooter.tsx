@@ -44,12 +44,6 @@ export function GuestFooter({ locale }: GuestFooterProps) {
               <Link className="footer-link" href={localizedPath(locale, "")}>
                 {copy.nav.discover}
               </Link>
-              <Link className="footer-link" href={localizedPath(locale, "how-it-works")}>
-                {copy.nav.howItWorks}
-              </Link>
-              <Link className="footer-link" href={localizedPath(locale, "membership")}>
-                {copy.nav.membership}
-              </Link>
               <Link className="footer-link" href={localizedPath(locale, "faq")}>
                 {copy.nav.faq}
               </Link>

@@ -3,6 +3,16 @@ import type { Story } from "@ladle/react";
 import { EventCard } from "./EventCard";
 import { sampleEventAvailable, sampleEventSoldOut } from "./stories/event-fixtures";
 
+export const HoverAvailabilityVisible: Story = () => (
+  <EventCard
+    className="event-card--availability-visible"
+    event={sampleEventAvailable}
+    locale="en"
+    viewer={{ kind: "member", subscriptionActive: true }}
+  />
+);
+HoverAvailabilityVisible.storyName = "EventCard / Hover — availability visible";
+
 export const GuestSeeDetails: Story = () => (
   <EventCard event={sampleEventSoldOut} locale="en" viewer={{ kind: "guest" }} />
 );

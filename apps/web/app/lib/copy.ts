@@ -23,6 +23,12 @@ export type FooterCopy = {
   };
 };
 
+export type DrawerSectionCopy = {
+  navigation: string;
+  language: string;
+  account: string;
+};
+
 export type ShellCopy = {
   nav: NavLinkCopy;
   login: string;
@@ -38,6 +44,8 @@ export type ShellCopy = {
   homeCta: string;
   notFoundTitle: string;
   notFoundBody: string;
+  /** Mobile drawer section labels */
+  drawer: DrawerSectionCopy;
   footer: FooterCopy;
 };
 
@@ -59,6 +67,11 @@ const copy: Record<Locale, ShellCopy> = {
     homeCta: "Entdecken",
     notFoundTitle: "Seite nicht gefunden",
     notFoundBody: "Die angeforderte Seite existiert nicht.",
+    drawer: {
+      navigation: "Navigation",
+      language: "Sprache",
+      account: "Konto",
+    },
     footer: {
       brandEyebrow: "UNVEILED BERLIN",
       tagline: "KURATIERTER KULTURZUGANG IN BERLIN.",
@@ -97,6 +110,11 @@ const copy: Record<Locale, ShellCopy> = {
     homeCta: "Discover",
     notFoundTitle: "Page not found",
     notFoundBody: "The page you requested does not exist.",
+    drawer: {
+      navigation: "Navigation",
+      language: "Language",
+      account: "Account",
+    },
     footer: {
       brandEyebrow: "UNVEILED BERLIN",
       tagline: "CURATED CULTURAL ACCESS IN BERLIN.",

@@ -39,8 +39,8 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
       },
     ],
     livePreview: {
-      eyebrow: "Live synchronisiert",
-      headline: "unveiled App: Event-Übersicht in Berlin",
+      eyebrow: "Mit deiner Mitgliedschaft buchbar",
+      headline: "Aktuelle Events in Berlin.",
       emptyState: "Aktuell keine kommenden Events.",
     },
     categories: {
@@ -96,8 +96,8 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
       },
     ],
     livePreview: {
-      eyebrow: "Live synced",
-      headline: "unveiled app: live event selection in Berlin",
+      eyebrow: "Bookable with your membership",
+      headline: "Current events in Berlin.",
       emptyState: "No upcoming events right now.",
     },
     categories: {

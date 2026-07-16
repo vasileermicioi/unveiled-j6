@@ -20,7 +20,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 ## Discover & public marketing
 
-**Discover is locale home.** `/:locale` renders the Discover marketing experience (hero, value props, curated upcoming preview, categories, venue highlights). Legacy `/:locale/discover` **301** redirects to `/:locale`. Do not invent a third home.
+**Discover is locale home.** `/:locale` renders the Discover marketing experience (curated upcoming events + partner venue highlights). Legacy `/:locale/discover` **301** redirects to `/:locale`. Do not invent a third home.
 
 ### Guest journey (Discover → Events)
 
@@ -96,7 +96,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 | Audience | Primary nav (header) | Events path |
 |---|---|---|
-| **Guest** | Discover (`/:locale`), FAQ; Log in (How it works / Membership / Sign up via footer + page CTAs) | Preview → `/events/:id`; full feed via signup/login → `/events` |
+| **Guest** | Discover (`/:locale`), FAQ; Log in (Sign up via auth routes; How it works / Membership via direct URL / in-flow CTAs) | Preview → `/events/:id`; full feed via signup/login → `/events` |
 | **Member (`USER`)** | Discover, FAQ; Saved + Bookings; credits badge; profile; logout | `/events`, `/events/map`, `/saved`, public detail |
 | **Admin** | Discover + FAQ where shared; admin chrome → `/admin` | Catalog via `/admin/events` |
 

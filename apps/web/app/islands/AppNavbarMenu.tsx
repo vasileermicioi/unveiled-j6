@@ -1,15 +1,20 @@
-import { Button, Chip, Drawer, Link, Surface, useOverlayState } from "@heroui/react";
+import { Button, Drawer, Link, Paragraph, Surface, useOverlayState } from "@heroui/react";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { NavLink } from "../components/NavLink";
+import type { Locale } from "../lib/locale";
 import AuthLogoutButton from "./AuthLogoutButton";
 
 export type MobileNavLink = {
   href: string;
   label: string;
   isActive: boolean;
-  isPrimary?: boolean;
+};
+
+type DrawerSections = {
+  navigation: string;
+  language: string;
+  account: string;
 };
 
 type AppNavbarMenuProps = {
@@ -20,6 +25,10 @@ type AppNavbarMenuProps = {
   showGuestAuthActions: boolean;
   loginHref: string;
   loginLabel: string;
+  locale: Locale;
+  localeDeHref: string;
+  localeEnHref: string;
+  sections: DrawerSections;
   creditsLabel?: string;
   logoutLabel?: string;
   savedHref?: string;
@@ -57,6 +66,30 @@ function MenuTriggerFallback() {
   );
 }
 
+function DrawerSectionLabel({ children }: { children: string }) {
+  return (
+    <Paragraph className="site-nav-drawer__section-label" color="muted" size="xs">
+      {children}
+    </Paragraph>
+  );
+}
+
+function DrawerTextLink({
+  href,
+  label,
+  isActive = false,
+}: {
+  href: string;
+  label: string;
+  isActive?: boolean;
+}) {
+  return (
+    <Link aria-current={isActive ? "page" : undefined} className="drawer-link" href={href}>
+      {label}
+    </Link>
+  );
+}
+
 export default function AppNavbarMenu({
   navLinks,
   isAuthenticated,
@@ -65,6 +98,10 @@ export default function AppNavbarMenu({
   showGuestAuthActions,
   loginHref,
   loginLabel,
+  locale,
+  localeDeHref,
+  localeEnHref,
+  sections,
   creditsLabel,
   logoutLabel,
   savedHref,
@@ -89,6 +126,11 @@ export default function AppNavbarMenu({
     return <MenuTriggerFallback />;
   }
 
+  const showAccountSection =
+    Boolean(bookingsHref || savedHref || adminHref || profileHref || logoutLabel) ||
+    showGuestAuthActions ||
+    Boolean(creditsLabel);
+
   return (
     <Drawer state={drawerState}>
       <Drawer.Trigger aria-label="Open navigation menu" className={menuTriggerClassName}>
@@ -111,98 +153,69 @@ export default function AppNavbarMenu({
               </Drawer.CloseTrigger>
             </Drawer.Header>
 
-            <Drawer.Body className="flex flex-col gap-2">
-              {navLinks.map((link) =>
-                link.isPrimary ? (
-                  <Link
-                    aria-current={link.isActive ? "page" : undefined}
-                    className={
-                      link.isActive
-                        ? "button button--primary button--md button--full-width"
-                        : "button button--secondary button--md button--full-width"
-                    }
-                    href={link.href}
-                    key={link.href}
-                  >
-                    {link.label}
-                  </Link>
-                ) : (
-                  <NavLink
-                    className="w-full justify-start"
+            <Drawer.Body className="site-nav-drawer__body">
+              <Surface className="site-nav-drawer__section" variant="transparent">
+                <DrawerSectionLabel>{sections.navigation}</DrawerSectionLabel>
+                {navLinks.map((link) => (
+                  <DrawerTextLink
                     href={link.href}
                     isActive={link.isActive}
                     key={link.href}
                     label={link.label}
                   />
-                ),
-              )}
+                ))}
+              </Surface>
 
-              {bookingsHref && bookingsLabel ? (
-                <Link
-                  aria-current={bookingsIsActive ? "page" : undefined}
-                  className="button button--secondary button--md button--full-width"
-                  href={bookingsHref}
-                >
-                  {bookingsLabel}
-                </Link>
-              ) : null}
+              <Surface className="site-nav-drawer__section" variant="transparent">
+                <DrawerSectionLabel>{sections.language}</DrawerSectionLabel>
+                <DrawerTextLink href={localeDeHref} isActive={locale === "de"} label="DE" />
+                <DrawerTextLink href={localeEnHref} isActive={locale === "en"} label="EN" />
+              </Surface>
 
-              {savedHref && savedLabel ? (
-                <Link
-                  aria-current={savedIsActive ? "page" : undefined}
-                  className="button button--secondary button--md button--full-width inline-flex items-center justify-between gap-2"
-                  href={savedHref}
-                >
-                  <Surface className="inline" variant="transparent">
-                    {savedLabel}
-                  </Surface>
-                  {savedCount > 0 ? (
-                    <Chip size="sm" variant="primary">
-                      <Chip.Label>{savedCount}</Chip.Label>
-                    </Chip>
-                  ) : null}
-                </Link>
-              ) : null}
+              {showAccountSection ? (
+                <Surface className="site-nav-drawer__section" variant="transparent">
+                  <DrawerSectionLabel>{sections.account}</DrawerSectionLabel>
 
-              {isAuthenticated ? (
-                <Surface className="mt-4 flex flex-col gap-3" variant="transparent">
-                  {adminHref && adminLabel ? (
-                    <Link
-                      className="button button--secondary button--md button--full-width"
-                      href={adminHref}
-                    >
-                      {adminLabel}
-                    </Link>
-                  ) : null}
-                  {creditsLabel ? (
-                    <Chip variant="tertiary">
-                      <Chip.Label>{creditsLabel}</Chip.Label>
-                    </Chip>
-                  ) : null}
-                  {profileHref && profileLabel ? (
-                    <Link
-                      aria-current={profileIsActive ? "page" : undefined}
-                      className="button button--secondary button--md button--full-width"
-                      href={profileHref}
-                    >
-                      {profileLabel}
-                    </Link>
-                  ) : null}
-                  {logoutLabel ? (
-                    <AuthLogoutButton
-                      className="button button--secondary button--md button--full-width"
-                      label={logoutLabel}
+                  {bookingsHref && bookingsLabel ? (
+                    <DrawerTextLink
+                      href={bookingsHref}
+                      isActive={bookingsIsActive}
+                      label={bookingsLabel}
                     />
                   ) : null}
-                </Surface>
-              ) : showGuestAuthActions ? (
-                <Surface className="mt-4 flex flex-col gap-2" variant="transparent">
-                  <Link
-                    className="button button--secondary button--md button--full-width"
-                    href={loginHref}
-                  >
-                    {loginLabel}
-                  </Link>
+
+                  {savedHref && savedLabel ? (
+                    <DrawerTextLink
+                      href={savedHref}
+                      isActive={savedIsActive}
+                      label={savedCount > 0 ? `${savedLabel} (${savedCount})` : savedLabel}
+                    />
+                  ) : null}
+
+                  {isAuthenticated ? (
+                    <>
+                      {adminHref && adminLabel ? (
+                        <DrawerTextLink href={adminHref} label={adminLabel} />
+                      ) : null}
+                      {creditsLabel ? (
+                        <Paragraph className="drawer-link drawer-link--static" color="muted">
+                          {creditsLabel}
+                        </Paragraph>
+                      ) : null}
+                      {profileHref && profileLabel ? (
+                        <DrawerTextLink
+                          href={profileHref}
+                          isActive={profileIsActive}
+                          label={profileLabel}
+                        />
+                      ) : null}
+                      {logoutLabel ? (
+                        <AuthLogoutButton className="drawer-link" label={logoutLabel} />
+                      ) : null}
+                    </>
+                  ) : showGuestAuthActions ? (
+                    <DrawerTextLink href={loginHref} label={loginLabel} />
+                  ) : null}
                 </Surface>
               ) : null}
             </Drawer.Body>

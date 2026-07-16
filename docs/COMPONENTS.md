@@ -33,7 +33,7 @@ Sticky header: logo, Discover (primary) + FAQ, DE/EN toggle, Log in (guest) or r
 - Marketing nav from `NAV_ITEMS` (`discover`, `faq`) + `getCopy(locale).nav`
 - Active state via `isActiveNavPath(pathname, href)` / `aria-current`
 - Guest header: Log in only — no Sign up, How it works, Membership, or logo tagline
-- How it works / Membership remain in `GuestFooter` and page CTAs
+- How it works / Membership are not in header or footer nav; pages remain via direct URL / in-flow CTAs
 - Theme: `.site-header`, `.nav-link`, `.lang-toggle`, `button--primary` (Discover)
 
 ---
@@ -241,7 +241,7 @@ HeroUI Accordion, single-open, first item expanded. SSR static fallback with mat
 
 **Path:** `islands/AppNavbarMenu.tsx`
 
-Mobile drawer nav (slim IA matches desktop). SSR fallback: disabled Menu button until mounted.
+Mobile drawer: plain-text links under section labels (Navigation / Language / Account). Bar is logo + hamburger only below `lg`. SSR fallback: disabled Menu button until mounted.
 
 ---
 

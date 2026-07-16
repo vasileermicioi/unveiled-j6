@@ -38,7 +38,7 @@ Language is not a client toggle — it's a route change:
 | Rule | Implementation |
 |---|---|
 | Active nav item | `aria-current="page"` via `NavLink` |
-| Home has no active nav pill | Logo links role home; Discover is the header primary CTA; Membership lives in the footer |
+| Home has no active nav pill | Logo links role home; Discover is header nav; Membership is not in header or footer nav |
 | Footer links on every page | `GuestFooter` in `AppShell` |
 | Back actions | Secondary button link to logical parent (`localizedPath(locale, "")` for FAQ guests) |
 | 404 | `NotFoundPage` with home CTA |

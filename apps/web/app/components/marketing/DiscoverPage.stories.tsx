@@ -10,7 +10,6 @@ export const Default: Story = () => (
     events={[mockEventCardItem]}
     locale={storyLocale}
     partners={[mockDiscoverPartner]}
-    stats={{ eventCount: 12, partnerCount: 8 }}
   />
 );
 Default.storyName = "DiscoverPage / Default";

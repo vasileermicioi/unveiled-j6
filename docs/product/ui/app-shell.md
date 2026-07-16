@@ -14,10 +14,10 @@ Role-aware header variants (guest, member, admin) composed from shared pieces �
    - No logo tagline in the sticky header (footer brand tagline is separate).
 
 2. **Primary nav (marketing)**
-   - **Guest (`lg+`):** Discover → `/:locale`; FAQ → `/faq`. Active link: yellow highlight + border.
+   - **Guest (`lg+`):** Discover → `/:locale`; FAQ → `/faq`. Active link: yellow highlight, no border (same in mobile drawer).
    - **Member (`USER`):** Discover → `/:locale`; FAQ → `/faq`. Plus role tools: Saved (bookmark, badge when count > 0) and Bookings / “My Tickets”.
    - **Admin:** admin section links under `/admin/*` (dashboard-focused chrome). Where admin shares marketing primary nav with other roles, that set is Discover + FAQ only.
-   - **Not in header:** How it works, Membership (remain in footer Navigation and Discover page CTAs).
+   - **Not in header or footer nav:** How it works, Membership (pages remain at `/how-it-works` and `/membership`; reachable via direct URL / in-flow CTAs).
 
 3. **Language toggle** — DE | EN; navigates to the same path under the other locale prefix.
 
@@ -27,7 +27,7 @@ Role-aware header variants (guest, member, admin) composed from shared pieces �
 
 6. **Logout** — any signed-in role.
 
-7. **Guest auth** — “Log in” only. Sign up is **not** in the header; guests create accounts via Discover / membership CTAs and auth routes (`/signup`, etc.).
+7. **Guest auth** — “Log in” only. Sign up is **not** in the header; guests create accounts via auth routes (`/signup`, etc.) and in-flow membership CTAs.
 
 ### Discover → Events (nav / CTA contract)
 
@@ -38,7 +38,7 @@ Role-aware header variants (guest, member, admin) composed from shared pieces �
 ### Behavior
 
 - Active-route highlighting (yellow + border) is the primary “you are here” affordance.
-- **Mobile:** hamburger + drawer (HeroUI drawer / menu), not “hide everything.”
+- **Mobile (`< lg`):** sticky bar is logo + hamburger only. Drawer lists uppercase links under section labels (Navigation / Language / Account); active + hover match desktop nav (yellow selected, invert on hover).
 - Sticky header on all pages.
 
 ---
@@ -50,7 +50,7 @@ White bordered block on yellow page background; thick dark top border; near-zero
 ### Columns
 
 1. **Brand** — “UNVEILED BERLIN” eyebrow; tagline “KURATIERTER KULTURZUGANG IN BERLIN.” / “CURATED CULTURAL ACCESS IN BERLIN.”; body: discover theatre/cinema/exhibitions copy (verbatim DE/EN from product screenshots).
-2. **Navigation** — Discover → `/:locale`; How it works; Membership; FAQ (uppercase link style). These keep How it works and Membership reachable after they left the header.
+2. **Navigation** — Discover → `/:locale`; FAQ (uppercase link style). How it works and Membership are **not** listed.
 3. **Contact** — `SUPPORT@UNVEILED.BERLIN` mailto; “BERLIN, GERMANY” / “BERLIN, DEUTSCHLAND”.
 4. **Legal** — Impressum, Privacy, Terms.
 

@@ -5,7 +5,7 @@ import { AppShell } from "./AppShell";
 import { mockAdminSession, mockUserSession, storyLocale, storyPathname } from "./stories/fixtures";
 
 /**
- * Full shell (navbar + footer). Guest header is slim; How it works / Membership remain in footer.
+ * Full shell (navbar + footer). Guest chrome is slim; footer nav is Discover + FAQ only.
  */
 export const Guest: Story = () => (
   <AppShell locale={storyLocale} pathname={storyPathname} session={null}>

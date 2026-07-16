@@ -38,10 +38,13 @@ test.describe("static-pages.feature", () => {
 
   test("Scenario: Discover is the home page", async ({ page, locale }) => {
     await page.goto(`/${locale}`);
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(
-      page.getByText(/finde dinge|find things|buche spontan|book spontaneously|community/i).first(),
+      page.getByRole("heading", {
+        level: 1,
+        name: /aktuelle events in berlin|current events in berlin/i,
+      }),
     ).toBeVisible();
+    await expect(page.getByText(/partnerorte|partner venues/i).first()).toBeVisible();
 
     // Slim sticky header: Log in only — Sign up / How it works / Membership are not in the banner.
     const header = page.getByRole("banner");
@@ -56,16 +59,13 @@ test.describe("static-pages.feature", () => {
       0,
     );
 
-    // Sign up remains via Discover page CTAs (browse → /signup), not header.
-    const signupCta = page.getByRole("link", { name: /live events ansehen|browse live events/i });
-    await expect(signupCta).toBeVisible();
-    await expect(signupCta).toHaveAttribute("href", /\/signup/);
-
-    // How it works / Membership / FAQ stay reachable via footer Navigation.
+    // Footer Navigation: Discover + FAQ only (How it works / Membership not listed).
     const footer = page.getByRole("contentinfo");
-    await expect(footer.getByRole("link", { name: /so funktioniert|how it works/i })).toBeVisible();
-    await expect(footer.getByRole("link", { name: /mitgliedschaft|membership/i })).toBeVisible();
     await expect(footer.getByRole("link", { name: /^faq$/i })).toBeVisible();
+    await expect(footer.getByRole("link", { name: /so funktioniert|how it works/i })).toHaveCount(0);
+    await expect(footer.getByRole("link", { name: /^mitgliedschaft$|^membership$/i })).toHaveCount(
+      0,
+    );
   });
 
   test("Scenario: Discover preview links to public event detail", async ({ page, locale }) => {
@@ -89,13 +89,12 @@ test.describe("static-pages.feature", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page).not.toHaveURL(new RegExp(`/${locale}/events/?$`));
 
-    const browseCta = page.getByRole("link", { name: /live events ansehen|browse live events/i });
-    await expect(browseCta).toBeVisible();
-    await browseCta.click();
-
+    // Guests reach the full feed via signup (no footer Membership CTA).
+    await page.goto(
+      `/${locale}/signup?returnTo=${encodeURIComponent(`/${locale}/events`)}`,
+    );
     await expect(page).toHaveURL(new RegExp(`/${locale}/(signup|login)`));
     await expect(page).toHaveURL(/returnTo=/);
-    expect(decodeURIComponent(page.url())).toMatch(new RegExp(`/${locale}/events`));
 
     const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const password = "e2e-test-pass-123";

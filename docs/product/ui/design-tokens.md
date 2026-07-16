@@ -52,7 +52,7 @@ The new app drops the body/display font pairing and uses **Work Sans only** (var
 
 - **Radius:** effectively zero on cards/borders/modals (`border-radius: 0` explicitly on map info windows); rounded only on pills/badges (`rounded-full`) and a language toggle (`rounded-sm`).
 - **Borders:** thick, always the dark color — `border-2`, `border-4`, up to `md:border-8` in `border-brand-dark`.
-- **Shadows:** **none** — flat bordered surfaces on the yellow page background. Do not use hard offset box-shadows (`.unveiled-shadow`, `.unveiled-card-hover`) or Tailwind `shadow-*` on marketing or app chrome. HeroUI elevation tokens are zeroed in the theme (`--surface-shadow: none`, etc.).
+- **Shadows:** **none** — flat bordered surfaces on the yellow page background. Do not use hard offset box-shadows (`.unveiled-shadow`, `.unveiled-card-hover`) or Tailwind `shadow-*` on marketing or app chrome. HeroUI elevation tokens are zeroed in the theme (`--surface-shadow: none`, etc.). EventCard hover “pop” uses the same policy: thicker flat outline / border emphasis, never a shadow (see `ui-component-map.md`).
 
 ### Spacing / layout
 

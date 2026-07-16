@@ -469,6 +469,39 @@ The `@unveiled/ui` package SHALL export an `EventCard` component matching `docs/
 - **WHEN** EventCard renders a save toggle
 - **THEN** the control exposes an `aria-label` describing save/unsaved state
 
+### Requirement: EventCard hover affordance
+
+On devices that support hover, the `EventCard` SHALL (1) colorize the grayscale cover image, (2) reveal the availability strip showing remaining capacity and ticket type (where space allows), and (3) emphasize the card with a stronger flat border or theme accent edge. The card SHALL NOT use drop shadows or hard-offset shadows for elevation. Hover transitions on the image and availability strip SHALL be disabled or near-instant when the user prefers reduced motion.
+
+#### Scenario: Pointer hover reveals availability
+
+- **WHEN** a user with a hover-capable pointer moves over an EventCard
+- **THEN** the availability strip becomes visible and the card border emphasis increases without a box-shadow
+
+#### Scenario: Pointer hover colorizes cover image
+
+- **WHEN** a user with a hover-capable pointer moves over an EventCard that shows a cover image
+- **THEN** the cover image leaves grayscale and appears in full color
+
+#### Scenario: Reduced motion prefers less transition
+
+- **WHEN** the user has `prefers-reduced-motion: reduce`
+- **THEN** hover transitions on the EventCard image and availability strip are disabled or near-instant
+
+### Requirement: EventCard hover documented in stories
+
+`@unveiled/ui` EventCard Ladle stories SHALL include a state that demonstrates the hover/availability reveal (or an equivalent forced-visible strip) so theme reviews do not require a live browser hover. The product UI component map SHALL describe the EventCard hover contract as a flat border/outline emphasis with availability strip reveal, not a drop shadow.
+
+#### Scenario: Story shows availability strip
+
+- **WHEN** a developer opens the EventCard hover (or availability-visible) story
+- **THEN** remaining capacity and ticket type are visible on a strip in the card body between the image and the title
+
+#### Scenario: Product map matches flat hover
+
+- **WHEN** an implementer reads the EventCard entry in `docs/product/ui/ui-component-map.md`
+- **THEN** the description states hover/focus reveals the availability strip and emphasizes the card with a flat border or outline, without prescribing a drop shadow
+
 ### Requirement: Discover page live event preview
 
 The public locale home `/:locale` (Discover) SHALL render up to six upcoming events from the database using EventCard components instead of static placeholder content.

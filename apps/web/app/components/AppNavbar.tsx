@@ -48,7 +48,6 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
       href,
       label: copy.nav[key],
       isActive: isActiveNavPath(pathname, href),
-      isPrimary: key === "discover",
     };
   });
 
@@ -70,37 +69,23 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
           role="navigation"
           variant="transparent"
         >
-          {navLinks.map((link) =>
-            link.isPrimary ? (
-              <Link
-                aria-current={link.isActive ? "page" : undefined}
-                className={
-                  link.isActive
-                    ? "button button--primary button--md"
-                    : "button button--secondary button--md"
-                }
-                href={link.href}
-                key={link.href}
-              >
-                {link.label}
-              </Link>
-            ) : (
-              <NavLink
-                href={link.href}
-                isActive={link.isActive}
-                key={link.href}
-                label={link.label}
-              />
-            ),
-          )}
+          {navLinks.map((link) => (
+            <NavLink
+              href={link.href}
+              isActive={link.isActive}
+              key={link.href}
+              label={link.label}
+            />
+          ))}
         </Surface>
 
         <Surface className="flex shrink-0 items-center gap-2" variant="transparent">
+          {/* Desktop-only chrome — below `lg`, only logo + hamburger remain in the bar */}
           {showBookingsNav ? (
             <Link
               aria-current={bookingsIsActive ? "page" : undefined}
               aria-label={copy.myBookings}
-              className="button button--secondary button--md hidden sm:inline-flex"
+              className="button button--secondary button--md hidden lg:inline-flex"
               href={bookingsHref}
             >
               {copy.myBookings}
@@ -111,13 +96,11 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
             <Link
               aria-current={savedIsActive ? "page" : undefined}
               aria-label={savedCount > 0 ? `${copy.mySaves}, ${savedCount}` : copy.mySaves}
-              className="button button--secondary button--md hidden items-center gap-2 sm:inline-flex"
+              className="button button--secondary button--md hidden items-center gap-2 lg:inline-flex"
               href={savedHref}
             >
               <Bookmark aria-hidden size={18} strokeWidth={2.25} />
-              <Paragraph className="hidden lg:inline" size="sm">
-                {copy.mySaves}
-              </Paragraph>
+              <Paragraph size="sm">{copy.mySaves}</Paragraph>
               {savedCount > 0 ? (
                 <Chip className="site-nav-saved-badge" size="sm" variant="primary">
                   <Chip.Label>{savedCount}</Chip.Label>
@@ -126,7 +109,12 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
             </Link>
           ) : null}
 
-          <Surface aria-label="Language" className="lang-toggle" role="group" variant="transparent">
+          <Surface
+            aria-label="Language"
+            className="lang-toggle hidden lg:inline-flex"
+            role="group"
+            variant="transparent"
+          >
             <Link
               aria-current={locale === "de" ? "true" : undefined}
               className="lang-toggle__option"
@@ -147,14 +135,14 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
             <>
               {isAdmin ? (
                 <Link
-                  className="button button--secondary button--md hidden sm:inline-flex"
+                  className="button button--secondary button--md hidden lg:inline-flex"
                   href={adminHref}
                 >
                   {adminCopy.navDashboard}
                 </Link>
               ) : null}
               {creditsLabel ? (
-                <Chip className="hidden sm:inline-flex" variant="tertiary">
+                <Chip className="hidden lg:inline-flex" variant="tertiary">
                   <Chip.Label>{creditsLabel}</Chip.Label>
                 </Chip>
               ) : null}
@@ -162,20 +150,20 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
                 <Link
                   aria-current={profileIsActive ? "page" : undefined}
                   aria-label={copy.profile}
-                  className="button button--secondary button--md hidden sm:inline-flex"
+                  className="button button--secondary button--md hidden lg:inline-flex"
                   href={profileHref}
                 >
                   {copy.profile}
                 </Link>
               ) : null}
               <AuthLogoutButton
-                className="button button--secondary button--md hidden sm:inline-flex"
+                className="button button--secondary button--md hidden lg:inline-flex"
                 label={copy.logout}
               />
             </>
           ) : showGuestAuthActions ? (
             <Link
-              className="button button--secondary button--md hidden sm:inline-flex"
+              className="button button--secondary button--md hidden lg:inline-flex"
               href={loginHref}
             >
               {copy.login}
@@ -190,6 +178,9 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
             bookingsLabel={showBookingsNav ? copy.myBookings : undefined}
             creditsLabel={creditsLabel}
             isAuthenticated={Boolean(session)}
+            locale={locale}
+            localeDeHref={switchLocalePath(pathname, "de")}
+            localeEnHref={switchLocalePath(pathname, "en")}
             loginHref={loginHref}
             loginLabel={copy.login}
             logoutLabel={session ? copy.logout : undefined}
@@ -201,6 +192,7 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
             savedHref={showSavedNav ? savedHref : undefined}
             savedIsActive={showSavedNav ? savedIsActive : undefined}
             savedLabel={showSavedNav ? copy.mySaves : undefined}
+            sections={copy.drawer}
             showGuestAuthActions={showGuestAuthActions}
           />
         </Surface>

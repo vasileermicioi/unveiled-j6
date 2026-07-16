@@ -15,9 +15,9 @@ Feature: Static and Marketing Pages
   Scenario: Discover is the home page
     Given I am not signed in
     When I visit the locale home ("/:locale")
-    Then I see the Discover experience: hero, value proposition, and curated upcoming event preview
-    And I see links to log in and sign up
-    And I see navigation to "How it works", FAQ, and Membership via the footer (not the sticky header)
+    Then I see the Discover experience: curated upcoming events and partner venues
+    And I see a link to log in in the sticky header
+    And I see navigation to Discover and FAQ via the footer (not How it works or Membership)
 
   Scenario: Discover preview links to public event detail
     Given I am not signed in
@@ -27,7 +27,7 @@ Feature: Static and Marketing Pages
 
   Scenario: Discover CTA path to the full member events feed
     Given I am not signed in
-    When I follow the primary CTA to browse all events (signup or login)
+    When I go to signup with returnTo the member events feed
     Then I am taken to signup or login
     And after authentication (and onboarding if incomplete) I land on the member events feed ("/events")
     And guests never receive a public full upcoming-events list equivalent to "/events"
