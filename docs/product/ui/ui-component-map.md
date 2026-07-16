@@ -26,7 +26,7 @@ Three SVG tones (`black` / `white` / `yellow`) via public `/logos/*` paths. Ladl
 
 ### EventCard
 
-Fields (top → bottom): image (`medium-640` / `small-320` srcset), category badge, availability strip (capacity + ticket type on sm+; between image and title), title, partner name, date + Lucide `Calendar`, neighborhood + Lucide `MapPin`, credit price (large black number + smaller muted “credits” unit), save toggle (Lucide `Bookmark`, bordered; guests → `/login`), primary CTA.
+Fields (top → bottom): image (`medium-640` / `small-320` srcset), category badge, availability strip (capacity + ticket type on sm+; between image and title), title, partner name, date + Lucide `Calendar`, neighborhood + Lucide `MapPin`, credit price (large black number + smaller muted “credits” unit), save toggle (Lucide `Bookmark`, bordered; **signed-in only** — hidden for guests), primary CTA.
 
 **Hover / focus (pointer + keyboard):** On `@media (hover: hover)`, `:hover` and `:focus-within` apply to the **whole card**: colorize the cover, reveal a yellow availability strip **in the card body** (space always reserved so the grid/partners below do not shift), hard offset `box-shadow` (8px / brand border color), and a slight `scale(1.02)` — both layout-neutral so siblings do not move. Image and strip are full-bleed to the card border. On `@media (hover: none)` (touch), the yellow availability strip stays visible without hover. `prefers-reduced-motion: reduce` disables image/strip/shadow/scale transitions. Ladle story `EventCard / Hover — availability visible` forces the reveal for theme review.
 

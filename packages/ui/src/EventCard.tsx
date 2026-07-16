@@ -79,14 +79,6 @@ function availabilityLabel(remainingCapacity: number, locale: CatalogLocale): st
   return `Available: ${remainingCapacity}`;
 }
 
-function guestSaveHref(locale: CatalogLocale, returnTo?: string): string {
-  const loginPath = `/${locale}/login`;
-  if (!returnTo) {
-    return loginPath;
-  }
-  return `${loginPath}?returnTo=${encodeURIComponent(returnTo)}`;
-}
-
 export function resolveEventCardCta(
   viewer: EventCardViewerState,
   soldOut: boolean,
@@ -148,18 +140,8 @@ export function EventCard({
     ? "event-card__bookmark event-card__bookmark--saved"
     : "event-card__bookmark";
 
-  let bookmarkControl: ReactNode;
-  if (isGuest) {
-    bookmarkControl = (
-      <Link
-        aria-label={ariaLabel}
-        className={bookmarkClassName}
-        href={guestSaveHref(locale, bookmarkReturnTo)}
-      >
-        <BookmarkIcon saved={false} />
-      </Link>
-    );
-  } else if (useFormBookmark && bookmarkFormAction) {
+  let bookmarkControl: ReactNode = null;
+  if (!isGuest && useFormBookmark && bookmarkFormAction) {
     bookmarkControl = (
       <Form action={bookmarkFormAction} method="post">
         {bookmarkReturnTo ? <Input name="returnTo" type="hidden" value={bookmarkReturnTo} /> : null}
@@ -175,7 +157,7 @@ export function EventCard({
         </Button>
       </Form>
     );
-  } else {
+  } else if (!isGuest) {
     bookmarkControl = (
       <Button
         aria-label={ariaLabel}

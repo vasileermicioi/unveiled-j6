@@ -34,7 +34,6 @@ export function DiscoverPage({ content, locale, events, partners }: DiscoverPage
           >
             {events.map((event) => (
               <EventCard
-                bookmarkReturnTo={localizedPath(locale, `events/${event.id}`)}
                 ctaHref={localizedPath(locale, `events/${event.id}`)}
                 event={event}
                 key={event.id}

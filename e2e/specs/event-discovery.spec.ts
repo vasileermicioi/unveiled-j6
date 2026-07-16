@@ -312,9 +312,12 @@ test.describe("event-discovery.feature", () => {
   });
 
   test("Scenario: Saving requires authentication", async ({ page, locale }) => {
-    // Guest POST to save endpoint → login redirect with returnTo
+    // Guest cards hide save; unauthenticated POST still redirects to login
     await page.context().clearCookies();
     await page.goto(`/${locale}`);
+    await expect(page.getByRole("button", { name: /^(merken|gemerkt|save|saved)$/i })).toHaveCount(
+      0,
+    );
 
     await page.evaluate(
       ({ locale: loc, title }) => {

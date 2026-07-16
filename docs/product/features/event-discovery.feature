@@ -94,5 +94,6 @@ Feature: Event Discovery
 
   Scenario: Saving requires authentication
     Given I am not signed in
-    When I try to save an event
+    Then the EventCard save control is not shown
+    When I POST to a save endpoint without a session
     Then I am redirected to sign in
