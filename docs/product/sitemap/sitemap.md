@@ -94,11 +94,11 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 ### Guest vs member nav (summary)
 
-| Audience | Primary nav | Events path |
+| Audience | Primary nav (header) | Events path |
 |---|---|---|
-| **Guest** | Discover (`/:locale`), How it works, Membership, FAQ; Login + Sign up | Preview → `/events/:id`; full feed via signup/login → `/events` |
-| **Member (`USER`)** | Discover/What’s Included, FAQ; Saved + Bookings; credits badge; profile | `/events`, `/events/map`, `/saved`, public detail |
-| **Admin** | Admin chrome → `/admin` | Catalog via `/admin/events` |
+| **Guest** | Discover (`/:locale`), FAQ; Log in (How it works / Membership / Sign up via footer + page CTAs) | Preview → `/events/:id`; full feed via signup/login → `/events` |
+| **Member (`USER`)** | Discover, FAQ; Saved + Bookings; credits badge; profile; logout | `/events`, `/events/map`, `/saved`, public detail |
+| **Admin** | Discover + FAQ where shared; admin chrome → `/admin` | Catalog via `/admin/events` |
 
 See `ui/app-shell.md` for header/footer detail.
 

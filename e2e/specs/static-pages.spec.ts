@@ -42,10 +42,30 @@ test.describe("static-pages.feature", () => {
     await expect(
       page.getByText(/finde dinge|find things|buche spontan|book spontaneously|community/i).first(),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: /anmelden|log ?in/i }).first()).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: /registrieren|sign up|register/i }).first(),
-    ).toBeVisible();
+
+    // Slim sticky header: Log in only — Sign up / How it works / Membership are not in the banner.
+    const header = page.getByRole("banner");
+    await expect(header.getByRole("link", { name: /anmelden|log ?in/i })).toBeVisible();
+    await expect(header.getByRole("link", { name: /registrieren|sign up|register/i })).toHaveCount(
+      0,
+    );
+    await expect(header.getByRole("link", { name: /so funktioniert|how it works/i })).toHaveCount(
+      0,
+    );
+    await expect(header.getByRole("link", { name: /^mitgliedschaft$|^membership$/i })).toHaveCount(
+      0,
+    );
+
+    // Sign up remains via Discover page CTAs (browse → /signup), not header.
+    const signupCta = page.getByRole("link", { name: /live events ansehen|browse live events/i });
+    await expect(signupCta).toBeVisible();
+    await expect(signupCta).toHaveAttribute("href", /\/signup/);
+
+    // How it works / Membership / FAQ stay reachable via footer Navigation.
+    const footer = page.getByRole("contentinfo");
+    await expect(footer.getByRole("link", { name: /so funktioniert|how it works/i })).toBeVisible();
+    await expect(footer.getByRole("link", { name: /mitgliedschaft|membership/i })).toBeVisible();
+    await expect(footer.getByRole("link", { name: /^faq$/i })).toBeVisible();
   });
 
   test("Scenario: Discover preview links to public event detail", async ({ page, locale }) => {

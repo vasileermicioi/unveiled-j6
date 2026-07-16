@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-07-16
+goal: AppNavbar and mobile drawer match guest/member/admin IA; Discover uses
+  theme primary CTA; Sign up and marketing links removed from header chrome.

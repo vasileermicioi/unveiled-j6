@@ -137,7 +137,7 @@ const href = localizedPath(locale, NAV_SEGMENTS.faq);
 const isActive = isActiveNavPath(pathname, href);
 ```
 
-`GuestNavbar` maps `NAV_ITEMS` → links with active highlighting.
+`AppNavbar` maps slim `NAV_ITEMS` (Discover + FAQ) → links with active highlighting.
 
 Language switch: `switchLocalePath(pathname, "en")` preserves path.
 
@@ -194,7 +194,7 @@ Info-only pages render correct label but no payment action until Phase 6.
 
 ## 11. Island hydration pattern
 
-**Reference:** `FaqAccordion.tsx`, `GuestNavbarMenu.tsx`
+**Reference:** `FaqAccordion.tsx`, `AppNavbarMenu.tsx`
 
 ```tsx
 const [mounted, setMounted] = useState(false);
@@ -264,9 +264,9 @@ See [`examples/dashboard.md`](examples/dashboard.md).
 
 Same `AppShell` evolves or swaps navbar by session role:
 
-- Guest: current `GuestNavbar`
-- Member: credits badge, saved/bookings links
-- Partner: `/partner/*` nav
+- Guest: slim `AppNavbar` (Discover + FAQ + Log in)
+- Member: same marketing nav + credits badge, saved/bookings links
+- Partner: `/partner/*` nav (post-MVP)
 - Admin: `/admin/*` nav
 
 Single app — conditional chrome, not separate deployables.

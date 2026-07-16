@@ -23,8 +23,9 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
   const adminCopy = getAdminCopy(locale);
   const showGuestAuthActions = !session && !isAuthPage(pathname);
   const loginHref = localizedPath(locale, "login");
-  const signupHref = localizedPath(locale, "signup");
   const adminHref = localizedPath(locale, "admin");
+  const eventsHref = localizedPath(locale, "events");
+  const discoverHref = localizedPath(locale, "");
   const savedHref = localizedPath(locale, "saved");
   const bookingsHref = localizedPath(locale, "bookings");
   const profileHref = localizedPath(locale, "profile");
@@ -38,13 +39,16 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
   const savedIsActive = isActiveNavPath(pathname, savedHref);
   const bookingsIsActive = isActiveNavPath(pathname, bookingsHref);
   const profileIsActive = pathname === profileHref || pathname.startsWith(`${profileHref}/`);
+  const logoHref = isAdmin ? adminHref : isUser ? eventsHref : discoverHref;
 
   const navLinks = NAV_ITEMS.map((key) => {
     const href = localizedPath(locale, NAV_SEGMENTS[key]);
     return {
+      key,
       href,
       label: copy.nav[key],
       isActive: isActiveNavPath(pathname, href),
+      isPrimary: key === "discover",
     };
   });
 
@@ -55,15 +59,9 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
         variant="transparent"
       >
         <Surface className="min-w-0" variant="transparent">
-          <Link
-            className="inline-flex items-center text-2xl md:text-3xl"
-            href={localizedPath(locale, "")}
-          >
+          <Link className="inline-flex items-center text-2xl md:text-3xl" href={logoHref}>
             <Logo className="text-2xl md:text-3xl" tone="black" />
           </Link>
-          <Paragraph className="mt-1 hidden uppercase lg:block" color="muted" size="xs">
-            {copy.headerTagline}
-          </Paragraph>
         </Surface>
 
         <Surface
@@ -72,9 +70,29 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
           role="navigation"
           variant="transparent"
         >
-          {navLinks.map((link) => (
-            <NavLink href={link.href} isActive={link.isActive} key={link.href} label={link.label} />
-          ))}
+          {navLinks.map((link) =>
+            link.isPrimary ? (
+              <Link
+                aria-current={link.isActive ? "page" : undefined}
+                className={
+                  link.isActive
+                    ? "button button--primary button--md"
+                    : "button button--secondary button--md"
+                }
+                href={link.href}
+                key={link.href}
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <NavLink
+                href={link.href}
+                isActive={link.isActive}
+                key={link.href}
+                label={link.label}
+              />
+            ),
+          )}
         </Surface>
 
         <Surface className="flex shrink-0 items-center gap-2" variant="transparent">
@@ -156,34 +174,26 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
               />
             </>
           ) : showGuestAuthActions ? (
-            <>
-              <Link
-                className="button button--secondary button--md hidden sm:inline-flex"
-                href={loginHref}
-              >
-                {copy.login}
-              </Link>
-              <Link
-                className="button button--primary button--md hidden sm:inline-flex"
-                href={signupHref}
-              >
-                {copy.signup}
-              </Link>
-            </>
+            <Link
+              className="button button--secondary button--md hidden sm:inline-flex"
+              href={loginHref}
+            >
+              {copy.login}
+            </Link>
           ) : null}
 
           <AppNavbarMenu
             adminHref={isAdmin ? adminHref : undefined}
             adminLabel={isAdmin ? adminCopy.navDashboard : undefined}
+            bookingsHref={showBookingsNav ? bookingsHref : undefined}
+            bookingsIsActive={showBookingsNav ? bookingsIsActive : undefined}
+            bookingsLabel={showBookingsNav ? copy.myBookings : undefined}
             creditsLabel={creditsLabel}
             isAuthenticated={Boolean(session)}
             loginHref={loginHref}
             loginLabel={copy.login}
             logoutLabel={session ? copy.logout : undefined}
             navLinks={navLinks}
-            bookingsHref={showBookingsNav ? bookingsHref : undefined}
-            bookingsIsActive={showBookingsNav ? bookingsIsActive : undefined}
-            bookingsLabel={showBookingsNav ? copy.myBookings : undefined}
             profileHref={showProfileNav ? profileHref : undefined}
             profileIsActive={showProfileNav ? profileIsActive : undefined}
             profileLabel={showProfileNav ? copy.profile : undefined}
@@ -192,8 +202,6 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
             savedIsActive={showSavedNav ? savedIsActive : undefined}
             savedLabel={showSavedNav ? copy.mySaves : undefined}
             showGuestAuthActions={showGuestAuthActions}
-            signupHref={signupHref}
-            signupLabel={copy.signup}
           />
         </Surface>
       </Surface>

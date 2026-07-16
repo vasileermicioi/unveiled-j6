@@ -31,14 +31,14 @@ apps/web/app/
 │       └── [...slug].tsx      # 404 catch-all
 ├── components/                # SSR React components
 │   ├── AppShell.tsx           # Navbar + main + footer
-│   ├── GuestNavbar.tsx
+│   ├── AppNavbar.tsx
 │   ├── GuestFooter.tsx
 │   ├── Logo.tsx, NavLink.tsx
 │   ├── NotFoundPage.tsx
 │   └── marketing/             # Page-level marketing compositions
 ├── islands/                   # Client-hydrated components only
 │   ├── FaqAccordion.tsx
-│   └── GuestNavbarMenu.tsx
+│   └── AppNavbarMenu.tsx
 ├── lib/
 │   ├── content/               # Page body copy (typed, DE/EN)
 │   ├── copy.ts                # Shell chrome copy (nav, footer)

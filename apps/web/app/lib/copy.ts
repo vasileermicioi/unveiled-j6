@@ -24,7 +24,6 @@ export type FooterCopy = {
 };
 
 export type ShellCopy = {
-  headerTagline: string;
   nav: NavLinkCopy;
   login: string;
   signup: string;
@@ -44,7 +43,6 @@ export type ShellCopy = {
 
 const copy: Record<Locale, ShellCopy> = {
   de: {
-    headerTagline: "Kuratierter Kulturzugang in Berlin",
     nav: {
       discover: "Entdecken",
       howItWorks: "So funktioniert's",
@@ -83,7 +81,6 @@ const copy: Record<Locale, ShellCopy> = {
     },
   },
   en: {
-    headerTagline: "Curated cultural access in Berlin",
     nav: {
       discover: "Discover",
       howItWorks: "How it works",
@@ -129,7 +126,8 @@ export function getCopy(locale: Locale): ShellCopy {
 
 export type NavItemKey = keyof NavLinkCopy;
 
-export const NAV_ITEMS: NavItemKey[] = ["discover", "howItWorks", "membership", "faq"];
+/** Sticky header + drawer marketing nav (slim IA). Footer keeps the full set via `footer.nav`. */
+export const NAV_ITEMS: NavItemKey[] = ["discover", "faq"];
 
 export const NAV_SEGMENTS: Record<NavItemKey, string> = {
   discover: "",

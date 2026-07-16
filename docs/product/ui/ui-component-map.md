@@ -10,9 +10,9 @@ Mapping aid for HeroUI rebuilds. Visual language: `design-tokens.md`. Ownership:
 
 | Component | Owner | Notes |
 |---|---|---|
-| Navbar / Header | `apps/web` | Guest / member / admin variants — see `app-shell.md` |
+| Navbar / Header | `apps/web` | Slim marketing nav Discover + FAQ; guest auth Log in only; How it works / Membership / Sign up out of header — see `app-shell.md` |
 | Logo | `@unveiled/ui` | Three SVG tones — `assets-inventory.md`; Ladle stories under `packages/ui` |
-| Footer | `apps/web` | Discover → `/:locale`; legal column |
+| Footer | `apps/web` | Discover → `/:locale`; How it works; Membership; FAQ; legal column |
 | Help / FAQ accordion | `apps/web` | HeroUI `Accordion` in `Card` |
 | Cookie banner | `apps/web` island | Accept/decline; gates map tiles |
 

@@ -14,7 +14,7 @@ Theme classes: `apps/web/app/styles/globals.css`
 **Path:** `components/AppShell.tsx`  
 **Used by:** `[locale]/_renderer.tsx` (every locale page)
 
-Wraps all pages: `GuestNavbar` + main (`pt-16 md:pt-20`) + `GuestFooter`.
+Wraps all pages: `AppNavbar` + main (`pt-16 md:pt-20`) + `GuestFooter`.
 
 ```tsx
 <AppShell locale={locale} pathname={pathname}>
@@ -24,16 +24,17 @@ Wraps all pages: `GuestNavbar` + main (`pt-16 md:pt-20`) + `GuestFooter`.
 
 ---
 
-### `GuestNavbar`
+### `AppNavbar`
 
-**Path:** `components/GuestNavbar.tsx`
+**Path:** `components/AppNavbar.tsx`
 
-Fixed header: logo, desktop nav, DE/EN toggle, membership CTA, mobile menu island.
+Sticky header: logo, Discover (primary) + FAQ, DE/EN toggle, Log in (guest) or role tools (member/admin), mobile drawer island.
 
-- Nav items from `NAV_ITEMS` + `getCopy(locale).nav`
-- Active state via `isActiveNavPath(pathname, href)`
-- Guest header shows Login + Sign up only (no separate Become-a-member CTA)
-- Theme: `.site-header`, `.nav-link`, `.lang-toggle`
+- Marketing nav from `NAV_ITEMS` (`discover`, `faq`) + `getCopy(locale).nav`
+- Active state via `isActiveNavPath(pathname, href)` / `aria-current`
+- Guest header: Log in only — no Sign up, How it works, Membership, or logo tagline
+- How it works / Membership remain in `GuestFooter` and page CTAs
+- Theme: `.site-header`, `.nav-link`, `.lang-toggle`, `button--primary` (Discover)
 
 ---
 
@@ -236,11 +237,11 @@ HeroUI Accordion, single-open, first item expanded. SSR static fallback with mat
 
 ---
 
-### `GuestNavbarMenu`
+### `AppNavbarMenu`
 
-**Path:** `islands/GuestNavbarMenu.tsx`
+**Path:** `islands/AppNavbarMenu.tsx`
 
-Mobile drawer nav. SSR fallback: disabled Menu button until mounted.
+Mobile drawer nav (slim IA matches desktop). SSR fallback: disabled Menu button until mounted.
 
 ---
 

@@ -39,8 +39,10 @@ test("Scenario: <exact Gherkin scenario title>", …)
 | `getByLabel` | `getByLabel(/e-?mail/i)` |
 | `getByText` | `getByText(/discover/i)` |
 | `filter({ has / hasText })` | `locator.filter({ hasText: 'Berlin' })` |
-| Parent walks | `getByRole('main').getByRole('link')` |
+| Parent walks | `getByRole('main').getByRole('link')`; also `banner` / `contentinfo` for header/footer chrome |
 | `nth()` | `getByRole('row').nth(1)` |
+
+After Simplified Header, How it works / Membership / Sign up are **not** in the sticky header — assert them via footer (`contentinfo`) or in-page CTAs; do not re-expand header IA to satisfy a test.
 
 **Forbidden:**
 

@@ -17,7 +17,7 @@ Feature: Static and Marketing Pages
     When I visit the locale home ("/:locale")
     Then I see the Discover experience: hero, value proposition, and curated upcoming event preview
     And I see links to log in and sign up
-    And I see navigation to "How it works", FAQ, and Membership as applicable
+    And I see navigation to "How it works", FAQ, and Membership via the footer (not the sticky header)
 
   Scenario: Discover preview links to public event detail
     Given I am not signed in

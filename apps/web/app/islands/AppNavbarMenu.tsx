@@ -9,6 +9,7 @@ export type MobileNavLink = {
   href: string;
   label: string;
   isActive: boolean;
+  isPrimary?: boolean;
 };
 
 type AppNavbarMenuProps = {
@@ -19,8 +20,6 @@ type AppNavbarMenuProps = {
   showGuestAuthActions: boolean;
   loginHref: string;
   loginLabel: string;
-  signupHref: string;
-  signupLabel: string;
   creditsLabel?: string;
   logoutLabel?: string;
   savedHref?: string;
@@ -66,8 +65,6 @@ export default function AppNavbarMenu({
   showGuestAuthActions,
   loginHref,
   loginLabel,
-  signupHref,
-  signupLabel,
   creditsLabel,
   logoutLabel,
   savedHref,
@@ -115,15 +112,30 @@ export default function AppNavbarMenu({
             </Drawer.Header>
 
             <Drawer.Body className="flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <NavLink
-                  className="w-full justify-start"
-                  href={link.href}
-                  isActive={link.isActive}
-                  key={link.href}
-                  label={link.label}
-                />
-              ))}
+              {navLinks.map((link) =>
+                link.isPrimary ? (
+                  <Link
+                    aria-current={link.isActive ? "page" : undefined}
+                    className={
+                      link.isActive
+                        ? "button button--primary button--md button--full-width"
+                        : "button button--secondary button--md button--full-width"
+                    }
+                    href={link.href}
+                    key={link.href}
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <NavLink
+                    className="w-full justify-start"
+                    href={link.href}
+                    isActive={link.isActive}
+                    key={link.href}
+                    label={link.label}
+                  />
+                ),
+              )}
 
               {bookingsHref && bookingsLabel ? (
                 <Link
@@ -190,12 +202,6 @@ export default function AppNavbarMenu({
                     href={loginHref}
                   >
                     {loginLabel}
-                  </Link>
-                  <Link
-                    className="button button--primary button--md button--full-width"
-                    href={signupHref}
-                  >
-                    {signupLabel}
                   </Link>
                 </Surface>
               ) : null}
