@@ -1,10 +1,11 @@
-import { Heading, Paragraph, Surface } from "@heroui/react";
+import { Paragraph, Surface } from "@heroui/react";
 import { EventCard, type EventCardItem } from "@unveiled/ui";
 
 import type { DiscoverPartnerTile } from "../../lib/catalog-mappers";
 import type { DiscoverContent } from "../../lib/content/types";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+import { PageSectionHeader } from "./PageSectionHeader";
 
 const PARTNERS_HEADING_ID = "discover-partners-heading";
 
@@ -55,12 +56,10 @@ export function DiscoverPage({ content, locale, events, partners }: DiscoverPage
       variant="transparent"
     >
       <Surface className="flex flex-col gap-6" id="events" variant="transparent">
-        <Surface className="discover-events-heading flex flex-col gap-2" variant="transparent">
-          <Paragraph className="uppercase tracking-wide" color="muted" size="sm">
-            {content.livePreview.eyebrow}
-          </Paragraph>
-          <Heading level={1}>{content.livePreview.headline}</Heading>
-        </Surface>
+        <PageSectionHeader
+          eyebrow={content.livePreview.eyebrow}
+          headline={content.livePreview.headline}
+        />
 
         {events.length > 0 ? (
           <Surface

@@ -118,11 +118,13 @@ export const legalContent: {
 } = {
   impressum: {
     de: {
+      eyebrow: "Rechtliches",
       pageTitle: "Impressum",
       intro: "Rechtliche Angaben gemäß TMG.",
       sections: [...impressumSections.de],
     },
     en: {
+      eyebrow: "Legal",
       pageTitle: "Impressum",
       intro: "Legal information pursuant to German law.",
       sections: [...impressumSections.en],
@@ -130,11 +132,13 @@ export const legalContent: {
   },
   privacy: {
     de: {
+      eyebrow: "Rechtliches",
       pageTitle: "Datenschutz",
       intro: "Informationen zur Verarbeitung personenbezogener Daten.",
       sections: [...privacySections.de],
     },
     en: {
+      eyebrow: "Legal",
       pageTitle: "Privacy",
       intro: "Information about the processing of personal data.",
       sections: [...privacySections.en],
@@ -142,11 +146,13 @@ export const legalContent: {
   },
   terms: {
     de: {
+      eyebrow: "Rechtliches",
       pageTitle: "AGB",
       intro: "Allgemeine Geschäftsbedingungen für die Nutzung von Unveiled Berlin.",
       sections: [...termsSections.de],
     },
     en: {
+      eyebrow: "Legal",
       pageTitle: "Terms",
       intro: "General terms and conditions for using Unveiled Berlin.",
       sections: [...termsSections.en],

@@ -1,4 +1,4 @@
-import { Alert, Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Alert, Card, Link, Paragraph, Surface } from "@heroui/react";
 import { EventCard, type EventCardItem, type EventCardViewerState } from "@unveiled/ui";
 
 import {
@@ -12,6 +12,7 @@ import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import { eventSavePath, eventUnsavePath } from "../../lib/saved-events";
 import type { AdminFormSelectOption } from "../admin/AdminFormSelect";
+import { PageSectionHeader } from "../marketing/PageSectionHeader";
 
 import { EventFeedFilters } from "./EventFeedFilters";
 import { EventFeedPagination } from "./EventFeedPagination";
@@ -78,7 +79,11 @@ export function EventFeedPage({
         className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         variant="transparent"
       >
-        <Heading level={1}>{copy.title}</Heading>
+        <PageSectionHeader
+          className="min-w-0 flex-1"
+          eyebrow={copy.eyebrow}
+          headline={copy.title}
+        />
         <Link className="button button--secondary button--md" href={mapHref}>
           {mapCopy.mapView}
         </Link>

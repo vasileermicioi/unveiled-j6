@@ -1,10 +1,11 @@
-import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Card, Link, Paragraph, Surface } from "@heroui/react";
 import { EventCard, type EventCardItem } from "@unveiled/ui";
 
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import { eventUnsavePath } from "../../lib/saved-events";
 import { getSavedEventsCopy } from "../../lib/saved-events-content";
+import { PageSectionHeader } from "../marketing/PageSectionHeader";
 import { resolveEventFeedCtaHref } from "./EventFeedPage";
 
 export type SavedEventsPageProps = {
@@ -22,9 +23,7 @@ export function SavedEventsPage({ locale, events, subscriptionActive }: SavedEve
       className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
       variant="transparent"
     >
-      <Surface className="flex flex-col gap-2" variant="transparent">
-        <Heading level={1}>{copy.title}</Heading>
-      </Surface>
+      <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
 
       {events.length === 0 ? (
         <Card>

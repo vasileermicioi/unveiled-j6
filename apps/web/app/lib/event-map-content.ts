@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export type EventMapCopy = {
+  eyebrow: string;
   title: string;
   listView: string;
   mapView: string;
@@ -19,6 +20,7 @@ export type EventMapCopy = {
 
 const copyByLocale: Record<Locale, EventMapCopy> = {
   de: {
+    eyebrow: "Entdecken",
     title: "Event-Karte",
     listView: "Listenansicht",
     mapView: "Kartenansicht",
@@ -37,6 +39,7 @@ const copyByLocale: Record<Locale, EventMapCopy> = {
     mapAriaLabel: "Karte der gefilterten Events",
   },
   en: {
+    eyebrow: "Discover",
     title: "Event map",
     listView: "List view",
     mapView: "Map view",

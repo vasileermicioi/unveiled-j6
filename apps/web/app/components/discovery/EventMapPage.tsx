@@ -1,10 +1,11 @@
-import { Alert, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Alert, Link, Paragraph, Surface } from "@heroui/react";
 import { MEMBER_FEED_MAP_MAX } from "@unveiled/db";
 
 import EventMap, { type EventMapMarker } from "../../islands/EventMap";
 import { buildEventFeedQueryString, type EventFeedQuery } from "../../lib/event-feed";
 import { getEventMapCopy } from "../../lib/event-map-content";
 import type { Locale } from "../../lib/locale";
+import { PageSectionHeader } from "../marketing/PageSectionHeader";
 
 export type EventMapPageProps = {
   locale: Locale;
@@ -44,7 +45,11 @@ export function EventMapPage({
         className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         variant="transparent"
       >
-        <Heading level={1}>{copy.title}</Heading>
+        <PageSectionHeader
+          className="min-w-0 flex-1"
+          eyebrow={copy.eyebrow}
+          headline={copy.title}
+        />
         <Link className="button button--secondary button--md" href={listHref}>
           {copy.listView}
         </Link>

@@ -1,8 +1,9 @@
-import { Heading, Paragraph, Surface } from "@heroui/react";
+import { Paragraph, Surface } from "@heroui/react";
 import type { ReactNode } from "react";
 
 import { type AuthPageKey, getAuthPageCopy } from "../lib/auth-content";
 import type { Locale } from "../lib/locale";
+import { PageSectionHeader } from "./marketing/PageSectionHeader";
 
 type AuthPageLayoutProps = {
   locale: Locale;
@@ -20,7 +21,7 @@ export function AuthPageLayout({ locale, page, children }: AuthPageLayoutProps) 
     >
       <Surface className="mx-auto flex w-full max-w-lg flex-col gap-6" variant="transparent">
         <Surface className="flex flex-col gap-3" variant="transparent">
-          <Heading level={1}>{copy.title}</Heading>
+          <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
           <Paragraph color="muted">{copy.description}</Paragraph>
         </Surface>
         {children}

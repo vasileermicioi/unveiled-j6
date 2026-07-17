@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export type EventFeedCopy = {
+  eyebrow: string;
   title: string;
   filtersTitle: string;
   categoryLabel: string;
@@ -26,6 +27,7 @@ export type EventFeedCopy = {
 
 const copyByLocale: Record<Locale, EventFeedCopy> = {
   de: {
+    eyebrow: "Entdecken",
     title: "Events",
     filtersTitle: "FILTERN",
     categoryLabel: "Kategorie",
@@ -51,6 +53,7 @@ const copyByLocale: Record<Locale, EventFeedCopy> = {
     paginationNext: "Weiter",
   },
   en: {
+    eyebrow: "Discover",
     title: "Events",
     filtersTitle: "FILTERS",
     categoryLabel: "Category",

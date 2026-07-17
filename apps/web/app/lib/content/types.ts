@@ -137,6 +137,7 @@ export type LegalSection = {
 };
 
 export type LegalContent = {
+  eyebrow: string;
   pageTitle: string;
   intro: string;
   sections: LegalSection[];

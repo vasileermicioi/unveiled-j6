@@ -26,6 +26,27 @@
     }
   }
 
+  .page-section-header {
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .page-section-header .typography--h1 {
+    font-size: 3rem;
+  }
+
+  @media (min-width: 768px) {
+    .page-section-header .typography--h1 {
+      font-size: 4.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-section-header .typography--h1 {
+      font-size: 5.5rem;
+    }
+  }
+
   .card.page-hero .typography--h1 {
     font-size: 2.25rem;
   }
@@ -59,22 +80,6 @@
 
   .help-section--compact .card__title {
     font-size: 1rem;
-  }
-
-  .faq-hero .typography--h1 {
-    font-size: 3rem;
-  }
-
-  @media (min-width: 768px) {
-    .faq-hero .typography--h1 {
-      font-size: 4.5rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .faq-hero .typography--h1 {
-      font-size: 5.5rem;
-    }
   }
 
   .faq-hero__subheadline {
@@ -551,11 +556,6 @@
     line-height: 0.9;
     text-transform: uppercase;
     letter-spacing: -0.05em;
-  }
-
-  .discover-events-heading {
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--border);
   }
 
   .discover-empty-state {

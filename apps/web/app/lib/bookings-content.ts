@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export type MyTicketsCopy = {
+  eyebrow: string;
   title: string;
   empty: string;
   browseEvents: string;
@@ -16,6 +17,7 @@ export type MyTicketsCopy = {
 
 const copyByLocale: Record<Locale, MyTicketsCopy> = {
   de: {
+    eyebrow: "Buchungen",
     title: "Meine Tickets",
     empty: "Du hast noch keine Tickets.",
     browseEvents: "Events entdecken",
@@ -29,6 +31,7 @@ const copyByLocale: Record<Locale, MyTicketsCopy> = {
     statusWaitlist: "Warteliste",
   },
   en: {
+    eyebrow: "Bookings",
     title: "My Tickets",
     empty: "You have no tickets yet.",
     browseEvents: "Browse events",
