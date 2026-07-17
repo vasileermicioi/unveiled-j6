@@ -587,14 +587,51 @@
     text-underline-offset: 4px;
   }
 
-  .discover-partner-tile {
-    border: 2px solid var(--border);
-    background-color: var(--surface);
-    padding: 1rem;
+  @keyframes discover-partners-marquee {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(-50%);
+    }
   }
 
-  .discover-partner-tile__initial {
-    margin-bottom: 0.75rem;
+  .discover-partners__viewport {
+    overflow: hidden;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .discover-partners__track {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 1rem;
+    width: max-content;
+    max-width: none;
+    animation: discover-partners-marquee 30s linear infinite;
+  }
+
+  .discover-partners__viewport:hover .discover-partners__track,
+  .discover-partners__viewport:focus-within .discover-partners__track {
+    animation-play-state: paused;
+  }
+
+  .discover-partners__item {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 12rem;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    background-color: var(--surface);
+    padding: 0;
+  }
+
+  .discover-partners__initial {
     font-size: 2rem;
     font-weight: 900;
     line-height: 0.9;
@@ -602,12 +639,25 @@
     letter-spacing: -0.05em;
   }
 
-  .discover-partner-tile__logo {
-    margin-bottom: 0.75rem;
-    aspect-ratio: 16 / 9;
+  .discover-partners__logo {
+    display: block;
     width: 100%;
-    object-fit: contain;
-    border-bottom: 2px solid var(--border);
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .discover-partners__track {
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 100%;
+      animation: none;
+      transform: none;
+    }
+
+    .discover-partners__item--clone {
+      display: none;
+    }
   }
 
   /* EventCard theme rules live in packages/ui brand-theme.css */

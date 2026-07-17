@@ -208,7 +208,12 @@ export function EventCard({
           {event.partnerName}
         </Paragraph>
         <Surface className="event-card__meta" variant="transparent">
-          <Calendar aria-hidden className="event-card__meta-icon" size={ICON_SIZE} strokeWidth={2} />
+          <Calendar
+            aria-hidden
+            className="event-card__meta-icon"
+            size={ICON_SIZE}
+            strokeWidth={2}
+          />
           <Paragraph color="muted" size="sm">
             {formatEventDate(event.dateTime, locale)}
           </Paragraph>

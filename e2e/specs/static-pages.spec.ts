@@ -62,7 +62,9 @@ test.describe("static-pages.feature", () => {
     // Footer Navigation: Discover + FAQ only (How it works / Membership not listed).
     const footer = page.getByRole("contentinfo");
     await expect(footer.getByRole("link", { name: /^faq$/i })).toBeVisible();
-    await expect(footer.getByRole("link", { name: /so funktioniert|how it works/i })).toHaveCount(0);
+    await expect(footer.getByRole("link", { name: /so funktioniert|how it works/i })).toHaveCount(
+      0,
+    );
     await expect(footer.getByRole("link", { name: /^mitgliedschaft$|^membership$/i })).toHaveCount(
       0,
     );
@@ -90,9 +92,7 @@ test.describe("static-pages.feature", () => {
     await expect(page).not.toHaveURL(new RegExp(`/${locale}/events/?$`));
 
     // Guests reach the full feed via signup (no footer Membership CTA).
-    await page.goto(
-      `/${locale}/signup?returnTo=${encodeURIComponent(`/${locale}/events`)}`,
-    );
+    await page.goto(`/${locale}/signup?returnTo=${encodeURIComponent(`/${locale}/events`)}`);
     await expect(page).toHaveURL(new RegExp(`/${locale}/(signup|login)`));
     await expect(page).toHaveURL(/returnTo=/);
 

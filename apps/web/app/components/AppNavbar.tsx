@@ -70,12 +70,7 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
           variant="transparent"
         >
           {navLinks.map((link) => (
-            <NavLink
-              href={link.href}
-              isActive={link.isActive}
-              key={link.href}
-              label={link.label}
-            />
+            <NavLink href={link.href} isActive={link.isActive} key={link.href} label={link.label} />
           ))}
         </Surface>
 

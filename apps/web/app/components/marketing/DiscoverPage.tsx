@@ -6,12 +6,47 @@ import type { DiscoverContent } from "../../lib/content/types";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
+const PARTNERS_HEADING_ID = "discover-partners-heading";
+
 type DiscoverPageProps = {
   content: DiscoverContent;
   locale: Locale;
   events: EventCardItem[];
   partners: DiscoverPartnerTile[];
 };
+
+function PartnerLogoCell({
+  partner,
+  clone = false,
+}: {
+  partner: DiscoverPartnerTile;
+  clone?: boolean;
+}) {
+  return (
+    <Surface
+      aria-hidden={clone || undefined}
+      aria-label={clone ? undefined : partner.name}
+      className={
+        clone ? "discover-partners__item discover-partners__item--clone" : "discover-partners__item"
+      }
+      variant="transparent"
+    >
+      {partner.logoUrl ? (
+        <img
+          alt=""
+          className="discover-partners__logo"
+          decoding="async"
+          loading="lazy"
+          src={partner.logoUrl}
+        />
+      ) : (
+        <Paragraph aria-hidden="true" className="discover-partners__initial">
+          {partner.initial}
+        </Paragraph>
+      )}
+    </Surface>
+  );
+}
 
 export function DiscoverPage({ content, locale, events, partners }: DiscoverPageProps) {
   return (
@@ -48,35 +83,34 @@ export function DiscoverPage({ content, locale, events, partners }: DiscoverPage
         )}
       </Surface>
 
-      <Surface className="flex flex-col gap-6" variant="transparent">
-        <Paragraph className="uppercase tracking-wide" color="muted" size="sm">
-          {content.partners.eyebrow}
-        </Paragraph>
+      {partners.length > 0 ? (
+        <Surface
+          aria-labelledby={PARTNERS_HEADING_ID}
+          className="discover-partners flex flex-col gap-6"
+          role="region"
+          variant="transparent"
+        >
+          <Paragraph
+            className="uppercase tracking-wide"
+            color="muted"
+            id={PARTNERS_HEADING_ID}
+            size="sm"
+          >
+            {content.partners.eyebrow}
+          </Paragraph>
 
-        <Surface className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" variant="transparent">
-          {partners.map((partner) => (
-            <Surface className="discover-partner-tile" key={partner.id} variant="transparent">
-              {partner.logoUrl ? (
-                <img
-                  alt=""
-                  className="discover-partner-tile__logo"
-                  decoding="async"
-                  loading="lazy"
-                  src={partner.logoUrl}
-                />
-              ) : (
-                <Paragraph aria-hidden="true" className="discover-partner-tile__initial">
-                  {partner.initial}
-                </Paragraph>
-              )}
-              <Paragraph className="font-semibold uppercase">{partner.name}</Paragraph>
-              <Paragraph color="muted" size="sm">
-                {partner.address}
-              </Paragraph>
+          <Surface className="discover-partners__viewport" variant="transparent">
+            <Surface className="discover-partners__track" variant="transparent">
+              {partners.map((partner) => (
+                <PartnerLogoCell key={`${partner.id}-a`} partner={partner} />
+              ))}
+              {partners.map((partner) => (
+                <PartnerLogoCell clone key={`${partner.id}-b`} partner={partner} />
+              ))}
             </Surface>
-          ))}
+          </Surface>
         </Surface>
-      </Surface>
+      ) : null}
     </Surface>
   );
 }

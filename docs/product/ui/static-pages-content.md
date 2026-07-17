@@ -16,9 +16,12 @@ Public page without login. Navbar “Discover” / “Entdecken” points here. 
 - Empty state (dashed border box): "Aktuell keine kommenden Events." / "No upcoming events right now."
 - Guests do **not** get an ungated `/events` list; signup/login for the full feed is via auth routes (`/signup`, `/login`).
 
-### 2. Partner venues grid
-- Section header: eyebrow "Partnerorte" / "Partner venues" (no big headline here, just the eyebrow)
-- Grid of up to 8 partner tiles, each showing the partner's logo (or a large initial letter if no logo), name, and address
+### 2. Partner venues slider
+- Section header: eyebrow "Partnerorte" / "Partner venues" (no big headline here, just the eyebrow); section is a named region (`aria-labelledby` / accessible name from the eyebrow)
+- Horizontal logo strip of up to 8 featured partners — logo image or large initial-letter fallback; name for accessibility context only (not address cards); logos decorative (`alt=""`)
+- Markup duplicates the partner sequence for a seamless continuous CSS marquee (default preference); duplicate cells are `aria-hidden`
+- `prefers-reduced-motion: reduce`: strip stays static (wrapped); no auto-scroll; clone sequence hidden
+- Empty featured-partners list: **hide** the Partner venues section entirely (no empty marquee, no partner empty-state copy)
 
 ### Dropped from old landing (not on Discover)
 - Hero panel (stats + membership / browse CTAs)

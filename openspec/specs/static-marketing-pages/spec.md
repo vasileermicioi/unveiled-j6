@@ -43,10 +43,66 @@ The locale home route `/:locale` SHALL render the Discover marketing preview wit
 - **WHEN** a visitor requests `/discover` without a locale segment
 - **THEN** they receive a **301** to `/:locale` (locale from `Accept-Language`, fallback `de`)
 
+### Requirement: Discover partner venues section
+
+The Discover locale home SHALL include a Partner venues section with a small uppercase eyebrow (“Partnerorte” / “Partner venues”) and a horizontal logo strip of featured partner venues (logo image or initial-letter fallback). The section SHALL NOT present a multi-column grid of address cards as the primary layout. The logo sequence markup SHALL include a duplicated partner sequence (or equivalent dual track) so a later continuous-loop animation can translate without restructuring. Partner addresses SHALL NOT be required as primary marquee cell content.
+
+#### Scenario: Guest sees partner section prefix and logos
+
+- **WHEN** a guest views `/:locale` with at least one featured partner
+- **THEN** they see the Partner venues eyebrow and a horizontal sequence of partner logos (or initials)
+
+#### Scenario: Partner strip is not an address card grid
+
+- **WHEN** a guest views the Partner venues section on Discover
+- **THEN** partner cells are logo-forward in a horizontal track and do not present address lines as the primary tile content
+
 #### Scenario: Partner logos from catalog
 
-- **WHEN** a partner in the venue grid has a `logo_image_id`
-- **THEN** the grid displays the partner logo using the `medium-640` variant URL
+- **WHEN** a partner in the strip has a `logo_image_id`
+- **THEN** the strip displays the partner logo using the `medium-640` variant URL (or the existing Discover logo URL helper)
+
+#### Scenario: Missing logo uses initial fallback
+
+- **WHEN** a partner in the strip has no usable logo URL
+- **THEN** the cell shows a large initial letter derived from the partner name
+
+### Requirement: Partner venues continuous marquee
+
+When the user does not prefer reduced motion, the Discover partner logo strip SHALL scroll horizontally in a continuous, seamless loop without requiring user interaction. When `prefers-reduced-motion: reduce` is set, the strip SHALL remain static (wrapped or clipped) with no auto-scrolling animation.
+
+#### Scenario: Continuous motion for default preference
+
+- **WHEN** a guest views Discover with multiple partner logos and no reduced-motion preference
+- **THEN** the logo strip moves continuously and the sequence appears to loop without a hard cut
+
+#### Scenario: Reduced motion disables auto-scroll
+
+- **WHEN** the user agent prefers reduced motion
+- **THEN** partner logos do not auto-scroll
+
+### Requirement: Partner marquee accessibility
+
+The partner logo marquee SHALL expose a single accessible section name (via the visible eyebrow and/or `aria-label` / `aria-labelledby` on the region). Duplicated logo nodes used only for seamless looping SHALL be hidden from the accessibility tree (`aria-hidden` on the duplicate track or clone cells). Logo images SHALL be decorative (`alt=""`) when the venue name is otherwise available to AT or purely ornamental in the strip.
+
+#### Scenario: Duplicate track is not double-read
+
+- **WHEN** a screen reader user lands on the Partner venues section
+- **THEN** each partner is not announced twice solely because of the seamless-loop duplicate sequence
+
+#### Scenario: Section has an accessible name
+
+- **WHEN** a screen reader user navigates by region or landmark to Partner venues
+- **THEN** the section is announced once using the Partner venues eyebrow (or equivalent accessible name)
+
+### Requirement: Partner venues empty list hides section
+
+When Discover has zero featured partners to show in the strip, the Partner venues section SHALL NOT render (no empty marquee track and no partner-specific empty-state copy).
+
+#### Scenario: No partners hides Partner venues
+
+- **WHEN** a guest views `/:locale` with an empty featured-partners list
+- **THEN** the Partner venues eyebrow and logo strip are not shown
 
 ### Requirement: Discover to events navigation
 

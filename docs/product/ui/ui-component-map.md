@@ -45,7 +45,7 @@ Ladle stories for all CTA states live under **`packages/ui`**. Theme Overview st
 
 | Surface | Route | Notes |
 |---|---|---|
-| **Discover home** | `/:locale` | Marketing + up to 6 upcoming EventCards; guest CTAs → public detail; auth CTAs → signup/login → `/events` |
+| **Discover home** | `/:locale` | Marketing + up to 6 upcoming EventCards; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); guest CTAs → public detail; auth CTAs → signup/login → `/events` |
 | **Member feed** | `/events` | Filters (GET query params), pagination, EventCard grid; subscription gate banner |
 | **Map** | `/events/map` | MapLibre + OSM island; cookie-gated |
 | **Saved** | `/saved` | Member saved list |
