@@ -74,7 +74,7 @@ test.describe("static-pages.feature", () => {
     await page.context().clearCookies();
     await page.goto(`/${locale}`);
 
-    const detailCta = page.getByRole("link", { name: /mehr sehen|see details/i }).first();
+    const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
     await expect(detailCta).toBeVisible({ timeout: 15_000 });
     await detailCta.click();
 
@@ -140,7 +140,9 @@ test.describe("static-pages.feature", () => {
 
   test("Scenario: FAQ", async ({ page, locale }) => {
     await page.goto(`/${locale}/faq`);
-    await expect(page.getByRole("heading", { name: /faq/i })).toBeVisible();
+    // PageSectionHeader: eyebrow + H1 (proximity role/name — not CSS-class selectors)
+    await expect(page.getByText(/^support$/i).first()).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /^faq$/i })).toBeVisible();
     await expect(
       page.getByRole("link", { name: /support@unveiled\.berlin/i }).first(),
     ).toBeVisible();

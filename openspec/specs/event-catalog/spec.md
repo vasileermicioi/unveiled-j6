@@ -457,12 +457,23 @@ The route `/:locale/admin/events/:id/codes` SHALL respond to GET with a CSV down
 
 ### Requirement: EventCard public component
 
-The `@unveiled/ui` package SHALL export an `EventCard` component matching `docs/product/ui/ui-component-map.md`, using image variants `medium-640` and `small-320` via srcset, and applying guest-first CTA precedence so unauthenticated viewers always see a "See details" action.
+The `@unveiled/ui` package SHALL export an `EventCard` component matching `docs/product/ui/ui-component-map.md` (product SoT updates for CTA copy may lag until hardening), using image variants `medium-640` and `small-320` via srcset. The primary CTA SHALL use the label **Book Now** / **Bin dabei** when remaining capacity is greater than zero, for both guests and signed-in members regardless of subscription status. When remaining capacity is zero, the CTA SHALL use **Waitlist** / **Warteliste**. The primary CTA SHALL navigate to the public event detail route `/:locale/events/:id` and SHALL NOT navigate directly to `/events/:id/book` or `/membership`.
 
-#### Scenario: Guest CTA on discover
+#### Scenario: Guest Book Now opens detail
 
-- **WHEN** EventCard renders without a signed-in user
-- **THEN** the primary CTA label corresponds to "See details" regardless of remaining capacity
+- **WHEN** a guest views an EventCard with remaining capacity
+- **THEN** the primary CTA label is Book Now (or Bin dabei)
+- **AND** following the CTA opens `/:locale/events/:id` without authentication
+
+#### Scenario: Member Book Now regardless of subscription
+
+- **WHEN** a signed-in member with inactive subscription views an EventCard with remaining capacity
+- **THEN** the primary CTA label is Book Now (or Bin dabei)
+
+#### Scenario: Sold-out Waitlist label
+
+- **WHEN** any viewer sees an EventCard with zero remaining capacity
+- **THEN** the primary CTA label is Waitlist (or Warteliste)
 
 #### Scenario: Bookmark control accessibility
 
@@ -513,17 +524,34 @@ The public locale home `/:locale` (Discover) SHALL render up to six upcoming eve
 
 ### Requirement: Public event detail page
 
-The web app SHALL serve `/:locale/events/:id` without requiring authentication for guests and crawlers, rendering full event details and share/OG metadata. Product docs under `docs/product/` (sitemap auth column, SEO indexability, authorization matrix) SHALL mark this route as public (`Auth` empty/`—`, not USER-required). Bookable future events (`date_time` in the future and remaining capacity > 0) SHALL be indexable; sold-out and past events SHALL still render HTTP 200 with a clear state and `noindex, follow`. Booking, waitlist, and save actions SHALL remain behind member (and subscription/credits) gates on dedicated routes.
+The web app SHALL serve `/:locale/events/:id` without requiring authentication for guests and crawlers, presenting a checkout-focused layout: event identity (category, partner, title, description, location) with a prominent larger image, plus a summary/action card showing ticket quantity affordance, total credit cost, contextual membership/auth messaging, and the primary next-step CTA. Share/OG metadata SHALL continue to be rendered. Product docs under `docs/product/` (sitemap auth column, SEO indexability, authorization matrix) SHALL mark this route as public (`Auth` empty/`—`, not USER-required) — doc updates may lag until hardening. Bookable future events (`date_time` in the future and remaining capacity > 0) SHALL be indexable; sold-out and past events SHALL still render HTTP 200 with a clear state and `noindex, follow`. Booking, waitlist, and save mutations SHALL remain on dedicated authenticated routes; the detail page SHALL NOT create bookings or ledger entries. A close control SHALL navigate via Link to Discover or the member events feed (or a safe `returnTo`), not dismiss a client-only modal.
 
 #### Scenario: Guest opens a shared event link
 
 - **WHEN** a guest opens `/:locale/events/:id` for a published upcoming event
 - **THEN** the SSR page renders event content and share/OG metadata without requiring login
 
+#### Scenario: Guest sees checkout card
+
+- **WHEN** a guest opens `/:locale/events/:id` for a bookable upcoming event
+- **THEN** they see event identity content and a summary card with total credits and a login (or equivalent unlock) CTA
+- **AND** they are not forced through auth before viewing the page
+
+#### Scenario: Eligible member continues to SSR book
+
+- **WHEN** a booking-eligible member opens the same detail page
+- **THEN** the primary CTA continues to the dedicated SSR book route `/:locale/events/:id/book`
+- **AND** credit deduction still occurs only via the booking domain on that SSR flow
+
+#### Scenario: Close returns to browse
+
+- **WHEN** a visitor activates the detail page close control
+- **THEN** they navigate to Discover or the member events feed (as appropriate) rather than dismissing a client-only modal
+
 #### Scenario: Unauthenticated event detail
 
 - **WHEN** a visitor opens a valid upcoming event detail URL
-- **THEN** the page returns 200 with hero srcset, description, partner info, and booking CTA linking to login or membership — not an auth redirect
+- **THEN** the page returns 200 with hero srcset, identity content, partner/location info, and a checkout summary card whose booking CTA links to login or membership — not an auth redirect
 
 #### Scenario: Event detail Open Graph image
 

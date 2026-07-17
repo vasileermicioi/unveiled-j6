@@ -25,7 +25,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 ### Guest journey (Discover → Events)
 
 1. Guest lands on Discover (`/:locale`).
-2. Preview **EventCard** CTAs link to public `/events/:id` (“See details” / “Mehr sehen”).
+2. Preview **EventCard** CTAs link to public `/events/:id` (“Book Now” / “Bin dabei”, or “Waitlist” / “Warteliste” when sold out).
 3. Path to the **full browse** experience: primary CTA to **signup or login**; after auth (and onboarding if incomplete), land on member `/events`.
 4. Guests do **not** get a public full upcoming-events list equivalent to `/events`.
 

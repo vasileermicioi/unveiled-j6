@@ -28,17 +28,8 @@ export type EventFeedPageProps = {
   partnerOptions: AdminFormSelectOption[];
 };
 
-export function resolveEventFeedCtaHref(
-  locale: Locale,
-  event: EventCardItem,
-  subscriptionActive: boolean,
-): string {
-  const soldOut = event.remainingCapacity <= 0;
-  if (soldOut || subscriptionActive) {
-    return localizedPath(locale, `events/${event.id}`);
-  }
-
-  return localizedPath(locale, "membership");
+export function resolveEventFeedCtaHref(locale: Locale, event: EventCardItem): string {
+  return localizedPath(locale, `events/${event.id}`);
 }
 
 export function EventFeedPage({
@@ -144,7 +135,7 @@ export function EventFeedPage({
                   saved ? eventUnsavePath(locale, event.id) : eventSavePath(locale, event.id)
                 }
                 bookmarkReturnTo={returnTo}
-                ctaHref={resolveEventFeedCtaHref(locale, event, subscriptionActive)}
+                ctaHref={resolveEventFeedCtaHref(locale, event)}
                 event={event}
                 key={event.id}
                 locale={locale}

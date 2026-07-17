@@ -94,7 +94,7 @@ test.describe("event-discovery.feature", () => {
     await page.context().clearCookies();
     // Prefer Discover → public detail (no test-process DB). Fall back to seeded id if preview empty.
     await page.goto(`/${locale}`);
-    const detailCta = page.getByRole("link", { name: /mehr sehen|see details/i }).first();
+    const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
     if ((await detailCta.count()) > 0) {
       await detailCta.click();
     } else {
@@ -105,8 +105,10 @@ test.describe("event-discovery.feature", () => {
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/[^/?#]+`));
     await expect(page).not.toHaveURL(/\/(login|signup)/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+    // Checkout summary card: total + guest unlock CTA (no auth required to view)
+    await expect(page.getByText(/^gesamt$|^total$/i).first()).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /anmelden zum buchen|sign in to book/i }).first(),
+      page.getByRole("link", { name: /einloggen zum freischalten|log in to unlock/i }).first(),
     ).toBeVisible();
   });
 
@@ -346,26 +348,26 @@ test.describe("event-discovery.feature", () => {
     await page.context().clearCookies();
     await page.goto(`/${locale}`);
 
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(
-      page.getByText(/mitgliedschaft|membership|credits|community/i).first(),
+      page.getByRole("heading", {
+        level: 1,
+        name: /aktuelle events in berlin|current events in berlin/i,
+      }),
     ).toBeVisible();
+    // Membership framing remains in the section eyebrow (hero membership CTAs were dropped).
     await expect(
-      page.getByRole("link", { name: /mitgliedschaft ansehen|view membership/i }).first(),
+      page.getByText(/mitgliedschaft buchbar|bookable with your membership/i).first(),
     ).toBeVisible();
 
-    // Preview events (seeded upcoming) — guest CTA is See details / Mehr sehen
-    const detailCta = page.getByRole("link", { name: /mehr sehen|see details/i }).first();
+    // Preview events (seeded upcoming) — guest CTA is Book Now / Bin dabei → detail (not booking POST)
+    const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
     await expect(detailCta).toBeVisible({ timeout: 15_000 });
+    await expect(detailCta).toHaveAttribute("href", new RegExp(`/${locale}/events/[^/?#]+`));
 
     // Partner venues section
     await expect(page.getByText(/partnerorte|partner venues/i).first()).toBeVisible();
 
-    // Attempting to book / membership CTA goes to membership (signup path), not a booking POST
-    await page
-      .getByRole("link", { name: /mitgliedschaft ansehen|view membership/i })
-      .first()
-      .click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/membership`));
+    // Guests do not get a public full feed equivalent to /events on Discover.
+    await expect(page).not.toHaveURL(new RegExp(`/${locale}/events/?$`));
   });
 });

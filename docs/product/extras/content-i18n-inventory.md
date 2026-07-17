@@ -136,7 +136,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 - Onboarding option labels (interests, moods, districts, timing, days — hardcoded arrays in `Onboarding.tsx`, values like "Theater", "Kino", "Mitte", "X-Berg", etc. are the same string in both languages today)
 - "SECURE RSVP // NO REFUNDS" booking policy copy (hardcoded in `BookingModal.tsx`, not in `translations.ts`)
 - Venue check-in inline copy (`BookingsView.tsx`)
-- `EventCard`'s two viewer-state-dependent CTA labels, hardcoded inline rather than pulled from `translations.ts` like the rest of the card's copy (`bookNow`/`waitlist` are in the catalog, these two aren't): "See details" / "Mehr sehen" (guest state) and "Unlock event" / "Mit Abo öffnen" (inactive-subscription state) — see `ui/ui-component-map.md`'s `EventCard` entry
+- Event detail checkout-card CTA/notice strings (guest unlock, membership notices, “Secure RSVP // No refunds”, total label) — live in `EventDetailPage.tsx` / locale helpers, not the old `translations.ts` catalog; see `ui/ui-component-map.md` Event detail entry. EventCard primary CTA uses catalog `bookNow` / `waitlist` for all viewer states (guest included).
 
 ## Recommendation
 

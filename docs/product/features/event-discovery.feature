@@ -8,7 +8,7 @@
 #   - Default feed scope = today (Europe/Berlin); custom date range available
 #
 # Prefer Scenario titles that match shipped e2e/specs/event-discovery.spec.ts when
-# behavior is unchanged; public-detail scenarios are additive (e2e gap for step 04).
+# behavior is unchanged.
 
 Feature: Event Discovery
   As a guest or member
@@ -22,14 +22,15 @@ Feature: Event Discovery
     Given I am not signed in
     When I visit the Discover home ("/:locale")
     Then I see a curated preview of upcoming events (no auth required)
-    And I see membership value propositions
+    And I see membership framing in the section header (eyebrow)
     And I do not see a public full upcoming-events list equivalent to the member "/events" feed
 
   Scenario: Guest can view public event detail without authentication
     Given I am not signed in
     When I open a valid upcoming event detail URL ("/events/:id")
-    Then the page renders event content without requiring login
-    And booking, waitlist, and save actions require authentication
+    Then the page renders checkout-focused event content (identity + summary card) without requiring login
+    And the summary card shows total credits and a login (or unlock) CTA
+    And booking, waitlist, and save mutations remain on authenticated routes
 
   Scenario: Guest path to full browse requires signup or login
     Given I am not signed in

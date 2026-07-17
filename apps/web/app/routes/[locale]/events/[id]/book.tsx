@@ -25,6 +25,17 @@ function loginRedirect(locale: Locale, returnPath: string): string {
   return `/${locale}/login?returnTo=${encodeURIComponent(returnPath)}`;
 }
 
+function parseQtyParam(raw: string | undefined): string {
+  const n = Number.parseInt(raw ?? "1", 10);
+  if (!Number.isFinite(n) || n < 1) {
+    return "1";
+  }
+  if (n > 3) {
+    return "3";
+  }
+  return String(n);
+}
+
 async function sendConfirmationSafe(options: {
   apiKey: string | undefined;
   from: string | undefined;
@@ -152,10 +163,13 @@ export default createRoute(async (c) => {
     return c.redirect(`/${locale}/membership`, 302);
   }
 
+  const defaultTickets = parseQtyParam(c.req.query("qty"));
+
   return c.render(
     <BookEventPage
       availableCredits={user?.credits}
       copy={copy}
+      defaultTickets={defaultTickets}
       event={event}
       idempotencyKey={crypto.randomUUID()}
       locale={locale}

@@ -13,15 +13,25 @@ export const HoverAvailabilityVisible: Story = () => (
 );
 HoverAvailabilityVisible.storyName = "EventCard / Hover — availability visible";
 
-export const GuestSeeDetails: Story = () => (
+export const GuestBookNow: Story = () => (
+  <EventCard event={sampleEventAvailable} locale="en" viewer={{ kind: "guest" }} />
+);
+GuestBookNow.storyName = "EventCard / Guest — Book Now";
+
+export const GuestBookNowDe: Story = () => (
+  <EventCard event={sampleEventAvailable} locale="de" viewer={{ kind: "guest" }} />
+);
+GuestBookNowDe.storyName = "EventCard / Guest — Bin dabei (de)";
+
+export const GuestWaitlist: Story = () => (
   <EventCard event={sampleEventSoldOut} locale="en" viewer={{ kind: "guest" }} />
 );
-GuestSeeDetails.storyName = "EventCard / Guest — See details";
+GuestWaitlist.storyName = "EventCard / Guest — Waitlist";
 
-export const GuestSeeDetailsDe: Story = () => (
+export const GuestWaitlistDe: Story = () => (
   <EventCard event={sampleEventSoldOut} locale="de" viewer={{ kind: "guest" }} />
 );
-GuestSeeDetailsDe.storyName = "EventCard / Guest — Mehr sehen (de)";
+GuestWaitlistDe.storyName = "EventCard / Guest — Warteliste (de)";
 
 export const MemberWaitlist: Story = () => (
   <EventCard
@@ -41,23 +51,23 @@ export const MemberWaitlistDe: Story = () => (
 );
 MemberWaitlistDe.storyName = "EventCard / Member — Warteliste (de)";
 
-export const MemberUnlock: Story = () => (
+export const MemberInactiveBookNow: Story = () => (
   <EventCard
     event={sampleEventAvailable}
     locale="en"
     viewer={{ kind: "member", subscriptionActive: false }}
   />
 );
-MemberUnlock.storyName = "EventCard / Member — Unlock event";
+MemberInactiveBookNow.storyName = "EventCard / Member inactive — Book Now";
 
-export const MemberUnlockDe: Story = () => (
+export const MemberInactiveBookNowDe: Story = () => (
   <EventCard
     event={sampleEventAvailable}
     locale="de"
     viewer={{ kind: "member", subscriptionActive: false }}
   />
 );
-MemberUnlockDe.storyName = "EventCard / Member — Mit Abo öffnen (de)";
+MemberInactiveBookNowDe.storyName = "EventCard / Member inactive — Bin dabei (de)";
 
 export const MemberBookNow: Story = () => (
   <EventCard

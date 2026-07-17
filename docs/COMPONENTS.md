@@ -84,6 +84,22 @@ Localized 404 with secondary back-to-home CTA.
 
 ## Marketing primitives
 
+### `PageSectionHeader`
+
+**Path:** `components/marketing/PageSectionHeader.tsx`  
+**Theme:** `.page-section-header` (on brand yellow)
+
+Default page/section header: muted uppercase eyebrow, bold headline (`h1` or section heading), full-width rule beneath. Used on Discover, FAQ, auth (`AuthPageLayout`), and member browse surfaces.
+
+```tsx
+<PageSectionHeader
+  eyebrow="Bookable with your membership"
+  headline="Current events in Berlin."
+/>
+```
+
+Do **not** confuse with `PageHero` — this sits directly on the yellow page background (no bordered card).
+
 ### `PageHero`
 
 **Path:** `components/marketing/PageHero.tsx`  
@@ -93,13 +109,13 @@ Bordered card hero with optional eyebrow, H1 headline, description.
 
 ```tsx
 <PageHero
-  eyebrow="Support"
-  headline="FAQ"
+  eyebrow="How Unveiled works"
+  headline="Understand the value before you commit."
   description="Subheadline text"
 />
 ```
 
-Use for **card-style** page intros (how-it-works). Not for FAQ (uses direct-on-yellow hero instead).
+Use for **card-style** long-form marketing/legal intros (how-it-works, etc.). Not the default for FAQ, auth, or Discover — those use `PageSectionHeader`.
 
 ---
 

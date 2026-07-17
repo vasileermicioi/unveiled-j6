@@ -139,13 +139,14 @@ Playwright tests SHALL use only accessibility- and layout-based locators (`getBy
 
 ### Requirement: Phase 0–4 component story coverage
 
-Every UI component shipped in Phases 0–4 SHALL have at least one Ladle story per visual state documented in `ui/ui-component-map.md`.
+Every UI component shipped in Phases 0–4 SHALL have at least one Ladle story per visual state documented in `ui/ui-component-map.md` (CTA matrix for EventCard follows this change’s Book Now / Waitlist contract until product docs catch up in hardening).
 
 #### Scenario: EventCard CTA states are story-isolated
 
 - **WHEN** a developer opens `EventCard` stories in Ladle
-- **THEN** guest, waitlist, unlock, and book CTA labels are each visible in a dedicated story
-- **AND** the guest story shows "See details" regardless of sold-out capacity
+- **THEN** guest Book Now, member Book Now (including inactive subscription), and Waitlist CTA labels are each visible in a dedicated story
+- **AND** the guest bookable story shows "Book Now" (or Bin dabei) when capacity remains
+- **AND** a sold-out story shows "Waitlist" (or Warteliste)
 
 #### Scenario: Page-level components are story-isolated
 
@@ -354,3 +355,17 @@ The web app SHALL provide a reusable `PageSectionHeader` composition (HeroUI pri
 #### Scenario: Auth pages use shared header
 - **WHEN** a visitor opens `/:locale/login` or `/:locale/signup`
 - **THEN** the auth page shows an eyebrow + headline section header with the shared bottom rule above the auth form
+
+### Requirement: Section header documented for agents
+
+Product UI docs SHALL describe the shared on-yellow `PageSectionHeader` (eyebrow + headline + rule) as the default page/section header for Discover, FAQ, auth, and member browse surfaces, distinct from the optional bordered `PageHero` card used on long-form marketing/legal pages. Agent-facing docs (`docs/product/ui/ui-component-map.md`, `docs/product/ui/static-pages-content.md`, and `docs/COMPONENTS.md` where headers are listed) SHALL make this distinction explicit so implementers do not invent one-off heroes or treat `PageHero` as the FAQ/auth default.
+
+#### Scenario: Component map mentions PageSectionHeader
+
+- **WHEN** an implementer reads the UI component / static pages docs
+- **THEN** they can distinguish PageSectionHeader (Discover pattern) from PageHero (card hero)
+
+#### Scenario: FAQ and auth header presence in e2e
+
+- **WHEN** Playwright covers FAQ and auth page headers after this change
+- **THEN** assertions use proximity role/name (eyebrow and/or level-1 heading), not CSS-class or `data-testid` selectors for the ruled header

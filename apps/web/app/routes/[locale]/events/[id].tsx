@@ -9,11 +9,23 @@ import { NotFoundPage } from "../../../components/NotFoundPage";
 import { getAuthOptions, getSessionIfConfigured } from "../../../lib/auth";
 import { getCatalogDb } from "../../../lib/catalog-db";
 import type { Locale } from "../../../lib/locale";
-import { isValidLocale } from "../../../lib/locale";
+import { isValidLocale, localizedPath } from "../../../lib/locale";
+import { parseReturnTo } from "../../../lib/post-auth-redirect";
 import { buildEventJsonLd, eventDetailPageMeta } from "../../../lib/seo";
 
 function getLocaleParam(value: string | undefined): Locale {
   return value && isValidLocale(value) ? value : "de";
+}
+
+function parseQtyParam(raw: string | undefined): number {
+  const n = Number.parseInt(raw ?? "1", 10);
+  if (!Number.isFinite(n) || n < 1) {
+    return 1;
+  }
+  if (n > 3) {
+    return 3;
+  }
+  return n;
 }
 
 export default createRoute(async (c) => {
@@ -66,12 +78,26 @@ export default createRoute(async (c) => {
     }
   }
 
+  const url = new URL(c.req.url);
+  const safeReturnTo = parseReturnTo(url.searchParams.get("returnTo") ?? undefined, locale);
+  const closeHref =
+    viewer.kind === "guest"
+      ? localizedPath(locale, "")
+      : (safeReturnTo ?? localizedPath(locale, "events"));
+  const defaultQty = parseQtyParam(url.searchParams.get("qty") ?? undefined);
+
   const meta = eventDetailPageMeta(event);
   const jsonLd = buildEventJsonLd(event);
 
   return c.render(
     <>
-      <EventDetailPage event={event} locale={locale} viewer={viewer} />
+      <EventDetailPage
+        closeHref={closeHref}
+        defaultQty={defaultQty}
+        event={event}
+        locale={locale}
+        viewer={viewer}
+      />
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         type="application/ld+json"

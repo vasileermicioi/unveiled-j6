@@ -13,6 +13,7 @@ Mapping aid for HeroUI rebuilds. Visual language: `design-tokens.md`. Ownership:
 | Navbar / Header | `apps/web` | Slim marketing nav Discover + FAQ; guest auth Log in only; How it works / Membership / Sign up out of header and footer nav — see `app-shell.md` |
 | Logo | `@unveiled/ui` | Three SVG tones — `assets-inventory.md`; Ladle stories under `packages/ui` |
 | Footer | `apps/web` | Discover → `/:locale`; FAQ; legal column (no How it works / Membership) |
+| **PageSectionHeader** | `apps/web` | Default on-yellow page/section header: muted uppercase eyebrow + bold headline + full-width rule. Used on Discover, FAQ, auth, member feed/browse — distinct from bordered `PageHero` card heroes |
 | Help / FAQ accordion | `apps/web` | HeroUI `Accordion` in `Card` |
 | Cookie banner | `apps/web` island | Accept/decline; gates map tiles |
 
@@ -32,12 +33,10 @@ Fields (top → bottom): image (`medium-640` / `small-320` srcset), category bad
 
 **CTA precedence (guest first):**
 
-1. Not signed in → always “See details” / “Mehr sehen” (links to public `/events/:id`)
-2. Signed in, sold out → “Waitlist”
-3. Signed in, subscription not `ACTIVE` → “Unlock event”
-4. Signed in, `ACTIVE` → “Book Now”
+1. Sold out → “Waitlist” / “Warteliste” (links to public `/events/:id` — no waitlist POST on the card)
+2. Otherwise (guest, inactive, or `ACTIVE`) → “Book Now” / “Bin dabei” (always links to public `/events/:id` — never `/membership` or `/events/:id/book` from the card)
 
-Ladle stories for all CTA states live under **`packages/ui`**. Theme Overview story: see `design-system.md`.
+Membership unlock / login messaging lives on the **event detail** checkout card, not as a separate EventCard CTA label. Ladle stories for CTA states live under **`packages/ui`**. Theme Overview story: see `design-system.md`.
 
 ---
 
@@ -45,11 +44,11 @@ Ladle stories for all CTA states live under **`packages/ui`**. Theme Overview st
 
 | Surface | Route | Notes |
 |---|---|---|
-| **Discover home** | `/:locale` | Marketing + up to 6 upcoming EventCards; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); guest CTAs → public detail; auth CTAs → signup/login → `/events` |
-| **Member feed** | `/events` | Filters (GET query params), pagination, EventCard grid; subscription gate banner |
+| **Discover home** | `/:locale` | `PageSectionHeader` + up to 6 upcoming EventCards; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); Book Now / Bin dabei (or Waitlist) → public detail; auth CTAs → signup/login → `/events` |
+| **Member feed** | `/events` | `PageSectionHeader`; filters (GET query params), pagination, EventCard grid; subscription gate banner |
 | **Map** | `/events/map` | MapLibre + OSM island; cookie-gated |
 | **Saved** | `/saved` | Member saved list |
-| **Event detail** | `/events/:id` | **Public** SSR page; hero srcset; map + address; CTA to book/waitlist/login |
+| **Event detail** | `/events/:id` | **Public** checkout-focused SSR page (no auth): identity column (category // partner, title, description, location, large image) + dark summary/action card (ticket qty affordance, total credits, auth/membership notice, primary CTA). Close control is a Link (Discover / feed / safe `returnTo`), not a client modal. Qty on detail is navigation state only — **no** booking/ledger POST; credit charge stays on `/events/:id/book`. Map + metadata below the fold. |
 
 ---
 

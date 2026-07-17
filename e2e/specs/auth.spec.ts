@@ -188,6 +188,9 @@ test.describe("auth.feature", () => {
 
   test("Scenario: Log in with invalid credentials", async ({ page, locale }) => {
     await page.goto(`/${locale}/login`);
+    // PageSectionHeader: eyebrow + H1 (proximity role/name — not CSS-class selectors)
+    await expect(page.getByText(/willkommen zurück|welcome back/i).first()).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /anmelden|sign in/i })).toBeVisible();
     await page.getByLabel(/e-?mail/i).fill("nobody@unveiled.test");
     await page.getByLabel(/^passwort$|^password$/i).fill("wrong-password-xyz");
     await page.getByRole("button", { name: /anmelden|sign in|log in/i }).click();

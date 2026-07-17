@@ -11,8 +11,8 @@ Exact DE/EN copy and section structure for marketing pages. Rebuild with HeroUI.
 Public page without login. Navbar “Discover” / “Entdecken” points here. Sections, top to bottom:
 
 ### 1. Live event preview grid
-- Section header (`h1`): eyebrow "Mit deiner Mitgliedschaft buchbar" / "Bookable with your membership", headline "Aktuelle Events in Berlin." / "Current events in Berlin." (full-width rule under the title)
-- Grid of up to 6 upcoming events (soonest first), each an `EventCard` with guest CTA **"See details" / "Mehr sehen"** → public `/events/:id` (not booking modal)
+- Section header via shared `PageSectionHeader` (`h1`): eyebrow "Mit deiner Mitgliedschaft buchbar" / "Bookable with your membership", headline "Aktuelle Events in Berlin." / "Current events in Berlin." (full-width rule under the title)
+- Grid of up to 6 upcoming events (soonest first), each an `EventCard` with guest CTA **"Book Now" / "Bin dabei"** (or **"Waitlist" / "Warteliste"** when sold out) → public `/events/:id` (not booking modal; not deep-link to `/book`)
 - Empty state (dashed border box): "Aktuell keine kommenden Events." / "No upcoming events right now."
 - Guests do **not** get an ungated `/events` list; signup/login for the full feed is via auth routes (`/signup`, `/login`).
 
@@ -53,9 +53,8 @@ Public page without login. Navbar “Discover” / “Entdecken” points here. 
 ## FAQ (`/faq`, component `FaqPage.tsx` + `HelpSection.tsx`)
 
 ### 1. Page header
-- Eyebrow: "Support" (same in both languages)
-- Headline: "FAQ" (same in both languages, styled as a large display headline)
-- Subheadline: "Alles Wichtige zu Mitgliedschaft und Buchung an einem Ort." / "Everything important about membership and booking in one place."
+- Shared `PageSectionHeader` on the yellow page background (not a bordered `PageHero` card): eyebrow "Support" (same in both languages), headline "FAQ" (same in both languages, large display headline), full-width rule under the title
+- Subheadline below the header: "Alles Wichtige zu Mitgliedschaft und Buchung an einem Ort." / "Everything important about membership and booking in one place."
 
 ### 2. Help/FAQ card (`HelpSection`, reused elsewhere too — see below)
 - Eyebrow: "FAQ & SUPPORT" (same in both languages)
@@ -83,6 +82,7 @@ Public page without login. Navbar “Discover” / “Entdecken” points here. 
 
 ## Cross-page observations for the rewrite
 
-- All of these pages share the same "bordered white/dark card on a page-level max-width container" pattern with an eyebrow + big uppercase headline + supporting paragraph — this is a strong candidate for a shared `PageHero`/`SectionCard` HeroUI-based layout primitive rather than one-off styling per page.
+- **Default page/section header:** shared `PageSectionHeader` (on-yellow eyebrow + headline + rule) for Discover, FAQ, auth (`AuthPageLayout`), and member browse surfaces. **Optional bordered card hero:** `PageHero` for long-form marketing/legal intros (e.g. How it works). Do not invent one-off FAQ/auth heroes.
+- Auth pages (`/login`, `/signup`, …) use `PageSectionHeader` via `AuthPageLayout` with locale eyebrows such as "Willkommen zurück" / "Welcome back" (login) and "Loslegen" / "Get started" (signup).
 - Every headline/eyebrow/CTA is manually translated inline via `language === 'DE' ? ... : ...` ternaries rather than pulled from the `translations.ts` catalog — when porting to whatever i18n system the new app uses, all of this copy needs to move into locale files (see `../extras/content-i18n-inventory.md` for the "not yet captured" note on this).
 - Two small pieces of copy are **not translated at all** today (identical in DE/EN): the landing page's three trust badges ("Member-owned", "Verified Events", "Berlin Focused") and the "How Unveiled works" eyebrow. **Decided: intentional, keep as brand-English terms** in both locales — short badge-style English phrases are a common, deliberate stylistic choice in German consumer marketing (reads as confident/international rather than untranslated), and these three are consistent with that pattern rather than an oversight. Don't translate them during the rewrite.

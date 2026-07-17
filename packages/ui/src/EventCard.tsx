@@ -48,16 +48,8 @@ function ticketTypeLabel(ticketType: EventCardItem["ticketType"], locale: Catalo
   return locale === "de" ? "Geheimcode" : "Secret code";
 }
 
-function guestCtaLabel(locale: CatalogLocale): string {
-  return locale === "de" ? "Mehr sehen" : "See details";
-}
-
 function waitlistCtaLabel(locale: CatalogLocale): string {
   return locale === "de" ? "Warteliste" : "Waitlist";
-}
-
-function unlockCtaLabel(locale: CatalogLocale): string {
-  return locale === "de" ? "Mit Abo öffnen" : "Unlock event";
 }
 
 function bookCtaLabel(locale: CatalogLocale): string {
@@ -80,18 +72,12 @@ function availabilityLabel(remainingCapacity: number, locale: CatalogLocale): st
 }
 
 export function resolveEventCardCta(
-  viewer: EventCardViewerState,
+  _viewer: EventCardViewerState,
   soldOut: boolean,
   locale: CatalogLocale,
 ): string {
-  if (viewer.kind === "guest") {
-    return guestCtaLabel(locale);
-  }
   if (soldOut) {
     return waitlistCtaLabel(locale);
-  }
-  if (!viewer.subscriptionActive) {
-    return unlockCtaLabel(locale);
   }
   return bookCtaLabel(locale);
 }

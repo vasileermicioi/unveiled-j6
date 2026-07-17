@@ -644,7 +644,7 @@ Spot-check vs `docs/product/sitemap/sitemap.md` (2026-07-11):
 ### Phase 5.5 demo script
 
 1. `bun run stories` — open **Theme Overview** under `@unveiled/ui` (brand yellow `#FAFF86`, primary/secondary CTAs, sample card/chips).
-2. As a guest, open `/:locale` (Discover) → click a preview “See details” / “Mehr sehen” → land on public `/events/:id` without login.
+2. As a guest, open `/:locale` (Discover) → click a preview “Book Now” / “Bin dabei” → land on public `/events/:id` without login.
 3. Confirm `/:locale/discover` and `/discover` **301** to locale home.
 4. Confirm guest `/events` redirects to signup/login; e2e Scenario titles match Gherkin (`docs/product/testing/coverage-matrix.md`).
 

@@ -46,7 +46,7 @@ export function SavedEventsPage({ locale, events, subscriptionActive }: SavedEve
             <EventCard
               bookmarkFormAction={eventUnsavePath(locale, event.id)}
               bookmarkReturnTo={returnTo}
-              ctaHref={resolveEventFeedCtaHref(locale, event, subscriptionActive)}
+              ctaHref={resolveEventFeedCtaHref(locale, event)}
               event={event}
               key={event.id}
               locale={locale}

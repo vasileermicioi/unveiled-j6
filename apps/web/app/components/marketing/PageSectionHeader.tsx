@@ -17,12 +17,10 @@ export function PageSectionHeader({
 }: PageSectionHeaderProps) {
   return (
     <Surface
-      className={`page-section-header flex flex-col gap-2 ${className ?? ""}`.trim()}
+      className={`page-section-header flex flex-col gap-1.5 ${className ?? ""}`.trim()}
       variant="transparent"
     >
-      <Paragraph className="uppercase tracking-wide" color="muted" size="sm">
-        {eyebrow}
-      </Paragraph>
+      <Paragraph className="page-section-header__eyebrow uppercase">{eyebrow}</Paragraph>
       <Heading id={id} level={level}>
         {headline}
       </Heading>

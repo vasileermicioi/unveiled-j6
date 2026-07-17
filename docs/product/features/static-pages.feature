@@ -22,7 +22,7 @@ Feature: Static and Marketing Pages
   Scenario: Discover preview links to public event detail
     Given I am not signed in
     And Discover shows at least one upcoming event card
-    When I follow the event card CTA ("See details" / equivalent)
+    When I follow the event card CTA ("Book Now" / "Bin dabei")
     Then I land on the public event detail page ("/events/:id") without being forced to log in
 
   Scenario: Discover CTA path to the full member events feed

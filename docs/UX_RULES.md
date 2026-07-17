@@ -89,16 +89,14 @@ Dual path: file upload or paste URL → `@unveiled/images` pipeline. See `docs/p
 
 ## Event card CTA states (Phase 4+)
 
-From `ui-component-map.md` — **check guest state before sold-out**:
+From `ui-component-map.md` — **sold-out before Book Now**; all primary CTAs link to public `/events/:id`:
 
 | Viewer | Event state | CTA |
 |---|---|---|
-| Guest | any | "See details" / "Mehr sehen" |
-| Member | sold out | "Waitlist" |
-| Member | subscription inactive | "Unlock event" |
-| Member | active, available | "Book Now" |
+| Guest or member | sold out | "Waitlist" / "Warteliste" |
+| Guest or member | bookable | "Book Now" / "Bin dabei" |
 
-Guests never see waitlist/unlock/book labels on public discover grid.
+Membership unlock / login messaging lives on the event detail checkout card, not as a separate EventCard label.
 
 ---
 

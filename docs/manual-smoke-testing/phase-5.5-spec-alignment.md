@@ -21,7 +21,7 @@ Spec alignment: Theme Overview, Discover CTAs, public detail. Client demo: *Them
 ## B. Guest Discover → public detail
 
 1. As guest, open `/:locale` (Discover).
-2. Click preview “See details” / “Mehr sehen” → public `/events/:id` **without** login.
+2. Click preview “Book Now” / “Bin dabei” → public `/events/:id` **without** login.
 3. Confirm browse/full-feed CTA sends guests toward signup/login (not a public `/events` list).
 
 ## C. Sitemap redirects

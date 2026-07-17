@@ -133,7 +133,7 @@ These are **authoritative** for steps 02–05. Do not reopen unless the user exp
 **Locked guest journey:**
 
 1. Guest lands on Discover (`/:locale`).
-2. Preview cards link to public `/events/:id` (guest CTA: “See details” / equivalent).
+2. Preview cards link to public `/events/:id` (guest CTA: “Book Now” / “Bin dabei”, or “Waitlist” when sold out).
 3. Path to the **full browse** experience: primary CTA to **signup or login**; after auth (and onboarding if incomplete), land on member `/events`.
 4. Guests do **not** get a public full upcoming-events list equivalent to `/events` in MVP.
 

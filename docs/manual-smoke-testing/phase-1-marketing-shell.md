@@ -23,7 +23,7 @@ Marketing shell, locale, legal, cookies. Client demo: *Yellow brand home, how-it
 
 1. Open `/:locale` — Discover hero, value props, curated upcoming preview (when catalog has events).
 2. Open `/:locale/discover` and bare `/discover` → **301** to locale home.
-3. Preview event CTA (“See details” / “Mehr sehen”) → public `/events/:id` when events exist (guest, no login).
+3. Preview event CTA (“Book Now” / “Bin dabei”) → public `/events/:id` when events exist (guest, no login).
 
 ## C. Static & legal
 

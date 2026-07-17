@@ -16,17 +16,18 @@ The locale home route `/:locale` SHALL render the Discover marketing preview wit
 #### Scenario: Live event grid
 
 - **WHEN** at least one future event exists in the catalog
-- **THEN** up to six EventCard components render with guest CTA labels "Mehr sehen" (DE) or "See details" (EN), ordered by ascending `date_time`
+- **THEN** up to six EventCard components render with guest CTA labels "Bin dabei" (DE) or "Book Now" (EN) when capacity remains, ordered by ascending `date_time`
 
 #### Scenario: Empty event state
 
 - **WHEN** no future events exist in the catalog
 - **THEN** the dashed-border empty state message from `static-pages-content.md` is shown
 
-#### Scenario: Guest never sees waitlist CTA
+#### Scenario: Guest sold-out Waitlist CTA
 
 - **WHEN** a guest views an EventCard for a sold-out upcoming event on discover
-- **THEN** the CTA still reads "See details" / "Mehr sehen", not "Waitlist"
+- **THEN** the CTA reads "Waitlist" / "Warteliste"
+- **AND** following the CTA opens public `/events/:id` without being forced to log in
 
 #### Scenario: Discover page SEO
 
@@ -106,11 +107,11 @@ When Discover has zero featured partners to show in the strip, the Partner venue
 
 ### Requirement: Discover to events navigation
 
-The public Discover experience (locale home `/:locale`) SHALL present marketing content and a curated event preview and SHALL provide a clear path into fuller event browsing: preview EventCard CTAs ("See details" / "Mehr sehen") link to public `/events/:id` without forcing login, and a primary CTA path leads guests to signup or login that lands on member `/events` after auth (and onboarding if incomplete). Guests SHALL NOT receive a public full upcoming-events list equivalent to `/events` in MVP. Product docs (`docs/product/sitemap/sitemap.md`, `ui/app-shell.md`, `ui/static-pages-content.md`) SHALL document these CTAs without dead ends. Phase 5.5 release spot-checks SHALL confirm these CTA hrefs and journeys (or record a named deferral with target phase).
+The public Discover experience (locale home `/:locale`) SHALL present marketing content and a curated event preview and SHALL provide a clear path into fuller event browsing: preview EventCard CTAs (**Book Now** / **Bin dabei**, or **Waitlist** / **Warteliste** when sold out) link to public `/events/:id` without forcing login, and a primary CTA path leads guests to signup or login that lands on member `/events` after auth (and onboarding if incomplete). Guests SHALL NOT receive a public full upcoming-events list equivalent to `/events` in MVP. Product docs (`docs/product/sitemap/sitemap.md`, `ui/app-shell.md`, `ui/static-pages-content.md`) SHALL document these CTAs without dead ends (doc updates may land in hardening). Phase 5.5 release spot-checks SHALL confirm these CTA hrefs and journeys (or record a named deferral with target phase).
 
 #### Scenario: Discover preview links to public event detail
 
-- **WHEN** a guest follows a Discover preview event CTA ("See details" / "Mehr sehen")
+- **WHEN** a guest follows a Discover preview event CTA ("Book Now" / "Bin dabei")
 - **THEN** they land on public `/events/:id` without being forced to log in
 
 #### Scenario: Discover CTA path to the full member events feed
