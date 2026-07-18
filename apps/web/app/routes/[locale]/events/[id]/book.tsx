@@ -4,6 +4,7 @@ import {
   createTxDb,
   getPublicEventById,
   isBookingEligibleStatus,
+  maxBookableTickets,
 } from "@unveiled/db";
 import { sendBookingConfirmation } from "@unveiled/email";
 import { createRoute } from "honox/factory";
@@ -25,15 +26,26 @@ function loginRedirect(locale: Locale, returnPath: string): string {
   return `/${locale}/login?returnTo=${encodeURIComponent(returnPath)}`;
 }
 
-function parseQtyParam(raw: string | undefined): string {
+function parseQtyParam(raw: string | undefined, maxQty: number): string {
   const n = Number.parseInt(raw ?? "1", 10);
+  const upper = Math.max(1, maxQty);
   if (!Number.isFinite(n) || n < 1) {
     return "1";
   }
-  if (n > 3) {
-    return "3";
-  }
-  return String(n);
+  return String(Math.min(n, upper));
+}
+
+function computeBookMaxQty(
+  credits: number,
+  creditPrice: number,
+  remainingCapacity: number,
+): number {
+  return maxBookableTickets({
+    viewerKind: "signed-in",
+    credits,
+    creditPrice,
+    remainingCapacity,
+  });
 }
 
 async function sendConfirmationSafe(options: {
@@ -163,16 +175,19 @@ export default createRoute(async (c) => {
     return c.redirect(`/${locale}/membership`, 302);
   }
 
-  const defaultTickets = parseQtyParam(c.req.query("qty"));
+  const credits = user?.credits ?? 0;
+  const maxQty = computeBookMaxQty(credits, event.creditPrice, event.remainingCapacity);
+  const defaultTickets = parseQtyParam(c.req.query("qty"), maxQty);
 
   return c.render(
     <BookEventPage
-      availableCredits={user?.credits}
+      availableCredits={credits}
       copy={copy}
       defaultTickets={defaultTickets}
       event={event}
       idempotencyKey={crypto.randomUUID()}
       locale={locale}
+      maxQty={Math.max(1, maxQty)}
       view="form"
     />,
     {
@@ -249,16 +264,26 @@ export const POST = createRoute(async (c) => {
       ? form.idempotencyKey.trim()
       : crypto.randomUUID();
 
+  const userForMax = await authDb.query.users.findFirst({
+    where: (fields, { eq }) => eq(fields.id, session.user.id),
+  });
+  const creditsForMax = userForMax?.credits ?? 0;
+  const maxQty = computeBookMaxQty(creditsForMax, event.creditPrice, event.remainingCapacity);
+  const selectMaxQty = Math.max(1, maxQty);
+  const defaultTicketsClamped = parseQtyParam(ticketsRaw, selectMaxQty);
+
   const databaseUrl = resolveEnvVarFromContext(c, "DATABASE_URL");
   if (!databaseUrl) {
     return c.render(
       <BookEventPage
+        availableCredits={creditsForMax}
         copy={copy}
-        defaultTickets={ticketsRaw}
+        defaultTickets={defaultTicketsClamped}
         errorMessage={copy.errorGeneric}
         event={event}
         idempotencyKey={idempotencyKey}
         locale={locale}
+        maxQty={selectMaxQty}
         view="form"
       />,
       {
@@ -323,19 +348,16 @@ export const POST = createRoute(async (c) => {
       }
     }
 
-    const user = await authDb.query.users.findFirst({
-      where: (fields, { eq }) => eq(fields.id, session.user.id),
-    });
-
     return c.render(
       <BookEventPage
-        availableCredits={user?.credits}
+        availableCredits={creditsForMax}
         copy={copy}
-        defaultTickets={Number.isFinite(ticketsCount) ? String(ticketsCount) : "1"}
+        defaultTickets={defaultTicketsClamped}
         errorMessage={errorMessage}
         event={event}
         idempotencyKey={idempotencyKey}
         locale={locale}
+        maxQty={selectMaxQty}
         offerWaitlist={offerWaitlist}
         view="form"
       />,

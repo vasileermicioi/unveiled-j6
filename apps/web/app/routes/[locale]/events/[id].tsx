@@ -1,4 +1,4 @@
-import { getPublicEventById, isBookingEligibleStatus } from "@unveiled/db";
+import { getPublicEventById, isBookingEligibleStatus, maxBookableTickets } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import {
@@ -17,15 +17,15 @@ function getLocaleParam(value: string | undefined): Locale {
   return value && isValidLocale(value) ? value : "de";
 }
 
-function parseQtyParam(raw: string | undefined): number {
+function parseQtyParam(raw: string | undefined, maxQty: number): number {
   const n = Number.parseInt(raw ?? "1", 10);
   if (!Number.isFinite(n) || n < 1) {
     return 1;
   }
-  if (n > 3) {
-    return 3;
+  if (maxQty < 1) {
+    return 1;
   }
-  return n;
+  return Math.min(n, maxQty);
 }
 
 export default createRoute(async (c) => {
@@ -63,12 +63,19 @@ export default createRoute(async (c) => {
   }
 
   let viewer: EventDetailViewer = { kind: "guest" };
+  let credits = 0;
   const session = await getSessionIfConfigured(c);
   if (session?.user) {
     const { db: authDb } = getAuthOptions();
-    const subscription = await authDb.query.subscriptions.findFirst({
-      where: (fields, { eq }) => eq(fields.userId, session.user.id),
-    });
+    const [subscription, user] = await Promise.all([
+      authDb.query.subscriptions.findFirst({
+        where: (fields, { eq }) => eq(fields.userId, session.user.id),
+      }),
+      authDb.query.users.findFirst({
+        where: (fields, { eq }) => eq(fields.id, session.user.id),
+      }),
+    ]);
+    credits = user?.credits ?? 0;
     if (subscription?.status === "PAST_DUE") {
       viewer = { kind: "past_due" };
     } else if (isBookingEligibleStatus(subscription?.status)) {
@@ -78,13 +85,20 @@ export default createRoute(async (c) => {
     }
   }
 
+  const maxQty = maxBookableTickets({
+    viewerKind: viewer.kind === "guest" ? "guest" : "signed-in",
+    credits,
+    creditPrice: event.creditPrice,
+    remainingCapacity: event.remainingCapacity,
+  });
+
   const url = new URL(c.req.url);
   const safeReturnTo = parseReturnTo(url.searchParams.get("returnTo") ?? undefined, locale);
   const closeHref =
     viewer.kind === "guest"
       ? localizedPath(locale, "")
       : (safeReturnTo ?? localizedPath(locale, "events"));
-  const defaultQty = parseQtyParam(url.searchParams.get("qty") ?? undefined);
+  const defaultQty = parseQtyParam(url.searchParams.get("qty") ?? undefined, maxQty);
 
   const meta = eventDetailPageMeta(event);
   const jsonLd = buildEventJsonLd(event);
@@ -96,6 +110,7 @@ export default createRoute(async (c) => {
         defaultQty={defaultQty}
         event={event}
         locale={locale}
+        maxQty={maxQty}
         viewer={viewer}
       />
       <script

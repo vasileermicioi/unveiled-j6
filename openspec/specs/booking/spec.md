@@ -27,7 +27,7 @@ The system SHALL provide a Drizzle-capable database client that supports multi-s
 - **THEN** it MAY continue to use the existing `createDb` neon-http factory
 
 ### Requirement: Atomic booking transaction
-The system SHALL create purchase bookings only through a single Postgres transaction that locks the event row, verifies subscription eligibility and capacity and credits, decrements capacity and credits, writes a `CONFIRMED` booking, and writes a negative `BOOKING` ledger entry (unless `skipCreditCharge`). The Booking domain SHALL be the only writer of purchase bookings and `BOOKING` ledger rows.
+The system SHALL create purchase bookings only through a single Postgres transaction that locks the event row, verifies subscription eligibility and capacity and credits, decrements capacity and credits, writes a `CONFIRMED` booking, and writes a negative `BOOKING` ledger entry (unless `skipCreditCharge`). The Booking domain SHALL be the only writer of purchase bookings and `BOOKING` ledger rows. Ticket count shape validation SHALL require an integer ≥ 1 and SHALL NOT impose a hard upper bound of 3; remaining capacity and credit balance remain authoritative rejection reasons.
 
 #### Scenario: Successful booking
 - **WHEN** an eligible member confirms a booking with sufficient capacity and credits
@@ -41,9 +41,32 @@ The system SHALL create purchase bookings only through a single Postgres transac
 - **WHEN** the same `(user_id, idempotency_key)` is submitted again after success
 - **THEN** no duplicate booking or credit/capacity change occurs and the original redemption info is returned
 
-#### Scenario: Ticket quantity bounds
-- **WHEN** a booking is requested with a ticket count outside 1–3
+#### Scenario: Ticket quantity shape invalid
+- **WHEN** a booking is requested with a non-integer ticket count or a count less than 1
 - **THEN** the booking is rejected without mutating credits, capacity, or ledger
+
+#### Scenario: Ticket quantity above three still bookable
+- **WHEN** an eligible member confirms a booking for more than 3 tickets and capacity and credits are sufficient
+- **THEN** a confirmed booking is created and credits and capacity decrease accordingly
+
+### Requirement: Ticket count selection bounds
+For guests viewing the public event detail checkout affordance, the system SHALL allow selecting a ticket count from 1 through 3 (preview only; booking remains auth-gated). For signed-in members on detail and book surfaces, the maximum selectable ticket count SHALL be the minimum of (a) floor(available credits ÷ event creditPrice) and (b) the event’s remaining capacity (with creditPrice ≤ 0 treated as capacity-only). The booking transaction SHALL accept any integer ticket count ≥ 1 that passes capacity and credit checks and SHALL NOT reject solely because the count is greater than 3.
+
+#### Scenario: Guest preview capped at three
+- **WHEN** a guest views a bookable event detail page
+- **THEN** the ticket quantity control does not exceed 3
+
+#### Scenario: Member max follows credits and capacity
+- **WHEN** a signed-in member with 17 credits views a bookable event priced at 2 credits with remaining capacity 10
+- **THEN** the maximum selectable ticket count is 8
+
+#### Scenario: Booking succeeds above former hard cap
+- **WHEN** an eligible member confirms a booking for 4 tickets and capacity and credits are sufficient
+- **THEN** the booking is created and credits/capacity decrease accordingly
+
+#### Scenario: Capacity still enforced
+- **WHEN** the requested ticket count exceeds remaining capacity
+- **THEN** the booking is rejected and no credits, capacity, or ledger changes occur
 
 ### Requirement: Subscription gate inside booking
 The system SHALL allow booking only for `ACTIVE` and `CANCELLED_PENDING` subscriptions. `PAST_DUE` SHALL show a credits-frozen / update-payment message. `INACTIVE` and `UNPAID` SHALL redirect to membership checkout. Unauthenticated users SHALL be redirected to sign-in.
@@ -184,3 +207,23 @@ The public event detail page SHALL NOT create bookings or ledger entries. Ticket
 - **WHEN** an eligible member adjusts ticket quantity on event detail and follows the primary book CTA
 - **THEN** they navigate to `/:locale/events/:id/book` (optionally with a quantity query)
 - **AND** no booking or ledger write occurs until the book page SSR POST succeeds
+
+### Requirement: Product Gherkin ticket bounds
+
+`docs/product/features/booking.feature` SHALL document guest preview max 3 and member max = `min(floor(credits ÷ creditPrice), remainingCapacity)`, and SHALL NOT require a universal hard max of 3 for successful bookings when credits and capacity allow a higher count. Capacity and credit rejection scenarios remain authoritative. Playwright covering ticket quantity on detail/book SHALL align with these bounds (guest + disabled at 3; eligible member can select more than 3 when seeded credits and capacity allow).
+
+#### Scenario: Feature file matches server and UI
+
+- **WHEN** an implementer reads `booking.feature` after this feature ships
+- **THEN** background/scenarios describe credit- and capacity-aware limits for members
+- **AND** they do not state that every successful booking must use a ticket count between 1 and 3 inclusive as a hard universal cap
+
+#### Scenario: Guest preview still capped at three in BDD
+
+- **WHEN** a guest views a bookable event detail checkout affordance under Playwright
+- **THEN** the ticket quantity control does not exceed 3 (e.g. increment disabled at 3)
+
+#### Scenario: Eligible member can select above three in BDD
+
+- **WHEN** a seeded ACTIVE member with sufficient credits views a bookable event with remaining capacity allowing more than 3 tickets
+- **THEN** Playwright can select a ticket count greater than 3 on detail or book surfaces

@@ -31,7 +31,9 @@ Feature: Event Booking
 
   Background:
     Given I am viewing an event's booking panel
-    And I may select a ticket count between 1 and 3
+    And guests may preview a ticket count from 1 through 3
+    And signed-in members may select up to min(floor(credits ÷ creditPrice), remainingCapacity) tickets (creditPrice ≤ 0 → capacity-only)
+    And a successful booking is not limited by a universal hard max of 3 when credits and capacity allow a higher count
 
   Scenario: Booking requires authentication
     Given I am not signed in
@@ -42,6 +44,12 @@ Feature: Event Booking
     Given I am signed in with subscription status other than "ACTIVE"
     When I try to book an event
     Then I am redirected to the membership checkout page
+
+  Scenario: Member ticket quantity follows credits and capacity
+    Given I am signed in with an "ACTIVE" subscription
+    And I have enough credits and the event has remaining capacity for more than 3 tickets
+    When I view the event detail checkout panel
+    Then I may select a ticket count greater than 3
 
   Scenario: Successful booking
     Given I am signed in with an "ACTIVE" subscription

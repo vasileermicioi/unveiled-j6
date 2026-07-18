@@ -30,7 +30,16 @@ Feature: Event Discovery
     When I open a valid upcoming event detail URL ("/events/:id")
     Then the page renders checkout-focused event content (identity + summary card) without requiring login
     And the summary card shows total credits and a login (or unlock) CTA
+    And DETAILS shows scannable metadata fields (dense multi-column layout on md+)
+    And guest ticket quantity is capped at 3 (increment disabled at max)
     And booking, waitlist, and save mutations remain on authenticated routes
+    And the detail page does not create bookings or ledger entries
+
+  Scenario: Detail LOCATION map shows a pin marker
+    Given I am not signed in
+    And I have accepted non-essential cookie consent
+    When I open a valid upcoming event detail URL with coordinates ("/events/:id")
+    Then the LOCATION map shows a recognizable pin marker icon (not a black square)
 
   Scenario: Guest path to full browse requires signup or login
     Given I am not signed in

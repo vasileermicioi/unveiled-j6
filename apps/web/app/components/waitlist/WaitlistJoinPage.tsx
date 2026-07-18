@@ -20,6 +20,8 @@ export type WaitlistJoinPageProps = {
   created?: boolean;
   requestedQty?: number;
   queuePosition?: number | null;
+  /** Inclusive upper bound for ticket Select (credit-aware; capacity ignored when sold out). */
+  maxQty?: number;
 };
 
 export function WaitlistJoinPage({
@@ -33,6 +35,7 @@ export function WaitlistJoinPage({
   created = true,
   requestedQty,
   queuePosition,
+  maxQty = 3,
 }: WaitlistJoinPageProps) {
   const eventHref = localizedPath(locale, `events/${event.id}`);
   const action = localizedPath(locale, `events/${event.id}/waitlist`);
@@ -96,6 +99,7 @@ export function WaitlistJoinPage({
             <TicketCountSelect
               defaultValue={defaultTickets}
               label={copy.ticketsLabel}
+              maxQty={maxQty}
               name="requestedQty"
             />
             <Button className="button button--primary button--md" type="submit">

@@ -709,6 +709,11 @@
     opacity: 0.7;
   }
 
+  .event-detail--checkout__hero {
+    width: 100%;
+    max-width: none;
+  }
+
   .event-detail--checkout__eyebrow {
     margin: 0;
     font-size: 0.75rem;
@@ -763,9 +768,11 @@
   .event-detail--checkout__hero-image {
     display: block;
     width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
+    max-width: none;
+    height: auto;
+    object-fit: contain;
     border: 2px solid var(--color-brand-dark);
+    background-color: var(--color-brand-cream);
   }
 
   .event-detail--checkout__card {
@@ -888,6 +895,57 @@
     text-transform: uppercase;
     text-align: center;
     color: color-mix(in oklab, var(--color-brand-cream) 55%, transparent);
+  }
+
+  .event-detail--checkout__meta-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .event-detail--checkout__meta-label-row {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .event-detail--checkout__meta-icon {
+    flex-shrink: 0;
+    color: var(--muted);
+  }
+
+  .event-detail--checkout__meta-label {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-brand-dark);
+  }
+
+  .event-detail--checkout__meta-value {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  .event-detail--checkout__location {
+    width: 100%;
+  }
+
+  .event-detail--checkout__location-address-block {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--color-brand-dark);
+  }
+
+  .event-detail--checkout__location-map {
+    display: block;
+    width: 100%;
+    min-width: 0;
   }
 
   .event-card-preview__header {
@@ -1612,13 +1670,46 @@
     width: 100%;
   }
 
+  /* Cover the canvas while MapLibre mounts — do not stack a second map-sized block. */
+  .event-map__canvas-wrap > .event-map__skeleton {
+    height: 100%;
+    inset: 0;
+    position: absolute;
+    z-index: 1;
+  }
+
+  /* Detail LOCATION map — compact preview; member /events/map keeps taller default. */
+  .event-detail--checkout__location-map .event-map__canvas,
+  .event-detail--checkout__location-map .event-map__skeleton {
+    height: 16rem;
+  }
+
+  .event-detail--checkout__location-map .event-map__canvas-wrap > .event-map__skeleton {
+    height: 100%;
+  }
+
   .event-map__marker {
-    background-color: var(--color-brand-dark);
-    border: var(--border-width) solid var(--color-brand-yellow);
-    border-radius: 0;
+    background-color: transparent;
+    border: none;
     cursor: pointer;
-    height: 1rem;
-    width: 1rem;
+    height: 2rem;
+    line-height: 0;
+    width: 1.5rem;
+  }
+
+  .event-map__marker-pin {
+    display: block;
+    fill: var(--color-brand-dark);
+    height: 100%;
+    stroke: var(--color-brand-yellow);
+    stroke-linejoin: round;
+    stroke-width: 1.5;
+    width: 100%;
+  }
+
+  .event-map__marker-pin-dot {
+    fill: var(--color-brand-yellow);
+    stroke: none;
   }
 
   .event-map__popup {

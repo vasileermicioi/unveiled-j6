@@ -12,6 +12,7 @@ export const Form: Story = () => (
     event={mockEvent}
     idempotencyKey="story-book-key"
     locale={storyLocale}
+    maxQty={6}
     view="form"
   />
 );

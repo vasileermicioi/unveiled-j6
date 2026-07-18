@@ -19,6 +19,8 @@ export type BookEventPageProps = {
   /** When true, show waitlist join CTA (sold-out / insufficient capacity). */
   offerWaitlist?: boolean;
   availableCredits?: number;
+  /** Inclusive upper bound for ticket Select (credits ∩ capacity). */
+  maxQty?: number;
 };
 
 export function BookEventPage({
@@ -31,6 +33,7 @@ export function BookEventPage({
   errorMessage,
   offerWaitlist = false,
   availableCredits,
+  maxQty = 3,
 }: BookEventPageProps) {
   const eventHref = localizedPath(locale, `events/${event.id}`);
   const action = localizedPath(locale, `events/${event.id}/book`);
@@ -96,6 +99,7 @@ export function BookEventPage({
             <TicketCountSelect
               defaultValue={defaultTickets}
               label={copy.ticketsLabel}
+              maxQty={maxQty}
               name="ticketsCount"
             />
             <Paragraph>{copy.policy}</Paragraph>

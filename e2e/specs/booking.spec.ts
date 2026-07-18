@@ -66,6 +66,30 @@ test.describe("booking.feature", () => {
     await expect(page.getByRole("button", { name: /abo starten|start sub/i })).toBeVisible();
   });
 
+  test("Scenario: Member ticket quantity follows credits and capacity", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member + resolve event");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email, 17);
+    // Tartuffe creditPrice 2 → floor(17/2)=8; ensure capacity allows > 3
+    const eventId = await ensureEventHasCapacity(BOOKABLE_TITLE, 8);
+
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+
+    const increase = page.getByRole("button", { name: /ticket mehr|increase tickets/i });
+    await expect(increase).toBeVisible();
+    // From 1 → 4 (past former hard max of 3); total = 4 × 2 credits
+    await increase.click();
+    await increase.click();
+    await increase.click();
+    await expect(page.getByText(/8 credits/i).first()).toBeVisible();
+    await expect(increase).toBeEnabled();
+  });
+
   test("Scenario: Successful booking", async ({ page, locale }) => {
     test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member + resolve event");
 

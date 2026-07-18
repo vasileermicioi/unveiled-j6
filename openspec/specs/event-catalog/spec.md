@@ -524,7 +524,7 @@ The public locale home `/:locale` (Discover) SHALL render up to six upcoming eve
 
 ### Requirement: Public event detail page
 
-The web app SHALL serve `/:locale/events/:id` without requiring authentication for guests and crawlers, presenting a checkout-focused layout: event identity (category, partner, title, description, location) with a prominent larger image, plus a summary/action card showing ticket quantity affordance, total credit cost, contextual membership/auth messaging, and the primary next-step CTA. Share/OG metadata SHALL continue to be rendered. Product docs under `docs/product/` (sitemap auth column, SEO indexability, authorization matrix) SHALL mark this route as public (`Auth` empty/`—`, not USER-required) — doc updates may lag until hardening. Bookable future events (`date_time` in the future and remaining capacity > 0) SHALL be indexable; sold-out and past events SHALL still render HTTP 200 with a clear state and `noindex, follow`. Booking, waitlist, and save mutations SHALL remain on dedicated authenticated routes; the detail page SHALL NOT create bookings or ledger entries. A close control SHALL navigate via Link to Discover or the member events feed (or a safe `returnTo`), not dismiss a client-only modal.
+The web app SHALL serve `/:locale/events/:id` without requiring authentication for guests and crawlers, presenting a checkout-focused layout: an identity column (category // partner, title, description, location, hero image) and a summary/action card showing ticket quantity affordance, total credit cost, contextual membership/auth messaging, and the primary next-step CTA. On large viewports the identity column and summary card SHALL share a common top alignment within the main content grid. The hero image SHALL span the identity column width and use responsive sizing appropriate to sm/md/lg viewports (not a permanently undersized inset box). Share/OG metadata SHALL continue to be rendered. Product docs under `docs/product/` (sitemap auth column, SEO indexability, authorization matrix) SHALL mark this route as public (`Auth` empty/`—`, not USER-required) — doc updates may lag until hardening. Bookable future events (`date_time` in the future and remaining capacity > 0) SHALL be indexable; sold-out and past events SHALL still render HTTP 200 with a clear state and `noindex, follow`. Booking, waitlist, and save mutations SHALL remain on dedicated authenticated routes; the detail page SHALL NOT create bookings or ledger entries. A close control SHALL navigate via Link to Discover or the member events feed (or a safe `returnTo`), not dismiss a client-only modal.
 
 #### Scenario: Guest opens a shared event link
 
@@ -536,6 +536,17 @@ The web app SHALL serve `/:locale/events/:id` without requiring authentication f
 - **WHEN** a guest opens `/:locale/events/:id` for a bookable upcoming event
 - **THEN** they see event identity content and a summary card with total credits and a login (or equivalent unlock) CTA
 - **AND** they are not forced through auth before viewing the page
+
+#### Scenario: Guest sees aligned checkout composition on large viewport
+
+- **WHEN** a guest opens a valid upcoming event detail URL on a large viewport
+- **THEN** the identity content and summary card begin at approximately the same vertical origin
+- **AND** the hero image fills the identity column width
+
+#### Scenario: Stacked layout on small viewport
+
+- **WHEN** a guest opens the same page on a small viewport
+- **THEN** identity content stacks above the summary card without overlapping the close control
 
 #### Scenario: Eligible member continues to SSR book
 
@@ -572,6 +583,35 @@ The web app SHALL serve `/:locale/events/:id` without requiring authentication f
 
 - **WHEN** an agent reads `docs/product/sitemap/sitemap.md` after this change
 - **THEN** `/events/:id` has Auth empty/`—` (not USER-required) while `/events/:id/book` and waitlist remain gated
+
+### Requirement: Detail checkout quantity affordance
+
+The public event detail summary card ticket quantity control SHALL use guest max 3 and signed-in max derived from session credits and event remaining capacity (see booking ticket-count bounds). Quantity on detail remains navigation state only (`qty` query) and SHALL NOT create bookings or ledger entries.
+
+#### Scenario: Eligible member sees credit-aware max on detail
+
+- **WHEN** an eligible member opens event detail with enough credits for more than 3 tickets and sufficient capacity
+- **THEN** the quantity control can increase beyond 3 up to that computed max
+
+#### Scenario: Guest detail qty stays at three
+
+- **WHEN** a guest opens the same bookable event detail page
+- **THEN** the quantity control does not offer a value above 3
+
+### Requirement: Public event detail below-fold metadata
+
+The public event detail page SHALL present below-the-fold DETAILS metadata in a dense, scannable layout that uses horizontal space on medium and large viewports (multi-column label/value grid), rather than a single sparse vertical list inside a wide empty card. LOCATION SHALL show the address and embedded map with chrome that does not leave large unused bands beside the map content. Visual language SHALL remain consistent with Discover EventCard density (uppercase labels, clear hierarchy) while staying on the event-detail surface.
+
+#### Scenario: DETAILS uses horizontal space on large viewport
+
+- **WHEN** a user views an event detail page with multiple metadata fields on a large viewport
+- **THEN** DETAILS fields appear in a multi-column grid
+- **AND** large empty horizontal regions inside the DETAILS card are avoided
+
+#### Scenario: LOCATION shows address and full-width map
+
+- **WHEN** the event has coordinates
+- **THEN** the LOCATION block shows the address and a map that spans the content width of its card
 
 ### Requirement: Automated browser coverage for admin catalog management
 

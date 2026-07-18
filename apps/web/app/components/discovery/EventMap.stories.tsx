@@ -1,7 +1,7 @@
 import { Alert, Card, Link, Paragraph, Skeleton, Surface } from "@heroui/react";
 import type { Story } from "@ladle/react";
 
-import type { EventMapMarker } from "../../islands/EventMap";
+import { type EventMapMarker, EventMapMarkerPinChrome } from "../../islands/EventMap";
 import { getEventMapCopy } from "../../lib/event-map-content";
 import { localizedPath } from "../../lib/locale";
 
@@ -73,9 +73,28 @@ export const ConsentFallback: Story = () => {
 };
 ConsentFallback.storyName = "EventMap / Consent fallback";
 
+/** Pin chrome without MapLibre / tiles (shape + brand colors). */
+export const MarkerPinChrome: Story = () => (
+  <Surface className="flex flex-col items-start gap-4 p-4" variant="transparent">
+    <Paragraph>Map pin marker (static chrome)</Paragraph>
+    <Surface className="flex items-end gap-6" variant="transparent">
+      {sampleMarkers.map((marker) => (
+        <Surface className="flex flex-col items-center gap-2" key={marker.id} variant="transparent">
+          <EventMapMarkerPinChrome title={marker.title} />
+          <Paragraph>{marker.title}</Paragraph>
+        </Surface>
+      ))}
+    </Surface>
+  </Surface>
+);
+MarkerPinChrome.storyName = "EventMap / Marker pin chrome";
+
 export const Loading: Story = () => (
-  <Surface className="event-map p-4" variant="transparent">
-    <Skeleton className="event-map__skeleton" />
+  <Surface className="event-map flex flex-col gap-3 p-4" variant="transparent">
+    <Surface className="event-map__canvas-wrap" variant="transparent">
+      <Skeleton className="event-map__skeleton" />
+      <div className="event-map__canvas" />
+    </Surface>
   </Surface>
 );
 Loading.storyName = "EventMap / Loading";

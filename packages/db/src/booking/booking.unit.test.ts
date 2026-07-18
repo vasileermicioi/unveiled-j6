@@ -6,6 +6,7 @@ import {
   isBookingEligibleStatus,
 } from "./eligibility";
 import { BookingError } from "./errors";
+import { maxBookableTickets } from "./max-bookable-tickets";
 import { generateSecretCode, resolveRedemption } from "./redemption";
 
 function baseEvent(overrides: Partial<Event> = {}): Event {
@@ -51,7 +52,70 @@ describe("booking eligibility", () => {
     expect(isBookingEligibleStatus("CANCELLED_PENDING")).toBe(true);
     expect(isBookingEligibleStatus("INACTIVE")).toBe(false);
     expect(() => assertBookingEligible("PAST_DUE")).toThrow(BookingError);
-    expect(() => assertValidTicketCount(4)).toThrow(BookingError);
+  });
+
+  test("assertValidTicketCount allows integers >= 1 including above 3", () => {
+    expect(() => assertValidTicketCount(1)).not.toThrow();
+    expect(() => assertValidTicketCount(4)).not.toThrow();
+    expect(() => assertValidTicketCount(0)).toThrow(BookingError);
+    expect(() => assertValidTicketCount(1.5)).toThrow(BookingError);
+  });
+});
+
+describe("maxBookableTickets", () => {
+  test("guest preview is capped at 3", () => {
+    expect(
+      maxBookableTickets({
+        viewerKind: "guest",
+        credits: 17,
+        creditPrice: 2,
+        remainingCapacity: 10,
+      }),
+    ).toBe(3);
+  });
+
+  test("signed-in max follows credits and capacity", () => {
+    expect(
+      maxBookableTickets({
+        viewerKind: "signed-in",
+        credits: 17,
+        creditPrice: 2,
+        remainingCapacity: 10,
+      }),
+    ).toBe(8);
+  });
+
+  test("signed-in capacity binds below affordable", () => {
+    expect(
+      maxBookableTickets({
+        viewerKind: "signed-in",
+        credits: 17,
+        creditPrice: 2,
+        remainingCapacity: 5,
+      }),
+    ).toBe(5);
+  });
+
+  test("signed-in zero credits yields zero", () => {
+    expect(
+      maxBookableTickets({
+        viewerKind: "signed-in",
+        credits: 0,
+        creditPrice: 2,
+        remainingCapacity: 10,
+      }),
+    ).toBe(0);
+  });
+
+  test("signed-in creditPrice <= 0 uses capacity only", () => {
+    expect(
+      maxBookableTickets({
+        viewerKind: "signed-in",
+        credits: 17,
+        creditPrice: 0,
+        remainingCapacity: 6,
+      }),
+    ).toBe(6);
   });
 });
 

@@ -16,6 +16,11 @@ export {
   type UserBookingListItem,
 } from "./list-user-bookings";
 export {
+  type MaxBookableTicketsInput,
+  type MaxBookableTicketsViewerKind,
+  maxBookableTickets,
+} from "./max-bookable-tickets";
+export {
   generateSecretCode,
   type RedemptionResult,
   resolveRedemption,

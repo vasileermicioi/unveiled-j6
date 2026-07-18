@@ -34,7 +34,7 @@ export function assertBookingEligible(status: SubscriptionStatus | null | undefi
 }
 
 export function assertValidTicketCount(ticketsCount: number): void {
-  if (!Number.isInteger(ticketsCount) || ticketsCount < 1 || ticketsCount > 3) {
-    throw new BookingError("INVALID_TICKET_COUNT", "Ticket count must be between 1 and 3");
+  if (!Number.isInteger(ticketsCount) || ticketsCount < 1) {
+    throw new BookingError("INVALID_TICKET_COUNT", "Ticket count must be an integer of at least 1");
   }
 }

@@ -6,7 +6,6 @@ import { useState } from "react";
 import type { Locale } from "../lib/locale";
 
 const MIN_QTY = 1;
-const MAX_QTY = 3;
 
 export type CheckoutPrimaryAction =
   | { type: "book"; bookPath: string; label: string }
@@ -21,6 +20,8 @@ export type CheckoutSecondaryAction = {
 export type EventDetailCheckoutCardProps = {
   locale: Locale;
   creditPrice: number;
+  /** Inclusive upper bound for +/− controls (guest 3; signed-in credits ∩ capacity). */
+  maxQty: number;
   ticketsLabel: string;
   totalLabel: string;
   noticeText: string | null;
@@ -34,11 +35,14 @@ export type EventDetailCheckoutCardProps = {
   increaseAriaLabel: string;
 };
 
-function clampQty(value: number): number {
+function clampQty(value: number, maxQty: number): number {
   if (!Number.isFinite(value)) {
     return MIN_QTY;
   }
-  return Math.min(MAX_QTY, Math.max(MIN_QTY, Math.trunc(value)));
+  if (maxQty < MIN_QTY) {
+    return MIN_QTY;
+  }
+  return Math.min(maxQty, Math.max(MIN_QTY, Math.trunc(value)));
 }
 
 function withQtyQuery(path: string, qty: number): string {
@@ -68,6 +72,7 @@ function formatCreditsTotal(total: number, locale: Locale): string {
 export default function EventDetailCheckoutCard({
   locale,
   creditPrice,
+  maxQty,
   ticketsLabel,
   totalLabel,
   noticeText,
@@ -80,9 +85,10 @@ export default function EventDetailCheckoutCard({
   decreaseAriaLabel,
   increaseAriaLabel,
 }: EventDetailCheckoutCardProps) {
-  const [qty, setQty] = useState(() => clampQty(defaultQty));
+  const [qty, setQty] = useState(() => clampQty(defaultQty, maxQty));
   const total = qty * creditPrice;
   const primaryHref = primaryAction ? resolvePrimaryHref(primaryAction, qty) : null;
+  const increaseDisabled = maxQty < MIN_QTY || qty >= maxQty;
 
   return (
     <Surface className="event-detail--checkout__card">
@@ -95,7 +101,7 @@ export default function EventDetailCheckoutCard({
                 aria-label={decreaseAriaLabel}
                 className="event-detail--checkout__qty-btn"
                 isDisabled={qty <= MIN_QTY}
-                onPress={() => setQty((current) => clampQty(current - 1))}
+                onPress={() => setQty((current) => clampQty(current - 1, maxQty))}
                 type="button"
               >
                 −
@@ -104,8 +110,8 @@ export default function EventDetailCheckoutCard({
               <Button
                 aria-label={increaseAriaLabel}
                 className="event-detail--checkout__qty-btn"
-                isDisabled={qty >= MAX_QTY}
-                onPress={() => setQty((current) => clampQty(current + 1))}
+                isDisabled={increaseDisabled}
+                onPress={() => setQty((current) => clampQty(current + 1, maxQty))}
                 type="button"
               >
                 +

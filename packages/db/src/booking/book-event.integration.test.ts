@@ -179,4 +179,83 @@ describe("bookEvent", () => {
       await txDb.pool.end().catch(() => undefined);
     }
   });
+
+  test("books more than 3 tickets when credits and capacity allow", async () => {
+    if (!databaseUrl) {
+      console.warn("Skipping bookEvent qty>3 integration test (DATABASE_URL unset)");
+      return;
+    }
+
+    const httpDb = createDb(databaseUrl);
+    const txDb = createTxDb(databaseUrl);
+    const suffix = crypto.randomUUID();
+    const userId = `book-qty4-${suffix}`;
+    const image = await createTestImageBuffer();
+
+    const partner = await createPartner(httpDb, {
+      name: `Booking Qty Venue ${suffix.slice(0, 8)}`,
+      address: "Teststraße 9, Berlin",
+      contactEmail: `book-qty4-${suffix}@example.com`,
+      logoUpload: image,
+      skipUpload: true,
+    });
+
+    const event = await createEvent(httpDb, {
+      partnerId: partner.id,
+      title: `Booking Qty Event ${suffix.slice(0, 8)}`,
+      description: "Description",
+      address: "Teststraße 9, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date(Date.now() + 86_400_000),
+      creditPrice: 2,
+      totalCapacity: 10,
+      secretCode: "QTY4TEST",
+      imageUpload: image,
+      skipUpload: true,
+    });
+
+    try {
+      await httpDb.insert(users).values({
+        id: userId,
+        email: `${userId}@example.com`,
+        emailVerified: true,
+        credits: 17,
+      });
+      await httpDb.insert(subscriptions).values({
+        userId,
+        status: "ACTIVE",
+        plan: "Basic Berlin",
+      });
+
+      const result = await bookEvent(txDb, {
+        userId,
+        eventId: event.id,
+        ticketsCount: 4,
+        idempotencyKey: `idem-qty4-${suffix}`,
+      });
+      expect(result.created).toBe(true);
+      expect(result.booking.ticketsCount).toBe(4);
+      expect(result.booking.totalCredits).toBe(8);
+
+      const afterBook = await httpDb.query.users.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
+      });
+      expect(afterBook?.credits).toBe(9);
+
+      const eventAfter = await httpDb.query.events.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, event.id),
+      });
+      expect(eventAfter?.remainingCapacity).toBe(6);
+    } finally {
+      await httpDb.delete(creditLedger).where(eq(creditLedger.userId, userId));
+      await httpDb.delete(bookings).where(eq(bookings.userId, userId));
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await httpDb.delete(users).where(eq(users.id, userId));
+      await deleteEvent(httpDb, event.id, { skipBucket: true });
+      await deletePartner(httpDb, partner.id, { skipBucket: true });
+      await txDb.pool.end().catch(() => undefined);
+    }
+  });
 });

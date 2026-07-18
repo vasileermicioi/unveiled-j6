@@ -110,6 +110,55 @@ test.describe("event-discovery.feature", () => {
     await expect(
       page.getByRole("link", { name: /einloggen zum freischalten|log in to unlock/i }).first(),
     ).toBeVisible();
+
+    // Dense DETAILS metadata (proximity — labels, not CSS-module hashes)
+    await expect(page.getByText(/^details$/i).first()).toBeVisible();
+    await expect(page.getByText(/^datum$|^date$/i).first()).toBeVisible();
+    await expect(page.getByText(/^format$|^event type$/i).first()).toBeVisible();
+
+    // Guest qty preview capped at 3 — increment disabled at max
+    const increase = page.getByRole("button", { name: /ticket mehr|increase tickets/i });
+    await expect(increase).toBeVisible();
+    await increase.click();
+    await increase.click();
+    await expect(increase).toBeDisabled();
+  });
+
+  test("Scenario: Detail LOCATION map shows a pin marker", async ({ page, locale }) => {
+    // Needs DB to resolve seeded event with coordinates; skip if unset
+    test.skip(!process.env.DATABASE_URL, "DATABASE_URL required to resolve seeded event id");
+
+    await page.context().clearCookies();
+    await setConsent(page, "accepted");
+
+    const eventId = await getEventIdByTitle(TITLES.tonight);
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+
+    await acceptMapConsent(page);
+    const acceptBtn = page.getByRole("button", { name: /akzeptieren|accept/i });
+    if ((await acceptBtn.count()) > 0) {
+      await acceptBtn.first().click();
+    }
+
+    const mapRegion = page.getByRole("region", {
+      name: /karte der gefilterten events|map of filtered events/i,
+    });
+    const consentFallback = page.getByText(
+      /karte benötigt cookie-zustimmung|map needs cookie consent/i,
+    );
+    await expect(mapRegion.or(consentFallback)).toBeVisible({ timeout: 20_000 });
+
+    if (await consentFallback.isVisible().catch(() => false)) {
+      // CI/platform: consent gate still blocking tiles — owner: reuse map consent fixture
+      test.skip(true, "Map consent fallback still blocking detail map in this env");
+    }
+
+    // Pin marker: accessible name = event title (role=img), not pixel OCR / CSS classes
+    const escaped = TITLES.tonight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    await expect(page.getByRole("img", { name: new RegExp(escaped, "i") })).toBeVisible({
+      timeout: 20_000,
+    });
   });
 
   test("Scenario: Guest path to full browse requires signup or login", async ({ page, locale }) => {

@@ -48,7 +48,7 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 | **Member feed** | `/events` | `PageSectionHeader`; filters (GET query params), pagination, EventCard grid; subscription gate banner |
 | **Map** | `/events/map` | MapLibre + OSM island; cookie-gated |
 | **Saved** | `/saved` | Member saved list |
-| **Event detail** | `/events/:id` | **Public** checkout-focused SSR page (no auth): identity column (category // partner, title, description, location, large image) + dark summary/action card (ticket qty affordance, total credits, auth/membership notice, primary CTA). Close control is a Link (Discover / feed / safe `returnTo`), not a client modal. Qty on detail is navigation state only — **no** booking/ledger POST; credit charge stays on `/events/:id/book`. Map + metadata below the fold. |
+| **Event detail** | `/events/:id` | **Public** checkout-focused SSR page (no auth): identity column (category // partner, title, description, location, large hero) + dark summary/action card. On **lg+**, identity and checkout card share a common top alignment; hero fills the identity column width and scales across sm/md/lg (not a permanently undersized inset). Close control is a Link (Discover / feed / safe `returnTo`), not a client modal. Ticket qty: **guests** hard-capped at 1–3 (preview); **signed-in** max = `min(floor(credits ÷ creditPrice), remainingCapacity)` (creditPrice ≤ 0 → capacity-only). Qty on detail is navigation state only — **no** booking/ledger POST; credit charge stays on `/events/:id/book`. Below the fold: dense multi-column **DETAILS** metadata grid (EventCard-inspired density on md+) + **LOCATION** card with address and MapLibre map using a brand **pin marker** (not a black square). |
 
 ---
 

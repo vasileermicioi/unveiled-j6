@@ -1,6 +1,7 @@
 import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
 import type { Event } from "@unveiled/db";
 import { buildDetailHeroSrc, buildDetailHeroSrcSet } from "@unveiled/ui";
+import { Calendar, MapPin } from "lucide-react";
 
 import EventDetailCheckoutCard, {
   type CheckoutPrimaryAction,
@@ -11,6 +12,8 @@ import { isEventBookable } from "../../lib/catalog-mappers";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
+const META_ICON_SIZE = 14;
+
 type EventDetailPageProps = {
   event: Event;
   locale: Locale;
@@ -18,6 +21,8 @@ type EventDetailPageProps = {
   /** Close control target — Discover for guests, feed/`returnTo` for members. */
   closeHref?: string;
   defaultQty?: number;
+  /** Inclusive qty max for checkout controls (guest 3; signed-in credits ∩ capacity). */
+  maxQty?: number;
 };
 
 export type EventDetailViewer =
@@ -179,9 +184,49 @@ function metadataLabel(key: string, locale: Locale): string {
     ageGroups: { de: "Zielgruppe", en: "Target age groups" },
     type: { de: "Format", en: "Event type" },
     when: { de: "Datum", en: "Date" },
+    neighborhood: { de: "Kiez", en: "Neighborhood" },
   };
 
   return labels[key]?.[locale] ?? key;
+}
+
+function MetaCell({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon?: "calendar" | "mapPin";
+}) {
+  return (
+    <Surface className="event-detail--checkout__meta-cell" variant="transparent">
+      <Surface className="event-detail--checkout__meta-label-row" variant="transparent">
+        {icon === "calendar" ? (
+          <Calendar
+            aria-hidden
+            className="event-detail--checkout__meta-icon"
+            size={META_ICON_SIZE}
+            strokeWidth={2}
+          />
+        ) : null}
+        {icon === "mapPin" ? (
+          <MapPin
+            aria-hidden
+            className="event-detail--checkout__meta-icon"
+            size={META_ICON_SIZE}
+            strokeWidth={2}
+          />
+        ) : null}
+        <Paragraph className="event-detail--checkout__meta-label" size="sm">
+          {label}
+        </Paragraph>
+      </Surface>
+      <Paragraph className="event-detail--checkout__meta-value" color="muted" size="sm">
+        {value}
+      </Paragraph>
+    </Surface>
+  );
 }
 
 function accessibilityValue(barrierFree: boolean | null, locale: Locale): string {
@@ -312,6 +357,7 @@ export function EventDetailPage({
   viewer = { kind: "guest" },
   closeHref,
   defaultQty = 1,
+  maxQty = 3,
 }: EventDetailPageProps) {
   const bookable = isEventBookable(event);
   const isPast = event.dateTime <= new Date();
@@ -344,24 +390,19 @@ export function EventDetailPage({
       variant="transparent"
     >
       <Surface
-        className="event-detail--checkout__chrome mb-6 flex justify-end"
+        className="event-detail--checkout__layout relative grid gap-8 pt-11 lg:grid-cols-2 lg:items-start lg:gap-10"
         variant="transparent"
       >
         <Link
           aria-label={closeAriaLabel(locale)}
-          className="event-detail--checkout__close"
+          className="event-detail--checkout__close absolute top-0 right-0 z-10"
           href={resolvedCloseHref}
         >
           ×
         </Link>
-      </Surface>
 
-      <Surface
-        className="event-detail--checkout__layout grid gap-8 lg:grid-cols-2 lg:items-start"
-        variant="transparent"
-      >
         <Surface
-          className="event-detail--checkout__identity flex flex-col gap-5"
+          className="event-detail--checkout__identity flex min-w-0 flex-col gap-5"
           variant="transparent"
         >
           <Paragraph className="event-detail--checkout__eyebrow">{eyebrow}</Paragraph>
@@ -380,36 +421,40 @@ export function EventDetailPage({
               {event.address}
             </Paragraph>
           </Surface>
-          {heroSrc ? (
-            <Surface className="event-detail--checkout__hero" variant="transparent">
-              <img
-                alt={event.title}
-                className="event-detail--checkout__hero-image"
-                decoding="async"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                src={heroSrc}
-                srcSet={heroSrcSet}
-              />
-            </Surface>
-          ) : null}
         </Surface>
 
-        <EventDetailCheckoutCard
-          decreaseAriaLabel={decreaseAriaLabel(locale)}
-          defaultQty={defaultQty}
-          increaseAriaLabel={increaseAriaLabel(locale)}
-          locale={locale}
-          creditPrice={event.creditPrice}
-          noticeText={checkout.noticeText}
-          policyText={policyText()}
-          primaryAction={checkout.primaryAction}
-          secondaryAction={checkout.secondaryAction}
-          showTicketControls={checkout.showTicketControls}
-          statusMessage={checkout.statusMessage}
-          ticketsLabel={ticketsLabel(locale)}
-          totalLabel={totalLabel(locale)}
-        />
+        <Surface className="event-detail--checkout__checkout min-w-0" variant="transparent">
+          <EventDetailCheckoutCard
+            decreaseAriaLabel={decreaseAriaLabel(locale)}
+            defaultQty={defaultQty}
+            increaseAriaLabel={increaseAriaLabel(locale)}
+            locale={locale}
+            creditPrice={event.creditPrice}
+            maxQty={maxQty}
+            noticeText={checkout.noticeText}
+            policyText={policyText()}
+            primaryAction={checkout.primaryAction}
+            secondaryAction={checkout.secondaryAction}
+            showTicketControls={checkout.showTicketControls}
+            statusMessage={checkout.statusMessage}
+            ticketsLabel={ticketsLabel(locale)}
+            totalLabel={totalLabel(locale)}
+          />
+        </Surface>
       </Surface>
+
+      {heroSrc ? (
+        <Surface className="event-detail--checkout__hero mt-10 w-full" variant="transparent">
+          <img
+            alt={event.title}
+            className="event-detail--checkout__hero-image"
+            decoding="async"
+            sizes="(max-width: 1280px) 100vw, 1280px"
+            src={heroSrc}
+            srcSet={heroSrcSet}
+          />
+        </Surface>
+      ) : null}
 
       <Surface
         className="event-detail--checkout__below mt-12 flex flex-col gap-6"
@@ -419,61 +464,41 @@ export function EventDetailPage({
           <Card.Header>
             <Card.Title>{detailsLabel(locale)}</Card.Title>
           </Card.Header>
-          <Card.Content className="flex flex-col gap-4">
-            <Surface className="flex flex-col gap-1" variant="transparent">
-              <Paragraph className="font-semibold uppercase" size="sm">
-                {metadataLabel("when", locale)}
-              </Paragraph>
-              <Paragraph color="muted" size="sm">
-                {formatEventDateTime(event.dateTime, locale)}
-              </Paragraph>
+          <Card.Content>
+            <Surface
+              className="event-detail--checkout__meta-grid grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+              variant="transparent"
+            >
+              <MetaCell
+                icon="calendar"
+                label={metadataLabel("when", locale)}
+                value={formatEventDateTime(event.dateTime, locale)}
+              />
+              <MetaCell
+                label={metadataLabel("accessibility", locale)}
+                value={accessibilityValue(event.barrierFree, locale)}
+              />
+              {event.languages && event.languages.length > 0 ? (
+                <MetaCell
+                  label={metadataLabel("languages", locale)}
+                  value={event.languages.join(", ")}
+                />
+              ) : null}
+              {event.targetAgeGroups && event.targetAgeGroups.length > 0 ? (
+                <MetaCell
+                  label={metadataLabel("ageGroups", locale)}
+                  value={event.targetAgeGroups.join(", ")}
+                />
+              ) : null}
+              <MetaCell label={metadataLabel("type", locale)} value={event.eventType} />
+              {event.neighborhood ? (
+                <MetaCell
+                  icon="mapPin"
+                  label={metadataLabel("neighborhood", locale)}
+                  value={event.neighborhood}
+                />
+              ) : null}
             </Surface>
-            <Surface className="flex flex-col gap-1" variant="transparent">
-              <Paragraph className="font-semibold uppercase" size="sm">
-                {metadataLabel("accessibility", locale)}
-              </Paragraph>
-              <Paragraph color="muted" size="sm">
-                {accessibilityValue(event.barrierFree, locale)}
-              </Paragraph>
-            </Surface>
-            {event.languages && event.languages.length > 0 ? (
-              <Surface className="flex flex-col gap-1" variant="transparent">
-                <Paragraph className="font-semibold uppercase" size="sm">
-                  {metadataLabel("languages", locale)}
-                </Paragraph>
-                <Paragraph color="muted" size="sm">
-                  {event.languages.join(", ")}
-                </Paragraph>
-              </Surface>
-            ) : null}
-            {event.targetAgeGroups && event.targetAgeGroups.length > 0 ? (
-              <Surface className="flex flex-col gap-1" variant="transparent">
-                <Paragraph className="font-semibold uppercase" size="sm">
-                  {metadataLabel("ageGroups", locale)}
-                </Paragraph>
-                <Paragraph color="muted" size="sm">
-                  {event.targetAgeGroups.join(", ")}
-                </Paragraph>
-              </Surface>
-            ) : null}
-            <Surface className="flex flex-col gap-1" variant="transparent">
-              <Paragraph className="font-semibold uppercase" size="sm">
-                {metadataLabel("type", locale)}
-              </Paragraph>
-              <Paragraph color="muted" size="sm">
-                {event.eventType}
-              </Paragraph>
-            </Surface>
-            {event.neighborhood ? (
-              <Surface className="flex flex-col gap-1" variant="transparent">
-                <Paragraph className="font-semibold uppercase" size="sm">
-                  {locale === "de" ? "Kiez" : "Neighborhood"}
-                </Paragraph>
-                <Paragraph color="muted" size="sm">
-                  {event.neighborhood}
-                </Paragraph>
-              </Surface>
-            ) : null}
           </Card.Content>
         </Card>
 
@@ -482,9 +507,16 @@ export function EventDetailPage({
             <Card.Header>
               <Card.Title>{locationLabel(locale)}</Card.Title>
             </Card.Header>
-            <Card.Content className="flex flex-col gap-4">
-              <Paragraph>{event.address}</Paragraph>
-              <EventMap locale={locale} markers={mapMarkers} />
+            <Card.Content className="event-detail--checkout__location flex flex-col gap-3">
+              <Paragraph className="event-detail--checkout__location-address-block">
+                {event.address}
+              </Paragraph>
+              <Surface
+                className="event-detail--checkout__location-map w-full"
+                variant="transparent"
+              >
+                <EventMap locale={locale} markers={mapMarkers} />
+              </Surface>
             </Card.Content>
           </Card>
         ) : null}

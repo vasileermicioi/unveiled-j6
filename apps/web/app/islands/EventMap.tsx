@@ -12,6 +12,9 @@ const BERLIN_CENTER: [number, number] = [13.405, 52.52];
 const DEFAULT_ZOOM = 11;
 const OSM_TILES = ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"];
 const OSM_ATTRIBUTION = "© OpenStreetMap contributors";
+const MARKER_LABEL_FALLBACK = "Event location";
+/** Teardrop pin; tip at bottom center of viewBox for MapLibre `anchor: "bottom"`. */
+const MARKER_PIN_PATH = "M12 32C12 32 3.5 20.5 3.5 13a8.5 8.5 0 1 1 17 0C20.5 20.5 12 32 12 32Z";
 
 export type EventMapMarker = {
   id: string;
@@ -38,10 +41,52 @@ function resolveConsentGate(): ConsentGate {
   return "blocked";
 }
 
-function createMarkerElement(): HTMLDivElement {
+function markerAriaLabel(title: string): string {
+  const trimmed = title.trim();
+  return trimmed.length > 0 ? trimmed : MARKER_LABEL_FALLBACK;
+}
+
+/** Static pin chrome for Ladle / SSR-safe previews (same classes as MapLibre marker DOM). */
+export function EventMapMarkerPinChrome({ title }: { title: string }) {
+  return (
+    <div aria-label={markerAriaLabel(title)} className="event-map__marker" role="img">
+      <svg
+        aria-hidden="true"
+        className="event-map__marker-pin"
+        viewBox="0 0 24 32"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d={MARKER_PIN_PATH} />
+        <circle className="event-map__marker-pin-dot" cx="12" cy="13" r="3.25" />
+      </svg>
+    </div>
+  );
+}
+
+export function createMarkerElement(marker: Pick<EventMapMarker, "title">): HTMLDivElement {
   const el = document.createElement("div");
   el.className = "event-map__marker";
   el.setAttribute("role", "img");
+  el.setAttribute("aria-label", markerAriaLabel(marker.title));
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "event-map__marker-pin");
+  svg.setAttribute("viewBox", "0 0 24 32");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", MARKER_PIN_PATH);
+  svg.appendChild(path);
+
+  const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  dot.setAttribute("class", "event-map__marker-pin-dot");
+  dot.setAttribute("cx", "12");
+  dot.setAttribute("cy", "13");
+  dot.setAttribute("r", "3.25");
+  svg.appendChild(dot);
+
+  el.appendChild(svg);
   return el;
 }
 
@@ -223,7 +268,10 @@ export default function EventMap({ locale, markers }: EventMapProps) {
             }).setDOMContent(createPopupContent(marker, copy.popupOpen));
             popups.push(popup);
 
-            const mapMarker = new maplibregl.Marker({ element: createMarkerElement() })
+            const mapMarker = new maplibregl.Marker({
+              anchor: "bottom",
+              element: createMarkerElement(marker),
+            })
               .setLngLat([marker.lng, marker.lat])
               .setPopup(popup)
               .addTo(map);
@@ -283,14 +331,13 @@ export default function EventMap({ locale, markers }: EventMapProps) {
         </Alert>
       ) : null}
 
-      {loading ? <Skeleton className="event-map__skeleton" /> : null}
-
       <Surface
         aria-label={copy.mapAriaLabel}
         className="event-map__canvas-wrap"
         role="region"
         variant="transparent"
       >
+        {loading ? <Skeleton className="event-map__skeleton" /> : null}
         <div className="event-map__canvas" ref={containerRef} />
       </Surface>
 
