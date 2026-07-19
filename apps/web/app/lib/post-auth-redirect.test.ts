@@ -23,10 +23,23 @@ function createSession(overrides: Partial<AppSession["user"]> = {}): AppSession 
 describe("post-auth-redirect", () => {
   test("parseReturnTo accepts same-locale paths and rejects open redirects", () => {
     expect(parseReturnTo("/de/events", "de")).toBe("/de/events");
+    expect(parseReturnTo("/de/events/abc/book?qty=1", "de")).toBe("/de/events/abc/book?qty=1");
     expect(parseReturnTo("https://evil.example", "de")).toBeNull();
     expect(parseReturnTo("//evil.example", "de")).toBeNull();
     expect(parseReturnTo("/en/events", "de")).toBeNull();
     expect(parseReturnTo("/de/../admin", "de")).toBeNull();
+  });
+
+  test("parseReturnTo rejects auth bounce paths that nest returnTo loops", () => {
+    expect(parseReturnTo("/de/login", "de")).toBeNull();
+    expect(parseReturnTo("/de/signup", "de")).toBeNull();
+    expect(parseReturnTo("/de/auth/continue", "de")).toBeNull();
+  });
+
+  test("parseReturnTo unwraps nested auth/continue returnTo to the destination", () => {
+    expect(
+      parseReturnTo("/en/auth/continue?returnTo=%2Fen%2Fevents%2Fabc%2Fbook%3Fqty%3D1", "en"),
+    ).toBe("/en/events/abc/book?qty=1");
   });
 
   test("buildAuthContinueUrl preserves returnTo", () => {
@@ -34,6 +47,10 @@ describe("post-auth-redirect", () => {
     expect(buildAuthContinueUrl("de", "/de/events")).toBe(
       "/de/auth/continue?returnTo=%2Fde%2Fevents",
     );
+    // Nested continue URLs unwrap to the destination before re-wrapping
+    expect(
+      buildAuthContinueUrl("en", "/en/auth/continue?returnTo=%2Fen%2Fevents%2Fabc%2Fbook"),
+    ).toBe("/en/auth/continue?returnTo=%2Fen%2Fevents%2Fabc%2Fbook");
   });
 
   test("resolvePostAuthRedirect sends incomplete USER to onboarding", () => {

@@ -65,6 +65,7 @@ export function createAuthProviderConfig(locale: Locale) {
         security: "security",
       },
     },
+    // Locale-relative: AuthProvider baseURL is `origin/${locale}` (see AppAuthProvider).
     redirectTo: "/auth/continue",
     socialProviders: ["google"] as SocialProvider[],
     emailAndPassword: {

@@ -4,13 +4,10 @@ import { AuthPageLayout } from "../../components/AuthPageLayout";
 import AuthSignIn from "../../islands/AuthSignIn";
 import { getSessionIfConfigured } from "../../lib/auth";
 import { getAuthPageCopy } from "../../lib/auth-content";
+import { buildAuthUiContinuePath } from "../../lib/auth-redirect";
 import type { Locale } from "../../lib/locale";
 import { isValidLocale } from "../../lib/locale";
-import {
-  buildAuthContinueUrl,
-  parseReturnTo,
-  resolvePostAuthRedirect,
-} from "../../lib/post-auth-redirect";
+import { parseReturnTo, resolvePostAuthRedirect } from "../../lib/post-auth-redirect";
 
 function getLocaleParam(value: string | undefined): Locale {
   return value && isValidLocale(value) ? value : "de";
@@ -21,7 +18,8 @@ export default createRoute(async (c) => {
   const pathname = new URL(c.req.url).pathname;
   const copy = getAuthPageCopy(locale, "login");
   const returnTo = parseReturnTo(c.req.query("returnTo"), locale);
-  const authRedirectTo = buildAuthContinueUrl(locale, returnTo);
+  // Locale-relative: AuthProvider baseURL is `origin/${locale}`; OAuth concatenates baseURL+redirectTo.
+  const authRedirectTo = buildAuthUiContinuePath(returnTo);
   const session = await getSessionIfConfigured(c);
 
   if (session) {
