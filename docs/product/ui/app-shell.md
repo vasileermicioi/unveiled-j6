@@ -38,7 +38,7 @@ Role-aware header variants (guest, member, admin) composed from shared pieces �
 ### Behavior
 
 - Active-route highlighting (yellow + border) is the primary “you are here” affordance.
-- **Mobile (`< lg`):** sticky bar is logo + hamburger only. Drawer lists uppercase links under section labels (Navigation / Language / Account); active + hover match desktop nav (yellow selected, invert on hover).
+- **Mobile (`< lg`):** sticky bar is logo + hamburger only. Drawer lists uppercase links under section labels in order **Account → Navigation → Language** (login/profile/auth first); active + hover match desktop nav (yellow selected, invert on hover).
 - Sticky header on all pages.
 
 ---

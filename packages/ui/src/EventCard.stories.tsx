@@ -3,15 +3,15 @@ import type { Story } from "@ladle/react";
 import { EventCard } from "./EventCard";
 import { sampleEventAvailable, sampleEventSoldOut } from "./stories/event-fixtures";
 
-export const HoverAvailabilityVisible: Story = () => (
+export const HoverPreview: Story = () => (
   <EventCard
-    className="event-card--availability-visible"
+    className="event-card--hover-preview"
     event={sampleEventAvailable}
     locale="en"
     viewer={{ kind: "member", subscriptionActive: true }}
   />
 );
-HoverAvailabilityVisible.storyName = "EventCard / Hover — availability visible";
+HoverPreview.storyName = "EventCard / Hover — colorized cover";
 
 export const GuestBookNow: Story = () => (
   <EventCard event={sampleEventAvailable} locale="en" viewer={{ kind: "guest" }} />
@@ -58,7 +58,7 @@ export const MemberInactiveBookNow: Story = () => (
     viewer={{ kind: "member", subscriptionActive: false }}
   />
 );
-MemberInactiveBookNow.storyName = "EventCard / Member inactive — Book Now";
+MemberInactiveBookNow.storyName = "EventCard / Member inactive — Book Now (no date/credits)";
 
 export const MemberInactiveBookNowDe: Story = () => (
   <EventCard

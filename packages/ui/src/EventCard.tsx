@@ -16,7 +16,7 @@ export type EventCardProps = {
   bookmarkFormAction?: string;
   /** Hidden `returnTo` field for the bookmark form. */
   bookmarkReturnTo?: string;
-  /** Extra classes on the card root (e.g. `event-card--availability-visible` for Ladle). */
+  /** Extra classes on the card root (e.g. layout helpers in Ladle). */
   className?: string;
 };
 
@@ -41,13 +41,6 @@ function creditsUnitLabel(creditPrice: number, locale: CatalogLocale): string {
   return creditPrice === 1 ? "credit" : "credits";
 }
 
-function ticketTypeLabel(ticketType: EventCardItem["ticketType"], locale: CatalogLocale): string {
-  if (ticketType === "VOUCHER") {
-    return locale === "de" ? "Gutschein" : "Voucher";
-  }
-  return locale === "de" ? "Geheimcode" : "Secret code";
-}
-
 function waitlistCtaLabel(locale: CatalogLocale): string {
   return locale === "de" ? "Warteliste" : "Waitlist";
 }
@@ -62,13 +55,6 @@ function saveAriaLabel(saved: boolean, locale: CatalogLocale): string {
     return saved ? "Gemerkt" : "Merken";
   }
   return saved ? "Saved" : "Save";
-}
-
-function availabilityLabel(remainingCapacity: number, locale: CatalogLocale): string {
-  if (locale === "de") {
-    return `Verfügbar: ${remainingCapacity}`;
-  }
-  return `Available: ${remainingCapacity}`;
 }
 
 export function resolveEventCardCta(
@@ -107,6 +93,7 @@ export function EventCard({
   const soldOut = event.remainingCapacity <= 0;
   const ctaLabel = resolveEventCardCta(viewer, soldOut, locale);
   const isGuest = viewer.kind === "guest";
+  const showSubscriberMeta = viewer.kind === "member" && viewer.subscriptionActive;
   const saved = viewer.kind === "member" ? Boolean(viewer.saved) : false;
   const useFormBookmark = Boolean(bookmarkFormAction) && !isGuest;
   const useClientBookmark = !isGuest && !useFormBookmark && Boolean(onBookmarkToggle);
@@ -181,29 +168,25 @@ export function EventCard({
             {event.category}
           </Chip>
         </Surface>
-        <Surface className="event-card__availability" variant="transparent">
-          <Paragraph size="xs">{availabilityLabel(event.remainingCapacity, locale)}</Paragraph>
-          <Paragraph className="event-card__ticket-type" size="xs">
-            {ticketTypeLabel(event.ticketType, locale)}
-          </Paragraph>
-        </Surface>
       </Card.Header>
-      <Card.Content className="flex flex-col gap-2">
+      <Card.Content className="event-card__body flex flex-col gap-2">
         <Card.Title className="event-card__title">{event.title}</Card.Title>
         <Paragraph color="muted" size="sm">
           {event.partnerName}
         </Paragraph>
-        <Surface className="event-card__meta" variant="transparent">
-          <Calendar
-            aria-hidden
-            className="event-card__meta-icon"
-            size={ICON_SIZE}
-            strokeWidth={2}
-          />
-          <Paragraph color="muted" size="sm">
-            {formatEventDate(event.dateTime, locale)}
-          </Paragraph>
-        </Surface>
+        {showSubscriberMeta ? (
+          <Surface className="event-card__meta" variant="transparent">
+            <Calendar
+              aria-hidden
+              className="event-card__meta-icon"
+              size={ICON_SIZE}
+              strokeWidth={2}
+            />
+            <Paragraph color="muted" size="sm">
+              {formatEventDate(event.dateTime, locale)}
+            </Paragraph>
+          </Surface>
+        ) : null}
         <Surface className="event-card__meta" variant="transparent">
           <MapPin aria-hidden className="event-card__meta-icon" size={ICON_SIZE} strokeWidth={2} />
           <Paragraph color="muted" size="sm">
@@ -212,12 +195,14 @@ export function EventCard({
         </Surface>
       </Card.Content>
       <Card.Footer className="event-card__footer">
-        <Surface className="event-card__price" variant="transparent">
-          <Paragraph className="event-card__price-value">{event.creditPrice}</Paragraph>
-          <Paragraph className="event-card__price-unit" color="muted" size="xs">
-            {creditsUnitLabel(event.creditPrice, locale)}
-          </Paragraph>
-        </Surface>
+        {showSubscriberMeta ? (
+          <Surface className="event-card__price" variant="transparent">
+            <Paragraph className="event-card__price-value">{event.creditPrice}</Paragraph>
+            <Paragraph className="event-card__price-unit" color="muted" size="xs">
+              {creditsUnitLabel(event.creditPrice, locale)}
+            </Paragraph>
+          </Surface>
+        ) : null}
         <Surface className="event-card__actions" variant="transparent">
           {bookmarkControl}
           <Link className="button button--secondary button--md" href={ctaHref ?? "#"}>

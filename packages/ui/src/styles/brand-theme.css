@@ -309,6 +309,9 @@
 
   /* EventCard — shared by apps/web and @unveiled/ui Ladle */
   .card.event-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     border-color: var(--border);
     transition:
       box-shadow 0.2s ease,
@@ -319,6 +322,7 @@
   .card.event-card .card__header {
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
     padding: 0;
     margin: 0;
   }
@@ -347,88 +351,35 @@
     left: 0.75rem;
   }
 
-  /*
-   * Availability strip — always reserved in-flow so hover reveal does not grow the
-   * card or push content below the grid. Resting: transparent band; hover: accent fill.
-   */
-  .event-card__availability {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 2.5rem;
-    padding: 0.5rem 0.75rem;
-    overflow: hidden;
-    border-bottom: 2px solid transparent;
-    background-color: transparent;
-    color: var(--foreground);
-    opacity: 0;
-    text-transform: uppercase;
-    font-weight: 600;
-    pointer-events: none;
-    transition:
-      opacity 0.2s ease,
-      background-color 0.2s ease,
-      border-color 0.2s ease;
-  }
-
-  .event-card__availability .typography {
-    color: inherit;
-  }
-
-  .event-card__ticket-type {
-    display: none;
-  }
-
-  @media (min-width: 640px) {
-    .event-card__ticket-type {
-      display: block;
-    }
-  }
-
   @media (hover: hover) {
     .card.event-card:hover .event-card__image-el,
     .card.event-card:focus-within .event-card__image-el {
       filter: grayscale(0%);
     }
-
-    .card.event-card:hover .event-card__availability,
-    .card.event-card:focus-within .event-card__availability {
-      background-color: var(--accent);
-      border-bottom-color: var(--border);
-      opacity: 1;
-    }
   }
 
-  /* Touch / coarse pointers — no hover, so keep the availability strip visible */
-  @media (hover: none) {
-    .card.event-card .event-card__availability {
-      background-color: var(--accent);
-      border-bottom-color: var(--border);
-      opacity: 1;
-    }
-  }
-
-  .card.event-card.event-card--availability-visible .event-card__image-el {
+  .card.event-card.event-card--hover-preview .event-card__image-el {
     filter: grayscale(0%);
-  }
-
-  .card.event-card.event-card--availability-visible .event-card__availability {
-    background-color: var(--accent);
-    border-bottom-color: var(--border);
-    opacity: 1;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .card.event-card,
-    .event-card__image-el,
-    .event-card__availability {
+    .event-card__image-el {
       transition: none;
     }
   }
 
-  .card.event-card .card__content {
+  .card.event-card .card__content,
+  .event-card__body {
+    flex: 1 1 auto;
     padding: 1rem 1.25rem 0.75rem;
+  }
+
+  .event-card__title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
   }
 
   .event-card__meta {
@@ -448,6 +399,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
+    flex-shrink: 0;
+    margin-top: auto;
     padding: 0.75rem 1.25rem 1.25rem;
   }
 
@@ -474,6 +427,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    margin-left: auto;
   }
 
   .event-card__actions form {
@@ -529,6 +483,9 @@
 .card.event-card {
   position: relative;
   z-index: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: 0 !important;
   gap: 0 !important;
   /* visible so the hard offset hover shadow is not clipped */
@@ -557,7 +514,7 @@
   }
 }
 
-.card.event-card.event-card--availability-visible {
+.card.event-card.event-card--hover-preview {
   z-index: 2;
   transform: scale(1.02);
   box-shadow: 8px 8px 0 0 var(--border);

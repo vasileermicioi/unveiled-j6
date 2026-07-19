@@ -154,24 +154,6 @@ export default function AppNavbarMenu({
             </Drawer.Header>
 
             <Drawer.Body className="site-nav-drawer__body">
-              <Surface className="site-nav-drawer__section" variant="transparent">
-                <DrawerSectionLabel>{sections.navigation}</DrawerSectionLabel>
-                {navLinks.map((link) => (
-                  <DrawerTextLink
-                    href={link.href}
-                    isActive={link.isActive}
-                    key={link.href}
-                    label={link.label}
-                  />
-                ))}
-              </Surface>
-
-              <Surface className="site-nav-drawer__section" variant="transparent">
-                <DrawerSectionLabel>{sections.language}</DrawerSectionLabel>
-                <DrawerTextLink href={localeDeHref} isActive={locale === "de"} label="DE" />
-                <DrawerTextLink href={localeEnHref} isActive={locale === "en"} label="EN" />
-              </Surface>
-
               {showAccountSection ? (
                 <Surface className="site-nav-drawer__section" variant="transparent">
                   <DrawerSectionLabel>{sections.account}</DrawerSectionLabel>
@@ -218,6 +200,24 @@ export default function AppNavbarMenu({
                   ) : null}
                 </Surface>
               ) : null}
+
+              <Surface className="site-nav-drawer__section" variant="transparent">
+                <DrawerSectionLabel>{sections.navigation}</DrawerSectionLabel>
+                {navLinks.map((link) => (
+                  <DrawerTextLink
+                    href={link.href}
+                    isActive={link.isActive}
+                    key={link.href}
+                    label={link.label}
+                  />
+                ))}
+              </Surface>
+
+              <Surface className="site-nav-drawer__section" variant="transparent">
+                <DrawerSectionLabel>{sections.language}</DrawerSectionLabel>
+                <DrawerTextLink href={localeDeHref} isActive={locale === "de"} label="DE" />
+                <DrawerTextLink href={localeEnHref} isActive={locale === "en"} label="EN" />
+              </Surface>
             </Drawer.Body>
           </Drawer.Dialog>
         </Drawer.Content>

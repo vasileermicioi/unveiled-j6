@@ -482,36 +482,37 @@ The `@unveiled/ui` package SHALL export an `EventCard` component matching `docs/
 
 ### Requirement: EventCard hover affordance
 
-On devices that support hover, the `EventCard` SHALL (1) colorize the grayscale cover image, (2) reveal the availability strip showing remaining capacity and ticket type (where space allows), and (3) emphasize the card with a stronger flat border or theme accent edge. The card SHALL NOT use drop shadows or hard-offset shadows for elevation. Hover transitions on the image and availability strip SHALL be disabled or near-instant when the user prefers reduced motion.
-
-#### Scenario: Pointer hover reveals availability
-
-- **WHEN** a user with a hover-capable pointer moves over an EventCard
-- **THEN** the availability strip becomes visible and the card border emphasis increases without a box-shadow
+On devices that support hover, the `EventCard` SHALL colorize the grayscale cover image and emphasize the card with a layout-neutral hard-offset border shadow and slight scale. The card SHALL NOT show an availability / capacity yellow strip. Hover transitions on the image SHALL be disabled or near-instant when the user prefers reduced motion. Date and credit price on the card SHALL be visible only for members with an active subscription; guests and inactive members SHALL NOT see those fields on the card.
 
 #### Scenario: Pointer hover colorizes cover image
 
 - **WHEN** a user with a hover-capable pointer moves over an EventCard that shows a cover image
 - **THEN** the cover image leaves grayscale and appears in full color
+- **AND** no availability strip is shown
 
 #### Scenario: Reduced motion prefers less transition
 
 - **WHEN** the user has `prefers-reduced-motion: reduce`
-- **THEN** hover transitions on the EventCard image and availability strip are disabled or near-instant
+- **THEN** hover transitions on the EventCard image are disabled or near-instant
+
+#### Scenario: Guests do not see date or credits on the card
+
+- **WHEN** a guest views Discover EventCards
+- **THEN** date and credit price are not shown on the card
 
 ### Requirement: EventCard hover documented in stories
 
-`@unveiled/ui` EventCard Ladle stories SHALL include a state that demonstrates the hover/availability reveal (or an equivalent forced-visible strip) so theme reviews do not require a live browser hover. The product UI component map SHALL describe the EventCard hover contract as a flat border/outline emphasis with availability strip reveal, not a drop shadow.
+`@unveiled/ui` EventCard Ladle stories SHALL include a state that demonstrates the hover colorize (or an equivalent forced-visible preview) so theme reviews do not require a live browser hover. The product UI component map SHALL describe the EventCard hover contract without an availability strip, and SHALL note that date/credits are subscribed-member-only.
 
-#### Scenario: Story shows availability strip
+#### Scenario: Story shows colorized cover
 
-- **WHEN** a developer opens the EventCard hover (or availability-visible) story
-- **THEN** remaining capacity and ticket type are visible on a strip in the card body between the image and the title
+- **WHEN** a developer opens the EventCard hover-preview story
+- **THEN** the cover is colorized without requiring a pointer hover
 
-#### Scenario: Product map matches flat hover
+#### Scenario: Product map matches subscriber-only meta
 
 - **WHEN** an implementer reads the EventCard entry in `docs/product/ui/ui-component-map.md`
-- **THEN** the description states hover/focus reveals the availability strip and emphasizes the card with a flat border or outline, without prescribing a drop shadow
+- **THEN** the description states date/credits are for subscribed members only and that there is no availability strip
 
 ### Requirement: Discover page live event preview
 
