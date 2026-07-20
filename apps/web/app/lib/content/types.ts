@@ -22,7 +22,8 @@ export type LandingContent = {
   subheadline: string;
   phoneAlt: string;
   plan: {
-    price: string;
+    priceAmount: string;
+    pricePeriod: string;
     perks: readonly [string, string, string, string];
     cta: string;
   };

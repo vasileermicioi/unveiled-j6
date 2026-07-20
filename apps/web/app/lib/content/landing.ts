@@ -3,22 +3,24 @@ import type { LandingContent, LocalizedContent } from "./types";
 export const landingContent: LocalizedContent<LandingContent> = {
   de: {
     headline: "Eine Mitgliedschaft für die gesamte Kulturszene.",
-    subheadline: "Monatliche Credits für Berlins beste Kulturorte und exklusive Community-Events.",
+    subheadline:
+      "Monatliche Credits für den Zugang zu Berlins besten Kultureinrichtungen und exklusiven Community-Events.",
     phoneAlt: "Unveiled App auf dem Smartphone",
     plan: {
-      price: "29€ pro Monat",
+      priceAmount: "29€",
+      pricePeriod: "pro Monat",
       perks: [
         "17 monatliche Credits",
-        "Flexible Credit-Kombinationen",
+        "Flexible Nutzung deiner Credits",
         "Exklusiver Community-Zugang",
-        "Abo jederzeit kündbar",
+        "Jederzeit kündbar",
       ],
       cta: "Registrier dich jetzt",
     },
     benefits: [
       {
         title: "Zeit sparen.",
-        body: "Finde große Events in unter einer Minute.",
+        body: "Finde großartige Events in unter einer Minute.",
       },
       {
         title: "Geld sparen.",
@@ -26,7 +28,7 @@ export const landingContent: LocalizedContent<LandingContent> = {
       },
       {
         title: "Leute treffen.",
-        body: "Schließ dich einer Community an, die wirklich rausgeht.",
+        body: "Werde Teil einer Community, die wirklich ausgeht.",
       },
     ],
   },
@@ -36,7 +38,8 @@ export const landingContent: LocalizedContent<LandingContent> = {
       "Monthly credits for Berlin's best cultural venues and exclusive community events.",
     phoneAlt: "Unveiled app on a smartphone",
     plan: {
-      price: "29€ per month",
+      priceAmount: "29€",
+      pricePeriod: "per month",
       perks: [
         "17 monthly credits",
         "Flexible credit combinations",

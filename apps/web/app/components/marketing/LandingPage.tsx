@@ -1,5 +1,5 @@
 import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
-import { Check, Coins, Hourglass, Users } from "lucide-react";
+import { Check, Hourglass, Link2, Users } from "lucide-react";
 
 import type { LandingContent } from "../../lib/content/types";
 import type { Locale } from "../../lib/locale";
@@ -10,51 +10,50 @@ type LandingPageProps = {
   landing: LandingContent;
 };
 
-const BENEFIT_ICONS = [Hourglass, Coins, Users] as const;
+const BENEFIT_ICONS = [Hourglass, Link2, Users] as const;
 
 export function LandingPage({ locale, landing }: LandingPageProps) {
   const signupHref = localizedPath(locale, "signup");
 
   return (
     <Surface
-      className="guest-home mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8"
+      className="guest-home mx-auto max-w-5xl px-4 py-5 sm:px-6 lg:px-8 lg:py-6"
       variant="transparent"
     >
       <Surface
-        className="guest-home__hero mx-auto flex max-w-4xl flex-col gap-4 text-center"
+        className="guest-home__hero flex w-full flex-col gap-2 text-left"
         variant="transparent"
       >
         <Heading className="guest-home__headline" level={1}>
           {landing.headline}
         </Heading>
-        <Paragraph className="guest-home__subheadline mx-auto max-w-3xl">
-          {landing.subheadline}
-        </Paragraph>
+        <Paragraph className="guest-home__subheadline">{landing.subheadline}</Paragraph>
       </Surface>
 
       <Surface
-        className="guest-home__showcase mt-10 grid items-center gap-8 lg:mt-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-12"
+        className="guest-home__showcase mt-5 grid gap-5 lg:mt-6 lg:grid-cols-2 lg:items-stretch lg:gap-6"
         variant="transparent"
       >
-        <Surface
-          className="guest-home__phone mx-auto w-full max-w-xs lg:max-w-sm"
-          variant="transparent"
-        >
+        <Surface className="guest-home__phone" variant="transparent">
           <img
             alt={landing.phoneAlt}
-            className="guest-home__phone-image h-auto w-full"
-            height={841}
+            className="guest-home__phone-image"
             src="/images/guest-home-phone.png"
-            width={426}
           />
         </Surface>
 
         <Card className="guest-home__plan">
-          <Card.Content className="guest-home__plan-body flex flex-col gap-6">
-            <Heading className="guest-home__price" level={2}>
-              {landing.plan.price}
-            </Heading>
-            <Surface className="guest-home__perks flex flex-col gap-3" variant="transparent">
+          <Card.Content className="guest-home__plan-body">
+            <Surface
+              className="guest-home__price-block flex flex-wrap items-baseline gap-x-3 gap-y-1"
+              variant="transparent"
+            >
+              <Heading className="guest-home__price-amount" level={2}>
+                {landing.plan.priceAmount}
+              </Heading>
+              <Paragraph className="guest-home__price-period">{landing.plan.pricePeriod}</Paragraph>
+            </Surface>
+            <Surface className="guest-home__perks flex flex-col gap-2.5" variant="transparent">
               {landing.plan.perks.map((perk) => (
                 <Surface
                   className="guest-home__perk flex items-start gap-3"
@@ -83,25 +82,25 @@ export function LandingPage({ locale, landing }: LandingPageProps) {
         </Card>
       </Surface>
 
-      <Card className="guest-home__benefits mt-10 lg:mt-14">
-        <Card.Content className="guest-home__benefits-grid grid gap-8 md:grid-cols-3 md:gap-6">
+      <Card className="guest-home__benefits mt-5 lg:mt-6">
+        <Card.Content className="guest-home__benefits-list flex flex-col gap-3.5">
           {landing.benefits.map((benefit, index) => {
             const Icon = BENEFIT_ICONS[index] ?? Hourglass;
             return (
               <Surface
-                className="guest-home__benefit flex flex-col gap-3"
+                className="guest-home__benefit flex items-center gap-3"
                 key={benefit.title}
                 variant="transparent"
               >
                 <Surface className="guest-home__benefit-icon" variant="transparent">
-                  <Icon aria-hidden size={20} strokeWidth={2.25} />
+                  <Icon aria-hidden size={18} strokeWidth={2.25} />
                 </Surface>
-                <Heading className="guest-home__benefit-title" level={3}>
-                  {benefit.title}
-                </Heading>
-                <Paragraph className="guest-home__benefit-body" color="muted" size="sm">
-                  {benefit.body}
-                </Paragraph>
+                <Surface className="guest-home__benefit-copy min-w-0 flex flex-col gap-0.5" variant="transparent">
+                  <Heading className="guest-home__benefit-title" level={3}>
+                    {benefit.title}
+                  </Heading>
+                  <Paragraph className="guest-home__benefit-body">{benefit.body}</Paragraph>
+                </Surface>
               </Surface>
             );
           })}

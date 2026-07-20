@@ -2023,51 +2023,108 @@
   }
 
   /* Guest marketing home — `/:locale` */
+  .guest-home {
+    --guest-home-showcase-h: 22.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    .guest-home {
+      --guest-home-showcase-h: 26rem;
+    }
+  }
+
   .guest-home__headline {
     margin: 0;
-    font-size: clamp(1.75rem, 4vw, 3rem);
+    max-width: none;
+    font-size: clamp(1.65rem, 3.8vw, 2.75rem);
     font-weight: 800;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     line-height: 0.95;
     text-transform: uppercase;
   }
 
   .guest-home__subheadline {
     margin: 0;
-    font-size: clamp(0.875rem, 1.6vw, 1.125rem);
+    max-width: none;
+    font-size: clamp(0.75rem, 1.25vw, 0.9375rem);
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     line-height: 1.35;
     text-transform: uppercase;
     color: var(--foreground);
   }
 
+  .guest-home__showcase {
+    align-items: stretch;
+  }
+
+  .guest-home__phone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    height: var(--guest-home-showcase-h);
+    max-height: var(--guest-home-showcase-h);
+    overflow: hidden;
+    text-align: center;
+  }
+
   .guest-home__phone-image {
     display: block;
+    width: auto;
+    height: var(--guest-home-showcase-h);
+    max-width: 100%;
+    max-height: var(--guest-home-showcase-h);
     margin-inline: auto;
+    object-fit: contain;
+    object-position: center;
   }
 
   .guest-home__plan {
+    width: 100%;
+    min-width: 0;
+    height: var(--guest-home-showcase-h);
+    max-height: var(--guest-home-showcase-h);
     background: var(--foreground);
     color: var(--surface);
     border-color: var(--foreground);
   }
 
-  .guest-home__plan .card__content {
-    padding: 1.75rem;
+  .guest-home__plan .card__content,
+  .guest-home__plan-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.25rem;
+    height: 100%;
+    max-height: var(--guest-home-showcase-h);
+    padding: 1.25rem;
+    box-sizing: border-box;
   }
 
   @media (min-width: 768px) {
-    .guest-home__plan .card__content {
-      padding: 2rem;
+    .guest-home__plan .card__content,
+    .guest-home__plan-body {
+      padding: 1.5rem 1.75rem;
     }
   }
 
-  .guest-home__price {
+  .guest-home__price-amount {
     margin: 0;
-    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-size: clamp(2.25rem, 4vw, 3rem);
     font-weight: 800;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+    text-transform: uppercase;
+    color: var(--surface);
+  }
+
+  .guest-home__price-period {
+    margin: 0;
+    font-size: clamp(0.9375rem, 1.6vw, 1.125rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
     line-height: 1;
     text-transform: uppercase;
     color: var(--surface);
@@ -2080,23 +2137,22 @@
     justify-content: center;
     width: 1.5rem;
     height: 1.5rem;
-    margin-top: 0.1rem;
+    margin-top: 0.05rem;
     color: var(--color-brand-yellow);
   }
 
   .guest-home__perk-text {
     margin: 0;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     line-height: 1.3;
     text-transform: uppercase;
     color: var(--surface);
   }
 
   .guest-home__cta-panel {
-    margin-top: 0.5rem;
-    padding: 1.25rem;
+    padding: 1rem;
     background: var(--color-brand-cream);
     border: var(--border-width) solid var(--foreground);
   }
@@ -2106,17 +2162,18 @@
   }
 
   .guest-home__benefits .card__content {
-    padding: 1.5rem;
+    padding: 1rem 1.25rem;
   }
 
   @media (min-width: 768px) {
     .guest-home__benefits .card__content {
-      padding: 1.75rem 2rem;
+      padding: 1.25rem 1.5rem;
     }
   }
 
   .guest-home__benefit-icon {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
     width: 2.25rem;
@@ -2130,17 +2187,19 @@
     margin: 0;
     font-size: 1rem;
     font-weight: 800;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     line-height: 1.2;
     text-transform: uppercase;
   }
 
   .guest-home__benefit-body {
     margin: 0;
+    font-size: 0.8125rem;
     font-weight: 600;
-    letter-spacing: 0.02em;
-    line-height: 1.35;
+    letter-spacing: 0.03em;
+    line-height: 1.3;
     text-transform: uppercase;
+    color: var(--foreground);
   }
 }
 
