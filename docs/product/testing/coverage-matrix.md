@@ -124,12 +124,14 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `profile.feature` | Edit cultural preferences ("Vibes") | `e2e/specs/profile.spec.ts` · `Scenario: Edit cultural preferences ("Vibes")` | `pass` |  |
 | `profile.feature` | View credit wallet | `e2e/specs/profile.spec.ts` · `Scenario: View credit wallet` | `pass` |  |
 | `profile.feature` | Refill credits | `e2e/specs/profile.spec.ts` · `Scenario: Refill credits` | `pass` |  |
-| `static-pages.feature` | Discover is the home page | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover is the home page` | `pass` |  |
+| `static-pages.feature` | Guest marketing home is the locale home page | `e2e/specs/static-pages.spec.ts` · `Scenario: Guest marketing home is the locale home page` | `pass` |  |
+| `static-pages.feature` | Signed-in users are redirected away from the guest marketing home | — | `deferred` | Covered by unit `resolvePostAuthRedirect` + index route; e2e optional |
+| `static-pages.feature` | Discover is available at /discover | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover is available at /discover` | `pass` |  |
 | `static-pages.feature` | Discover preview links to public event detail | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover preview links to public event detail` | `pass` |  |
 | `static-pages.feature` | Discover CTA path to the full member events feed | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover CTA path to the full member events feed` | `pass` | CTA → signup?returnTo=/events; after onboarding test navigates to `/events`. Auto honor `returnTo` on onboarding finish → `deferred` (post-MVP polish) |
 | `static-pages.feature` | How it works | `e2e/specs/static-pages.spec.ts` · `Scenario: How it works` | `pass` |  |
 | `static-pages.feature` | FAQ | `e2e/specs/static-pages.spec.ts` · `Scenario: FAQ` | `pass` |  |
-| `static-pages.feature` | Legacy /discover redirects to locale home | `e2e/specs/static-pages.spec.ts` · `Scenario: Legacy /discover redirects to locale home` | `pass` |  |
+| `static-pages.feature` | Bare /discover redirects to localized Discover | `e2e/specs/static-pages.spec.ts` · `Scenario: Bare /discover redirects to localized Discover` | `pass` |  |
 | `static-pages.feature` | Bilingual content | `e2e/specs/static-pages.spec.ts` · `Scenario: Bilingual content` | `pass` |  |
 | `static-pages.feature` | Legal pages exist and are linked from the footer | `e2e/specs/static-pages.spec.ts` · `Scenario: Legal pages exist and are linked from the footer` | `pass` |  |
 | `static-pages.feature` | Cookie consent banner on first visit | `e2e/specs/static-pages.spec.ts` · `Scenario: Cookie consent banner on first visit` | `pass` |  |

@@ -1,7 +1,8 @@
 # Static and marketing pages for the production MVP.
 #
-# Aligns with docs/product/sitemap/sitemap.md: Discover IS locale home (`/:locale`);
-# legacy `/discover` 301s home. Legal pages + cookie consent are required for DE ops.
+# Aligns with docs/product/sitemap/sitemap.md: guest marketing home is locale home
+# (`/:locale`); Discover lives at `/:locale/discover`. Bare `/discover` redirects to
+# the localized Discover route. Legal pages + cookie consent are required for DE ops.
 # Error tracking (Sentry) is strictly necessary (no PII / no session replay) — not gated.
 # Event map third-party tiles ARE gated behind consent.
 #
@@ -12,12 +13,23 @@ Feature: Static and Marketing Pages
   I want informational and marketing pages
   So that I can understand the product before/while using it
 
-  Scenario: Discover is the home page
+  Scenario: Guest marketing home is the locale home page
     Given I am not signed in
     When I visit the locale home ("/:locale")
-    Then I see the Discover experience: curated upcoming events and partner venues
+    Then I see the guest marketing home: membership headline, plan card, and signup CTA
     And I see a link to log in in the sticky header
     And I see navigation to Discover and FAQ via the footer (not How it works or Membership)
+
+  Scenario: Signed-in users are redirected away from the guest marketing home
+    Given I am signed in as a member or admin
+    When I visit the locale home ("/:locale")
+    Then I am redirected to my role home ("/events" or onboarding for members; "/admin" for admins)
+    And I do not see the guest marketing home
+
+  Scenario: Discover is available at /discover
+    Given I am not signed in
+    When I visit "/:locale/discover"
+    Then I see the Discover experience: curated upcoming events and partner venues
 
   Scenario: Discover preview links to public event detail
     Given I am not signed in
@@ -42,10 +54,10 @@ Feature: Static and Marketing Pages
     And I see an accordion of frequently asked questions (DE/EN)
     And only one question can be expanded at a time
 
-  Scenario: Legacy /discover redirects to locale home
-    When I visit "/:locale/discover"
-    Then I am redirected (301) to "/:locale"
-    And I see the Discover home experience
+  Scenario: Bare /discover redirects to localized Discover
+    When I visit "/discover"
+    Then I am redirected to "/:locale/discover"
+    And I see the Discover experience
 
   Scenario: Bilingual content
     Given all static and marketing content exists in both German and English

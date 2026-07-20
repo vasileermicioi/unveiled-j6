@@ -18,13 +18,21 @@ export function buildAuthContinueUrl(locale: Locale, returnTo?: string | null): 
   return `${base}?returnTo=${encodeURIComponent(safeReturnTo)}`;
 }
 
+function isGuestMarketingHomePath(pathname: string, locale: Locale): boolean {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  return normalized === `/${locale}`;
+}
+
 export function resolvePostAuthRedirect(options: {
   locale: Locale;
   session: AppSession;
   returnTo?: string | null;
 }): string {
   const { locale, session } = options;
-  const returnTo = parseReturnTo(options.returnTo ?? undefined, locale);
+  const parsedReturnTo = parseReturnTo(options.returnTo ?? undefined, locale);
+  // Locale root is guest-only; never bounce signed-in users back there.
+  const returnTo =
+    parsedReturnTo && !isGuestMarketingHomePath(parsedReturnTo, locale) ? parsedReturnTo : null;
   const { user } = session;
 
   if (user.role === "PARTNER") {

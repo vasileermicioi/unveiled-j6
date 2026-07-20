@@ -2,11 +2,22 @@
 
 Exact DE/EN copy and section structure for marketing pages. Rebuild with HeroUI. See `ui-component-map.md`, `app-shell.md`, and `../extras/content-i18n-inventory.md`.
 
-**MVP route lock:** Discover **is** locale home `/:locale`. Legacy `/discover` 301s to `/:locale`. There is no separate marketing landing with an inline auth card — auth is `/login` and `/signup`.
+**MVP route lock:** Guest marketing home **is** locale home `/:locale`. Discover is `/:locale/discover`. Bare `/discover` 302s to `/:locale/discover`. Auth is `/login` and `/signup` (no inline auth card on home).
 
 ---
 
-## Discover (locale home `/:locale`)
+## Guest marketing home (`/:locale`)
+
+Public conversion landing for **guests only**. Signed-in members/admins who hit this URL are redirected to their role home (`/events` or onboarding for `USER`, `/admin` for `ADMIN`). Logo (guest) points here. Navbar still links **Discover** / **Entdecken** to `/discover`. Sections, top to bottom:
+
+1. **Hero** — H1 + subheadline (all-caps brand tone): membership for Berlin’s cultural scene / monthly credits framing
+2. **Showcase** — phone mockup (`/images/guest-home-phone.png`) + black plan card (29€ / month, four perks, cream CTA panel)
+3. **Primary CTA** — “Registrier dich jetzt” / “Register now” → `/signup` (no limited-offer / bonus-credits block)
+4. **Benefits strip** — three columns: save time / save money / meet people
+
+---
+
+## Discover (`/:locale/discover`)
 
 Public page without login. Navbar “Discover” / “Entdecken” points here. Sections, top to bottom:
 
@@ -23,12 +34,13 @@ Public page without login. Navbar “Discover” / “Entdecken” points here. 
 - `prefers-reduced-motion: reduce`: strip stays static (wrapped); no auto-scroll; clone sequence hidden
 - Empty featured-partners list: **hide** the Partner venues section entirely (no empty marquee, no partner empty-state copy)
 
-### Dropped from old landing (not on Discover)
-- Hero panel (stats + membership / browse CTAs)
+### Dropped from old Discover-as-home era
+- Discover as locale home (home is now the guest marketing landing)
+- Hero panel (stats + membership / browse CTAs) on Discover
 - Value proposition cards and membership category tiles / venue callout (parked — not shown on Discover)
 - Venue check-in success banner (check-in is **post-MVP**)
 - Inline auth card / GUEST EXPLORER / ADMIN ACCESS — use `/login` and `/signup` instead
-- Separate `/` marketing page distinct from Discover`
+- Limited-offer / bonus-credits promo on the guest home plan card
 
 ---
 

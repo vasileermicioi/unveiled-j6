@@ -633,8 +633,8 @@ Spot-check vs `docs/product/sitemap/sitemap.md` (2026-07-11):
 | Check | Result |
 |---|---|
 | `/:locale` = Discover (marketing + curated preview) | Aligned |
-| `/:locale/discover` → **301** `/:locale` | Aligned |
-| Bare `/discover` → **301** locale home (`Accept-Language`) | **Fixed** in step 05 (`apps/web/app/routes/discover.tsx`) |
+| `/:locale` → guest marketing home; `/:locale/discover` → Discover | Aligned |
+| Bare `/discover` → **302** `/:locale/discover` (`Accept-Language`) | Aligned (`apps/web/app/routes/discover.tsx`) |
 | Preview EventCard → public `/events/:id` (no auth) | Aligned |
 | Browse CTA → `signup?returnTo=/:locale/events` | Aligned (step 04) |
 | Guest `/events` → login with `returnTo` | Aligned |
@@ -646,7 +646,7 @@ Spot-check vs `docs/product/sitemap/sitemap.md` (2026-07-11):
 
 1. `bun run stories` — open **Theme Overview** under `@unveiled/ui` (brand yellow `#FAFF86`, primary/secondary CTAs, sample card/chips).
 2. As a guest, open `/:locale` (Discover) → click a preview “Book Now” / “Bin dabei” → land on public `/events/:id` without login.
-3. Confirm `/:locale/discover` and `/discover` **301** to locale home.
+3. Confirm `/:locale` is guest home, `/:locale/discover` is Discover, and `/discover` **302**s to localized Discover.
 4. Confirm guest `/events` redirects to signup/login; e2e Scenario titles match Gherkin (`docs/product/testing/coverage-matrix.md`).
 
 ### Automated verification (Phase 5.5)
@@ -933,7 +933,7 @@ With `DATABASE_URL` and `AUTH_URL` set:
 
 After deploy (with `SITE_URL` set to the staging origin), confirm:
 
-1. All public routes render in DE and EN: `/` (Discover home), `/how-it-works`, `/faq`, `/membership`, `/impressum`, `/privacy`, `/terms` (`/discover` redirects to `/`)
+1. All public routes render in DE and EN: `/` (guest marketing home), `/discover`, `/how-it-works`, `/faq`, `/membership`, `/impressum`, `/privacy`, `/terms` (bare `/discover` redirects to `/:locale/discover`)
 2. Footer legal links work on every page
 3. `curl -s $SITE_URL/robots.txt` — shows `Allow`, `Disallow`, and `Sitemap:` lines
 4. `curl -s $SITE_URL/sitemap.xml` — valid XML with 14 URLs (`/de`, `/en/terms`, etc.); no `/events/` URLs

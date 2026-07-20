@@ -81,7 +81,7 @@ Severity: **P0** blocks coherent MVP docs; **P1** must fix in rewrite; **P2** sc
 | ID | Area | Gap | Evidence | Severity | Owner |
 |---|---|---|---|---|---|
 | G1 | Sitemap / SEO | `/events/:id` auth contradicts public/indexable intent | `sitemap.md` USER ✅ vs `seo-and-metadata.md` indexable + shipped public `[id].tsx` + `AGENTS.md` | P0 | 02 |
-| G2 | Sitemap / journey | Discover vs Events fuzzy; migration still has separate landing + `/discover` | `sitemap.md` `/` + `/discover`; shipped home **is** Discover; legacy `/discover` 301 | P0 | 02 |
+| G2 | Sitemap / journey | Discover vs Events fuzzy; migration still has separate landing + `/discover` | `sitemap.md`: guest home `/:locale`, Discover `/:locale/discover`; bare `/discover` → localized Discover | P0 | 02 |
 | G3 | SEO | `/events` listed indexable but feed is member-gated | `seo-and-metadata.md` row for `/events`; Phase 5 guards | P1 | 02 (correct to `noindex` / member-only) |
 | G4 | Persona | Partner mixed into MVP language in migration features/sitemap | `partner-portal.feature`, `checkin.feature`, `/partner/*` routes | P0 | 02–03 (park); charter locks |
 | G5 | UI / Ladle | DS stories live mostly in `apps/web`; no Theme Overview | 1 story in `packages/ui` vs 43 in `apps/web`; ThemeDecorator cross-imports app CSS | P1 | 02 (docs); 04 (schedule moves) |
@@ -128,7 +128,7 @@ These are **authoritative** for steps 02–05. Do not reopen unless the user exp
 
 ### 3. Discover → Events
 
-**Shipped fact:** locale home `/:locale` **is** Discover (marketing + curated upcoming preview). Legacy `/:locale/discover` **301** redirects to `/:locale`. Do not invent a third home.
+**Shipped fact:** locale home `/:locale` **is** the guest marketing landing (guests only; signed-in `USER`/`ADMIN` redirect to role home). Discover (curated upcoming preview + partners) lives at `/:locale/discover`. Bare `/discover` redirects to the localized Discover route.
 
 **Locked guest journey:**
 

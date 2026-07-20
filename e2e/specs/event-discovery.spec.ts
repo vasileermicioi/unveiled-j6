@@ -88,7 +88,7 @@ test.describe("event-discovery.feature", () => {
   }) => {
     await page.context().clearCookies();
     // Prefer Discover → public detail (no test-process DB). Fall back to seeded id if preview empty.
-    await page.goto(`/${locale}`);
+    await page.goto(`/${locale}/discover`);
     const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
     if ((await detailCta.count()) > 0) {
       await detailCta.click();
@@ -365,7 +365,7 @@ test.describe("event-discovery.feature", () => {
   test("Scenario: Saving requires authentication", async ({ page, locale }) => {
     // Guest cards hide save; unauthenticated POST still redirects to login
     await page.context().clearCookies();
-    await page.goto(`/${locale}`);
+    await page.goto(`/${locale}/discover`);
     await expect(page.getByRole("button", { name: /^(merken|gemerkt|save|saved)$/i })).toHaveCount(
       0,
     );
@@ -395,7 +395,7 @@ test.describe("event-discovery.feature", () => {
 
   test("Scenario: Public discovery preview for guests", async ({ page, locale }) => {
     await page.context().clearCookies();
-    await page.goto(`/${locale}`);
+    await page.goto(`/${locale}/discover`);
 
     await expect(
       page.getByRole("heading", {

@@ -8,6 +8,7 @@ import { buildSitemapXml, type SitemapUrlEntry, toSitemapLastmod } from "../lib/
 
 const SITEMAP_STATIC_PATHS = [
   "",
+  "discover",
   "how-it-works",
   "faq",
   "membership",

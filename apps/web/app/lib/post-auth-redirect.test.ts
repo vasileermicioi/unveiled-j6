@@ -116,6 +116,27 @@ describe("post-auth-redirect", () => {
     ).toBe("/de/events");
   });
 
+  test("resolvePostAuthRedirect ignores guest-home returnTo for signed-in users", () => {
+    expect(
+      resolvePostAuthRedirect({
+        locale: "de",
+        session: createSession({
+          onboardingComplete: true,
+          profile: { onboarding_complete: true },
+        }),
+        returnTo: "/de",
+      }),
+    ).toBe("/de/events");
+
+    expect(
+      resolvePostAuthRedirect({
+        locale: "en",
+        session: createSession({ role: "ADMIN" }),
+        returnTo: "/en/",
+      }),
+    ).toBe("/en/admin");
+  });
+
   test("resolvePostAuthRedirect routes PARTNER and ADMIN to role homes", () => {
     expect(
       resolvePostAuthRedirect({

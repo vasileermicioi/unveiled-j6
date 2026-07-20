@@ -12,17 +12,21 @@ export type PageKey =
 
 export type LocalizedContent<T> = Record<Locale, T>;
 
+export type LandingBenefit = {
+  title: string;
+  body: string;
+};
+
 export type LandingContent = {
   headline: string;
   subheadline: string;
-  ctaDiscover: string;
-  ctaHowItWorks: string;
-  trustMicrocopy: string;
-  conversionCard: {
-    loginCta: string;
-    signupCta: string;
+  phoneAlt: string;
+  plan: {
+    price: string;
+    perks: readonly [string, string, string, string];
+    cta: string;
   };
-  trustBadges: readonly [string, string, string];
+  benefits: readonly [LandingBenefit, LandingBenefit, LandingBenefit];
 };
 
 export type ValuePropCard = {

@@ -12,7 +12,7 @@ Mapping aid for HeroUI rebuilds. Visual language: `design-tokens.md`. Ownership:
 |---|---|---|
 | Navbar / Header | `apps/web` | Slim marketing nav Discover + FAQ; guest auth Log in only; How it works / Membership / Sign up out of header and footer nav — see `app-shell.md` |
 | Logo | `@unveiled/ui` | Three SVG tones — `assets-inventory.md`; Ladle stories under `packages/ui` |
-| Footer | `apps/web` | Discover → `/:locale`; FAQ; legal column (no How it works / Membership) |
+| Footer | `apps/web` | Discover → `/:locale/discover`; FAQ; legal column (no How it works / Membership) |
 | **PageSectionHeader** | `apps/web` | Default on-yellow page/section header: muted uppercase eyebrow + bold headline + full-width rule. Used on Discover, FAQ, auth, member feed/browse — distinct from bordered `PageHero` card heroes |
 | Help / FAQ accordion | `apps/web` | HeroUI `Accordion` in `Card` |
 | Cookie banner | `apps/web` island | Accept/decline; gates map tiles |
@@ -44,7 +44,8 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 
 | Surface | Route | Notes |
 |---|---|---|
-| **Discover home** | `/:locale` | `PageSectionHeader` + up to 6 upcoming EventCards; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); Book Now / Bin dabei (or Waitlist) → public detail; auth CTAs → signup/login → `/events` |
+| **Guest marketing home** | `/:locale` | Guests only (signed-in → role home). Headline + phone + plan card + signup CTA + benefits |
+| **Discover** | `/:locale/discover` | `PageSectionHeader` + up to 6 upcoming EventCards; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); Book Now / Bin dabei (or Waitlist) → public detail |
 | **Member feed** | `/events` | `PageSectionHeader`; filters (GET query params), pagination, EventCard grid; subscription gate banner |
 | **Map** | `/events/map` | MapLibre + OSM island; cookie-gated |
 | **Saved** | `/saved` | Member saved list |
@@ -85,7 +86,7 @@ Four SSR steps: `/onboarding/age` → `interests` → `location` → `timing`. P
 
 ## Static / marketing
 
-How it works, FAQ, legal pages — copy in `static-pages-content.md`. Discover content is locale home, not a separate `/discover` page.
+How it works, FAQ, legal pages — copy in `static-pages-content.md`. Guest marketing home is locale home; Discover is `/:locale/discover`.
 
 ---
 

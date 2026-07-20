@@ -12,7 +12,7 @@ Product specs live under `docs/product/`. Binding scope lock: [`docs/product/CHA
 |---|---|
 | MVP personas = guest / member (`USER`) / admin; **partner portal & check-in = post-MVP** | `CHARTER.md`, `product/vision-and-domains.md`, sitemap appendix |
 | `/events/:id` is **public** and indexable when bookable; member `/events` is gated + `noindex` | `sitemap/sitemap.md`, `extras/seo-and-metadata.md` |
-| Discover = locale home `/:locale`; guest path = preview → public detail + auth CTA → `/events` | `sitemap/sitemap.md`, `ui/static-pages-content.md`, `ui/app-shell.md` |
+| Guest marketing home = locale home `/:locale` (guests only; signed-in redirect to role home); Discover = `/:locale/discover`; guest path = preview → public detail + auth CTA → `/events` | `sitemap/sitemap.md`, `ui/static-pages-content.md`, `ui/app-shell.md` |
 | `@unveiled/ui` is the design system + Ladle home; Theme Overview story required | `ui/design-system.md`, `CHARTER.md` |
 | Complete MVP schema includes bookings/credits/waitlist/saved_events; portal columns labeled post-MVP | `database/schema-overview.md` |
 

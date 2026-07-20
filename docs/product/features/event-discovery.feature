@@ -1,7 +1,7 @@
 # Event discovery for the production MVP.
 #
 # Charter locks:
-#   - Discover = locale home with curated guest preview (not a public full feed)
+#   - Discover = /:locale/discover with curated guest preview (not a public full feed)
 #   - /events/:id is public (no auth); book/save/waitlist remain gated
 #   - Member feed /events, /events/map, /saved require USER
 #   - No algorithmic ranking — explicit filters only (category / partner / date; single-select)
@@ -21,7 +21,7 @@ Feature: Event Discovery
 
   Scenario: Public discovery preview for guests
     Given I am not signed in
-    When I visit the Discover home ("/:locale")
+    When I visit Discover ("/:locale/discover")
     Then I see a curated preview of upcoming events (no auth required)
     And I see membership framing in the section header (eyebrow)
     And I do not see a public full upcoming-events list equivalent to the member "/events" feed

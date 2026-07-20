@@ -4,7 +4,7 @@ Legend: **Auth** = sign-in required. **Role** = required role beyond being signe
 
 Locale is a **route segment**. Switching language re-navigates to the same path under the other locale (e.g. `/de/events/abc` ↔ `/en/events/abc`).
 
-**Charter locks:** Discover = locale home; `/events/:id` is **public**; member feed `/events` is gated; partner portal is **post-MVP** (appendix only).
+**Charter locks:** Guest marketing home = locale home; Discover at `/discover`; `/events/:id` is **public**; member feed `/events` is gated; partner portal is **post-MVP** (appendix only).
 
 ---
 
@@ -18,21 +18,23 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 ---
 
-## Discover & public marketing
+## Guest home, Discover & public marketing
 
-**Discover is locale home.** `/:locale` renders the Discover marketing experience (curated upcoming events + partner venue highlights). Legacy `/:locale/discover` **301** redirects to `/:locale`. Do not invent a third home.
+**Guest marketing home is locale home.** `/:locale` renders the membership conversion landing (headline, phone mockup, plan card, benefits). **Discover** is `/:locale/discover` (curated upcoming events + partner venue highlights). Bare `/discover` **302** redirects to `/:locale/discover` via `Accept-Language`.
 
-### Guest journey (Discover → Events)
+### Guest journey (Home → Discover → Events)
 
-1. Guest lands on Discover (`/:locale`).
-2. Preview **EventCard** CTAs link to public `/events/:id` (“Book Now” / “Bin dabei”, or “Waitlist” / “Warteliste” when sold out).
-3. Path to the **full browse** experience: primary CTA to **signup or login**; after auth (and onboarding if incomplete), land on member `/events`.
-4. Guests do **not** get a public full upcoming-events list equivalent to `/events`.
+1. Guest lands on marketing home (`/:locale`) — CTA to `/signup`.
+2. Navbar/footer **Discover** opens `/:locale/discover`.
+3. Preview **EventCard** CTAs link to public `/events/:id` (“Book Now” / “Bin dabei”, or “Waitlist” / “Warteliste” when sold out).
+4. Path to the **full browse** experience: primary CTA to **signup or login**; after auth (and onboarding if incomplete), land on member `/events`.
+5. Guests do **not** get a public full upcoming-events list equivalent to `/events`.
 
 | Route | Auth | Notes |
 |---|---|---|
-| `/:locale` | — | **Discover** — marketing + curated event preview; CTAs to detail + auth |
-| `/discover` | — | **301** → `/:locale` |
+| `/:locale` | — | **Guest home** — membership marketing + signup CTA. Signed-in `USER` → `/events` (or onboarding); `ADMIN` → `/admin` |
+| `/discover` | — | **302** → `/:locale/discover` |
+| `/:locale/discover` | — | **Discover** — curated event preview + partner venues |
 | `/how-it-works` | — | Static explainer |
 | `/faq` | — | FAQ accordion |
 | `/membership` | — | Plan details; Stripe checkout when signed in (Phase 6+) |

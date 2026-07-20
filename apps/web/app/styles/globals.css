@@ -2021,6 +2021,127 @@
   .admin-flash--success {
     background: var(--surface-secondary);
   }
+
+  /* Guest marketing home — `/:locale` */
+  .guest-home__headline {
+    margin: 0;
+    font-size: clamp(1.75rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    text-transform: uppercase;
+  }
+
+  .guest-home__subheadline {
+    margin: 0;
+    font-size: clamp(0.875rem, 1.6vw, 1.125rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+    text-transform: uppercase;
+    color: var(--foreground);
+  }
+
+  .guest-home__phone-image {
+    display: block;
+    margin-inline: auto;
+  }
+
+  .guest-home__plan {
+    background: var(--foreground);
+    color: var(--surface);
+    border-color: var(--foreground);
+  }
+
+  .guest-home__plan .card__content {
+    padding: 1.75rem;
+  }
+
+  @media (min-width: 768px) {
+    .guest-home__plan .card__content {
+      padding: 2rem;
+    }
+  }
+
+  .guest-home__price {
+    margin: 0;
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--surface);
+  }
+
+  .guest-home__perk-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: 0.1rem;
+    color: var(--color-brand-yellow);
+  }
+
+  .guest-home__perk-text {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    text-transform: uppercase;
+    color: var(--surface);
+  }
+
+  .guest-home__cta-panel {
+    margin-top: 0.5rem;
+    padding: 1.25rem;
+    background: var(--color-brand-cream);
+    border: var(--border-width) solid var(--foreground);
+  }
+
+  .guest-home__benefits {
+    background: var(--surface);
+  }
+
+  .guest-home__benefits .card__content {
+    padding: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .guest-home__benefits .card__content {
+      padding: 1.75rem 2rem;
+    }
+  }
+
+  .guest-home__benefit-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: var(--color-brand-yellow);
+    border: var(--border-width) solid var(--foreground);
+    color: var(--foreground);
+  }
+
+  .guest-home__benefit-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .guest-home__benefit-body {
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+    text-transform: uppercase;
+  }
 }
 
 @layer utilities {

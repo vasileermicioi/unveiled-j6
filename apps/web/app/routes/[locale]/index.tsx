@@ -1,14 +1,11 @@
-import { listPartners, listUpcomingEvents } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
-import { DiscoverPage } from "../../components/marketing/DiscoverPage";
-import { getCatalogDb } from "../../lib/catalog-db";
-import { toDiscoverPartnerTile, toEventCardItem } from "../../lib/catalog-mappers";
+import { LandingPage } from "../../components/marketing/LandingPage";
 import { getPageContent } from "../../lib/content";
-import { getCopy } from "../../lib/copy";
 import type { Locale } from "../../lib/locale";
 import { isValidLocale } from "../../lib/locale";
-import { buildOrganizationJsonLd, discoverPageMeta } from "../../lib/seo";
+import { resolvePostAuthRedirect } from "../../lib/post-auth-redirect";
+import { buildOrganizationJsonLd, landingPageMeta } from "../../lib/seo";
 
 function getLocaleParam(value: string | undefined): Locale {
   return value && isValidLocale(value) ? value : "de";
@@ -16,33 +13,21 @@ function getLocaleParam(value: string | undefined): Locale {
 
 export default createRoute(async (c) => {
   const locale = getLocaleParam(c.req.param("locale"));
-  const content = getPageContent(locale, "discover");
-  const copy = getCopy(locale);
-  const pathname = new URL(c.req.url).pathname;
-  const meta = discoverPageMeta(content, copy.nav.discover);
-  const jsonLd = buildOrganizationJsonLd(locale);
+  const session = c.get("session") ?? null;
 
-  let events: ReturnType<typeof toEventCardItem>[] = [];
-  let partners: ReturnType<typeof toDiscoverPartnerTile>[] = [];
-
-  const db = getCatalogDb();
-  if (db) {
-    try {
-      const [upcomingEvents, partnerRows] = await Promise.all([
-        listUpcomingEvents(db, { limit: 6 }),
-        listPartners(db, { limit: 8 }),
-      ]);
-
-      events = upcomingEvents.map(toEventCardItem);
-      partners = partnerRows.map(toDiscoverPartnerTile);
-    } catch (error) {
-      console.error("discover catalog fetch failed", error);
-    }
+  // Guest marketing home only — signed-in members/admins go to their role home.
+  if (session) {
+    return c.redirect(resolvePostAuthRedirect({ locale, session }), 302);
   }
+
+  const content = getPageContent(locale, "landing");
+  const pathname = new URL(c.req.url).pathname;
+  const meta = landingPageMeta(content);
+  const jsonLd = buildOrganizationJsonLd(locale);
 
   return c.render(
     <>
-      <DiscoverPage content={content} events={events} locale={locale} partners={partners} />
+      <LandingPage landing={content} locale={locale} />
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         type="application/ld+json"

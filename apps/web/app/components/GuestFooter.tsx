@@ -41,7 +41,7 @@ export function GuestFooter({ locale }: GuestFooterProps) {
               {copy.navigationEyebrow}
             </Paragraph>
             <Surface className="mt-4 flex flex-col gap-3" role="navigation" variant="transparent">
-              <Link className="footer-link" href={localizedPath(locale, "")}>
+              <Link className="footer-link" href={localizedPath(locale, "discover")}>
                 {copy.nav.discover}
               </Link>
               <Link className="footer-link" href={localizedPath(locale, "faq")}>

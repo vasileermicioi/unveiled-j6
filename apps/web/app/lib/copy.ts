@@ -148,7 +148,7 @@ export type NavItemKey = keyof NavLinkCopy;
 export const NAV_ITEMS: NavItemKey[] = ["discover", "faq"];
 
 export const NAV_SEGMENTS: Record<NavItemKey, string> = {
-  discover: "",
+  discover: "discover",
   howItWorks: "how-it-works",
   membership: "membership",
   faq: "faq",

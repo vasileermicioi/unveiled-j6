@@ -25,7 +25,7 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
   const loginHref = localizedPath(locale, "login");
   const adminHref = localizedPath(locale, "admin");
   const eventsHref = localizedPath(locale, "events");
-  const discoverHref = localizedPath(locale, "");
+  const homeHref = localizedPath(locale, "");
   const savedHref = localizedPath(locale, "saved");
   const bookingsHref = localizedPath(locale, "bookings");
   const profileHref = localizedPath(locale, "profile");
@@ -39,7 +39,7 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
   const savedIsActive = isActiveNavPath(pathname, savedHref);
   const bookingsIsActive = isActiveNavPath(pathname, bookingsHref);
   const profileIsActive = pathname === profileHref || pathname.startsWith(`${profileHref}/`);
-  const logoHref = isAdmin ? adminHref : isUser ? eventsHref : discoverHref;
+  const logoHref = isAdmin ? adminHref : isUser ? eventsHref : homeHref;
 
   const navLinks = NAV_ITEMS.map((key) => {
     const href = localizedPath(locale, NAV_SEGMENTS[key]);

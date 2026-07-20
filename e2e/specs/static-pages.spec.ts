@@ -37,15 +37,20 @@ test.describe("static-pages.feature", () => {
   // Neon Auth signup can flake under load (Discover CTA path).
   test.describe.configure({ retries: 1 });
 
-  test("Scenario: Discover is the home page", async ({ page, locale }) => {
+  test("Scenario: Guest marketing home is the locale home page", async ({ page, locale }) => {
     await page.goto(`/${locale}`);
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: /aktuelle events in berlin|current events in berlin/i,
+        name: /eine mitgliedschaft für die gesamte kulturszene|one membership for the entire cultural scene/i,
       }),
     ).toBeVisible();
-    await expect(page.getByText(/partnerorte|partner venues/i).first()).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /registrier dich jetzt|register now/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /registrier dich jetzt|register now/i }),
+    ).toHaveAttribute("href", new RegExp(`/${locale}/signup`));
 
     // Slim sticky header: Log in only — Sign up / How it works / Membership are not in the banner.
     const header = page.getByRole("banner");
@@ -62,6 +67,7 @@ test.describe("static-pages.feature", () => {
 
     // Footer Navigation: Discover + FAQ only (How it works / Membership not listed).
     const footer = page.getByRole("contentinfo");
+    await expect(footer.getByRole("link", { name: /entdecken|discover/i })).toBeVisible();
     await expect(
       footer.getByRole("link", { name: /^faq$|^häufig gestellte fragen$/i }),
     ).toBeVisible();
@@ -73,9 +79,20 @@ test.describe("static-pages.feature", () => {
     );
   });
 
+  test("Scenario: Discover is available at /discover", async ({ page, locale }) => {
+    await page.goto(`/${locale}/discover`);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: /aktuelle events in berlin|current events in berlin/i,
+      }),
+    ).toBeVisible();
+    await expect(page.getByText(/partnerorte|partner venues/i).first()).toBeVisible();
+  });
+
   test("Scenario: Discover preview links to public event detail", async ({ page, locale }) => {
     await page.context().clearCookies();
-    await page.goto(`/${locale}`);
+    await page.goto(`/${locale}/discover`);
 
     const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
     await expect(detailCta).toBeVisible({ timeout: 15_000 });
@@ -88,7 +105,7 @@ test.describe("static-pages.feature", () => {
 
   test("Scenario: Discover CTA path to the full member events feed", async ({ page, locale }) => {
     await page.context().clearCookies();
-    await page.goto(`/${locale}`);
+    await page.goto(`/${locale}/discover`);
 
     // Guests must not see a public full feed equivalent to /events on Discover.
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -166,10 +183,15 @@ test.describe("static-pages.feature", () => {
     ).toBeVisible();
   });
 
-  test("Scenario: Legacy /discover redirects to locale home", async ({ page, locale }) => {
-    await page.goto(`/${locale}/discover`);
-    await expect(page).toHaveURL(new RegExp(`/${locale}/?$`));
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  test("Scenario: Bare /discover redirects to localized Discover", async ({ page }) => {
+    await page.goto("/discover");
+    await expect(page).toHaveURL(/\/(de|en)\/discover\/?$/);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: /aktuelle events in berlin|current events in berlin/i,
+      }),
+    ).toBeVisible();
   });
 
   test("Scenario: Bilingual content", async ({ page }) => {
