@@ -31,7 +31,7 @@ const filteredQuery: EventFeedQuery = {
   page: 1,
 };
 
-export const DefaultTodayScope: Story = () => (
+export const DefaultUpcomingScope: Story = () => (
   <EventFeedFilters
     action="/en/events"
     categoryOptions={categoryOptions}
@@ -40,7 +40,7 @@ export const DefaultTodayScope: Story = () => (
     query={defaultQuery}
   />
 );
-DefaultTodayScope.storyName = "EventFeedFilters / Default — today scope";
+DefaultUpcomingScope.storyName = "EventFeedFilters / Default — upcoming scope";
 
 export const FiltersApplied: Story = () => (
   <EventFeedFilters
@@ -53,7 +53,7 @@ export const FiltersApplied: Story = () => (
 );
 FiltersApplied.storyName = "EventFeedFilters / Filters applied";
 
-export const DefaultTodayScopeDe: Story = () => (
+export const DefaultUpcomingScopeDe: Story = () => (
   <EventFeedFilters
     action="/de/events"
     categoryOptions={categoryOptions}
@@ -62,4 +62,4 @@ export const DefaultTodayScopeDe: Story = () => (
     query={defaultQuery}
   />
 );
-DefaultTodayScopeDe.storyName = "EventFeedFilters / Default — today scope (de)";
+DefaultUpcomingScopeDe.storyName = "EventFeedFilters / Default — upcoming scope (de)";

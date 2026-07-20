@@ -10,20 +10,20 @@ import { EventMapPage } from "./EventMapPage";
 const sampleMarkers: EventMapMarker[] = [
   {
     id: "evt-1",
-    title: "Tonight: Stadt ohne Schlaf",
-    partnerName: "Volksbühne Berlin",
-    address: "Rosa-Luxemburg-Platz, 10178 Berlin",
-    lat: 52.5265,
-    lng: 13.412,
+    title: "Tonight: Der Enkeltrick (Kriminalkomödie von Frank Piotraschke)",
+    partnerName: "Berliner Kriminal Theater",
+    address: "Palisadenstraße 48, 10243 Berlin",
+    lat: 52.5181715,
+    lng: 13.4399455,
     href: "/en/events/evt-1",
   },
   {
     id: "evt-2",
-    title: "Tartuffe — Molière",
-    partnerName: "Deutsches Theater",
-    address: "Schumannstraße 13A, 10117 Berlin",
-    lat: 52.5248,
-    lng: 13.3825,
+    title: "Die Renaissance des Bisexuell-Seins",
+    partnerName: "theatre pool",
+    address: "Boxhagener Str. 18, 10245 Berlin",
+    lat: 52.5128003,
+    lng: 13.4550712,
     href: "/en/events/evt-2",
   },
 ];
@@ -114,28 +114,43 @@ export const ErrorState: Story = () => {
 };
 ErrorState.storyName = "EventMap / Error";
 
+const storyCategoryOptions = [
+  { id: "Theater", label: "Theater" },
+  { id: "Kino", label: "Kino" },
+];
+const storyPartnerOptions = [{ id: "partner-1", label: "Sample Partner" }];
+
 export const MarkersPageChrome: Story = () => (
   <EventMapPage
+    categoryOptions={storyCategoryOptions}
     filteredTotal={2}
     locale="en"
-    mapItemCount={2}
     markers={sampleMarkers}
-    query={{ category: "Theater", partnerId: undefined, from: undefined, to: undefined }}
+    partnerOptions={storyPartnerOptions}
+    query={{
+      category: "Theater",
+      partnerId: undefined,
+      from: undefined,
+      to: undefined,
+      page: 1,
+    }}
   />
 );
 MarkersPageChrome.storyName = "EventMapPage / Markers (consent-gated island)";
 
 export const EmptyFiltered: Story = () => (
   <EventMapPage
+    categoryOptions={storyCategoryOptions}
     filteredTotal={0}
     locale="en"
-    mapItemCount={0}
     markers={[]}
+    partnerOptions={storyPartnerOptions}
     query={{
       category: "Kino",
       partnerId: undefined,
       from: "2099-01-01",
       to: "2099-01-02",
+      page: 1,
     }}
   />
 );

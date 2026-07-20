@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./constants": "./src/constants.ts",
     "./errors": "./src/errors.ts",
     "./urls": "./src/urls.ts",
     "./sip-workers-init": "./src/sip-workers-init-stub.ts",

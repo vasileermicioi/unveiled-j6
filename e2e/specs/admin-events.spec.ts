@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 
 import type { Page } from "@playwright/test";
+import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 import {
   adminLabels,
   createEventViaUI,
@@ -376,7 +377,7 @@ test.describe("admin-events.feature", () => {
     await expect(
       page.getByText(/demo-daten wurden erstellt|demo data (was )?created/i),
     ).toBeVisible({ timeout: 120_000 });
-    await expectEventOnDiscover(page, locale, "Tonight: Stadt ohne Schlaf");
+    await expectEventOnDiscover(page, locale, DEMO_DISCOVERY_TITLES.tonight);
   });
 
   test("Scenario: Seed demo data is a no-op when data exists", async ({ page, locale }) => {

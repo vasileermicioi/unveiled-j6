@@ -36,7 +36,7 @@ async function insertTestUser(db: ReturnType<typeof createDb>, suffix: string) {
 }
 
 describe("discovery integration", () => {
-  test("defaults to Berlin today and excludes past events", async () => {
+  test("defaults to all upcoming soonest-first and excludes past events", async () => {
     if (!databaseUrl) {
       console.warn("DATABASE_URL not set — skipping integration test");
       return;
@@ -46,9 +46,9 @@ describe("discovery integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const image = await createTestImageBuffer();
     const partner = await createPartner(db, {
-      name: `Discovery Today ${suffix}`,
+      name: `Discovery Upcoming ${suffix}`,
       address: "Discoverystraße 1, Berlin",
-      contactEmail: `discovery-today-${suffix}@example.com`,
+      contactEmail: `discovery-upcoming-${suffix}@example.com`,
       logoUpload: image,
       skipUpload: true,
     });
@@ -106,9 +106,10 @@ describe("discovery integration", () => {
       const feed = await listMemberFeedEvents(db, { now });
       const ids = feed.items.map((row) => row.id);
       expect(ids).toContain(todayFuture.id);
+      expect(ids).toContain(tomorrow.id);
       expect(ids).not.toContain(todayPast.id);
-      expect(ids).not.toContain(tomorrow.id);
-      expect(feed.total).toBeGreaterThanOrEqual(1);
+      expect(ids.indexOf(todayFuture.id)).toBeLessThan(ids.indexOf(tomorrow.id));
+      expect(feed.total).toBeGreaterThanOrEqual(2);
     } finally {
       await deleteEvent(db, todayFuture.id, { skipBucket: true });
       await deleteEvent(db, todayPast.id, { skipBucket: true });
@@ -117,7 +118,7 @@ describe("discovery integration", () => {
     }
   });
 
-  test("custom date range overrides today and supports category/partner filters", async () => {
+  test("custom date range narrows upcoming and supports category/partner filters", async () => {
     if (!databaseUrl) {
       console.warn("DATABASE_URL not set — skipping integration test");
       return;
@@ -213,6 +214,16 @@ describe("discovery integration", () => {
       );
       expect(byCategory.total).toBe(2);
 
+      const byCategories = await listMemberFeedEvents(db, {
+        from: "2026-07-11",
+        to: "2026-07-11",
+        category: [categoryTheater, categoryMusic],
+        now,
+      });
+      expect(byCategories.items.map((row) => row.id).sort()).toEqual(
+        [theaterA.id, musicA.id, theaterB.id].sort(),
+      );
+
       const byPartner = await listMemberFeedEvents(db, {
         from: "2026-07-11",
         to: "2026-07-11",
@@ -220,6 +231,16 @@ describe("discovery integration", () => {
         now,
       });
       expect(byPartner.items.map((row) => row.id).sort()).toEqual([theaterA.id, musicA.id].sort());
+
+      const byPartners = await listMemberFeedEvents(db, {
+        from: "2026-07-11",
+        to: "2026-07-11",
+        partnerId: [partnerA.id, partnerB.id],
+        now,
+      });
+      expect(byPartners.items.map((row) => row.id).sort()).toEqual(
+        [theaterA.id, musicA.id, theaterB.id].sort(),
+      );
 
       const empty = await listMemberFeedEvents(db, {
         from: "2026-07-11",

@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 
 import { signupFreshUser } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
@@ -9,7 +10,7 @@ import { completeOnboardingWizard } from "../fixtures/onboarding";
 const CONSENT_STORAGE_KEY = "unveiled:cookie-consent";
 
 /** Stable demo seed title with lat/lng (public detail map). */
-const SEEDED_MAP_EVENT_TITLE = "Tonight: Stadt ohne Schlaf";
+const SEEDED_MAP_EVENT_TITLE = DEMO_DISCOVERY_TITLES.tonight;
 
 async function fillSignupPasswords(page: Page, password: string): Promise<void> {
   await page.getByLabel(/^passwort$|^password$/i).fill(password);

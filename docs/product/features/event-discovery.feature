@@ -4,8 +4,9 @@
 #   - Discover = locale home with curated guest preview (not a public full feed)
 #   - /events/:id is public (no auth); book/save/waitlist remain gated
 #   - Member feed /events, /events/map, /saved require USER
-#   - No algorithmic ranking — explicit filters only (category / partner / date)
-#   - Default feed scope = today (Europe/Berlin); custom date range available
+#   - No algorithmic ranking — explicit filters only (category / partner / date; single-select)
+#   - Default feed scope = all upcoming (date_time >= now), soonest first; custom date range available
+#   - List and map share the same filters + pagination; view switch is tabs (admin-style)
 #
 # Prefer Scenario titles that match shipped e2e/specs/event-discovery.spec.ts when
 # behavior is unchanged.
@@ -47,11 +48,12 @@ Feature: Event Discovery
     Then I am redirected to sign in (or signup)
     And after authentication (and onboarding if incomplete) I can use the member feed
 
-  Scenario: Default feed shows today's events only
+  Scenario: Default feed shows all upcoming events soonest first
     Given I am signed in as a "USER" with an active or inactive subscription
     And I have not applied any date filters
     When I view the events feed
-    Then I see only events happening today that have not already started
+    Then I see all upcoming events that have not already started
+    And events are ordered by start time ascending (soonest first)
 
   Scenario: Events with invalid or past dates are hidden
     Given an event has a missing/invalid date or a start time in the past
@@ -72,12 +74,12 @@ Feature: Event Discovery
     Given I am viewing the events feed
     When I set a start date and an end date
     Then only events within that date range (inclusive, full days) are shown
-    And the "today only" default no longer applies
+    And the all-upcoming default no longer applies
 
   Scenario: Reset filters
     Given I have applied one or more filters
     When I reset the filters
-    Then the feed returns to the default "today" scope
+    Then the feed returns to the default all-upcoming scope
 
   Scenario: No results
     Given my applied filters match no events
@@ -95,7 +97,6 @@ Feature: Event Discovery
     And I have saved one or more upcoming events
     When I view "My Saved Events"
     Then I see all my saved events that are still upcoming
-    And this view is not restricted to "today only"
 
   Scenario: Save and unsave an event
     Given I am signed in

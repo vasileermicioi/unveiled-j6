@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { DEMO_DISCOVERY_TITLES, partnerNameForSeedTitle } from "@unveiled/db/seed-titles";
 
 import { signupFreshUser } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
@@ -8,14 +9,8 @@ import { completeOnboardingWizard } from "../fixtures/onboarding";
 /** Mirrors `CONSENT_STORAGE_KEY` in apps/web — keep in sync. */
 const CONSENT_STORAGE_KEY = "unveiled:cookie-consent";
 
-/** Stable demo seed titles from `@unveiled/db` DEMO_DISCOVERY_TITLES. */
-const TITLES = {
-  tonight: "Tonight: Stadt ohne Schlaf",
-  pastHidden: "Past Premiere: Archive Night",
-  theaterFuture: "Tartuffe — Molière",
-  ausstellung: "Exhibition Opening: Material Echoes",
-  konzert: "Global Sound Forum",
-} as const;
+/** Stable demo seed titles from `@unveiled/db/seed-titles`. */
+const TITLES = DEMO_DISCOVERY_TITLES;
 
 async function setConsent(page: Page, decision: "accepted" | "declined"): Promise<void> {
   await page.addInitScript(
@@ -170,16 +165,25 @@ test.describe("event-discovery.feature", () => {
     expect(decodeURIComponent(page.url())).toMatch(new RegExp(`/${locale}/events`));
   });
 
-  test("Scenario: Default feed shows today's events only", async ({ page, locale }) => {
+  test("Scenario: Default feed shows all upcoming events soonest first", async ({
+    page,
+    locale,
+  }) => {
     await loginMember(page, locale);
     await page.goto(`/${locale}/events`);
 
     await expect(
-      page.getByText(/heute \(europe\/berlin\)|today \(europe\/berlin\)/i),
+      page.getByText(/alle kommenden events|all upcoming events/i),
     ).toBeVisible();
     await expect(page.getByText(TITLES.tonight)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText(TITLES.theaterFuture)).toHaveCount(0);
+    await expect(page.getByText(TITLES.theaterFuture)).toBeVisible();
     await expect(page.getByText(TITLES.pastHidden)).toHaveCount(0);
+
+    const tonightBox = await page.getByText(TITLES.tonight).boundingBox();
+    const theaterBox = await page.getByText(TITLES.theaterFuture).boundingBox();
+    expect(tonightBox).toBeTruthy();
+    expect(theaterBox).toBeTruthy();
+    expect((tonightBox?.y ?? 0) < (theaterBox?.y ?? 0)).toBe(true);
   });
 
   test("Scenario: Events with invalid or past dates are hidden", async ({ page, locale }) => {
@@ -215,7 +219,7 @@ test.describe("event-discovery.feature", () => {
     await loginMember(page, locale);
     const from = berlinYmd(0);
     const to = berlinYmd(30);
-    const partnerId = await getPartnerIdByName("Gropius Bau");
+    const partnerId = await getPartnerIdByName(partnerNameForSeedTitle(TITLES.ausstellung));
 
     // GET filter form contract (same as selecting partner + Apply)
     await page.goto(
@@ -236,9 +240,7 @@ test.describe("event-discovery.feature", () => {
     await applyDateRange(page, from, to);
 
     await expect(page.getByText(/zeitraum:|range:/i)).toBeVisible();
-    await expect(page.getByText(/heute \(europe\/berlin\)|today \(europe\/berlin\)/i)).toHaveCount(
-      0,
-    );
+    await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toHaveCount(0);
     await expect(page.getByText(TITLES.theaterFuture)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(TITLES.tonight)).toHaveCount(0);
   });
@@ -257,9 +259,7 @@ test.describe("event-discovery.feature", () => {
       .first()
       .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/?$`));
-    await expect(
-      page.getByText(/heute \(europe\/berlin\)|today \(europe\/berlin\)/i),
-    ).toBeVisible();
+    await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toBeVisible();
   });
 
   test("Scenario: No results", async ({ page, locale }) => {
@@ -268,7 +268,7 @@ test.describe("event-discovery.feature", () => {
 
     await applyDateRange(page, "2099-01-01", "2099-01-02");
     await expect(
-      page.getByText(/keine events in diesem zeitraum gefunden|no events found for this period/i),
+      page.getByText(/keine events entsprechen diesen filtern|no events match these filters/i),
     ).toBeVisible();
   });
 
@@ -284,7 +284,7 @@ test.describe("event-discovery.feature", () => {
     );
     await expect(page.getByText(TITLES.tonight)).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole("link", { name: /kartenansicht|map view/i }).click();
+    await page.getByRole("tablist", { name: /ansicht|view/i }).getByRole("link", { name: /karte|map/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/map`));
     await expect(page).toHaveURL(/category=Theater/);
     await expect(page).toHaveURL(/from=/);
@@ -304,17 +304,20 @@ test.describe("event-discovery.feature", () => {
     );
     await expect(mapRegion.or(consentFallback)).toBeVisible({ timeout: 20_000 });
 
-    // Filtered Theater set — list↔map preserves filters; markers on map (titles in popups only)
-    const listLink = page.getByRole("link", { name: /listenansicht|list view/i });
-    await expect(listLink).toBeVisible();
-    await expect(listLink).toHaveAttribute("href", /category=Theater/);
+    // Filtered Theater set — list↔map tabs preserve filters; map has same filter form
+    const listTab = page.getByRole("tablist", { name: /ansicht|view/i }).getByRole("link", {
+      name: /liste|list/i,
+    });
+    await expect(listTab).toBeVisible();
+    await expect(listTab).toHaveAttribute("href", /category=Theater/);
+    await expect(page.getByText(/filtern|filters/i).first()).toBeVisible();
     await expect(page.getByText(TITLES.ausstellung)).toHaveCount(0);
   });
 
   test("Scenario: Saved events view", async ({ page, locale }) => {
     await loginMember(page, locale);
 
-    // Isolate Tartuffe via date range (not today-only) — single bookmark on the page
+    // Isolate theaterFuture via date range (not today-only) — single bookmark on the page
     await page.goto(`/${locale}/events`);
     const from = berlinYmd(6);
     const to = berlinYmd(10);
@@ -331,18 +334,15 @@ test.describe("event-discovery.feature", () => {
     await page.goto(`/${locale}/saved`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByText(TITLES.theaterFuture)).toBeVisible({ timeout: 15_000 });
-    // Not today-only: future theater event is visible on saved even if not "today"
-    await expect(page.getByText(/heute \(europe\/berlin\)|today \(europe\/berlin\)/i)).toHaveCount(
-      0,
-    );
   });
 
   test("Scenario: Save and unsave an event", async ({ page, locale }) => {
     await loginMember(page, locale);
     await page.goto(`/${locale}/events`);
 
+    // Narrow to today so a single seeded tonight card is on the page
+    await applyDateRange(page, berlinYmd(0), berlinYmd(0));
     await expect(page.getByText(TITLES.tonight)).toBeVisible({ timeout: 15_000 });
-    // Default today feed shows a single seeded tonight event → one bookmark
     const bookmark = soleBookmark(page);
     await expect(bookmark).toBeVisible();
 
@@ -350,14 +350,14 @@ test.describe("event-discovery.feature", () => {
     await bookmark.click();
     await expect(page.getByRole("main")).toBeVisible({ timeout: 15_000 });
 
-    await page.goto(`/${locale}/events`);
+    await applyDateRange(page, berlinYmd(0), berlinYmd(0));
     const bookmarkAfter = soleBookmark(page);
     const after = ((await bookmarkAfter.getAttribute("aria-label")) ?? "").toLowerCase();
     expect(after).not.toBe(before);
 
     await bookmarkAfter.click();
     await expect(page.getByRole("main")).toBeVisible({ timeout: 15_000 });
-    await page.goto(`/${locale}/events`);
+    await applyDateRange(page, berlinYmd(0), berlinYmd(0));
     const finalLabel = ((await soleBookmark(page).getAttribute("aria-label")) ?? "").toLowerCase();
     expect(finalLabel).toBe(before);
   });

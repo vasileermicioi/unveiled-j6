@@ -4,8 +4,12 @@ import type { Db } from "../index";
 import { events } from "../schema/events";
 import { type Partner, partners } from "../schema/partners";
 import { CatalogValidationError } from "./errors";
-import { deleteImageRecord, persistImageFromSource, replacePartnerLogo } from "./images";
 import { requireNonEmpty, validateEmail, validateImageSourceExclusive } from "./validation";
+
+/** Lazy — keeps `@unveiled/images` / sip out of client graphs that import `@unveiled/db`. */
+function catalogImages() {
+  return import("./images");
+}
 
 export type ListPartnersOptions = {
   limit?: number;
@@ -76,6 +80,7 @@ export async function createPartner(db: Db, input: CreatePartnerInput): Promise<
   let logoImageId: string | null = null;
   const logoSource = validateImageSourceExclusive(input.logoUpload, input.logoUrl);
   if (logoSource) {
+    const { persistImageFromSource } = await catalogImages();
     logoImageId = await persistImageFromSource(db, logoSource, {
       uploadedBy: input.uploadedBy,
       skipUpload: input.skipUpload,
@@ -135,6 +140,7 @@ export async function updatePartner(
   const nextEmail =
     input.contactEmail !== undefined ? validateEmail(input.contactEmail) : existing.contactEmail;
 
+  const { replacePartnerLogo, deleteImageRecord } = await catalogImages();
   const logoImageId = await replacePartnerLogo(
     db,
     partnerId,
@@ -227,6 +233,7 @@ export async function deletePartner(
   await db.delete(partners).where(eq(partners.id, partnerId));
 
   if (logoImageId) {
+    const { deleteImageRecord } = await catalogImages();
     await deleteImageRecord(db, logoImageId, { skipBucket: options?.skipBucket });
   }
 }

@@ -9,7 +9,7 @@ import {
 } from "../lib/auth-redirect";
 import { createAuthProviderConfig } from "../lib/auth-ui-config";
 import type { Locale } from "../lib/locale";
-import { parseReturnTo } from "../lib/post-auth-redirect";
+import { parseReturnTo } from "../lib/return-to";
 
 type AppAuthProviderProps = {
   locale: Locale;

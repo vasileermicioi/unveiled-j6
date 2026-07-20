@@ -35,6 +35,21 @@ type AdminFormSelectMultipleProps = AdminFormSelectBaseProps & {
 
 export type AdminFormSelectProps = AdminFormSelectSingleProps | AdminFormSelectMultipleProps;
 
+/** React Aria rejects empty-string item keys; form value stays "". */
+const EMPTY_OPTION_KEY = "__empty__";
+
+function toSelectItemId(optionId: string): string {
+  return optionId === "" ? EMPTY_OPTION_KEY : optionId;
+}
+
+function fromSelectItemId(key: Key | null): string {
+  if (key == null) {
+    return "";
+  }
+  const value = String(key);
+  return value === EMPTY_OPTION_KEY ? "" : value;
+}
+
 function AdminFormSelectContent({
   label,
   options,
@@ -63,11 +78,14 @@ function AdminFormSelectContent({
         placement="bottom start"
       >
         <ListBox>
-          {options.map((option) => (
-            <ListBox.Item id={option.id} key={option.id} textValue={option.label}>
-              {option.label}
-            </ListBox.Item>
-          ))}
+          {options.map((option) => {
+            const itemId = toSelectItemId(option.id);
+            return (
+              <ListBox.Item id={itemId} key={itemId} textValue={option.label}>
+                {option.label}
+              </ListBox.Item>
+            );
+          })}
         </ListBox>
       </Select.Popover>
     </>
@@ -84,9 +102,15 @@ function AdminFormSelectSingle({
   onSelectionChange,
 }: AdminFormSelectSingleProps) {
   const [selectedKey, setSelectedKey] = useState(defaultSelectedKey ?? "");
+  const selectDefaultKey =
+    defaultSelectedKey === undefined || defaultSelectedKey === ""
+      ? options.some((option) => option.id === "")
+        ? EMPTY_OPTION_KEY
+        : undefined
+      : defaultSelectedKey;
 
   const handleChange = (key: Key | null) => {
-    const next = key == null ? "" : String(key);
+    const next = fromSelectItemId(key);
     setSelectedKey(next);
     onSelectionChange?.(next);
   };
@@ -99,7 +123,7 @@ function AdminFormSelectSingle({
           <Input name={name} type="hidden" value={selectedKey} />
           <Select
             className="admin-form__select"
-            defaultSelectedKey={defaultSelectedKey}
+            defaultSelectedKey={selectDefaultKey}
             fullWidth
             isRequired={isRequired}
             onChange={handleChange}

@@ -79,7 +79,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 |---|---|---|---|
 | `/events` | ✅ | USER | Member discovery feed (filters + pagination). **Not** a public guest list. |
 | `/events?category=&partnerId=&from=&to=&page=` | ✅ | USER | Filtered + paginated feed (GET query params, SSR) |
-| `/events/map` | ✅ | USER | Map view of current filter set |
+| `/events/map?category=&partnerId=&from=&to=&page=` | ✅ | USER | Map view — same filters + pagination as list (tabs switch preserves query) |
 | `/events/:id/book` | ✅ | USER, ACTIVE subscription | Booking form (ticket quantity) |
 | `/events/:id/book/confirm` | ✅ | USER | Confirmation / redemption code / ICS |
 | `/events/:id/waitlist` | ✅ | USER | Join waitlist when sold out |

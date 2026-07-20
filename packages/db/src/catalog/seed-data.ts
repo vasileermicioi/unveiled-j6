@@ -1,22 +1,76 @@
-import { WIKIMEDIA_SEED_IMAGES } from "./commons-urls";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { berlinInclusiveDateRange, getBerlinCalendarDate } from "./datetime";
 import type { CreateEventInput } from "./events";
 import type { CreatePartnerInput } from "./partners";
 
 /**
- * Demo catalog seed — real Berlin cultural venues with Wikimedia Commons images (CC/public domain).
- * Refresh image filenames via `bun scripts/resolve-commons-images.ts "<search query>"`.
+ * Demo catalog seed — Berlin events from Abundo + local images.
  *
- * Discovery E2E titles (stable `getByText` anchors):
- * - Today (Berlin, evening): `Tonight: Stadt ohne Schlaf`
- * - Past (hidden from feed/map): `Past Premiere: Archive Night`
- * - Future Theater: `Tartuffe — Molière`, `International Ensemble Night`
- * - Future Ausstellung: `Exhibition Opening: Material Echoes`
- * - Future Konzert: `Global Sound Forum`, `Chamber Orchestra: Beethoven & Contemporary`
+ * Fixture: `fixtures/abundo-berlin-demo.json`
+ * Images:  `public/images/seed/{partners,events}/*.jpg`
+ * Refresh: `bun scripts/fetch-abundo-seed.ts`
+ *
+ * Absolute dates are not stored; `daysFromToday` / hour / minute resolve at seed time.
  */
+
 export type DemoCatalogEntry = {
-  partner: Omit<CreatePartnerInput, "logoUpload">;
-  events: Omit<CreateEventInput, "partnerId" | "imageUpload">[];
+  partner: CreatePartnerInput;
+  events: Omit<CreateEventInput, "partnerId">[];
+};
+
+type FixturePartner = {
+  key: string;
+  name: string;
+  address: string;
+  contactEmail: string;
+  /** Relative to `public/images/seed/` */
+  logoPath: string;
+  logoSourceUrl?: string;
+  /** @deprecated Prefer logoPath — kept for older fixtures */
+  logoUrl?: string;
+  lat: string;
+  lng: string;
+};
+
+type FixtureEvent = {
+  slug: string;
+  partnerKey: string;
+  title: string;
+  description: string;
+  address: string;
+  neighborhood: string;
+  category: string;
+  eventType: string;
+  tags: string[];
+  /** Relative to `public/images/seed/` */
+  imagePath: string;
+  imageSourceUrl?: string;
+  /** @deprecated Prefer imagePath — kept for older fixtures */
+  imageUrl?: string;
+  creditPrice: number;
+  secretCode: string;
+  languages: string[];
+  barrierFree: boolean;
+  lat: string;
+  lng: string;
+  daysFromToday: number;
+  hour: number;
+  minute: number;
+  seedRole?: string;
+  totalCapacity?: number;
+  soldOut?: boolean;
+  sourceUrl?: string;
+};
+
+type AbundoFixture = {
+  source: string;
+  city: string;
+  imagesRoot?: string;
+  partners: FixturePartner[];
+  events: FixtureEvent[];
 };
 
 const YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -45,237 +99,129 @@ function berlinDaysFromToday(days: number, hour = 19, minute = 30): Date {
 }
 
 /**
- * Tonight in Berlin at 22:00 — late enough that daytime CI/dev runs still see it as
- * "not already started" on the default today feed.
+ * Abundo sometimes ships `0,0` (Null Island) when a venue has no geocode.
+ * Treat that as missing so demos never pin Berlin addresses in Africa.
  */
-function berlinTonight(): Date {
-  const today = getBerlinCalendarDate(new Date());
-  return berlinAt(today, 22, 0);
+function normalizeSeedCoords(
+  lat: string | null | undefined,
+  lng: string | null | undefined,
+): { lat: string | null; lng: string | null } {
+  const latN = Number.parseFloat(String(lat ?? ""));
+  const lngN = Number.parseFloat(String(lng ?? ""));
+  if (!Number.isFinite(latN) || !Number.isFinite(lngN)) {
+    return { lat: null, lng: null };
+  }
+  if (Math.abs(latN) < 0.01 && Math.abs(lngN) < 0.01) {
+    return { lat: null, lng: null };
+  }
+  return { lat: String(latN), lng: String(lngN) };
 }
 
-export const DEMO_CATALOG: DemoCatalogEntry[] = [
-  {
-    partner: {
-      name: "Volksbühne Berlin",
-      address: "Rosa-Luxemburg-Platz, 10178 Berlin",
-      contactEmail: "kontakt@volksbuehne.berlin",
-      logoUrl: WIKIMEDIA_SEED_IMAGES.volksbuehneFacade.url,
-    },
-    events: [
-      {
-        title: "Tonight: Stadt ohne Schlaf",
-        description:
-          "A new ensemble work blending spoken word, live electronics, and movement — Volksbühne's signature politically charged stage language.",
-        address: "Rosa-Luxemburg-Platz, 10178 Berlin",
-        neighborhood: "Mitte",
-        category: "Theater",
-        eventType: "Performance",
-        tags: ["premiere", "ensemble", "tonight"],
-        dateTime: berlinTonight(),
-        creditPrice: 2,
-        secretCode: "VOLKS2026",
-        languages: ["de", "en"],
-        barrierFree: true,
-        lat: "52.526500",
-        lng: "13.412000",
-        imageUrl: WIKIMEDIA_SEED_IMAGES.volksbuehnePlatz.url,
-      },
-      {
-        title: "Past Premiere: Archive Night",
-        description:
-          "Seed-only past event — must never appear on the member feed or map (invalid/past dates are hidden).",
-        address: "Rosa-Luxemburg-Platz, 10178 Berlin",
-        neighborhood: "Mitte",
-        category: "Theater",
-        eventType: "Performance",
-        tags: ["past", "archive"],
-        dateTime: berlinDaysFromToday(-5, 20, 0),
-        creditPrice: 2,
-        secretCode: "VOLKSPAST",
-        languages: ["de"],
-        barrierFree: true,
-        lat: "52.526500",
-        lng: "13.412000",
-        imageUrl: WIKIMEDIA_SEED_IMAGES.volksbuehnePlatz.url,
-      },
-      // DEMO_SOLD_OUT_WAITLIST — Phase 7 waitlist demo (remainingCapacity forced to 0 in seed.ts)
-      {
-        title: "Sold Out: Waitlist Demo Night",
-        description:
-          "Seed sold-out event for waitlist demos — join waitlist, then raise capacity in admin edit to auto-promote.",
-        address: "Rosa-Luxemburg-Platz, 10178 Berlin",
-        neighborhood: "Mitte",
-        category: "Theater",
-        eventType: "Performance",
-        tags: ["waitlist", "sold-out", "demo"],
-        dateTime: berlinDaysFromToday(12, 20, 0),
-        creditPrice: 2,
-        totalCapacity: 20,
-        secretCode: "WAITLIST26",
-        languages: ["de", "en"],
-        barrierFree: true,
-        lat: "52.526500",
-        lng: "13.412000",
-        imageUrl: WIKIMEDIA_SEED_IMAGES.volksbuehnePlatz.url,
-      },
-    ],
-  },
-  {
-    partner: {
-      name: "Deutsches Theater",
-      address: "Schumannstraße 13A, 10117 Berlin",
-      contactEmail: "info@deutschestheater.de",
-      logoUrl: WIKIMEDIA_SEED_IMAGES.deutschesTheaterFacade.url,
-    },
-    events: [
-      {
-        title: "Tartuffe — Molière",
-        description:
-          "A sharp, contemporary take on Molière's classic — hypocrisy, devotion, and household intrigue on one of Berlin's grandest stages.",
-        address: "Schumannstraße 13A, 10117 Berlin",
-        neighborhood: "Mitte",
-        category: "Theater",
-        eventType: "Performance",
-        tags: ["classic", "comedy"],
-        dateTime: berlinDaysFromToday(8, 19, 30),
-        creditPrice: 2,
-        secretCode: "TARTUFFE",
-        languages: ["de"],
-        barrierFree: true,
-        lat: "52.524800",
-        lng: "13.382500",
-        imageUrl: WIKIMEDIA_SEED_IMAGES.deutschesTheaterTartuffe.url,
-      },
-    ],
-  },
-  {
-    partner: {
-      name: "Schaubühne am Lehniner Platz",
-      address: "Kurfürstendamm 153, 10709 Berlin",
-      contactEmail: "service@schaubuehne.de",
-      logoUrl: WIKIMEDIA_SEED_IMAGES.schaubuehne.url,
-    },
-    events: [
-      {
-        title: "International Ensemble Night",
-        description:
-          "Three short works from Schaubühne's resident directors — bold staging, multilingual cast, and post-show conversation.",
-        address: "Kurfürstendamm 153, 10709 Berlin",
-        neighborhood: "Charlottenburg",
-        category: "Theater",
-        eventType: "Performance",
-        tags: ["ensemble", "international"],
-        dateTime: berlinDaysFromToday(11, 20, 0),
-        creditPrice: 2,
-        secretCode: "SCHAUB26",
-        languages: ["de", "en"],
-        barrierFree: false,
-        lat: "52.498900",
-        lng: "13.302800",
-        imageUrl: WIKIMEDIA_SEED_IMAGES.schaubuehne.url,
-      },
-    ],
-  },
-  {
-    partner: {
-      name: "Gropius Bau",
-      address: "Niederkirchnerstraße 7, 10963 Berlin",
-      contactEmail: "info@berlinerfestspiele.de",
-      logoUrl: WIKIMEDIA_SEED_IMAGES.gropiusBauFacade.url,
-    },
-    events: [
-      {
-        title: "Exhibition Opening: Material Echoes",
-        description:
-          "Opening night for a cross-disciplinary show of sculpture, sound, and archival photography in the Gropius Bau atrium.",
-        address: "Niederkirchnerstraße 7, 10963 Berlin",
-        neighborhood: "Kreuzberg",
-        category: "Ausstellung",
-        eventType: "Other",
-        tags: ["opening", "contemporary"],
-        dateTime: berlinDaysFromToday(14, 18, 0),
-        creditPrice: 1,
-        secretCode: "GROPIUS",
-        languages: ["de", "en"],
-        barrierFree: true,
-        lat: "52.506300",
-        lng: "13.376500",
-        imageUrl: WIKIMEDIA_SEED_IMAGES.gropiusBauWall.url,
-      },
-    ],
-  },
-  {
-    partner: {
-      name: "Haus der Kulturen der Welt",
-      address: "John-Foster-Dulles-Allee 10, 10557 Berlin",
-      contactEmail: "info@hkw.de",
-      logoUrl: WIKIMEDIA_SEED_IMAGES.hkwDay.url,
-    },
-    events: [
-      {
-        title: "Global Sound Forum",
-        description:
-          "An evening of experimental music and talks bridging electronic producers from Berlin and the Global South — HKW's curved hall.",
-        address: "John-Foster-Dulles-Allee 10, 10557 Berlin",
-        neighborhood: "Tiergarten",
-        category: "Konzert",
-        eventType: "Concert",
-        tags: ["electronic", "talk"],
-        dateTime: berlinDaysFromToday(17, 20, 30),
-        creditPrice: 2,
-        secretCode: "HKWBERLIN",
-        languages: ["de", "en"],
-        barrierFree: true,
-        lat: "52.518600",
-        lng: "13.348900",
-        imageUrl: WIKIMEDIA_SEED_IMAGES.hkwBlueHour.url,
-      },
-    ],
-  },
-  {
-    partner: {
-      name: "Konzerthaus Berlin",
-      address: "Gendarmenmarkt 2, 10117 Berlin",
-      contactEmail: "info@konzerthaus.de",
-      logoUrl: WIKIMEDIA_SEED_IMAGES.konzerthausNight.url,
-    },
-    events: [
-      {
-        title: "Chamber Orchestra: Beethoven & Contemporary",
-        description:
-          "The Konzerthausorchester performs Beethoven's Seventh alongside a new commission — grand hall acoustics at Gendarmenmarkt.",
-        address: "Gendarmenmarkt 2, 10117 Berlin",
-        neighborhood: "Mitte",
-        category: "Konzert",
-        eventType: "Concert",
-        tags: ["orchestra", "classical"],
-        dateTime: berlinDaysFromToday(21, 19, 0),
-        creditPrice: 2,
-        secretCode: "KONZERT26",
-        languages: ["de"],
-        barrierFree: true,
-        lat: "52.513800",
-        lng: "13.392000",
-        imageUrl: WIKIMEDIA_SEED_IMAGES.konzerthausInterior.url,
-      },
-    ],
-  },
-];
+function catalogDir(): string {
+  return dirname(fileURLToPath(import.meta.url));
+}
 
-/** Stable titles for discovery E2E / DEPLOYMENT docs. */
-export const DEMO_DISCOVERY_TITLES = {
-  tonight: "Tonight: Stadt ohne Schlaf",
-  pastHidden: "Past Premiere: Archive Night",
-  theaterFuture: "Tartuffe — Molière",
-  ausstellung: "Exhibition Opening: Material Echoes",
-  konzert: "Global Sound Forum",
-  /** Phase 7 waitlist demo — remainingCapacity set to 0 after create in seed.ts */
-  soldOutWaitlist: "Sold Out: Waitlist Demo Night",
-} as const;
+/** Repo root: packages/db/src/catalog → ../../../../.. */
+function repoRoot(): string {
+  return join(catalogDir(), "../../../..");
+}
+
+function seedImagesRoot(fixture: AbundoFixture): string {
+  const relative = fixture.imagesRoot ?? "public/images/seed";
+  return join(repoRoot(), relative);
+}
+
+function loadFixture(): AbundoFixture {
+  const path = join(catalogDir(), "fixtures", "abundo-berlin-demo.json");
+  return JSON.parse(readFileSync(path, "utf8")) as AbundoFixture;
+}
+
+function readSeedImage(imagesRoot: string, relativePath: string, label: string): Buffer {
+  const abs = join(imagesRoot, relativePath);
+  if (!existsSync(abs)) {
+    throw new Error(
+      `Missing seed image for ${label}: ${abs}\nRun: bun scripts/fetch-abundo-seed.ts`,
+    );
+  }
+  return readFileSync(abs);
+}
+
+const FIXTURE = loadFixture();
+
+function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
+  const imagesRoot = seedImagesRoot(fixture);
+  const eventsByPartner = new Map<string, FixtureEvent[]>();
+
+  for (const event of fixture.events) {
+    const list = eventsByPartner.get(event.partnerKey) ?? [];
+    list.push(event);
+    eventsByPartner.set(event.partnerKey, list);
+  }
+
+  const catalog: DemoCatalogEntry[] = [];
+
+  for (const partner of fixture.partners) {
+    const partnerEvents = eventsByPartner.get(partner.key) ?? [];
+    if (partnerEvents.length === 0) continue;
+
+    const logoPath = partner.logoPath;
+    const partnerInput: CreatePartnerInput = {
+      name: partner.name,
+      address: partner.address,
+      contactEmail: partner.contactEmail,
+    };
+
+    if (logoPath) {
+      partnerInput.logoUpload = readSeedImage(imagesRoot, logoPath, `partner ${partner.key}`);
+    } else if (partner.logoUrl) {
+      partnerInput.logoUrl = partner.logoUrl;
+    }
+
+    catalog.push({
+      partner: partnerInput,
+      events: partnerEvents.map((event) => {
+        const base: Omit<CreateEventInput, "partnerId"> = {
+          title: event.title,
+          description: event.description,
+          address: event.address,
+          neighborhood: event.neighborhood,
+          category: event.category,
+          eventType: event.eventType,
+          tags: event.tags,
+          dateTime: berlinDaysFromToday(event.daysFromToday, event.hour, event.minute),
+          creditPrice: event.creditPrice,
+          ...(event.totalCapacity != null ? { totalCapacity: event.totalCapacity } : {}),
+          secretCode: event.secretCode,
+          languages: event.languages,
+          barrierFree: event.barrierFree,
+          ...normalizeSeedCoords(event.lat, event.lng),
+        };
+
+        if (event.imagePath) {
+          base.imageUpload = readSeedImage(imagesRoot, event.imagePath, `event ${event.slug}`);
+        } else if (event.imageUrl) {
+          base.imageUrl = event.imageUrl;
+        }
+
+        return base;
+      }),
+    });
+  }
+
+  return catalog;
+}
+
+export const DEMO_CATALOG: DemoCatalogEntry[] = buildDemoCatalog(FIXTURE);
+
+/** Re-export for callers that already import catalog titles alongside DEMO_CATALOG. */
+export { DEMO_DISCOVERY_TITLES } from "./demo-discovery-titles";
 
 /** @deprecated Use DEMO_CATALOG — kept for tests referencing partner list length. */
 export const DEMO_PARTNERS: Omit<CreatePartnerInput, "logoUpload">[] = DEMO_CATALOG.map(
-  (entry) => entry.partner,
+  ({ partner }) => {
+    const { logoUpload: _logoUpload, ...rest } = partner;
+    return rest;
+  },
 );
 
 /** @deprecated Use DEMO_CATALOG — builds one event for backward-compatible tests. */

@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 
 import { selectOptionByLabel, settleAdminSession } from "../fixtures/admin";
 import {
@@ -20,7 +21,7 @@ import { ensureEventHasCapacity } from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
 
 /** Stable demo seed — SECRET_CODE / MANUAL, creditPrice 2, future date. */
-const BOOKABLE_TITLE = "Tartuffe — Molière";
+const BOOKABLE_TITLE = DEMO_DISCOVERY_TITLES.theaterFuture;
 
 async function onboardFreshMember(page: Page, locale: Locale) {
   let lastError: unknown;

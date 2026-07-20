@@ -16,6 +16,7 @@
     "db:generate": "bun --env-file=.env --filter @unveiled/db generate",
     "db:migrate": "bun --env-file=.env --filter @unveiled/db migrate",
     "seed:demo": "bun --env-file=.env scripts/seed-demo.ts",
+    "seed:fetch-abundo": "bun scripts/fetch-abundo-seed.ts",
     "seed:admin-pagination": "bun --env-file=.env scripts/seed-admin-pagination.ts",
     "stories": "bun --filter @unveiled/ui stories & bun --filter @unveiled/web stories",
     "test:e2e": "bunx playwright test --config e2e/playwright.config.ts"

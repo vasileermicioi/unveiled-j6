@@ -1,18 +1,20 @@
-import { and, asc, count, eq, gte, lt, type SQL } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, lt, type SQL } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { type Event, events } from "../schema/events";
 import { savedEvents } from "../schema/saved-events";
-import { berlinInclusiveDateRange, berlinTodayRange } from "./datetime";
+import { berlinInclusiveDateRange } from "./datetime";
 
 export const MEMBER_FEED_PAGE_SIZE = 24;
 
-/** Max markers returned for the member map view (full filtered set, no page slice). */
+/** Max markers returned for the member map view when loading the full filtered set. */
 export const MEMBER_FEED_MAP_MAX = 500;
 
 export type MemberFeedFilters = {
-  category?: string;
-  partnerId?: string;
+  /** One or more categories (OR). Single string still accepted. */
+  category?: string | string[];
+  /** One or more partner ids (OR). Single string still accepted. */
+  partnerId?: string | string[];
   /** YYYY-MM-DD Europe/Berlin calendar day (inclusive). */
   from?: string;
   /** YYYY-MM-DD Europe/Berlin calendar day (inclusive). */
@@ -31,12 +33,12 @@ export type MemberFeedResult = {
 /** Map list omits feed `page`; same filter window / past exclusion as the feed. */
 export type MemberFeedMapFilters = Omit<MemberFeedFilters, "page">;
 
-function resolveFeedWindow(filters: MemberFeedFilters, now: Date) {
+function resolveFeedWindow(filters: MemberFeedFilters) {
   const hasFrom = Boolean(filters.from?.trim());
   const hasTo = Boolean(filters.to?.trim());
 
   if (!hasFrom && !hasTo) {
-    return berlinTodayRange(now);
+    return null;
   }
 
   const from = hasFrom ? (filters.from as string) : (filters.to as string);
@@ -44,20 +46,46 @@ function resolveFeedWindow(filters: MemberFeedFilters, now: Date) {
   return berlinInclusiveDateRange(from, to);
 }
 
-function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
-  const window = resolveFeedWindow(filters, now);
-  const conditions: SQL[] = [
-    gte(events.dateTime, now),
-    gte(events.dateTime, window.start),
-    lt(events.dateTime, window.end),
-  ];
+function normalizeFilterList(value?: string | string[]): string[] {
+  if (value == null) {
+    return [];
+  }
+  const raw = Array.isArray(value) ? value : [value];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const entry of raw) {
+    const trimmed = entry.trim();
+    if (!trimmed || seen.has(trimmed)) {
+      continue;
+    }
+    seen.add(trimmed);
+    out.push(trimmed);
+  }
+  return out;
+}
 
-  if (filters.category?.trim()) {
-    conditions.push(eq(events.category, filters.category.trim()));
+function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
+  const window = resolveFeedWindow(filters);
+  // Default: all upcoming (`date_time >= now`), soonest first via orderBy.
+  // Optional from/to narrows to an inclusive Europe/Berlin calendar range.
+  const conditions: SQL[] = [gte(events.dateTime, now)];
+
+  if (window) {
+    conditions.push(gte(events.dateTime, window.start), lt(events.dateTime, window.end));
   }
 
-  if (filters.partnerId?.trim()) {
-    conditions.push(eq(events.partnerId, filters.partnerId.trim()));
+  const categories = normalizeFilterList(filters.category);
+  if (categories.length === 1) {
+    conditions.push(eq(events.category, categories[0]!));
+  } else if (categories.length > 1) {
+    conditions.push(inArray(events.category, categories));
+  }
+
+  const partnerIds = normalizeFilterList(filters.partnerId);
+  if (partnerIds.length === 1) {
+    conditions.push(eq(events.partnerId, partnerIds[0]!));
+  } else if (partnerIds.length > 1) {
+    conditions.push(inArray(events.partnerId, partnerIds));
   }
 
   return conditions;

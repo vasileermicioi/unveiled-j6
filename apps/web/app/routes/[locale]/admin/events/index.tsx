@@ -1,4 +1,5 @@
-import { countEvents, ensureImageVariantsUploaded, listEvents } from "@unveiled/db";
+import { countEvents, listEvents } from "@unveiled/db";
+import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
 import { buildVariantUrl } from "@unveiled/images/urls";
 import { createRoute } from "honox/factory";
 

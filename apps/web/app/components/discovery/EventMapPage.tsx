@@ -1,20 +1,21 @@
-import { Alert, Link, Paragraph, Surface } from "@heroui/react";
-import { MEMBER_FEED_MAP_MAX } from "@unveiled/db";
+import { Alert, Paragraph, Surface } from "@heroui/react";
 
 import EventMap, { type EventMapMarker } from "../../islands/EventMap";
-import { buildEventFeedQueryString, type EventFeedQuery } from "../../lib/event-feed";
+import type { EventFeedQuery } from "../../lib/event-feed";
 import { getEventMapCopy } from "../../lib/event-map-content";
 import type { Locale } from "../../lib/locale";
-import { PageSectionHeader } from "../marketing/PageSectionHeader";
+import type { AdminFormSelectOption } from "../admin/AdminFormSelect";
+
+import { EventDiscoveryShell } from "./EventDiscoveryShell";
 
 export type EventMapPageProps = {
   locale: Locale;
-  query: Pick<EventFeedQuery, "category" | "partnerId" | "from" | "to">;
+  query: EventFeedQuery;
   markers: EventMapMarker[];
-  /** Total matching feed filters (before coord filter / map cap). */
+  /** Total matching feed filters (before coord filter). */
   filteredTotal: number;
-  /** Events returned by map query before coord filter (may be capped). */
-  mapItemCount: number;
+  categoryOptions: AdminFormSelectOption[];
+  partnerOptions: AdminFormSelectOption[];
 };
 
 export function EventMapPage({
@@ -22,63 +23,35 @@ export function EventMapPage({
   query,
   markers,
   filteredTotal,
-  mapItemCount,
+  categoryOptions,
+  partnerOptions,
 }: EventMapPageProps) {
   const copy = getEventMapCopy(locale);
-  const filterQueryString = buildEventFeedQueryString({
-    category: query.category,
-    partnerId: query.partnerId,
-    from: query.from,
-    to: query.to,
-  });
-  const listHref = `/${locale}/events${filterQueryString}`;
-  const showCapWarning = filteredTotal > MEMBER_FEED_MAP_MAX;
   const showEmptyFiltered = filteredTotal === 0;
   const showEmptyMarkers = filteredTotal > 0 && markers.length === 0;
 
   return (
-    <Surface
-      className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
-      variant="transparent"
+    <EventDiscoveryShell
+      categoryOptions={categoryOptions}
+      locale={locale}
+      partnerOptions={partnerOptions}
+      query={query}
+      total={filteredTotal}
+      view="map"
     >
-      <Surface
-        className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-        variant="transparent"
-      >
-        <PageSectionHeader
-          className="min-w-0 flex-1"
-          eyebrow={copy.eyebrow}
-          headline={copy.title}
-        />
-        <Link className="button button--secondary button--md" href={listHref}>
-          {copy.listView}
-        </Link>
+      <Surface className="flex flex-col gap-4" variant="transparent">
+        {showEmptyFiltered ? (
+          <Alert status="accent">
+            <Alert.Content>
+              <Alert.Description>{copy.emptyFiltered}</Alert.Description>
+            </Alert.Content>
+          </Alert>
+        ) : null}
+
+        {showEmptyMarkers ? <Paragraph>{copy.emptyMarkers}</Paragraph> : null}
+
+        {!showEmptyFiltered ? <EventMap locale={locale} markers={markers} /> : null}
       </Surface>
-
-      {showCapWarning ? (
-        <Alert status="warning">
-          <Alert.Content>
-            <Alert.Description>
-              {copy.capWarning(Math.min(mapItemCount, MEMBER_FEED_MAP_MAX), filteredTotal)}
-            </Alert.Description>
-          </Alert.Content>
-        </Alert>
-      ) : null}
-
-      {showEmptyFiltered ? (
-        <Alert status="accent">
-          <Alert.Content>
-            <Alert.Description>{copy.emptyFiltered}</Alert.Description>
-          </Alert.Content>
-          <Link className="button button--secondary button--md" href={listHref}>
-            {copy.listView}
-          </Link>
-        </Alert>
-      ) : null}
-
-      {showEmptyMarkers ? <Paragraph>{copy.emptyMarkers}</Paragraph> : null}
-
-      {!showEmptyFiltered ? <EventMap locale={locale} markers={markers} /> : null}
-    </Surface>
+    </EventDiscoveryShell>
   );
 }

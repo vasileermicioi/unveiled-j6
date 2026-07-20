@@ -467,7 +467,7 @@ Public catalog surfaces (`@unveiled/ui` EventCard, locale-home Discover live gri
 
 ### Demo seed images (Wikimedia Commons)
 
-`bun run seed:demo` inserts six real Berlin cultural partners (Volksbühne, Deutsches Theater, Schaubühne, Gropius Bau, HKW, Konzerthaus) with venue-matched events. Images are fetched from **Wikimedia Commons** via `processImageFromUrl` and stored as six JPEG variants in R2.
+`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **local JPEGs** in `public/images/seed/{partners,events}/`. Refresh fixture + images with `bun run seed:fetch-abundo` (partner logos prefer Wikimedia venue photos; event images from Abundo; dates stay relative — resolved at seed time). Seed then uploads six JPEG variants to R2 via `processImageFromBuffer`.
 
 ```bash
 # Fresh catalog on empty DB
@@ -570,7 +570,7 @@ bun run test:e2e
 
 ## Phase 5 — Member discovery
 
-Phase 5 is complete when signed-in members can filter today's events (Europe/Berlin), paginate, save/unsave, open event detail, and view the filtered set on the MapLibre + OSM map — with Ladle stories and Playwright coverage for every scenario in `docs/product/features/event-discovery.feature`. **Booking / Stripe remains Phase 6** — CTAs link to membership or detail with a “booking coming soon” banner only.
+Phase 5 is complete when signed-in members can browse all upcoming events (soonest first), optionally filter by category/partner/date range, paginate, save/unsave, open event detail, and view the filtered set on the MapLibre + OSM map — with Ladle stories and Playwright coverage for every scenario in `docs/product/features/event-discovery.feature`. **Booking / Stripe remains Phase 6** — CTAs link to membership or detail with a “booking coming soon” banner only.
 
 **Client demo line:** *"This is the member app — filter by neighborhood, save favorites, map view."* (Booking still locked until Phase 6.)
 
@@ -589,18 +589,19 @@ After `bun run seed:demo` (use `-- --reset` only on a disposable DB):
 
 | Title | Role |
 |---|---|
-| `Tonight: Stadt ohne Schlaf` | Today (Berlin evening) + coords — default feed |
-| `Past Premiere: Archive Night` | Past — must stay hidden from feed/map |
-| `Tartuffe — Molière` | Future Theater + coords |
-| `Exhibition Opening: Material Echoes` | Future Ausstellung (Gropius Bau) |
-| `Global Sound Forum` | Future Konzert |
+| `DEMO_DISCOVERY_TITLES.tonight` (Abundo; prefixed `Tonight:`) | Today (Berlin evening) + coords — default feed |
+| `DEMO_DISCOVERY_TITLES.pastHidden` (prefixed `Past Premiere:`) | Past — must stay hidden from feed/map |
+| `DEMO_DISCOVERY_TITLES.theaterFuture` | Future Theater + coords (booking e2e) |
+| `DEMO_DISCOVERY_TITLES.ausstellung` | Future Ausstellung |
+| `DEMO_DISCOVERY_TITLES.konzert` | Future Konzert |
+| `Sold Out: Waitlist Demo Night` | Sold-out waitlist demo |
 
 Categories align with onboarding `INTERESTS` (`Theater`, `Ausstellung`, `Konzert`, …). All published demo events include `lat`/`lng` for map markers.
 
 ### Phase 5 demo script
 
 1. Sign in as the demo USER (`E2E_USER_*` or staging member).
-2. Open `/:locale/events` — confirm **Today (Europe/Berlin)** and `Tonight: Stadt ohne Schlaf`.
+2. Open `/:locale/events` — confirm **All upcoming events** / **Alle kommenden Events** and the seeded `Tonight: …` title (`DEMO_DISCOVERY_TITLES.tonight`) near the top (soonest first).
 3. Apply filters (category / partner / date range) → reset → empty range shows no-results copy.
 4. Save an event → open **Saved** (`/:locale/saved`) → unsave.
 5. From the feed, open **Map view** (accept cookies if prompted) → markers match filters → **Open event** / list link (no booking POST).

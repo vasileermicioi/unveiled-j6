@@ -96,7 +96,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Public discovery preview for guests | `e2e/specs/event-discovery.spec.ts` · `Scenario: Public discovery preview for guests` | `pass` |  |
 | `event-discovery.feature` | Guest can view public event detail without authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest can view public event detail without authentication` | `pass` |  |
 | `event-discovery.feature` | Guest path to full browse requires signup or login | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest path to full browse requires signup or login` | `pass` |  |
-| `event-discovery.feature` | Default feed shows today's events only | `e2e/specs/event-discovery.spec.ts` · `Scenario: Default feed shows today's events only` | `pass` |  |
+| `event-discovery.feature` | Default feed shows all upcoming events soonest first | `e2e/specs/event-discovery.spec.ts` · `Scenario: Default feed shows all upcoming events soonest first` | `pass` |  |
 | `event-discovery.feature` | Events with invalid or past dates are hidden | `e2e/specs/event-discovery.spec.ts` · `Scenario: Events with invalid or past dates are hidden` | `pass` |  |
 | `event-discovery.feature` | Filter by category | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by category` | `pass` |  |
 | `event-discovery.feature` | Filter by partner (venue) | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by partner (venue)` | `pass` |  |

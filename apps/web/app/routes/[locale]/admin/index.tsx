@@ -2,10 +2,9 @@ import {
   countEvents,
   countPartners,
   countUpcomingEvents,
-  runDemoSeed,
-  shouldRunDemoSeed,
   sumRemainingCapacity,
 } from "@unveiled/db";
+import { runDemoSeed, shouldRunDemoSeed } from "@unveiled/db/seed";
 import { createRoute } from "honox/factory";
 
 import { AdminDashboardPage } from "../../../components/admin/AdminDashboardPage";

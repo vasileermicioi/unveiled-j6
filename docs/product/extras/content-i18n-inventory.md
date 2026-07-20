@@ -55,7 +55,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `from` | VON | FROM |
 | `to` | BIS | UNTIL |
 | `reset` | ZURÜCKSETZEN | RESET |
-| `noResults` | KEINE EVENTS IN DIESEM ZEITRAUM GEFUNDEN. | NO EVENTS FOUND FOR THIS PERIOD. |
+| `noResults` | KEINE EVENTS ENTSPRECHEN DIESEN FILTERN. | NO EVENTS MATCH THESE FILTERS. |
 
 ## `auth`
 

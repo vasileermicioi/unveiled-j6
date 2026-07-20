@@ -5,10 +5,11 @@ import { bookings } from "../schema/bookings";
 import { events } from "../schema/events";
 import { partners } from "../schema/partners";
 import { waitlistEntries } from "../schema/waitlist-entries";
+import { DEMO_DISCOVERY_TITLES } from "./demo-discovery-titles";
 import { countEvents, createEvent, listEvents } from "./events";
 import { deleteImageRecord } from "./images";
 import { countPartners, createPartner, listPartners } from "./partners";
-import { DEMO_CATALOG, DEMO_DISCOVERY_TITLES } from "./seed-data";
+import { DEMO_CATALOG } from "./seed-data";
 
 export type DemoSeedResult = "seeded" | "skipped";
 

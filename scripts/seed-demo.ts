@@ -1,4 +1,5 @@
-import { createDb, resetCatalogData, runDemoSeed } from "@unveiled/db";
+import { createDb } from "@unveiled/db";
+import { resetCatalogData, runDemoSeed } from "@unveiled/db/seed";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -24,7 +25,7 @@ const result = await runDemoSeed(db, { force, skipBucket: skipUpload });
 
 if (result === "seeded") {
   console.log(
-    "Demo seed complete: created Berlin cultural partners and events with Wikimedia Commons images.",
+    "Demo seed complete: created Berlin partners/events from Abundo fixture (local images in public/images/seed).",
   );
   if (skipUpload) {
     console.log("Note: --skip-upload was set; image rows exist but R2 objects were not written.");

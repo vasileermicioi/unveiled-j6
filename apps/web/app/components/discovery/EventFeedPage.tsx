@@ -1,21 +1,14 @@
-import { Alert, Card, Link, Paragraph, Surface } from "@heroui/react";
+import { Card, Link, Paragraph, Surface } from "@heroui/react";
 import { EventCard, type EventCardItem, type EventCardViewerState } from "@unveiled/ui";
 
-import {
-  buildEventFeedQueryString,
-  type EventFeedQuery,
-  MEMBER_FEED_PAGE_SIZE,
-} from "../../lib/event-feed";
+import { buildEventFeedQueryString, type EventFeedQuery } from "../../lib/event-feed";
 import { getEventFeedCopy } from "../../lib/event-feed-content";
-import { getEventMapCopy } from "../../lib/event-map-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import { eventSavePath, eventUnsavePath } from "../../lib/saved-events";
 import type { AdminFormSelectOption } from "../admin/AdminFormSelect";
-import { PageSectionHeader } from "../marketing/PageSectionHeader";
 
-import { EventFeedFilters } from "./EventFeedFilters";
-import { EventFeedPagination } from "./EventFeedPagination";
+import { EventDiscoveryShell } from "./EventDiscoveryShell";
 
 export type EventFeedPageProps = {
   locale: Locale;
@@ -43,7 +36,6 @@ export function EventFeedPage({
   partnerOptions,
 }: EventFeedPageProps) {
   const copy = getEventFeedCopy(locale);
-  const mapCopy = getEventMapCopy(locale);
   const feedPath = `/${locale}/events`;
   const queryString = buildEventFeedQueryString({
     category: query.category,
@@ -52,61 +44,18 @@ export function EventFeedPage({
     to: query.to,
     page: query.page,
   });
-  const mapQueryString = buildEventFeedQueryString({
-    category: query.category,
-    partnerId: query.partnerId,
-    from: query.from,
-    to: query.to,
-  });
-  const mapHref = `/${locale}/events/map${mapQueryString}`;
   const returnTo = `${feedPath}${queryString}`;
 
   return (
-    <Surface
-      className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
-      variant="transparent"
+    <EventDiscoveryShell
+      categoryOptions={categoryOptions}
+      locale={locale}
+      partnerOptions={partnerOptions}
+      query={query}
+      subscriptionActive={subscriptionActive}
+      total={total}
+      view="list"
     >
-      <Surface
-        className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-        variant="transparent"
-      >
-        <PageSectionHeader
-          className="min-w-0 flex-1"
-          eyebrow={copy.eyebrow}
-          headline={copy.title}
-        />
-        <Link className="button button--secondary button--md" href={mapHref}>
-          {mapCopy.mapView}
-        </Link>
-      </Surface>
-
-      {!subscriptionActive ? (
-        <Alert status="warning">
-          <Alert.Content>
-            <Alert.Title>{copy.subscriptionGateTitle}</Alert.Title>
-            <Alert.Description>{copy.subscriptionGateBody}</Alert.Description>
-          </Alert.Content>
-          <Link
-            className="button button--primary button--md"
-            href={localizedPath(locale, "membership")}
-          >
-            {copy.subscriptionGateCta}
-          </Link>
-        </Alert>
-      ) : null}
-
-      <Card>
-        <Card.Content>
-          <EventFeedFilters
-            action={feedPath}
-            categoryOptions={categoryOptions}
-            locale={locale}
-            partnerOptions={partnerOptions}
-            query={query}
-          />
-        </Card.Content>
-      </Card>
-
       {events.length === 0 ? (
         <Card>
           <Card.Content className="flex flex-col items-start gap-4">
@@ -145,15 +94,6 @@ export function EventFeedPage({
           })}
         </Surface>
       )}
-
-      <EventFeedPagination
-        basePath={feedPath}
-        locale={locale}
-        page={query.page}
-        pageSize={MEMBER_FEED_PAGE_SIZE}
-        queryString={queryString}
-        total={total}
-      />
-    </Surface>
+    </EventDiscoveryShell>
   );
 }

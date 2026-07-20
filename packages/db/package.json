@@ -5,7 +5,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./catalog/errors": "./src/catalog/errors.ts",
-    "./catalog/seed-pagination": "./src/catalog/seed-pagination.ts"
+    "./catalog/images": "./src/catalog/images.ts",
+    "./catalog/seed-pagination": "./src/catalog/seed-pagination.ts",
+    "./seed": "./src/seed.ts",
+    "./seed-titles": "./src/catalog/demo-discovery-titles.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate",

@@ -1,4 +1,5 @@
-import { ensureImageVariantsUploaded, getEventById, listPartners, updateEvent } from "@unveiled/db";
+import { getEventById, listPartners, updateEvent } from "@unveiled/db";
+import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 

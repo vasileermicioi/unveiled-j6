@@ -1,7 +1,7 @@
 "use client";
 
 import { Description, Input, Paragraph, Surface } from "@heroui/react";
-import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images";
+import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images/constants";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";

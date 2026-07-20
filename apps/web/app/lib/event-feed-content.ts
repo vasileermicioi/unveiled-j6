@@ -14,7 +14,11 @@ export type EventFeedCopy = {
   allCategories: string;
   allPartners: string;
   dateRangeLabel: (from: string, to: string) => string;
-  todayScopeLabel: string;
+  /** Shown when no custom from/to — all upcoming events. */
+  upcomingScopeLabel: string;
+  viewTabsLabel: string;
+  listView: string;
+  mapView: string;
   subscriptionGateTitle: string;
   subscriptionGateBody: string;
   subscriptionGateCta: string;
@@ -36,11 +40,14 @@ const copyByLocale: Record<Locale, EventFeedCopy> = {
     to: "BIS",
     reset: "ZURÜCKSETZEN",
     apply: "Anwenden",
-    noResults: "KEINE EVENTS IN DIESEM ZEITRAUM GEFUNDEN.",
+    noResults: "KEINE EVENTS ENTSPRECHEN DIESEN FILTERN.",
     allCategories: "Alle Kategorien",
     allPartners: "Alle Partner",
     dateRangeLabel: (from, to) => (from === to ? `Zeitraum: ${from}` : `Zeitraum: ${from} – ${to}`),
-    todayScopeLabel: "Heute (Europe/Berlin)",
+    upcomingScopeLabel: "Alle kommenden Events",
+    viewTabsLabel: "Ansicht",
+    listView: "Liste",
+    mapView: "Karte",
     subscriptionGateTitle: "Mitgliedschaft erforderlich",
     subscriptionGateBody:
       "Aktiviere dein Abo, um Events freizuschalten. Bis dahin kannst du weiter stöbern.",
@@ -62,11 +69,14 @@ const copyByLocale: Record<Locale, EventFeedCopy> = {
     to: "UNTIL",
     reset: "RESET",
     apply: "Apply",
-    noResults: "NO EVENTS FOUND FOR THIS PERIOD.",
+    noResults: "NO EVENTS MATCH THESE FILTERS.",
     allCategories: "All categories",
     allPartners: "All partners",
     dateRangeLabel: (from, to) => (from === to ? `Range: ${from}` : `Range: ${from} – ${to}`),
-    todayScopeLabel: "Today (Europe/Berlin)",
+    upcomingScopeLabel: "All upcoming events",
+    viewTabsLabel: "View",
+    listView: "List",
+    mapView: "Map",
     subscriptionGateTitle: "Membership required",
     subscriptionGateBody:
       "Activate your subscription to unlock events. You can keep browsing in the meantime.",

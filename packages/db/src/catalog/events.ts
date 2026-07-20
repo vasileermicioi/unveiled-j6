@@ -10,7 +10,6 @@ import {
 } from "../schema/events";
 import { deriveDateTimeFields } from "./datetime";
 import { CatalogValidationError } from "./errors";
-import { attachImageToEvent, deleteImageRecord, replaceEventImage } from "./images";
 import { getPartnerById } from "./partners";
 import {
   applyEventDefaults,
@@ -19,6 +18,11 @@ import {
   validateRedemptionConfig,
   validateUniqueSeriesSlots,
 } from "./validation";
+
+/** Lazy — keeps `@unveiled/images` / sip out of client graphs that import `@unveiled/db`. */
+function catalogImages() {
+  return import("./images");
+}
 
 export type ListEventsOptions = {
   limit?: number;
@@ -267,6 +271,7 @@ export async function createEvent(db: Db, input: CreateEventInput): Promise<Even
   validateImageSourceExclusive(input.imageUpload, input.imageUrl, { required: true });
   const partner = await resolvePartner(db, input.partnerId);
 
+  const { attachImageToEvent, deleteImageRecord } = await catalogImages();
   const imageId = await attachImageToEvent(db, input.imageUpload, input.imageUrl, {
     uploadedBy: input.uploadedBy,
     skipUpload: input.skipUpload,
@@ -288,6 +293,7 @@ export async function createEventSeries(
   const partner = await resolvePartner(db, input.partnerId);
   const slots = validateUniqueSeriesSlots(input.slots);
 
+  const { attachImageToEvent } = await catalogImages();
   const imageId = await attachImageToEvent(db, input.imageUpload, input.imageUrl, {
     uploadedBy: input.uploadedBy,
     skipUpload: input.skipUpload,
@@ -342,6 +348,7 @@ export async function updateEvent(
     (input.imageUrl != null && input.imageUrl.trim().length > 0);
 
   if (hasNewImage) {
+    const { replaceEventImage } = await catalogImages();
     imageId = await replaceEventImage(db, existing.imageId, input.imageUpload, input.imageUrl, {
       uploadedBy: input.uploadedBy,
       skipUpload: input.skipUpload,
@@ -423,6 +430,7 @@ export async function updateEvent(
   }
 
   if (hasNewImage && previousImageId !== imageId) {
+    const { deleteImageRecord } = await catalogImages();
     await deleteImageRecord(db, previousImageId, { skipBucket: input.skipUpload });
   }
 
@@ -440,6 +448,7 @@ export async function deleteEvent(
   }
 
   await db.delete(events).where(eq(events.id, eventId));
+  const { deleteImageRecord } = await catalogImages();
   await deleteImageRecord(db, existing.imageId, { skipBucket: options?.skipBucket });
 }
 

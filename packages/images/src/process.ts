@@ -196,14 +196,19 @@ export async function generateImageVariants(
   const input = new Uint8Array(buffer);
   const imageId = options.imageId ?? crypto.randomUUID();
 
-  const [original, hero1920, large1280, medium640, small320, og1200x630] = await Promise.all([
-    createMaxBoundVariant(input, ORIGINAL_MAX_EDGE, ORIGINAL_MAX_EDGE, ORIGINAL_QUALITY),
-    createMaxBoundVariant(input, HERO_MAX_WIDTH, undefined, HERO_QUALITY),
-    createMaxBoundVariant(input, LARGE_MAX_WIDTH, undefined, LARGE_QUALITY),
-    createMaxBoundVariant(input, MEDIUM_MAX_WIDTH, undefined, MEDIUM_QUALITY),
-    createMaxBoundVariant(input, SMALL_MAX_WIDTH, undefined, SMALL_QUALITY),
-    createOgVariant(input),
-  ]);
+  // Sequential: sip's WASM JPEG decoder is not safe under concurrent transform() calls
+  // (parallel Promise.all surfaces as "Failed to start JPEG decompression" / unhandled rejections).
+  const original = await createMaxBoundVariant(
+    input,
+    ORIGINAL_MAX_EDGE,
+    ORIGINAL_MAX_EDGE,
+    ORIGINAL_QUALITY,
+  );
+  const hero1920 = await createMaxBoundVariant(input, HERO_MAX_WIDTH, undefined, HERO_QUALITY);
+  const large1280 = await createMaxBoundVariant(input, LARGE_MAX_WIDTH, undefined, LARGE_QUALITY);
+  const medium640 = await createMaxBoundVariant(input, MEDIUM_MAX_WIDTH, undefined, MEDIUM_QUALITY);
+  const small320 = await createMaxBoundVariant(input, SMALL_MAX_WIDTH, undefined, SMALL_QUALITY);
+  const og1200x630 = await createOgVariant(input);
 
   const variants = {
     "original.jpg": original,

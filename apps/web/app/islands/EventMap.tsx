@@ -264,6 +264,7 @@ export default function EventMap({ locale, markers }: EventMapProps) {
           for (const marker of markers) {
             const popup = new maplibregl.Popup({
               closeButton: true,
+              focusAfterOpen: false,
               maxWidth: "280px",
             }).setDOMContent(createPopupContent(marker, copy.popupOpen));
             popups.push(popup);

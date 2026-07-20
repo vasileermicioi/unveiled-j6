@@ -1653,6 +1653,53 @@
     width: 100%;
   }
 
+  /* Compact member discovery filters — denser than admin form defaults */
+  .event-feed-filters .text-field .input,
+  .event-feed-filters .text-field [data-slot="input"] {
+    min-height: 2.5rem;
+  }
+
+  .event-feed-filters .label,
+  .event-feed-filters [data-slot="label"] {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .event-feed-filters__field .label,
+  .event-feed-filters__field [data-slot="label"] {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .event-feed-filters__select {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    border: var(--border-width) solid var(--border);
+    border-radius: 0;
+    background-color: var(--field-background);
+    color: var(--foreground);
+    font: inherit;
+    font-weight: 600;
+    box-shadow: none;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--foreground) 50%),
+      linear-gradient(135deg, var(--foreground) 50%, transparent 50%);
+    background-position:
+      calc(100% - 1rem) calc(50% - 0.15rem),
+      calc(100% - 0.7rem) calc(50% - 0.15rem);
+    background-size:
+      0.3rem 0.3rem,
+      0.3rem 0.3rem;
+    background-repeat: no-repeat;
+  }
+
+  .event-feed-filters__select:focus {
+    outline: none;
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
   .event-map__canvas-wrap {
     border: var(--border-width) solid var(--border);
     overflow: hidden;
@@ -1739,11 +1786,39 @@
   }
 
   .event-map__popup-link {
+    align-self: flex-start;
+    border: var(--border-width) solid var(--border);
+    background: var(--surface);
     color: var(--color-brand-dark);
+    display: inline-flex;
     font-family: var(--font-sans);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 700;
-    text-decoration: underline;
+    padding: 0.375rem 0.75rem;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .event-map__popup-link:hover,
+  .event-map__popup-link:focus-visible {
+    background: var(--color-brand-dark);
+    color: var(--color-brand-cream);
+    outline: none;
+  }
+
+  .event-map__popup-link:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* MapLibre injects close button + may focus popup chrome */
+  .event-map__canvas-wrap .maplibregl-popup-content:focus,
+  .event-map__canvas-wrap .maplibregl-popup-close-button:focus {
+    outline: none;
+  }
+
+  .event-map__canvas-wrap .maplibregl-popup-close-button:focus-visible {
+    outline: var(--border-width) solid var(--border);
+    outline-offset: 2px;
   }
 
   .event-map__attribution {
@@ -1847,6 +1922,16 @@
     line-height: 1;
     text-decoration: none;
     white-space: nowrap;
+  }
+
+  .link.event-feed-view-tabs__tab {
+    gap: 0.4rem;
+  }
+
+  .event-feed-view-tabs__icon {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
   }
 
   .link.admin-tabs__tab--active {

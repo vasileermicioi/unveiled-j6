@@ -1,4 +1,5 @@
-import { ensureImageVariantsUploaded, getPartnerById, updatePartner } from "@unveiled/db";
+import { getPartnerById, updatePartner } from "@unveiled/db";
+import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
 import { buildVariantUrl } from "@unveiled/images/urls";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";

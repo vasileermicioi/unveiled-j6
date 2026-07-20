@@ -25,7 +25,7 @@ const copyByLocale: Record<Locale, EventMapCopy> = {
     listView: "Listenansicht",
     mapView: "Kartenansicht",
     emptyMarkers: "Keine Events mit Standort in diesem Filter.",
-    emptyFiltered: "Keine Events in diesem Zeitraum gefunden.",
+    emptyFiltered: "Keine Events entsprechen diesen Filtern.",
     capWarning: (shown, total) =>
       `Karte zeigt die ersten ${shown} von ${total} Events. Verfeinere die Filter für die vollständige Liste.`,
     consentTitle: "Karte benötigt Cookie-Zustimmung",
@@ -44,7 +44,7 @@ const copyByLocale: Record<Locale, EventMapCopy> = {
     listView: "List view",
     mapView: "Map view",
     emptyMarkers: "No events with a location match these filters.",
-    emptyFiltered: "No events found for this period.",
+    emptyFiltered: "No events match these filters.",
     capWarning: (shown, total) =>
       `Map shows the first ${shown} of ${total} events. Narrow filters to see the full set on the map.`,
     consentTitle: "Map needs cookie consent",

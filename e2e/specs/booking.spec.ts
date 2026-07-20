@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 
 import { settleAdminSession } from "../fixtures/admin";
 import {
@@ -23,7 +24,7 @@ import {
 } from "../fixtures/waitlist";
 
 /** Stable demo seed — SECRET_CODE / MANUAL, creditPrice 2, future date. */
-const BOOKABLE_TITLE = "Tartuffe — Molière";
+const BOOKABLE_TITLE = DEMO_DISCOVERY_TITLES.theaterFuture;
 
 async function onboardFreshMember(page: Page, locale: Locale) {
   let lastError: unknown;
@@ -74,7 +75,7 @@ test.describe("booking.feature", () => {
 
     const user = await onboardFreshMember(page, locale);
     await activateMemberForBooking(user.email, 17);
-    // Tartuffe creditPrice 2 → floor(17/2)=8; ensure capacity allows > 3
+    // Bookable seed creditPrice 2 → floor(17/2)=8; ensure capacity allows > 3
     const eventId = await ensureEventHasCapacity(BOOKABLE_TITLE, 8);
 
     await page.goto(`/${locale}/events/${eventId}`);
