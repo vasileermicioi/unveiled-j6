@@ -9,7 +9,7 @@ import { DEMO_DISCOVERY_TITLES } from "./demo-discovery-titles";
 import { countEvents, createEvent, listEvents } from "./events";
 import { deleteImageRecord } from "./images";
 import { countPartners, createPartner, listPartners } from "./partners";
-import { DEMO_CATALOG } from "./seed-data";
+import { getDemoCatalog } from "./seed-data";
 
 export type DemoSeedResult = "seeded" | "skipped";
 
@@ -81,7 +81,7 @@ export async function runDemoSeed(
 
   const pauseMs = SEED_IMAGE_PAUSE_MS;
 
-  for (const entry of DEMO_CATALOG) {
+  for (const entry of getDemoCatalog()) {
     const partner = await createPartner(db, entry.partner);
     await sleep(pauseMs);
 

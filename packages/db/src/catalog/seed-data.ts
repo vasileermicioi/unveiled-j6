@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { berlinInclusiveDateRange, getBerlinCalendarDate } from "./datetime";
 import type { CreateEventInput } from "./events";
+import fixtureJson from "./fixtures/abundo-berlin-demo.json";
 import type { CreatePartnerInput } from "./partners";
 
 /**
@@ -117,8 +118,19 @@ function normalizeSeedCoords(
   return { lat: String(latN), lng: String(lngN) };
 }
 
+/**
+ * Image files still live on disk for local/script seeding.
+ * Only call when `getDemoCatalog()` runs — never at module init (Workers validate
+ * the bundle with `import.meta.url` undefined).
+ */
 function catalogDir(): string {
-  return dirname(fileURLToPath(import.meta.url));
+  const metaUrl = import.meta.url;
+  if (!metaUrl) {
+    throw new Error(
+      "Demo catalog images require a filesystem (import.meta.url). Run seed via bun scripts/seed-demo.ts locally.",
+    );
+  }
+  return dirname(fileURLToPath(metaUrl));
 }
 
 /** Repo root: packages/db/src/catalog → ../../../../.. */
@@ -131,11 +143,6 @@ function seedImagesRoot(fixture: AbundoFixture): string {
   return join(repoRoot(), relative);
 }
 
-function loadFixture(): AbundoFixture {
-  const path = join(catalogDir(), "fixtures", "abundo-berlin-demo.json");
-  return JSON.parse(readFileSync(path, "utf8")) as AbundoFixture;
-}
-
 function readSeedImage(imagesRoot: string, relativePath: string, label: string): Buffer {
   const abs = join(imagesRoot, relativePath);
   if (!existsSync(abs)) {
@@ -146,7 +153,8 @@ function readSeedImage(imagesRoot: string, relativePath: string, label: string):
   return readFileSync(abs);
 }
 
-const FIXTURE = loadFixture();
+/** Bundled fixture — no fs / fileURLToPath at import time (Workers-safe). */
+const FIXTURE = fixtureJson as AbundoFixture;
 
 function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
   const imagesRoot = seedImagesRoot(fixture);
@@ -211,22 +219,67 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
   return catalog;
 }
 
-export const DEMO_CATALOG: DemoCatalogEntry[] = buildDemoCatalog(FIXTURE);
+let cachedDemoCatalog: DemoCatalogEntry[] | null = null;
+
+/** Lazy: reads local seed images only when seeding runs (not at Workers module init). */
+export function getDemoCatalog(): DemoCatalogEntry[] {
+  if (!cachedDemoCatalog) {
+    cachedDemoCatalog = buildDemoCatalog(FIXTURE);
+  }
+  return cachedDemoCatalog;
+}
+
+/** @deprecated Prefer `getDemoCatalog()`. */
+export const DEMO_CATALOG: DemoCatalogEntry[] = new Proxy([] as DemoCatalogEntry[], {
+  get(_target, prop, receiver) {
+    const catalog = getDemoCatalog();
+    const value = Reflect.get(catalog, prop, receiver);
+    return typeof value === "function"
+      ? (value as (...args: unknown[]) => unknown).bind(catalog)
+      : value;
+  },
+  ownKeys() {
+    return Reflect.ownKeys(getDemoCatalog());
+  },
+  getOwnPropertyDescriptor(_target, prop) {
+    return Reflect.getOwnPropertyDescriptor(getDemoCatalog(), prop);
+  },
+  has(_target, prop) {
+    return Reflect.has(getDemoCatalog(), prop);
+  },
+});
 
 /** Re-export for callers that already import catalog titles alongside DEMO_CATALOG. */
 export { DEMO_DISCOVERY_TITLES } from "./demo-discovery-titles";
 
-/** @deprecated Use DEMO_CATALOG — kept for tests referencing partner list length. */
-export const DEMO_PARTNERS: Omit<CreatePartnerInput, "logoUpload">[] = DEMO_CATALOG.map(
-  ({ partner }) => {
-    const { logoUpload: _logoUpload, ...rest } = partner;
-    return rest;
+/** @deprecated Use getDemoCatalog() — kept for tests referencing partner list length. */
+export const DEMO_PARTNERS: Omit<CreatePartnerInput, "logoUpload">[] = new Proxy(
+  [] as Omit<CreatePartnerInput, "logoUpload">[],
+  {
+    get(_target, prop, receiver) {
+      const partners = getDemoCatalog().map(({ partner }) => {
+        const { logoUpload: _logoUpload, ...rest } = partner;
+        return rest;
+      });
+      const value = Reflect.get(partners, prop, receiver);
+      return typeof value === "function"
+        ? (value as (...args: unknown[]) => unknown).bind(partners)
+        : value;
+    },
+    ownKeys() {
+      return Reflect.ownKeys(
+        getDemoCatalog().map(({ partner }) => {
+          const { logoUpload: _logoUpload, ...rest } = partner;
+          return rest;
+        }),
+      );
+    },
   },
 );
 
-/** @deprecated Use DEMO_CATALOG — builds one event for backward-compatible tests. */
+/** @deprecated Use getDemoCatalog() — builds one event for backward-compatible tests. */
 export function buildDemoEvents(partnerId: string): CreateEventInput[] {
-  const template = DEMO_CATALOG[0]?.events[0];
+  const template = getDemoCatalog()[0]?.events[0];
   if (!template) {
     return [];
   }

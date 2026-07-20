@@ -1,11 +1,9 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 /**
- * Stable demo seed titles for E2E / docs — JSON roles only (no image buffers).
- * Server/script import via `@unveiled/db/seed` — never from client islands.
+ * Stable demo seed titles for E2E / docs — JSON fixture only (no node:fs).
+ * Safe to import from Workers SSR and Playwright via `@unveiled/db/seed-titles`.
  */
+
+import fixture from "./fixtures/abundo-berlin-demo.json";
 
 type FixturePartner = { key: string; name: string };
 type FixtureEvent = { title: string; partnerKey: string; seedRole?: string };
@@ -15,12 +13,7 @@ type AbundoFixture = {
   events: FixtureEvent[];
 };
 
-function loadFixture(): AbundoFixture {
-  const path = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "abundo-berlin-demo.json");
-  return JSON.parse(readFileSync(path, "utf8")) as AbundoFixture;
-}
-
-const FIXTURE = loadFixture();
+const FIXTURE = fixture as AbundoFixture;
 
 function titleForRole(role: string, fallback: string): string {
   return FIXTURE.events.find((e) => e.seedRole === role)?.title ?? fallback;
