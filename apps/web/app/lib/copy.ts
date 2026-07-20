@@ -55,7 +55,7 @@ const copy: Record<Locale, ShellCopy> = {
       discover: "Entdecken",
       howItWorks: "So funktioniert's",
       membership: "Mitgliedschaft",
-      faq: "FAQ",
+      faq: "Häufig gestellte Fragen",
     },
     login: "Anmelden",
     signup: "Registrieren",
@@ -84,7 +84,7 @@ const copy: Record<Locale, ShellCopy> = {
         discover: "ENTDECKEN",
         howItWorks: "SO FUNKTIONIERT'S",
         membership: "MITGLIEDSCHAFT",
-        faq: "FAQ",
+        faq: "HÄUFIG GESTELLTE FRAGEN",
       },
       legal: {
         impressum: "IMPRESSUM",

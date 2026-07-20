@@ -125,7 +125,7 @@ export const legalContent: {
     },
     en: {
       eyebrow: "Legal",
-      pageTitle: "Impressum",
+      pageTitle: "Imprint",
       intro: "Legal information pursuant to German law.",
       sections: [...impressumSections.en],
     },
@@ -139,7 +139,7 @@ export const legalContent: {
     },
     en: {
       eyebrow: "Legal",
-      pageTitle: "Privacy",
+      pageTitle: "Privacy Policy",
       intro: "Information about the processing of personal data.",
       sections: [...privacySections.en],
     },
@@ -153,7 +153,7 @@ export const legalContent: {
     },
     en: {
       eyebrow: "Legal",
-      pageTitle: "Terms",
+      pageTitle: "Terms of Service",
       intro: "General terms and conditions for using Unveiled Berlin.",
       sections: [...termsSections.en],
     },

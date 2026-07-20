@@ -3,7 +3,7 @@ import type { LocalizedContent, MembershipCheckoutContent } from "./types";
 export const membershipContent: LocalizedContent<MembershipCheckoutContent> = {
   de: {
     title: "DEIN KULTUR-UPGRADE.",
-    subtitle: "Full Access. 17 Credits/Monat. Jederzeit kündbar.",
+    subtitle: "Voller Zugang. 17 Credits/Monat. Jederzeit kündbar.",
     button: "ABO STARTEN — 29€",
     secure: "SICHERE ZAHLUNG VIA STRIPE",
     perks: ["Alle Events inklusive", "Vorkaufsrecht für Highlights", "17 Credits jeden Monat"],

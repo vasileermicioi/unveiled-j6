@@ -4,12 +4,12 @@ export const faqContent: LocalizedContent<FaqContent> = {
   de: {
     hero: {
       eyebrow: "Support",
-      headline: "FAQ",
+      headline: "Häufig gestellte Fragen",
       subheadline: "Alles Wichtige zu Mitgliedschaft, Buchung und Check-in an einem Ort.",
     },
     section: {
-      eyebrow: "FAQ & SUPPORT",
-      headline: "Häufige Fragen.",
+      eyebrow: "HILFE & SUPPORT",
+      headline: "Häufig gestellte Fragen.",
       supportEmail: "support@unveiled.berlin",
       items: [
         {
@@ -20,7 +20,7 @@ export const faqContent: LocalizedContent<FaqContent> = {
         {
           question: "Was passiert nach der Buchung?",
           answer:
-            "Je nach Event bekommst du entweder einen Einlasscode oder einen Promo-Code mit Link zur externen Ticketseite. Vor Ort scannst du zusätzlich den Venue-QR, damit dein Besuch registriert wird.",
+            "Je nach Event bekommst du entweder einen Einlasscode oder einen Promo-Code mit Link zur externen Ticketseite. Alle Details findest du unter Meine Tickets — zeige den Code bei Bedarf an der Tür vor.",
         },
         {
           question: "Was mache ich, wenn etwas nicht funktioniert?",
@@ -49,7 +49,7 @@ export const faqContent: LocalizedContent<FaqContent> = {
         {
           question: "What do I receive after booking?",
           answer:
-            "Depending on the event, you will receive either an entry code or a voucher or promo code with a link to the external ticket page. On site, you also scan the venue QR so your attendance is checked in correctly.",
+            "Depending on the event, you will receive either an entry code or a voucher or promo code with a link to the external ticket page. All details appear under My Tickets — show the code at the door when needed.",
         },
         {
           question: "What if something is not working?",

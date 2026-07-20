@@ -62,7 +62,9 @@ test.describe("static-pages.feature", () => {
 
     // Footer Navigation: Discover + FAQ only (How it works / Membership not listed).
     const footer = page.getByRole("contentinfo");
-    await expect(footer.getByRole("link", { name: /^faq$/i })).toBeVisible();
+    await expect(
+      footer.getByRole("link", { name: /^faq$|^häufig gestellte fragen$/i }),
+    ).toBeVisible();
     await expect(footer.getByRole("link", { name: /so funktioniert|how it works/i })).toHaveCount(
       0,
     );
@@ -143,14 +145,16 @@ test.describe("static-pages.feature", () => {
     await page.goto(`/${locale}/faq`);
     // PageSectionHeader: eyebrow + H1 (proximity role/name — not CSS-class selectors)
     await expect(page.getByText(/^support$/i).first()).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1, name: /^faq$/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: /^faq$|^häufig gestellte fragen$/i }),
+    ).toBeVisible();
     await expect(
       page.getByRole("link", { name: /support@unveiled\.berlin/i }).first(),
     ).toBeVisible();
 
     const firstQuestion = page.getByRole("button", { name: /wie buche ich|how does booking/i });
     const secondQuestion = page.getByRole("button", {
-      name: /was passiert nach|what happens after/i,
+      name: /was passiert nach|what do i receive after/i,
     });
     await expect(firstQuestion).toBeVisible({ timeout: 10_000 });
     await expect(secondQuestion).toBeVisible();

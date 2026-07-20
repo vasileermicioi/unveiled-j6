@@ -76,7 +76,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | Key | DE | EN |
 |---|---|---|
 | `title` | DEIN KULTUR-UPGRADE. | YOUR CULTURE UPGRADE. |
-| `subtitle` | Full Access. 17 Credits/Monat. Jederzeit kündbar. | Full Access. 17 Credits/mo. Cancel anytime. |
+| `subtitle` | Voller Zugang. 17 Credits/Monat. Jederzeit kündbar. | Full Access. 17 Credits/mo. Cancel anytime. |
 | `button` | ABO STARTEN — 29€ | START SUB — 29€ |
 | `secure` | SICHERE ZAHLUNG VIA STRIPE | SECURE PAYMENT VIA STRIPE |
 | `perks[0]` | Alle Events inklusive | All events included |

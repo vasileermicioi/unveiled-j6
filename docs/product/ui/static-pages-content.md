@@ -53,12 +53,13 @@ Public page without login. Navbar “Discover” / “Entdecken” points here. 
 ## FAQ (`/faq`, component `FaqPage.tsx` + `HelpSection.tsx`)
 
 ### 1. Page header
-- Shared `PageSectionHeader` on the yellow page background (not a bordered `PageHero` card): eyebrow "Support" (same in both languages), headline "FAQ" (same in both languages, large display headline), full-width rule under the title
-- Subheadline below the header: "Alles Wichtige zu Mitgliedschaft und Buchung an einem Ort." / "Everything important about membership and booking in one place."
+- Shared `PageSectionHeader` on the yellow page background (not a bordered `PageHero` card): eyebrow "Support" (same in both languages), headline **"Häufig gestellte Fragen" / "FAQ"** (large display headline), full-width rule under the title
+- Subheadline below the header: "Alles Wichtige zu Mitgliedschaft, Buchung und Check-in an einem Ort." / "Everything important about membership, booking, and check-in in one place."
+- Shell nav/footer DE label for this route is also **"Häufig gestellte Fragen"** / **"HÄUFIG GESTELLTE FRAGEN"** (not the English acronym "FAQ")
 
 ### 2. Help/FAQ card (`HelpSection`, reused elsewhere too — see below)
-- Eyebrow: "FAQ & SUPPORT" (same in both languages)
-- Headline: "Häufige Fragen." / "Everything you need to know."
+- Eyebrow: "HILFE & SUPPORT" / "FAQ & SUPPORT"
+- Headline: "Häufig gestellte Fragen." / "Everything you need to know."
 - Support email link: `support@unveiled.berlin` (mailto)
 - **Accordion with exactly 3 Q&As, one open at a time (first one open by default):**
 
@@ -86,3 +87,4 @@ Public page without login. Navbar “Discover” / “Entdecken” points here. 
 - Auth pages (`/login`, `/signup`, …) use `PageSectionHeader` via `AuthPageLayout` with locale eyebrows such as "Willkommen zurück" / "Welcome back" (login) and "Loslegen" / "Get started" (signup).
 - Every headline/eyebrow/CTA is manually translated inline via `language === 'DE' ? ... : ...` ternaries rather than pulled from the `translations.ts` catalog — when porting to whatever i18n system the new app uses, all of this copy needs to move into locale files (see `../extras/content-i18n-inventory.md` for the "not yet captured" note on this).
 - Two small pieces of copy are **not translated at all** today (identical in DE/EN): the landing page's three trust badges ("Member-owned", "Verified Events", "Berlin Focused") and the "How Unveiled works" eyebrow. **Decided: intentional, keep as brand-English terms** in both locales — short badge-style English phrases are a common, deliberate stylistic choice in German consumer marketing (reads as confident/international rather than untranslated), and these three are consistent with that pattern rather than an oversight. Don't translate them during the rewrite.
+- **FAQ is localized:** DE uses "Häufig gestellte Fragen" (nav, page H1, help card); EN keeps "FAQ". Do not leave the English acronym as the DE nav/page label.
