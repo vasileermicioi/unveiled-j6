@@ -7,9 +7,17 @@ import { partners } from "../schema/partners";
 import { waitlistEntries } from "../schema/waitlist-entries";
 import { DEMO_DISCOVERY_TITLES } from "./demo-discovery-titles";
 import { countEvents, createEvent, listEvents } from "./events";
+import { addFeaturedEvent } from "./featured-events";
 import { deleteImageRecord } from "./images";
 import { countPartners, createPartner, listPartners } from "./partners";
 import { getDemoCatalog } from "./seed-data";
+
+/** Upcoming demo titles featured on Discover after seed (leave others non-featured for e2e contrast). */
+const DEMO_FEATURED_TITLES: readonly string[] = [
+  DEMO_DISCOVERY_TITLES.tonight,
+  DEMO_DISCOVERY_TITLES.theaterFuture,
+  DEMO_DISCOVERY_TITLES.ausstellung,
+];
 
 export type DemoSeedResult = "seeded" | "skipped";
 
@@ -81,17 +89,27 @@ export async function runDemoSeed(
 
   const pauseMs = SEED_IMAGE_PAUSE_MS;
 
+  const createdByTitle = new Map<string, string>();
+
   for (const entry of getDemoCatalog()) {
     const partner = await createPartner(db, entry.partner);
     await sleep(pauseMs);
 
     for (const eventInput of entry.events) {
       const created = await createEvent(db, { ...eventInput, partnerId: partner.id });
+      createdByTitle.set(created.title, created.id);
       // DEMO_SOLD_OUT_WAITLIST: force zero remaining for Phase 7 waitlist demos
       if (created.title === DEMO_DISCOVERY_TITLES.soldOutWaitlist) {
         await db.update(events).set({ remainingCapacity: 0 }).where(eq(events.id, created.id));
       }
       await sleep(pauseMs);
+    }
+  }
+
+  for (const title of DEMO_FEATURED_TITLES) {
+    const eventId = createdByTitle.get(title);
+    if (eventId) {
+      await addFeaturedEvent(db, eventId);
     }
   }
 

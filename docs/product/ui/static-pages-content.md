@@ -8,7 +8,7 @@ Exact DE/EN copy and section structure for marketing pages. Rebuild with HeroUI.
 
 ## Guest marketing home (`/:locale`)
 
-Public conversion landing for **guests only**. Signed-in members/admins who hit this URL are redirected to their role home (`/events` or onboarding for `USER`, `/admin` for `ADMIN`). Logo (guest) points here. Navbar still links **Discover** / **Entdecken** to `/discover`. Sections, top to bottom:
+Public conversion landing for **guests only**. Signed-in members/admins who hit this URL are redirected to their role home (booking-eligible `USER` → `/events`, non-active `USER` → `/discover` or onboarding, `ADMIN` → `/admin`). Logo (guest) points here. Navbar links **Discover** / **Entdecken** to `/discover` for guests (active members see **Browse events** → `/events` instead). Sections, top to bottom:
 
 1. **Hero** — H1 + subheadline (all-caps brand tone): membership for Berlin’s cultural scene / monthly credits framing
 2. **Showcase** — phone mockup (`/images/guest-home-phone.png`) + black plan card (29€ / month, four perks, cream CTA panel)
@@ -19,13 +19,14 @@ Public conversion landing for **guests only**. Signed-in members/admins who hit 
 
 ## Discover (`/:locale/discover`)
 
-Public page without login. Navbar “Discover” / “Entdecken” points here. Sections, top to bottom:
+Public page without login for guests and non-booking-eligible members. Navbar “Discover” / “Entdecken” points here for those audiences. Booking-eligible `USER` members are redirected to `/events` (they see **Browse events** in the nav instead). `ADMIN` may open Discover for QA. Sections, top to bottom:
 
-### 1. Live event preview grid
+### 1. Featured event preview grid
 - Section header via shared `PageSectionHeader` (`h1`): eyebrow "Mit deiner Mitgliedschaft buchbar" / "Bookable with your membership", headline "Aktuelle Events in Berlin." / "Current events in Berlin." (full-width rule under the title)
-- Grid of up to 6 upcoming events (soonest first), each an `EventCard` with guest CTA **"Book Now" / "Bin dabei"** (or **"Waitlist" / "Warteliste"** when sold out) → public `/events/:id` (not booking modal; not deep-link to `/book`)
-- Empty state (dashed border box): "Aktuell keine kommenden Events." / "No upcoming events right now."
-- Guests do **not** get an ungated `/events` list; signup/login for the full feed is via auth routes (`/signup`, `/login`).
+- Grid of **admin-featured** upcoming events (`listFeaturedEvents` with `upcomingOnly: true`, ordered by `sort_order` then `date_time`), each an `EventCard` with guest CTA **"Book Now" / "Bin dabei"** (or **"Waitlist" / "Warteliste"** when sold out) → public `/events/:id` (not booking modal; not deep-link to `/book`)
+- Non-featured catalog events do **not** appear solely for being soon
+- Empty state (dashed border box): "Aktuell keine empfohlenen Events." / "No featured events right now."
+- Guests do **not** get an ungated `/events` list; signup/login + active subscription for the full feed is via auth routes (`/signup`, `/login`) and membership
 
 ### 2. Partner venues slider
 - Section header: eyebrow "Partnerorte" / "Partner venues" (no big headline here, just the eyebrow); section is a named region (`aria-labelledby` / accessible name from the eyebrow)

@@ -65,6 +65,9 @@ Delivery plan: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](../../.dev-plan/IMPLEMEN
 | Preference-based feed ranking is a decided non-goal for v1 — onboarding preferences are still captured (used by admin's member-support "intel" view and as a foundation for future ranking) but the feed stays explicitly filter-driven, not algorithmic | `features/event-discovery.feature`, `features/onboarding.feature`, `product/vision-and-domains.md` |
 | "Today only" default feed scope kept as-is (intentional, matches actual usage pattern) | `features/event-discovery.feature` |
 | Newsletter (opt-in/confirm/unsubscribe) cut entirely — schema-only in the old app with zero corresponding product | `product/vision-and-domains.md`, `database/schema-overview.md` |
+| **Featured Discover:** Discover shows admin-curated `featured_events` (upcoming only), not an automatic upcoming-catalog slice. Guests + non-booking-eligible `USER` (`INACTIVE`, `PAST_DUE`, missing sub) see Discover; booking-eligible (`ACTIVE` \| `CANCELLED_PENDING`) get Browse events → `/events` and are redirected away from `/discover`. Non-active `/events` / map → Discover. Demo seed features a small upcoming subset. | `features/event-discovery.feature`, `features/admin-events.feature`, `ui/app-shell.md`, `sitemap/sitemap.md` |
+| **Deferred — footer Browse events parity:** Footer Navigation keeps Discover → `/discover` for all audiences (top nav/drawer swap only). | `ui/app-shell.md` |
+| **Deferred — `PAST_DUE` Browse access:** Treated as non-active (Discover) for MVP; product may later grant Browse while past-due. | `features/event-discovery.feature`, parent Featured Discover guide |
 
 ## App shell & content
 

@@ -19,6 +19,7 @@ export type AdminCopy = {
   tabOverview: string;
   tabPartners: string;
   tabEvents: string;
+  tabFeatured: string;
   tabUsers: string;
   tabWaitlist: string;
   kpiPartners: string;
@@ -138,6 +139,18 @@ export type AdminCopy = {
   compTicketSubmit: string;
   compTicketSuccess: string;
   compTicketNoEvents: string;
+  featuredTitle: string;
+  featuredSubtitle: string;
+  featuredEmpty: string;
+  featuredAddAction: string;
+  featuredAddTitle: string;
+  featuredAddSubtitle: string;
+  featuredAddEmpty: string;
+  featuredAddSubmit: string;
+  featuredRemoveAction: string;
+  featuredRemoveTitle: string;
+  featuredRemoveBody: (title: string, date: string) => string;
+  featuredRemoveConfirm: string;
   waitlistTitle: string;
   waitlistSubtitle: string;
   waitlistEmpty: string;
@@ -298,6 +311,7 @@ const copy: Record<Locale, AdminCopy> = {
     tabOverview: "Übersicht",
     tabPartners: "Partner",
     tabEvents: "Events",
+    tabFeatured: "Empfohlen",
     tabUsers: "Mitglieder",
     tabWaitlist: "Warteliste",
     kpiPartners: "Partner",
@@ -421,6 +435,19 @@ const copy: Record<Locale, AdminCopy> = {
     compTicketSubmit: "Comp-Ticket ausstellen",
     compTicketSuccess: "Comp-Ticket wurde erstellt.",
     compTicketNoEvents: "Keine bevorstehenden Events für die Auswahl.",
+    featuredTitle: "Empfohlene Events",
+    featuredSubtitle: "Kuratiere die Featured-Liste für Discover.",
+    featuredEmpty: "Noch keine empfohlenen Events. Füge Katalog-Events über die Suche hinzu.",
+    featuredAddAction: "Event hinzufügen",
+    featuredAddTitle: "Empfohlenes Event hinzufügen",
+    featuredAddSubtitle: "Suche bestehende Katalog-Events, die noch nicht empfohlen sind.",
+    featuredAddEmpty: "Keine passenden Events gefunden.",
+    featuredAddSubmit: "Zur Featured-Liste",
+    featuredRemoveAction: "Entfernen",
+    featuredRemoveTitle: "Aus Featured entfernen",
+    featuredRemoveBody: (title, date) =>
+      `„${title}" (${date}) aus der Featured-Liste entfernen? Das Event bleibt im Katalog unter Events erhalten.`,
+    featuredRemoveConfirm: "Aus Featured entfernen",
     waitlistTitle: "Warteliste",
     waitlistSubtitle: "Einträge filtern und manuell befördern.",
     waitlistEmpty: "Keine Wartelisteneinträge.",
@@ -586,6 +613,7 @@ const copy: Record<Locale, AdminCopy> = {
     tabOverview: "Overview",
     tabPartners: "Partners",
     tabEvents: "Events",
+    tabFeatured: "Featured",
     tabUsers: "Users",
     tabWaitlist: "Waitlist",
     kpiPartners: "Partners",
@@ -709,6 +737,19 @@ const copy: Record<Locale, AdminCopy> = {
     compTicketSubmit: "Issue comp ticket",
     compTicketSuccess: "Comp ticket was created.",
     compTicketNoEvents: "No upcoming events available to select.",
+    featuredTitle: "Featured events",
+    featuredSubtitle: "Curate the featured list shown on Discover.",
+    featuredEmpty: "No featured events yet. Add catalog events via search.",
+    featuredAddAction: "Add event",
+    featuredAddTitle: "Add featured event",
+    featuredAddSubtitle: "Search existing catalog events that are not already featured.",
+    featuredAddEmpty: "No matching events found.",
+    featuredAddSubmit: "Add to featured",
+    featuredRemoveAction: "Remove",
+    featuredRemoveTitle: "Remove from featured",
+    featuredRemoveBody: (title, date) =>
+      `Remove “${title}” (${date}) from the featured list? The event stays in the catalog under Events.`,
+    featuredRemoveConfirm: "Remove from featured",
     waitlistTitle: "Waitlist",
     waitlistSubtitle: "Filter entries and promote manually.",
     waitlistEmpty: "No waitlist entries.",
@@ -920,6 +961,12 @@ export function mapCatalogErrorCode(
 
   if (code === "EVENT_NOT_FOUND") {
     return locale === "de" ? "Event nicht gefunden." : "Event not found.";
+  }
+
+  if (code === "ALREADY_FEATURED") {
+    return locale === "de"
+      ? "Dieses Event ist bereits in der Featured-Liste."
+      : "This event is already featured.";
   }
 
   if (code === "PARTNER_HAS_EVENTS") {

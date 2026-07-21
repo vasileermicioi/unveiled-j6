@@ -8,6 +8,7 @@ import {
   type AdminTab,
   adminDashboardPath,
   adminEventsPath,
+  adminFeaturedPath,
   adminPartnersPath,
   adminUsersPath,
   adminWaitlistPath,
@@ -27,6 +28,7 @@ export function AdminTabNav({ locale, activeTab }: AdminTabNavProps) {
     { id: "overview", href: adminDashboardPath(locale), label: copy.tabOverview },
     { id: "partners", href: adminPartnersPath(locale), label: copy.tabPartners },
     { id: "events", href: adminEventsPath(locale), label: copy.tabEvents },
+    { id: "featured", href: adminFeaturedPath(locale), label: copy.tabFeatured },
     { id: "users", href: adminUsersPath(locale), label: copy.tabUsers },
     { id: "waitlist", href: adminWaitlistPath(locale), label: copy.tabWaitlist },
   ];

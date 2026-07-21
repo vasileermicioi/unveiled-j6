@@ -41,7 +41,7 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
     livePreview: {
       eyebrow: "Mit deiner Mitgliedschaft buchbar",
       headline: "Aktuelle Events in Berlin.",
-      emptyState: "Aktuell keine kommenden Events.",
+      emptyState: "Aktuell keine empfohlenen Events.",
     },
     categories: {
       eyebrow: "Mitgliedschaft",
@@ -98,7 +98,7 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
     livePreview: {
       eyebrow: "Bookable with your membership",
       headline: "Current events in Berlin.",
-      emptyState: "No upcoming events right now.",
+      emptyState: "No featured events right now.",
     },
     categories: {
       eyebrow: "Memberships",

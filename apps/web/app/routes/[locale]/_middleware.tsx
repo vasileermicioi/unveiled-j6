@@ -1,4 +1,4 @@
-import { listSavedEventIds } from "@unveiled/db";
+import { isBookingEligibleStatus, listSavedEventIds } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { NotFoundPage } from "../../components/NotFoundPage";
@@ -24,6 +24,7 @@ export default createRoute(async (c, next) => {
   const session = await getSessionIfConfigured(c);
   c.set("session", session);
   c.set("savedCount", 0);
+  c.set("canBrowseEvents", false);
 
   const redirectTo = evaluateAuthRedirect({
     locale: locale as Locale,
@@ -50,10 +51,18 @@ export default createRoute(async (c, next) => {
     if (session.user.role === "USER") {
       try {
         const { db } = getAuthOptions();
-        const ids = await listSavedEventIds(db, session.user.id);
+        const [ids, subscription] = await Promise.all([
+          listSavedEventIds(db, session.user.id),
+          db.query.subscriptions.findFirst({
+            where: (fields, { eq }) => eq(fields.userId, session.user.id),
+            columns: { status: true },
+          }),
+        ]);
         c.set("savedCount", ids.length);
+        c.set("canBrowseEvents", isBookingEligibleStatus(subscription?.status));
       } catch {
         c.set("savedCount", 0);
+        c.set("canBrowseEvents", false);
       }
     }
   }

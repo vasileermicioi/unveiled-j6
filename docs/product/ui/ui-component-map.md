@@ -10,9 +10,9 @@ Mapping aid for HeroUI rebuilds. Visual language: `design-tokens.md`. Ownership:
 
 | Component | Owner | Notes |
 |---|---|---|
-| Navbar / Header | `apps/web` | Slim marketing nav Discover + FAQ; guest auth Log in only; How it works / Membership / Sign up out of header and footer nav — see `app-shell.md` |
+| Navbar / Header | `apps/web` | Slim marketing nav: Discover (guests / non-active) or Browse events (booking-eligible) + FAQ; guest auth Log in only; How it works / Membership / Sign up out of header and footer nav — see `app-shell.md` |
 | Logo | `@unveiled/ui` | Three SVG tones — `assets-inventory.md`; Ladle stories under `packages/ui` |
-| Footer | `apps/web` | Discover → `/:locale/discover`; FAQ; legal column (no How it works / Membership) |
+| Footer | `apps/web` | Discover → `/:locale/discover` (no Browse events swap); FAQ; legal column (no How it works / Membership) |
 | **PageSectionHeader** | `apps/web` | Default on-yellow page/section header: muted uppercase eyebrow + bold headline + full-width rule. Used on Discover, FAQ, auth, member feed/browse, book/confirm, waitlist join/cancel, Saved, My Tickets, and member account/profile pages (`/profile*`) — distinct from bordered `PageHero` card heroes and the membership marketing hero card |
 | Help / FAQ accordion | `apps/web` | HeroUI `Accordion` in `Card` |
 | Cookie banner | `apps/web` island | Accept/decline; gates map tiles |
@@ -45,9 +45,10 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 | Surface | Route | Notes |
 |---|---|---|
 | **Guest marketing home** | `/:locale` | Guests only (signed-in → role home). Headline + phone + plan card + signup CTA + benefits |
-| **Discover** | `/:locale/discover` | `PageSectionHeader` + up to 6 upcoming EventCards; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); Book Now / Bin dabei (or Waitlist) → public detail |
-| **Member feed** | `/events` | `PageSectionHeader`; filters (GET query params), pagination, EventCard grid; subscription gate banner |
-| **Map** | `/events/map` | MapLibre + OSM island; cookie-gated; marker popups expose a large close control (~44px hit target, keyboard-accessible) |
+| **Discover** | `/:locale/discover` | `PageSectionHeader` + admin-**featured** upcoming EventCards (not automatic catalog slice); empty featured state copy; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); Book Now / Bin dabei (or Waitlist) → public detail. Booking-eligible USER redirected to `/events`. |
+| **Member feed** | `/events` | Booking-eligible USER only (non-active → Discover). `PageSectionHeader`; filters (GET query params), pagination, EventCard grid |
+| **Map** | `/events/map` | Same audience gate as feed. MapLibre + OSM island; cookie-gated; marker popups expose a large close control (~44px hit target, keyboard-accessible) |
+| **Admin Featured** | `/admin/featured*` | SSR list / search-add / remove-from-featured (keeps catalog event); see `admin-events.feature` |
 | **Saved** | `/saved` | Member saved list |
 | **Event detail** | `/events/:id` | **Public** checkout-focused SSR page (no auth): identity column (category // partner, title, description, location, large hero) + dark summary/action card. On **lg+**, identity and checkout card share a common top alignment; hero fills the identity column width and scales across sm/md/lg (not a permanently undersized inset). Close control is a Link (Discover / feed / safe `returnTo`), not a client modal. **Booking-eligible members only** see ticket quantity (max = `min(floor(credits ÷ creditPrice), remainingCapacity)`, creditPrice ≤ 0 → capacity-only), credit total, and DETAILS date/time chrome; guests and other non–eligible viewers omit ticket qty, credits, and date (JSON-LD `startDate` still for crawlers) and see unlock/membership CTAs instead. Qty on detail is navigation state only — **no** booking/ledger POST; credit charge stays on `/events/:id/book`. Below the fold: dense multi-column **DETAILS** metadata grid (EventCard-inspired density on md+) + **LOCATION** card with address and MapLibre map using a brand **pin marker** (not a black square); marker popups use the same large close control as `/events/map` (~44px hit target). |
 

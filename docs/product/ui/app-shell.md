@@ -10,13 +10,14 @@ Role-aware header variants (guest, member, admin) composed from shared pieces �
 
 1. **Logo**
    - Wordmark (`Logo` asset) — clickable.
-   - **Routing:** guest → `/:locale` (guest marketing home); `USER` → `/events`; `ADMIN` → `/admin`.
+   - **Routing:** guest → `/:locale` (guest marketing home); booking-eligible `USER` → `/events`; non-booking-eligible `USER` → `/discover`; `ADMIN` → `/admin`.
    - No logo tagline in the sticky header (footer brand tagline is separate).
 
 2. **Primary nav (marketing)**
-   - **Guest (`lg+`):** Discover → `/discover`; FAQ → `/faq`. Active link: yellow highlight, no border (same in mobile drawer).
-   - **Member (`USER`):** Discover → `/discover`; FAQ → `/faq`. Plus role tools: Saved (bookmark, badge when count > 0) and Bookings / “My Tickets”.
-   - **Admin:** admin section links under `/admin/*` (dashboard-focused chrome). Where admin shares marketing primary nav with other roles, that set is Discover + FAQ only.
+   - **Guest (`lg+`):** Discover / Entdecken → `/discover`; FAQ → `/faq`. Active link: yellow highlight, no border (same in mobile drawer).
+   - **Member (`USER`) non-booking-eligible:** Discover / Entdecken → `/discover`; FAQ → `/faq`. Plus role tools: Saved (bookmark, badge when count > 0) and Bookings / “My Tickets”.
+   - **Member (`USER`) booking-eligible (`ACTIVE` | `CANCELLED_PENDING` via `isBookingEligibleStatus`):** **Browse events** / **Events entdecken** → `/events`; FAQ → `/faq`. Same role tools as above.
+   - **Admin:** admin section links under `/admin/*` (dashboard-focused chrome). Where admin shares marketing primary nav with other roles, that set is Discover + FAQ only (Discover stays reachable for QA).
    - **Not in header or footer nav:** How it works, Membership (pages remain at `/how-it-works` and `/membership`; reachable via direct URL / in-flow CTAs).
 
 3. **Language toggle** — DE | EN; navigates to the same path under the other locale prefix.
@@ -31,13 +32,15 @@ Role-aware header variants (guest, member, admin) composed from shared pieces �
 
 ### Discover → Events (nav / CTA contract)
 
-- Discover link always points at **`/:locale/discover`**. Guest marketing home is `/:locale` (guests only).
-- Guests reach the **full event browse** via signup/login (landing on `/events` after auth/onboarding), not via an ungated `/events` list.
+- Guests and non-booking-eligible members: primary nav **Discover** → `/:locale/discover` (admin-featured upcoming preview).
+- Booking-eligible members: primary nav **Browse events** → `/:locale/events` (full feed). Hitting `/discover` redirects to `/events`.
+- Guests reach the **full event browse** via signup/login **and** an active subscription — not via an ungated `/events` list. Inactive members land on Discover when they hit `/events` or `/events/map`.
 - Preview cards on Discover link to public `/events/:id`.
+- Sticky header and mobile drawer use the same Discover ↔ Browse events label/href swap. Footer Navigation keeps Discover → `/discover` (no Browse events parity unless product later chooses it).
 
 ### Behavior
 
-- Active-route highlighting (yellow + border) is the primary “you are here” affordance.
+- Active-route highlighting uses the resolved href (Discover or Browse events). Discover/Browse uses theme primary button when current, secondary otherwise; FAQ stays text nav.
 - **Mobile (`< lg`):** sticky bar is logo + hamburger only. Drawer lists uppercase links under section labels in order **Account → Navigation → Language** (login/profile/auth first); active + hover match desktop nav (yellow selected, invert on hover).
 - Sticky header on all pages.
 
@@ -50,7 +53,7 @@ White bordered block on yellow page background; thick dark top border; near-zero
 ### Columns
 
 1. **Brand** — “UNVEILED BERLIN” eyebrow; tagline “KURATIERTER KULTURZUGANG IN BERLIN.” / “CURATED CULTURAL ACCESS IN BERLIN.”; body: discover theatre/cinema/exhibitions copy (verbatim DE/EN from product screenshots).
-2. **Navigation** — Discover → `/:locale`; FAQ (uppercase link style). How it works and Membership are **not** listed.
+2. **Navigation** — Discover → `/:locale/discover`; FAQ (uppercase link style). How it works and Membership are **not** listed. Footer does **not** swap to Browse events for active members (deferred parity).
 3. **Contact** — `SUPPORT@UNVEILED.BERLIN` mailto; “BERLIN, GERMANY” / “BERLIN, DEUTSCHLAND”.
 4. **Legal** — Impressum, Privacy, Terms.
 

@@ -4,7 +4,7 @@ Complete production-MVP schema (including booking/credits/waitlist tables even i
 
 ## Entity overview
 
-Tables: `users`, `subscriptions` (1:1), `saved_events`, `partners`, `images`, `events`, `bookings`, `waitlist_entries`, `credit_ledger`.
+Tables: `users`, `subscriptions` (1:1), `saved_events`, `featured_events`, `partners`, `images`, `events`, `bookings`, `waitlist_entries`, `credit_ledger`.
 
 ---
 
@@ -132,6 +132,20 @@ Join table for member bookmarks (MVP).
 | `created_at` | timestamptz | |
 
 Unique `(user_id, event_id)`. Cascade or restrict deletes per product rules (prefer remove save when event deleted).
+
+---
+
+### `featured_events`
+
+Admin-curated Discover featured list (join table; no duplicated event payload).
+
+| Field | Type | Notes |
+|---|---|---|
+| `event_id` | FK → `events.id`, PK | One featured row per event; **ON DELETE CASCADE** |
+| `sort_order` | integer | Append on add; Discover/admin order by `sort_order` then `date_time` |
+| `created_at` | timestamptz | |
+
+Removing a featured row MUST NOT delete the underlying `events` row. Full Discover/browse product behavior is documented with the Featured Discover feature steps.
 
 ---
 

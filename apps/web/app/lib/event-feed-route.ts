@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 
-import { guardMemberAppRoute, type MemberAppGuardResult } from "./member-app-route";
+import { guardActiveMemberFeedRoute, type MemberAppGuardResult } from "./member-app-route";
 
 export type {
   MemberAppGuardFail as MemberFeedGuardFail,
@@ -8,7 +8,10 @@ export type {
   MemberAppGuardResult as MemberFeedGuardResult,
 } from "./member-app-route";
 
-/** @deprecated Prefer `guardMemberAppRoute` — kept as alias for feed call sites. */
+/**
+ * Guard for `/events` list and `/events/map` — booking-eligible USER or ADMIN.
+ * Guests → login; non-eligible USER → Discover.
+ */
 export async function guardMemberFeedRoute(c: Context): Promise<MemberAppGuardResult> {
-  return guardMemberAppRoute(c);
+  return guardActiveMemberFeedRoute(c);
 }

@@ -31,6 +31,11 @@ export type DrawerSectionCopy = {
 
 export type ShellCopy = {
   nav: NavLinkCopy;
+  /**
+   * Primary marketing nav for booking-eligible USERs (→ `/events`).
+   * Matches saved/bookings `browseEvents` phrasing.
+   */
+  browseEvents: string;
   login: string;
   signup: string;
   logout: string;
@@ -57,6 +62,7 @@ const copy: Record<Locale, ShellCopy> = {
       membership: "Mitgliedschaft",
       faq: "Häufig gestellte Fragen",
     },
+    browseEvents: "Events entdecken",
     login: "Anmelden",
     signup: "Registrieren",
     logout: "Abmelden",
@@ -100,6 +106,7 @@ const copy: Record<Locale, ShellCopy> = {
       membership: "Membership",
       faq: "FAQ",
     },
+    browseEvents: "Browse events",
     login: "Log in",
     signup: "Sign up",
     logout: "Log out",

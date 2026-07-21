@@ -23,6 +23,8 @@ declare module "hono" {
   interface ContextVariableMap {
     session: AppSession | null;
     savedCount: number;
+    /** USER with booking-eligible subscription (`ACTIVE` | `CANCELLED_PENDING`). */
+    canBrowseEvents: boolean;
   }
 }
 

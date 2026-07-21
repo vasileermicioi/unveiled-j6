@@ -78,12 +78,13 @@ export function futureDateISO(daysAhead: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-export type AdminTab = "overview" | "partners" | "events" | "users" | "waitlist";
+export type AdminTab = "overview" | "partners" | "events" | "featured" | "users" | "waitlist";
 
 const TAB_HREF: Record<AdminTab, string> = {
   overview: "admin",
   partners: "admin/partners",
   events: "admin/events",
+  featured: "admin/featured",
   users: "admin/users",
   waitlist: "admin/waitlist",
 };
@@ -384,9 +385,9 @@ export async function expectEventOnDiscover(
   eventTitle: string,
   partnerName?: string,
 ): Promise<void> {
-  // Discover preview shows only the next 6 upcoming events — assert via public detail
-  // when the title is crowded off the grid (common after many E2E creates).
-  await page.goto(`/${locale}`);
+  // Discover shows admin-featured upcoming only — assert via Discover when featured;
+  // otherwise fall back to admin catalog (create flows do not auto-feature).
+  await page.goto(`/${locale}/discover`);
   const onDiscover = page.getByText(eventTitle);
   if ((await onDiscover.count()) > 0) {
     await expect(onDiscover.first()).toBeVisible({ timeout: 10_000 });
@@ -396,7 +397,7 @@ export async function expectEventOnDiscover(
     return;
   }
 
-  // Fallback: search admin events list then open public detail for partner name.
+  // Fallback: event remains in admin catalog even when not featured.
   await page.goto(`/${locale}/admin/events`);
   await expect(page.getByText(eventTitle).first()).toBeVisible({ timeout: 15_000 });
   if (partnerName) {

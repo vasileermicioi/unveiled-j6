@@ -1,9 +1,16 @@
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
-export type AdminTab = "overview" | "partners" | "events" | "users" | "waitlist";
+export type AdminTab = "overview" | "partners" | "events" | "featured" | "users" | "waitlist";
 
-export const ADMIN_TAB_ORDER: AdminTab[] = ["overview", "partners", "events", "users", "waitlist"];
+export const ADMIN_TAB_ORDER: AdminTab[] = [
+  "overview",
+  "partners",
+  "events",
+  "featured",
+  "users",
+  "waitlist",
+];
 
 export function adminDashboardPath(locale: Locale): string {
   return localizedPath(locale, "admin");
@@ -15,6 +22,18 @@ export function adminPartnersPath(locale: Locale): string {
 
 export function adminEventsPath(locale: Locale): string {
   return localizedPath(locale, "admin/events");
+}
+
+export function adminFeaturedPath(locale: Locale): string {
+  return localizedPath(locale, "admin/featured");
+}
+
+export function adminFeaturedAddPath(locale: Locale): string {
+  return localizedPath(locale, "admin/featured/add");
+}
+
+export function adminFeaturedRemovePath(locale: Locale, eventId: string): string {
+  return localizedPath(locale, `admin/featured/${eventId}/remove`);
 }
 
 export function adminUsersPath(locale: Locale): string {
@@ -60,6 +79,10 @@ export function adminBookingCancelPath(locale: Locale, bookingId: string): strin
 export function inferAdminTab(pathname: string): AdminTab {
   if (pathname.includes("/admin/partners")) {
     return "partners";
+  }
+
+  if (pathname.includes("/admin/featured")) {
+    return "featured";
   }
 
   if (pathname.includes("/admin/events")) {

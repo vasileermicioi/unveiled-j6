@@ -26,10 +26,7 @@ export default createRoute(async (c) => {
   const feedPath = `/${guard.locale}/events`;
   const userId = guard.session.user.id;
 
-  const [subscription, feed, partners, savedIds] = await Promise.all([
-    db.query.subscriptions.findFirst({
-      where: (fields, { eq }) => eq(fields.userId, userId),
-    }),
+  const [feed, partners, savedIds] = await Promise.all([
     listMemberFeedEvents(db, {
       category: feedQuery.category,
       partnerId: feedQuery.partnerId,
@@ -46,8 +43,8 @@ export default createRoute(async (c) => {
     return c.redirect(redirectPath, 302);
   }
 
-  const subscriptionActive =
-    subscription?.status === "ACTIVE" || subscription?.status === "CANCELLED_PENDING";
+  // Non-eligible USERs are redirected by `guardMemberFeedRoute`; banner-as-gate is obsolete.
+  const subscriptionActive = true;
   const copy = getEventFeedCopy(guard.locale);
   const queryString = buildEventFeedQueryString({
     category: feedQuery.category,

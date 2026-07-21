@@ -14,6 +14,7 @@ export default reactRenderer(
     const pathname = new URL(c.req.url).pathname;
     const session = c.get("session") ?? null;
     const savedCount = c.get("savedCount") ?? 0;
+    const canBrowseEvents = c.get("canBrowseEvents") ?? false;
 
     return (
       <Layout
@@ -25,6 +26,7 @@ export default reactRenderer(
         title={title}
       >
         <AppShell
+          canBrowseEvents={canBrowseEvents}
           locale={resolvedLocale}
           pathname={pathname}
           savedCount={savedCount}

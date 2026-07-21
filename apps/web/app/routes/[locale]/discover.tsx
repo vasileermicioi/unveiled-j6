@@ -1,4 +1,4 @@
-import { listPartners, listUpcomingEvents } from "@unveiled/db";
+import { listFeaturedEvents, listPartners } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { DiscoverPage } from "../../components/marketing/DiscoverPage";
@@ -16,6 +16,14 @@ function getLocaleParam(value: string | undefined): Locale {
 
 export default createRoute(async (c) => {
   const locale = getLocaleParam(c.req.param("locale"));
+  const session = c.get("session") ?? null;
+  const canBrowseEvents = c.get("canBrowseEvents") ?? false;
+
+  // Booking-eligible USERs browse the full feed — Discover is for guests / non-active.
+  if (session?.user.role === "USER" && canBrowseEvents) {
+    return c.redirect(`/${locale}/events`, 302);
+  }
+
   const content = getPageContent(locale, "discover");
   const copy = getCopy(locale);
   const pathname = new URL(c.req.url).pathname;
@@ -28,12 +36,12 @@ export default createRoute(async (c) => {
   const db = getCatalogDb();
   if (db) {
     try {
-      const [upcomingEvents, partnerRows] = await Promise.all([
-        listUpcomingEvents(db, { limit: 6 }),
+      const [featuredEvents, partnerRows] = await Promise.all([
+        listFeaturedEvents(db, { upcomingOnly: true }),
         listPartners(db, { limit: 8 }),
       ]);
 
-      events = upcomingEvents.map(toEventCardItem);
+      events = featuredEvents.map(toEventCardItem);
       partners = partnerRows.map(toDiscoverPartnerTile);
     } catch (error) {
       console.error("discover catalog fetch failed", error);

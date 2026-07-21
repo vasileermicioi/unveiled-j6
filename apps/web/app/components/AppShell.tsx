@@ -13,14 +13,29 @@ type AppShellProps = {
   pathname: string;
   session: AppSession | null;
   savedCount?: number;
+  /** USER with booking-eligible subscription — drives Discover ↔ Browse events nav/logo. */
+  canBrowseEvents?: boolean;
   children: ReactNode;
 };
 
-export function AppShell({ locale, pathname, session, savedCount = 0, children }: AppShellProps) {
+export function AppShell({
+  locale,
+  pathname,
+  session,
+  savedCount = 0,
+  canBrowseEvents = false,
+  children,
+}: AppShellProps) {
   return (
     <SSRProvider>
       <Surface className="flex min-h-screen flex-col" variant="transparent">
-        <AppNavbar locale={locale} pathname={pathname} savedCount={savedCount} session={session} />
+        <AppNavbar
+          canBrowseEvents={canBrowseEvents}
+          locale={locale}
+          pathname={pathname}
+          savedCount={savedCount}
+          session={session}
+        />
         <Surface className="flex-1 pt-16 md:pt-20" role="main" variant="transparent">
           {children}
         </Surface>

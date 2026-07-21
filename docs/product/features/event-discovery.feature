@@ -1,9 +1,9 @@
 # Event discovery for the production MVP.
 #
 # Charter locks:
-#   - Discover = /:locale/discover with curated guest preview (not a public full feed)
+#   - Discover = /:locale/discover with admin-featured upcoming preview (not a public full feed)
 #   - /events/:id is public (no auth); book/save/waitlist remain gated
-#   - Member feed /events, /events/map, /saved require USER
+#   - Member feed /events, /events/map, /saved require USER; browse/map also require booking-eligible subscription
 #   - No algorithmic ranking — explicit filters only (category / partner / date; single-select)
 #   - Default feed scope = all upcoming (date_time >= now), soonest first; custom date range available
 #   - List and map share the same filters + pagination; view switch is tabs (admin-style)
@@ -22,9 +22,36 @@ Feature: Event Discovery
   Scenario: Public discovery preview for guests
     Given I am not signed in
     When I visit Discover ("/:locale/discover")
-    Then I see a curated preview of upcoming events (no auth required)
+    Then I see a curated featured preview of upcoming events (no auth required)
     And I see membership framing in the section header (eyebrow)
     And I do not see a public full upcoming-events list equivalent to the member "/events" feed
+
+  Scenario: Guest sees featured Discover
+    Given I am not signed in
+    And at least one upcoming event is admin-featured
+    And at least one other upcoming catalog event is not featured
+    When I visit Discover ("/:locale/discover")
+    Then the featured event appears
+    And the non-featured upcoming catalog event does not appear solely for being soon
+
+  Scenario: Discover is for non-active membership audiences
+    Given I am signed in as a "USER" without a booking-eligible subscription
+    When I visit Discover ("/:locale/discover")
+    Then I see the featured Discover page
+    When I am signed in as a "USER" with a booking-eligible subscription ("ACTIVE" or "CANCELLED_PENDING")
+    And I visit Discover ("/:locale/discover")
+    Then I am redirected to "/:locale/events"
+
+  Scenario: Inactive member cannot browse the full feed
+    Given I am signed in as a "USER" without a booking-eligible subscription
+    When I attempt to open the member events feed ("/events") or map ("/events/map")
+    Then I am redirected to Discover
+    And I do not see the full upcoming catalog
+
+  Scenario: Active member nav shows Browse events
+    Given I am signed in as a "USER" with a booking-eligible subscription
+    When I view the app shell (sticky header or mobile drawer)
+    Then the primary nav shows Browse events (localized) linking to "/events"
 
   Scenario: Guest can view public event detail without authentication
     Given I am not signed in
@@ -53,10 +80,10 @@ Feature: Event Discovery
     Given I am not signed in
     When I attempt to open the member events feed ("/events")
     Then I am redirected to sign in (or signup)
-    And after authentication (and onboarding if incomplete) I can use the member feed
+    And after authentication (and onboarding if incomplete) and an active subscription I can use the member feed
 
   Scenario: Default feed shows all upcoming events soonest first
-    Given I am signed in as a "USER" with an active or inactive subscription
+    Given I am signed in as a "USER" with a booking-eligible subscription
     And I have not applied any date filters
     When I view the events feed
     Then I see all upcoming events that have not already started
@@ -64,37 +91,37 @@ Feature: Event Discovery
 
   Scenario: Events with invalid or past dates are hidden
     Given an event has a missing/invalid date or a start time in the past
-    When any user views the events feed or map
+    When any booking-eligible user views the events feed or map
     Then that event does not appear
 
   Scenario: Filter by category
-    Given I am viewing the events feed
+    Given I am viewing the events feed as a booking-eligible member
     When I select a category filter
     Then only events matching that category are shown
 
   Scenario: Filter by partner (venue)
-    Given I am viewing the events feed
+    Given I am viewing the events feed as a booking-eligible member
     When I select a specific partner/venue filter
     Then only events hosted by that partner are shown
 
   Scenario: Filter by custom date range
-    Given I am viewing the events feed
+    Given I am viewing the events feed as a booking-eligible member
     When I set a start date and an end date
     Then only events within that date range (inclusive, full days) are shown
     And the all-upcoming default no longer applies
 
   Scenario: Reset filters
-    Given I have applied one or more filters
+    Given I have applied one or more filters as a booking-eligible member
     When I reset the filters
     Then the feed returns to the default all-upcoming scope
 
   Scenario: No results
     Given my applied filters match no events
-    When I view the feed
+    When I view the feed as a booking-eligible member
     Then I see an empty/no-results state
 
   Scenario: Map view mirrors the filtered feed
-    Given I have applied filters to the events feed
+    Given I have applied filters to the events feed as a booking-eligible member
     When I open the map view
     Then the map shows markers only for the currently filtered events
     And selecting a marker opens a preview with a link to book

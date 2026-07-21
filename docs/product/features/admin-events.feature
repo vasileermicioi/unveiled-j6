@@ -87,8 +87,32 @@ Feature: Admin — Event Management
     Given the events and partners tables are both empty
     When I trigger the demo data seed
     Then a small set of sample partners and events is created
+    And a small subset of upcoming demo events is featured for Discover
 
   Scenario: Seed demo data is a no-op when data exists
     Given at least one partner or event already exists
     When I trigger the demo data seed
     Then no new demo data is created
+
+  Scenario: List featured events
+    When I open the Featured tab ("/:locale/admin/featured")
+    Then I see the current featured list ordered by sort_order
+    And each row shows at least title, partner, and date/time
+
+  Scenario: Add by searching existing events
+    When I search on the featured add page ("/:locale/admin/featured/add?q=")
+    Then I see matching catalog events that are not already featured
+    And submitting add creates a featured row for that event
+    And I am redirected to the featured list
+
+  Scenario: Admin remove from featured keeps catalog event
+    Given an upcoming event is on the Featured list
+    When I confirm remove on "/:locale/admin/featured/:eventId/remove"
+    Then the event disappears from the featured list
+    And Discover no longer lists it
+    And the event remains available in "/:locale/admin/events"
+
+  Scenario: Empty featured list
+    Given no featured rows exist
+    When I open "/:locale/admin/featured"
+    Then I see an empty state and a path to add featured events

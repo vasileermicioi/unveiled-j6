@@ -4,7 +4,11 @@ import { DEMO_DISCOVERY_TITLES, partnerNameForSeedTitle } from "@unveiled/db/see
 import { signupFreshUser } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
 import { activateMemberForBooking, hasDatabaseUrl } from "../fixtures/billing";
-import { getEventIdByTitle, getPartnerIdByName } from "../fixtures/catalog";
+import {
+  ensureDemoFeaturedSplit,
+  getEventIdByTitle,
+  getPartnerIdByName,
+} from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
 
 /** Mirrors `CONSENT_STORAGE_KEY` in apps/web — keep in sync. */
@@ -33,13 +37,15 @@ async function setConsent(page: Page, decision: "accepted" | "declined"): Promis
 }
 
 /**
- * Fresh USER + full onboarding — preferred over E2E_USER_* login, which often
- * stalls on Neon Auth when the seeded password/account drifts.
- * Lands on `/:locale/membership` after the wizard.
+ * Fresh USER + full onboarding + booking-eligible subscription.
+ * Preferred over E2E_USER_* login (Neon Auth seed drift). Feed/map require
+ * booking-eligible status after the featured Discover browse gate.
  */
 async function loginMember(page: Page, locale: Locale): Promise<void> {
-  await signupFreshUser(page, locale);
+  test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member for /events browse");
+  const user = await signupFreshUser(page, locale);
   await completeOnboardingWizard(page, locale);
+  await activateMemberForBooking(user.email);
 }
 
 /** Berlin calendar YYYY-MM-DD for `daysFromToday` (can be negative). */
@@ -88,7 +94,10 @@ test.describe("event-discovery.feature", () => {
     locale,
   }) => {
     await page.context().clearCookies();
-    // Prefer Discover → public detail (no test-process DB). Fall back to seeded id if preview empty.
+    if (hasDatabaseUrl()) {
+      await ensureDemoFeaturedSplit();
+    }
+    // Prefer Discover → public detail. Fall back to seeded id if preview empty.
     await page.goto(`/${locale}/discover`);
     const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
     if ((await detailCta.count()) > 0) {
@@ -434,6 +443,8 @@ test.describe("event-discovery.feature", () => {
   });
 
   test("Scenario: Public discovery preview for guests", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to ensure featured Discover seed split");
+    await ensureDemoFeaturedSplit();
     await page.context().clearCookies();
     await page.goto(`/${locale}/discover`);
 
@@ -448,15 +459,50 @@ test.describe("event-discovery.feature", () => {
       page.getByText(/mitgliedschaft buchbar|bookable with your membership/i).first(),
     ).toBeVisible();
 
-    // Preview events (seeded upcoming) — guest CTA is Book Now / Bin dabei → detail (not booking POST)
+    // Featured preview — guest CTA is Book Now / Bin dabei → detail (not booking POST)
     const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
     await expect(detailCta).toBeVisible({ timeout: 15_000 });
     await expect(detailCta).toHaveAttribute("href", new RegExp(`/${locale}/events/[^/?#]+`));
+    // Prefer theaterFuture — tonight (daysFromToday: 0) may already be past for upcomingOnly.
+    await expect(page.getByText(TITLES.theaterFuture)).toBeVisible({ timeout: 15_000 });
 
     // Partner venues section
     await expect(page.getByText(/partnerorte|partner venues/i).first()).toBeVisible();
 
     // Guests do not get a public full feed equivalent to /events on Discover.
     await expect(page).not.toHaveURL(new RegExp(`/${locale}/events/?$`));
+  });
+
+  test("Scenario: Guest sees featured Discover", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to ensure featured Discover seed split");
+    await ensureDemoFeaturedSplit();
+    await page.context().clearCookies();
+    await page.goto(`/${locale}/discover`);
+
+    await expect(page.getByText(TITLES.theaterFuture)).toBeVisible({ timeout: 15_000 });
+    // Non-featured upcoming catalog event must not appear solely for being soon.
+    await expect(page.getByText(TITLES.konzert)).toHaveCount(0);
+  });
+
+  test("Scenario: Inactive member cannot browse the full feed", async ({ page, locale }) => {
+    await page.context().clearCookies();
+    await signupFreshUser(page, locale);
+    await completeOnboardingWizard(page, locale);
+    // Fresh signup stays INACTIVE — must not reach the full feed.
+    await page.goto(`/${locale}/events`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/discover`), { timeout: 15_000 });
+    await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toHaveCount(0);
+  });
+
+  test("Scenario: Active member nav shows Browse events", async ({ page, locale }) => {
+    await loginMember(page, locale);
+    await page.goto(`/${locale}/events`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/events`), { timeout: 15_000 });
+
+    const browseNav = page
+      .getByRole("banner")
+      .getByRole("link", { name: /events entdecken|browse events/i });
+    await expect(browseNav).toBeVisible({ timeout: 15_000 });
+    await expect(browseNav).toHaveAttribute("href", new RegExp(`/${locale}/events`));
   });
 });

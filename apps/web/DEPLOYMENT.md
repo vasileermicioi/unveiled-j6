@@ -459,10 +459,10 @@ Phase 4 is complete when staging supports the admin → public catalog loop with
 ### Catalog demo script
 
 1. Schema migrated via `bun run build` (or `bun run db:migrate`) against staging `DATABASE_URL`.
-2. Sign in as ADMIN → `/de/admin`. If DB empty, run **Seed demo data** or `bun run seed:demo`. To replace an existing catalog with fresh Berlin venue demo data: `bun run seed:demo -- --reset` (deletes all partners and events first; also removes pagination seed rows).
+2. Sign in as ADMIN → `/de/admin`. If DB empty, run **Seed demo data** or `bun run seed:demo`. To replace an existing catalog with fresh Berlin venue demo data: `bun run seed:demo -- --reset` (deletes all partners and events first; also removes pagination seed rows). Fresh seed also features a small upcoming subset for Discover.
 3. Create a partner with logo (upload or URL) → appears on `/de/admin/partners`.
-4. Create an event with image → listed on `/de/admin/events`.
-5. Open `/de` — event appears in Discover preview grid (up to 6 upcoming).
+4. Create an event with image → listed on `/de/admin/events`. Add it under **Featured** (`/de/admin/featured`) if it should appear on Discover.
+5. Open `/de/discover` — admin-featured upcoming events appear (not the full upcoming catalog).
 6. Open `/de/events/:id` **without login** — hero srcset, event copy, `og:image` uses `og-1200x630` variant URL under `IMAGE_PUBLIC_BASE_URL`.
 7. View Source — Event JSON-LD stub and unique `<title>` / meta description.
 
@@ -481,7 +481,7 @@ Public catalog surfaces (`@unveiled/ui` EventCard, locale-home Discover live gri
 
 ### Demo seed images (Wikimedia Commons)
 
-`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **local JPEGs** in `public/images/seed/{partners,events}/`. Refresh fixture + images with `bun run seed:fetch-abundo` (partner logos prefer Wikimedia venue photos; event images from Abundo; dates stay relative — resolved at seed time). Seed then uploads six JPEG variants to R2 via `processImageFromBuffer`.
+`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **local JPEGs** in `public/images/seed/{partners,events}/`, then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`. Refresh fixture + images with `bun run seed:fetch-abundo` (partner logos prefer Wikimedia venue photos; event images from Abundo; dates stay relative — resolved at seed time). Seed then uploads six JPEG variants to R2 via `processImageFromBuffer`. Existing catalogs seeded before Featured Discover need `seed:demo -- --reset` (or manual Featured tab adds) to populate Discover.
 
 ```bash
 # Fresh catalog on empty DB

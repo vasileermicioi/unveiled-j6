@@ -20,21 +20,21 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 ## Guest home, Discover & public marketing
 
-**Guest marketing home is locale home.** `/:locale` renders the membership conversion landing (headline, phone mockup, plan card, benefits). **Discover** is `/:locale/discover` (curated upcoming events + partner venue highlights). Bare `/discover` **302** redirects to `/:locale/discover` via `Accept-Language`.
+**Guest marketing home is locale home.** `/:locale` renders the membership conversion landing (headline, phone mockup, plan card, benefits). **Discover** is `/:locale/discover` (admin-**featured** upcoming events + partner venue highlights). Bare `/discover` **302** redirects to `/:locale/discover` via `Accept-Language`.
 
 ### Guest journey (Home → Discover → Events)
 
 1. Guest lands on marketing home (`/:locale`) — CTA to `/signup`.
 2. Navbar/footer **Discover** opens `/:locale/discover`.
-3. Preview **EventCard** CTAs link to public `/events/:id` (“Book Now” / “Bin dabei”, or “Waitlist” / “Warteliste” when sold out).
-4. Path to the **full browse** experience: primary CTA to **signup or login**; after auth (and onboarding if incomplete), land on member `/events`.
+3. Featured **EventCard** CTAs link to public `/events/:id` (“Book Now” / “Bin dabei”, or “Waitlist” / “Warteliste” when sold out).
+4. Path to the **full browse** experience: signup/login, complete onboarding, then an **active** (booking-eligible) subscription → member `/events`. Non-active members stay on Discover.
 5. Guests do **not** get a public full upcoming-events list equivalent to `/events`.
 
 | Route | Auth | Notes |
 |---|---|---|
-| `/:locale` | — | **Guest home** — membership marketing + signup CTA. Signed-in `USER` → `/events` (or onboarding); `ADMIN` → `/admin` |
+| `/:locale` | — | **Guest home** — membership marketing + signup CTA. Signed-in booking-eligible `USER` → `/events` (or onboarding); non-active `USER` → `/discover`; `ADMIN` → `/admin` |
 | `/discover` | — | **302** → `/:locale/discover` |
-| `/:locale/discover` | — | **Discover** — curated event preview + partner venues |
+| `/:locale/discover` | — | **Discover** — admin-featured upcoming events + partner venues. Guests + non-booking-eligible `USER` OK; booking-eligible `USER` → **302** `/events`; `ADMIN` keeps access (QA) |
 | `/how-it-works` | — | Static explainer |
 | `/faq` | — | FAQ accordion |
 | `/membership` | — | Plan details; Stripe checkout when signed in (Phase 6+) |
@@ -79,9 +79,9 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 | Route | Auth | Role | Notes |
 |---|---|---|---|
-| `/events` | ✅ | USER | Member discovery feed (filters + pagination). **Not** a public guest list. |
-| `/events?category=&partnerId=&from=&to=&page=` | ✅ | USER | Filtered + paginated feed (GET query params, SSR) |
-| `/events/map?category=&partnerId=&from=&to=&page=` | ✅ | USER | Map view — same filters + pagination as list (tabs switch preserves query) |
+| `/events` | ✅ | USER, booking-eligible | Member discovery feed (filters + pagination). Guests → auth redirect; non-active `USER` → **302** `/discover`. **Not** a public guest list. |
+| `/events?category=&partnerId=&from=&to=&page=` | ✅ | USER, booking-eligible | Filtered + paginated feed (GET query params, SSR) |
+| `/events/map?category=&partnerId=&from=&to=&page=` | ✅ | USER, booking-eligible | Map view — same filters + pagination as list; same audience gate as `/events` |
 | `/events/:id/book` | ✅ | USER, ACTIVE subscription | Booking form (ticket quantity) |
 | `/events/:id/book/confirm` | ✅ | USER | Confirmation / redemption code / ICS |
 | `/events/:id/waitlist` | ✅ | USER | Join waitlist when sold out |
@@ -101,9 +101,10 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 | Audience | Primary nav (header) | Events path |
 |---|---|---|
-| **Guest** | Discover (`/:locale`), FAQ; Log in (Sign up via auth routes; How it works / Membership via direct URL / in-flow CTAs) | Preview → `/events/:id`; full feed via signup/login → `/events` |
-| **Member (`USER`)** | Discover, FAQ; Saved + Bookings; credits badge; profile; logout | `/events`, `/events/map`, `/saved`, public detail |
-| **Admin** | Discover + FAQ where shared; admin chrome → `/admin` | Catalog via `/admin/events` |
+| **Guest** | Discover → `/discover`, FAQ; Log in (Sign up via auth routes; How it works / Membership via direct URL / in-flow CTAs) | Featured preview → `/events/:id`; full feed via signup/login + active sub → `/events` |
+| **Member (`USER`) non-active** | Discover → `/discover`, FAQ; Saved + Bookings; credits badge; profile; logout | Discover featured list; `/events` / map redirect to Discover; public detail |
+| **Member (`USER`) booking-eligible** | **Browse events** → `/events`, FAQ; Saved + Bookings; credits badge; profile; logout | `/events`, `/events/map`, `/saved`, public detail |
+| **Admin** | Discover + FAQ where shared; admin chrome → `/admin` | Catalog via `/admin/events`; Featured tab at `/admin/featured` |
 
 See `ui/app-shell.md` for header/footer detail.
 
@@ -120,6 +121,9 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin/events/:id/edit` | ✅ | ADMIN | Edit event |
 | `/admin/events/:id/delete` | ✅ | ADMIN | Delete confirmation |
 | `/admin/events/:id/codes` | ✅ | ADMIN | Export redemption codes (CSV) |
+| `/admin/featured` | ✅ | ADMIN | Featured events list |
+| `/admin/featured/add?q=` | ✅ | ADMIN | Search and add featured event |
+| `/admin/featured/:eventId/remove` | ✅ | ADMIN | Remove from featured (catalog event kept) |
 | `/admin/bookings/:id/cancel` | ✅ | ADMIN | Cancel booking (+ waitlist promo path) |
 | `/admin/waitlist?eventId=&status=&page=` | ✅ | ADMIN | Waitlist list |
 | `/admin/waitlist/:id/promote` | ✅ | ADMIN | Manual promote |

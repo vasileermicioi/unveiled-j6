@@ -2,6 +2,7 @@ export * from "./datetime";
 export * from "./discovery";
 export * from "./errors";
 export * from "./events";
+export * from "./featured-events";
 // Image pipeline (`@unveiled/images` / sip WASM) — import `@unveiled/db/catalog/images`
 // from server routes only. Do not re-export here (pulls WASM into client islands).
 export * from "./partners";

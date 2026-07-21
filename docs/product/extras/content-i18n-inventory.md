@@ -47,6 +47,8 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `km` | km | km |
 | `eventList` | Events | Events |
 | `createEvent` | Event erstellen | Create Event |
+| `nav.discover` (shell) | Entdecken | Discover |
+| `browseEvents` (shell, booking-eligible) | Events entdecken | Browse events |
 
 ## `filters`
 
@@ -134,7 +136,8 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 - Landing page hero/marketing copy (inline in `App.tsx`)
 - How It Works page steps/value points (`HowItWorksPage.tsx`)
 - FAQ questions/answers (`HelpSection.tsx` — hardcoded 3 Q&As per language)
-- Discover/marketing page copy (`AccessPage.tsx`)
+- Discover/marketing page copy (`apps/web/app/lib/content/discover.ts` — featured empty state: "Aktuell keine empfohlenen Events." / "No featured events right now.")
+- App shell nav Discover / Browse events strings (`apps/web/app/lib/copy.ts` — `nav.discover`, `browseEvents`)
 - Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getDistrictLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants` (e.g. `X-Berg`). District UI labels: DE uses Berlin shorthand for `X-Berg` / `P-Berg` / `F-Hain` (other districts keep proper names); EN uses expanded names (`Kreuzberg`, `Prenzlauer Berg`, `Friedrichshain`). Timing/days/languages/moods are translated per locale. Section chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`).
 - "SECURE RSVP // NO REFUNDS" booking policy copy (hardcoded in `BookingModal.tsx`, not in `translations.ts`)
 - Venue check-in inline copy (`BookingsView.tsx`)

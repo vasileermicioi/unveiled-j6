@@ -1,7 +1,8 @@
 import type { AppSession } from "@unveiled/auth";
+import { isBookingEligibleStatus } from "@unveiled/db";
 import type { Context } from "hono";
 
-import { getSession } from "./auth";
+import { getAuthOptions, getSession } from "./auth";
 import { buildLoginRedirectUrl } from "./auth-middleware";
 import type { Locale } from "./locale";
 import { getLocaleParam } from "./onboarding-route";
@@ -51,4 +52,53 @@ export async function guardMemberAppRoute(c: Context): Promise<MemberAppGuardRes
   }
 
   return { ok: true, session, locale };
+}
+
+/**
+ * Guard for the full event list and map (`/events`, `/events/map`).
+ * Non-booking-eligible USER → Discover. ADMIN keeps access (not sent to Discover).
+ * Guests keep the auth redirect from {@link guardMemberAppRoute}.
+ */
+export async function guardActiveMemberFeedRoute(c: Context): Promise<MemberAppGuardResult> {
+  const guard = await guardMemberAppRoute(c);
+  if (!guard.ok) {
+    return guard;
+  }
+
+  if (guard.session.user.role !== "USER") {
+    return guard;
+  }
+
+  // Prefer middleware flag when present; fall back to a subscription lookup.
+  const fromContext = c.get("canBrowseEvents");
+  if (fromContext === true) {
+    return guard;
+  }
+  if (fromContext === false) {
+    return {
+      ok: false,
+      response: c.redirect(`/${guard.locale}/discover`, 302),
+    };
+  }
+
+  try {
+    const { db } = getAuthOptions();
+    const subscription = await db.query.subscriptions.findFirst({
+      where: (fields, { eq }) => eq(fields.userId, guard.session.user.id),
+      columns: { status: true },
+    });
+    if (!isBookingEligibleStatus(subscription?.status)) {
+      return {
+        ok: false,
+        response: c.redirect(`/${guard.locale}/discover`, 302),
+      };
+    }
+  } catch {
+    return {
+      ok: false,
+      response: c.redirect(`/${guard.locale}/discover`, 302),
+    };
+  }
+
+  return guard;
 }

@@ -16,15 +16,24 @@ type AppNavbarProps = {
   session: AppSession | null;
   /** Live saved-events count for USER badge; omit or 0 hides the badge. */
   savedCount?: number;
+  /** USER with booking-eligible subscription — Discover ↔ Browse events. */
+  canBrowseEvents?: boolean;
 };
 
-export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavbarProps) {
+export function AppNavbar({
+  locale,
+  pathname,
+  session,
+  savedCount = 0,
+  canBrowseEvents = false,
+}: AppNavbarProps) {
   const copy = getCopy(locale);
   const adminCopy = getAdminCopy(locale);
   const showGuestAuthActions = !session && !isAuthPage(pathname);
   const loginHref = localizedPath(locale, "login");
   const adminHref = localizedPath(locale, "admin");
   const eventsHref = localizedPath(locale, "events");
+  const discoverHref = localizedPath(locale, "discover");
   const homeHref = localizedPath(locale, "");
   const savedHref = localizedPath(locale, "saved");
   const bookingsHref = localizedPath(locale, "bookings");
@@ -39,9 +48,23 @@ export function AppNavbar({ locale, pathname, session, savedCount = 0 }: AppNavb
   const savedIsActive = isActiveNavPath(pathname, savedHref);
   const bookingsIsActive = isActiveNavPath(pathname, bookingsHref);
   const profileIsActive = pathname === profileHref || pathname.startsWith(`${profileHref}/`);
-  const logoHref = isAdmin ? adminHref : isUser ? eventsHref : homeHref;
+  const logoHref = isAdmin
+    ? adminHref
+    : isUser
+      ? canBrowseEvents
+        ? eventsHref
+        : discoverHref
+      : homeHref;
 
   const navLinks = NAV_ITEMS.map((key) => {
+    if (key === "discover" && canBrowseEvents) {
+      return {
+        key,
+        href: eventsHref,
+        label: copy.browseEvents,
+        isActive: isActiveNavPath(pathname, eventsHref),
+      };
+    }
     const href = localizedPath(locale, NAV_SEGMENTS[key]);
     return {
       key,

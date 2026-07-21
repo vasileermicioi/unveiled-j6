@@ -362,6 +362,39 @@ test.describe("admin-events.feature", () => {
     expect(body).toMatch(/booking_id|redemption_code/i);
   });
 
+  test("Scenario: Admin remove from featured keeps catalog event", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+
+    await navigateAdminTab(page, locale, "featured");
+    await page.getByRole("link", { name: /event hinzufügen|add event/i }).click();
+    await expect(page).toHaveURL(/\/admin\/featured\/add/);
+    await page.goto(`/${locale}/admin/featured/add?q=${encodeURIComponent(event.title)}`);
+    const addRow = page.getByRole("row").filter({ hasText: event.title });
+    await expect(addRow).toBeVisible({ timeout: 15_000 });
+    await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), { timeout: 30_000 });
+    await expect(page.getByText(event.title)).toBeVisible();
+
+    const featuredRow = page.getByRole("row").filter({ hasText: event.title });
+    await featuredRow.getByRole("link", { name: /entfernen|remove/i }).click();
+    await expect(page).toHaveURL(/\/admin\/featured\/.+\/remove/);
+    await page
+      .getByRole("button", { name: /aus featured entfernen|remove from featured/i })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), { timeout: 30_000 });
+    await expect(page.getByRole("row").filter({ hasText: event.title })).toHaveCount(0);
+
+    await page.goto(`/${locale}/discover`);
+    await expect(page.getByText(event.title)).toHaveCount(0);
+
+    await page.goto(`/${locale}/admin/events`);
+    await expect(page.getByRole("row").filter({ hasText: event.title })).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
   test("Scenario: Seed demo data (empty environment only)", async ({ page, locale }) => {
     await navigateAdminTab(page, locale, "overview");
     const seedButton = page.getByRole("button", { name: /demo-daten laden|load demo data/i });
