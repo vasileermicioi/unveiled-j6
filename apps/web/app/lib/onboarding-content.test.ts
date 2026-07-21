@@ -30,6 +30,13 @@ describe("onboarding-content i18n", () => {
     expect(getOnboardingCopy("en").next).toBe("NEXT");
   });
 
+  test("accessibility section and option labels are split by locale", () => {
+    expect(getOnboardingCopy("en").accessibilitySectionLabel).toBe("ACCESSIBILITY?");
+    expect(getOnboardingCopy("en").accessibilityOptionLabel).toBe("Required");
+    expect(getOnboardingCopy("de").accessibilitySectionLabel).toBe("BARRIEREFREIHEIT?");
+    expect(getOnboardingCopy("de").accessibilityOptionLabel).toBe("Erforderlich");
+  });
+
   test("every allowlist value has localized labels in both locales", () => {
     for (const locale of locales) {
       for (const value of AGE_GROUPS) {

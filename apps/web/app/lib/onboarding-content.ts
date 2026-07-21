@@ -26,7 +26,8 @@ type OnboardingCopy = {
   timingLabel: string;
   daysLabel: string;
   languagePrefLabel: string;
-  accessibilityLabel: string;
+  accessibilitySectionLabel: string;
+  accessibilityOptionLabel: string;
   next: string;
   skip: string;
   finish: string;
@@ -48,7 +49,8 @@ const copy: Record<Locale, OnboardingCopy> = {
     timingLabel: "WANN HAST DU ZEIT?",
     daysLabel: "WELCHE TAGE?",
     languagePrefLabel: "SPRACHEN?",
-    accessibilityLabel: "BARRIEREFREIHEIT ERFORDERLICH?",
+    accessibilitySectionLabel: "BARRIEREFREIHEIT?",
+    accessibilityOptionLabel: "Erforderlich",
     next: "WEITER",
     skip: "ÜBERSPRINGEN",
     finish: "FERTIG",
@@ -68,7 +70,8 @@ const copy: Record<Locale, OnboardingCopy> = {
     timingLabel: "WHEN DO YOU HAVE TIME?",
     daysLabel: "WHICH DAYS?",
     languagePrefLabel: "LANGUAGES?",
-    accessibilityLabel: "ACCESSIBILITY REQUIRED?",
+    accessibilitySectionLabel: "ACCESSIBILITY?",
+    accessibilityOptionLabel: "Required",
     next: "NEXT",
     skip: "SKIP",
     finish: "FINISH",
@@ -168,11 +171,11 @@ const moodLabels: Record<Locale, Record<(typeof MOODS)[number], string>> = {
 const districtLabels: Record<Locale, Record<(typeof DISTRICTS)[number], string>> = {
   de: {
     Mitte: "Mitte",
-    "X-Berg": "Kreuzberg",
-    "P-Berg": "Prenzlauer Berg",
+    "X-Berg": "X-Berg",
+    "P-Berg": "P-Berg",
     Charlottenburg: "Charlottenburg",
     Wedding: "Wedding",
-    "F-Hain": "Friedrichshain",
+    "F-Hain": "F-Hain",
     Schöneberg: "Schöneberg",
   },
   en: {

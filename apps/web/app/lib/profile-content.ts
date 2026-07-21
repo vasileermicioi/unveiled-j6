@@ -1,8 +1,10 @@
 import type { Locale } from "./locale";
 
 export type ProfileCopy = {
+  eyebrow: string;
   title: string;
   subtitle: string;
+  tabNavLabel: string;
   walletTitle: string;
   walletBalance: (credits: number) => string;
   refillCta: string;
@@ -11,7 +13,6 @@ export type ProfileCopy = {
   lastNameLabel: string;
   emailLabel: string;
   saveIdentity: string;
-  linksTitle: string;
   preferencesLink: string;
   billingLink: string;
   passwordLink: string;
@@ -30,8 +31,10 @@ export type ProfileCopy = {
 
 const copy: Record<Locale, ProfileCopy> = {
   de: {
+    eyebrow: "Konto",
     title: "Dein Konto",
     subtitle: "Identität, Credits und Vibes verwalten.",
+    tabNavLabel: "Kontobereiche",
     walletTitle: "Credit-Wallet",
     walletBalance: (credits) => `${credits} Credits`,
     refillCta: "Credits aufladen",
@@ -40,7 +43,6 @@ const copy: Record<Locale, ProfileCopy> = {
     lastNameLabel: "Nachname",
     emailLabel: "E-Mail",
     saveIdentity: "Speichern",
-    linksTitle: "Konto",
     preferencesLink: "Vibes / Präferenzen",
     billingLink: "Abrechnung",
     passwordLink: "Passwort ändern",
@@ -57,8 +59,10 @@ const copy: Record<Locale, ProfileCopy> = {
     successPreferences: "Präferenzen gespeichert.",
   },
   en: {
+    eyebrow: "Account",
     title: "Your account",
     subtitle: "Manage identity, credits, and vibes.",
+    tabNavLabel: "Account sections",
     walletTitle: "Credit wallet",
     walletBalance: (credits) => `${credits} credits`,
     refillCta: "Refill credits",
@@ -67,7 +71,6 @@ const copy: Record<Locale, ProfileCopy> = {
     lastNameLabel: "Last name",
     emailLabel: "Email",
     saveIdentity: "Save",
-    linksTitle: "Account",
     preferencesLink: "Vibes / Preferences",
     billingLink: "Billing",
     passwordLink: "Change password",

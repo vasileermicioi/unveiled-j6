@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export type BillingCopy = {
+  eyebrow: string;
   title: string;
   subtitle: string;
   planLabel: string;
@@ -42,6 +43,7 @@ export type BillingCopy = {
 
 const copy: Record<Locale, BillingCopy> = {
   de: {
+    eyebrow: "Konto",
     title: "Abrechnung",
     subtitle: "Plan, Zahlung und Kündigung verwalten.",
     planLabel: "Plan",
@@ -92,6 +94,7 @@ const copy: Record<Locale, BillingCopy> = {
     noRolloverNote: "Ungenutzte Credits verfallen am Periodenende — kein Übertrag.",
   },
   en: {
+    eyebrow: "Account",
     title: "Billing",
     subtitle: "Manage plan, payment, and cancellation.",
     planLabel: "Plan",

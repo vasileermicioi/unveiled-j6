@@ -7,6 +7,9 @@
 #     mechanics (immediate CANCELLED_PENDING, access retained until period end).
 #   - Account deletion and data export (GDPR) are new capabilities surfaced from this page — full
 #     scenarios live in auth.feature since they're identity-lifecycle actions, not billing actions.
+#   - Account IA uses admin-style navigational tabs (wallet, personal details, vibes, billing,
+#     password, export, delete). The previous stacked Account link card on /profile is removed.
+#     Identity edits live on /profile/details; /profile is the credit wallet tab.
 
 Feature: Member Profile
   As a member

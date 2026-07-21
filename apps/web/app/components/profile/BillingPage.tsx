@@ -5,6 +5,8 @@ import type { BillingCopy } from "../../lib/billing-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
+import { ProfileLayout } from "./ProfileLayout";
+
 export type BillingPageProps = {
   locale: Locale;
   copy: BillingCopy;
@@ -30,7 +32,6 @@ export function BillingPage({
   error = null,
   success = null,
 }: BillingPageProps) {
-  const profileHref = localizedPath(locale, "profile");
   const membershipHref = localizedPath(locale, "membership");
   const cancelHref = localizedPath(locale, "profile/billing/cancel");
   const portalAction = localizedPath(locale, "profile/billing");
@@ -55,16 +56,7 @@ export function BillingPage({
   const showCancelPending = status === "CANCELLED_PENDING";
 
   return (
-    <Surface
-      className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 md:py-14"
-      variant="transparent"
-    >
-      <Surface className="flex max-w-2xl flex-col gap-3" variant="transparent">
-        <Heading level={1}>{copy.title}</Heading>
-        <Paragraph color="muted">{copy.subtitle}</Paragraph>
-        <Link href={profileHref}>{copy.backToProfile}</Link>
-      </Surface>
-
+    <ProfileLayout activeTab="billing" eyebrow={copy.eyebrow} headline={copy.title} locale={locale}>
       <Card className="mx-auto w-full max-w-2xl">
         <Card.Header className="flex flex-col gap-3">
           <Heading level={2}>{copy.planLabel}</Heading>
@@ -149,6 +141,6 @@ export function BillingPage({
           ) : null}
         </Card.Content>
       </Card>
-    </Surface>
+    </ProfileLayout>
   );
 }

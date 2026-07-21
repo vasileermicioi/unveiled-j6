@@ -176,13 +176,20 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
         </Surface>
       </Surface>
 
-      <NativePreferenceOption
-        defaultChecked={profile.accessibility ?? false}
-        label={onboarding.accessibilityLabel}
-        name="accessibility"
-        type="checkbox"
-        value="true"
-      />
+      <Surface className="flex flex-col gap-4" variant="transparent">
+        <Label className="onboarding-form__section-label">
+          {onboarding.accessibilitySectionLabel}
+        </Label>
+        <Surface className="onboarding-form__options" variant="transparent">
+          <NativePreferenceOption
+            defaultChecked={profile.accessibility ?? false}
+            label={onboarding.accessibilityOptionLabel}
+            name="accessibility"
+            type="checkbox"
+            value="true"
+          />
+        </Surface>
+      </Surface>
 
       <Button className="button button--primary button--md sm:max-w-xs" type="submit">
         {copy.savePreferences}

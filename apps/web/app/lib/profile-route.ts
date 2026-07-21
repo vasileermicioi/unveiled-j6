@@ -167,7 +167,7 @@ export async function handleProfileIdentityPost(c: Context): Promise<
     });
     return {
       kind: "redirect",
-      location: `/${locale}/profile?saved=identity`,
+      location: `/${locale}/profile/details?saved=identity`,
     };
   } catch (error) {
     if (error instanceof ProfileValidationError) {

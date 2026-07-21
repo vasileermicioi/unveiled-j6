@@ -42,13 +42,20 @@ test.describe("profile.feature", () => {
 
     const user = await onboardFreshMember(page, locale);
     await page.goto(`/${locale}/profile`);
-    await expect(page.getByRole("heading", { name: /dein konto|your account/i })).toBeVisible();
+    await expect(
+      page.getByRole("tablist", { name: /kontobereiche|account sections/i }),
+    ).toBeVisible();
+    await page.getByRole("link", { name: /persönliche daten|personal details/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/profile/details`));
+    await expect(
+      page.getByRole("heading", { name: /persönliche daten|personal details/i }),
+    ).toBeVisible();
 
     await page.getByLabel(/vorname|first name/i).fill("E2EUpdated");
     await page.getByLabel(/nachname|last name/i).fill(user.lastName);
     await page.getByLabel(/e-?mail/i).fill(user.email);
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/profile\\?saved=identity`));
+    await expect(page).toHaveURL(new RegExp(`/${locale}/profile/details\\?saved=identity`));
     await expect(page.getByText(/profil aktualisiert|profile updated/i)).toBeVisible();
     await expect(page.getByLabel(/vorname|first name/i)).toHaveValue("E2EUpdated");
   });
@@ -58,7 +65,10 @@ test.describe("profile.feature", () => {
 
     await onboardFreshMember(page, locale);
     await page.goto(`/${locale}/profile`);
-    await page.getByRole("link", { name: /passwort ändern|change password/i }).click();
+    await page
+      .getByRole("tablist", { name: /kontobereiche|account sections/i })
+      .getByRole("link", { name: /passwort ändern|change password/i })
+      .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/profile/security`));
     await expect(page.getByRole("heading", { name: /sicherheit|security/i })).toBeVisible();
     // Full Neon Auth password mutation is provider-owned; entry point is Phase 7 scope.
@@ -132,17 +142,21 @@ test.describe("profile.feature", () => {
 
     await onboardFreshMember(page, locale);
     await page.goto(`/${locale}/profile`);
-    await expect(page.getByRole("link", { name: /daten exportieren|export data/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /konto löschen|delete account/i })).toBeVisible();
+    const tabs = page.getByRole("tablist", { name: /kontobereiche|account sections/i });
+    await expect(tabs.getByRole("link", { name: /daten exportieren|export data/i })).toBeVisible();
+    await expect(tabs.getByRole("link", { name: /konto löschen|delete account/i })).toBeVisible();
 
-    await page.getByRole("link", { name: /daten exportieren|export data/i }).click();
+    await tabs.getByRole("link", { name: /daten exportieren|export data/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/profile/data-export`));
     await expect(
       page.getByRole("heading", { name: /daten exportieren|export your data/i }),
     ).toBeVisible();
 
     await page.goto(`/${locale}/profile`);
-    await page.getByRole("link", { name: /konto löschen|delete account/i }).click();
+    await page
+      .getByRole("tablist", { name: /kontobereiche|account sections/i })
+      .getByRole("link", { name: /konto löschen|delete account/i })
+      .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/profile/delete-account`));
     await expect(
       page.getByRole("heading", { name: /konto löschen|delete account/i }),

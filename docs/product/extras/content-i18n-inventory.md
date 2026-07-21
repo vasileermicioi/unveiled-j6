@@ -39,7 +39,8 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `timingLabel` | WANN HAST DU ZEIT? | WHEN DO YOU HAVE TIME? |
 | `daysLabel` | WELCHE TAGE? | WHICH DAYS? |
 | `languagePrefLabel` | SPRACHEN? | LANGUAGES? |
-| `accessibilityLabel` | BARRIEREFREIHEIT ERFORDERLICH? | ACCESSIBILITY REQUIRED? |
+| `accessibilitySectionLabel` | BARRIEREFREIHEIT? | ACCESSIBILITY? |
+| `accessibilityOptionLabel` | Erforderlich | Required |
 | `finish` | FERTIG | FINISH |
 | `next` | WEITER | NEXT |
 | `skip` | ÜBERSPRINGEN | SKIP |
@@ -94,6 +95,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 
 > ✅ **Resolved:** `secure: "SICHERE ZAHLUNG VIA STRIPE" / "SECURE PAYMENT VIA STRIPE"` referenced Stripe despite no integration existing in the old app. **Decided:** the rewrite implements real Stripe Billing (see `features/credits-subscription.feature`), so this copy is now accurate as-is and can be kept unchanged.
 > ✅ **Resolved:** `perks[2]` — app + inventory now use DE: "17 Credits jeden Monat" / EN: "17 fresh credits every month". Credits do **not** roll over (see `features/credits-subscription.feature`); the old "Credits roll over" / "Credits rollen mit" claim must not return.
+> ✅ **Resolved (membership card merge):** `subtitle` and `guarantee` are **not** rendered on checkout/guest membership UI (single-card layout). `subtitle` remains in the content module for SEO meta description (`membershipPageMeta`); `guarantee` may remain unused in the module.
 
 ## `redemption`
 
@@ -133,7 +135,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 - How It Works page steps/value points (`HowItWorksPage.tsx`)
 - FAQ questions/answers (`HelpSection.tsx` — hardcoded 3 Q&As per language)
 - Discover/marketing page copy (`AccessPage.tsx`)
-- Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getDistrictLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants` (e.g. `X-Berg`); DE/EN UI labels expand districts and translate timing/days/languages/moods. Section chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`).
+- Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getDistrictLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants` (e.g. `X-Berg`). District UI labels: DE uses Berlin shorthand for `X-Berg` / `P-Berg` / `F-Hain` (other districts keep proper names); EN uses expanded names (`Kreuzberg`, `Prenzlauer Berg`, `Friedrichshain`). Timing/days/languages/moods are translated per locale. Section chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`).
 - "SECURE RSVP // NO REFUNDS" booking policy copy (hardcoded in `BookingModal.tsx`, not in `translations.ts`)
 - Venue check-in inline copy (`BookingsView.tsx`)
 - Event detail checkout-card CTA/notice strings (guest unlock, membership notices, “Secure RSVP // No refunds”, total label) — live in `EventDetailPage.tsx` / locale helpers, not the old `translations.ts` catalog; see `ui/ui-component-map.md` Event detail entry. EventCard primary CTA uses catalog `bookNow` / `waitlist` for all viewer states (guest included).

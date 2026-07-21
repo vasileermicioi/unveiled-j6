@@ -13,7 +13,7 @@ Mapping aid for HeroUI rebuilds. Visual language: `design-tokens.md`. Ownership:
 | Navbar / Header | `apps/web` | Slim marketing nav Discover + FAQ; guest auth Log in only; How it works / Membership / Sign up out of header and footer nav — see `app-shell.md` |
 | Logo | `@unveiled/ui` | Three SVG tones — `assets-inventory.md`; Ladle stories under `packages/ui` |
 | Footer | `apps/web` | Discover → `/:locale/discover`; FAQ; legal column (no How it works / Membership) |
-| **PageSectionHeader** | `apps/web` | Default on-yellow page/section header: muted uppercase eyebrow + bold headline + full-width rule. Used on Discover, FAQ, auth, member feed/browse, book/confirm, waitlist join/cancel — distinct from bordered `PageHero` card heroes and the membership marketing hero card |
+| **PageSectionHeader** | `apps/web` | Default on-yellow page/section header: muted uppercase eyebrow + bold headline + full-width rule. Used on Discover, FAQ, auth, member feed/browse, book/confirm, waitlist join/cancel, Saved, My Tickets, and member account/profile pages (`/profile*`) — distinct from bordered `PageHero` card heroes and the membership marketing hero card |
 | Help / FAQ accordion | `apps/web` | HeroUI `Accordion` in `Card` |
 | Cookie banner | `apps/web` island | Accept/decline; gates map tiles |
 
@@ -60,9 +60,9 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 | Book | `/events/:id/book` | Dedicated SSR page (not modal); `PageSectionHeader` + form; full-bleed yellow treatment |
 | Confirm | `/events/:id/book/confirm` | `PageSectionHeader` + redemption + ICS |
 | Waitlist | `/events/:id/waitlist` | `PageSectionHeader` + join form (cancel pages same header pattern) |
-| Membership / checkout | `/membership` | Stripe Billing (Phase 6+); bordered marketing hero + **vertical** icon-bullet benefits list (not three-up perk cards) |
+| Membership / checkout | `/membership` | Stripe Billing (Phase 6+); **single** bordered marketing card with headline/CTA and **vertical** icon-bullet benefits list inside (not a second benefits card; not three-up perk cards). Checkout/guest views omit muted subtitle/guarantee marketing filler. |
 | My Tickets | `/bookings` | `PageSectionHeader` + list + empty state |
-| Profile | `/profile`, `/billing`, `/preferences`, GDPR pages | Split SSR forms |
+| Profile | `/profile`, `/profile/details`, `/profile/billing`, `/profile/preferences`, GDPR pages | `ProfileLayout` (`PageSectionHeader` + `ProfileTabNav` reusing `.admin-tabs*`) + per-tab SSR panels; no stacked Account link card; no muted subtitle under the title |
 
 ---
 

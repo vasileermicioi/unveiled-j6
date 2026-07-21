@@ -1,16 +1,16 @@
 # Member Profile
 
-Authenticated member account home: identity and credit wallet, cultural preferences (“Vibes”) editor, password-change entry via Neon Auth / Better Auth UI, profile billing (Customer Portal + cancel), and profile navigation entry points.
+Authenticated member account home: tabbed credit wallet and personal details, cultural preferences (“Vibes”) editor, password-change entry via Neon Auth / Better Auth UI, profile billing (Customer Portal + cancel), and profile tab navigation.
 
 ## Requirements
 
 ### Requirement: Profile identity and wallet
 
-The system SHALL provide an authenticated `/:locale/profile` page where members can view their current credit balance and update first name, last name, and email via SSR form POST. Identity persistence SHALL update `public.users` profile/email fields through a package-level helper (not route-only logic). Email changes SHALL remain aligned with Neon Auth / Better Auth identity (no second user store).
+The system SHALL provide an authenticated credit-wallet surface at `/:locale/profile` where members can view their current credit balance and refill via membership. Personal details (first name, last name, email) SHALL be editable on a dedicated account tab route `/:locale/profile/details` via SSR form POST. Identity persistence SHALL update `public.users` profile/email fields through a package-level helper (not route-only logic). Email changes SHALL remain aligned with Neon Auth / Better Auth identity (no second user store).
 
 #### Scenario: View and edit identity
 
-- **WHEN** a signed-in member submits updated first name, last name, or email on `/profile`
+- **WHEN** a signed-in member submits updated first name, last name, or email on `/profile/details`
 - **THEN** the account profile reflects the new values
 
 #### Scenario: View credit wallet
@@ -26,6 +26,11 @@ The system SHALL provide an authenticated `/:locale/profile` page where members 
 #### Scenario: Guest blocked from profile
 
 - **WHEN** an unauthenticated visitor requests `/:locale/profile`
+- **THEN** they are redirected to sign in
+
+#### Scenario: Guest blocked from personal details
+
+- **WHEN** an unauthenticated visitor requests `/:locale/profile/details`
 - **THEN** they are redirected to sign in
 
 ### Requirement: Cultural preferences editor
@@ -59,22 +64,46 @@ The system SHALL allow members to change their password through the Neon Auth / 
 
 ### Requirement: Profile navigation entry points
 
-The system SHALL expose navigation from `/profile` to preferences, membership refill, **billing** (`/:locale/profile/billing` — implemented page, not a stub-only path), password change, **data export** (`/:locale/profile/data-export`), and **account deletion** (`/:locale/profile/delete-account`). The member app shell SHALL provide a Profile control linking to `/:locale/profile` for signed-in USERs.
+The system SHALL expose account-section navigation as the profile tablist to preferences, **billing** (`/:locale/profile/billing` — implemented page, not a stub-only path), password change, **data export** (`/:locale/profile/data-export`), **account deletion** (`/:locale/profile/delete-account`), and personal details (`/:locale/profile/details`), plus membership refill from the wallet tab. The member app shell SHALL provide a Profile control linking to `/:locale/profile` for signed-in USERs. A stacked Account link card on `/profile` SHALL NOT be required once tabs ship.
 
 #### Scenario: Profile links to preferences and billing
 
 - **WHEN** a member views `/profile`
-- **THEN** they can navigate to `/profile/preferences` and to `/profile/billing`
+- **THEN** they can navigate via tabs to `/profile/preferences` and to `/profile/billing`
 
 #### Scenario: Profile links to GDPR flows
 
 - **WHEN** a member views `/profile`
-- **THEN** they can navigate to `/profile/data-export` and to `/profile/delete-account`
+- **THEN** they can navigate via tabs to `/profile/data-export` and to `/profile/delete-account`
+
+#### Scenario: Profile links to personal details
+
+- **WHEN** a member views `/profile`
+- **THEN** they can navigate via tabs to `/profile/details`
 
 #### Scenario: Navbar profile entry
 
 - **WHEN** a signed-in USER views the app shell
 - **THEN** a Profile control links to `/:locale/profile`
+
+### Requirement: Tabbed account navigation
+
+The member account area SHALL expose Credit wallet, Personal details, Vibes/Preferences, Billing, Change password, Export data, and Delete account as navigational tabs using the same link-tablist pattern as admin (`role="tablist"`, active tab via route). The previous stacked Account link card listing those destinations SHALL be removed once tabs ship. Each tab target SHALL remain an SSR page; identity and preference mutations SHALL continue as form POST on their dedicated routes.
+
+#### Scenario: Account sections are tabs
+
+- **WHEN** a signed-in member opens `/en/profile`
+- **THEN** they see a horizontal tablist for account sections and can open Personal details, Vibes/Preferences, Billing, and the other account destinations from tabs instead of a stacked link card
+
+#### Scenario: Deep links keep working
+
+- **WHEN** a member opens `/en/profile/billing` (or another existing profile sub-route)
+- **THEN** the billing tab is active and the billing page content is shown inside the account shell
+
+#### Scenario: Billing nested routes keep billing tab active
+
+- **WHEN** a member opens `/en/profile/billing/cancel`
+- **THEN** the billing tab is active
 
 ### Requirement: Profile entry points for GDPR
 
@@ -154,9 +183,37 @@ The cultural preferences editor at `/:locale/profile/preferences` SHALL use the 
 - **WHEN** a signed-in member opens `/profile/preferences`
 - **THEN** multi-value preference fields render as native checkboxes with visible labels
 - **AND** travel radius uses a native number input or native select
-- **AND** accessibility uses a native checkbox
+- **AND** accessibility uses a native checkbox with a short option label under a section title
 
 #### Scenario: Profile preference options follow locale
 - **WHEN** a member views `/de/profile/preferences`
 - **THEN** option labels are German according to onboarding locale maps
 - **AND** under `/en/profile/preferences` the same options are English
+
+### Requirement: Profile accessibility section shares onboarding chrome
+The cultural preferences editor at `/:locale/profile/preferences` SHALL present accessibility with the same section-label + options layout and shared copy keys as onboarding step 4 (locale section title + short option chip). The persisted value SHALL remain a boolean posted as `accessibility`.
+
+#### Scenario: Profile preferences accessibility mirrors Languages
+- **WHEN** a signed-in member views `/profile/preferences`
+- **THEN** accessibility has a section title above its checkbox option, parallel to the Languages block
+- **AND** the option label is the short locale string (not the former full-question chip alone)
+
+### Requirement: Profile hangout labels share onboarding district maps
+The cultural preferences editor at `/:locale/profile/preferences` SHALL render hangout (district) option labels via the same `getDistrictLabel` locale maps as onboarding. German UI SHALL show Berlin shorthand for `X-Berg`, `P-Berg`, and `F-Hain`; English UI SHALL show expanded district names. Stored values SHALL remain allowlist keys.
+
+#### Scenario: Profile preferences hangout chips follow locale
+- **WHEN** a member views `/en/profile/preferences`
+- **THEN** hangout options use expanded labels (e.g. Kreuzberg)
+- **AND** under `/de/profile/preferences` the X-Berg, P-Berg, and F-Hain options show Berlin shorthand
+
+### Requirement: Account page section header
+Member account pages under `/:locale/profile*` SHALL use the shared `PageSectionHeader` pattern (eyebrow + headline) used by other member surfaces such as Saved and My Tickets, instead of a standalone heading plus muted subtitle-only intro. Page-level muted subtitles under the title SHALL NOT be shown; essential instructional copy for destructive or GDPR flows MAY remain in card body content below the header.
+
+#### Scenario: Profile header matches member app chrome
+- **WHEN** a signed-in member opens `/en/profile`
+- **THEN** the page intro uses the same eyebrow + headline header component pattern as `/en/saved`
+- **AND** a muted subtitle line is not shown directly under the page title
+
+#### Scenario: Account subpages share PageSectionHeader
+- **WHEN** a signed-in member opens `/en/profile/details`, `/en/profile/preferences`, `/en/profile/billing`, `/en/profile/security`, `/en/profile/data-export`, or `/en/profile/delete-account`
+- **THEN** each page intro uses `PageSectionHeader` with a localized eyebrow and headline

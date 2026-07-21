@@ -1,9 +1,10 @@
-import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Card } from "@heroui/react";
 
 import ProfileSecuritySettings from "../../islands/ProfileSecuritySettings";
 import type { Locale } from "../../lib/locale";
-import { localizedPath } from "../../lib/locale";
 import type { ProfileCopy } from "../../lib/profile-content";
+
+import { ProfileLayout } from "./ProfileLayout";
 
 export type SecurityPageProps = {
   locale: Locale;
@@ -11,26 +12,18 @@ export type SecurityPageProps = {
 };
 
 export function SecurityPage({ locale, copy }: SecurityPageProps) {
-  const backHref = localizedPath(locale, "profile");
-
   return (
-    <Surface
-      className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 md:py-14"
-      variant="transparent"
+    <ProfileLayout
+      activeTab="security"
+      eyebrow={copy.eyebrow}
+      headline={copy.securityTitle}
+      locale={locale}
     >
-      <Surface className="flex max-w-2xl flex-col gap-3" variant="transparent">
-        <Heading level={1}>{copy.securityTitle}</Heading>
-        <Paragraph color="muted">{copy.securitySubtitle}</Paragraph>
-        <Link className="button button--secondary button--md sm:max-w-xs" href={backHref}>
-          {copy.backToProfile}
-        </Link>
-      </Surface>
-
       <Card className="mx-auto w-full max-w-2xl">
         <Card.Content>
           <ProfileSecuritySettings locale={locale} />
         </Card.Content>
       </Card>
-    </Surface>
+    </ProfileLayout>
   );
 }

@@ -1,8 +1,10 @@
-import { Button, Card, Form, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Button, Card, Form, Link, Paragraph } from "@heroui/react";
 
 import type { BillingCopy } from "../../lib/billing-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+
+import { ProfileLayout } from "./ProfileLayout";
 
 export type BillingCancelPageProps = {
   locale: Locale;
@@ -15,19 +17,16 @@ export function BillingCancelPage({ locale, copy, error = null }: BillingCancelP
   const action = localizedPath(locale, "profile/billing/cancel");
 
   return (
-    <Surface
-      className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 md:py-14"
-      variant="transparent"
+    <ProfileLayout
+      activeTab="billing"
+      eyebrow={copy.eyebrow}
+      headline={copy.cancelPageTitle}
+      locale={locale}
     >
-      <Surface className="flex max-w-2xl flex-col gap-3" variant="transparent">
-        <Heading level={1}>{copy.cancelPageTitle}</Heading>
-        <Paragraph color="muted">{copy.cancelPageSubtitle}</Paragraph>
-        <Link href={billingHref}>{copy.backToBilling}</Link>
-      </Surface>
-
       <Card className="mx-auto w-full max-w-2xl">
         <Card.Content className="flex flex-col gap-6">
           {error ? <Paragraph>{error}</Paragraph> : null}
+          <Paragraph>{copy.cancelPageSubtitle}</Paragraph>
 
           <Form action={action} className="flex flex-col gap-4" method="post">
             <Button className="button button--primary button--md sm:max-w-xs" type="submit">
@@ -40,6 +39,6 @@ export function BillingCancelPage({ locale, copy, error = null }: BillingCancelP
           </Link>
         </Card.Content>
       </Card>
-    </Surface>
+    </ProfileLayout>
   );
 }

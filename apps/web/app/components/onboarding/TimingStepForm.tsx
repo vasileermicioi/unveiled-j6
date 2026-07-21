@@ -87,13 +87,18 @@ export function TimingStepForm({ locale, profile }: TimingStepFormProps) {
         </Surface>
       </Surface>
 
-      <NativePreferenceOption
-        defaultChecked={profile.accessibility ?? false}
-        label={copy.accessibilityLabel}
-        name="accessibility"
-        type="checkbox"
-        value="true"
-      />
+      <Surface className="flex flex-col gap-4" variant="transparent">
+        <Label className="onboarding-form__section-label">{copy.accessibilitySectionLabel}</Label>
+        <Surface className="onboarding-form__options" variant="transparent">
+          <NativePreferenceOption
+            defaultChecked={profile.accessibility ?? false}
+            label={copy.accessibilityOptionLabel}
+            name="accessibility"
+            type="checkbox"
+            value="true"
+          />
+        </Surface>
+      </Surface>
 
       <OnboardingFormActions primaryLabel={copy.finish} />
     </Form>

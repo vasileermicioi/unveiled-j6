@@ -3,6 +3,7 @@ import type { GdprErrorCode } from "@unveiled/db";
 import type { Locale } from "./locale";
 
 export type GdprMemberCopy = {
+  eyebrow: string;
   exportTitle: string;
   exportSubtitle: string;
   exportDownload: string;
@@ -22,6 +23,7 @@ export type GdprMemberCopy = {
 
 const memberCopy: Record<Locale, GdprMemberCopy> = {
   de: {
+    eyebrow: "Konto",
     exportTitle: "Daten exportieren",
     exportSubtitle:
       "Lade eine Zusammenfassung deines Profils, deiner Buchungen und deines Credit-Ledgers herunter.",
@@ -43,6 +45,7 @@ const memberCopy: Record<Locale, GdprMemberCopy> = {
     errorGeneric: "Konto löschen ist fehlgeschlagen. Bitte versuche es erneut.",
   },
   en: {
+    eyebrow: "Account",
     exportTitle: "Export your data",
     exportSubtitle: "Download a summary of your profile, bookings, and credit ledger.",
     exportDownload: "Download JSON",

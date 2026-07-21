@@ -88,11 +88,14 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 | `/waitlist/:id/cancel` | ✅ | USER | Cancel own waitlist entry |
 | `/saved` | ✅ | USER | Saved events |
 | `/bookings?page=` | ✅ | USER | My Tickets |
-| `/profile` | ✅ | USER | Identity / profile |
-| `/profile/billing` | ✅ | USER | Billing, cancel sub, Stripe portal |
-| `/profile/preferences` | ✅ | USER | Vibes / preferences |
-| `/profile/data-export` | ✅ | USER | GDPR export |
-| `/profile/delete-account` | ✅ | USER | GDPR deletion |
+| `/profile` | ✅ | USER | Account home (credit wallet tab) |
+| `/profile/details` | ✅ | USER | Personal details tab (identity form POST) |
+| `/profile/billing` | ✅ | USER | Billing tab; cancel sub, Stripe portal |
+| `/profile/billing/cancel` | ✅ | USER | Cancel subscription confirm (billing tab active) |
+| `/profile/preferences` | ✅ | USER | Vibes / preferences tab |
+| `/profile/security` | ✅ | USER | Change password tab (Neon Auth / Better Auth UI) |
+| `/profile/data-export` | ✅ | USER | GDPR export tab |
+| `/profile/delete-account` | ✅ | USER | GDPR deletion tab |
 
 ### Guest vs member nav (summary)
 

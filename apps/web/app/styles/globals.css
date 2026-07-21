@@ -551,10 +551,12 @@
     }
   }
 
-  .membership-benefits__row {
-    padding: 0.875rem 1rem;
-    background: var(--surface);
-    border: var(--border-width) solid var(--foreground);
+  .membership-hero .membership-benefits__list {
+    padding-top: 0.25rem;
+  }
+
+  .membership-hero__cta {
+    text-align: center;
   }
 
   .membership-benefits__icon {
@@ -564,7 +566,6 @@
     justify-content: center;
     width: 2rem;
     height: 2rem;
-    margin-top: 0.05rem;
     color: var(--foreground);
   }
 
@@ -1903,6 +1904,12 @@
     padding: 0.125rem;
     border: var(--border-width) solid var(--border);
     background: var(--surface);
+  }
+
+  .profile-tabs .admin-tabs__track {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
   }
 
   .link.admin-tabs__tab {

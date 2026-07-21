@@ -1,8 +1,10 @@
-import { Button, Card, Form, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Button, Card, Form, Link, Paragraph } from "@heroui/react";
 
 import type { GdprMemberCopy } from "../../lib/gdpr-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+
+import { ProfileLayout } from "./ProfileLayout";
 
 export type DeleteAccountPageProps = {
   locale: Locale;
@@ -15,19 +17,16 @@ export function DeleteAccountPage({ locale, copy, error = null }: DeleteAccountP
   const action = localizedPath(locale, "profile/delete-account");
 
   return (
-    <Surface
-      className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 md:py-14"
-      variant="transparent"
+    <ProfileLayout
+      activeTab="delete-account"
+      eyebrow={copy.eyebrow}
+      headline={copy.deleteTitle}
+      locale={locale}
     >
-      <Surface className="flex max-w-2xl flex-col gap-3" variant="transparent">
-        <Heading level={1}>{copy.deleteTitle}</Heading>
-        <Paragraph color="muted">{copy.deleteSubtitle}</Paragraph>
-        <Link href={profileHref}>{copy.deleteBack}</Link>
-      </Surface>
-
       <Card className="mx-auto w-full max-w-2xl">
         <Card.Content className="flex flex-col gap-6">
           {error ? <Paragraph>{error}</Paragraph> : null}
+          <Paragraph>{copy.deleteSubtitle}</Paragraph>
           <Paragraph>{copy.deleteWarning}</Paragraph>
 
           <Form action={action} className="flex flex-col gap-4" method="post">
@@ -41,6 +40,6 @@ export function DeleteAccountPage({ locale, copy, error = null }: DeleteAccountP
           </Link>
         </Card.Content>
       </Card>
-    </Surface>
+    </ProfileLayout>
   );
 }
