@@ -3,6 +3,7 @@ import { DEMO_DISCOVERY_TITLES, partnerNameForSeedTitle } from "@unveiled/db/see
 
 import { signupFreshUser } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
+import { activateMemberForBooking, hasDatabaseUrl } from "../fixtures/billing";
 import { getEventIdByTitle, getPartnerIdByName } from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
 
@@ -100,15 +101,16 @@ test.describe("event-discovery.feature", () => {
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/[^/?#]+`));
     await expect(page).not.toHaveURL(/\/(login|signup)/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
-    // Checkout summary card: total + guest unlock CTA (no auth required to view)
-    await expect(page.getByText(/^gesamt$|^total$/i).first()).toBeVisible();
+    // Checkout summary card: guest unlock CTA; credit total gated for non–eligible
+    await expect(page.getByText(/^gesamt$|^total$/i)).toHaveCount(0);
+    await expect(page.getByText(/\d+\s*CREDITS?/i)).toHaveCount(0);
     await expect(
       page.getByRole("link", { name: /einloggen zum freischalten|log in to unlock/i }).first(),
     ).toBeVisible();
 
-    // Dense DETAILS metadata (proximity — labels, not CSS-module hashes)
+    // Dense DETAILS metadata (proximity — labels, not CSS-module hashes); date gated for guests
     await expect(page.getByText(/^details$/i).first()).toBeVisible();
-    await expect(page.getByText(/^datum$|^date$/i).first()).toBeVisible();
+    await expect(page.getByText(/^datum$|^date$/i)).toHaveCount(0);
     await expect(page.getByText(/^format$|^event type$/i).first()).toBeVisible();
 
     // Guest qty preview capped at 3 — increment disabled at max
@@ -117,6 +119,28 @@ test.describe("event-discovery.feature", () => {
     await increase.click();
     await increase.click();
     await expect(increase).toBeDisabled();
+  });
+
+  test("Scenario: Booking-eligible member sees credits and date on event detail", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member + resolve event");
+
+    const user = await signupFreshUser(page, locale);
+    await completeOnboardingWizard(page, locale);
+    await activateMemberForBooking(user.email, 17);
+
+    const eventId = await getEventIdByTitle(TITLES.tonight);
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+
+    await expect(page.getByText(/^gesamt$|^total$/i).first()).toBeVisible();
+    await expect(page.getByText(/\d+\s*CREDITS?/i).first()).toBeVisible();
+    await expect(page.getByText(/^datum$|^date$/i).first()).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /tickets buchen|book tickets/i }).first(),
+    ).toBeVisible();
   });
 
   test("Scenario: Detail LOCATION map shows a pin marker", async ({ page, locale }) => {
@@ -172,9 +196,7 @@ test.describe("event-discovery.feature", () => {
     await loginMember(page, locale);
     await page.goto(`/${locale}/events`);
 
-    await expect(
-      page.getByText(/alle kommenden events|all upcoming events/i),
-    ).toBeVisible();
+    await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toBeVisible();
     await expect(page.getByText(TITLES.tonight)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(TITLES.theaterFuture)).toBeVisible();
     await expect(page.getByText(TITLES.pastHidden)).toHaveCount(0);
@@ -284,7 +306,10 @@ test.describe("event-discovery.feature", () => {
     );
     await expect(page.getByText(TITLES.tonight)).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole("tablist", { name: /ansicht|view/i }).getByRole("link", { name: /karte|map/i }).click();
+    await page
+      .getByRole("tablist", { name: /ansicht|view/i })
+      .getByRole("link", { name: /karte|map/i })
+      .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/map`));
     await expect(page).toHaveURL(/category=Theater/);
     await expect(page).toHaveURL(/from=/);

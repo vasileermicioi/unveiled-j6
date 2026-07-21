@@ -27,6 +27,8 @@ export type EventDetailCheckoutCardProps = {
   noticeText: string | null;
   policyText: string;
   showTicketControls: boolean;
+  /** Credit total row — booking-eligible members only; guests omit pricing chrome. */
+  showCreditTotal?: boolean;
   defaultQty?: number;
   statusMessage?: string | null;
   primaryAction: CheckoutPrimaryAction | null;
@@ -78,6 +80,7 @@ export default function EventDetailCheckoutCard({
   noticeText,
   policyText,
   showTicketControls,
+  showCreditTotal = false,
   defaultQty = 1,
   statusMessage = null,
   primaryAction,
@@ -118,15 +121,19 @@ export default function EventDetailCheckoutCard({
               </Button>
             </Surface>
           </Surface>
-          <Surface className="event-detail--checkout__divider" variant="transparent">
-            <Paragraph className="sr-only">—</Paragraph>
-          </Surface>
-          <Surface className="event-detail--checkout__row" variant="transparent">
-            <Paragraph className="event-detail--checkout__row-label">{totalLabel}</Paragraph>
-            <Paragraph className="event-detail--checkout__total-value">
-              {formatCreditsTotal(total, locale)}
-            </Paragraph>
-          </Surface>
+          {showCreditTotal ? (
+            <>
+              <Surface className="event-detail--checkout__divider" variant="transparent">
+                <Paragraph className="sr-only">—</Paragraph>
+              </Surface>
+              <Surface className="event-detail--checkout__row" variant="transparent">
+                <Paragraph className="event-detail--checkout__row-label">{totalLabel}</Paragraph>
+                <Paragraph className="event-detail--checkout__total-value">
+                  {formatCreditsTotal(total, locale)}
+                </Paragraph>
+              </Surface>
+            </>
+          ) : null}
         </>
       ) : null}
 

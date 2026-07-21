@@ -381,6 +381,7 @@ export function EventDetailPage({
     bookable,
     viewer,
   });
+  const showMemberBookingChrome = viewer.kind === "eligible";
 
   const eyebrow = `${event.category} // ${event.partnerName}`;
 
@@ -435,6 +436,7 @@ export function EventDetailPage({
             policyText={policyText()}
             primaryAction={checkout.primaryAction}
             secondaryAction={checkout.secondaryAction}
+            showCreditTotal={showMemberBookingChrome}
             showTicketControls={checkout.showTicketControls}
             statusMessage={checkout.statusMessage}
             ticketsLabel={ticketsLabel(locale)}
@@ -469,11 +471,13 @@ export function EventDetailPage({
               className="event-detail--checkout__meta-grid grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
               variant="transparent"
             >
-              <MetaCell
-                icon="calendar"
-                label={metadataLabel("when", locale)}
-                value={formatEventDateTime(event.dateTime, locale)}
-              />
+              {showMemberBookingChrome ? (
+                <MetaCell
+                  icon="calendar"
+                  label={metadataLabel("when", locale)}
+                  value={formatEventDateTime(event.dateTime, locale)}
+                />
+              ) : null}
               <MetaCell
                 label={metadataLabel("accessibility", locale)}
                 value={accessibilityValue(event.barrierFree, locale)}

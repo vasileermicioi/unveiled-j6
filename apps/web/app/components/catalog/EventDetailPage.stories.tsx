@@ -6,19 +6,20 @@ import { EventDetailPage } from "./EventDetailPage";
 /** Wide frame so lg two-column identity/checkout alignment and DETAILS grid are reviewable. */
 const wideMeta = { width: 1280 as const };
 
-/** Guest preview: hard max qty 3; DETAILS/LOCATION below the fold visible in wide frame. */
+/** Guest preview: hard max qty 3; credit total + DETAILS date omitted; unlock CTA remains. */
 export const Guest: Story = () => (
   <EventDetailPage
     closeHref={`/${storyLocale}`}
     event={mockEvent}
     locale={storyLocale}
     maxQty={3}
+    viewer={{ kind: "guest" }}
   />
 );
 Guest.storyName = "EventDetailPage / Guest";
 Guest.meta = wideMeta;
 
-/** Eligible member: credits ∩ capacity (example max 8 for 17 credits / price 2). */
+/** Eligible member: credit total + date visible; qty max = credits ∩ capacity (example 8). */
 export const Eligible: Story = () => (
   <EventDetailPage
     closeHref={`/${storyLocale}/events`}

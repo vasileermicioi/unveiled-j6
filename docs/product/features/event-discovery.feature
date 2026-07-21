@@ -30,11 +30,17 @@ Feature: Event Discovery
     Given I am not signed in
     When I open a valid upcoming event detail URL ("/events/:id")
     Then the page renders checkout-focused event content (identity + summary card) without requiring login
-    And the summary card shows total credits and a login (or unlock) CTA
-    And DETAILS shows scannable metadata fields (dense multi-column layout on md+)
+    And the summary card shows a login (or unlock) CTA without credit cost
+    And DETAILS shows scannable metadata fields without date/time chrome (dense multi-column layout on md+)
     And guest ticket quantity is capped at 3 (increment disabled at max)
     And booking, waitlist, and save mutations remain on authenticated routes
     And the detail page does not create bookings or ledger entries
+
+  Scenario: Booking-eligible member sees credits and date on event detail
+    Given I am signed in as a booking-eligible member
+    When I open the same valid upcoming event detail URL ("/events/:id")
+    Then the summary card shows total credits
+    And DETAILS includes date/time chrome
 
   Scenario: Detail LOCATION map shows a pin marker
     Given I am not signed in
