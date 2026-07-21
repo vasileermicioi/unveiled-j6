@@ -31,8 +31,8 @@ Feature: Event Booking
 
   Background:
     Given I am viewing an event's booking panel
-    And guests may preview a ticket count from 1 through 3
-    And signed-in members may select up to min(floor(credits ÷ creditPrice), remainingCapacity) tickets (creditPrice ≤ 0 → capacity-only)
+    And guests and non–booking-eligible viewers do not see ticket quantity on public event detail
+    And booking-eligible members may select up to min(floor(credits ÷ creditPrice), remainingCapacity) tickets on detail and book (creditPrice ≤ 0 → capacity-only)
     And a successful booking is not limited by a universal hard max of 3 when credits and capacity allow a higher count
 
   Scenario: Booking requires authentication

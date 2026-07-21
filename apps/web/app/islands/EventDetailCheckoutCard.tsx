@@ -20,7 +20,7 @@ export type CheckoutSecondaryAction = {
 export type EventDetailCheckoutCardProps = {
   locale: Locale;
   creditPrice: number;
-  /** Inclusive upper bound for +/− controls (guest 3; signed-in credits ∩ capacity). */
+  /** Inclusive upper bound for +/− controls (eligible: credits ∩ capacity). */
   maxQty: number;
   ticketsLabel: string;
   totalLabel: string;

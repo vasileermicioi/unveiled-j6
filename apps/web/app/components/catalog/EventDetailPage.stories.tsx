@@ -6,7 +6,7 @@ import { EventDetailPage } from "./EventDetailPage";
 /** Wide frame so lg two-column identity/checkout alignment and DETAILS grid are reviewable. */
 const wideMeta = { width: 1280 as const };
 
-/** Guest preview: hard max qty 3; credit total + DETAILS date omitted; unlock CTA remains. */
+/** Guest: no tickets/credits/date chrome; unlock CTA remains. */
 export const Guest: Story = () => (
   <EventDetailPage
     closeHref={`/${storyLocale}`}

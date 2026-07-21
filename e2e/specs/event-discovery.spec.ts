@@ -101,7 +101,11 @@ test.describe("event-discovery.feature", () => {
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/[^/?#]+`));
     await expect(page).not.toHaveURL(/\/(login|signup)/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
-    // Checkout summary card: guest unlock CTA; credit total gated for non–eligible
+    // Checkout summary card: guest unlock CTA; tickets/credits gated for non–eligible
+    await expect(page.getByText(/^tickets$/i)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /ticket mehr|increase tickets/i })).toHaveCount(
+      0,
+    );
     await expect(page.getByText(/^gesamt$|^total$/i)).toHaveCount(0);
     await expect(page.getByText(/\d+\s*CREDITS?/i)).toHaveCount(0);
     await expect(
@@ -112,16 +116,9 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByText(/^details$/i).first()).toBeVisible();
     await expect(page.getByText(/^datum$|^date$/i)).toHaveCount(0);
     await expect(page.getByText(/^format$|^event type$/i).first()).toBeVisible();
-
-    // Guest qty preview capped at 3 — increment disabled at max
-    const increase = page.getByRole("button", { name: /ticket mehr|increase tickets/i });
-    await expect(increase).toBeVisible();
-    await increase.click();
-    await increase.click();
-    await expect(increase).toBeDisabled();
   });
 
-  test("Scenario: Booking-eligible member sees credits and date on event detail", async ({
+  test("Scenario: Booking-eligible member sees tickets, credits and date on event detail", async ({
     page,
     locale,
   }) => {
@@ -135,6 +132,8 @@ test.describe("event-discovery.feature", () => {
     await page.goto(`/${locale}/events/${eventId}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
 
+    await expect(page.getByText(/^tickets$/i).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /ticket mehr|increase tickets/i })).toBeVisible();
     await expect(page.getByText(/^gesamt$|^total$/i).first()).toBeVisible();
     await expect(page.getByText(/\d+\s*CREDITS?/i).first()).toBeVisible();
     await expect(page.getByText(/^datum$|^date$/i).first()).toBeVisible();

@@ -21,7 +21,7 @@ type EventDetailPageProps = {
   /** Close control target — Discover for guests, feed/`returnTo` for members. */
   closeHref?: string;
   defaultQty?: number;
-  /** Inclusive qty max for checkout controls (guest 3; signed-in credits ∩ capacity). */
+  /** Inclusive qty max for checkout controls (eligible members: credits ∩ capacity). */
   maxQty?: number;
 };
 
@@ -293,7 +293,7 @@ function resolveCheckoutActions(
       secondaryAction: { href: signupPath, label: signupLabel(locale) },
       noticeText: null,
       statusMessage: waitlistGuestMessage(locale),
-      showTicketControls: true,
+      showTicketControls: false,
     };
   }
 
@@ -323,7 +323,7 @@ function resolveCheckoutActions(
       secondaryAction: null,
       noticeText: pastDueNotice(locale),
       statusMessage: null,
-      showTicketControls: true,
+      showTicketControls: false,
     };
   }
 
@@ -333,7 +333,7 @@ function resolveCheckoutActions(
       secondaryAction: null,
       noticeText: membershipNotice(locale),
       statusMessage: null,
-      showTicketControls: true,
+      showTicketControls: false,
     };
   }
 
@@ -347,7 +347,7 @@ function resolveCheckoutActions(
     secondaryAction: { href: signupPath, label: signupLabel(locale) },
     noticeText: guestNotice(locale),
     statusMessage: null,
-    showTicketControls: true,
+    showTicketControls: false,
   };
 }
 
