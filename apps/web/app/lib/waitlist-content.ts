@@ -1,11 +1,13 @@
 import type { Locale } from "./locale";
 
 export type WaitlistJoinCopy = {
+  eyebrow: string;
   title: string;
   subtitle: (eventTitle: string) => string;
   ticketsLabel: string;
   submit: string;
   backToEvent: string;
+  confirmEyebrow: string;
   confirmTitle: string;
   confirmCreated: string;
   confirmExisting: string;
@@ -18,11 +20,13 @@ export type WaitlistJoinCopy = {
 };
 
 export type WaitlistCancelCopy = {
+  eyebrow: string;
   title: string;
   subtitle: (eventTitle: string) => string;
   confirmBody: string;
   submit: string;
   back: string;
+  successEyebrow: string;
   successTitle: string;
   successBody: string;
   errorGeneric: string;
@@ -33,11 +37,13 @@ export type WaitlistCancelCopy = {
 
 const joinCopy: Record<Locale, WaitlistJoinCopy> = {
   de: {
+    eyebrow: "Buchungen",
     title: "Warteliste",
     subtitle: (eventTitle) => `Auf die Warteliste für ${eventTitle}`,
     ticketsLabel: "Gewünschte Tickets",
     submit: "Warteliste beitreten",
     backToEvent: "Zurück zum Event",
+    confirmEyebrow: "Buchungen",
     confirmTitle: "Du bist auf der Warteliste",
     confirmCreated:
       "Dein Eintrag wurde erstellt. Wir benachrichtigen dich, wenn ein Platz frei wird.",
@@ -50,11 +56,13 @@ const joinCopy: Record<Locale, WaitlistJoinCopy> = {
     errorInvalidQty: "Bitte 1–3 Tickets wählen.",
   },
   en: {
+    eyebrow: "Bookings",
     title: "Waitlist",
     subtitle: (eventTitle) => `Join the waitlist for ${eventTitle}`,
     ticketsLabel: "Requested tickets",
     submit: "Join waitlist",
     backToEvent: "Back to event",
+    confirmEyebrow: "Bookings",
     confirmTitle: "You are on the waitlist",
     confirmCreated: "Your entry was created. We will notify you if a spot opens up.",
     confirmExisting: "You are already on the waitlist for this event.",
@@ -69,11 +77,13 @@ const joinCopy: Record<Locale, WaitlistJoinCopy> = {
 
 const cancelCopy: Record<Locale, WaitlistCancelCopy> = {
   de: {
+    eyebrow: "Buchungen",
     title: "Warteliste stornieren",
     subtitle: (eventTitle) => `Wartelisten-Eintrag für ${eventTitle} stornieren`,
     confirmBody: "Möchtest du deinen Wartelisten-Eintrag wirklich stornieren?",
     submit: "Stornieren bestätigen",
     back: "Abbrechen",
+    successEyebrow: "Buchungen",
     successTitle: "Eintrag storniert",
     successBody: "Dein Wartelisten-Eintrag wurde storniert.",
     errorGeneric: "Stornierung fehlgeschlagen. Bitte erneut versuchen.",
@@ -82,11 +92,13 @@ const cancelCopy: Record<Locale, WaitlistCancelCopy> = {
     notFoundTitle: "Eintrag nicht gefunden",
   },
   en: {
+    eyebrow: "Bookings",
     title: "Cancel waitlist",
     subtitle: (eventTitle) => `Cancel your waitlist entry for ${eventTitle}`,
     confirmBody: "Do you want to cancel your waitlist entry?",
     submit: "Confirm cancel",
     back: "Keep entry",
+    successEyebrow: "Bookings",
     successTitle: "Entry cancelled",
     successBody: "Your waitlist entry has been cancelled.",
     errorGeneric: "Cancel failed. Please try again.",

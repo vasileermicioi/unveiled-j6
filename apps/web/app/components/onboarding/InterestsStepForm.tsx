@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkbox, CheckboxGroup, Form, Label, Surface } from "@heroui/react";
+import { Form, Label, Surface } from "@heroui/react";
 import type { UserProfile } from "@unveiled/db";
 
 import type { Locale } from "../../lib/locale";
@@ -12,6 +12,7 @@ import {
   MOODS,
 } from "../../lib/onboarding-content";
 
+import { NativePreferenceOption } from "./NativePreferenceOption";
 import { OnboardingFormActions } from "./OnboardingFormActions";
 
 type InterestsStepFormProps = {
@@ -21,47 +22,47 @@ type InterestsStepFormProps = {
 
 export function InterestsStepForm({ locale, profile }: InterestsStepFormProps) {
   const copy = getOnboardingCopy(locale);
+  const selectedInterests = profile.interests ?? [];
+  const selectedMoods = profile.moods ?? [];
 
   return (
     <Form className="onboarding-form flex flex-col gap-8" method="post">
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{copy.interestLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid"
-          defaultValue={profile.interests ?? []}
-          name="interests"
+          variant="transparent"
         >
           {INTERESTS.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getInterestLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedInterests.includes(value)}
+              key={value}
+              label={getInterestLabel(locale, value)}
+              name="interests"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{copy.moodLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid"
-          defaultValue={profile.moods ?? []}
-          name="moods"
+          variant="transparent"
         >
           {MOODS.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getMoodLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedMoods.includes(value)}
+              key={value}
+              label={getMoodLabel(locale, value)}
+              name="moods"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
       <OnboardingFormActions primaryLabel={copy.next} />

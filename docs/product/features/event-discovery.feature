@@ -47,6 +47,8 @@ Feature: Event Discovery
     And I have accepted non-essential cookie consent
     When I open a valid upcoming event detail URL with coordinates ("/events/:id")
     Then the LOCATION map shows a recognizable pin marker icon (not a black square)
+    And selecting the marker opens a popup whose close control has a large enough hit target
+    And activating the close control dismisses the popup
 
   Scenario: Guest path to full browse requires signup or login
     Given I am not signed in
@@ -97,6 +99,8 @@ Feature: Event Discovery
     When I open the map view
     Then the map shows markers only for the currently filtered events
     And selecting a marker opens a preview with a link to book
+    And the popup close control has a large enough hit target to activate reliably
+    And activating the close control dismisses the popup
 
   Scenario: Saved events view
     Given I am signed in as a "USER"

@@ -1,9 +1,10 @@
-import { Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Link, Paragraph, Surface } from "@heroui/react";
 import type { Booking, Event } from "@unveiled/db";
 
 import type { BookConfirmCopy } from "../../lib/booking-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+import { PageSectionHeader } from "../marketing/PageSectionHeader";
 import { TicketRedemptionBlock } from "./TicketRedemptionBlock";
 
 export type BookConfirmPageProps = {
@@ -22,7 +23,7 @@ export function BookConfirmPage({ locale, event, booking, copy, icsHref }: BookC
       className="mx-auto flex max-w-lg flex-col gap-6 px-4 py-12 sm:px-6"
       variant="transparent"
     >
-      <Heading level={1}>{copy.title}</Heading>
+      <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
       <Paragraph>{copy.subtitle}</Paragraph>
       <Paragraph>{event.title}</Paragraph>
       <Paragraph>

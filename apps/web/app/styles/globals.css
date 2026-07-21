@@ -551,6 +551,32 @@
     }
   }
 
+  .membership-benefits__row {
+    padding: 0.875rem 1rem;
+    background: var(--surface);
+    border: var(--border-width) solid var(--foreground);
+  }
+
+  .membership-benefits__icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin-top: 0.05rem;
+    color: var(--foreground);
+  }
+
+  .membership-benefits__text {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+    color: var(--foreground);
+  }
+
   .discover-stat-tile {
     border: 2px solid var(--border);
     padding: 1rem;
@@ -1032,6 +1058,12 @@
     gap: 0.75rem;
   }
 
+  /* Shared auth column — header rule, skeleton, and form share one measure (32rem / max-w-lg). */
+  .auth-page__column {
+    width: 100%;
+    max-width: 32rem;
+  }
+
   .auth-form {
     width: 100%;
     max-width: none;
@@ -1120,11 +1152,6 @@
     padding-top: 1.5rem;
   }
 
-  .onboarding-form .radio-group,
-  .onboarding-form .checkbox-group {
-    width: 100%;
-  }
-
   .onboarding-step-indicator__segment {
     height: 0.375rem;
     border-width: 2px;
@@ -1149,11 +1176,13 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    width: 100%;
   }
 
   .onboarding-form__options--grid {
     display: grid;
     gap: 0.75rem;
+    width: 100%;
   }
 
   @media (min-width: 640px) {
@@ -1165,6 +1194,7 @@
   .onboarding-form__options--grid-three {
     display: grid;
     gap: 0.75rem;
+    width: 100%;
   }
 
   @media (min-width: 640px) {
@@ -1173,15 +1203,8 @@
     }
   }
 
-  .onboarding-form .radio,
-  .onboarding-form .checkbox {
-    width: 100%;
-  }
-
-  .onboarding-form .radio .radio__content,
-  .onboarding-form .checkbox .checkbox__content,
-  .onboarding-form [data-slot="radio-content"],
-  .onboarding-form [data-slot="checkbox-content"] {
+  /* Native checkbox/radio cards (preference forms — AGENTS §14 exception) */
+  .onboarding-form__option {
     display: flex;
     width: 100%;
     align-items: center;
@@ -1195,124 +1218,71 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: -0.02em;
+    cursor: pointer;
     transition:
       background-color 150ms ease,
       color 150ms ease;
   }
 
   @media (hover: hover) {
-    .onboarding-form .radio:not([data-selected]):not(:has(input:checked)) .radio__content:hover,
-    .onboarding-form
-      .radio:not([data-selected]):not(:has(input:checked))
-      [data-slot="radio-content"][data-hovered="true"],
-    .onboarding-form
-      .checkbox:not([data-selected]):not(:has(input:checked))
-      .checkbox__content:hover,
-    .onboarding-form
-      .checkbox:not([data-selected]):not(:has(input:checked))
-      [data-slot="checkbox-content"][data-hovered="true"] {
+    .onboarding-form__option:hover:not(:has(.onboarding-form__native-control:checked)) {
       background-color: var(--surface-secondary);
     }
   }
 
-  .onboarding-form .radio[data-selected] .radio__content,
-  .onboarding-form .radio:has(input:checked) .radio__content,
-  .onboarding-form .checkbox[data-selected] .checkbox__content,
-  .onboarding-form .checkbox:has(input:checked) .checkbox__content {
+  .onboarding-form__option:has(.onboarding-form__native-control:checked) {
     background-color: var(--color-brand-dark);
     color: var(--color-brand-cream);
   }
 
-  .onboarding-form .radio[data-selected] .radio__content [data-slot="label"],
-  .onboarding-form .radio:has(input:checked) .radio__content [data-slot="label"],
-  .onboarding-form .checkbox[data-selected] .checkbox__content [data-slot="label"],
-  .onboarding-form .checkbox:has(input:checked) .checkbox__content [data-slot="label"] {
-    color: var(--color-brand-cream);
+  .onboarding-form__option:has(.onboarding-form__native-control:focus-visible) {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
   }
 
-  .onboarding-form .radio__control,
-  .onboarding-form .checkbox__control {
+  .onboarding-form__native-control {
     width: 1.25rem;
     height: 1.25rem;
-    border-radius: 0;
+    margin: 0;
     flex-shrink: 0;
+    accent-color: var(--color-brand-yellow);
+    cursor: pointer;
   }
 
-  .onboarding-form .radio[data-selected] .radio__control,
-  .onboarding-form .radio:has(input:checked) .radio__control,
-  .onboarding-form .checkbox[data-selected] .checkbox__control,
-  .onboarding-form .checkbox:has(input:checked) .checkbox__control {
-    border-color: var(--color-brand-cream);
-    background-color: var(--color-brand-cream);
+  .onboarding-form__option:has(.onboarding-form__native-control:checked)
+    .onboarding-form__native-control {
+    accent-color: var(--color-brand-cream);
   }
 
-  .onboarding-form .radio[data-selected] .radio__indicator:empty::before,
-  .onboarding-form .radio:has(input:checked) .radio__indicator:empty::before {
-    background-color: var(--color-brand-dark);
-  }
-
-  .onboarding-form .checkbox[data-selected] .checkbox__indicator,
-  .onboarding-form .checkbox:has(input:checked) .checkbox__indicator {
-    color: var(--color-brand-dark);
+  .onboarding-form__option-text {
+    flex: 1;
+    min-width: 0;
   }
 
   .onboarding-form__number-field {
     width: 100%;
   }
 
-  .onboarding-form__number-field .number-field__group,
-  .onboarding-form .number-field__group {
+  .onboarding-form__native-number {
     width: 100%;
     min-height: 3rem;
-    grid-template-columns: 3rem 1fr 3rem;
+    padding: 0.5rem 0.75rem;
     border-width: 2px;
     border-style: solid;
     border-color: var(--border);
+    border-radius: 0;
     background-color: var(--field-background);
+    color: var(--foreground);
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
     box-shadow: none;
   }
 
-  .onboarding-form__number-field input,
-  .onboarding-form .number-field__input {
-    min-width: 0;
-    border-width: 0;
-    background-color: transparent;
-    text-align: center;
-    font-weight: 700;
-  }
-
-  .onboarding-form__number-field .number-field__decrement-button,
-  .onboarding-form__number-field .number-field__increment-button,
-  .onboarding-form .number-field__decrement-button,
-  .onboarding-form .number-field__increment-button {
-    width: 100%;
-    height: 100%;
-    border-width: 0;
-    border-radius: 0;
-    background-color: var(--surface);
-    font-weight: 700;
-  }
-
-  .onboarding-form__number-field .number-field__decrement-button,
-  .onboarding-form .number-field__decrement-button {
-    border-right: 2px solid var(--border);
-  }
-
-  .onboarding-form__number-field .number-field__increment-button,
-  .onboarding-form .number-field__increment-button {
-    border-left: 2px solid var(--border);
-  }
-
-  .onboarding-form__switch .switch__content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    min-height: 3rem;
-    padding: 0.875rem 1rem;
-    border-width: 2px;
-    border-style: solid;
+  .onboarding-form__native-number:focus {
+    outline: none;
     border-color: var(--border);
-    background-color: var(--surface);
+    box-shadow: none;
   }
 
   .onboarding-form .button.button--primary,
@@ -1683,7 +1653,8 @@
     font-weight: 600;
     box-shadow: none;
     appearance: none;
-    background-image: linear-gradient(45deg, transparent 50%, var(--foreground) 50%),
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--foreground) 50%),
       linear-gradient(135deg, var(--foreground) 50%, transparent 50%);
     background-position:
       calc(100% - 1rem) calc(50% - 0.15rem),
@@ -1811,9 +1782,36 @@
   }
 
   /* MapLibre injects close button + may focus popup chrome */
+  .event-map__canvas-wrap .maplibregl-popup-content {
+    /* Clear ~44px close control in the top-right; flat (no hard drop shadow) */
+    box-shadow: none;
+    padding: 2.75rem 1rem 1rem;
+  }
+
   .event-map__canvas-wrap .maplibregl-popup-content:focus,
   .event-map__canvas-wrap .maplibregl-popup-close-button:focus {
     outline: none;
+  }
+
+  .event-map__canvas-wrap .maplibregl-popup-close-button {
+    align-items: center;
+    color: var(--color-brand-dark);
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1.75rem;
+    font-weight: 400;
+    height: 2.75rem;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    right: 0;
+    top: 0;
+    width: 2.75rem;
+  }
+
+  .event-map__canvas-wrap .maplibregl-popup-close-button:hover {
+    background-color: transparent;
+    color: var(--color-brand-dark);
   }
 
   .event-map__canvas-wrap .maplibregl-popup-close-button:focus-visible {
@@ -2204,6 +2202,15 @@
 }
 
 @layer utilities {
+  /*
+   * better-auth-ui merges `max-w-sm` onto SignUp/SignIn/etc. cards.
+   * Utilities beat @layer components, so clear that cap here so the card
+   * fills `.auth-page__column` (same width as header + AuthFormFallback).
+   */
+  .auth-form.max-w-sm {
+    max-width: none;
+  }
+
   .auth-form .card__footer .link.text-accent {
     color: var(--foreground);
   }

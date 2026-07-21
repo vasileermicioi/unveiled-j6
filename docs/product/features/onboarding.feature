@@ -34,26 +34,26 @@ Feature: Onboarding
 
   Scenario: Step 1 — age group (skippable)
     Given I am on onboarding step 1
-    When I choose one age group via Select from "18-25", "26-35", "36-50", or "50+"
+    When I choose one age group via native radio from "18-25", "26-35", "36-50", or "50+"
     Then my selection is stored
     But I may also skip this step without selecting an age group
 
   Scenario: Step 2 — interests and moods
     Given I am on onboarding step 2
-    Then I can multi-select interests via Select from: Theater, Kino, Museum, Ausstellung, Konzert, Talk/Lesung, Comedy, Tanz/Performance
-    And I can multi-select moods via Select from: Leicht, Experimentell, Klassisch, Politisch, Fam
+    Then I can multi-select interests via native checkbox from: Theater, Kino, Museum, Ausstellung, Konzert, Talk/Lesung, Comedy, Tanz/Performance
+    And I can multi-select moods via native checkbox from: Leicht, Experimentell, Klassisch, Politisch, Fam
 
   Scenario: Step 3 — districts and travel radius
     Given I am on onboarding step 3
-    Then I can multi-select districts via Select from: Mitte, X-Berg, P-Berg, Charlottenburg, Wedding, F-Hain, Schöneberg
-    And I can set a maximum travel distance between 1 and 25 km
+    Then I can multi-select districts via native checkbox from: Mitte, X-Berg, P-Berg, Charlottenburg, Wedding, F-Hain, Schöneberg
+    And I can set a maximum travel distance between 1 and 25 km via native number input
 
   Scenario: Step 4 — timing, days, languages, accessibility
     Given I am on onboarding step 4
-    Then I can choose preferred timing via Select from: After Work, Weekend, Day
-    And I can multi-select preferred days Monday through Sunday via Select
-    And I can choose preferred languages via Select from: DE, EN, Non-Verbal
-    And I can choose an accessibility requirement via Select
+    Then I can choose preferred timing via native checkbox from: After Work, Weekend, Day
+    And I can multi-select preferred days Monday through Sunday via native checkbox
+    And I can choose preferred languages via native checkbox from: DE, EN, Non-Verbal
+    And I can choose an accessibility requirement via native checkbox
 
   Scenario: Completing onboarding
     Given I have completed all onboarding steps

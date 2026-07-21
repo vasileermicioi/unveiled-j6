@@ -14,7 +14,7 @@ import { PageSectionHeader } from "../marketing/PageSectionHeader";
 
 import { EventFeedFilters } from "./EventFeedFilters";
 import { EventFeedPagination } from "./EventFeedPagination";
-import { EventFeedViewTabs, type EventFeedView } from "./EventFeedViewTabs";
+import { type EventFeedView, EventFeedViewTabs } from "./EventFeedViewTabs";
 
 /** Hide top+bottom pagination chrome when the result set fits on one short screen. */
 const PAGINATION_MIN_TOTAL = 7;

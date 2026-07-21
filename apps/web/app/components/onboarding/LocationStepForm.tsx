@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkbox, CheckboxGroup, Description, Form, Label, NumberField } from "@heroui/react";
+import { Form, Label, Paragraph, Surface } from "@heroui/react";
 import type { UserProfile } from "@unveiled/db";
 
 import type { Locale } from "../../lib/locale";
@@ -12,6 +12,7 @@ import {
   MAX_DISTANCE_MIN,
 } from "../../lib/onboarding-content";
 
+import { NativePreferenceOption } from "./NativePreferenceOption";
 import { OnboardingFormActions } from "./OnboardingFormActions";
 
 type LocationStepFormProps = {
@@ -22,43 +23,45 @@ type LocationStepFormProps = {
 export function LocationStepForm({ locale, profile }: LocationStepFormProps) {
   const copy = getOnboardingCopy(locale);
   const defaultDistance = profile.max_distance ?? 10;
+  const selectedDistricts = profile.districts ?? [];
 
   return (
     <Form className="onboarding-form flex flex-col gap-8" method="post">
       <Label className="onboarding-form__section-label">{copy.districtLabel}</Label>
-      <CheckboxGroup
+      <Surface
         className="onboarding-form__options onboarding-form__options--grid"
-        defaultValue={profile.districts ?? []}
-        name="districts"
+        variant="transparent"
       >
         {DISTRICTS.map((value) => (
-          <Checkbox key={value} value={value}>
-            <Checkbox.Content>
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Label>{getDistrictLabel(locale, value)}</Label>
-            </Checkbox.Content>
-          </Checkbox>
+          <NativePreferenceOption
+            defaultChecked={selectedDistricts.includes(value)}
+            key={value}
+            label={getDistrictLabel(locale, value)}
+            name="districts"
+            type="checkbox"
+            value={value}
+          />
         ))}
-      </CheckboxGroup>
+      </Surface>
 
-      <NumberField
-        className="onboarding-form__number-field"
-        defaultValue={defaultDistance}
-        fullWidth
-        maxValue={MAX_DISTANCE_MAX}
-        minValue={MAX_DISTANCE_MIN}
-        name="max_distance"
-      >
-        <Label className="onboarding-form__section-label">{copy.radiusLabel}</Label>
-        <NumberField.Group>
-          <NumberField.DecrementButton>-</NumberField.DecrementButton>
-          <NumberField.Input />
-          <NumberField.IncrementButton>+</NumberField.IncrementButton>
-        </NumberField.Group>
-        <Description>{copy.km}</Description>
-      </NumberField>
+      <Surface className="onboarding-form__number-field flex flex-col gap-2" variant="transparent">
+        <Label className="onboarding-form__section-label" htmlFor="max_distance">
+          {copy.radiusLabel}
+        </Label>
+        <input
+          className="onboarding-form__native-number"
+          defaultValue={defaultDistance}
+          id="max_distance"
+          max={MAX_DISTANCE_MAX}
+          min={MAX_DISTANCE_MIN}
+          name="max_distance"
+          step={1}
+          type="number"
+        />
+        <Paragraph color="muted" size="sm">
+          {copy.km}
+        </Paragraph>
+      </Surface>
 
       <OnboardingFormActions primaryLabel={copy.next} />
     </Form>

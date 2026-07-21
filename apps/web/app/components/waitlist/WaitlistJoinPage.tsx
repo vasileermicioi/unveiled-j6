@@ -1,10 +1,11 @@
-import { Alert, Button, Card, Form, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Alert, Button, Card, Form, Link, Paragraph, Surface } from "@heroui/react";
 import type { Event } from "@unveiled/db";
 
 import TicketCountSelect from "../../islands/TicketCountSelect";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import type { WaitlistJoinCopy } from "../../lib/waitlist-content";
+import { PageSectionHeader } from "../marketing/PageSectionHeader";
 
 export type WaitlistJoinView = "form" | "status";
 
@@ -46,7 +47,7 @@ export function WaitlistJoinPage({
         className="mx-auto flex max-w-lg flex-col gap-6 px-4 py-12 sm:px-6"
         variant="transparent"
       >
-        <Heading level={1}>{copy.confirmTitle}</Heading>
+        <PageSectionHeader eyebrow={copy.confirmEyebrow} headline={copy.confirmTitle} />
         <Paragraph>{created ? copy.confirmCreated : copy.confirmExisting}</Paragraph>
         <Card>
           <Card.Content className="flex flex-col gap-3">
@@ -78,7 +79,7 @@ export function WaitlistJoinPage({
       className="mx-auto flex max-w-lg flex-col gap-6 px-4 py-12 sm:px-6"
       variant="transparent"
     >
-      <Heading level={1}>{copy.title}</Heading>
+      <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
       <Paragraph>{copy.subtitle(event.title)}</Paragraph>
       <Paragraph>
         {event.partnerName} · {event.creditPrice}{" "}

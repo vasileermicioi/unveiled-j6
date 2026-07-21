@@ -1,8 +1,9 @@
-import { Alert, Button, Card, Form, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Alert, Button, Card, Form, Link, Paragraph, Surface } from "@heroui/react";
 
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import type { WaitlistCancelCopy } from "../../lib/waitlist-content";
+import { PageSectionHeader } from "../marketing/PageSectionHeader";
 
 export type WaitlistCancelView = "confirm" | "success";
 
@@ -36,7 +37,7 @@ export function WaitlistCancelPage({
         className="mx-auto flex max-w-lg flex-col gap-6 px-4 py-12 sm:px-6"
         variant="transparent"
       >
-        <Heading level={1}>{copy.successTitle}</Heading>
+        <PageSectionHeader eyebrow={copy.successEyebrow} headline={copy.successTitle} />
         <Paragraph>{copy.successBody}</Paragraph>
         <Link className="button button--primary button--md" href={backHref}>
           {copy.back}
@@ -50,7 +51,7 @@ export function WaitlistCancelPage({
       className="mx-auto flex max-w-lg flex-col gap-6 px-4 py-12 sm:px-6"
       variant="transparent"
     >
-      <Heading level={1}>{copy.title}</Heading>
+      <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
       <Paragraph>{copy.subtitle(eventTitle)}</Paragraph>
 
       {errorMessage ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkbox, CheckboxGroup, Form, Label, Surface, Switch } from "@heroui/react";
+import { Form, Label, Surface } from "@heroui/react";
 import type { UserProfile } from "@unveiled/db";
 
 import type { Locale } from "../../lib/locale";
@@ -14,6 +14,7 @@ import {
   WEEKDAYS,
 } from "../../lib/onboarding-content";
 
+import { NativePreferenceOption } from "./NativePreferenceOption";
 import { OnboardingFormActions } from "./OnboardingFormActions";
 
 type TimingStepFormProps = {
@@ -23,82 +24,76 @@ type TimingStepFormProps = {
 
 export function TimingStepForm({ locale, profile }: TimingStepFormProps) {
   const copy = getOnboardingCopy(locale);
+  const selectedTiming = profile.timing ?? [];
+  const selectedDays = profile.preferred_days ?? [];
+  const selectedLanguages = profile.preferred_languages ?? [];
 
   return (
     <Form className="onboarding-form flex flex-col gap-8" method="post">
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{copy.timingLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid-three"
-          defaultValue={profile.timing ?? []}
-          name="timing"
+          variant="transparent"
         >
           {TIMING_OPTIONS.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getTimingLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedTiming.includes(value)}
+              key={value}
+              label={getTimingLabel(locale, value)}
+              name="timing"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{copy.daysLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid"
-          defaultValue={profile.preferred_days ?? []}
-          name="preferred_days"
+          variant="transparent"
         >
           {WEEKDAYS.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getWeekdayLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedDays.includes(value)}
+              key={value}
+              label={getWeekdayLabel(locale, value)}
+              name="preferred_days"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{copy.languagePrefLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid-three"
-          defaultValue={profile.preferred_languages ?? []}
-          name="preferred_languages"
+          variant="transparent"
         >
           {PREFERRED_LANGUAGES.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getPreferredLanguageLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedLanguages.includes(value)}
+              key={value}
+              label={getPreferredLanguageLabel(locale, value)}
+              name="preferred_languages"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
-      <Switch
-        className="onboarding-form__switch"
-        defaultSelected={profile.accessibility ?? false}
+      <NativePreferenceOption
+        defaultChecked={profile.accessibility ?? false}
+        label={copy.accessibilityLabel}
         name="accessibility"
+        type="checkbox"
         value="true"
-      >
-        <Switch.Content>
-          <Switch.Control>
-            <Switch.Thumb />
-          </Switch.Control>
-          <Label>{copy.accessibilityLabel}</Label>
-        </Switch.Content>
-      </Switch>
+      />
 
       <OnboardingFormActions primaryLabel={copy.finish} />
     </Form>

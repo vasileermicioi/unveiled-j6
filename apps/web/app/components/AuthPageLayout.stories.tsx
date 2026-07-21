@@ -1,4 +1,3 @@
-import { Paragraph } from "@heroui/react";
 import type { Story } from "@ladle/react";
 
 import { AuthFormFallback } from "./AuthFormFallback";
@@ -14,9 +13,7 @@ Login.storyName = "AuthPageLayout / Login";
 
 export const Signup: Story = () => (
   <AuthPageLayout locale={storyLocale} page="signup">
-    <Paragraph color="muted" size="sm">
-      Signup form placeholder
-    </Paragraph>
+    <AuthFormFallback locale={storyLocale} />
   </AuthPageLayout>
 );
 Signup.storyName = "AuthPageLayout / Signup";

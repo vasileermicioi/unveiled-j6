@@ -168,11 +168,11 @@ const moodLabels: Record<Locale, Record<(typeof MOODS)[number], string>> = {
 const districtLabels: Record<Locale, Record<(typeof DISTRICTS)[number], string>> = {
   de: {
     Mitte: "Mitte",
-    "X-Berg": "X-Berg",
-    "P-Berg": "P-Berg",
+    "X-Berg": "Kreuzberg",
+    "P-Berg": "Prenzlauer Berg",
     Charlottenburg: "Charlottenburg",
     Wedding: "Wedding",
-    "F-Hain": "F-Hain",
+    "F-Hain": "Friedrichshain",
     Schöneberg: "Schöneberg",
   },
   en: {
@@ -183,6 +183,21 @@ const districtLabels: Record<Locale, Record<(typeof DISTRICTS)[number], string>>
     Wedding: "Wedding",
     "F-Hain": "Friedrichshain",
     Schöneberg: "Schöneberg",
+  },
+};
+
+const ageGroupLabels: Record<Locale, Record<(typeof AGE_GROUPS)[number], string>> = {
+  de: {
+    "18-25": "18-25",
+    "26-35": "26-35",
+    "36-50": "36-50",
+    "50+": "50+",
+  },
+  en: {
+    "18-25": "18-25",
+    "26-35": "26-35",
+    "36-50": "36-50",
+    "50+": "50+",
   },
 };
 
@@ -216,8 +231,8 @@ export function getOnboardingStepMeta(locale: Locale, step: OnboardingStepKey) {
   }
 }
 
-export function getAgeGroupLabel(_locale: Locale, value: (typeof AGE_GROUPS)[number]): string {
-  return value;
+export function getAgeGroupLabel(locale: Locale, value: (typeof AGE_GROUPS)[number]): string {
+  return ageGroupLabels[locale][value];
 }
 
 export function getInterestLabel(locale: Locale, value: (typeof INTERESTS)[number]): string {

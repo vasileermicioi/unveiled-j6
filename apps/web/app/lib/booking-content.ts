@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export type BookPageCopy = {
+  eyebrow: string;
   title: string;
   subtitle: (eventTitle: string) => string;
   ticketsLabel: string;
@@ -8,6 +9,7 @@ export type BookPageCopy = {
   submit: string;
   creditCost: (total: number) => string;
   backToEvent: string;
+  pastDueEyebrow: string;
   pastDueTitle: string;
   pastDueBody: string;
   membershipCta: string;
@@ -20,6 +22,7 @@ export type BookPageCopy = {
 };
 
 export type BookConfirmCopy = {
+  eyebrow: string;
   title: string;
   subtitle: string;
   ticketCodeLabel: string;
@@ -37,6 +40,7 @@ export type BookConfirmCopy = {
 
 const bookCopy: Record<Locale, BookPageCopy> = {
   de: {
+    eyebrow: "Buchungen",
     title: "Event buchen",
     subtitle: (eventTitle) => `Reserviere Tickets für ${eventTitle}`,
     ticketsLabel: "Anzahl Tickets",
@@ -44,6 +48,7 @@ const bookCopy: Record<Locale, BookPageCopy> = {
     submit: "Buchung bestätigen",
     creditCost: (total) => `${total} Credit${total === 1 ? "" : "s"}`,
     backToEvent: "Zurück zum Event",
+    pastDueEyebrow: "Buchungen",
     pastDueTitle: "Credits eingefroren",
     pastDueBody:
       "Dein Abo ist zahlungsgestört. Aktualisiere deine Zahlungsmethode, bevor du wieder buchen kannst.",
@@ -56,6 +61,7 @@ const bookCopy: Record<Locale, BookPageCopy> = {
     support: "support@unveiled.berlin",
   },
   en: {
+    eyebrow: "Bookings",
     title: "Book event",
     subtitle: (eventTitle) => `Reserve tickets for ${eventTitle}`,
     ticketsLabel: "Ticket count",
@@ -63,6 +69,7 @@ const bookCopy: Record<Locale, BookPageCopy> = {
     submit: "Confirm booking",
     creditCost: (total) => `${total} credit${total === 1 ? "" : "s"}`,
     backToEvent: "Back to event",
+    pastDueEyebrow: "Bookings",
     pastDueTitle: "Credits frozen",
     pastDueBody: "Your subscription is past due. Update your payment method before booking again.",
     membershipCta: "Go to membership",
@@ -77,6 +84,7 @@ const bookCopy: Record<Locale, BookPageCopy> = {
 
 const confirmCopy: Record<Locale, BookConfirmCopy> = {
   de: {
+    eyebrow: "Buchungen",
     title: "Buchung bestätigt",
     subtitle: "Dein Ticket ist bereit.",
     ticketCodeLabel: "DEIN TICKET-CODE",
@@ -92,6 +100,7 @@ const confirmCopy: Record<Locale, BookConfirmCopy> = {
     openVoucher: "Zur Partner-Website",
   },
   en: {
+    eyebrow: "Bookings",
     title: "Booking confirmed",
     subtitle: "Your ticket is ready.",
     ticketCodeLabel: "YOUR TICKET CODE",

@@ -1,11 +1,12 @@
 "use client";
 
-import { Form, Label, Paragraph, Radio, RadioGroup } from "@heroui/react";
+import { Form, Label, Paragraph, Surface } from "@heroui/react";
 import type { UserProfile } from "@unveiled/db";
 
 import type { Locale } from "../../lib/locale";
 import { AGE_GROUPS, getAgeGroupLabel, getOnboardingCopy } from "../../lib/onboarding-content";
 
+import { NativePreferenceOption } from "./NativePreferenceOption";
 import { OnboardingFormActions } from "./OnboardingFormActions";
 
 type AgeStepFormProps = {
@@ -23,22 +24,21 @@ export function AgeStepForm({ locale, profile }: AgeStepFormProps) {
         {copy.ageSubtitle}
       </Paragraph>
 
-      <RadioGroup
+      <Surface
         className="onboarding-form__options onboarding-form__options--stack"
-        defaultValue={profile.age_group ?? undefined}
-        name="age_group"
+        variant="transparent"
       >
         {AGE_GROUPS.map((value) => (
-          <Radio key={value} value={value}>
-            <Radio.Content>
-              <Radio.Control>
-                <Radio.Indicator />
-              </Radio.Control>
-              <Label>{getAgeGroupLabel(locale, value)}</Label>
-            </Radio.Content>
-          </Radio>
+          <NativePreferenceOption
+            defaultChecked={profile.age_group === value}
+            key={value}
+            label={getAgeGroupLabel(locale, value)}
+            name="age_group"
+            type="radio"
+            value={value}
+          />
         ))}
-      </RadioGroup>
+      </Surface>
 
       <OnboardingFormActions primaryLabel={copy.next} showSkip skipLabel={copy.skip} />
     </Form>

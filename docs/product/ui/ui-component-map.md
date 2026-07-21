@@ -13,7 +13,7 @@ Mapping aid for HeroUI rebuilds. Visual language: `design-tokens.md`. Ownership:
 | Navbar / Header | `apps/web` | Slim marketing nav Discover + FAQ; guest auth Log in only; How it works / Membership / Sign up out of header and footer nav — see `app-shell.md` |
 | Logo | `@unveiled/ui` | Three SVG tones — `assets-inventory.md`; Ladle stories under `packages/ui` |
 | Footer | `apps/web` | Discover → `/:locale/discover`; FAQ; legal column (no How it works / Membership) |
-| **PageSectionHeader** | `apps/web` | Default on-yellow page/section header: muted uppercase eyebrow + bold headline + full-width rule. Used on Discover, FAQ, auth, member feed/browse — distinct from bordered `PageHero` card heroes |
+| **PageSectionHeader** | `apps/web` | Default on-yellow page/section header: muted uppercase eyebrow + bold headline + full-width rule. Used on Discover, FAQ, auth, member feed/browse, book/confirm, waitlist join/cancel — distinct from bordered `PageHero` card heroes and the membership marketing hero card |
 | Help / FAQ accordion | `apps/web` | HeroUI `Accordion` in `Card` |
 | Cookie banner | `apps/web` island | Accept/decline; gates map tiles |
 
@@ -47,9 +47,9 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 | **Guest marketing home** | `/:locale` | Guests only (signed-in → role home). Headline + phone + plan card + signup CTA + benefits |
 | **Discover** | `/:locale/discover` | `PageSectionHeader` + up to 6 upcoming EventCards; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); Book Now / Bin dabei (or Waitlist) → public detail |
 | **Member feed** | `/events` | `PageSectionHeader`; filters (GET query params), pagination, EventCard grid; subscription gate banner |
-| **Map** | `/events/map` | MapLibre + OSM island; cookie-gated |
+| **Map** | `/events/map` | MapLibre + OSM island; cookie-gated; marker popups expose a large close control (~44px hit target, keyboard-accessible) |
 | **Saved** | `/saved` | Member saved list |
-| **Event detail** | `/events/:id` | **Public** checkout-focused SSR page (no auth): identity column (category // partner, title, description, location, large hero) + dark summary/action card. On **lg+**, identity and checkout card share a common top alignment; hero fills the identity column width and scales across sm/md/lg (not a permanently undersized inset). Close control is a Link (Discover / feed / safe `returnTo`), not a client modal. Ticket qty: **guests** hard-capped at 1–3 (preview); **signed-in** max = `min(floor(credits ÷ creditPrice), remainingCapacity)` (creditPrice ≤ 0 → capacity-only). **Booking-eligible members only** see credit total and DETAILS date/time chrome; guests and other non–eligible viewers omit those fields (JSON-LD `startDate` still for crawlers). Qty on detail is navigation state only — **no** booking/ledger POST; credit charge stays on `/events/:id/book`. Below the fold: dense multi-column **DETAILS** metadata grid (EventCard-inspired density on md+) + **LOCATION** card with address and MapLibre map using a brand **pin marker** (not a black square). |
+| **Event detail** | `/events/:id` | **Public** checkout-focused SSR page (no auth): identity column (category // partner, title, description, location, large hero) + dark summary/action card. On **lg+**, identity and checkout card share a common top alignment; hero fills the identity column width and scales across sm/md/lg (not a permanently undersized inset). Close control is a Link (Discover / feed / safe `returnTo`), not a client modal. Ticket qty: **guests** hard-capped at 1–3 (preview); **signed-in** max = `min(floor(credits ÷ creditPrice), remainingCapacity)` (creditPrice ≤ 0 → capacity-only). **Booking-eligible members only** see credit total and DETAILS date/time chrome; guests and other non–eligible viewers omit those fields (JSON-LD `startDate` still for crawlers). Qty on detail is navigation state only — **no** booking/ledger POST; credit charge stays on `/events/:id/book`. Below the fold: dense multi-column **DETAILS** metadata grid (EventCard-inspired density on md+) + **LOCATION** card with address and MapLibre map using a brand **pin marker** (not a black square); marker popups use the same large close control as `/events/map` (~44px hit target). |
 
 ---
 
@@ -57,11 +57,11 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 
 | Surface | Route | Notes |
 |---|---|---|
-| Book | `/events/:id/book` | Dedicated SSR page (not modal); full-bleed yellow treatment |
-| Confirm | `/events/:id/book/confirm` | Redemption + ICS |
-| Waitlist | `/events/:id/waitlist` | Join form |
-| Membership / checkout | `/membership` | Stripe Billing (Phase 6+) |
-| My Tickets | `/bookings` | List + empty state |
+| Book | `/events/:id/book` | Dedicated SSR page (not modal); `PageSectionHeader` + form; full-bleed yellow treatment |
+| Confirm | `/events/:id/book/confirm` | `PageSectionHeader` + redemption + ICS |
+| Waitlist | `/events/:id/waitlist` | `PageSectionHeader` + join form (cancel pages same header pattern) |
+| Membership / checkout | `/membership` | Stripe Billing (Phase 6+); bordered marketing hero + **vertical** icon-bullet benefits list (not three-up perk cards) |
+| My Tickets | `/bookings` | `PageSectionHeader` + list + empty state |
 | Profile | `/profile`, `/billing`, `/preferences`, GDPR pages | Split SSR forms |
 
 ---

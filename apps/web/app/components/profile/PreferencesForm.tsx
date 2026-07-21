@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Checkbox,
-  CheckboxGroup,
-  Description,
-  Form,
-  Label,
-  NumberField,
-  Surface,
-  Switch,
-} from "@heroui/react";
+import { Button, Form, Label, Paragraph, Surface } from "@heroui/react";
 import type { UserProfile } from "@unveiled/db";
 
 import type { Locale } from "../../lib/locale";
@@ -32,6 +22,7 @@ import {
   WEEKDAYS,
 } from "../../lib/onboarding-content";
 import type { ProfileCopy } from "../../lib/profile-content";
+import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 
 type PreferencesFormProps = {
   locale: Locale;
@@ -43,159 +34,155 @@ type PreferencesFormProps = {
 export function PreferencesForm({ locale, profile, copy, action }: PreferencesFormProps) {
   const onboarding = getOnboardingCopy(locale);
   const defaultDistance = profile.max_distance ?? 10;
+  const selectedInterests = profile.interests ?? [];
+  const selectedMoods = profile.moods ?? [];
+  const selectedDistricts = profile.districts ?? [];
+  const selectedTiming = profile.timing ?? [];
+  const selectedDays = profile.preferred_days ?? [];
+  const selectedLanguages = profile.preferred_languages ?? [];
 
   return (
     <Form action={action} className="onboarding-form flex flex-col gap-8" method="post">
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{onboarding.interestLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid"
-          defaultValue={profile.interests ?? []}
-          name="interests"
+          variant="transparent"
         >
           {INTERESTS.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getInterestLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedInterests.includes(value)}
+              key={value}
+              label={getInterestLabel(locale, value)}
+              name="interests"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{onboarding.moodLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid"
-          defaultValue={profile.moods ?? []}
-          name="moods"
+          variant="transparent"
         >
           {MOODS.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getMoodLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedMoods.includes(value)}
+              key={value}
+              label={getMoodLabel(locale, value)}
+              name="moods"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{onboarding.districtLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid"
-          defaultValue={profile.districts ?? []}
-          name="districts"
+          variant="transparent"
         >
           {DISTRICTS.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getDistrictLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedDistricts.includes(value)}
+              key={value}
+              label={getDistrictLabel(locale, value)}
+              name="districts"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
-      <NumberField
-        className="onboarding-form__number-field"
-        defaultValue={defaultDistance}
-        fullWidth
-        maxValue={MAX_DISTANCE_MAX}
-        minValue={MAX_DISTANCE_MIN}
-        name="max_distance"
-      >
-        <Label className="onboarding-form__section-label">{onboarding.radiusLabel}</Label>
-        <NumberField.Group>
-          <NumberField.DecrementButton>-</NumberField.DecrementButton>
-          <NumberField.Input />
-          <NumberField.IncrementButton>+</NumberField.IncrementButton>
-        </NumberField.Group>
-        <Description>{onboarding.km}</Description>
-      </NumberField>
+      <Surface className="onboarding-form__number-field flex flex-col gap-2" variant="transparent">
+        <Label className="onboarding-form__section-label" htmlFor="profile_max_distance">
+          {onboarding.radiusLabel}
+        </Label>
+        <input
+          className="onboarding-form__native-number"
+          defaultValue={defaultDistance}
+          id="profile_max_distance"
+          max={MAX_DISTANCE_MAX}
+          min={MAX_DISTANCE_MIN}
+          name="max_distance"
+          step={1}
+          type="number"
+        />
+        <Paragraph color="muted" size="sm">
+          {onboarding.km}
+        </Paragraph>
+      </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{onboarding.timingLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid-three"
-          defaultValue={profile.timing ?? []}
-          name="timing"
+          variant="transparent"
         >
           {TIMING_OPTIONS.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getTimingLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedTiming.includes(value)}
+              key={value}
+              label={getTimingLabel(locale, value)}
+              name="timing"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{onboarding.daysLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid"
-          defaultValue={profile.preferred_days ?? []}
-          name="preferred_days"
+          variant="transparent"
         >
           {WEEKDAYS.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getWeekdayLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedDays.includes(value)}
+              key={value}
+              label={getWeekdayLabel(locale, value)}
+              name="preferred_days"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{onboarding.languagePrefLabel}</Label>
-        <CheckboxGroup
+        <Surface
           className="onboarding-form__options onboarding-form__options--grid-three"
-          defaultValue={profile.preferred_languages ?? []}
-          name="preferred_languages"
+          variant="transparent"
         >
           {PREFERRED_LANGUAGES.map((value) => (
-            <Checkbox key={value} value={value}>
-              <Checkbox.Content>
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Label>{getPreferredLanguageLabel(locale, value)}</Label>
-              </Checkbox.Content>
-            </Checkbox>
+            <NativePreferenceOption
+              defaultChecked={selectedLanguages.includes(value)}
+              key={value}
+              label={getPreferredLanguageLabel(locale, value)}
+              name="preferred_languages"
+              type="checkbox"
+              value={value}
+            />
           ))}
-        </CheckboxGroup>
+        </Surface>
       </Surface>
 
-      <Switch
-        className="onboarding-form__switch"
-        defaultSelected={profile.accessibility ?? false}
+      <NativePreferenceOption
+        defaultChecked={profile.accessibility ?? false}
+        label={onboarding.accessibilityLabel}
         name="accessibility"
+        type="checkbox"
         value="true"
-      >
-        <Switch.Content>
-          <Switch.Control>
-            <Switch.Thumb />
-          </Switch.Control>
-          <Label>{onboarding.accessibilityLabel}</Label>
-        </Switch.Content>
-      </Switch>
+      />
 
       <Button className="button button--primary button--md sm:max-w-xs" type="submit">
         {copy.savePreferences}

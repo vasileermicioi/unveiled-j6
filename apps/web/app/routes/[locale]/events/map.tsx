@@ -2,9 +2,9 @@ import { listMemberFeedEvents, listPartners } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { EventMapPage } from "../../../components/discovery/EventMapPage";
+import type { EventMapMarker } from "../../../islands/EventMap";
 import { getEventCategoryOptions } from "../../../lib/admin-content";
 import { getAuthOptions } from "../../../lib/auth";
-import type { EventMapMarker } from "../../../islands/EventMap";
 import {
   buildEventFeedQueryString,
   eventFeedPageRedirectPath,

@@ -4,25 +4,21 @@ import type { Locale } from "./base";
 import { expect } from "./base";
 
 /**
- * Select a HeroUI Radio/Checkbox by accessible name.
- * Native check()/click on the input is unreliable — control spans intercept events
- * and force-check may not sync React Aria form state. Prefer label click, then Space.
+ * Select a native radio/checkbox by accessible name (label text).
+ * Prefer role locators; fall back to associated label click.
  */
 async function selectOption(page: Page, name: string | RegExp): Promise<void> {
-  const label = page.locator("label").filter({ hasText: name }).first();
-  if ((await label.count()) > 0) {
-    await label.click();
-    return;
-  }
   const radio = page.getByRole("radio", { name });
   if ((await radio.count()) > 0) {
-    await radio.focus();
-    await page.keyboard.press("Space");
+    await radio.check();
     return;
   }
   const checkbox = page.getByRole("checkbox", { name });
-  await checkbox.focus();
-  await page.keyboard.press("Space");
+  if ((await checkbox.count()) > 0) {
+    await checkbox.check();
+    return;
+  }
+  await page.locator("label").filter({ hasText: name }).first().click();
 }
 
 export async function completeAgeStep(

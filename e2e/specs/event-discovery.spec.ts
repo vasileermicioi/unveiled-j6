@@ -173,11 +173,25 @@ test.describe("event-discovery.feature", () => {
       test.skip(true, "Map consent fallback still blocking detail map in this env");
     }
 
-    // Pin marker: accessible name = event title (role=img), not pixel OCR / CSS classes
+    // Pin marker: accessible name = event title (role=img), not pixel OCR / CSS classes.
+    // Scope to the map region — the hero also uses the event title as img alt.
     const escaped = TITLES.tonight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    await expect(page.getByRole("img", { name: new RegExp(escaped, "i") })).toBeVisible({
+    const marker = mapRegion.getByRole("img", { name: new RegExp(escaped, "i") });
+    await expect(marker).toBeVisible({
       timeout: 20_000,
     });
+
+    // Popup close: large hit target + dismiss (same MapLibre chrome as /events/map)
+    await marker.click();
+    const closeBtn = mapRegion.locator(".maplibregl-popup-close-button");
+    await expect(closeBtn).toBeVisible({ timeout: 10_000 });
+    await expect(closeBtn).toBeEnabled();
+    const closeBox = await closeBtn.boundingBox();
+    expect(closeBox).toBeTruthy();
+    expect((closeBox?.width ?? 0) >= 40).toBe(true);
+    expect((closeBox?.height ?? 0) >= 40).toBe(true);
+    await closeBtn.click();
+    await expect(closeBtn).toHaveCount(0);
   });
 
   test("Scenario: Guest path to full browse requires signup or login", async ({ page, locale }) => {
@@ -337,6 +351,8 @@ test.describe("event-discovery.feature", () => {
     await expect(listTab).toHaveAttribute("href", /category=Theater/);
     await expect(page.getByText(/filtern|filters/i).first()).toBeVisible();
     await expect(page.getByText(TITLES.ausstellung)).toHaveCount(0);
+    // Popup close hit-target coverage lives on guest detail LOCATION map (same EventMap
+    // chrome) to avoid Neon Auth signup flake on this member-only scenario.
   });
 
   test("Scenario: Saved events view", async ({ page, locale }) => {

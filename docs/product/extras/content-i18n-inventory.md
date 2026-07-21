@@ -133,7 +133,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 - How It Works page steps/value points (`HowItWorksPage.tsx`)
 - FAQ questions/answers (`HelpSection.tsx` — hardcoded 3 Q&As per language)
 - Discover/marketing page copy (`AccessPage.tsx`)
-- Onboarding option labels (interests, moods, districts, timing, days — hardcoded arrays in `Onboarding.tsx`, values like "Theater", "Kino", "Mitte", "X-Berg", etc. are the same string in both languages today)
+- Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getDistrictLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants` (e.g. `X-Berg`); DE/EN UI labels expand districts and translate timing/days/languages/moods. Section chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`).
 - "SECURE RSVP // NO REFUNDS" booking policy copy (hardcoded in `BookingModal.tsx`, not in `translations.ts`)
 - Venue check-in inline copy (`BookingsView.tsx`)
 - Event detail checkout-card CTA/notice strings (guest unlock, membership notices, “Secure RSVP // No refunds”, total label) — live in `EventDetailPage.tsx` / locale helpers, not the old `translations.ts` catalog; see `ui/ui-component-map.md` Event detail entry. EventCard primary CTA uses catalog `bookNow` / `waitlist` for all viewer states (guest included).

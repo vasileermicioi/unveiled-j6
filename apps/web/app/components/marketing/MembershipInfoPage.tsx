@@ -1,9 +1,9 @@
 import { Button, Card, Form, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Coins, Sparkles, Ticket } from "lucide-react";
 
 import type { MembershipCheckoutContent } from "../../lib/content/types";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
-import { SectionCard } from "./SectionCard";
 
 export type MembershipViewState = "guest" | "checkout" | "active" | "frozen" | "error";
 
@@ -13,6 +13,8 @@ type MembershipInfoPageProps = {
   view: MembershipViewState;
   errorMessage?: string | null;
 };
+
+const PERK_ICONS = [Ticket, Sparkles, Coins] as const;
 
 export function MembershipInfoPage({
   content,
@@ -113,10 +115,22 @@ export function MembershipInfoPage({
         </Card.Content>
       </Card>
 
-      <Surface className="grid gap-6 md:grid-cols-3" variant="transparent">
-        {content.perks.map((perk) => (
-          <SectionCard key={perk} title={perk} />
-        ))}
+      <Surface className="membership-benefits flex flex-col gap-4" variant="transparent">
+        {content.perks.map((perk, index) => {
+          const Icon = PERK_ICONS[index] ?? Ticket;
+          return (
+            <Surface
+              className="membership-benefits__row flex items-start gap-3"
+              key={perk}
+              variant="transparent"
+            >
+              <Surface className="membership-benefits__icon" variant="transparent">
+                <Icon aria-hidden size={20} strokeWidth={2.25} />
+              </Surface>
+              <Paragraph className="membership-benefits__text">{perk}</Paragraph>
+            </Surface>
+          );
+        })}
       </Surface>
     </Surface>
   );

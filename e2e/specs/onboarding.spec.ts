@@ -85,7 +85,11 @@ test.describe("onboarding.feature", () => {
     await expect(page.getByText(/wann hast du zeit|when do you have time/i)).toBeVisible();
     await expect(page.getByText(/welche tage|which days/i)).toBeVisible();
     await expect(page.getByText(/sprachen|languages/i).first()).toBeVisible();
-    await expect(page.getByText(/barrierefreiheit|accessibility/i)).toBeVisible();
+    await expect(
+      page.getByRole("checkbox", {
+        name: /barrierefreiheit erforderlich|accessibility required/i,
+      }),
+    ).toBeVisible();
     await completeTimingStep(page, locale);
   });
 

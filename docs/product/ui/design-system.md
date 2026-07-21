@@ -51,6 +51,8 @@ Full detail: [`design-tokens.md`](./design-tokens.md).
 
 Prefer HeroUI **Select** (and documented multi-select patterns) for choice UIs. Do **not** introduce Radio or Checkbox groups for MVP admin/member forms unless a later charter amendment says otherwise (matches implementation-plan hard rules).
 
+**Exception — preference & booking quantity forms:** Onboarding steps, profile cultural preferences (“Vibes”), and book/waitlist ticket quantity MAY use **native** HTML `checkbox`, `radio`, `select`, and `input type="number"` when HeroUI Checkbox/Radio/Switch/Select chrome fails visibility or hydration (same precedent as Discover feed filters’ native `<select>`). Theme styling for those controls still belongs in `globals.css` tokens — not ad-hoc per-route colors. Stored allowlist keys stay locale-invariant; user-visible option labels come from locale copy (`onboarding-content.ts`).
+
 ## Related docs
 
 - [`ui-component-map.md`](./ui-component-map.md) — which components exist and where they live

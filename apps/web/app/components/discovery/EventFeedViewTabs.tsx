@@ -1,5 +1,5 @@
 import { Link, Surface } from "@heroui/react";
-import { List, Map } from "lucide-react";
+import { List, Map as MapIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { buildEventFeedQueryString, type EventFeedQuery } from "../../lib/event-feed";
@@ -21,7 +21,7 @@ function ViewTabIcon({ view }: { view: EventFeedView }): ReactNode {
     size: 16,
     strokeWidth: 2.5,
   };
-  return view === "list" ? <List {...props} /> : <Map {...props} />;
+  return view === "list" ? <List {...props} /> : <MapIcon {...props} />;
 }
 
 export function EventFeedViewTabs({ locale, activeView, query }: EventFeedViewTabsProps) {

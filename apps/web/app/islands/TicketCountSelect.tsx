@@ -1,14 +1,10 @@
-"use client";
-
-import { Input, Label, ListBox, Select } from "@heroui/react";
-import type { Key } from "react";
-import { useState } from "react";
+import { Label, Surface } from "@heroui/react";
 
 type TicketCountSelectProps = {
   name: string;
   label: string;
   defaultValue?: string;
-  /** Inclusive upper bound for Select options (1..maxQty). Defaults to 3. */
+  /** Inclusive upper bound for select options (1..maxQty). Defaults to 3. */
   maxQty?: number;
 };
 
@@ -29,6 +25,7 @@ function clampDefaultValue(defaultValue: string, maxQty: number): string {
   return String(Math.min(n, upper));
 }
 
+/** Native ticket quantity select for book/waitlist SSR forms (Discover filter precedent). */
 export default function TicketCountSelect({
   name,
   label,
@@ -37,37 +34,24 @@ export default function TicketCountSelect({
 }: TicketCountSelectProps) {
   const options = buildTicketOptions(maxQty);
   const initial = clampDefaultValue(defaultValue, maxQty);
-  const [selectedKey, setSelectedKey] = useState(initial);
-
-  const handleChange = (key: Key | null) => {
-    setSelectedKey(key == null ? "1" : String(key));
-  };
+  const id = `ticket-count-${name}`;
 
   return (
-    <>
-      <Input name={name} type="hidden" value={selectedKey} />
-      <Select
-        defaultSelectedKey={initial}
-        fullWidth
-        isRequired
-        onChange={handleChange}
-        selectionMode="single"
+    <Surface className="flex w-full flex-col gap-1" variant="transparent">
+      <Label htmlFor={id}>{label}</Label>
+      <select
+        className="event-feed-filters__select"
+        defaultValue={initial}
+        id={id}
+        name={name}
+        required
       >
-        <Label>{label}</Label>
-        <Select.Trigger>
-          <Select.Value />
-          <Select.Indicator />
-        </Select.Trigger>
-        <Select.Popover placement="bottom start">
-          <ListBox>
-            {options.map((option) => (
-              <ListBox.Item id={option.id} key={option.id} textValue={option.label}>
-                {option.label}
-              </ListBox.Item>
-            ))}
-          </ListBox>
-        </Select.Popover>
-      </Select>
-    </>
+        {options.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </Surface>
   );
 }

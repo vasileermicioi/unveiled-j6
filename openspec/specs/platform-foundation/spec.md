@@ -369,3 +369,26 @@ Product UI docs SHALL describe the shared on-yellow `PageSectionHeader` (eyebrow
 
 - **WHEN** Playwright covers FAQ and auth page headers after this change
 - **THEN** assertions use proximity role/name (eyebrow and/or level-1 heading), not CSS-class or `data-testid` selectors for the ruled header
+
+### Requirement: Native controls exception for preference forms
+For onboarding, profile preferences, and booking/waitlist quantity fields, the product MAY use native checkboxes, radios, selects, and number inputs instead of HeroUI Select-only / no-checkbox guidance when custom controls fail visibility or hydration. Theme styling for those native controls SHALL still come from shared CSS tokens in `globals.css`. Product UI documentation SHALL state this exception explicitly.
+
+#### Scenario: Documented exception
+- **WHEN** an implementer reads product UI docs after this change
+- **THEN** the native-control exception for preference and booking quantity forms is stated explicitly
+- **AND** the docs still require theme-token styling (not ad-hoc per-route colors) for those controls
+
+### Requirement: Shared page section headers on booking flows
+Member flows that use the default on-yellow page title pattern SHALL use the shared `PageSectionHeader` (or documented equivalent), including booking and waitlist pages. Pages SHALL NOT invent one-off bare `Heading` title chrome that diverges from that pattern without an explicit product exception. The membership marketing hero card MAY retain its bordered hero composition; this requirement targets transactional member pages (book, confirm, waitlist), not the membership perk hero.
+
+#### Scenario: Book event uses shared header
+- **WHEN** a member opens the book-event page
+- **THEN** the title/eyebrow treatment matches the shared page-header pattern used on Discover/FAQ-style surfaces
+
+#### Scenario: Booking confirmation uses shared header
+- **WHEN** a member opens the booking confirmation page
+- **THEN** the page uses `PageSectionHeader` (eyebrow + headline) rather than a bare level-1 heading stack
+
+#### Scenario: Waitlist join uses shared header
+- **WHEN** a member opens the waitlist join page
+- **THEN** the page header matches the shared `PageSectionHeader` pattern

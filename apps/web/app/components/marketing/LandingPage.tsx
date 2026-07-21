@@ -95,7 +95,10 @@ export function LandingPage({ locale, landing }: LandingPageProps) {
                 <Surface className="guest-home__benefit-icon" variant="transparent">
                   <Icon aria-hidden size={18} strokeWidth={2.25} />
                 </Surface>
-                <Surface className="guest-home__benefit-copy min-w-0 flex flex-col gap-0.5" variant="transparent">
+                <Surface
+                  className="guest-home__benefit-copy min-w-0 flex flex-col gap-0.5"
+                  variant="transparent"
+                >
                   <Heading className="guest-home__benefit-title" level={3}>
                     {benefit.title}
                   </Heading>

@@ -19,7 +19,10 @@ export function AuthPageLayout({ locale, page, children }: AuthPageLayoutProps) 
       className="mx-auto flex w-full max-w-7xl flex-col px-4 py-10 md:py-14"
       variant="transparent"
     >
-      <Surface className="mx-auto flex w-full max-w-lg flex-col gap-6" variant="transparent">
+      <Surface
+        className="auth-page__column mx-auto flex w-full flex-col gap-6"
+        variant="transparent"
+      >
         <Surface className="flex flex-col gap-3" variant="transparent">
           <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
           <Paragraph color="muted">{copy.description}</Paragraph>

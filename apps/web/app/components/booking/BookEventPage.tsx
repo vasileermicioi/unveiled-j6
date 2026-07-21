@@ -1,10 +1,11 @@
-import { Alert, Button, Card, Form, Heading, Input, Link, Paragraph, Surface } from "@heroui/react";
+import { Alert, Button, Card, Form, Input, Link, Paragraph, Surface } from "@heroui/react";
 import type { Event } from "@unveiled/db";
 
 import TicketCountSelect from "../../islands/TicketCountSelect";
 import type { BookPageCopy } from "../../lib/booking-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+import { PageSectionHeader } from "../marketing/PageSectionHeader";
 
 export type BookPageView = "form" | "past_due";
 
@@ -46,7 +47,7 @@ export function BookEventPage({
         className="mx-auto flex max-w-lg flex-col gap-6 px-4 py-12 sm:px-6"
         variant="transparent"
       >
-        <Heading level={1}>{copy.pastDueTitle}</Heading>
+        <PageSectionHeader eyebrow={copy.pastDueEyebrow} headline={copy.pastDueTitle} />
         <Paragraph>{copy.pastDueBody}</Paragraph>
         <Surface className="flex flex-col gap-3 sm:flex-row" variant="transparent">
           <Link
@@ -69,7 +70,7 @@ export function BookEventPage({
       className="mx-auto flex max-w-lg flex-col gap-6 px-4 py-12 sm:px-6"
       variant="transparent"
     >
-      <Heading level={1}>{copy.title}</Heading>
+      <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
       <Paragraph>{copy.subtitle(event.title)}</Paragraph>
       <Paragraph>
         {event.partnerName} · {unitPrice} {locale === "de" ? "Credit / Ticket" : "credit / ticket"}
