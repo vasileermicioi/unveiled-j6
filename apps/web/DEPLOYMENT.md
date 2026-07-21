@@ -92,7 +92,9 @@ Connect the GitHub repo in **Workers & Pages → your Worker → Settings → Bu
 
 `bun run build` runs **`db:migrate` first** (Drizzle against `DATABASE_URL`), then the Workers bundle. Migrations fail the build if `DATABASE_URL` is missing or migrate errors.
 
-Do **not** use `npx wrangler deploy` alone — Wrangler will refuse monorepo roots. The root `deploy:workers` script runs `bunx wrangler deploy --config apps/web/wrangler.toml`.
+Do **not** use `npx wrangler deploy` alone — Wrangler will refuse monorepo roots. The root `deploy:workers` script runs `bunx wrangler deploy --keep-vars --config apps/web/wrangler.toml`.
+
+**Do not drop dashboard env vars on deploy:** `apps/web/wrangler.toml` sets `keep_vars = true`, and `deploy:workers` passes `--keep-vars`. Without that, Wrangler replaces plaintext vars with only the `[vars]` block and deletes dashboard-only keys (e.g. Stripe publishable / webhook / price, Resend). Encrypted **Secrets** already survive deploy; prefer Secrets (or `bun run secrets:workers`) for credentials. After a wipe, re-upload from root `.env` with `bun run secrets:workers`.
 
 **Build variables** (Settings → Variables and secrets → **Build**):
 
@@ -104,15 +106,27 @@ Do **not** use `npx wrangler deploy` alone — Wrangler will refuse monorepo roo
 
 Locally, root `.env` supplies the same vars (`bun --env-file=.env` on `db:migrate`).
 
-**Runtime secrets** (Settings → Variables and secrets → **Secrets** — required for auth and DB):
+**Runtime variables** (Settings → Variables and secrets — production checklist; prefer **Secret** type for credentials):
 
-| Secret | Phase | Notes |
+| Variable | Phase | Notes |
 |---|---|---|
+| `SITE_URL` | 1+ | Public site origin (no trailing slash) |
 | `DATABASE_URL` | 2+ | Neon Postgres connection string |
 | `AUTH_URL` | 2+ | Neon Auth API base URL (no trailing slash) |
-| `SITE_URL` | 1+ | Public site origin, e.g. `https://unveiled-j6.deepcode.xyz` (no trailing slash) |
+| `S3_ENDPOINT` | 4+ | R2 S3 API host only |
+| `S3_REGION` | 4+ | Usually `auto` |
+| `S3_BUCKET` | 4+ | R2 bucket name |
+| `S3_ACCESS_KEY_ID` | 4+ | R2 access key |
+| `S3_SECRET_ACCESS_KEY` | 4+ | R2 secret key |
+| `IMAGE_PUBLIC_BASE_URL` | 4+ | Public R2.dev / custom domain |
+| `STRIPE_SECRET_KEY` | 6+ | Stripe secret key |
+| `STRIPE_PUBLISHABLE_KEY` | 6+ | Stripe publishable key |
+| `STRIPE_WEBHOOK_SECRET` | 6+ | Webhook signing secret |
+| `STRIPE_PRICE_ID_BASIC_BERLIN` | 6+ | Basic Berlin price id |
+| `RESEND_API_KEY` | 6+ | Resend API key |
+| `DAILY_CODES_FROM_EMAIL` | 6+ | Verified From address |
 
-`SITE_URL`, `AUTH_URL`, and the six R2 vars are set in `apps/web/wrangler.toml` `[vars]` for staging (mirrored from repo-root `.env`). `DATABASE_URL` is also in `[vars]` for this staging Worker — redeploy after changes (`bun run deploy:workers`). For production, prefer `wrangler secret put` / dashboard secrets instead of committing credentials.
+Staging may still mirror `SITE_URL` / DB / Auth / R2 in `wrangler.toml` `[vars]` for convenience. Production should use dashboard Secrets + `bun run secrets:workers` so credentials are not committed; `keep_vars` keeps any dashboard-only plaintext vars across deploys.
 
 **Verify after deploy:**
 

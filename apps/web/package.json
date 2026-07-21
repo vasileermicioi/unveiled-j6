@@ -7,7 +7,7 @@
     "dev:workers": "vite build --mode client && vite build && wrangler dev",
     "build": "vite build --mode client && vite build",
     "start": "wrangler dev",
-    "deploy:workers": "bunx wrangler deploy",
+    "deploy:workers": "bunx wrangler deploy --keep-vars",
     "stories": "ladle serve",
     "typecheck": "tsc --noEmit"
   },

@@ -3,6 +3,11 @@ compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 main = "dist/index.js"
 
+# Preserve dashboard / `wrangler secret` plaintext vars that are not listed in [vars].
+# Without this, each `wrangler deploy` deletes Stripe/Resend/etc. vars set only in the dashboard.
+# Encrypted secrets are never deleted by deploy; this flag protects plaintext vars.
+keep_vars = true
+
 # Bundle sip WASM imported by @standardagents/sip's workerd entry.
 [[rules]]
 globs = ["**/*.wasm"]
@@ -10,6 +15,7 @@ type = "CompiledWasm"
 fallthrough = true
 
 # Staging runtime vars — mirrored from repo-root `.env` (+ SITE_URL for this host).
+# Prefer `bun run secrets:workers` for Stripe/Resend and other credentials (not committed here).
 # Redeploy after changes: `bun run deploy:workers`
 [vars]
 SITE_URL = "https://unveiled-j6.deepcode.xyz"
