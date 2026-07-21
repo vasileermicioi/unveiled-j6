@@ -49,9 +49,13 @@ Full detail: [`design-tokens.md`](./design-tokens.md).
 
 ## Form controls
 
-Prefer HeroUI **Select** (and documented multi-select patterns) for choice UIs. Do **not** introduce Radio or Checkbox groups for MVP admin/member forms unless a later charter amendment says otherwise (matches implementation-plan hard rules).
+Prefer **native** HTML controls for choice, numeric, date, and file fields when a native control exists: `select` (single or multi), `input` of type `checkbox|radio|number|date|time|file`, and `textarea`. Do **not** use HeroUI `Select`, `NumberField`, `Checkbox`, `Radio`, or `Switch` for those fields in new work.
 
-**Exception — preference & booking quantity forms:** Onboarding steps, profile cultural preferences (“Vibes”), and book/waitlist ticket quantity MAY use **native** HTML `checkbox`, `radio`, `select`, and `input type="number"` when HeroUI Checkbox/Radio/Switch/Select chrome fails visibility or hydration (same precedent as Discover feed filters’ native `<select>`). Theme styling for those controls still belongs in `globals.css` tokens — not ad-hoc per-route colors. Stored allowlist keys stay locale-invariant; user-visible option labels come from locale copy (`onboarding-content.ts`).
+Keep HeroUI for text fields (`TextField` / `TextArea`), buttons, labels, and layout chrome. Native controls MAY be wrapped in HeroUI `Label` / `Surface` / `Field`. Theme styling belongs in `globals.css` tokens (Discover `.event-feed-filters__select`, onboarding preference cards, admin `.admin-native-select` / `.admin-native-number`) — not ad-hoc per-route colors.
+
+**Exceptions (keep non-native):** admin image upload / Pica processing UI; `EventGeoPicker` / map islands; `@better-auth-ui/*` auth chrome.
+
+Preference allowlist keys stay locale-invariant; user-visible option labels come from locale copy (`onboarding-content.ts`).
 
 ## Related docs
 

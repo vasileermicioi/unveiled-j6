@@ -69,7 +69,7 @@ Business logic for admin catalog operations lives in `packages/db/src/catalog/` 
 
 **Discovery:** `listMemberFeedEvents`, `listMemberFeedMapEvents`, `MEMBER_FEED_PAGE_SIZE`, `MEMBER_FEED_MAP_MAX`, `saveEvent`, `unsaveEvent`, `isEventSaved`, `listSavedEventIds`, `listSavedUpcomingEvents`, `berlinTodayRange`, `berlinInclusiveDateRange`, `getBerlinCalendarDate`
 
-**Images:** `attachImageToPartner`, `attachImageToEvent`, `deleteImageRecord`, `persistImageFromSource`
+**Images:** `attachImageToPartner`, `attachImageToEvent`, `deleteImageRecord`, `persistImageFromSource`, `persistPrebuiltImage` (import `@unveiled/db/catalog/images` — not the main barrel). New images must be **prebuilt** (`imagePrebuilt` / `logoPrebuilt`); optional `imageUrl`/`logoUrl` is sourceUrl metadata only.
 
 **Seed:** `runDemoSeed`, `shouldRunDemoSeed`
 

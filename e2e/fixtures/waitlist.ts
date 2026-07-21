@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { createDb, eq, events, listPartners, subscriptions, users } from "@unveiled/db";
 
-import { adminLabels } from "./admin";
+import { adminLabels, fillNumberByLabel } from "./admin";
 import { getAdminCredentials, loginAsAdmin, logout } from "./auth";
 import type { Locale } from "./base";
 import { expect } from "./base";
@@ -128,21 +128,8 @@ export async function bumpEventCapacityViaAdmin(
   });
   await page.waitForLoadState("networkidle");
 
-  const capacity = page.getByRole("textbox", { name: adminLabels.capacity, exact: true });
-  await expect(capacity).toBeVisible({ timeout: 15_000 });
-  const current = Number((await capacity.inputValue()) || "0");
-  const delta = Number(target) - current;
-  if (delta !== 0) {
-    const buttons = page.getByRole("button", {
-      name: delta > 0 ? /erhöhen|increment|increase/i : /verringern|decrement|decrease/i,
-    });
-    const btn = buttons.nth(1);
-    for (let i = 0; i < Math.abs(delta); i++) {
-      await btn.click();
-    }
-  }
+  await fillNumberByLabel(page, adminLabels.capacity, target);
 
-  await page.keyboard.press("Escape").catch(() => undefined);
   await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 60_000 });
 

@@ -33,6 +33,7 @@ export const POST = createRoute(async (c) => {
       address: values.address,
       contactEmail: values.contactEmail,
       logoUpload: values.logoUpload,
+      logoPrebuilt: values.logoPrebuilt,
       uploadedBy: guard.session.user.id,
     });
 

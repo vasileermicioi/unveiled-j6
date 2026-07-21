@@ -1,8 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createDb } from "@unveiled/db";
-import { createSolidJpeg } from "@unveiled/images";
 import { eq } from "drizzle-orm";
-
 import { featuredEvents } from "../schema/featured-events";
 import { CatalogValidationError } from "./errors";
 import { createEvent, deleteEvent, getEventById } from "./events";
@@ -13,11 +11,12 @@ import {
   searchEventsNotFeatured,
 } from "./featured-events";
 import { createPartner, deletePartner } from "./partners";
+import { createTestImagePrebuilt } from "./test-image";
 
 const databaseUrl = process.env.DATABASE_URL;
 
-async function createTestImageBuffer(): Promise<Buffer> {
-  return createSolidJpeg(800, 420, { r: 250, g: 255, b: 134 });
+async function createTestImage() {
+  return createTestImagePrebuilt();
 }
 
 describe("featured events integration", () => {
@@ -29,12 +28,12 @@ describe("featured events integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
     const partner = await createPartner(db, {
       name: `Featured Partner ${suffix}`,
       address: "Featuredstraße 1, Berlin",
       contactEmail: `featured-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -51,7 +50,7 @@ describe("featured events integration", () => {
       dateTime: new Date("2026-07-10T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `FUP${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -66,7 +65,7 @@ describe("featured events integration", () => {
       dateTime: new Date("2026-07-08T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `FPA${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -81,7 +80,7 @@ describe("featured events integration", () => {
       dateTime: new Date("2026-07-11T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `NF${suffix.slice(0, 6)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -146,12 +145,12 @@ describe("featured events integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
     const partner = await createPartner(db, {
       name: `Featured Cascade ${suffix}`,
       address: "Cascadestraße 1, Berlin",
       contactEmail: `featured-cascade-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -166,7 +165,7 @@ describe("featured events integration", () => {
       dateTime: new Date("2026-07-15T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `FC${suffix.slice(0, 6)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 

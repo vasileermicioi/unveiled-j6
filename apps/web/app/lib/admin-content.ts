@@ -265,8 +265,12 @@ export type AdminCopy = {
   imageUrlLabel: string;
   imageUrlPlaceholder: string;
   imageUrlHint: string;
+  imageUrlProcessButton: string;
+  imageUrlFetchError: string;
   imageUploadHint: string;
   imageUploadHintEdit: string;
+  imageProcessingInProgress: string;
+  imageProcessingError: string;
   chooseImageButton: string;
   imageSelectedLabel: (fileName: string) => string;
   imageStorageError: string;
@@ -306,7 +310,7 @@ const copy: Record<Locale, AdminCopy> = {
   de: {
     navDashboard: "Admin",
     dashboardTitle: "Admin-Dashboard",
-    dashboardSubtitle: "Katalog-Kennzahlen und Demo-Daten.",
+    dashboardSubtitle: "Katalog-Kennzahlen.",
     tabNavLabel: "Admin-Bereiche",
     tabOverview: "Übersicht",
     tabPartners: "Partner",
@@ -527,9 +531,10 @@ const copy: Record<Locale, AdminCopy> = {
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
     logoFileLabel: "Logo hochladen",
-    logoUploadHint: "Optional: JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
+    logoUploadHint:
+      "Optional: JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB. Datei-Upload erfordert JavaScript.",
     logoUploadHintEdit:
-      "Optional: neues Logo hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten.",
+      "Optional: neues Logo hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten. Datei-Upload erfordert JavaScript.",
     partnerLabel: "Partner",
     titleLabel: "Titel",
     descriptionLabel: "Beschreibung",
@@ -566,10 +571,18 @@ const copy: Record<Locale, AdminCopy> = {
     imageFileLabel: "Event-Bild hochladen",
     imageUrlLabel: "Bild-URL",
     imageUrlPlaceholder: "https://…",
-    imageUrlHint: "Statt Upload: öffentliche Bild-URL einfügen. Nicht beides gleichzeitig.",
-    imageUploadHint: "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB. Upload oder URL.",
+    imageUrlHint:
+      "Statt Datei: öffentliche Bild-URL einfügen und „URL verarbeiten“ wählen. Nicht beides gleichzeitig. Erfordert JavaScript.",
+    imageUrlProcessButton: "URL verarbeiten",
+    imageUrlFetchError:
+      "Bild-URL konnte nicht geladen werden. Bitte eine erreichbare JPEG/PNG/WebP-URL prüfen.",
+    imageUploadHint:
+      "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB. Datei oder URL. Bild-Upload erfordert JavaScript.",
     imageUploadHintEdit:
-      "Optional: neues Bild per Upload oder URL ersetzen — beides leer lassen, um das aktuelle zu behalten.",
+      "Optional: neues Bild per Datei oder URL ersetzen — leer lassen, um das aktuelle zu behalten. Erfordert JavaScript.",
+    imageProcessingInProgress: "Bild wird verarbeitet…",
+    imageProcessingError:
+      "Bild konnte nicht verarbeitet werden. Bitte eine gültige Datei oder URL wählen (min. 800×420) und erneut versuchen.",
     chooseImageButton: "Bild auswählen",
     imageSelectedLabel: (fileName) => `Ausgewählt: ${fileName}`,
     imageStorageError: "Bildspeicher ist nicht konfiguriert. Bitte Admin kontaktieren.",
@@ -593,7 +606,8 @@ const copy: Record<Locale, AdminCopy> = {
       contactEmail: "Gültige E-Mail-Adresse erforderlich.",
       address: "Adresse ist erforderlich.",
       logo: "Logo-Upload und URL können nicht gleichzeitig gesetzt werden.",
-      image: "Event-Bild ist erforderlich (Upload oder URL — nicht beides).",
+      image:
+        "Event-Bild ist erforderlich. Bitte Datei oder URL mit JavaScript verarbeiten (Varianten).",
       partnerId: "Partner ist erforderlich.",
       title: "Titel ist erforderlich.",
       description: "Beschreibung ist erforderlich.",
@@ -608,7 +622,7 @@ const copy: Record<Locale, AdminCopy> = {
   en: {
     navDashboard: "Admin",
     dashboardTitle: "Admin dashboard",
-    dashboardSubtitle: "Catalog metrics and demo data.",
+    dashboardSubtitle: "Catalog metrics.",
     tabNavLabel: "Admin sections",
     tabOverview: "Overview",
     tabPartners: "Partners",
@@ -828,9 +842,10 @@ const copy: Record<Locale, AdminCopy> = {
     emailLabel: "Contact email",
     addressLabel: "Address",
     logoFileLabel: "Upload logo",
-    logoUploadHint: "Optional: JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
+    logoUploadHint:
+      "Optional: JPEG, PNG, or WebP — min 800×420 px, max 8 MB. File upload requires JavaScript.",
     logoUploadHintEdit:
-      "Optional: upload a new logo to replace the current one — leave empty to keep it.",
+      "Optional: upload a new logo to replace the current one — leave empty to keep it. File upload requires JavaScript.",
     partnerLabel: "Partner",
     titleLabel: "Title",
     descriptionLabel: "Description",
@@ -867,10 +882,18 @@ const copy: Record<Locale, AdminCopy> = {
     imageFileLabel: "Upload event image",
     imageUrlLabel: "Image URL",
     imageUrlPlaceholder: "https://…",
-    imageUrlHint: "Paste a public image URL instead of uploading. Do not provide both.",
-    imageUploadHint: "JPEG, PNG, or WebP — min 800×420 px, max 8 MB. Upload or URL.",
+    imageUrlHint:
+      "Instead of a file: paste a public image URL and choose “Process URL”. Do not provide both. Requires JavaScript.",
+    imageUrlProcessButton: "Process URL",
+    imageUrlFetchError:
+      "Could not fetch the image URL. Check that it is a reachable JPEG, PNG, or WebP URL.",
+    imageUploadHint:
+      "JPEG, PNG, or WebP — min 800×420 px, max 8 MB. File or URL. Image upload requires JavaScript.",
     imageUploadHintEdit:
-      "Optional: replace the current image via upload or URL — leave both empty to keep it.",
+      "Optional: replace the current image via file or URL — leave empty to keep it. Requires JavaScript.",
+    imageProcessingInProgress: "Processing image…",
+    imageProcessingError:
+      "Could not process the image. Choose a valid file or URL (min 800×420) and try again.",
     chooseImageButton: "Choose image",
     imageSelectedLabel: (fileName) => `Selected: ${fileName}`,
     imageStorageError: "Image storage is not configured. Contact support.",
@@ -893,7 +916,7 @@ const copy: Record<Locale, AdminCopy> = {
       contactEmail: "A valid email address is required.",
       address: "Address is required.",
       logo: "Logo upload and URL cannot both be provided.",
-      image: "Event image is required (upload or URL — not both).",
+      image: "Event image is required. Process a file or URL with JavaScript (variants).",
       partnerId: "Partner is required.",
       title: "Title is required.",
       description: "Description is required.",
@@ -914,6 +937,7 @@ export function getAdminCopy(locale: Locale): AdminCopy {
 const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fieldErrors"]>> = {
   INVALID_EMAIL: "contactEmail",
   REQUIRED_FIELD: "name",
+  CLIENT_IMAGE_REQUIRED: "image",
   CONFLICTING_IMAGE_SOURCES: "logo",
   MISSING_EVENT_IMAGE: "image",
   INVALID_REDEMPTION_CONFIG: "redemption",
@@ -943,8 +967,14 @@ export function mapCatalogErrorCode(
 
   if (code === "CONFLICTING_IMAGE_SOURCES") {
     return locale === "de"
-      ? "Upload und URL können nicht gleichzeitig gesetzt werden."
-      : "Upload and URL cannot both be provided.";
+      ? "Bild-Upload (inkl. Varianten) und URL können nicht gleichzeitig gesetzt werden."
+      : "Image upload (including variants) and URL cannot both be provided.";
+  }
+
+  if (code === "CLIENT_IMAGE_REQUIRED") {
+    return locale === "de"
+      ? "Bild-Varianten müssen im Browser erzeugt werden (Datei oder „URL verarbeiten“)."
+      : "Image variants must be generated in the browser (file or “Process URL”).";
   }
 
   if (code === "MISSING_EVENT_IMAGE") {

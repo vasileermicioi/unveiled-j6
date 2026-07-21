@@ -1,8 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createDb, events, images, partners } from "@unveiled/db";
-import { createSolidJpeg } from "@unveiled/images";
 import { eq } from "drizzle-orm";
-
 import {
   countEvents,
   createEvent,
@@ -20,11 +18,12 @@ import {
   updatePartner,
 } from "./partners";
 import { runDemoSeed, shouldRunDemoSeed } from "./seed";
+import { createTestImagePrebuilt } from "./test-image";
 
 const databaseUrl = process.env.DATABASE_URL;
 
-async function createTestImageBuffer(): Promise<Buffer> {
-  return createSolidJpeg(800, 420, { r: 250, g: 255, b: 134 });
+async function createTestImage() {
+  return createTestImagePrebuilt();
 }
 
 describe("catalog integration", () => {
@@ -35,12 +34,12 @@ describe("catalog integration", () => {
     }
 
     const db = createDb(databaseUrl);
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
     const partner = await createPartner(db, {
       name: "Rename Test Venue",
       address: "Teststraße 1, Berlin",
       contactEmail: `rename-${crypto.randomUUID()}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -55,7 +54,7 @@ describe("catalog integration", () => {
       dateTime: new Date(Date.now() + 86_400_000),
       creditPrice: 1,
       secretCode: "TESTCODE",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -78,12 +77,12 @@ describe("catalog integration", () => {
     }
 
     const db = createDb(databaseUrl);
-    const originalImage = await createTestImageBuffer();
+    const originalImage = await createTestImage();
     const partner = await createPartner(db, {
       name: "Image Replace Venue",
       address: "Teststraße 2, Berlin",
       contactEmail: `image-replace-${crypto.randomUUID()}@example.com`,
-      logoUpload: originalImage,
+      logoPrebuilt: originalImage,
       skipUpload: true,
     });
 
@@ -98,16 +97,16 @@ describe("catalog integration", () => {
       dateTime: new Date(Date.now() + 86_400_000),
       creditPrice: 1,
       secretCode: "REPLACE1",
-      imageUpload: originalImage,
+      imagePrebuilt: originalImage,
       skipUpload: true,
     });
 
-    const replacementImage = await createSolidJpeg(800, 420, { r: 20, g: 20, b: 20 });
+    const replacementImage = createTestImagePrebuilt();
 
     try {
       const previousImageId = event.imageId;
       const updated = await updateEvent(db, event.id, {
-        imageUpload: replacementImage,
+        imagePrebuilt: replacementImage,
         skipUpload: true,
       });
 
@@ -224,7 +223,7 @@ describe("catalog integration", () => {
     }
 
     const db = createDb(databaseUrl);
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
     const suffix = crypto.randomUUID().slice(0, 8);
     const partner = await createPartner(db, {
       name: `Event Search Partner ${suffix}`,
@@ -244,7 +243,7 @@ describe("catalog integration", () => {
       dateTime: new Date(Date.now() + 86_400_000),
       creditPrice: 1,
       secretCode: "OLDER01",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
     const newerEvent = await createEvent(db, {
@@ -258,7 +257,7 @@ describe("catalog integration", () => {
       dateTime: new Date(Date.now() + 172_800_000),
       creditPrice: 1,
       secretCode: "NEWER01",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -327,7 +326,7 @@ describe("catalog integration", () => {
     }
 
     const db = createDb(databaseUrl);
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
     const partner = await createPartner(db, {
       name: "Upcoming Test Venue",
       address: "Teststraße 2, Berlin",
@@ -350,7 +349,7 @@ describe("catalog integration", () => {
       dateTime: laterDate,
       creditPrice: 1,
       secretCode: "LATERCODE",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -365,7 +364,7 @@ describe("catalog integration", () => {
       dateTime: soonerDate,
       creditPrice: 1,
       secretCode: "SOONCODE",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -380,7 +379,7 @@ describe("catalog integration", () => {
       dateTime: pastDate,
       creditPrice: 1,
       secretCode: "PASTCODE",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 

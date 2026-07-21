@@ -1,10 +1,12 @@
 import type { AppSession } from "@unveiled/auth";
 import { CatalogValidationError } from "@unveiled/db";
+import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { ImageValidationError } from "@unveiled/images/errors";
 import type { Context } from "hono";
 
 import { getAdminCopy, mapCatalogErrorCode } from "./admin-content";
 import { parseEventFormBody, parseSeriesSlots } from "./admin-event-form";
+import { parsePrebuiltImageVariants } from "./admin-prebuilt-image";
 import { getSession } from "./auth";
 import { buildLoginRedirectUrl } from "./auth-middleware";
 import type { Locale } from "./locale";
@@ -66,6 +68,7 @@ export type PartnerFormValues = {
   contactEmail: string;
   address: string;
   logoUpload: Buffer | null;
+  logoPrebuilt: PrebuiltImageVariantsInput | null;
 };
 
 function getLocaleParam(value: string | undefined): Locale {
@@ -112,11 +115,14 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
   const name = asString(body.name)?.trim() ?? "";
   const contactEmail = asString(body.contact_email)?.trim() ?? "";
   const address = asString(body.address)?.trim() ?? "";
+  const logoPrebuilt = await parsePrebuiltImageVariants(body, asString, asFile);
 
-  const logoFile = asFile(body.logo);
   let logoUpload: Buffer | null = null;
-  if (logoFile && logoFile.size > 0) {
-    logoUpload = Buffer.from(await logoFile.arrayBuffer());
+  if (!logoPrebuilt) {
+    const logoFile = asFile(body.logo);
+    if (logoFile && logoFile.size > 0) {
+      logoUpload = Buffer.from(await logoFile.arrayBuffer());
+    }
   }
 
   return {
@@ -124,6 +130,7 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
     contactEmail,
     address,
     logoUpload,
+    logoPrebuilt,
   };
 }
 
@@ -154,7 +161,7 @@ export function mapCatalogError(error: unknown, locale: Locale): string {
     return getAdminCopy(locale).imageStorageError;
   }
 
-  // Surface unexpected runtime messages (e.g. Workers sip/WASM/R2) for admin operators.
+  // Surface unexpected runtime messages (e.g. R2/image storage) for admin operators.
   if (error instanceof Error && error.message.trim().length > 0) {
     return error.message;
   }

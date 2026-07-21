@@ -1,3 +1,4 @@
+import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { count, desc, eq, ilike } from "drizzle-orm";
 
 import type { Db } from "../index";
@@ -24,6 +25,7 @@ export type CreatePartnerInput = {
   venueCheckInToken?: string | null;
   logoUpload?: Buffer | null;
   logoUrl?: string | null;
+  logoPrebuilt?: PrebuiltImageVariantsInput | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
 };
@@ -34,6 +36,7 @@ export type UpdatePartnerInput = {
   contactEmail?: string;
   logoUpload?: Buffer | null;
   logoUrl?: string | null;
+  logoPrebuilt?: PrebuiltImageVariantsInput | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
 };
@@ -75,15 +78,17 @@ export async function createPartner(db: Db, input: CreatePartnerInput): Promise<
   const name = requireNonEmpty(input.name, "name");
   const address = requireNonEmpty(input.address, "address");
   const contactEmail = validateEmail(input.contactEmail);
-  validateImageSourceExclusive(input.logoUpload, input.logoUrl);
 
   let logoImageId: string | null = null;
-  const logoSource = validateImageSourceExclusive(input.logoUpload, input.logoUrl);
+  const logoSource = validateImageSourceExclusive(input.logoUpload, input.logoUrl, {
+    prebuilt: input.logoPrebuilt,
+  });
   if (logoSource) {
     const { persistImageFromSource } = await catalogImages();
     logoImageId = await persistImageFromSource(db, logoSource, {
       uploadedBy: input.uploadedBy,
       skipUpload: input.skipUpload,
+      prebuilt: input.logoPrebuilt,
     });
   }
 
@@ -132,7 +137,9 @@ export async function updatePartner(
     throw new CatalogValidationError("PARTNER_NOT_FOUND", `Partner ${partnerId} not found`);
   }
 
-  validateImageSourceExclusive(input.logoUpload, input.logoUrl);
+  validateImageSourceExclusive(input.logoUpload, input.logoUrl, {
+    prebuilt: input.logoPrebuilt,
+  });
 
   const nextName = input.name !== undefined ? requireNonEmpty(input.name, "name") : existing.name;
   const nextAddress =
@@ -150,6 +157,7 @@ export async function updatePartner(
     {
       uploadedBy: input.uploadedBy,
       skipUpload: input.skipUpload,
+      prebuilt: input.logoPrebuilt,
     },
   );
 

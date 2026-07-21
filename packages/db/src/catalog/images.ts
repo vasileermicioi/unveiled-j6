@@ -1,8 +1,9 @@
 import {
   deleteImageObjects,
-  processImageFromBuffer,
-  processImageFromUrl,
-  repairImageVariants,
+  ensureImageObjectsPresent,
+  type PersistPrebuiltOptions,
+  type PrebuiltImageVariantsInput,
+  persistPrebuiltImageVariants,
 } from "@unveiled/images";
 import { eq } from "drizzle-orm";
 
@@ -14,23 +15,26 @@ import { type ImageAttachInput, validateImageSourceExclusive } from "./validatio
 export type PersistImageOptions = {
   uploadedBy?: string | null;
   skipUpload?: boolean;
+  prebuilt?: PrebuiltImageVariantsInput | null;
+  /** Optional remote origin when prebuilt variants were generated from a URL. */
+  sourceUrl?: string | null;
 };
 
-export async function persistImageFromSource(
+export type PersistPrebuiltImageOptions = PersistImageOptions &
+  Pick<PersistPrebuiltOptions, "source" | "sourceUrl">;
+
+/** Persist a client-built six-variant set (no server resize). */
+export async function persistPrebuiltImage(
   db: Db,
-  source: ImageAttachInput,
-  options: PersistImageOptions = {},
+  input: PrebuiltImageVariantsInput,
+  options: PersistPrebuiltImageOptions = {},
 ): Promise<string> {
-  const processed =
-    source.type === "upload"
-      ? await processImageFromBuffer(source.buffer, {
-          uploadedBy: options.uploadedBy,
-          skipUpload: options.skipUpload,
-        })
-      : await processImageFromUrl(source.url, {
-          uploadedBy: options.uploadedBy,
-          skipUpload: options.skipUpload,
-        });
+  const sourceUrl = options.sourceUrl ?? null;
+  const processed = await persistPrebuiltImageVariants(input, {
+    skipUpload: options.skipUpload,
+    source: options.source ?? (sourceUrl ? "REMOTE_URL" : "UPLOAD"),
+    sourceUrl,
+  });
 
   await db.insert(images).values({
     id: processed.imageId,
@@ -44,6 +48,25 @@ export async function persistImageFromSource(
   return processed.imageId;
 }
 
+export async function persistImageFromSource(
+  db: Db,
+  source: ImageAttachInput,
+  options: PersistImageOptions = {},
+): Promise<string> {
+  if (source.type !== "prebuilt") {
+    throw new CatalogValidationError(
+      "CLIENT_IMAGE_REQUIRED",
+      "Image variants must be generated in the browser before submit",
+    );
+  }
+
+  return persistPrebuiltImage(db, source.input, {
+    ...options,
+    sourceUrl: options.sourceUrl ?? source.sourceUrl ?? null,
+    source: (options.sourceUrl ?? source.sourceUrl) ? "REMOTE_URL" : "UPLOAD",
+  });
+}
+
 export async function attachImageToPartner(
   db: Db,
   _partnerId: string,
@@ -51,7 +74,10 @@ export async function attachImageToPartner(
   url?: string | null,
   options: PersistImageOptions = {},
 ): Promise<string> {
-  const source = validateImageSourceExclusive(upload, url, { required: true });
+  const source = validateImageSourceExclusive(upload, url, {
+    required: true,
+    prebuilt: options.prebuilt,
+  });
   if (!source) {
     throw new CatalogValidationError("MISSING_EVENT_IMAGE", "Partner logo image is required");
   }
@@ -65,7 +91,10 @@ export async function attachImageToEvent(
   url?: string | null,
   options: PersistImageOptions = {},
 ): Promise<string> {
-  const source = validateImageSourceExclusive(upload, url, { required: true });
+  const source = validateImageSourceExclusive(upload, url, {
+    required: true,
+    prebuilt: options.prebuilt,
+  });
   if (!source) {
     throw new CatalogValidationError("MISSING_EVENT_IMAGE", "Event image is required");
   }
@@ -93,7 +122,7 @@ export async function replacePartnerLogo(
   url?: string | null,
   options: PersistImageOptions = {},
 ): Promise<string | null> {
-  const source = validateImageSourceExclusive(upload, url);
+  const source = validateImageSourceExclusive(upload, url, { prebuilt: options.prebuilt });
   if (!source) {
     return currentLogoImageId;
   }
@@ -108,7 +137,7 @@ export async function replaceEventImage(
   url?: string | null,
   options: PersistImageOptions = {},
 ): Promise<string> {
-  const source = validateImageSourceExclusive(upload, url);
+  const source = validateImageSourceExclusive(upload, url, { prebuilt: options.prebuilt });
   if (!source) {
     return currentImageId;
   }
@@ -116,18 +145,19 @@ export async function replaceEventImage(
   return persistImageFromSource(db, source, options);
 }
 
+/** Best-effort existence check — does not re-fetch or resize missing objects. */
 export async function ensureImageVariantsUploaded(db: Db, imageId: string): Promise<void> {
   const row = await db.query.images.findFirst({
     where: eq(images.id, imageId),
   });
 
-  if (!row?.sourceUrl) {
+  if (!row) {
     return;
   }
 
   try {
-    await repairImageVariants(imageId, row.sourceUrl);
+    await ensureImageObjectsPresent(imageId);
   } catch {
-    // Repair is best-effort; list/detail still use existing URLs if R2 is temporarily unavailable.
+    // Best-effort; list/detail still use existing URLs if R2 is temporarily unavailable.
   }
 }

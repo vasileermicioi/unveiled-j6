@@ -1,4 +1,7 @@
 import type { SecretCodeMode, TicketType, TimingMode } from "@unveiled/db";
+import type { PrebuiltImageVariantsInput } from "@unveiled/images";
+
+import { parsePrebuiltImageVariants } from "./admin-prebuilt-image";
 
 export const MAX_SERIES_SLOTS = 52;
 export const MANUAL_SLOT_ROWS = 5;
@@ -31,6 +34,7 @@ export type EventFormValues = {
   mapZoom: number | null;
   imageUpload: Buffer | null;
   imageUrl: string | null;
+  imagePrebuilt: PrebuiltImageVariantsInput | null;
 };
 
 export type SeriesSlotMode = "manual" | "builder";
@@ -360,11 +364,14 @@ export async function parseEventFormBody(
   asFile: (value: string | File | (string | File)[] | undefined) => File | Blob | undefined,
 ): Promise<EventFormValues> {
   const timingMode = parseTimingMode(asString(body.timing_mode));
-  const imageFile = asFile(body.image);
-  let imageUpload: Buffer | null = null;
+  const imagePrebuilt = await parsePrebuiltImageVariants(body, asString, asFile);
 
-  if (imageFile && imageFile.size > 0) {
-    imageUpload = Buffer.from(await imageFile.arrayBuffer());
+  let imageUpload: Buffer | null = null;
+  if (!imagePrebuilt) {
+    const imageFile = asFile(body.image);
+    if (imageFile && imageFile.size > 0) {
+      imageUpload = Buffer.from(await imageFile.arrayBuffer());
+    }
   }
 
   const languages = parseBodyStringArrayField(body, "languages", asString);
@@ -398,6 +405,7 @@ export async function parseEventFormBody(
     mapZoom: parseOptionalInteger(asString(body.map_zoom)),
     imageUpload,
     imageUrl,
+    imagePrebuilt,
   };
 }
 

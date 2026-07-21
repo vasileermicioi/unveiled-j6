@@ -30,6 +30,7 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
     mapZoom: values.mapZoom,
     imageUpload: values.imageUpload,
     imageUrl: values.imageUrl,
+    imagePrebuilt: values.imagePrebuilt,
     uploadedBy,
   };
 }
@@ -61,6 +62,7 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
     mapZoom: values.mapZoom,
     imageUpload: values.imageUpload,
     imageUrl: values.imageUrl,
+    imagePrebuilt: values.imagePrebuilt,
     uploadedBy,
   };
 }
@@ -96,6 +98,7 @@ export function toSeriesCreateInput(
     mapZoom: values.mapZoom,
     imageUpload: values.imageUpload,
     imageUrl: values.imageUrl,
+    imagePrebuilt: values.imagePrebuilt,
     uploadedBy,
     slots,
   };

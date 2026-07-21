@@ -1,3 +1,4 @@
+import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { and, asc, count, desc, eq, gt, gte, ilike, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
@@ -39,6 +40,7 @@ export type CreateEventInput = {
   neighborhood: string;
   imageUpload?: Buffer | null;
   imageUrl?: string | null;
+  imagePrebuilt?: PrebuiltImageVariantsInput | null;
   category: string;
   eventType: string;
   tags?: string[];
@@ -69,6 +71,7 @@ export type UpdateEventInput = {
   neighborhood?: string;
   imageUpload?: Buffer | null;
   imageUrl?: string | null;
+  imagePrebuilt?: PrebuiltImageVariantsInput | null;
   category?: string;
   eventType?: string;
   tags?: string[];
@@ -268,13 +271,17 @@ async function insertEventRow(
 }
 
 export async function createEvent(db: Db, input: CreateEventInput): Promise<Event> {
-  validateImageSourceExclusive(input.imageUpload, input.imageUrl, { required: true });
+  validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
+    required: true,
+    prebuilt: input.imagePrebuilt,
+  });
   const partner = await resolvePartner(db, input.partnerId);
 
   const { attachImageToEvent, deleteImageRecord } = await catalogImages();
   const imageId = await attachImageToEvent(db, input.imageUpload, input.imageUrl, {
     uploadedBy: input.uploadedBy,
     skipUpload: input.skipUpload,
+    prebuilt: input.imagePrebuilt,
   });
 
   try {
@@ -289,7 +296,10 @@ export async function createEventSeries(
   db: Db,
   input: Omit<CreateEventInput, "dateTime"> & { slots: Date[] },
 ): Promise<Event[]> {
-  validateImageSourceExclusive(input.imageUpload, input.imageUrl, { required: true });
+  validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
+    required: true,
+    prebuilt: input.imagePrebuilt,
+  });
   const partner = await resolvePartner(db, input.partnerId);
   const slots = validateUniqueSeriesSlots(input.slots);
 
@@ -297,6 +307,7 @@ export async function createEventSeries(
   const imageId = await attachImageToEvent(db, input.imageUpload, input.imageUrl, {
     uploadedBy: input.uploadedBy,
     skipUpload: input.skipUpload,
+    prebuilt: input.imagePrebuilt,
   });
 
   const created: Event[] = [];
@@ -326,7 +337,9 @@ export async function updateEvent(
     throw new CatalogValidationError("EVENT_NOT_FOUND", `Event ${eventId} not found`);
   }
 
-  validateImageSourceExclusive(input.imageUpload, input.imageUrl);
+  validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
+    prebuilt: input.imagePrebuilt,
+  });
 
   const partnerId = input.partnerId ?? existing.partnerId;
   const partner = await resolvePartner(db, partnerId);
@@ -343,15 +356,15 @@ export async function updateEvent(
 
   let imageId = existing.imageId;
   const previousImageId = existing.imageId;
-  const hasNewImage =
-    (input.imageUpload != null && input.imageUpload.length > 0) ||
-    (input.imageUrl != null && input.imageUrl.trim().length > 0);
+  // New image bytes must arrive as prebuilt variants (file or URL→proxy→Pica).
+  const hasNewImage = input.imagePrebuilt != null;
 
   if (hasNewImage) {
     const { replaceEventImage } = await catalogImages();
     imageId = await replaceEventImage(db, existing.imageId, input.imageUpload, input.imageUrl, {
       uploadedBy: input.uploadedBy,
       skipUpload: input.skipUpload,
+      prebuilt: input.imagePrebuilt,
     });
   }
 

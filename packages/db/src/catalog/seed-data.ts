@@ -1,6 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  type PrebuiltImageVariantsInput,
+  VARIANT_FILENAMES,
+  type VariantFilename,
+} from "@unveiled/images";
 
 import { berlinInclusiveDateRange, getBerlinCalendarDate } from "./datetime";
 import type { CreateEventInput } from "./events";
@@ -11,10 +16,11 @@ import type { CreatePartnerInput } from "./partners";
  * Demo catalog seed — Berlin events from Abundo + local images.
  *
  * Fixture: `fixtures/abundo-berlin-demo.json`
- * Images:  `public/images/seed/{partners,events}/*.jpg`
- * Refresh: `bun scripts/fetch-abundo-seed.ts`
+ * Images:  `public/images/seed/{partners,events}/*.jpg` plus `*.jpg.variants/` packs
+ * Refresh: `bun scripts/fetch-abundo-seed.ts` then `bun scripts/bake-seed-image-variants.ts`
  *
  * Absolute dates are not stored; `daysFromToday` / hour / minute resolve at seed time.
+ * Seed persists prebuilt variants only (no Worker-side resize).
  */
 
 export type DemoCatalogEntry = {
@@ -143,14 +149,34 @@ function seedImagesRoot(fixture: AbundoFixture): string {
   return join(repoRoot(), relative);
 }
 
-function readSeedImage(imagesRoot: string, relativePath: string, label: string): Buffer {
-  const abs = join(imagesRoot, relativePath);
-  if (!existsSync(abs)) {
+function readSeedPrebuilt(
+  imagesRoot: string,
+  relativePath: string,
+  label: string,
+): PrebuiltImageVariantsInput {
+  const sourceAbs = join(imagesRoot, relativePath);
+  const variantsDir = `${sourceAbs}.variants`;
+  if (!existsSync(variantsDir)) {
     throw new Error(
-      `Missing seed image for ${label}: ${abs}\nRun: bun scripts/fetch-abundo-seed.ts`,
+      `Missing seed image variants for ${label}: ${variantsDir}\nRun: bun scripts/bake-seed-image-variants.ts`,
     );
   }
-  return readFileSync(abs);
+
+  const variants = {} as Record<VariantFilename, Buffer>;
+  for (const filename of VARIANT_FILENAMES) {
+    const abs = join(variantsDir, filename);
+    if (!existsSync(abs)) {
+      throw new Error(
+        `Missing seed variant ${filename} for ${label}: ${abs}\nRun: bun scripts/bake-seed-image-variants.ts`,
+      );
+    }
+    variants[filename] = readFileSync(abs);
+  }
+
+  return {
+    imageId: crypto.randomUUID(),
+    variants,
+  };
 }
 
 /** Bundled fixture — no fs / fileURLToPath at import time (Workers-safe). */
@@ -180,9 +206,14 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
     };
 
     if (logoPath) {
-      partnerInput.logoUpload = readSeedImage(imagesRoot, logoPath, `partner ${partner.key}`);
+      partnerInput.logoPrebuilt = readSeedPrebuilt(imagesRoot, logoPath, `partner ${partner.key}`);
+      if (partner.logoSourceUrl) {
+        partnerInput.logoUrl = partner.logoSourceUrl;
+      }
     } else if (partner.logoUrl) {
-      partnerInput.logoUrl = partner.logoUrl;
+      throw new Error(
+        `Partner ${partner.key} has logoUrl but no logoPath variants. Refresh seed images.`,
+      );
     }
 
     catalog.push({
@@ -206,9 +237,14 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
         };
 
         if (event.imagePath) {
-          base.imageUpload = readSeedImage(imagesRoot, event.imagePath, `event ${event.slug}`);
+          base.imagePrebuilt = readSeedPrebuilt(imagesRoot, event.imagePath, `event ${event.slug}`);
+          if (event.imageSourceUrl) {
+            base.imageUrl = event.imageSourceUrl;
+          }
         } else if (event.imageUrl) {
-          base.imageUrl = event.imageUrl;
+          throw new Error(
+            `Event ${event.slug} has imageUrl but no imagePath variants. Refresh seed images.`,
+          );
         }
 
         return base;

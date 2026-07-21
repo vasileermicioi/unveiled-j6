@@ -1,4 +1,4 @@
-import { createSolidJpeg, readS3Env } from "@unveiled/images";
+import { readS3Env } from "@unveiled/images";
 import { ilike } from "drizzle-orm";
 
 import type { Db } from "../index";
@@ -16,6 +16,7 @@ import {
   PAGINATION_PARTNER_PREFIX,
   paginationPageCount,
 } from "./seed-pagination-data";
+import { createTestImagePrebuilt } from "./test-image";
 
 export type SeedAdminPaginationOptions = {
   partnerCount?: number;
@@ -34,14 +35,6 @@ export type SeedAdminPaginationResult = {
   searchTerm: string;
   imagesUploaded: boolean;
 };
-
-async function createSeedImageBuffer(index: number): Promise<Buffer> {
-  return createSolidJpeg(800, 420, {
-    r: 40 + ((index * 17) % 200),
-    g: 80 + ((index * 23) % 150),
-    b: 100 + ((index * 29) % 120),
-  });
-}
 
 export function assertPaginationSeedImageEnv(skipUpload: boolean): void {
   if (skipUpload) {
@@ -96,10 +89,10 @@ export async function runSeedAdminPagination(
   const createdPartners = [];
 
   for (let index = 1; index <= partnerCount; index += 1) {
-    const logoUpload = await createSeedImageBuffer(index);
+    const logoPrebuilt = createTestImagePrebuilt();
     const partner = await createPartner(
       db,
-      buildPaginationPartnerInput(index, logoUpload, skipUpload),
+      buildPaginationPartnerInput(index, logoPrebuilt, skipUpload),
     );
     createdPartners.push(partner);
   }
@@ -115,8 +108,8 @@ export async function runSeedAdminPagination(
       break;
     }
 
-    const imageUpload = await createSeedImageBuffer(index + partnerCount);
-    await createEvent(db, buildPaginationEventInput(partner.id, index, imageUpload, skipUpload));
+    const imagePrebuilt = createTestImagePrebuilt();
+    await createEvent(db, buildPaginationEventInput(partner.id, index, imagePrebuilt, skipUpload));
     eventsCreated += 1;
   }
 
@@ -173,7 +166,7 @@ export function printSeedAdminPaginationHelp(): void {
 
 Seeds synthetic partners and events for manual admin list pagination testing.
 Rows are prefixed "${PAGINATION_PARTNER_PREFIX}" / "${PAGINATION_EVENT_PREFIX}".
-Each row gets a generated logo/event image uploaded to R2 (requires Phase 4 env vars).
+Each row gets a committed prebuilt six-variant JPEG pack uploaded to R2.
 
 Options:
   --partners=N     Number of partners to create (default ${DEFAULT_PAGINATION_PARTNER_COUNT})

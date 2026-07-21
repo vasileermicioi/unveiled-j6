@@ -2,7 +2,7 @@
 
 Mapping aid for HeroUI rebuilds. Visual language: `design-tokens.md`. Ownership: `design-system.md`. Routes: `sitemap/sitemap.md`.
 
-**Controls:** use HeroUI **Select** (and documented multi-select) — not Radio/Checkbox groups for MVP forms.
+**Controls:** prefer **native** HTML choice/number/date/file controls (`select`, checkbox/radio/number/date/time/file inputs); HeroUI for text fields, buttons, and layout. Exceptions: image/Pica, map/geo, `@better-auth-ui/*` — see `design-system.md` Form controls.
 
 ---
 
@@ -10,9 +10,9 @@ Mapping aid for HeroUI rebuilds. Visual language: `design-tokens.md`. Ownership:
 
 | Component | Owner | Notes |
 |---|---|---|
-| Navbar / Header | `apps/web` | Slim marketing nav: Discover (guests / non-active) or Browse events (booking-eligible) + FAQ; guest auth Log in only; How it works / Membership / Sign up out of header and footer nav — see `app-shell.md` |
+| Navbar / Header | `apps/web` | Slim marketing nav: Discover (guests / non-active) or Browse events (booking-eligible) + FAQ; **ADMIN omits Discover/FAQ**; guest auth Log in only; How it works / Membership / Sign up out of header and footer nav — see `app-shell.md` |
 | Logo | `@unveiled/ui` | Three SVG tones — `assets-inventory.md`; Ladle stories under `packages/ui` |
-| Footer | `apps/web` | Discover → `/:locale/discover` (no Browse events swap); FAQ; legal column (no How it works / Membership) |
+| Footer | `apps/web` | Guest/member: Discover → `/:locale/discover` (no Browse events swap) + FAQ; **ADMIN omits Navigation column**; legal + contact remain (no How it works / Membership) |
 | **PageSectionHeader** | `apps/web` | Default on-yellow page/section header: muted uppercase eyebrow + bold headline + full-width rule. Used on Discover, FAQ, auth, member feed/browse, book/confirm, waitlist join/cancel, Saved, My Tickets, and member account/profile pages (`/profile*`) — distinct from bordered `PageHero` card heroes and the membership marketing hero card |
 | Help / FAQ accordion | `apps/web` | HeroUI `Accordion` in `Card` |
 | Cookie banner | `apps/web` island | Accept/decline; gates map tiles |
@@ -69,7 +69,7 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 
 ## Onboarding
 
-Four SSR steps: `/onboarding/age` → `interests` → `location` → `timing`. Prefer Select / multi-select patterns over Radio/Checkbox.
+Four SSR steps: `/onboarding/age` → `interests` → `location` → `timing`. Native checkbox/radio/select preference controls (themed in `globals.css`).
 
 ---
 

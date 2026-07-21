@@ -38,8 +38,7 @@ async function fetchBetterAuthSession(
   c: Context,
   authUrl: string,
 ): Promise<BetterAuthSessionResponse | null> {
-  // Promise.race avoids AbortSignal clashes between @types/node and DOM libs
-  // pulled in transitively via @unveiled/images → @standardagents/sip.
+  // Promise.race avoids AbortSignal type clashes between @types/node and DOM libs.
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
     const response = await Promise.race([

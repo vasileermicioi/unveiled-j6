@@ -190,33 +190,63 @@ Admin event create and edit forms SHALL NOT expose a remote image URL text field
 - **WHEN** an ADMIN opens edit for an event that has an `image_id`
 - **THEN** the form displays a preview using the `small-320` variant URL
 
-### Requirement: Admin event form HeroUI-first controls
+### Requirement: Admin event form select controls
 
-Admin event create and edit forms SHALL prefer HeroUI v3 components (`Select`, `DatePicker`, `TimeField`, `TextField`, `InputGroup`) over raw HTML form elements. Native HTML inputs SHALL be used only as a fallback inside HeroUI primitives where the library requires them, not as standalone form controls for dates or selects.
+Admin event create/edit and series forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, barrier-free, languages, and target age groups. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`).
 
-#### Scenario: Event date uses HeroUI date picker
+#### Scenario: Partner field is a native select
 
-- **WHEN** an ADMIN opens the event create or edit form
-- **THEN** the event date is chosen via a HeroUI date picker control rather than a standalone native date input
+- **WHEN** an admin opens Create Event
+- **THEN** the Partner control is a native HTML select (or equivalent native multi pattern) associated with an accessible label
 
-#### Scenario: Select menu anchors to trigger
+#### Scenario: Multi-value fields post the same array names
 
-- **WHEN** an ADMIN opens a select field such as timing mode or partner on the event form
-- **THEN** the option list appears adjacent below the trigger control, not detached at an unrelated viewport position
+- **WHEN** an admin submits languages or target age groups
+- **THEN** the POST body still carries the existing array field names accepted by admin parsers
+
+#### Scenario: Category and event type remain native selects
+
+- **WHEN** an admin opens Create Event or Edit Event
+- **THEN** category and event type are native HTML selects (or documented native multi pattern) with unchanged `name` attributes
+
+### Requirement: Admin event numeric fields
+
+Admin event create/edit forms SHALL use native HTML `<input type="number">` for credit price and total capacity (and any shared admin number primitive). HeroUI `NumberField` SHALL NOT be required for those fields. Bounds and SSR field names remain unchanged (`credit_price`, `total_capacity`). Native number inputs SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native number classes from `globals.css` (e.g. `.admin-native-number`).
+
+#### Scenario: Capacity is a native number input
+
+- **WHEN** an admin opens Create Event
+- **THEN** total capacity is a native number input with an accessible label and posts the existing field name on submit
+
+#### Scenario: Credit price is a native number input
+
+- **WHEN** an admin opens Create Event
+- **THEN** credit price is a native number input with an accessible label and posts the existing field name (`credit_price`) on submit
+
+#### Scenario: Numeric bounds and defaults unchanged
+
+- **WHEN** an admin creates an event without overriding numeric fields
+- **THEN** credit price defaults to at least 1 and total capacity defaults to 10 (matching existing product/parser defaults)
+- **AND** client-side min constraints remain ≥ 1 for both fields
 
 ### Requirement: Admin event languages and age groups multi-select
 
-The admin event form SHALL capture `languages` and `target_age_groups` as multi-select fields with predefined options, not comma-separated free text. Submitted values SHALL persist to the existing `text[]` and enum-array columns respectively.
+The admin event form SHALL capture `languages` and `target_age_groups` as multi-value fields with predefined options, not comma-separated free text. Controls SHALL be native HTML (`<select multiple>` or a native checkbox group) posting the same array field names (`languages`, `target_age_groups`) accepted by admin parsers. Submitted values SHALL persist to the existing `text[]` and enum-array columns respectively. HeroUI `Select` / `ListBox` SHALL NOT be required for these fields.
 
 #### Scenario: Admin selects multiple languages
 
-- **WHEN** an ADMIN selects German and English in the languages multi-select and submits a valid form
+- **WHEN** an ADMIN selects German and English in the languages multi-value control and submits a valid form
 - **THEN** the event row stores both language codes in `languages`
 
 #### Scenario: Admin selects multiple age groups
 
 - **WHEN** an ADMIN selects two or more target age group options and submits a valid form
 - **THEN** the event row stores the selected values in `target_age_groups`
+
+#### Scenario: Multi-value POST field names unchanged
+
+- **WHEN** an ADMIN submits languages and target age groups via the native multi-value controls
+- **THEN** the request body still uses the `languages` and `target_age_groups` array field names
 
 ### Requirement: Admin event map geolocation with zoom
 
@@ -393,7 +423,7 @@ The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` f
 
 ### Requirement: Admin event series confirm survives preview remount
 
-When an ADMIN creates an event series via `/admin/events/series/new`, the confirm POST after preview SHALL include the partner id, redemption configuration, and event image required by `createEventSeries`, even if the client remounts the form tree between preview and confirm. Uncontrolled HeroUI Select display state alone SHALL NOT be the sole carrier of required select values on confirm. Playwright scenarios for manual-slot and date-range series creation SHALL assert successful create (redirect to the admin events list and visible event titles), not the preview step alone.
+When an ADMIN creates an event series via `/admin/events/series/new`, the confirm POST after preview SHALL include the partner id, redemption configuration, and event image required by `createEventSeries`, even if the client remounts the form tree between preview and confirm. Required select values SHALL be carried by named native form controls (or equivalent named inputs), not by ephemeral display-only widget state. Playwright scenarios for manual-slot and date-range series creation SHALL assert successful create (redirect to the admin events list and visible event titles), not the preview step alone.
 
 #### Scenario: Manual series confirm creates events
 

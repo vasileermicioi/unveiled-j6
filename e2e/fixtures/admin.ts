@@ -94,37 +94,56 @@ export async function navigateAdminTab(page: Page, locale: Locale, tab: AdminTab
   await expect(page.getByRole("main")).toBeVisible({ timeout: 15_000 });
 }
 
-/** HeroUI Select: open by accessible label, pick option by visible text. */
+/** Native `<select>`: resolve by accessible label, pick option by visible text. */
 export async function selectOptionByLabel(
   page: Page,
   label: string | RegExp,
   optionName: string | RegExp,
 ): Promise<void> {
-  // Close any open popover from a previous select.
-  await page.keyboard.press("Escape").catch(() => undefined);
+  const select =
+    typeof label === "string"
+      ? page.getByLabel(label, { exact: true }).first()
+      : page.getByLabel(label).first();
+  await expect(select).toBeVisible({ timeout: 10_000 });
 
-  const combobox = page.getByRole("combobox", { name: label });
-  const trigger =
-    (await combobox.count()) > 0
-      ? combobox.first()
-      : page.getByRole("button", { name: label }).first();
-  await expect(trigger).toBeVisible({ timeout: 10_000 });
-  await trigger.click();
-
-  const listbox = page.getByRole("listbox");
-  await expect(listbox.first()).toBeVisible({ timeout: 10_000 });
-
-  const byRole = listbox.getByRole("option", { name: optionName });
-  if ((await byRole.count()) > 0) {
-    await byRole.first().click();
-  } else {
-    await listbox.getByText(optionName).first().click();
+  if (typeof optionName === "string") {
+    await select.selectOption({ label: optionName });
+    return;
   }
 
-  // Wait for listbox to close so the next select is not blocked.
-  await expect(listbox)
-    .toHaveCount(0, { timeout: 5_000 })
-    .catch(() => undefined);
+  const options = select.locator("option");
+  const count = await options.count();
+  for (let i = 0; i < count; i++) {
+    const option = options.nth(i);
+    const text = ((await option.textContent()) ?? "").trim();
+    if (!optionName.test(text)) {
+      continue;
+    }
+    const value = await option.getAttribute("value");
+    if (value != null && value !== "") {
+      await select.selectOption(value);
+    } else {
+      await select.selectOption({ label: text });
+    }
+    return;
+  }
+
+  throw new Error(`No <option> matching ${optionName} for label ${String(label)}`);
+}
+
+/** Native `input[type="number"]`: fill by accessible label. */
+export async function fillNumberByLabel(
+  page: Page,
+  label: string | RegExp,
+  value: string | number,
+): Promise<void> {
+  const field =
+    typeof label === "string" ? page.getByLabel(label, { exact: true }) : page.getByLabel(label);
+  await expect(field).toBeVisible({ timeout: 15_000 });
+  const asString = String(value);
+  await field.fill("");
+  await field.fill(asString);
+  await expect(field).toHaveValue(asString, { timeout: 5_000 });
 }
 
 export async function fillTextbox(
@@ -276,26 +295,10 @@ export async function createEventViaUI(
   }
 
   if (overrides.creditPrice) {
-    // HeroUI NumberField exposes a textbox (not spinbutton) in Chromium a11y tree.
-    const credits = page.getByRole("textbox", { name: adminLabels.credits, exact: true });
-    await credits.fill("");
-    await credits.fill(overrides.creditPrice);
+    await fillNumberByLabel(page, adminLabels.credits, overrides.creditPrice);
   }
   if (overrides.totalCapacity) {
-    const capacity = page.getByRole("textbox", { name: adminLabels.capacity, exact: true });
-    const target = Number(overrides.totalCapacity);
-    const current = Number((await capacity.inputValue()) || "10");
-    const delta = target - current;
-    if (delta !== 0) {
-      const buttons = page.getByRole("button", {
-        name: delta > 0 ? /erhöhen|increment|increase/i : /verringern|decrement|decrease/i,
-      });
-      // Credits is first number field, capacity is second.
-      const btn = buttons.nth(1);
-      for (let i = 0; i < Math.abs(delta); i++) {
-        await btn.click();
-      }
-    }
+    await fillNumberByLabel(page, adminLabels.capacity, overrides.totalCapacity);
   }
 
   if (overrides.ticketType === "VOUCHER") {
@@ -334,9 +337,6 @@ export async function createEventViaUI(
   if (overrides.ageGroup) {
     await selectOptionByLabel(page, adminLabels.ageGroups, overrides.ageGroup);
   }
-
-  // Multi-select popovers can leave an overlay that intercepts the submit click.
-  await page.keyboard.press("Escape").catch(() => undefined);
 
   if (overrides.imageUrl) {
     await fillTextbox(page, adminLabels.imageUrl, overrides.imageUrl);

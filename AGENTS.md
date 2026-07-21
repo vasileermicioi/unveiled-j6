@@ -38,7 +38,7 @@ When specs conflict, prefer the more specific doc for the topic (e.g. `seo-and-m
 | Auth backend | **Neon Auth** (Better Auth hosted by Neon); `/api/auth/*` → `AUTH_URL` |
 | Auth UI | **`@better-auth-ui/heroui`** + react/core — not shadcn |
 | Database | **Neon Postgres** + **Drizzle** (`@unveiled/db`, `public` schema only) |
-| Images | **Cloudflare R2** + `@unveiled/images` (six JPEG variants via `@standardagents/sip`) |
+| Images | **Cloudflare R2** + `@unveiled/images` (six JPEG variants; admin Pica client → server validate/store) |
 | Payments | **Stripe Billing** (`@unveiled/billing`) — Phase 6+ |
 | Email | **Resend** (`@unveiled/email`) — Phase 6+ |
 | Hosting | **Cloudflare Workers** for `apps/web` |
@@ -96,13 +96,13 @@ bun run test:e2e     # Playwright
 5. **Match the spec verbatim** where copy is provided (`docs/product/ui/static-pages-content.md`, `docs/product/extras/content-i18n-inventory.md`).
 6. **Yellow page background app-wide** — `#FAFF86` is the page backdrop on every route, not grey. White/cream cards float on top. See [`DESIGN.md`](DESIGN.md) and [`docs/product/ui/design-tokens.md`](docs/product/ui/design-tokens.md).
 7. **Work Sans only** — no EK Notice Sans in the new app.
-8. **HeroUI-only markup** — no raw HTML elements (`<section>`, `<p>`, `<a>`, `<button>`, `<h1>`, etc.) in routes or UI components. Use `@heroui/react` primitives (`Card`, `Link`, `Button`, `Heading`, `Paragraph`, `Surface`, `Chip`, …) or page-level components built entirely from HeroUI. Tailwind on HeroUI nodes is for **layout only** (`flex`, `grid`, `gap`, `max-w-*`, positioning) — never for colors, borders, shadows, or typography that belong in the theme. Exceptions: `<script type="application/ld+json">` for structured data; `<img>` inside HeroUI wrappers where no HeroUI image primitive applies. Design-system home: [`docs/product/ui/design-system.md`](docs/product/ui/design-system.md) (`@unveiled/ui` + Theme Overview).
+8. **HeroUI-only markup** — no raw HTML elements (`<section>`, `<p>`, `<a>`, `<button>`, `<h1>`, etc.) in routes or UI components. Use `@heroui/react` primitives (`Card`, `Link`, `Button`, `Heading`, `Paragraph`, `Surface`, `Chip`, …) or page-level components built entirely from HeroUI. Tailwind on HeroUI nodes is for **layout only** (`flex`, `grid`, `gap`, `max-w-*`, positioning) — never for colors, borders, shadows, or typography that belong in the theme. Exceptions: `<script type="application/ld+json">` for structured data; `<img>` inside HeroUI wrappers where no HeroUI image primitive applies; native form controls `select`, `option`, `optgroup`, `input`, and `textarea` when used as form fields (optionally wrapped in HeroUI `Label` / `Surface` / `Field` chrome — see §14). Design-system home: [`docs/product/ui/design-system.md`](docs/product/ui/design-system.md) (`@unveiled/ui` + Theme Overview).
 9. **Theme-only visual styling** — colors, borders, radius, shadows, typography, and interactive hover states belong in `apps/web/app/styles/globals.css` (`@theme` tokens + `@layer components` overrides targeting HeroUI BEM classes, after `@import "@heroui/styles"`). Adjust look-and-feel by changing theme tokens — not ad-hoc per-route color/border/shadow/hover classes. Normative visual tokens: [`DESIGN.md`](DESIGN.md).
 10. **Public event detail pages** — `/events/:id` is indexable without auth (Phase 4+). Booking and member feed stay gated.
 11. **Atomic booking transaction** — only the Booking domain writes bookings/ledger for purchases; waitlist promotion calls the same path.
 12. **Partner scoping** — when partner portal ships (post-MVP), every partner query/write filtered by session `partnerId`; never trust client-supplied `partnerId`.
 13. **BDD / Playwright** — Gherkin under `docs/product/features/` is behavioral SoT; proximity/layout selectors only — see [`docs/product/testing/bdd-and-e2e.md`](docs/product/testing/bdd-and-e2e.md).
-14. **No radios or checkboxes** — prefer HeroUI `Select` (see MVP plan hard rules).
+14. **Native-first form controls** — prefer native HTML controls (`select`, `input` of type `checkbox|radio|number|date|time|file`, `textarea`) for choice, numeric, date, and file fields when a native control exists. Do **not** use HeroUI `Select`, `NumberField`, `Checkbox`, `Radio`, or `Switch` for those fields except documented exceptions (admin image/Pica UI, map/geo pickers, `@better-auth-ui/*`). HeroUI remains for text fields, buttons, labels, and layout. Theme native controls via `globals.css` (e.g. `.admin-native-select`, `.admin-native-number`).
 
 ---
 

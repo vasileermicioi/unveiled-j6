@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { createSolidJpeg } from "@unveiled/images";
 import { eq } from "drizzle-orm";
+import { createTestImagePrebuilt } from "../catalog/test-image";
 
 import {
   bookings,
@@ -25,8 +25,8 @@ import {
 
 const databaseUrl = process.env.DATABASE_URL;
 
-async function createTestImageBuffer(): Promise<Buffer> {
-  return createSolidJpeg(800, 420, { r: 250, g: 255, b: 134 });
+async function createTestImage() {
+  return createTestImagePrebuilt();
 }
 
 describe("waitlist domain", () => {
@@ -39,13 +39,13 @@ describe("waitlist domain", () => {
     const httpDb = createDb(databaseUrl);
     const txDb = createTxDb(databaseUrl);
     const suffix = crypto.randomUUID();
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
 
     const partner = await createPartner(httpDb, {
       name: `Waitlist Venue ${suffix.slice(0, 8)}`,
       address: "Teststraße 9, Berlin",
       contactEmail: `wait-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -61,7 +61,7 @@ describe("waitlist domain", () => {
       creditPrice: 2,
       totalCapacity: 2,
       secretCode: "WAITTEST",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 

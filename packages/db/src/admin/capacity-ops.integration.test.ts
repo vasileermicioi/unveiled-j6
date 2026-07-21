@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { createSolidJpeg } from "@unveiled/images";
 import { eq } from "drizzle-orm";
+import { createTestImagePrebuilt } from "../catalog/test-image";
 
 import {
   bookEvent,
@@ -25,8 +25,8 @@ import {
 
 const databaseUrl = process.env.DATABASE_URL;
 
-async function createTestImageBuffer(): Promise<Buffer> {
-  return createSolidJpeg(800, 420, { r: 250, g: 255, b: 134 });
+async function createTestImage() {
+  return createTestImagePrebuilt();
 }
 
 describe("admin capacity ops (integration)", () => {
@@ -42,13 +42,13 @@ describe("admin capacity ops (integration)", () => {
     const adminId = `cap-admin-${suffix}`;
     const memberId = `cap-member-${suffix}`;
     const waiterId = `cap-waiter-${suffix}`;
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
 
     const partner = await createPartner(httpDb, {
       name: `Capacity Ops Venue ${suffix.slice(0, 8)}`,
       address: "Teststraße 11, Berlin",
       contactEmail: `cap-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -64,7 +64,7 @@ describe("admin capacity ops (integration)", () => {
       creditPrice: 2,
       totalCapacity: 1,
       secretCode: "CAPTEST",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -230,7 +230,7 @@ describe("admin capacity ops (integration)", () => {
         creditPrice: 3,
         totalCapacity: 2,
         secretCode: "COMPTEST",
-        imageUpload: image,
+        imagePrebuilt: image,
         skipUpload: true,
       });
 

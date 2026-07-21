@@ -10,7 +10,7 @@ Greenfield rewrite of the Unveiled Berlin cultural-access membership platform.
 | App | HonoX + React SSR (`apps/web`) |
 | UI | HeroUI v3 (Uber preset + brand tokens) |
 | Data / auth | Neon Postgres + Neon Auth + Drizzle |
-| Images | Cloudflare R2 + `@standardagents/sip` |
+| Images | Cloudflare R2 + `@unveiled/images` (client Pica → prebuilt store) |
 | Lint / format | Biome |
 
 Payments (Stripe) and email (Resend) land in remaining MVP phases via `packages/billing` and `packages/email`.

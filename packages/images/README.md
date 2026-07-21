@@ -1,14 +1,16 @@
 # @unveiled/images
 
-Server-side image processing for Unveiled Berlin. Converts JPEG, PNG, or WebP sources into six fixed JPEG variants and uploads them to S3-compatible object storage (Cloudflare R2 recommended).
+Image helpers for Unveiled Berlin: validate and store the six fixed JPEG variants in S3-compatible object storage (Cloudflare R2 recommended). Variant **generation** for admin uploads happens in the browser with Pica (`@unveiled/images/client`).
 
 ## Runtime
 
-Image processing uses **`@standardagents/sip`** (WASM/scanline) on **Cloudflare Workers and local Node/Bun** — including admin multipart uploads on the Workers URL and `bun run seed:demo`. There is no `sharp` (or other Node-native image addon) dependency. Variant filenames and Content-Types are JPEG (`*.jpg` / `image/jpeg`).
+| Entry | Role |
+|---|---|
+| `@unveiled/images` | Server/Workers: prebuilt validate+upload, remote bytes fetch (admin proxy), S3, URLs |
+| `@unveiled/images/client` | Browser: `generateImageVariantsClient` (Pica + OG cover-crop) — **do not** import from Workers routes |
+| `@unveiled/images/offline` | Bun/scripts/tests only: solid JPEG + buffer→prebuilt via canvas shim — **never** import from Workers routes |
 
-The Workers build must include sip’s WASM (sip’s `workerd` export + `sip.wasm`). Do not externalize `@unveiled/images` from the Cloudflare Vite plugin.
-
-**Known gap:** sip does not auto-apply EXIF orientation the way sharp’s `.rotate()` once did; orientation follows sip’s default decode behavior. JPEG objects may be larger than the former WebP variants at similar quality.
+There is no `sharp` and no `@standardagents/sip`. Variant filenames and Content-Types are JPEG (`*.jpg` / `image/jpeg`).
 
 ## Environment variables
 
@@ -25,8 +27,6 @@ Variant URLs: `{IMAGE_PUBLIC_BASE_URL}/images/{imageId}/{variant}.jpg`
 
 ## Storage layout
 
-Each image id gets one folder with six files:
-
 ```
 images/{id}/original.jpg
 images/{id}/hero-1920.jpg
@@ -36,30 +36,32 @@ images/{id}/small-320.jpg
 images/{id}/og-1200x630.jpg
 ```
 
-## Variant specs
-
-| File | Target | Behavior | Quality |
-|---|---|---|---|
-| `original.jpg` | Source dimensions, max 3840px edge | Re-encode only; never upscale | ~90 |
-| `hero-1920.jpg` | Max width 1920 | Downscale only | ~82 |
-| `large-1280.jpg` | Max width 1280 | Downscale only | ~80 |
-| `medium-640.jpg` | Max width 640 | Downscale only | ~78 |
-| `small-320.jpg` | Max width 320 | Downscale only | ~75 |
-| `og-1200x630.jpg` | Fixed 1200×630 | Center cover-crop; may upscale | ~85 |
-
 ## Validation
 
-- Accepted formats: JPEG, PNG, WebP
-- Max upload size: 8 MB (raw input)
-- Min dimensions: 800×420
+- Client source formats: JPEG, PNG, WebP
+- Prebuilt path: each of the six variants must be JPEG
+- Max upload size: 8 MB per file (source or per prebuilt variant)
+- Min dimensions: 800×420 (`original.jpg` on the prebuilt path)
 
 ## Public API
 
-- `processImageFromBuffer(buffer, options?)` — validate, generate six variants, upload to bucket
-- `processImageFromUrl(url, options?)` — fetch remote image, same pipeline
-- `generateImageVariants(buffer, options)` — resize-only helper (used in tests; pass `skipUpload: true` on process helpers to avoid S3)
+- `persistPrebuiltImageVariants(input, options?)` — validate six client-built JPEGs, upload as-is (no resize); pass `skipUpload: true` in tests
+- `validatePrebuiltVariants(input)` — validation-only helper
+- `fetchRemoteImageBytes(url)` — ADMIN proxy helper (timeout, size, content-type, basic SSRF checks)
 - `deleteImageObjects(imageId)` — delete all six bucket objects
 - `buildVariantUrl(imageId, variantFilename)` — compute public CDN URL
+- `validateImageBuffer(buffer)` — lightweight magic/dimension checks for tooling
+
+DB insert helper: `persistPrebuiltImage` from `@unveiled/db/catalog/images`.
+
+### Prebuilt multipart contract (admin forms)
+
+| Field | Type | Notes |
+|---|---|---|
+| `imageId` | text | UUID (client-generated) |
+| `original.jpg` … `og-1200x630.jpg` | file | **Field name = exact `VariantFilename`** |
+| `claimedWidth` / `claimedHeight` | text (optional) | Integers; server re-inspects JPEG SOF headers and prefers inspected dims |
+| `image_url` | text (optional) | Metadata / remote origin when variants came from the URL→proxy path |
 
 ## Tests
 
@@ -67,4 +69,4 @@ images/{id}/og-1200x630.jpg
 cd packages/images && bun test
 ```
 
-Tests cover resize/crop logic without requiring live R2 credentials (`skipUpload` / `generateImageVariants` only).
+Tests cover client generation (via offline canvas shim), prebuilt accept/reject rules, and remote URL safety helpers without live R2 credentials.

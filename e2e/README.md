@@ -45,7 +45,7 @@ SITE_URL=https://your-staging-host bun run test:e2e
 | `E2E_STRIPE_CHECKOUT` | Optional (`1`) | Drive hosted Stripe Checkout in Playwright (needs webhook forwarding) |
 | `STRIPE_*` / `RESEND_*` | Staging / local app | Required for real Checkout + confirmation email (see `DEPLOYMENT.md` Phase 6) |
 
-Image create/edit tests call `test.skip('R2 vars not configured')` when any of the six R2 vars is missing. Admin uploads use **`@standardagents/sip`** and work against **`bun run dev`** (default) and, when configured, against a **Workers preview or staging** base URL (`SITE_URL` / Playwright `baseURL` + the same six R2 vars). Do not skip image specs solely because the host is Workers.
+Image create/edit tests call `test.skip('R2 vars not configured')` when any of the six R2 vars is missing. Admin uploads generate variants **in the browser with Pica** (JS required) and work against **`bun run dev`** (default) and, when configured, against a **Workers preview or staging** base URL (`SITE_URL` / Playwright `baseURL` + the same six R2 vars). Do not skip image specs solely because the host is Workers.
 
 **Fallbacks (local only):**
 

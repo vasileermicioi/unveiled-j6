@@ -39,7 +39,7 @@ export function AppShell({
         <Surface className="flex-1 pt-16 md:pt-20" role="main" variant="transparent">
           {children}
         </Surface>
-        <GuestFooter locale={locale} />
+        <GuestFooter locale={locale} showMarketingNav={session?.user.role !== "ADMIN"} />
         <CookieConsentBanner locale={locale} />
       </Surface>
     </SSRProvider>

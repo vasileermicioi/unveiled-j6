@@ -8,7 +8,7 @@ import { mockAdminSession, mockUserSession, storyLocale, storyPathname } from ".
  * - Guest: logo · Discover → /discover · FAQ · DE|EN · Log in
  * - Inactive USER: Discover → /discover; logo → /discover
  * - Active USER: Browse events → /events; logo → /events
- * - ADMIN: Discover + admin dashboard; logo → /admin
+ * - ADMIN: no Discover/FAQ; admin dashboard + logout; logo → /admin
  */
 export const Guest: Story = () => (
   <AppNavbar locale={storyLocale} pathname={storyPathname} session={null} />

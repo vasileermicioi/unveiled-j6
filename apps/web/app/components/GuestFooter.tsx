@@ -7,9 +7,11 @@ import { localizedPath } from "../lib/locale";
 
 type GuestFooterProps = {
   locale: Locale;
+  /** Guest/member marketing nav (Discover + FAQ). Hidden for ADMIN. */
+  showMarketingNav?: boolean;
 };
 
-export function GuestFooter({ locale }: GuestFooterProps) {
+export function GuestFooter({ locale, showMarketingNav = true }: GuestFooterProps) {
   const copy = getCopy(locale).footer;
 
   return (
@@ -36,19 +38,21 @@ export function GuestFooter({ locale }: GuestFooterProps) {
           className="flex flex-col gap-10 sm:flex-row sm:gap-12 lg:gap-8"
           variant="transparent"
         >
-          <Surface variant="transparent">
-            <Paragraph className="uppercase tracking-[0.2em]" color="muted" size="xs">
-              {copy.navigationEyebrow}
-            </Paragraph>
-            <Surface className="mt-4 flex flex-col gap-3" role="navigation" variant="transparent">
-              <Link className="footer-link" href={localizedPath(locale, "discover")}>
-                {copy.nav.discover}
-              </Link>
-              <Link className="footer-link" href={localizedPath(locale, "faq")}>
-                {copy.nav.faq}
-              </Link>
+          {showMarketingNav ? (
+            <Surface variant="transparent">
+              <Paragraph className="uppercase tracking-[0.2em]" color="muted" size="xs">
+                {copy.navigationEyebrow}
+              </Paragraph>
+              <Surface className="mt-4 flex flex-col gap-3" role="navigation" variant="transparent">
+                <Link className="footer-link" href={localizedPath(locale, "discover")}>
+                  {copy.nav.discover}
+                </Link>
+                <Link className="footer-link" href={localizedPath(locale, "faq")}>
+                  {copy.nav.faq}
+                </Link>
+              </Surface>
             </Surface>
-          </Surface>
+          ) : null}
 
           <Surface variant="transparent">
             <Paragraph className="uppercase tracking-[0.2em]" color="muted" size="xs">

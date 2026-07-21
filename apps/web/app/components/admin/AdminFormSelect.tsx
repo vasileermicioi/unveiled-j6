@@ -1,10 +1,7 @@
 "use client";
 
-import { Input, Label, ListBox, Select } from "@heroui/react";
-import type { Key, ReactNode } from "react";
-import { useState } from "react";
-
-import { AdminFormPopoverAnchor } from "./AdminFormPopoverAnchor";
+import { Label, Surface } from "@heroui/react";
+import type { ChangeEvent } from "react";
 
 export type AdminFormSelectOption = {
   id: string;
@@ -35,61 +32,8 @@ type AdminFormSelectMultipleProps = AdminFormSelectBaseProps & {
 
 export type AdminFormSelectProps = AdminFormSelectSingleProps | AdminFormSelectMultipleProps;
 
-/** React Aria rejects empty-string item keys; form value stays "". */
-const EMPTY_OPTION_KEY = "__empty__";
-
-function toSelectItemId(optionId: string): string {
-  return optionId === "" ? EMPTY_OPTION_KEY : optionId;
-}
-
-function fromSelectItemId(key: Key | null): string {
-  if (key == null) {
-    return "";
-  }
-  const value = String(key);
-  return value === EMPTY_OPTION_KEY ? "" : value;
-}
-
-function AdminFormSelectContent({
-  label,
-  options,
-  placeholder,
-  portalContainer,
-}: {
-  label: string;
-  options: AdminFormSelectOption[];
-  placeholder?: string;
-  portalContainer: HTMLElement | null;
-}): ReactNode {
-  return (
-    <>
-      <Label>{label}</Label>
-      <Select.Trigger>
-        <Select.Value>
-          {placeholder
-            ? ({ isPlaceholder, selectedText }) => (isPlaceholder ? placeholder : selectedText)
-            : undefined}
-        </Select.Value>
-        <Select.Indicator />
-      </Select.Trigger>
-      <Select.Popover
-        UNSTABLE_portalContainer={portalContainer ?? undefined}
-        className="admin-form__select-popover"
-        placement="bottom start"
-      >
-        <ListBox>
-          {options.map((option) => {
-            const itemId = toSelectItemId(option.id);
-            return (
-              <ListBox.Item id={itemId} key={itemId} textValue={option.label}>
-                {option.label}
-              </ListBox.Item>
-            );
-          })}
-        </ListBox>
-      </Select.Popover>
-    </>
-  );
+function selectIdForName(name: string): string {
+  return `admin-select-${name}`;
 }
 
 function AdminFormSelectSingle({
@@ -101,44 +45,37 @@ function AdminFormSelectSingle({
   placeholder,
   onSelectionChange,
 }: AdminFormSelectSingleProps) {
-  const [selectedKey, setSelectedKey] = useState(defaultSelectedKey ?? "");
-  const selectDefaultKey =
-    defaultSelectedKey === undefined || defaultSelectedKey === ""
-      ? options.some((option) => option.id === "")
-        ? EMPTY_OPTION_KEY
-        : undefined
-      : defaultSelectedKey;
+  const id = selectIdForName(name);
+  const defaultValue = defaultSelectedKey ?? "";
+  const showPlaceholder = Boolean(placeholder) && !options.some((option) => option.id === "");
 
-  const handleChange = (key: Key | null) => {
-    const next = fromSelectItemId(key);
-    setSelectedKey(next);
-    onSelectionChange?.(next);
+  const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    onSelectionChange?.(event.target.value);
   };
 
   return (
-    <AdminFormPopoverAnchor>
-      {(portalContainer) => (
-        <>
-          {/* Hidden mirror: HeroUI Select may not re-emit name after remount (series confirm). */}
-          <Input name={name} type="hidden" value={selectedKey} />
-          <Select
-            className="admin-form__select"
-            defaultSelectedKey={selectDefaultKey}
-            fullWidth
-            isRequired={isRequired}
-            onChange={handleChange}
-            selectionMode="single"
-          >
-            <AdminFormSelectContent
-              label={label}
-              options={options}
-              placeholder={placeholder}
-              portalContainer={portalContainer}
-            />
-          </Select>
-        </>
-      )}
-    </AdminFormPopoverAnchor>
+    <Surface className="flex w-full flex-col gap-1" variant="transparent">
+      <Label htmlFor={id}>{label}</Label>
+      <select
+        className="admin-native-select"
+        defaultValue={defaultValue}
+        id={id}
+        name={name}
+        onChange={handleChange}
+        required={isRequired}
+      >
+        {showPlaceholder ? (
+          <option disabled={isRequired} value="">
+            {placeholder}
+          </option>
+        ) : null}
+        {options.map((option) => (
+          <option key={option.id === "" ? "__empty__" : option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </Surface>
   );
 }
 
@@ -148,42 +85,36 @@ function AdminFormSelectMultiple({
   options,
   defaultSelectedKeys = [],
   isRequired = false,
-  placeholder,
   onSelectionChange,
 }: AdminFormSelectMultipleProps) {
-  const [selectedKeys, setSelectedKeys] = useState<string[]>(defaultSelectedKeys);
+  const id = selectIdForName(name);
+  const size = Math.min(Math.max(options.length, 3), 8);
 
-  const handleChange = (keys: Key[]) => {
-    const selected = keys.map(String);
-    setSelectedKeys(selected);
+  const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const selected = Array.from(event.target.selectedOptions, (option) => option.value);
     onSelectionChange?.(selected);
   };
 
   return (
-    <AdminFormPopoverAnchor>
-      {(portalContainer) => (
-        <>
-          {selectedKeys.map((key) => (
-            <Input key={`${name}-${key}`} name={name} type="hidden" value={key} />
-          ))}
-          <Select
-            className="admin-form__select"
-            defaultValue={defaultSelectedKeys}
-            fullWidth
-            isRequired={isRequired}
-            onChange={handleChange}
-            selectionMode="multiple"
-          >
-            <AdminFormSelectContent
-              label={label}
-              options={options}
-              placeholder={placeholder}
-              portalContainer={portalContainer}
-            />
-          </Select>
-        </>
-      )}
-    </AdminFormPopoverAnchor>
+    <Surface className="flex w-full flex-col gap-1" variant="transparent">
+      <Label htmlFor={id}>{label}</Label>
+      <select
+        className="admin-native-select admin-native-select--multiple"
+        defaultValue={defaultSelectedKeys}
+        id={id}
+        multiple
+        name={name}
+        onChange={handleChange}
+        required={isRequired}
+        size={size}
+      >
+        {options.map((option) => (
+          <option key={option.id === "" ? "__empty__" : option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </Surface>
   );
 }
 

@@ -8,7 +8,7 @@ main = "dist/index.js"
 # Encrypted secrets are never deleted by deploy; this flag protects plaintext vars.
 keep_vars = true
 
-# Bundle sip WASM imported by @standardagents/sip's workerd entry.
+# Optional WASM modules (none required for the image pipeline after sip removal).
 [[rules]]
 globs = ["**/*.wasm"]
 type = "CompiledWasm"

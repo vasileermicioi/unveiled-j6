@@ -1,8 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createDb, users } from "@unveiled/db";
-import { createSolidJpeg } from "@unveiled/images";
 import { eq } from "drizzle-orm";
-
 import { getBerlinCalendarDate } from "./datetime";
 import {
   isEventSaved,
@@ -16,11 +14,12 @@ import {
 } from "./discovery";
 import { createEvent, deleteEvent } from "./events";
 import { createPartner, deletePartner } from "./partners";
+import { createTestImagePrebuilt } from "./test-image";
 
 const databaseUrl = process.env.DATABASE_URL;
 
-async function createTestImageBuffer(): Promise<Buffer> {
-  return createSolidJpeg(800, 420, { r: 250, g: 255, b: 134 });
+async function createTestImage() {
+  return createTestImagePrebuilt();
 }
 
 async function insertTestUser(db: ReturnType<typeof createDb>, suffix: string) {
@@ -44,12 +43,12 @@ describe("discovery integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
     const partner = await createPartner(db, {
       name: `Discovery Upcoming ${suffix}`,
       address: "Discoverystraße 1, Berlin",
       contactEmail: `discovery-upcoming-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -68,7 +67,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `TODAYF${suffix.slice(0, 4)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -83,7 +82,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T10:00:00.000Z"),
       creditPrice: 1,
       secretCode: `TODAYP${suffix.slice(0, 4)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -98,7 +97,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-10T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `TOMOR${suffix.slice(0, 4)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -126,19 +125,19 @@ describe("discovery integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
     const partnerA = await createPartner(db, {
       name: `Discovery A ${suffix}`,
       address: "Filterstraße 1, Berlin",
       contactEmail: `discovery-a-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
     const partnerB = await createPartner(db, {
       name: `Discovery B ${suffix}`,
       address: "Filterstraße 2, Berlin",
       contactEmail: `discovery-b-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -158,7 +157,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-11T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `THA${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -173,7 +172,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-11T20:00:00.000Z"),
       creditPrice: 1,
       secretCode: `MUA${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -188,7 +187,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-11T19:00:00.000Z"),
       creditPrice: 1,
       secretCode: `THB${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -267,12 +266,12 @@ describe("discovery integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
     const partner = await createPartner(db, {
       name: `Discovery Map ${suffix}`,
       address: "Mapstraße 1, Berlin",
       contactEmail: `discovery-map-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -289,7 +288,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-12T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `MPC${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
       lat: "52.520000",
       lng: "13.405000",
@@ -306,7 +305,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-12T19:00:00.000Z"),
       creditPrice: 1,
       secretCode: `MPN${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -321,7 +320,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T06:00:00.000Z"),
       creditPrice: 1,
       secretCode: `MPP${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
       lat: "52.510000",
       lng: "13.400000",
@@ -366,13 +365,13 @@ describe("discovery integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
     const userId = await insertTestUser(db, suffix);
     const partner = await createPartner(db, {
       name: `Discovery Save ${suffix}`,
       address: "Savestraße 1, Berlin",
       contactEmail: `discovery-save-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -389,7 +388,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `SVT${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -404,7 +403,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-15T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `SVL${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -419,7 +418,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T10:00:00.000Z"),
       creditPrice: 1,
       secretCode: `SVP${suffix.slice(0, 5)}`,
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 

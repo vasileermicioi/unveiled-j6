@@ -370,13 +370,29 @@ Product UI docs SHALL describe the shared on-yellow `PageSectionHeader` (eyebrow
 - **WHEN** Playwright covers FAQ and auth page headers after this change
 - **THEN** assertions use proximity role/name (eyebrow and/or level-1 heading), not CSS-class or `data-testid` selectors for the ruled header
 
-### Requirement: Native controls exception for preference forms
-For onboarding, profile preferences, and booking/waitlist quantity fields, the product MAY use native checkboxes, radios, selects, and number inputs instead of HeroUI Select-only / no-checkbox guidance when custom controls fail visibility or hydration. Theme styling for those native controls SHALL still come from shared CSS tokens in `globals.css`. Product UI documentation SHALL state this exception explicitly.
+### Requirement: Form control preference
+App forms SHALL use native HTML controls (`select`, `input` of type `checkbox|radio|number|date|time|file`, `textarea`) for choice, numeric, date, and file fields when a native control exists. HeroUI `Select`, `NumberField`, `Checkbox`, `Radio`, and `Switch` SHALL NOT be used for those fields except where listed as exceptions (admin image processing UI, map/geo pickers, third-party auth UI). HeroUI MAY still wrap labels, layout, text fields, and buttons. Theme styling for native controls SHALL come from shared CSS tokens in `globals.css`. Agent-facing docs (`AGENTS.md` hard rules and `docs/product/ui/design-system.md` Form controls) SHALL state this native-first preference and SHALL NOT mandate HeroUI Select-only guidance for those fields.
 
-#### Scenario: Documented exception
-- **WHEN** an implementer reads product UI docs after this change
-- **THEN** the native-control exception for preference and booking quantity forms is stated explicitly
-- **AND** the docs still require theme-token styling (not ad-hoc per-route colors) for those controls
+#### Scenario: Policy documents native-first forms
+- **WHEN** an agent or implementer reads AGENTS hard rules and the design-system Form controls section
+- **THEN** native controls are preferred for choice/number/date/file fields and HeroUI Select-only guidance no longer applies
+
+#### Scenario: Documented exceptions remain
+- **WHEN** an implementer reads the Form controls policy after this change
+- **THEN** admin image processing UI, map/geo pickers, and third-party auth UI are listed as allowed non-native exceptions
+- **AND** theme-token styling (not ad-hoc per-route colors) is still required for native controls
+
+### Requirement: Admin form automation uses native controls
+Automated tests for admin choice and numeric fields SHALL target native HTML form controls (e.g. Playwright `selectOption` / labeled number inputs), not HeroUI Select listbox popovers or NumberField increment/decrement steppers, once native form controls have shipped. Helpers SHALL resolve fields via accessible labels (`getByLabel` or equivalent proximity selectors) per `docs/product/testing/bdd-and-e2e.md`.
+
+#### Scenario: Admin event Partner selection in e2e
+- **WHEN** an e2e test sets the Partner field on Create Event
+- **THEN** it selects via the native select associated with the Partner label (not a ListBox popover)
+
+#### Scenario: Admin capacity uses labeled number input
+- **WHEN** an e2e helper or spec sets event capacity (create, edit, or waitlist capacity bump)
+- **THEN** it fills the native number input associated with the capacity label
+- **AND** it does not click HeroUI NumberField increment/decrement buttons
 
 ### Requirement: Shared page section headers on booking flows
 Member flows that use the default on-yellow page title pattern SHALL use the shared `PageSectionHeader` (or documented equivalent), including booking and waitlist pages. Pages SHALL NOT invent one-off bare `Heading` title chrome that diverges from that pattern without an explicit product exception. The membership marketing hero card MAY retain its bordered hero composition; this requirement targets transactional member pages (book, confirm, waitlist), not the membership perk hero.

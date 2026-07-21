@@ -16,7 +16,8 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { processImageFromBuffer } from "../packages/images/src/index.ts";
+import { bufferToPrebuiltVariants } from "../packages/images/src/offline/index.ts";
+import { validateImageBuffer } from "../packages/images/src/validation.ts";
 
 const BERLIN_CITY_ID = "01704393-9f68-70bf-8050-f527682ed3d0";
 const API = "https://abundolive.de/api/v1";
@@ -317,11 +318,12 @@ async function fetchBuffer(url: string): Promise<Buffer | null> {
   }
 }
 
-/** Validate + normalize to a seedable JPEG (original variant). */
+/** Validate + normalize to a seedable JPEG (original variant via offline Pica). */
 async function toSeedJpeg(buffer: Buffer): Promise<Buffer | null> {
   try {
-    const processed = await processImageFromBuffer(buffer, { skipUpload: true });
-    return processed.variants["original.jpg"];
+    await validateImageBuffer(buffer);
+    const prebuilt = await bufferToPrebuiltVariants(buffer, { source: "UPLOAD" });
+    return prebuilt.variants["original.jpg"];
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`  skip image: ${message.split("\n")[0]}`);
@@ -852,6 +854,7 @@ async function main() {
     const hit = events.find((e) => e.seedRole === role);
     console.log(`  role ${role}: ${hit?.title ?? "(missing)"}`);
   }
+  console.log("Bake Workers-safe variant packs: bun scripts/bake-seed-image-variants.ts");
 }
 
 await main();

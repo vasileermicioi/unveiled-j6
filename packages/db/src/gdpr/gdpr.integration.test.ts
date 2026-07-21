@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { createSolidJpeg } from "@unveiled/images";
 import { eq } from "drizzle-orm";
+import { createTestImagePrebuilt } from "../catalog/test-image";
 
 import {
   anonymizeUserAccount,
@@ -23,8 +23,8 @@ import {
 
 const databaseUrl = process.env.DATABASE_URL;
 
-async function createTestImageBuffer(): Promise<Buffer> {
-  return createSolidJpeg(800, 420, { r: 250, g: 255, b: 134 });
+async function createTestImage() {
+  return createTestImagePrebuilt();
 }
 
 describe("gdpr domain (integration)", () => {
@@ -39,13 +39,13 @@ describe("gdpr domain (integration)", () => {
     const suffix = crypto.randomUUID();
     const userId = `gdpr-${suffix}`;
     const adminId = `gdpr-admin-${suffix}`;
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
 
     const partner = await createPartner(httpDb, {
       name: `GDPR Venue ${suffix.slice(0, 8)}`,
       address: "Teststraße 9, Berlin",
       contactEmail: `gdpr-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -61,7 +61,7 @@ describe("gdpr domain (integration)", () => {
       creditPrice: 2,
       totalCapacity: 5,
       secretCode: "GDPRTEST",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 

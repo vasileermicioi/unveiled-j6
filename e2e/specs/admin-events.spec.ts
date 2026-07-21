@@ -10,6 +10,7 @@ import {
   expectEventOnDiscover,
   expectPublicEventDetail,
   fillLabeledDateOrTime,
+  fillNumberByLabel,
   fillTextbox,
   futureDateISO,
   navigateAdminTab,
@@ -279,14 +280,7 @@ test.describe("admin-events.feature", () => {
 
     const row = page.getByRole("row").filter({ hasText: event.title });
     await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
-    // HeroUI NumberField: click increment until 15 (fill is unreliable on the spin textbox).
-    const capacityField = page.getByRole("textbox", { name: adminLabels.capacity, exact: true });
-    await expect(capacityField).toBeVisible();
-    const increment = page.getByRole("button", { name: /erhöhen|increment|increase/i }).nth(1);
-    for (let i = 0; i < 5; i++) {
-      await increment.click();
-    }
-    await expect(capacityField).toHaveValue("15");
+    await fillNumberByLabel(page, adminLabels.capacity, "15");
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`));
     await expect(

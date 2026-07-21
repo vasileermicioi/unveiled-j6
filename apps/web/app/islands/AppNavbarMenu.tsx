@@ -201,17 +201,19 @@ export default function AppNavbarMenu({
                 </Surface>
               ) : null}
 
-              <Surface className="site-nav-drawer__section" variant="transparent">
-                <DrawerSectionLabel>{sections.navigation}</DrawerSectionLabel>
-                {navLinks.map((link) => (
-                  <DrawerTextLink
-                    href={link.href}
-                    isActive={link.isActive}
-                    key={link.href}
-                    label={link.label}
-                  />
-                ))}
-              </Surface>
+              {navLinks.length > 0 ? (
+                <Surface className="site-nav-drawer__section" variant="transparent">
+                  <DrawerSectionLabel>{sections.navigation}</DrawerSectionLabel>
+                  {navLinks.map((link) => (
+                    <DrawerTextLink
+                      href={link.href}
+                      isActive={link.isActive}
+                      key={link.href}
+                      label={link.label}
+                    />
+                  ))}
+                </Surface>
+              ) : null}
 
               <Surface className="site-nav-drawer__section" variant="transparent">
                 <DrawerSectionLabel>{sections.language}</DrawerSectionLabel>

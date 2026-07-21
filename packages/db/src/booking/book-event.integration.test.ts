@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { createSolidJpeg } from "@unveiled/images";
 import { eq } from "drizzle-orm";
+import { createTestImagePrebuilt } from "../catalog/test-image";
 
 import {
   bookEvent,
@@ -19,8 +19,8 @@ import {
 
 const databaseUrl = process.env.DATABASE_URL;
 
-async function createTestImageBuffer(): Promise<Buffer> {
-  return createSolidJpeg(800, 420, { r: 250, g: 255, b: 134 });
+async function createTestImage() {
+  return createTestImagePrebuilt();
 }
 
 describe("bookEvent", () => {
@@ -34,13 +34,13 @@ describe("bookEvent", () => {
     const txDb = createTxDb(databaseUrl);
     const suffix = crypto.randomUUID();
     const userId = `book-test-${suffix}`;
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
 
     const partner = await createPartner(httpDb, {
       name: `Booking Test Venue ${suffix.slice(0, 8)}`,
       address: "Teststraße 9, Berlin",
       contactEmail: `book-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -56,7 +56,7 @@ describe("bookEvent", () => {
       creditPrice: 2,
       totalCapacity: 3,
       secretCode: "BOOKTEST",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 
@@ -190,13 +190,13 @@ describe("bookEvent", () => {
     const txDb = createTxDb(databaseUrl);
     const suffix = crypto.randomUUID();
     const userId = `book-qty4-${suffix}`;
-    const image = await createTestImageBuffer();
+    const image = await createTestImage();
 
     const partner = await createPartner(httpDb, {
       name: `Booking Qty Venue ${suffix.slice(0, 8)}`,
       address: "Teststraße 9, Berlin",
       contactEmail: `book-qty4-${suffix}@example.com`,
-      logoUpload: image,
+      logoPrebuilt: image,
       skipUpload: true,
     });
 
@@ -212,7 +212,7 @@ describe("bookEvent", () => {
       creditPrice: 2,
       totalCapacity: 10,
       secretCode: "QTY4TEST",
-      imageUpload: image,
+      imagePrebuilt: image,
       skipUpload: true,
     });
 

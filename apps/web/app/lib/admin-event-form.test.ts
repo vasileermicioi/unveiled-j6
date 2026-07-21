@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { VARIANT_FILENAMES } from "@unveiled/images";
+
 import {
   expandSeriesSlotsFromBuilder,
   parseBerlinDateTime,
@@ -22,8 +24,15 @@ function asString(value: string | File | (string | File)[] | undefined): string 
   return typeof value === "string" ? value : undefined;
 }
 
-async function asFile(_value: string | File | (string | File)[] | undefined): Promise<undefined> {
-  return undefined;
+function asFile(value: string | File | (string | File)[] | undefined): File | Blob | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (Array.isArray(value)) {
+    const first = value[0];
+    return first instanceof File || first instanceof Blob ? first : undefined;
+  }
+  return value instanceof File || value instanceof Blob ? value : undefined;
 }
 
 describe("admin-event-form helpers", () => {
@@ -70,6 +79,7 @@ describe("admin-event-form helpers", () => {
     expect(values.secretCode).toBe("JAZZ123");
     expect(values.imageUpload).toBeNull();
     expect(values.imageUrl).toBeNull();
+    expect(values.imagePrebuilt).toBeNull();
   });
 
   test("parseEventFormBody extracts image_url", async () => {
@@ -92,6 +102,57 @@ describe("admin-event-form helpers", () => {
 
     expect(values.imageUrl).toBe("https://example.com/poster.jpg");
     expect(values.imageUpload).toBeNull();
+    expect(values.imagePrebuilt).toBeNull();
+  });
+
+  test("parseEventFormBody prefers complete prebuilt variants over raw image", async () => {
+    const body: Record<string, string | File> = {
+      partner_id: "partner-1",
+      title: "Jazz Night",
+      description: "Live set",
+      address: "Main St 1",
+      neighborhood: "Mitte",
+      category: "Music",
+      event_type: "Concert",
+      event_date: "2026-08-01",
+      event_time: "20:00",
+      imageId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      image: new File([new Uint8Array(8)], "source.png", { type: "image/png" }),
+      image_url: "https://example.com/poster.jpg",
+    };
+    for (const filename of VARIANT_FILENAMES) {
+      body[filename] = new File([new Uint8Array(12)], filename, { type: "image/jpeg" });
+    }
+
+    const values = await parseEventFormBody(body, asString, asFile);
+
+    expect(values.imagePrebuilt?.imageId).toBe("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    expect(values.imageUpload).toBeNull();
+    expect(values.imageUrl).toBe("https://example.com/poster.jpg");
+  });
+
+  test("parseEventFormBody falls back to legacy image when prebuilt incomplete", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        address: "Main St 1",
+        neighborhood: "Mitte",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        imageId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "original.jpg": new File([new Uint8Array(12)], "original.jpg", { type: "image/jpeg" }),
+        image: new File([new Uint8Array(8)], "source.png", { type: "image/png" }),
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.imagePrebuilt).toBeNull();
+    expect(values.imageUpload).not.toBeNull();
   });
 
   test("parseEventFormBody accepts multi-select arrays and map zoom", async () => {

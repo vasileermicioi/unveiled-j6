@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { CatalogValidationError } from "./errors";
 import {
   applyEventDefaults,
@@ -25,10 +26,52 @@ describe("validateImageSourceExclusive", () => {
     );
   });
 
-  test("rejects both upload and URL", () => {
-    expect(() =>
-      validateImageSourceExclusive(Buffer.from("x"), "https://example.com/image.jpg"),
-    ).toThrow(CatalogValidationError);
+  test("rejects raw upload without prebuilt", () => {
+    expect(() => validateImageSourceExclusive(Buffer.from("x"), null)).toThrow(
+      CatalogValidationError,
+    );
+  });
+
+  test("rejects URL alone without prebuilt", () => {
+    expect(() => validateImageSourceExclusive(null, "https://example.com/image.jpg")).toThrow(
+      CatalogValidationError,
+    );
+  });
+
+  test("accepts prebuilt alone", () => {
+    const prebuilt = {
+      imageId: "11111111-1111-1111-1111-111111111111",
+      variants: {} as never,
+    };
+    expect(validateImageSourceExclusive(null, null, { prebuilt })).toEqual({
+      type: "prebuilt",
+      input: prebuilt,
+      sourceUrl: null,
+    });
+  });
+
+  test("accepts prebuilt with URL as sourceUrl metadata", () => {
+    const prebuilt = {
+      imageId: "11111111-1111-1111-1111-111111111111",
+      variants: {} as never,
+    };
+    expect(
+      validateImageSourceExclusive(null, "https://example.com/image.jpg", { prebuilt }),
+    ).toEqual({
+      type: "prebuilt",
+      input: prebuilt,
+      sourceUrl: "https://example.com/image.jpg",
+    });
+  });
+
+  test("rejects prebuilt with raw upload buffer", () => {
+    const prebuilt = {
+      imageId: "11111111-1111-1111-1111-111111111111",
+      variants: {} as never,
+    };
+    expect(() => validateImageSourceExclusive(Buffer.from("x"), null, { prebuilt })).toThrow(
+      CatalogValidationError,
+    );
   });
 });
 

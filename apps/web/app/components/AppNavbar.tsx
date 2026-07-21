@@ -56,23 +56,26 @@ export function AppNavbar({
         : discoverHref
       : homeHref;
 
-  const navLinks = NAV_ITEMS.map((key) => {
-    if (key === "discover" && canBrowseEvents) {
-      return {
-        key,
-        href: eventsHref,
-        label: copy.browseEvents,
-        isActive: isActiveNavPath(pathname, eventsHref),
-      };
-    }
-    const href = localizedPath(locale, NAV_SEGMENTS[key]);
-    return {
-      key,
-      href,
-      label: copy.nav[key],
-      isActive: isActiveNavPath(pathname, href),
-    };
-  });
+  // Admin chrome is dashboard-focused — no Discover / FAQ marketing nav.
+  const navLinks = isAdmin
+    ? []
+    : NAV_ITEMS.map((key) => {
+        if (key === "discover" && canBrowseEvents) {
+          return {
+            key,
+            href: eventsHref,
+            label: copy.browseEvents,
+            isActive: isActiveNavPath(pathname, eventsHref),
+          };
+        }
+        const href = localizedPath(locale, NAV_SEGMENTS[key]);
+        return {
+          key,
+          href,
+          label: copy.nav[key],
+          isActive: isActiveNavPath(pathname, href),
+        };
+      });
 
   return (
     <Header className="site-header">
@@ -86,16 +89,18 @@ export function AppNavbar({
           </Link>
         </Surface>
 
-        <Surface
-          aria-label="Primary"
-          className="hidden items-center gap-1 lg:flex"
-          role="navigation"
-          variant="transparent"
-        >
-          {navLinks.map((link) => (
-            <NavLink href={link.href} isActive={link.isActive} key={link.href} label={link.label} />
-          ))}
-        </Surface>
+        {navLinks.length > 0 ? (
+          <Surface
+            aria-label="Primary"
+            className="hidden items-center gap-1 lg:flex"
+            role="navigation"
+            variant="transparent"
+          >
+            {navLinks.map((link) => (
+              <NavLink href={link.href} isActive={link.isActive} key={link.href} label={link.label} />
+            ))}
+          </Surface>
+        ) : null}
 
         <Surface className="flex shrink-0 items-center gap-2" variant="transparent">
           {/* Desktop-only chrome — below `lg`, only logo + hamburger remain in the bar */}

@@ -24,9 +24,9 @@ import { AdminFormError } from "./AdminFormError";
 import { AdminFormSelect } from "./AdminFormSelect";
 import { EventAdminBaseFields } from "./EventAdminBaseFields";
 import {
-  EventAdminDatePicker,
+  EventAdminDateInput,
   EventAdminDateTimeFields,
-  EventAdminTimeField,
+  EventAdminTimeInput,
 } from "./EventAdminDateFields";
 import type { EventFormDefaults, PartnerOption } from "./event-admin-types";
 
@@ -162,13 +162,13 @@ export function EventSeriesForm({
       ) : (
         <Surface className="flex flex-col gap-4" variant="transparent">
           <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
-            <EventAdminDatePicker
+            <EventAdminDateInput
               eventDate={defaults?.eventDate}
               label={copy.builderStartLabel}
               locale={locale}
               name="builder_start"
             />
-            <EventAdminDatePicker label={copy.builderEndLabel} locale={locale} name="builder_end" />
+            <EventAdminDateInput label={copy.builderEndLabel} locale={locale} name="builder_end" />
           </Surface>
           <AdminFormSelect
             defaultSelectedKeys={[]}
@@ -189,7 +189,7 @@ export function EventSeriesForm({
           <Surface className="flex flex-col gap-4" variant="transparent">
             <Description>{copy.builderTimesHint}</Description>
             {BUILDER_TIMES.map((slot) => (
-              <EventAdminTimeField
+              <EventAdminTimeInput
                 defaultEmpty={slot.defaultEmpty}
                 key={slot.id}
                 label={copy.builderTimeSlotLabel(slot.labelIndex)}

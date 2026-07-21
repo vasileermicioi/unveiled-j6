@@ -1,11 +1,21 @@
+import type { PrebuiltImageVariantsInput } from "@unveiled/images";
+
 import type { SecretCodeMode, TicketType, TimingMode } from "../schema/events";
 import { CatalogValidationError } from "./errors";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type ImageAttachInput =
-  | { type: "upload"; buffer: Buffer }
-  | { type: "remote_url"; url: string };
+export type ImageAttachInput = {
+  type: "prebuilt";
+  input: PrebuiltImageVariantsInput;
+  /** Optional remote origin metadata when variants were built from a URL. */
+  sourceUrl?: string | null;
+};
+
+export type ValidateImageSourceOptions = {
+  required?: boolean;
+  prebuilt?: PrebuiltImageVariantsInput | null;
+};
 
 export function requireNonEmpty(value: string | undefined | null, field: string): string {
   if (!value?.trim()) {
@@ -24,33 +34,47 @@ export function validateEmail(email: string): string {
   return trimmed;
 }
 
+/**
+ * Admin image supply must be a complete prebuilt variant set.
+ * Raw buffer upload or URL-alone (server resize) are no longer accepted.
+ * A URL may accompany prebuilt variants as sourceUrl metadata only.
+ */
 export function validateImageSourceExclusive(
   upload?: Buffer | null,
   url?: string | null,
-  options?: { required?: boolean },
+  options?: ValidateImageSourceOptions,
 ): ImageAttachInput | null {
+  const hasPrebuilt = options?.prebuilt != null;
   const hasUpload = upload != null && upload.length > 0;
   const hasUrl = url != null && url.trim().length > 0;
 
-  if (hasUpload && hasUrl) {
+  if (hasPrebuilt && hasUpload) {
     throw new CatalogValidationError(
       "CONFLICTING_IMAGE_SOURCES",
-      "Provide either an upload or a remote URL, not both",
+      "Provide either an upload, prebuilt variants, or a remote URL — not more than one",
     );
   }
 
-  if (!hasUpload && !hasUrl) {
-    if (options?.required) {
-      throw new CatalogValidationError("MISSING_EVENT_IMAGE", "Event image is required");
-    }
-    return null;
+  if (hasPrebuilt) {
+    return {
+      type: "prebuilt",
+      input: options?.prebuilt as PrebuiltImageVariantsInput,
+      sourceUrl: hasUrl ? url?.trim() : null,
+    };
   }
 
-  if (hasUpload) {
-    return { type: "upload", buffer: upload as Buffer };
+  if (hasUpload || hasUrl) {
+    throw new CatalogValidationError(
+      "CLIENT_IMAGE_REQUIRED",
+      "Image variants must be generated in the browser before submit",
+    );
   }
 
-  return { type: "remote_url", url: url?.trim() as string };
+  if (options?.required) {
+    throw new CatalogValidationError("MISSING_EVENT_IMAGE", "Event image is required");
+  }
+
+  return null;
 }
 
 export type RedemptionInput = {

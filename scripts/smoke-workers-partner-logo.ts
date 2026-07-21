@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Workers-runtime smoke: sign in as admin, POST partner create with logo,
+ * Workers-runtime smoke: sign in as admin, POST partner create with prebuilt logo variants,
  * assert 302 + six JPEG objects in R2.
  *
  * Expects wrangler already listening on SITE_URL (default http://127.0.0.1:8787).
@@ -9,7 +9,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
-import { createSolidJpeg } from "../packages/images/src/create-solid-jpeg.ts";
+import { VARIANT_FILENAMES } from "../packages/images/src/constants.ts";
+import { bufferToPrebuiltVariants, createSolidJpeg } from "../packages/images/src/offline/index.ts";
 
 function loadRootEnv(): void {
   const envPath = resolve(import.meta.dir, "../.env");
@@ -55,7 +56,6 @@ async function main(): Promise<void> {
   };
   const cookieHeader = () => [...cookieJar.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
 
-  // CSRF / origin: Better Auth needs Origin allowlisted; localhost/127.0.0.1 usually ok.
   const signIn = await fetch(`${baseURL}/api/auth/sign-in/email`, {
     method: "POST",
     headers: {
@@ -82,13 +82,19 @@ async function main(): Promise<void> {
   }
   console.log(`signed in as ${sessionJson.user.email ?? sessionJson.user.id}`);
 
-  const jpeg = await createSolidJpeg(900, 500, { r: 40, g: 120, b: 200 });
+  const jpeg = createSolidJpeg(900, 500, { r: 40, g: 120, b: 200 });
+  const prebuilt = await bufferToPrebuiltVariants(jpeg, { source: "UPLOAD" });
   const suffix = Date.now().toString(36);
   const form = new FormData();
-  form.set("name", `Workers Sip Smoke ${suffix}`);
-  form.set("contact_email", `sip-smoke-${suffix}@example.com`);
+  form.set("name", `Workers Image Smoke ${suffix}`);
+  form.set("contact_email", `image-smoke-${suffix}@example.com`);
   form.set("address", `Smoke Street ${suffix}, 10115 Berlin`);
-  form.set("logo", new File([jpeg], "logo.jpg", { type: "image/jpeg" }));
+  form.set("imageId", prebuilt.imageId);
+  form.set("claimedWidth", String(prebuilt.claimedWidth ?? 900));
+  form.set("claimedHeight", String(prebuilt.claimedHeight ?? 500));
+  for (const filename of VARIANT_FILENAMES) {
+    form.set(filename, new File([prebuilt.variants[filename]], filename, { type: "image/jpeg" }));
+  }
 
   const create = await fetch(`${baseURL}/de/admin/partners/new`, {
     method: "POST",
@@ -111,17 +117,15 @@ async function main(): Promise<void> {
     );
   }
 
-  // Confirm list page shows partner (and thumbnail markup if present)
   const list = await fetch(`${baseURL}/de/admin/partners`, {
     headers: { cookie: cookieHeader() },
   });
   const listHtml = await list.text();
-  if (!listHtml.includes(`Workers Sip Smoke ${suffix}`)) {
+  if (!listHtml.includes(`Workers Image Smoke ${suffix}`)) {
     throw new Error("partner name not found on admin list");
   }
   console.log("partner visible on admin list");
 
-  // Find newest image folder in R2 with six .jpg keys (best-effort by listing recent prefixes)
   const client = new S3Client({
     region: requireEnv("S3_REGION"),
     endpoint: requireEnv("S3_ENDPOINT"),

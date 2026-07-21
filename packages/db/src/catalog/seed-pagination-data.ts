@@ -1,3 +1,5 @@
+import type { PrebuiltImageVariantsInput } from "@unveiled/images";
+
 import type { CreateEventInput } from "./events";
 import type { CreatePartnerInput } from "./partners";
 
@@ -20,7 +22,7 @@ export function formatPaginationEventTitle(index: number): string {
 
 export function buildPaginationPartnerInput(
   index: number,
-  logoUpload: Buffer,
+  logoPrebuilt: PrebuiltImageVariantsInput,
   skipUpload?: boolean,
 ): CreatePartnerInput {
   const label = formatPaginationPartnerName(index);
@@ -28,7 +30,7 @@ export function buildPaginationPartnerInput(
     name: label,
     address: `Paginationstraße ${index}, 10115 Berlin`,
     contactEmail: `pagination-partner-${String(index).padStart(2, "0")}@example.test`,
-    logoUpload,
+    logoPrebuilt,
     skipUpload,
   };
 }
@@ -43,7 +45,7 @@ function daysFromNow(days: number): Date {
 export function buildPaginationEventInput(
   partnerId: string,
   index: number,
-  imageUpload: Buffer,
+  imagePrebuilt: PrebuiltImageVariantsInput,
   skipUpload?: boolean,
 ): CreateEventInput {
   return {
@@ -58,7 +60,7 @@ export function buildPaginationEventInput(
     dateTime: daysFromNow((index % 30) + 1),
     creditPrice: 1,
     secretCode: `PAGE${String(index).padStart(4, "0")}`,
-    imageUpload,
+    imagePrebuilt,
     skipUpload,
   };
 }

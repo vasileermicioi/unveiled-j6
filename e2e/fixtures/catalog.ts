@@ -12,7 +12,7 @@ import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 
 /**
  * Resolve a demo partner id for GET `partnerId=` filters.
- * Prefer this over HeroUI Select popover scraping (portal/listbox is flaky in headless).
+ * Prefer this over scraping option lists from the rendered admin UI.
  */
 export async function getPartnerIdByName(name: string): Promise<string> {
   const url = process.env.DATABASE_URL;

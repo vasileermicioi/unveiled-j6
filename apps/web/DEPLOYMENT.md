@@ -14,16 +14,11 @@ Target custom domain: `https://staging.unveiled.berlin` (configure in Cloudflare
 
 **Cloudflare Workers** — HonoX SSR via `@hono/vite-build/cloudflare-workers` and `wrangler.toml`.
 
-**Image processing** uses **`@standardagents/sip`** (WASM) on **Cloudflare Workers and local Node/Bun** (`bun run dev`, `bun run seed:demo`, staging/production Workers). Admin multipart image uploads succeed on the Workers URL in-request — no separate Node-only upload host is required.
+**Admin image uploads** (file picker and remote URL) generate the six JPEG variants **in the browser with Pica** (`@unveiled/images/client`) before the SSR form POST; the server validates and stores prebuilt variants (`persistPrebuiltImage`). Remote URLs go through `POST /:locale/admin/image-proxy` (ADMIN session) then the same client generator. **JavaScript is required** for admin event/partner image supply. There is **no** `@standardagents/sip` / Worker-side resize.
 
-Workers build requirements (`apps/web/vite.config.ts`):
-- Resolve sip’s **`workerd`** entry (not the Node entry — Vite SSR defaults to `node` conditions).
-- Ship **`sip.wasm`**, **`webp_dec.wasm`**, and **`avif_dec.wasm`** as Wrangler `CompiledWasm` siblings (jsquash codecs are preloaded via `__SIP_CODEC_WASM__`).
-- Use sync `WebAssembly.Instance` for sip’s `__SIP_WASM_LOADER__` so Emscripten never falls through to fetch/XHR.
+Demo seed reads pre-baked `public/images/seed/**/*.jpg.variants/` packs (refresh with `bun scripts/fetch-abundo-seed.ts` then `bun scripts/bake-seed-image-variants.ts`).
 
-If uploads fail with “both async and sync fetching of the wasm failed”, rebuild/redeploy and confirm `dist/` contains those three `.wasm` files and `dist/index.js` has static `import … from "./….wasm"`.
-
-**Migrating from the former WebP / sharp pipeline:** variant filenames are now `*.jpg` only. Existing R2 objects under `images/{id}/*.webp` (and DB rows that still resolve to those URLs) will 404 until you **re-seed** (`bun run seed:demo` on an empty catalog, or with `--reset` / force against a disposable DB) and/or **re-upload** partner logos and event images in admin. There is no automatic WebP→JPEG migration job.
+**Migrating from older pipelines:** variant filenames remain `*.jpg`. Re-seed or re-upload if objects are missing; there is no automatic migration job.
 
 Deploy artifacts:
 - `apps/web/wrangler.toml` — Workers config, static assets binding
@@ -481,7 +476,7 @@ Public catalog surfaces (`@unveiled/ui` EventCard, locale-home Discover live gri
 
 ### Demo seed images (Wikimedia Commons)
 
-`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **local JPEGs** in `public/images/seed/{partners,events}/`, then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`. Refresh fixture + images with `bun run seed:fetch-abundo` (partner logos prefer Wikimedia venue photos; event images from Abundo; dates stay relative — resolved at seed time). Seed then uploads six JPEG variants to R2 via `processImageFromBuffer`. Existing catalogs seeded before Featured Discover need `seed:demo -- --reset` (or manual Featured tab adds) to populate Discover.
+`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **prebuilt variant packs** next to local JPEGs in `public/images/seed/{partners,events}/` (`*.jpg.variants/`), then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`. Refresh fixture + images with `bun run seed:fetch-abundo` then `bun scripts/bake-seed-image-variants.ts`. Seed uploads the six JPEG variants to R2 via `persistPrebuiltImage` (no Worker resize). Existing catalogs seeded before Featured Discover need `seed:demo -- --reset` (or manual Featured tab adds) to populate Discover.
 
 ```bash
 # Fresh catalog on empty DB

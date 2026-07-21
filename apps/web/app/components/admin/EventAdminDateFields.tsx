@@ -3,7 +3,7 @@ import { Input, Label, Surface, TextField } from "@heroui/react";
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
-type EventAdminDatePickerProps = {
+type EventAdminDateInputProps = {
   locale: Locale;
   eventDate?: string;
   name?: string;
@@ -11,7 +11,7 @@ type EventAdminDatePickerProps = {
   isRequired?: boolean;
 };
 
-type EventAdminTimeFieldProps = {
+type EventAdminTimeInputProps = {
   locale: Locale;
   eventTime?: string;
   name?: string;
@@ -38,13 +38,13 @@ function getDefaultTimeValue(eventTime: string | undefined, defaultEmpty: boolea
   return defaultEmpty ? "" : DEFAULT_EVENT_TIME;
 }
 
-export function EventAdminDatePicker({
+export function EventAdminDateInput({
   locale,
   eventDate,
   name = "event_date",
   label,
   isRequired = false,
-}: EventAdminDatePickerProps) {
+}: EventAdminDateInputProps) {
   const copy = getAdminCopy(locale);
 
   return (
@@ -61,13 +61,13 @@ export function EventAdminDatePicker({
   );
 }
 
-export function EventAdminTimeField({
+export function EventAdminTimeInput({
   locale,
   eventTime,
   name = "event_time",
   label,
   defaultEmpty = false,
-}: EventAdminTimeFieldProps) {
+}: EventAdminTimeInputProps) {
   const copy = getAdminCopy(locale);
 
   return (
@@ -93,13 +93,13 @@ export function EventAdminDateTimeFields({
 }: EventAdminDateTimeFieldsProps) {
   return (
     <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
-      <EventAdminDatePicker
+      <EventAdminDateInput
         eventDate={eventDate}
         isRequired={isDateRequired}
         locale={locale}
         name={dateName}
       />
-      <EventAdminTimeField eventTime={eventTime} locale={locale} name={timeName} />
+      <EventAdminTimeInput eventTime={eventTime} locale={locale} name={timeName} />
     </Surface>
   );
 }

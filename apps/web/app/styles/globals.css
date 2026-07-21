@@ -1204,7 +1204,7 @@
     }
   }
 
-  /* Native checkbox/radio cards (preference forms — AGENTS §14 exception) */
+  /* Native checkbox/radio cards (preference forms — AGENTS §14 native-first) */
   .onboarding-form__option {
     display: flex;
     width: 100%;
@@ -1373,6 +1373,72 @@
   .admin-form .admin-form__select,
   .admin-form .select {
     width: 100%;
+  }
+
+  /* Admin native select/number — consumed by AdminFormSelect / AdminFormNumberField (native-form-controls 02–03) */
+  .admin-native-select {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    border: var(--border-width) solid var(--border);
+    border-radius: 0;
+    background-color: var(--field-background);
+    color: var(--foreground);
+    font: inherit;
+    font-weight: 600;
+    box-shadow: none;
+    appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--foreground) 50%),
+      linear-gradient(135deg, var(--foreground) 50%, transparent 50%);
+    background-position:
+      calc(100% - 1rem) calc(50% - 0.15rem),
+      calc(100% - 0.7rem) calc(50% - 0.15rem);
+    background-size:
+      0.3rem 0.3rem,
+      0.3rem 0.3rem;
+    background-repeat: no-repeat;
+  }
+
+  .admin-native-select:focus {
+    outline: none;
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
+  .admin-native-select:focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+
+  .admin-native-select--multiple {
+    min-height: 8rem;
+    padding-right: 0.75rem;
+    background-image: none;
+  }
+
+  .admin-native-number {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    border: var(--border-width) solid var(--border);
+    border-radius: 0;
+    background-color: var(--field-background);
+    color: var(--foreground);
+    font: inherit;
+    font-weight: 600;
+    box-shadow: none;
+  }
+
+  .admin-native-number:focus {
+    outline: none;
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
+  .admin-native-number:focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
   }
 
   .admin-form__popover-anchor {

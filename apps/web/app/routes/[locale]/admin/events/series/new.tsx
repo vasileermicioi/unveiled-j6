@@ -69,7 +69,10 @@ export const POST = createRoute(async (c) => {
   const { db } = getAuthOptions();
   const partners = await listPartners(db, { limit: 1000 });
   const partnerOptions = toPartnerOptions(partners);
-  const body = (await c.req.parseBody()) as Record<string, string | File | (string | File)[]>;
+  const body = (await c.req.parseBody({ all: true })) as Record<
+    string,
+    string | File | (string | File)[]
+  >;
   const action = typeof body.action === "string" ? body.action : "preview";
 
   try {
