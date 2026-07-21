@@ -59,7 +59,21 @@ Env vars and third-party services for the production MVP. Partner-portal-only fl
 
 ## Payment
 
-**No real payment integration exists in the old app** — checkout is entirely mocked (a simulated 2-second delay; `subscription.status` flips to `ACTIVE` directly), despite UI copy referencing "Stripe." **Decided for the rewrite: real Stripe Billing integration** — Stripe Checkout for the initial subscribe flow, the Stripe Customer Portal (linked from `/profile/billing`) for payment-method updates and cancellation, and webhooks (`checkout.session.completed`, `invoice.payment_failed`, `customer.subscription.updated`/`.deleted`) driving the `ACTIVE` / `PAST_DUE` / `CANCELLED_PENDING` / `INACTIVE` transitions described in `features/credits-subscription.feature`. This is required for a production product that charges real money — a mocked payment flow cannot ship.
+**No real payment integration exists in the old app** — checkout is entirely mocked (a simulated 2-second delay; `subscription.status` flips to `ACTIVE` directly), despite UI copy referencing "Stripe." **Decided for the rewrite: real Stripe Billing integration** — Stripe Checkout for the initial subscribe flow, the Stripe Customer Portal (linked from `/profile/billing`) for payment-method updates and cancellation, and webhooks driving the `ACTIVE` / `PAST_DUE` / `CANCELLED_PENDING` / `INACTIVE` transitions described in `features/credits-subscription.feature`. This is required for a production product that charges real money — a mocked payment flow cannot ship.
+
+**Webhook endpoint:** `POST {SITE_URL}/api/webhooks/stripe` (handler in `packages/billing/src/webhooks.ts`).
+
+**Events to enable in the Stripe Dashboard** (and what local `stripe listen` forwards when testing):
+
+| Event | Purpose |
+|---|---|
+| `checkout.session.completed` | First activation after Checkout |
+| `invoice.paid` | Monthly renewal credit refill (`subscription_cycle`) |
+| `invoice.payment_failed` | → `PAST_DUE` |
+| `customer.subscription.updated` | Status / cancel-at-period-end sync |
+| `customer.subscription.deleted` | → `INACTIVE` + credit expiry |
+
+Do **not** rely on `subscription_schedule.*` events — they are not handled. Operator setup (local CLI vs staging/prod endpoint + `STRIPE_WEBHOOK_SECRET`): [`apps/web/DEPLOYMENT.md`](../../../apps/web/DEPLOYMENT.md) § Stripe webhook setup.
 
 ## Google OAuth
 

@@ -684,6 +684,24 @@ Phase 6 closes the member money loop: **Stripe Checkout** (Basic Berlin) → `AC
 
 Workers: set the same Stripe/Resend secrets via `bun run secrets:workers` (or wrangler) before staging demos.
 
+#### Stripe webhook setup (Dashboard + local)
+
+Handler: `packages/billing/src/webhooks.ts` via `POST /api/webhooks/stripe`.
+
+**Events to select** (only these — do **not** select `subscription_schedule.*`):
+
+| Event | Purpose |
+|---|---|
+| `checkout.session.completed` | Activate membership + credits after Checkout (**required** for subscribe) |
+| `invoice.paid` | Credit refill on subscription renewals (`subscription_cycle` only) |
+| `invoice.payment_failed` | Mark subscription `PAST_DUE` |
+| `customer.subscription.updated` | Sync status / cancel-at-period-end / period end |
+| `customer.subscription.deleted` | Tear down canceled subscription → `INACTIVE` + credit expiry |
+
+**Local:** run `stripe listen --forward-to localhost:3000/api/webhooks/stripe`, put the CLI `whsec_…` in root `.env` as `STRIPE_WEBHOOK_SECRET`, restart `bun run --env-file .env dev`. (`stripe listen` is a tunnel only — not used on staging/prod.)
+
+**Staging / production:** Stripe Dashboard → Developers → Webhooks → Add endpoint → URL `https://<host>/api/webhooks/stripe` → select the five events above → copy that endpoint’s signing secret into Workers as `STRIPE_WEBHOOK_SECRET`. Use **test** mode + test keys on staging; **live** mode + live keys + a live-mode webhook on production.
+
 ### Demo accounts / subscription notes
 
 1. **Inactive member (Checkout)** — fresh signup → onboarding → lands on `/:locale/membership` with `INACTIVE` + 17 starter credits; use test card to activate.
@@ -894,7 +912,7 @@ Use before promoting a production Workers host (replace staging origin with prod
 1. **Neon Postgres** — Production branch/project; ensure production `DATABASE_URL` is a **Build** variable so `bun run build` migrates schema; decide empty vs curated catalog (prefer curated seed or admin-created venues — avoid demo-only junk).
 2. **Neon Auth** — Production `AUTH_URL`; add production origin to **trusted domains** (exact URL, no trailing slash); configure Google OAuth if offering social login; enable Admin plugin + `user.deleteUser` for GDPR disable paths.
 3. **Worker secrets / vars** — `DATABASE_URL`, `AUTH_URL`, `SITE_URL` (production origin); six R2 vars + `IMAGE_PUBLIC_BASE_URL`; Stripe **live** keys + `STRIPE_PRICE_ID_BASIC_BERLIN` + webhook secret; `RESEND_API_KEY` + `DAILY_CODES_FROM_EMAIL` (verified domain); optional `SENTRY_DSN`. Prefer secrets over committed `[vars]` for credentials.
-4. **Stripe** — Live mode Checkout + Customer Portal (cancel at period end); webhook endpoint → `https://<prod>/api/webhooks/stripe` (`checkout.session.completed`, subscription/invoice events as wired).
+4. **Stripe** — Live mode Checkout + Customer Portal (cancel at period end); webhook endpoint → `https://<prod>/api/webhooks/stripe` with events: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted` (see [Stripe webhook setup](#stripe-webhook-setup-dashboard--local)).
 5. **R2** — Production bucket (or same with separate prefix policy); public read base URL; CORS if needed for uploads.
 6. **Resend** — Domain/from verification; send a booking confirmation on staging/prod smoke.
 7. **DNS / Cloudflare** — Custom domain route to Worker; TLS; confirm `SITE_URL` matches browser origin (Auth + Stripe return URLs).

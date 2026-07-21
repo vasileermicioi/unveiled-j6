@@ -112,6 +112,8 @@ Local webhook forward (app on `:3000`):
 stripe listen --forward-to localhost:3000/api/webhooks/stripe
 ```
 
+Put the CLI `whsec_…` in root `.env` as `STRIPE_WEBHOOK_SECRET` and restart the app. Dashboard / staging / prod event checklist (`checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`): [`apps/web/DEPLOYMENT.md`](../apps/web/DEPLOYMENT.md) § Stripe webhook setup.
+
 Activation scenario skips unless `E2E_STRIPE_CHECKOUT=1`. Booking confirmation email skips in Playwright (no inbox harness) — verify in Resend on staging.
 
 Focused run:
