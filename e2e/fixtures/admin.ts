@@ -35,7 +35,6 @@ export const adminLabels = {
   builderStart: "Startdatum",
   builderEnd: "Enddatum",
   builderTime1: "Uhrzeit 1",
-  imageUrl: "Bild-URL",
   credits: "Credits*",
   capacity: "Kapazität*",
   secretCode: "Secret Code",
@@ -251,7 +250,6 @@ export type CreateEventOverrides = {
   promoCode?: string;
   eventWebsiteUrl?: string;
   imagePath?: string;
-  imageUrl?: string;
   skipImage?: boolean;
   barrierFree?: "Ja" | "Nein" | "Yes" | "No";
   language?: string | RegExp;
@@ -265,11 +263,7 @@ export async function createEventViaUI(
 ): Promise<CreatedEvent> {
   const suffix = uniqueSuffix();
   const title = overrides.title ?? `E2E Event ${suffix}`;
-  const imagePath = overrides.skipImage
-    ? undefined
-    : overrides.imageUrl
-      ? undefined
-      : (overrides.imagePath ?? SAMPLE_EVENT_IMAGE);
+  const imagePath = overrides.skipImage ? undefined : (overrides.imagePath ?? SAMPLE_EVENT_IMAGE);
 
   await page.goto(`/${locale}/admin/events/new`);
   await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
@@ -284,7 +278,7 @@ export async function createEventViaUI(
     overrides.description ?? `E2E description ${suffix}`,
   );
   await fillTextbox(page, adminLabels.address, overrides.address ?? `E2E Venue ${suffix}, Berlin`);
-  await fillTextbox(page, adminLabels.neighborhood, overrides.neighborhood ?? "Mitte");
+  await selectOptionByLabel(page, adminLabels.neighborhood, overrides.neighborhood ?? "Mitte");
   await selectOptionByLabel(page, adminLabels.category, overrides.category ?? "Theater");
   await selectOptionByLabel(page, adminLabels.eventType, overrides.eventType ?? "Performance");
 
@@ -338,9 +332,7 @@ export async function createEventViaUI(
     await selectOptionByLabel(page, adminLabels.ageGroups, overrides.ageGroup);
   }
 
-  if (overrides.imageUrl) {
-    await fillTextbox(page, adminLabels.imageUrl, overrides.imageUrl);
-  } else if (imagePath) {
+  if (imagePath) {
     // BDD exception: file-input
     await page.locator('input[name="image"]').setInputFiles(imagePath);
   }

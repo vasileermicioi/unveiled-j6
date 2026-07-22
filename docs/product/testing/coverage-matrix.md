@@ -19,7 +19,6 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 |---|---|---|---|---|
 | `admin-events.feature` | Create a single event | `e2e/specs/admin-events.spec.ts` · `Scenario: Create a single event` | `pass` |  |
 | `admin-events.feature` | Supply the event image as a direct upload | `e2e/specs/admin-events.spec.ts` · `Scenario: Supply the event image as a direct upload` | `pass` |  |
-| `admin-events.feature` | Supply the event image as a remote URL | `e2e/specs/admin-events.spec.ts` · `Scenario: Supply the event image as a remote URL` | `pass` |  |
 | `admin-events.feature` | Event image is required | `e2e/specs/admin-events.spec.ts` · `Scenario: Event image is required` | `pass` |  |
 | `admin-events.feature` | Redemption configuration validation on create | `e2e/specs/admin-events.spec.ts` (create flows) | `pass` | Covered alongside event create |
 | `admin-events.feature` | Shared generated code is created automatically | `e2e/specs/admin-events.spec.ts` · `Scenario: Shared generated code is created automatically` | `pass` |  |

@@ -14,7 +14,7 @@ Target custom domain: `https://staging.unveiled.berlin` (configure in Cloudflare
 
 **Cloudflare Workers** — HonoX SSR via `@hono/vite-build/cloudflare-workers` and `wrangler.toml`.
 
-**Admin image uploads** (file picker and remote URL) generate the six JPEG variants **in the browser with Pica** (`@unveiled/images/client`) before the SSR form POST; the server validates and stores prebuilt variants (`persistPrebuiltImage`). Remote URLs go through `POST /:locale/admin/image-proxy` (ADMIN session) then the same client generator. **JavaScript is required** for admin event/partner image supply. There is **no** `@standardagents/sip` / Worker-side resize.
+**Admin image uploads** (file picker) generate the six JPEG variants **in the browser with Pica** (`@unveiled/images/client`) before the SSR form POST; the server validates and stores prebuilt variants (`persistPrebuiltImage`). Event admin UI is file-upload only. **JavaScript is required** for admin event/partner image supply. There is **no** `@standardagents/sip` / Worker-side resize.
 
 Demo seed reads pre-baked `public/images/seed/**/*.jpg.variants/` packs (refresh with `bun scripts/fetch-abundo-seed.ts` then `bun scripts/bake-seed-image-variants.ts`).
 

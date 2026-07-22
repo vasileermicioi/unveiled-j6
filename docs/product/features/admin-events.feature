@@ -2,7 +2,7 @@
 # Dedicated SSR pages: /admin/events/new, /admin/events/:id/edit, etc. (see sitemap).
 # Partner self-service event CRUD is post-MVP (features/post-mvp/). Admin retains
 # unrestricted cross-venue event management in MVP.
-# Event image = required upload or remote URL → six JPEG variants (extras/image-uploads.md).
+# Event image = required file upload → six JPEG variants (extras/image-uploads.md).
 
 Feature: Admin — Event Management
   As an admin
@@ -19,17 +19,12 @@ Feature: Admin — Event Management
     And its startTimeMinutes and weekday are computed from its dateTime
 
   Scenario: Supply the event image as a direct upload
-    When I create or edit an event and upload an image file instead of pasting a URL
+    When I create or edit an event and upload an image file
     Then the file is processed into the standard set of size variants and stored in object storage
-    And the event's image is set to the resulting image, exactly as if a URL had been provided (see extras/image-uploads.md)
-
-  Scenario: Supply the event image as a remote URL
-    When I create or edit an event and paste an image URL instead of uploading a file
-    Then the server fetches that URL and processes it into the same set of size variants as a direct upload
-    And the event's image is set to the resulting image — the original URL is not stored or linked to directly
+    And the event's image is set to the resulting image (see extras/image-uploads.md)
 
   Scenario: Event image is required
-    When I attempt to create or edit an event without providing an image (neither upload nor URL)
+    When I attempt to create or edit an event without uploading an image
     Then the creation/edit is rejected until an image is provided
 
   Scenario Outline: Redemption configuration validation on create

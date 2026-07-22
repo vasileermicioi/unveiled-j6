@@ -1,9 +1,16 @@
-import { AGE_GROUPS, EVENT_TYPES, INTERESTS, PREFERRED_LANGUAGES } from "@unveiled/auth/constants";
+import {
+  AGE_GROUPS,
+  DISTRICTS,
+  EVENT_TYPES,
+  INTERESTS,
+  PREFERRED_LANGUAGES,
+} from "@unveiled/auth/constants";
 import type { CatalogErrorCode } from "@unveiled/db/catalog/errors";
 
 import type { Locale } from "./locale";
 import {
   getAgeGroupLabel,
+  getDistrictLabel,
   getInterestLabel,
   getPreferredLanguageLabel,
 } from "./onboarding-content";
@@ -262,11 +269,6 @@ export type AdminCopy = {
   mapLocationLabel: string;
   imageSectionLabel: string;
   imageFileLabel: string;
-  imageUrlLabel: string;
-  imageUrlPlaceholder: string;
-  imageUrlHint: string;
-  imageUrlProcessButton: string;
-  imageUrlFetchError: string;
   imageUploadHint: string;
   imageUploadHintEdit: string;
   imageProcessingInProgress: string;
@@ -532,9 +534,9 @@ const copy: Record<Locale, AdminCopy> = {
     addressLabel: "Adresse",
     logoFileLabel: "Logo hochladen",
     logoUploadHint:
-      "Optional: JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB. Datei-Upload erfordert JavaScript.",
+      "Optional: JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
     logoUploadHintEdit:
-      "Optional: neues Logo hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten. Datei-Upload erfordert JavaScript.",
+      "Optional: neues Logo hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten.",
     partnerLabel: "Partner",
     titleLabel: "Titel",
     descriptionLabel: "Beschreibung",
@@ -569,20 +571,13 @@ const copy: Record<Locale, AdminCopy> = {
     mapLocationLabel: "Standort auf der Karte",
     imageSectionLabel: "Event-Bild",
     imageFileLabel: "Event-Bild hochladen",
-    imageUrlLabel: "Bild-URL",
-    imageUrlPlaceholder: "https://…",
-    imageUrlHint:
-      "Statt Datei: öffentliche Bild-URL einfügen und „URL verarbeiten“ wählen. Nicht beides gleichzeitig. Erfordert JavaScript.",
-    imageUrlProcessButton: "URL verarbeiten",
-    imageUrlFetchError:
-      "Bild-URL konnte nicht geladen werden. Bitte eine erreichbare JPEG/PNG/WebP-URL prüfen.",
     imageUploadHint:
-      "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB. Datei oder URL. Bild-Upload erfordert JavaScript.",
+      "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
     imageUploadHintEdit:
-      "Optional: neues Bild per Datei oder URL ersetzen — leer lassen, um das aktuelle zu behalten. Erfordert JavaScript.",
+      "Optional: neues Bild per Datei ersetzen — leer lassen, um das aktuelle zu behalten.",
     imageProcessingInProgress: "Bild wird verarbeitet…",
     imageProcessingError:
-      "Bild konnte nicht verarbeitet werden. Bitte eine gültige Datei oder URL wählen (min. 800×420) und erneut versuchen.",
+      "Bild konnte nicht verarbeitet werden. Bitte eine gültige Datei wählen (min. 800×420) und erneut versuchen.",
     chooseImageButton: "Bild auswählen",
     imageSelectedLabel: (fileName) => `Ausgewählt: ${fileName}`,
     imageStorageError: "Bildspeicher ist nicht konfiguriert. Bitte Admin kontaktieren.",
@@ -607,7 +602,7 @@ const copy: Record<Locale, AdminCopy> = {
       address: "Adresse ist erforderlich.",
       logo: "Logo-Upload und URL können nicht gleichzeitig gesetzt werden.",
       image:
-        "Event-Bild ist erforderlich. Bitte Datei oder URL mit JavaScript verarbeiten (Varianten).",
+        "Event-Bild ist erforderlich. Bitte ein Bild hochladen.",
       partnerId: "Partner ist erforderlich.",
       title: "Titel ist erforderlich.",
       description: "Beschreibung ist erforderlich.",
@@ -843,9 +838,9 @@ const copy: Record<Locale, AdminCopy> = {
     addressLabel: "Address",
     logoFileLabel: "Upload logo",
     logoUploadHint:
-      "Optional: JPEG, PNG, or WebP — min 800×420 px, max 8 MB. File upload requires JavaScript.",
+      "Optional: JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
     logoUploadHintEdit:
-      "Optional: upload a new logo to replace the current one — leave empty to keep it. File upload requires JavaScript.",
+      "Optional: upload a new logo to replace the current one — leave empty to keep it.",
     partnerLabel: "Partner",
     titleLabel: "Title",
     descriptionLabel: "Description",
@@ -880,20 +875,13 @@ const copy: Record<Locale, AdminCopy> = {
     mapLocationLabel: "Map location",
     imageSectionLabel: "Event image",
     imageFileLabel: "Upload event image",
-    imageUrlLabel: "Image URL",
-    imageUrlPlaceholder: "https://…",
-    imageUrlHint:
-      "Instead of a file: paste a public image URL and choose “Process URL”. Do not provide both. Requires JavaScript.",
-    imageUrlProcessButton: "Process URL",
-    imageUrlFetchError:
-      "Could not fetch the image URL. Check that it is a reachable JPEG, PNG, or WebP URL.",
     imageUploadHint:
-      "JPEG, PNG, or WebP — min 800×420 px, max 8 MB. File or URL. Image upload requires JavaScript.",
+      "JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
     imageUploadHintEdit:
-      "Optional: replace the current image via file or URL — leave empty to keep it. Requires JavaScript.",
+      "Optional: replace the current image via file — leave empty to keep it.",
     imageProcessingInProgress: "Processing image…",
     imageProcessingError:
-      "Could not process the image. Choose a valid file or URL (min 800×420) and try again.",
+      "Could not process the image. Choose a valid file (min 800×420) and try again.",
     chooseImageButton: "Choose image",
     imageSelectedLabel: (fileName) => `Selected: ${fileName}`,
     imageStorageError: "Image storage is not configured. Contact support.",
@@ -916,7 +904,7 @@ const copy: Record<Locale, AdminCopy> = {
       contactEmail: "A valid email address is required.",
       address: "Address is required.",
       logo: "Logo upload and URL cannot both be provided.",
-      image: "Event image is required. Process a file or URL with JavaScript (variants).",
+      image: "Event image is required. Please upload an image.",
       partnerId: "Partner is required.",
       title: "Title is required.",
       description: "Description is required.",
@@ -973,8 +961,8 @@ export function mapCatalogErrorCode(
 
   if (code === "CLIENT_IMAGE_REQUIRED") {
     return locale === "de"
-      ? "Bild-Varianten müssen im Browser erzeugt werden (Datei oder „URL verarbeiten“)."
-      : "Image variants must be generated in the browser (file or “Process URL”).";
+      ? "Bild-Varianten müssen im Browser aus der hochgeladenen Datei erzeugt werden."
+      : "Image variants must be generated in the browser from the uploaded file.";
   }
 
   if (code === "MISSING_EVENT_IMAGE") {
@@ -1041,6 +1029,22 @@ export function getEventCategoryOptions(locale: Locale): AdminSelectOption[] {
     id,
     label: getInterestLabel(locale, id),
   }));
+}
+
+/** Same district allowlist as member onboarding / profile preferences. */
+export function getEventNeighborhoodOptions(
+  locale: Locale,
+  currentValue?: string | null,
+): AdminSelectOption[] {
+  const options: AdminSelectOption[] = DISTRICTS.map((id) => ({
+    id,
+    label: getDistrictLabel(locale, id),
+  }));
+  const trimmed = currentValue?.trim();
+  if (trimmed && !DISTRICTS.includes(trimmed as (typeof DISTRICTS)[number])) {
+    options.push({ id: trimmed, label: trimmed });
+  }
+  return options;
 }
 
 const eventTypeLabels: Record<Locale, Record<(typeof EVENT_TYPES)[number], string>> = {

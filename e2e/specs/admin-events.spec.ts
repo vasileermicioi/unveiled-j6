@@ -24,10 +24,6 @@ import { loginAsAdmin } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
 import { hasAdminCredentials } from "../fixtures/waitlist";
 
-/** Stable Wikimedia Commons URL used by seed data (fetchable for processImageFromUrl). */
-const SAMPLE_REMOTE_IMAGE_URL =
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Berlin%2C_Mitte%2C_Rosa-Luxemburg-Platz%2C_Volksbuehne_02.jpg/1280px-Berlin%2C_Mitte%2C_Rosa-Luxemburg-Platz%2C_Volksbuehne_02.jpg";
-
 async function fillEventBaseFields(page: Page, partnerName: string, title: string): Promise<void> {
   await expect(page.getByRole("heading", { name: /serie|series|event/i })).toBeVisible({
     timeout: 15_000,
@@ -38,7 +34,7 @@ async function fillEventBaseFields(page: Page, partnerName: string, title: strin
   await fillTextbox(page, adminLabels.title, title);
   await fillTextbox(page, adminLabels.description, `Series desc ${suffix}`);
   await fillTextbox(page, adminLabels.address, `Series venue ${suffix}, Berlin`);
-  await fillTextbox(page, adminLabels.neighborhood, "Mitte");
+  await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
   await selectOptionByLabel(page, adminLabels.category, "Theater");
   await selectOptionByLabel(page, adminLabels.eventType, "Performance");
   await fillTextbox(page, adminLabels.secretCode, `SER${suffix.slice(0, 6).toUpperCase()}`);
@@ -88,19 +84,6 @@ test.describe("admin-events.feature", () => {
     await expect(hero).toHaveAttribute("src", /(?:hero-1920|large-1280|medium-640)\.jpg(?:\?|$)/);
   });
 
-  test("Scenario: Supply the event image as a remote URL", async ({ page, locale }) => {
-    test.skip(!r2Configured(), "R2 vars not configured");
-    const partner = await createPartnerViaUI(page, locale);
-    const event = await createEventViaUI(page, locale, {
-      partnerName: partner.name,
-      imageUrl: SAMPLE_REMOTE_IMAGE_URL,
-    });
-    await page.goto(event.detailPath);
-    const hero = page.getByRole("img", { name: event.title });
-    await expect(hero).toBeVisible({ timeout: 15_000 });
-    await expect(hero).toHaveAttribute("src", /(?:hero-1920|large-1280|medium-640)\.jpg(?:\?|$)/);
-  });
-
   test("Scenario: Event image is required", async ({ page, locale }) => {
     const partner = await createPartnerViaUI(page, locale);
     await page.goto(`/${locale}/admin/events/new`);
@@ -112,7 +95,7 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.title, `No Image ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing image");
     await fillTextbox(page, adminLabels.address, "Berlin");
-    await fillTextbox(page, adminLabels.neighborhood, "Mitte");
+    await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
@@ -135,7 +118,7 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.title, `No Secret ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing secret");
     await fillTextbox(page, adminLabels.address, "Berlin");
-    await fillTextbox(page, adminLabels.neighborhood, "Mitte");
+    await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
@@ -158,7 +141,7 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.title, `No Promo ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing promo");
     await fillTextbox(page, adminLabels.address, "Berlin");
-    await fillTextbox(page, adminLabels.neighborhood, "Mitte");
+    await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
@@ -183,7 +166,7 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.title, `No Website ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing website");
     await fillTextbox(page, adminLabels.address, "Berlin");
-    await fillTextbox(page, adminLabels.neighborhood, "Mitte");
+    await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));

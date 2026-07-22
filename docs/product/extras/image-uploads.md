@@ -4,7 +4,7 @@ Ported for `docs/product/`. Admin uploads only in MVP; partner self-service uplo
 
 **Decided (supersedes the earlier "no image upload in v1, URL-only" call in `extras/gaps-and-decisions.md`):** the rewrite gets a real image upload pipeline — S3-compatible object storage, with every image turned into a fixed set of JPEG size variants. This applies uniformly to **event images** (`events`, required) and **partner logos** (`partners`, optional) — one pipeline, one `images` table, no per-entity special-casing.
 
-**Processing location (current):** admin file picker and remote URL both generate the six variants **in the browser with Pica** (`@unveiled/images/client`). The server **validates and stores** prebuilt JPEG variants only — it does not resize. Remote URLs use an authenticated admin **bytes proxy** (server fetch → raw bytes to the island) so the browser is not blocked by CORS. **JavaScript is required** for admin image supply.
+**Processing location (current):** the admin **file picker** generates the six variants **in the browser with Pica** (`@unveiled/images/client`). The server **validates and stores** prebuilt JPEG variants only — it does not resize. Event admin UI is file-upload only (no paste-URL / “Process URL” field). **JavaScript is required** for admin image supply.
 
 This replaces two things from the old app at once, both covered in `ui/assets-inventory.md`:
 - The plain-URL-only text field (no processing, no control over dimensions/format/weight, hotlinks a third party's file indefinitely).
@@ -12,7 +12,7 @@ This replaces two things from the old app at once, both covered in `ui/assets-in
 
 ## 1. Storage layout and the six files
 
-Every image, regardless of source (admin file, remote URL via proxy, or demo seed packs), gets its own folder in the bucket, keyed by its `images.id` (UUID):
+Every image, regardless of source (admin file upload or demo seed packs), gets its own folder in the bucket, keyed by its `images.id` (UUID):
 
 ```
 {BUCKET}/images/{imageId}/original.jpg

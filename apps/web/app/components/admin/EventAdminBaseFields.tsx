@@ -9,6 +9,7 @@ import {
   getEventAgeGroupOptions,
   getEventCategoryOptions,
   getEventLanguageOptions,
+  getEventNeighborhoodOptions,
   getEventTypeOptions,
 } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
@@ -51,6 +52,7 @@ export function EventAdminBaseFields({
   const ageGroupOptions = getEventAgeGroupOptions(locale);
   const categoryOptions = getEventCategoryOptions(locale);
   const eventTypeOptions = getEventTypeOptions(locale);
+  const neighborhoodOptions = getEventNeighborhoodOptions(locale, defaults?.neighborhood);
   const [ticketType, setTicketType] = useState<TicketType>(defaultTicketType(defaults));
   const [secretCodeMode, setSecretCodeMode] = useState<SecretCodeMode>(
     defaultSecretCodeMode(defaults),
@@ -82,10 +84,14 @@ export function EventAdminBaseFields({
         <Input />
       </TextField>
 
-      <TextField defaultValue={defaults?.neighborhood} fullWidth isRequired name="neighborhood">
-        <Label>{copy.neighborhoodLabel}</Label>
-        <Input />
-      </TextField>
+      <AdminFormSelect
+        defaultSelectedKey={defaults?.neighborhood}
+        isRequired
+        label={copy.neighborhoodLabel}
+        name="neighborhood"
+        options={neighborhoodOptions}
+        placeholder={copy.selectPlaceholder}
+      />
 
       <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
         <AdminFormSelect

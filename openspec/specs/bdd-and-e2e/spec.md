@@ -22,9 +22,9 @@ The system SHALL assert MVP Playwright scenarios with proximity/layout selectors
 ### Requirement: MVP @skip-no-ui gate
 Phase 5.5 SHALL NOT leave MVP-required scenarios tagged `@skip-no-ui` without an explicit deferral recording scenario name, reason, and target phase. Post-MVP portal/check-in/QR skips MAY remain. Admin waitlist visibility/manual promote SHALL be covered by Playwright once `/admin/waitlist` ships (admin-ops), or recorded as a named env/harness deferral owned by `seo-launch-polish-03` — not left as “UI not built.” GDPR export/delete page mechanics SHALL be covered by Playwright once `gdpr-rights` ships, or recorded as a named Neon Auth / env / harness deferral owned by `seo-launch-polish-03` — not left as “not built.” Stripe Customer Portal deep hosted interactions MAY use an opt-in/seed pattern documented in `e2e/README.md` (analogous to `E2E_STRIPE_CHECKOUT`).
 
-#### Scenario: Remote URL event image
-- **WHEN** Phase 5.5 step 03 completes
-- **THEN** "Supply the event image as a remote URL" either has a passing Playwright test without `@skip-no-ui` or is listed as a named deferral
+#### Scenario: Event image direct upload
+- **WHEN** admin event image e2e coverage is evaluated
+- **THEN** "Supply the event image as a direct upload" has a passing Playwright test without `@skip-no-ui`, or is listed as a named env deferral (e.g. missing R2)
 
 #### Scenario: Post-MVP partner portal and QR skips remain
 - **WHEN** Phase 5.5 step 03 completes

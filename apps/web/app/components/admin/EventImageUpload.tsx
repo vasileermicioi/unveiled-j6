@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Description, Input, Label, Paragraph, Surface, TextField } from "@heroui/react";
+import { Description, Input, Label, Paragraph, Surface } from "@heroui/react";
 import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images/constants";
 import { useEffect, useId, useRef, useState } from "react";
 
@@ -11,7 +11,6 @@ import { AdminImageVariantFields } from "./AdminImageVariantFields";
 import {
   mapClientImageError,
   type ProcessedAdminUpload,
-  processAdminImageBlob,
   processAdminImageFiles,
 } from "./admin-image-variants";
 
@@ -34,10 +33,6 @@ function resolveNativeFileInput(host: HTMLElement | null): HTMLInputElement | nu
   return host.querySelector<HTMLInputElement>('input[type="file"]');
 }
 
-function imageProxyPath(locale: Locale): string {
-  return `/${locale}/admin/image-proxy`;
-}
-
 export function EventImageUpload({
   locale,
   isEdit = false,
@@ -47,12 +42,10 @@ export function EventImageUpload({
 }: EventImageUploadProps) {
   const copy = getAdminCopy(locale);
   const fileInputId = useId();
-  const urlInputId = useId();
   const [processed, setProcessed] = useState<ProcessedAdminUpload | null>(null);
   const [status, setStatus] = useState<"idle" | "processing" | "ready" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
-  const [imageUrlValue, setImageUrlValue] = useState("");
   const processingRef = useRef(false);
   const processedRef = useRef<ProcessedAdminUpload | null>(null);
   const statusRef = useRef(status);
@@ -81,10 +74,8 @@ export function EventImageUpload({
 
       const nativeInput = resolveNativeFileInput(document.getElementById(fileInputId));
       const hasFile = Boolean(nativeInput?.files && nativeInput.files.length > 0);
-      const urlInput = form.querySelector<HTMLInputElement>(`#${CSS.escape(urlInputId)}`);
-      const hasUrl = Boolean(urlInput?.value?.trim());
 
-      if (!hasFile && !hasUrl) {
+      if (!hasFile) {
         return;
       }
 
@@ -93,7 +84,7 @@ export function EventImageUpload({
         return;
       }
 
-      // File or URL supplied but variants not ready — block submit.
+      // File supplied but variants not ready — block submit.
       event.preventDefault();
       setErrorMessage(copy.imageProcessingError);
       setStatus("error");
@@ -101,7 +92,7 @@ export function EventImageUpload({
 
     document.addEventListener("submit", onSubmit, true);
     return () => document.removeEventListener("submit", onSubmit, true);
-  }, [copy.imageProcessingError, fileInputId, urlInputId]);
+  }, [copy.imageProcessingError, fileInputId]);
 
   async function handleFilesSelected(fileList: FileList | null) {
     const files = fileList ? Array.from(fileList) : [];
@@ -118,7 +109,6 @@ export function EventImageUpload({
     setErrorMessage(null);
     setProcessed(null);
     setSelectedLabel(copy.imageSelectedLabel(files[0]?.name ?? ""));
-    setImageUrlValue("");
 
     try {
       const results = await processAdminImageFiles(files, { multiple });
@@ -129,63 +119,6 @@ export function EventImageUpload({
       setProcessed(null);
       setStatus("error");
       setErrorMessage(mapClientImageError(error, copy.imageProcessingError));
-    } finally {
-      processingRef.current = false;
-    }
-  }
-
-  async function handleProcessUrl() {
-    const url = imageUrlValue.trim();
-    if (!url) {
-      return;
-    }
-
-    processingRef.current = true;
-    setStatus("processing");
-    setErrorMessage(null);
-    setProcessed(null);
-    setSelectedLabel(copy.imageSelectedLabel(url));
-
-    const native = resolveNativeFileInput(document.getElementById(fileInputId));
-    if (native) {
-      native.value = "";
-    }
-
-    try {
-      const response = await fetch(imageProxyPath(locale), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json,image/*" },
-        body: JSON.stringify({ url }),
-        credentials: "same-origin",
-      });
-
-      if (!response.ok) {
-        let message = copy.imageUrlFetchError;
-        try {
-          const payload = (await response.json()) as { error?: string };
-          if (payload.error?.trim()) {
-            message = payload.error;
-          }
-        } catch {
-          // keep localized fallback
-        }
-        throw new Error(message);
-      }
-
-      const contentType = response.headers.get("content-type") ?? "image/jpeg";
-      const bytes = await response.arrayBuffer();
-      const blob = new Blob([bytes], { type: contentType.split(";")[0]?.trim() || "image/jpeg" });
-      const result = await processAdminImageBlob(blob, {
-        source: "REMOTE_URL",
-        sourceUrl: url,
-        sourceFileName: "remote-image",
-      });
-      setProcessed(result);
-      setStatus("ready");
-    } catch (error) {
-      setProcessed(null);
-      setStatus("error");
-      setErrorMessage(mapClientImageError(error, copy.imageUrlFetchError));
     } finally {
       processingRef.current = false;
     }
@@ -227,40 +160,6 @@ export function EventImageUpload({
       </Surface>
 
       {processed ? <AdminImageVariantFields processed={processed} /> : null}
-
-      <TextField fullWidth name="image_url" value={imageUrlValue}>
-        <Label htmlFor={urlInputId}>{copy.imageUrlLabel}</Label>
-        <Input
-          id={urlInputId}
-          onChange={(event) => {
-            const native = event.currentTarget as unknown as HTMLInputElement;
-            const next = "value" in native ? String(native.value) : "";
-            setImageUrlValue(next);
-            const fileNative = resolveNativeFileInput(document.getElementById(fileInputId));
-            if (fileNative) {
-              fileNative.value = "";
-            }
-            setProcessed(null);
-            setStatus("idle");
-            setErrorMessage(null);
-            setSelectedLabel(null);
-          }}
-          placeholder={copy.imageUrlPlaceholder}
-          type="url"
-        />
-        <Description>{copy.imageUrlHint}</Description>
-      </TextField>
-
-      <Button
-        className="button button--secondary"
-        isDisabled={status === "processing" || imageUrlValue.trim().length === 0}
-        onPress={() => {
-          void handleProcessUrl();
-        }}
-        type="button"
-      >
-        {copy.imageUrlProcessButton}
-      </Button>
     </Surface>
   );
 }
