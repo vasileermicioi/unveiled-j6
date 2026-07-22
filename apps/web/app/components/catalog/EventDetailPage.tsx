@@ -7,10 +7,13 @@ import EventDetailCheckoutCard, {
   type CheckoutPrimaryAction,
   type CheckoutSecondaryAction,
 } from "../../islands/EventDetailCheckoutCard";
+import EventGallerySlider from "../../islands/EventGallerySlider";
 import EventMap, { type EventMapMarker } from "../../islands/EventMap";
 import { isEventBookable } from "../../lib/catalog-mappers";
+import { getEventDetailGalleryCopy } from "../../lib/event-detail-gallery-copy";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+import type { PublicEventGalleryImage } from "../../lib/public-event-gallery";
 
 const META_ICON_SIZE = 14;
 
@@ -23,6 +26,8 @@ type EventDetailPageProps = {
   defaultQty?: number;
   /** Inclusive qty max for checkout controls (eligible members: credits ∩ capacity). */
   maxQty?: number;
+  /** Ordered gallery images; omit or empty → no gallery section. */
+  galleryImages?: PublicEventGalleryImage[];
 };
 
 export type EventDetailViewer =
@@ -358,12 +363,14 @@ export function EventDetailPage({
   closeHref,
   defaultQty = 1,
   maxQty = 3,
+  galleryImages = [],
 }: EventDetailPageProps) {
   const bookable = isEventBookable(event);
   const isPast = event.dateTime <= new Date();
   const isSoldOut = event.remainingCapacity <= 0 && !isPast;
   const mapMarkers = eventDetailMarkers(event, locale);
   const resolvedCloseHref = closeHref ?? localizedPath(locale, "");
+  const galleryCopy = getEventDetailGalleryCopy(locale);
 
   let heroSrc = "";
   let heroSrcSet = "";
@@ -525,6 +532,17 @@ export function EventDetailPage({
           </Card>
         ) : null}
       </Surface>
+
+      {galleryImages.length > 0 ? (
+        <Card className="event-detail-gallery mt-12">
+          <Card.Header>
+            <Card.Title>{galleryCopy.sectionTitle}</Card.Title>
+          </Card.Header>
+          <Card.Content>
+            <EventGallerySlider copy={galleryCopy} images={galleryImages} />
+          </Card.Content>
+        </Card>
+      ) : null}
     </Surface>
   );
 }

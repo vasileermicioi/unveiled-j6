@@ -476,7 +476,7 @@ Public catalog surfaces (`@unveiled/ui` EventCard, locale-home Discover live gri
 
 ### Demo seed images (Wikimedia Commons)
 
-`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **prebuilt variant packs** next to local JPEGs in `public/images/seed/{partners,events}/` (`*.jpg.variants/`), then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`. Refresh fixture + images with `bun run seed:fetch-abundo` then `bun scripts/bake-seed-image-variants.ts`. Seed uploads the six JPEG variants to R2 via `persistPrebuiltImage` (no Worker resize). Existing catalogs seeded before Featured Discover need `seed:demo -- --reset` (or manual Featured tab adds) to populate Discover.
+`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **prebuilt variant packs** next to local JPEGs in `public/images/seed/{partners,events}/` (`*.jpg.variants/`), then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`, and attaches **≥2 gallery images** to the featured theater demo (`DEMO_DISCOVERY_TITLES.theaterFuture`) for public detail slider demos. Refresh fixture + images with `bun run seed:fetch-abundo` then `bun scripts/bake-seed-image-variants.ts`. Seed uploads the six JPEG variants to R2 via `persistPrebuiltImage` (no Worker resize). Existing catalogs seeded before Featured Discover / Featured Event Gallery need `seed:demo -- --reset` (or manual Featured tab + gallery uploads) to populate Discover and the demo gallery.
 
 ```bash
 # Fresh catalog on empty DB
@@ -600,12 +600,19 @@ After `bun run seed:demo` (use `-- --reset` only on a disposable DB):
 |---|---|
 | `DEMO_DISCOVERY_TITLES.tonight` (Abundo; prefixed `Tonight:`) | Today (Berlin evening) + coords — default feed |
 | `DEMO_DISCOVERY_TITLES.pastHidden` (prefixed `Past Premiere:`) | Past — must stay hidden from feed/map |
-| `DEMO_DISCOVERY_TITLES.theaterFuture` | Future Theater + coords (booking e2e) |
+| `DEMO_DISCOVERY_TITLES.theaterFuture` | Future Theater + coords (booking e2e); **also hosts ≥2 seeded gallery images** |
 | `DEMO_DISCOVERY_TITLES.ausstellung` | Future Ausstellung |
-| `DEMO_DISCOVERY_TITLES.konzert` | Future Konzert |
+| `DEMO_DISCOVERY_TITLES.konzert` | Future Konzert (no gallery — useful for empty-gallery checks) |
 | `Sold Out: Waitlist Demo Night` | Sold-out waitlist demo |
 
 Categories align with onboarding `INTERESTS` (`Theater`, `Ausstellung`, `Konzert`, …). All published demo events include `lat`/`lng` for map markers.
+
+### Featured Event Gallery demo script
+
+1. Fresh seed: `bun run seed:demo` (or `-- --reset` on a disposable DB).
+2. As guest, open public detail for the theater featured demo → end-of-page **Galerie / Gallery** with ≥2 thumbs → open slider → next/prev/close.
+3. As ADMIN → event edit → **Galerie / Gallery** → add multiple photos (Pica) → list shows capacity `N / 12` → remove one via discrete action or multi-select confirm.
+4. Confirm primary hero on cards/detail is unchanged; Discover featured curation is independent of gallery display.
 
 ### Phase 5 demo script
 

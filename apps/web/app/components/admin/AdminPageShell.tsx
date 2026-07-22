@@ -79,6 +79,9 @@ export type { AdminTab } from "./admin-tabs";
 export {
   adminBookingCancelPath,
   adminDashboardPath,
+  adminEventGalleryAddPath,
+  adminEventGalleryPath,
+  adminEventGalleryRemovePath,
   adminEventsPath,
   adminFeaturedAddPath,
   adminFeaturedPath,

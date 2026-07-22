@@ -4,6 +4,7 @@ import {
   createDb,
   eq,
   events,
+  listEventGalleryImages,
   listEvents,
   listPartners,
   removeFeaturedEvent,
@@ -85,6 +86,25 @@ function requireDatabaseUrl(): string {
     throw new Error("DATABASE_URL is required for featured catalog E2E fixtures");
   }
   return url;
+}
+
+/**
+ * Resolve a demo event that already has ≥2 gallery images (from `bun run seed:demo`).
+ * Prefer theaterFuture — featured + reliably upcoming. Does not attach images here
+ * (Playwright cannot load `@unveiled/db/seed` / `@unveiled/images` prebuilt helpers).
+ */
+export async function ensureDemoEventGallery(
+  title: string = DEMO_DISCOVERY_TITLES.theaterFuture,
+): Promise<string> {
+  const db = createDb(requireDatabaseUrl());
+  const eventId = await getEventIdByTitle(title);
+  const existing = await listEventGalleryImages(db, eventId);
+  if (existing.length < 2) {
+    throw new Error(
+      `Demo event "${title}" needs ≥2 gallery images (found ${existing.length}). Run: bun run seed:demo -- --reset`,
+    );
+  }
+  return eventId;
 }
 
 /** Restore bookable capacity when prior e2e runs depleted a seed event. */

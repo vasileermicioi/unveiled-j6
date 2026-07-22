@@ -99,11 +99,17 @@ Only one supply path may be active per submission; both empty is a validation er
 Images have **no legal retention requirement** (unlike bookings/ledger entries, which are kept anonymized forever for German accounting rules — `database/schema-overview.md`'s "Account deletion" section) — there's no reason to keep orphaned files around.
 
 - **Replacing an image** (editing an event/partner to a new upload/URL): delete the old `images` row and all six of its bucket objects in the same request that saves the new one.
-- **Deleting an event or partner**: delete its associated `images` row and bucket objects as part of the same deletion flow (`/admin/events/:id/delete`, `/partner/events/:id/delete`, `/admin/partners/:id/delete` — `sitemap/sitemap.md`).
+- **Deleting an event or partner**: delete its associated `images` row and bucket objects as part of the same deletion flow (`/admin/events/:id/delete`, `/partner/events/:id/delete`, `/admin/partners/:id/delete` — `sitemap/sitemap.md`). Event delete also removes `event_gallery_images` join rows (CASCADE) and cleans unreferenced gallery image rows/objects via the catalog path.
+- **Removing gallery photos**: `/admin/events/:id/gallery/remove` calls `removeEventGalleryImages`, which deletes join rows then unreferenced `images` + bucket objects (primary `events.image_id` is never removed by gallery remove).
 - Do this **synchronously in the request** for v1 (six small object deletes is fast) rather than queuing a background job — consistent with §4's "no background processing" posture. Revisit only if this measurably slows down the root delete/edit request path in practice.
+
+## 8a. Optional event gallery (multi-image)
+
+Events keep a **required singular primary image** (`events.image_id`) for cards, hero, and OG/JSON-LD. Optionally, admins may attach up to **12** additional gallery photos via `event_gallery_images` (composite PK `(event_id, image_id)`, ordered by `sort_order`). Each gallery photo uses the **same six JPEG variant pipeline** as the primary image (client Pica → server validate/store). Admin manage: `/admin/events/:id/gallery*` (see `sitemap/sitemap.md`, `features/admin-events.feature`). Public detail shows the gallery at page end when non-empty (`features/event-discovery.feature`, `ui/ui-component-map.md`). Gallery membership MUST NOT replace the primary hero. Schema: `database/schema-overview.md` → `event_gallery_images`.
 
 ## 9. What this doc deliberately does not cover
 
 - **Image moderation/content scanning** — not a requirement for a curated, admin/partner-only upload surface (no end-user-generated image content anywhere in this product).
 - **Cropping/editing UI** (letting the admin manually choose a crop region before the pipeline runs) — the automatic center-crop for `og-1200x630` is good enough for v1; a manual crop tool is a future nice-to-have, not a launch requirement.
-- **Multi-image galleries per event** — see follow-on `featured-event-gallery` planning; primary event image remains singular in MVP.
+- **Drag-and-drop gallery reorder** — `sort_order` is append-stable; reorder UI is post-MVP nice-to-have.
+- **Expanding OG/JSON-LD to every gallery image** — primary hero remains the SEO image unless a later SEO change mandates otherwise.

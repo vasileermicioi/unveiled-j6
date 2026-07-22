@@ -97,7 +97,12 @@ export function AppNavbar({
             variant="transparent"
           >
             {navLinks.map((link) => (
-              <NavLink href={link.href} isActive={link.isActive} key={link.href} label={link.label} />
+              <NavLink
+                href={link.href}
+                isActive={link.isActive}
+                key={link.href}
+                label={link.label}
+              />
             ))}
           </Surface>
         ) : null}

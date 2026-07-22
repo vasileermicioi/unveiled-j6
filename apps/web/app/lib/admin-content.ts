@@ -158,6 +158,26 @@ export type AdminCopy = {
   featuredRemoveTitle: string;
   featuredRemoveBody: (title: string, date: string) => string;
   featuredRemoveConfirm: string;
+  galleryTitle: string;
+  gallerySubtitle: (eventTitle: string) => string;
+  galleryCapacity: (count: number, max: number) => string;
+  galleryEmpty: string;
+  galleryAddAction: string;
+  galleryAddTitle: string;
+  galleryAddSubtitle: (remaining: number) => string;
+  galleryAddSubmit: string;
+  galleryAddRequired: string;
+  galleryManageAction: string;
+  galleryRemoveAction: string;
+  galleryRemoveBulkAction: string;
+  galleryRemoveTitle: string;
+  galleryRemoveBody: string;
+  galleryRemoveConfirm: string;
+  galleryRemoveSelectLabel: string;
+  galleryRemoveSelectHint: string;
+  galleryRemoveSelectionRequired: string;
+  galleryPhotoLabel: (index: number, sortOrder: number) => string;
+  gallerySelectedFilesLabel: (count: number) => string;
   waitlistTitle: string;
   waitlistSubtitle: string;
   waitlistEmpty: string;
@@ -454,6 +474,28 @@ const copy: Record<Locale, AdminCopy> = {
     featuredRemoveBody: (title, date) =>
       `„${title}" (${date}) aus der Featured-Liste entfernen? Das Event bleibt im Katalog unter Events erhalten.`,
     featuredRemoveConfirm: "Aus Featured entfernen",
+    galleryTitle: "Event-Galerie",
+    gallerySubtitle: (eventTitle) => `Galerie-Fotos für „${eventTitle}"`,
+    galleryCapacity: (count, max) => `${count} / ${max} Fotos`,
+    galleryEmpty: "Noch keine Galerie-Fotos. Lade mehrere Bilder auf einmal hoch.",
+    galleryAddAction: "Fotos hinzufügen",
+    galleryAddTitle: "Galerie-Fotos hinzufügen",
+    galleryAddSubtitle: (remaining) =>
+      `Mehrere Dateien auswählen (Pica im Browser). Noch ${remaining} Plätze frei (max. 12).`,
+    galleryAddSubmit: "Fotos speichern",
+    galleryAddRequired: "Mindestens ein Bild mit fertigen Varianten ist erforderlich.",
+    galleryManageAction: "Galerie",
+    galleryRemoveAction: "Entfernen",
+    galleryRemoveBulkAction: "Fotos entfernen",
+    galleryRemoveTitle: "Galerie-Fotos entfernen",
+    galleryRemoveBody:
+      "Ausgewählte Galerie-Fotos entfernen? Unreferenzierte Bilddateien werden gelöscht. Das Hero-Bild bleibt unverändert.",
+    galleryRemoveConfirm: "Fotos entfernen",
+    galleryRemoveSelectLabel: "Fotos auswählen",
+    galleryRemoveSelectHint: "Mehrfachauswahl mit Strg/Cmd-Klick.",
+    galleryRemoveSelectionRequired: "Wähle mindestens ein Foto zum Entfernen.",
+    galleryPhotoLabel: (index, sortOrder) => `Foto ${index} · Reihenfolge ${sortOrder}`,
+    gallerySelectedFilesLabel: (count) => `${count} Dateien vorbereitet`,
     waitlistTitle: "Warteliste",
     waitlistSubtitle: "Einträge filtern und manuell befördern.",
     waitlistEmpty: "Keine Wartelisteneinträge.",
@@ -533,8 +575,7 @@ const copy: Record<Locale, AdminCopy> = {
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
     logoFileLabel: "Logo hochladen",
-    logoUploadHint:
-      "Optional: JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
+    logoUploadHint: "Optional: JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
     logoUploadHintEdit:
       "Optional: neues Logo hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten.",
     partnerLabel: "Partner",
@@ -571,8 +612,7 @@ const copy: Record<Locale, AdminCopy> = {
     mapLocationLabel: "Standort auf der Karte",
     imageSectionLabel: "Event-Bild",
     imageFileLabel: "Event-Bild hochladen",
-    imageUploadHint:
-      "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
+    imageUploadHint: "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
     imageUploadHintEdit:
       "Optional: neues Bild per Datei ersetzen — leer lassen, um das aktuelle zu behalten.",
     imageProcessingInProgress: "Bild wird verarbeitet…",
@@ -601,8 +641,7 @@ const copy: Record<Locale, AdminCopy> = {
       contactEmail: "Gültige E-Mail-Adresse erforderlich.",
       address: "Adresse ist erforderlich.",
       logo: "Logo-Upload und URL können nicht gleichzeitig gesetzt werden.",
-      image:
-        "Event-Bild ist erforderlich. Bitte ein Bild hochladen.",
+      image: "Event-Bild ist erforderlich. Bitte ein Bild hochladen.",
       partnerId: "Partner ist erforderlich.",
       title: "Titel ist erforderlich.",
       description: "Beschreibung ist erforderlich.",
@@ -759,6 +798,28 @@ const copy: Record<Locale, AdminCopy> = {
     featuredRemoveBody: (title, date) =>
       `Remove “${title}” (${date}) from the featured list? The event stays in the catalog under Events.`,
     featuredRemoveConfirm: "Remove from featured",
+    galleryTitle: "Event gallery",
+    gallerySubtitle: (eventTitle) => `Gallery photos for “${eventTitle}”`,
+    galleryCapacity: (count, max) => `${count} / ${max} photos`,
+    galleryEmpty: "No gallery photos yet. Upload multiple images at once.",
+    galleryAddAction: "Add photos",
+    galleryAddTitle: "Add gallery photos",
+    galleryAddSubtitle: (remaining) =>
+      `Select multiple files (Pica in the browser). ${remaining} slot(s) remaining (max 12).`,
+    galleryAddSubmit: "Save photos",
+    galleryAddRequired: "At least one image with ready variants is required.",
+    galleryManageAction: "Gallery",
+    galleryRemoveAction: "Remove",
+    galleryRemoveBulkAction: "Remove photos",
+    galleryRemoveTitle: "Remove gallery photos",
+    galleryRemoveBody:
+      "Remove the selected gallery photos? Unreferenced image files will be deleted. The hero image is unchanged.",
+    galleryRemoveConfirm: "Remove photos",
+    galleryRemoveSelectLabel: "Select photos",
+    galleryRemoveSelectHint: "Multi-select with Ctrl/Cmd-click.",
+    galleryRemoveSelectionRequired: "Select at least one photo to remove.",
+    galleryPhotoLabel: (index, sortOrder) => `Photo ${index} · order ${sortOrder}`,
+    gallerySelectedFilesLabel: (count) => `${count} files ready`,
     waitlistTitle: "Waitlist",
     waitlistSubtitle: "Filter entries and promote manually.",
     waitlistEmpty: "No waitlist entries.",
@@ -837,8 +898,7 @@ const copy: Record<Locale, AdminCopy> = {
     emailLabel: "Contact email",
     addressLabel: "Address",
     logoFileLabel: "Upload logo",
-    logoUploadHint:
-      "Optional: JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
+    logoUploadHint: "Optional: JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
     logoUploadHintEdit:
       "Optional: upload a new logo to replace the current one — leave empty to keep it.",
     partnerLabel: "Partner",
@@ -875,10 +935,8 @@ const copy: Record<Locale, AdminCopy> = {
     mapLocationLabel: "Map location",
     imageSectionLabel: "Event image",
     imageFileLabel: "Upload event image",
-    imageUploadHint:
-      "JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
-    imageUploadHintEdit:
-      "Optional: replace the current image via file — leave empty to keep it.",
+    imageUploadHint: "JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
+    imageUploadHintEdit: "Optional: replace the current image via file — leave empty to keep it.",
     imageProcessingInProgress: "Processing image…",
     imageProcessingError:
       "Could not process the image. Choose a valid file (min 800×420) and try again.",
@@ -985,6 +1043,18 @@ export function mapCatalogErrorCode(
     return locale === "de"
       ? "Dieses Event ist bereits in der Featured-Liste."
       : "This event is already featured.";
+  }
+
+  if (code === "GALLERY_LIMIT_EXCEEDED") {
+    return locale === "de"
+      ? "Die Event-Galerie darf höchstens 12 Fotos haben."
+      : "The event gallery cannot exceed 12 photos.";
+  }
+
+  if (code === "GALLERY_DUPLICATE_IMAGE") {
+    return locale === "de"
+      ? "Ein Galerie-Bild ist doppelt oder bereits vorhanden."
+      : "A gallery image is duplicated or already on the event.";
   }
 
   if (code === "PARTNER_HAS_EVENTS") {

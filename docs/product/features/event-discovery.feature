@@ -62,6 +62,23 @@ Feature: Event Discovery
     And booking, waitlist, and save mutations remain on authenticated routes
     And the detail page does not create bookings or ledger entries
 
+  Scenario: Guest views gallery on event detail
+    Given I am not signed in
+    And an event has two or more gallery images
+    When I open that event's public detail URL ("/events/:id")
+    Then I see a gallery section after the main detail content (heading "Galerie" / "Gallery")
+    And I can open a photo slider and navigate with previous and next controls
+
+  Scenario: No gallery images
+    Given an event has zero gallery images
+    When I open that event's public detail URL ("/events/:id")
+    Then the public detail page omits the gallery section
+
+  Scenario: Featured demo event includes gallery
+    Given demo seed has run
+    When I open the public detail URL for an upcoming featured demo event that was seeded with a gallery
+    Then I see multiple gallery images on the detail page
+
   Scenario: Booking-eligible member sees tickets, credits and date on event detail
     Given I am signed in as a booking-eligible member
     When I open the same valid upcoming event detail URL ("/events/:id")

@@ -4,7 +4,7 @@ Complete production-MVP schema (including booking/credits/waitlist tables even i
 
 ## Entity overview
 
-Tables: `users`, `subscriptions` (1:1), `saved_events`, `featured_events`, `partners`, `images`, `events`, `bookings`, `waitlist_entries`, `credit_ledger`.
+Tables: `users`, `subscriptions` (1:1), `saved_events`, `featured_events`, `partners`, `images`, `events`, `event_gallery_images`, `bookings`, `waitlist_entries`, `credit_ledger`.
 
 ---
 
@@ -149,6 +149,21 @@ Removing a featured row MUST NOT delete the underlying `events` row. Full Discov
 
 ---
 
+### `event_gallery_images`
+
+Optional ordered photo gallery per event (separate from required primary `events.image_id`).
+
+| Field | Type | Notes |
+|---|---|---|
+| `event_id` | FK → `events.id` | Composite PK with `image_id`; **ON DELETE CASCADE** |
+| `image_id` | FK → `images.id` | **ON DELETE RESTRICT** — app deletes unreferenced `images` rows/objects after join removal (same sequencing as hero cleanup; see `extras/image-uploads.md` §8) |
+| `sort_order` | integer | Append on add; list ordered by `sort_order` then `image_id` |
+| `created_at` | timestamptz | |
+
+**Max 12** gallery images per event (enforced in `@unveiled/db` catalog). Gallery membership MUST NOT replace the primary hero. Index `(event_id, sort_order)` for list queries. Admin UI / public slider are separate feature steps.
+
+---
+
 ### `bookings`
 
 | Field | Type | Notes |
@@ -215,6 +230,8 @@ erDiagram
   users }o--o{ events : "savedEventIds (recommend join table)"
   images ||--o| partners : "logoImageId"
   images ||--|| events : "imageId"
+  events ||--o{ event_gallery_images : "eventId"
+  images ||--o{ event_gallery_images : "imageId"
   users ||--o{ images : "uploadedBy"
 ```
 
@@ -241,6 +258,7 @@ erDiagram
 - `bookings (user_id, idempotency_key)` unique — replaces the old deterministic-ID trick
 - Foreign keys with `ON DELETE RESTRICT` (or `CASCADE` only where deletion should genuinely cascade, e.g. deleting a partner probably should NOT cascade-delete its historical bookings)
 - `events.image_id` / `partners.logo_image_id` → `images.id`: `ON DELETE RESTRICT` (deleting an event/partner is what triggers deleting its image, not the other way around — see `extras/image-uploads.md` §8 for the app-level cleanup sequencing)
+- `event_gallery_images.event_id` → `events.id`: `ON DELETE CASCADE`; `event_gallery_images.image_id` → `images.id`: `ON DELETE RESTRICT` (event delete / gallery remove deletes unreferenced gallery images at the app layer after join rows are gone)
 
 ## Business-critical transaction: booking
 

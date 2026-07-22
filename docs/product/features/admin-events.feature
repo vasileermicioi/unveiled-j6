@@ -83,11 +83,43 @@ Feature: Admin — Event Management
     When I trigger the demo data seed
     Then a small set of sample partners and events is created
     And a small subset of upcoming demo events is featured for Discover
+    And at least one upcoming featured event has multiple gallery images
 
   Scenario: Seed demo data is a no-op when data exists
     Given at least one partner or event already exists
     When I trigger the demo data seed
     Then no new demo data is created
+
+  Scenario: Admin multi-upload gallery photos
+    Given an existing event in the catalog
+    When I open the event gallery add page ("/:locale/admin/events/:id/gallery/add")
+    And I submit multiple valid image files
+    Then each file is processed into six JPEG variants client-side and stored as gallery images
+    And I am redirected to the event gallery list showing the new photos
+    And the primary hero image is unchanged
+
+  Scenario: Admin removes selected gallery photos
+    Given an event has two or more gallery photos
+    When I confirm removal of one or more gallery images on "/:locale/admin/events/:id/gallery/remove"
+    Then those images disappear from the event gallery list
+    And unreferenced image objects are cleaned up from storage
+
+  Scenario: Admin removes a single gallery photo via discrete action
+    Given an event has at least one gallery photo
+    When I open remove confirm for one gallery image from the gallery list
+    And I confirm with form POST
+    Then that image is removed from the event gallery list
+
+  Scenario: Gallery manage is available for existing events
+    When I open the edit page for an existing event
+    Then I see a path to manage that event's gallery photos ("Galerie" / "Gallery")
+    And gallery manage is not required on the create-event form
+
+  Scenario: Gallery capacity is enforced
+    Given an event already has 12 gallery photos
+    When I attempt to add more gallery photos
+    Then the add is rejected with an admin-visible error
+    And the primary hero image is unchanged
 
   Scenario: List featured events
     When I open the Featured tab ("/:locale/admin/featured")

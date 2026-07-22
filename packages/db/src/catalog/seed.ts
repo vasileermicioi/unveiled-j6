@@ -2,15 +2,17 @@ import { eq, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { bookings } from "../schema/bookings";
+import { eventGalleryImages } from "../schema/event-gallery-images";
 import { events } from "../schema/events";
 import { partners } from "../schema/partners";
 import { waitlistEntries } from "../schema/waitlist-entries";
 import { DEMO_DISCOVERY_TITLES } from "./demo-discovery-titles";
+import { addEventGalleryImages } from "./event-gallery-images";
 import { countEvents, createEvent, listEvents } from "./events";
 import { addFeaturedEvent } from "./featured-events";
-import { deleteImageRecord } from "./images";
+import { deleteImageRecord, persistPrebuiltImage } from "./images";
 import { countPartners, createPartner, listPartners } from "./partners";
-import { getDemoCatalog } from "./seed-data";
+import { getDemoCatalog, readDemoSeedPrebuilt } from "./seed-data";
 
 /** Upcoming demo titles featured on Discover after seed (leave others non-featured for e2e contrast). */
 const DEMO_FEATURED_TITLES: readonly string[] = [
@@ -18,6 +20,15 @@ const DEMO_FEATURED_TITLES: readonly string[] = [
   DEMO_DISCOVERY_TITLES.theaterFuture,
   DEMO_DISCOVERY_TITLES.ausstellung,
 ];
+
+/**
+ * Featured upcoming host for demo gallery (≥2 images). Prefer theaterFuture —
+ * tonight (daysFromToday: 0) may already be past in Europe/Berlin evening runs.
+ */
+const DEMO_GALLERY_HOST_TITLE = DEMO_DISCOVERY_TITLES.theaterFuture;
+
+/** Distinct seed fixture paths (not the host event hero) for gallery demos. */
+const DEMO_GALLERY_IMAGE_PATHS: readonly string[] = ["events/yami-safdie.jpg", "events/ende.jpg"];
 
 export type DemoSeedResult = "seeded" | "skipped";
 
@@ -41,6 +52,9 @@ export async function resetCatalogData(
 
   const eventsList = await listEvents(db, { limit: 10_000 });
   const partnersList = await listPartners(db, { limit: 10_000 });
+  const galleryRows = await db
+    .select({ imageId: eventGalleryImages.imageId })
+    .from(eventGalleryImages);
 
   const imageIds = new Set<string>();
   for (const event of eventsList) {
@@ -50,6 +64,9 @@ export async function resetCatalogData(
     if (partner.logoImageId) {
       imageIds.add(partner.logoImageId);
     }
+  }
+  for (const row of galleryRows) {
+    imageIds.add(row.imageId);
   }
 
   // Delete rows without per-row image cleanup (shared images would fail mid-loop).
@@ -75,6 +92,23 @@ const SEED_IMAGE_PAUSE_MS = 750;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function seedDemoEventGallery(
+  db: Db,
+  eventId: string,
+  options: { skipBucket?: boolean } = {},
+): Promise<void> {
+  const imageIds: string[] = [];
+  for (const relativePath of DEMO_GALLERY_IMAGE_PATHS) {
+    const prebuilt = readDemoSeedPrebuilt(relativePath, `gallery ${relativePath}`);
+    const imageId = await persistPrebuiltImage(db, prebuilt, {
+      skipUpload: options.skipBucket,
+    });
+    imageIds.push(imageId);
+    await sleep(SEED_IMAGE_PAUSE_MS);
+  }
+  await addEventGalleryImages(db, eventId, imageIds);
 }
 
 export async function runDemoSeed(
@@ -111,6 +145,11 @@ export async function runDemoSeed(
     if (eventId) {
       await addFeaturedEvent(db, eventId);
     }
+  }
+
+  const galleryHostId = createdByTitle.get(DEMO_GALLERY_HOST_TITLE);
+  if (galleryHostId) {
+    await seedDemoEventGallery(db, galleryHostId, { skipBucket: options.skipBucket });
   }
 
   return "seeded";

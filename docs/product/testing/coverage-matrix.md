@@ -32,6 +32,11 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-events.feature` | Export redemption codes for an event | `e2e/specs/admin-events.spec.ts` · `Scenario: Export redemption codes for an event` | `pass` |  |
 | `admin-events.feature` | Seed demo data (empty environment only) | `e2e/specs/admin-events.spec.ts` · `Scenario: Seed demo data (empty environment only)` | `skip` | hard-skipped in e2e |
 | `admin-events.feature` | Seed demo data is a no-op when data exists | `e2e/specs/admin-events.spec.ts` · `Scenario: Seed demo data is a no-op when data exists` | `pass` |  |
+| `admin-events.feature` | Admin multi-upload gallery photos | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin multi-upload gallery photos` | `pass` | R2 env-skip when vars missing |
+| `admin-events.feature` | Admin removes selected gallery photos | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin removes selected gallery photos` | `pass` | R2 env-skip when vars missing |
+| `admin-events.feature` | Admin removes a single gallery photo via discrete action | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin removes a single gallery photo via discrete action` | `pass` | R2 env-skip when vars missing |
+| `admin-events.feature` | Gallery manage is available for existing events | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery manage is available for existing events` | `pass` | R2 env-skip when vars missing |
+| `admin-events.feature` | Gallery capacity is enforced | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery capacity is enforced` | `skip` | Named skip — 12× Pica upload brittle; covered by `@unveiled/db` gallery tests |
 | `admin-partners.feature` | Create a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Create a partner` | `pass` |  |
 | `admin-partners.feature` | Supply the partner logo as a direct upload or a remote URL | `e2e/specs/admin-partners.spec.ts` · `Scenario: Supply the partner logo as a direct upload or a remote URL` | `pass` | R2 env-skip when vars missing |
 | `admin-partners.feature` | Partner creation validation | `e2e/specs/admin-partners.spec.ts` (validation paths in create flows) | `pass` | Covered alongside create partner |
@@ -94,6 +99,9 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `credits-subscription.feature` | Admin creates a complimentary ticket | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin creates a complimentary ticket` | `pass` | Shared booking path, no credit charge |
 | `event-discovery.feature` | Public discovery preview for guests | `e2e/specs/event-discovery.spec.ts` · `Scenario: Public discovery preview for guests` | `pass` |  |
 | `event-discovery.feature` | Guest can view public event detail without authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest can view public event detail without authentication` | `pass` |  |
+| `event-discovery.feature` | Guest views gallery on event detail | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest views gallery on event detail` | `pass` | Needs `DATABASE_URL` + R2; `ensureDemoEventGallery` |
+| `event-discovery.feature` | No gallery images | `e2e/specs/event-discovery.spec.ts` · `Scenario: No gallery images` | `pass` | Uses seeded konzert (no gallery) |
+| `event-discovery.feature` | Featured demo event includes gallery | `e2e/specs/event-discovery.spec.ts` · `Scenario: Featured demo event includes gallery` | `pass` | Needs `DATABASE_URL` + R2 |
 | `event-discovery.feature` | Guest path to full browse requires signup or login | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest path to full browse requires signup or login` | `pass` |  |
 | `event-discovery.feature` | Default feed shows all upcoming events soonest first | `e2e/specs/event-discovery.spec.ts` · `Scenario: Default feed shows all upcoming events soonest first` | `pass` |  |
 | `event-discovery.feature` | Events with invalid or past dates are hidden | `e2e/specs/event-discovery.spec.ts` · `Scenario: Events with invalid or past dates are hidden` | `pass` |  |

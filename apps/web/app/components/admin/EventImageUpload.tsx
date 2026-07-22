@@ -7,7 +7,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
-import { AdminImageVariantFields } from "./AdminImageVariantFields";
+import { AdminGalleryImageVariantFields, AdminImageVariantFields } from "./AdminImageVariantFields";
 import {
   mapClientImageError,
   type ProcessedAdminUpload,
@@ -18,9 +18,11 @@ export type EventImageUploadProps = {
   locale: Locale;
   isEdit?: boolean;
   currentImageUrl?: string | null;
-  /** Reserved for featured-event-gallery; primary event image stays single-file. */
+  /** When true, process/emit all selected files as indexed gallery prebuilt sets. */
   multiple?: boolean;
   inputName?: string;
+  sectionLabel?: string;
+  uploadHint?: string;
 };
 
 function resolveNativeFileInput(host: HTMLElement | null): HTMLInputElement | null {
@@ -39,20 +41,22 @@ export function EventImageUpload({
   currentImageUrl = null,
   multiple = false,
   inputName = "image",
+  sectionLabel,
+  uploadHint,
 }: EventImageUploadProps) {
   const copy = getAdminCopy(locale);
   const fileInputId = useId();
-  const [processed, setProcessed] = useState<ProcessedAdminUpload | null>(null);
+  const [processedList, setProcessedList] = useState<ProcessedAdminUpload[]>([]);
   const [status, setStatus] = useState<"idle" | "processing" | "ready" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
   const processingRef = useRef(false);
-  const processedRef = useRef<ProcessedAdminUpload | null>(null);
+  const processedListRef = useRef<ProcessedAdminUpload[]>([]);
   const statusRef = useRef(status);
 
   useEffect(() => {
-    processedRef.current = processed;
-  }, [processed]);
+    processedListRef.current = processedList;
+  }, [processedList]);
 
   useEffect(() => {
     statusRef.current = status;
@@ -68,7 +72,7 @@ export function EventImageUpload({
         return;
       }
 
-      if (processedRef.current) {
+      if (processedListRef.current.length > 0) {
         return;
       }
 
@@ -97,7 +101,7 @@ export function EventImageUpload({
   async function handleFilesSelected(fileList: FileList | null) {
     const files = fileList ? Array.from(fileList) : [];
     if (files.length === 0) {
-      setProcessed(null);
+      setProcessedList([]);
       setStatus("idle");
       setErrorMessage(null);
       setSelectedLabel(null);
@@ -107,16 +111,22 @@ export function EventImageUpload({
     processingRef.current = true;
     setStatus("processing");
     setErrorMessage(null);
-    setProcessed(null);
-    setSelectedLabel(copy.imageSelectedLabel(files[0]?.name ?? ""));
+    setProcessedList([]);
+    setSelectedLabel(
+      multiple
+        ? copy.gallerySelectedFilesLabel(files.length)
+        : copy.imageSelectedLabel(files[0]?.name ?? ""),
+    );
 
     try {
       const results = await processAdminImageFiles(files, { multiple });
-      const first = results[0] ?? null;
-      setProcessed(first);
-      setStatus(first ? "ready" : "idle");
+      setProcessedList(results);
+      setStatus(results.length > 0 ? "ready" : "idle");
+      if (multiple && results.length > 0) {
+        setSelectedLabel(copy.gallerySelectedFilesLabel(results.length));
+      }
     } catch (error) {
-      setProcessed(null);
+      setProcessedList([]);
       setStatus("error");
       setErrorMessage(mapClientImageError(error, copy.imageProcessingError));
     } finally {
@@ -124,10 +134,14 @@ export function EventImageUpload({
     }
   }
 
+  const resolvedSectionLabel = sectionLabel ?? copy.imageSectionLabel;
+  const resolvedHint = uploadHint ?? (isEdit ? copy.imageUploadHintEdit : copy.imageUploadHint);
+  const singleProcessed = !multiple ? (processedList[0] ?? null) : null;
+
   return (
     <Surface className="flex flex-col gap-4" variant="transparent">
-      <Paragraph className="onboarding-form__section-label">{copy.imageSectionLabel}</Paragraph>
-      <Description>{isEdit ? copy.imageUploadHintEdit : copy.imageUploadHint}</Description>
+      <Paragraph className="onboarding-form__section-label">{resolvedSectionLabel}</Paragraph>
+      <Description>{resolvedHint}</Description>
 
       {isEdit && currentImageUrl ? (
         <Surface className="admin-form__image-preview" variant="transparent">
@@ -141,7 +155,7 @@ export function EventImageUpload({
           accept={ACCEPTED_IMAGE_FILE_ACCEPT}
           id={fileInputId}
           multiple={multiple}
-          name={processed ? undefined : inputName}
+          name={processedList.length > 0 ? undefined : inputName}
           onChange={(event) => {
             const native = event.currentTarget as unknown as HTMLInputElement;
             const files =
@@ -159,7 +173,12 @@ export function EventImageUpload({
         {errorMessage ? <Description>{errorMessage}</Description> : null}
       </Surface>
 
-      {processed ? <AdminImageVariantFields processed={processed} /> : null}
+      {multiple && processedList.length > 0 ? (
+        <AdminGalleryImageVariantFields processed={processedList} />
+      ) : null}
+      {!multiple && singleProcessed ? (
+        <AdminImageVariantFields processed={singleProcessed} />
+      ) : null}
     </Surface>
   );
 }

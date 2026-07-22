@@ -2,6 +2,7 @@ import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { and, asc, count, desc, eq, gt, gte, ilike, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
+import { eventGalleryImages } from "../schema/event-gallery-images";
 import {
   type Event,
   events,
@@ -460,9 +461,20 @@ export async function deleteEvent(
     throw new CatalogValidationError("EVENT_NOT_FOUND", `Event ${eventId} not found`);
   }
 
+  const galleryRows = await db
+    .select({ imageId: eventGalleryImages.imageId })
+    .from(eventGalleryImages)
+    .where(eq(eventGalleryImages.eventId, eventId));
+
+  const imageIdsToDelete = new Set(galleryRows.map((row) => row.imageId));
+  imageIdsToDelete.add(existing.imageId);
+
   await db.delete(events).where(eq(events.id, eventId));
+
   const { deleteImageRecord } = await catalogImages();
-  await deleteImageRecord(db, existing.imageId, { skipBucket: options?.skipBucket });
+  for (const imageId of imageIdsToDelete) {
+    await deleteImageRecord(db, imageId, { skipBucket: options?.skipBucket });
+  }
 }
 
 export type CountEventsOptions = {

@@ -1,6 +1,7 @@
 export * from "./datetime";
 export * from "./discovery";
 export * from "./errors";
+export * from "./event-gallery-images";
 export * from "./events";
 export * from "./featured-events";
 // Image pipeline (`@unveiled/images` / sip WASM) — import `@unveiled/db/catalog/images`

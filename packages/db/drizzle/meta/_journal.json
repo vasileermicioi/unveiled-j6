@@ -50,6 +50,13 @@
       "when": 1784640114790,
       "tag": "0006_blue_sabretooth",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784697135699,
+      "tag": "0007_massive_swordsman",
+      "breakpoints": true
     }
   ]
 }

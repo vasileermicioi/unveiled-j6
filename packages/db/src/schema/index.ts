@@ -1,5 +1,6 @@
 export * from "./bookings";
 export * from "./credit-ledger";
+export * from "./event-gallery-images";
 export * from "./events";
 export * from "./featured-events";
 export * from "./images";

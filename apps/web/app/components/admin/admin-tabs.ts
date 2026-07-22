@@ -24,6 +24,30 @@ export function adminEventsPath(locale: Locale): string {
   return localizedPath(locale, "admin/events");
 }
 
+export function adminEventGalleryPath(locale: Locale, eventId: string): string {
+  return localizedPath(locale, `admin/events/${eventId}/gallery`);
+}
+
+export function adminEventGalleryAddPath(locale: Locale, eventId: string): string {
+  return localizedPath(locale, `admin/events/${eventId}/gallery/add`);
+}
+
+export function adminEventGalleryRemovePath(
+  locale: Locale,
+  eventId: string,
+  imageIds?: string[],
+): string {
+  const base = localizedPath(locale, `admin/events/${eventId}/gallery/remove`);
+  if (!imageIds?.length) {
+    return base;
+  }
+  const params = new URLSearchParams();
+  for (const imageId of imageIds) {
+    params.append("imageIds", imageId);
+  }
+  return `${base}?${params.toString()}`;
+}
+
 export function adminFeaturedPath(locale: Locale): string {
   return localizedPath(locale, "admin/featured");
 }

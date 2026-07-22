@@ -119,6 +119,9 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin/events/new` | ✅ | ADMIN | Create event |
 | `/admin/events/series/new` | ✅ | ADMIN | Event series |
 | `/admin/events/:id/edit` | ✅ | ADMIN | Edit event |
+| `/admin/events/:id/gallery` | ✅ | ADMIN | Event gallery list |
+| `/admin/events/:id/gallery/add` | ✅ | ADMIN | Multi-upload gallery photos |
+| `/admin/events/:id/gallery/remove` | ✅ | ADMIN | Remove one or many gallery photos (confirm) |
 | `/admin/events/:id/delete` | ✅ | ADMIN | Delete confirmation |
 | `/admin/events/:id/codes` | ✅ | ADMIN | Export redemption codes (CSV) |
 | `/admin/featured` | ✅ | ADMIN | Featured events list |

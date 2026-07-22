@@ -21,4 +21,5 @@ export {
   DEMO_PARTNERS,
   type DemoCatalogEntry,
   getDemoCatalog,
+  readDemoSeedPrebuilt,
 } from "./catalog/seed-data";

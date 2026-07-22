@@ -1,10 +1,12 @@
 import type { Page } from "@playwright/test";
 import { DEMO_DISCOVERY_TITLES, partnerNameForSeedTitle } from "@unveiled/db/seed-titles";
 
+import { r2Configured } from "../fixtures/admin";
 import { signupFreshUser } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
 import { activateMemberForBooking, hasDatabaseUrl } from "../fixtures/billing";
 import {
+  ensureDemoEventGallery,
   ensureDemoFeaturedSplit,
   getEventIdByTitle,
   getPartnerIdByName,
@@ -149,6 +151,64 @@ test.describe("event-discovery.feature", () => {
     await expect(
       page.getByRole("link", { name: /tickets buchen|book tickets/i }).first(),
     ).toBeVisible();
+  });
+
+  test("Scenario: Guest views gallery on event detail", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event + gallery");
+    test.skip(!r2Configured(), "R2 vars required so gallery image URLs resolve");
+
+    await page.context().clearCookies();
+    let eventId: string;
+    try {
+      eventId = await ensureDemoEventGallery(TITLES.theaterFuture);
+    } catch (error) {
+      test.skip(true, error instanceof Error ? error.message : String(error));
+      return;
+    }
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/^(galerie|gallery)$/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.getByRole("button", { name: /^(foto|photo)\s*1$/i }).click();
+    await expect(page.getByRole("button", { name: /nächstes foto|next photo/i })).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.getByRole("button", { name: /nächstes foto|next photo/i }).click();
+    await page.getByRole("button", { name: /vorheriges foto|previous photo/i }).click();
+    await page.getByRole("button", { name: /galerie schließen|close gallery/i }).click();
+  });
+
+  test("Scenario: No gallery images", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event");
+
+    await page.context().clearCookies();
+    // konzert is seeded without a gallery and left non-featured for Discover contrast
+    const eventId = await getEventIdByTitle(TITLES.konzert);
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/^(galerie|gallery)$/i)).toHaveCount(0);
+  });
+
+  test("Scenario: Featured demo event includes gallery", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded featured event");
+    test.skip(!r2Configured(), "R2 vars required so gallery image URLs resolve");
+
+    await page.context().clearCookies();
+    let eventId: string;
+    try {
+      eventId = await ensureDemoEventGallery(TITLES.theaterFuture);
+    } catch (error) {
+      test.skip(true, error instanceof Error ? error.message : String(error));
+      return;
+    }
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByText(/^(galerie|gallery)$/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("button", { name: /^(foto|photo)\s*1$/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^(foto|photo)\s*2$/i })).toBeVisible();
   });
 
   test("Scenario: Detail LOCATION map shows a pin marker", async ({ page, locale }) => {

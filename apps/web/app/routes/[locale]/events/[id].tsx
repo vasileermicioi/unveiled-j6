@@ -1,4 +1,9 @@
-import { getPublicEventById, isBookingEligibleStatus, maxBookableTickets } from "@unveiled/db";
+import {
+  getPublicEventById,
+  isBookingEligibleStatus,
+  listEventGalleryImages,
+  maxBookableTickets,
+} from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import {
@@ -11,6 +16,7 @@ import { getCatalogDb } from "../../../lib/catalog-db";
 import type { Locale } from "../../../lib/locale";
 import { isValidLocale, localizedPath } from "../../../lib/locale";
 import { parseReturnTo } from "../../../lib/post-auth-redirect";
+import { toPublicEventGalleryImages } from "../../../lib/public-event-gallery";
 import { buildEventJsonLd, eventDetailPageMeta } from "../../../lib/seo";
 
 function getLocaleParam(value: string | undefined): Locale {
@@ -100,6 +106,9 @@ export default createRoute(async (c) => {
       : (safeReturnTo ?? localizedPath(locale, "events"));
   const defaultQty = parseQtyParam(url.searchParams.get("qty") ?? undefined, maxQty);
 
+  const galleryRows = await listEventGalleryImages(db, eventId);
+  const galleryImages = toPublicEventGalleryImages(galleryRows);
+
   const meta = eventDetailPageMeta(event);
   const jsonLd = buildEventJsonLd(event);
 
@@ -109,6 +118,7 @@ export default createRoute(async (c) => {
         closeHref={closeHref}
         defaultQty={defaultQty}
         event={event}
+        galleryImages={galleryImages}
         locale={locale}
         maxQty={maxQty}
         viewer={viewer}

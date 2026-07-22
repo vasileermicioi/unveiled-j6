@@ -179,6 +179,16 @@ function readSeedPrebuilt(
   };
 }
 
+/** Read a baked seed variant pack for demo gallery (or other) attaches outside `getDemoCatalog()`. */
+export function readDemoSeedPrebuilt(
+  relativePath: string,
+  label = relativePath,
+): PrebuiltImageVariantsInput {
+  const fixture = FIXTURE;
+  const imagesRoot = seedImagesRoot(fixture);
+  return readSeedPrebuilt(imagesRoot, relativePath, label);
+}
+
 /** Bundled fixture — no fs / fileURLToPath at import time (Workers-safe). */
 const FIXTURE = fixtureJson as AbundoFixture;
 
