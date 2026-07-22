@@ -1,11 +1,10 @@
-import { Button, Description, Form, Link, Paragraph, Surface } from "@heroui/react";
+import { Button, Form, Link, Paragraph, Surface } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
 import type { AdminGalleryListItem } from "./AdminEventGalleryListPage";
 import { AdminFormError } from "./AdminFormError";
-import { AdminFormSelect } from "./AdminFormSelect";
 import {
   AdminPageShell,
   adminEventGalleryPath,
@@ -18,7 +17,7 @@ type AdminEventGalleryRemovePageProps = {
   eventId: string;
   eventTitle: string;
   images: AdminGalleryListItem[];
-  defaultSelectedKeys?: string[];
+  selectedImageIds: string[];
   error?: string | null;
 };
 
@@ -27,11 +26,13 @@ export function AdminEventGalleryRemovePage({
   eventId,
   eventTitle,
   images,
-  defaultSelectedKeys = [],
+  selectedImageIds,
   error,
 }: AdminEventGalleryRemovePageProps) {
   const copy = getAdminCopy(locale);
   const galleryHref = adminEventGalleryPath(locale, eventId);
+  const selectedSet = new Set(selectedImageIds);
+  const selectedImages = images.filter((image) => selectedSet.has(image.imageId));
 
   return (
     <AdminPageShell
@@ -47,21 +48,24 @@ export function AdminEventGalleryRemovePage({
       {error ? <AdminFormError message={error} /> : null}
       <Paragraph>{copy.galleryRemoveBody}</Paragraph>
 
-      {images.length > 0 ? (
-        <Surface className="flex flex-wrap gap-3" variant="transparent">
-          {images.map((image, index) =>
+      {selectedImages.length > 0 ? (
+        <Surface className="admin-event-gallery__confirm-grid" variant="transparent">
+          {selectedImages.map((image, index) =>
             image.thumbnailUrl ? (
               <Surface
-                className="admin-form__image-preview"
+                className="admin-event-gallery__confirm-tile"
                 key={image.imageId}
                 variant="transparent"
               >
                 <img
-                  alt={copy.galleryPhotoLabel(index + 1, image.sortOrder)}
+                  alt={copy.galleryPhotoLabel(index + 1)}
+                  className="admin-event-gallery__thumb"
                   src={image.thumbnailUrl}
                 />
               </Surface>
-            ) : null,
+            ) : (
+              <Paragraph key={image.imageId}>{copy.galleryPhotoLabel(index + 1)}</Paragraph>
+            ),
           )}
         </Surface>
       ) : null}
@@ -71,17 +75,9 @@ export function AdminEventGalleryRemovePage({
         className="flex flex-col gap-4"
         method="post"
       >
-        <AdminFormSelect
-          defaultSelectedKeys={defaultSelectedKeys}
-          label={copy.galleryRemoveSelectLabel}
-          name="imageIds"
-          options={images.map((image, index) => ({
-            id: image.imageId,
-            label: copy.galleryPhotoLabel(index + 1, image.sortOrder),
-          }))}
-          selectionMode="multiple"
-        />
-        <Description>{copy.galleryRemoveSelectHint}</Description>
+        {selectedImageIds.map((imageId) => (
+          <input key={imageId} name="imageIds" type="hidden" value={imageId} />
+        ))}
         <Surface className="flex flex-col gap-3 sm:flex-row sm:items-center" variant="transparent">
           <Button className="button button--primary button--md" type="submit">
             {copy.galleryRemoveConfirm}

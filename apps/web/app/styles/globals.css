@@ -996,11 +996,226 @@
     object-fit: cover;
   }
 
+  /* Immersive lightbox: full-bleed photo + bottom pager links; dismiss via backdrop/Esc */
+  .modal__backdrop.event-detail-gallery__backdrop {
+    background-color: color-mix(in srgb, var(--color-brand-dark) 92%, transparent);
+  }
+
+  .modal__dialog.event-detail-gallery__dialog {
+    width: min(98vw, 80rem);
+    max-width: min(98vw, 80rem);
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .event-detail-gallery__dialog .modal__body,
+  .event-detail-gallery__dialog-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 0;
+    background: transparent;
+  }
+
+  .event-detail-gallery__stage {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+
   .event-detail-gallery__full {
     display: block;
-    width: 100%;
-    max-height: min(70vh, 720px);
+    width: auto;
+    max-width: 100%;
+    max-height: min(82vh, 56rem);
     object-fit: contain;
+    border: none;
+  }
+
+  .event-detail-gallery__pager {
+    min-height: 2.5rem;
+  }
+
+  .event-detail-gallery__pager-link.button,
+  .event-detail-gallery__pager-link {
+    display: inline-flex;
+    height: auto;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--color-brand-cream);
+    transform: none;
+  }
+
+  .event-detail-gallery__pager-link.button:hover,
+  .event-detail-gallery__pager-link.button[data-hovered="true"],
+  .event-detail-gallery__pager-link.button[data-pressed="true"],
+  .event-detail-gallery__pager-link.button:focus,
+  .event-detail-gallery__pager-link.button:focus-visible,
+  .event-detail-gallery__pager-link.button:focus-visible:not(:focus),
+  .event-detail-gallery__pager-link.button[data-focus-visible="true"],
+  .event-detail-gallery__pager-link:hover {
+    height: auto;
+    border: none;
+    outline: none;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-ring-offset-shadow: 0 0 #0000;
+    box-shadow: none;
+    background: transparent;
+    color: var(--color-brand-yellow);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    transform: none;
+  }
+
+  .event-detail-gallery__counter {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-brand-cream);
+  }
+
+  /* Admin event gallery manager */
+  .admin-event-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .admin-event-gallery__hint {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .admin-event-gallery__save-form {
+    display: inline-flex;
+    margin: 0;
+  }
+
+  .admin-event-gallery__grid,
+  .admin-event-gallery__confirm-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .admin-event-gallery__grid,
+    .admin-event-gallery__confirm-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .admin-event-gallery__grid,
+    .admin-event-gallery__confirm-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .admin-event-gallery__tile,
+  .admin-event-gallery__confirm-tile {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    border-radius: 0;
+    background: var(--color-brand-cream);
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .admin-event-gallery__tile--dragging {
+    z-index: 2;
+    cursor: grabbing;
+    opacity: 0.92;
+  }
+
+  .admin-event-gallery__tile--selected {
+    border-color: var(--color-brand-dark);
+    outline: 2px solid var(--color-brand-yellow);
+    outline-offset: -4px;
+  }
+
+  .admin-event-gallery__thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+  }
+
+  .admin-event-gallery__thumb--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    padding: 0.75rem;
+  }
+
+  .admin-event-gallery__select {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1;
+    display: flex;
+    width: 1.75rem;
+    height: 1.75rem;
+    cursor: pointer;
+  }
+
+  .admin-event-gallery__checkbox {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .admin-event-gallery__select-icon {
+    display: block;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 2px solid var(--color-brand-dark);
+    border-radius: 0;
+    background-color: var(--color-brand-cream);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 0.9rem 0.9rem;
+  }
+
+  .admin-event-gallery__checkbox:checked + .admin-event-gallery__select-icon {
+    background-color: var(--color-brand-yellow);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23202621' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  }
+
+  .admin-event-gallery__checkbox:focus-visible + .admin-event-gallery__select-icon {
+    outline: 2px solid var(--color-brand-dark);
+    outline-offset: 2px;
   }
 
   .event-card-preview__header {

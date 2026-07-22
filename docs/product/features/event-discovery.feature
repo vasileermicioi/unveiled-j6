@@ -1,7 +1,7 @@
 # Event discovery for the production MVP.
 #
 # Charter locks:
-#   - Discover = /:locale/discover with admin-featured upcoming preview (not a public full feed)
+#   - Discover = /:locale/discover with admin-featured preview (includes past featured; not a public full feed)
 #   - /events/:id is public (no auth); book/save/waitlist remain gated
 #   - Member feed /events, /events/map, /saved require USER; browse/map also require booking-eligible subscription
 #   - No algorithmic ranking — explicit filters only (category / partner / date; single-select)
@@ -22,17 +22,24 @@ Feature: Event Discovery
   Scenario: Public discovery preview for guests
     Given I am not signed in
     When I visit Discover ("/:locale/discover")
-    Then I see a curated featured preview of upcoming events (no auth required)
+    Then I see a curated featured preview of events (no auth required)
+    And featured events that are already past still appear
     And I see membership framing in the section header (eyebrow)
     And I do not see a public full upcoming-events list equivalent to the member "/events" feed
 
   Scenario: Guest sees featured Discover
     Given I am not signed in
-    And at least one upcoming event is admin-featured
+    And at least one event is admin-featured
     And at least one other upcoming catalog event is not featured
     When I visit Discover ("/:locale/discover")
     Then the featured event appears
     And the non-featured upcoming catalog event does not appear solely for being soon
+
+  Scenario: Past featured event remains on Discover
+    Given I am not signed in
+    And an admin-featured event has a date/time in the past
+    When I visit Discover ("/:locale/discover")
+    Then that featured event still appears
 
   Scenario: Discover is for non-active membership audiences
     Given I am signed in as a "USER" without a booking-eligible subscription

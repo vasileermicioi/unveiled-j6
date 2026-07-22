@@ -34,8 +34,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-events.feature` | Seed demo data is a no-op when data exists | `e2e/specs/admin-events.spec.ts` · `Scenario: Seed demo data is a no-op when data exists` | `pass` |  |
 | `admin-events.feature` | Admin multi-upload gallery photos | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin multi-upload gallery photos` | `pass` | R2 env-skip when vars missing |
 | `admin-events.feature` | Admin removes selected gallery photos | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin removes selected gallery photos` | `pass` | R2 env-skip when vars missing |
-| `admin-events.feature` | Admin removes a single gallery photo via discrete action | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin removes a single gallery photo via discrete action` | `pass` | R2 env-skip when vars missing |
-| `admin-events.feature` | Gallery manage is available for existing events | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery manage is available for existing events` | `pass` | R2 env-skip when vars missing |
+| `admin-events.feature` | Admin reorders gallery photos by drag and drop | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin reorders gallery photos by drag and drop` | `pass` | R2 env-skip; HTML5 DnD via Playwright |
+| `admin-events.feature` | Gallery manage is available from the featured list | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery manage is available from the featured list` | `pass` | R2 env-skip when vars missing |
 | `admin-events.feature` | Gallery capacity is enforced | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery capacity is enforced` | `skip` | Named skip — 12× Pica upload brittle; covered by `@unveiled/db` gallery tests |
 | `admin-partners.feature` | Create a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Create a partner` | `pass` |  |
 | `admin-partners.feature` | Supply the partner logo as a direct upload or a remote URL | `e2e/specs/admin-partners.spec.ts` · `Scenario: Supply the partner logo as a direct upload or a remote URL` | `pass` | R2 env-skip when vars missing |

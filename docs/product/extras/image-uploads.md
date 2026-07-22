@@ -105,11 +105,11 @@ Images have **no legal retention requirement** (unlike bookings/ledger entries, 
 
 ## 8a. Optional event gallery (multi-image)
 
-Events keep a **required singular primary image** (`events.image_id`) for cards, hero, and OG/JSON-LD. Optionally, admins may attach up to **12** additional gallery photos via `event_gallery_images` (composite PK `(event_id, image_id)`, ordered by `sort_order`). Each gallery photo uses the **same six JPEG variant pipeline** as the primary image (client Pica → server validate/store). Admin manage: `/admin/events/:id/gallery*` (see `sitemap/sitemap.md`, `features/admin-events.feature`). Public detail shows the gallery at page end when non-empty (`features/event-discovery.feature`, `ui/ui-component-map.md`). Gallery membership MUST NOT replace the primary hero. Schema: `database/schema-overview.md` → `event_gallery_images`.
+Events keep a **required singular primary image** (`events.image_id`) for cards, hero, and OG/JSON-LD. Optionally, admins may attach up to **12** additional gallery photos via `event_gallery_images` (composite PK `(event_id, image_id)`, ordered by `sort_order`). Each gallery photo uses the **same six JPEG variant pipeline** as the primary image (client Pica → server validate/store). Admin manage: `/admin/events/:id/gallery*` — thumbnail **grid**, drag-and-drop reorder with explicit **Save order** POST, checkbox select → SSR remove confirm (entry from Featured list; see `sitemap/sitemap.md`, `features/admin-events.feature`). Public detail shows the gallery at page end when non-empty (`features/event-discovery.feature`, `ui/ui-component-map.md`). Gallery membership MUST NOT replace the primary hero. Schema: `database/schema-overview.md` → `event_gallery_images`.
 
 ## 9. What this doc deliberately does not cover
 
 - **Image moderation/content scanning** — not a requirement for a curated, admin/partner-only upload surface (no end-user-generated image content anywhere in this product).
 - **Cropping/editing UI** (letting the admin manually choose a crop region before the pipeline runs) — the automatic center-crop for `og-1200x630` is good enough for v1; a manual crop tool is a future nice-to-have, not a launch requirement.
-- **Drag-and-drop gallery reorder** — `sort_order` is append-stable; reorder UI is post-MVP nice-to-have.
+- ~~**Drag-and-drop gallery reorder**~~ — shipped on admin gallery grid (drag locally, persist via **Save order**).
 - **Expanding OG/JSON-LD to every gallery image** — primary hero remains the SEO image unless a later SEO change mandates otherwise.

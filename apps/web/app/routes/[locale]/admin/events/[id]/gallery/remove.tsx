@@ -39,7 +39,7 @@ async function renderRemovePage(
     eventId: string;
     eventTitle: string;
     images: AdminGalleryListItem[];
-    defaultSelectedKeys?: string[];
+    selectedImageIds: string[];
     error?: string | null;
   },
 ) {
@@ -48,12 +48,12 @@ async function renderRemovePage(
   return renderAdminPage(
     c,
     <AdminEventGalleryRemovePage
-      defaultSelectedKeys={options.defaultSelectedKeys}
       error={options.error}
       eventId={options.eventId}
       eventTitle={options.eventTitle}
       images={options.images}
       locale={options.locale}
+      selectedImageIds={options.selectedImageIds}
     />,
     {
       locale: options.locale,
@@ -93,18 +93,11 @@ export const POST = createRoute(async (c) => {
 
   const rows = await listEventGalleryImages(db, eventId);
   const images = toAdminGalleryListItems(rows);
-  const copy = getAdminCopy(guard.locale);
   const body = (await c.req.parseBody({ all: true })) as ParsedBody;
   const imageIds = parseGalleryImageIds(body, asString);
 
   if (imageIds.length === 0) {
-    return renderRemovePage(c, {
-      locale: guard.locale,
-      eventId,
-      eventTitle: event.title,
-      images,
-      error: copy.galleryRemoveSelectionRequired,
-    });
+    return c.redirect(adminEventGalleryPath(guard.locale, eventId), 302);
   }
 
   try {
@@ -116,7 +109,7 @@ export const POST = createRoute(async (c) => {
       eventId,
       eventTitle: event.title,
       images,
-      defaultSelectedKeys: imageIds,
+      selectedImageIds: imageIds,
       error: mapCatalogError(error, guard.locale),
     });
   }
@@ -152,15 +145,19 @@ export default createRoute(async (c) => {
   const rows = await listEventGalleryImages(db, eventId);
   const images = toAdminGalleryListItems(rows);
   const queryIds = c.req.queries("imageIds") ?? [];
-  const defaultSelectedKeys = parseGalleryImageIdsFromQuery(
+  const selectedImageIds = parseGalleryImageIdsFromQuery(
     queryIds.length > 0 ? queryIds : c.req.query("imageIds"),
-  );
+  ).filter((imageId) => images.some((image) => image.imageId === imageId));
+
+  if (selectedImageIds.length === 0) {
+    return c.redirect(adminEventGalleryPath(guard.locale, eventId), 302);
+  }
 
   return renderRemovePage(c, {
     locale: guard.locale,
     eventId,
     eventTitle: event.title,
     images,
-    defaultSelectedKeys,
+    selectedImageIds,
   });
 });

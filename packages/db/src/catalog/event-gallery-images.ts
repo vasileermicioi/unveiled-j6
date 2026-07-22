@@ -149,6 +149,76 @@ export async function addEventGalleryImages(
   return listEventGalleryImages(db, eventId);
 }
 
+/**
+ * Persist a new gallery order. `orderedImageIds` must be a permutation of the
+ * current membership (same set, same length). Writes `sort_order` as 0..n-1.
+ */
+export async function reorderEventGalleryImages(
+  db: Db,
+  eventId: string,
+  orderedImageIds: string[],
+): Promise<EventGalleryImageRow[]> {
+  const event = await getEventById(db, eventId);
+  if (!event) {
+    throw new CatalogValidationError("EVENT_NOT_FOUND", `Event ${eventId} not found`);
+  }
+
+  const existing = await listEventGalleryImages(db, eventId);
+  const existingIds = existing.map((row) => row.imageId);
+
+  if (orderedImageIds.length === 0 && existingIds.length === 0) {
+    return [];
+  }
+
+  const uniqueOrdered = [...new Set(orderedImageIds)];
+  if (
+    uniqueOrdered.length !== orderedImageIds.length ||
+    uniqueOrdered.length !== existingIds.length
+  ) {
+    throw new CatalogValidationError(
+      "GALLERY_REORDER_INVALID",
+      "Gallery reorder must include each current image id exactly once",
+    );
+  }
+
+  const existingSet = new Set(existingIds);
+  for (const imageId of uniqueOrdered) {
+    if (!existingSet.has(imageId)) {
+      throw new CatalogValidationError(
+        "GALLERY_REORDER_INVALID",
+        `Image ${imageId} is not in the gallery for event ${eventId}`,
+      );
+    }
+  }
+
+  // Temporary high offsets avoid unique (event_id, sort_order) collisions mid-update
+  // when a unique index is present; sequential writes are fine for neon-http.
+  const tempBase = MAX_EVENT_GALLERY_IMAGES + 100;
+  for (let i = 0; i < uniqueOrdered.length; i += 1) {
+    const imageId = uniqueOrdered[i];
+    if (!imageId) {
+      continue;
+    }
+    await db
+      .update(eventGalleryImages)
+      .set({ sortOrder: tempBase + i })
+      .where(and(eq(eventGalleryImages.eventId, eventId), eq(eventGalleryImages.imageId, imageId)));
+  }
+
+  for (let i = 0; i < uniqueOrdered.length; i += 1) {
+    const imageId = uniqueOrdered[i];
+    if (!imageId) {
+      continue;
+    }
+    await db
+      .update(eventGalleryImages)
+      .set({ sortOrder: i })
+      .where(and(eq(eventGalleryImages.eventId, eventId), eq(eventGalleryImages.imageId, imageId)));
+  }
+
+  return listEventGalleryImages(db, eventId);
+}
+
 export async function removeEventGalleryImages(
   db: Db,
   eventId: string,

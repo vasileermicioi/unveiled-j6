@@ -8,7 +8,7 @@ import { formatEventDateTime } from "../../lib/admin-event-form";
 import type { Locale } from "../../lib/locale";
 
 import { AdminTableActions } from "./AdminTableActions";
-import { adminFeaturedRemovePath } from "./admin-tabs";
+import { adminEventGalleryPath, adminFeaturedRemovePath } from "./admin-tabs";
 
 type AdminFeaturedTableProps = {
   locale: Locale;
@@ -43,6 +43,11 @@ export function AdminFeaturedTable({ locale, events }: AdminFeaturedTableProps) 
                 <Table.Cell className="admin-table__actions-cell">
                   <AdminTableActions
                     actions={[
+                      {
+                        href: adminEventGalleryPath(locale, event.id),
+                        label: copy.galleryManageAction,
+                        icon: "gallery",
+                      },
                       {
                         href: adminFeaturedRemovePath(locale, event.id),
                         label: copy.featuredRemoveAction,

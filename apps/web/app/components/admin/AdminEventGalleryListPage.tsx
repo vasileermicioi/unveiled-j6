@@ -2,13 +2,15 @@ import { Link, Paragraph, Surface } from "@heroui/react";
 import type { EventGalleryImageRow } from "@unveiled/db";
 import { MAX_EVENT_GALLERY_IMAGES } from "@unveiled/db";
 
+import AdminEventGalleryManager from "../../islands/AdminEventGalleryManager";
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
+import { AdminFormError } from "./AdminFormError";
 import {
   AdminPageShell,
   adminEventGalleryAddPath,
-  adminEventGalleryRemovePath,
+  adminEventGalleryPath,
   adminEventsPath,
 } from "./AdminPageShell";
 
@@ -21,6 +23,7 @@ type AdminEventGalleryListPageProps = {
   eventId: string;
   eventTitle: string;
   images: AdminGalleryListItem[];
+  error?: string | null;
 };
 
 export function AdminEventGalleryListPage({
@@ -28,11 +31,19 @@ export function AdminEventGalleryListPage({
   eventId,
   eventTitle,
   images,
+  error,
 }: AdminEventGalleryListPageProps) {
   const copy = getAdminCopy(locale);
   const listHref = adminEventsPath(locale);
   const addHref = adminEventGalleryAddPath(locale, eventId);
-  const removeHref = adminEventGalleryRemovePath(locale, eventId);
+  const galleryHref = adminEventGalleryPath(locale, eventId);
+
+  const managerItems = images.map((image, index) => ({
+    imageId: image.imageId,
+    thumbnailUrl: image.thumbnailUrl,
+    label: copy.galleryPhotoLabel(index + 1),
+    selectLabel: copy.gallerySelectLabel(index + 1),
+  }));
 
   return (
     <AdminPageShell
@@ -41,11 +52,6 @@ export function AdminEventGalleryListPage({
           <Link className="button button--primary button--md" href={addHref}>
             {copy.galleryAddAction}
           </Link>
-          {images.length > 0 ? (
-            <Link className="button button--secondary button--md" href={removeHref}>
-              {copy.galleryRemoveBulkAction}
-            </Link>
-          ) : null}
         </Surface>
       }
       breadcrumbs={[
@@ -56,35 +62,23 @@ export function AdminEventGalleryListPage({
       subtitle={copy.gallerySubtitle(eventTitle)}
       title={copy.galleryTitle}
     >
+      {error ? <AdminFormError message={error} /> : null}
       <Paragraph>{copy.galleryCapacity(images.length, MAX_EVENT_GALLERY_IMAGES)}</Paragraph>
 
       {images.length === 0 ? (
         <Paragraph>{copy.galleryEmpty}</Paragraph>
       ) : (
-        <Surface className="flex flex-col gap-4" variant="transparent">
-          {images.map((image, index) => (
-            <Surface
-              className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-              key={image.imageId}
-              variant="default"
-            >
-              <Surface className="flex items-center gap-3" variant="transparent">
-                {image.thumbnailUrl ? (
-                  <Surface className="admin-form__image-preview" variant="transparent">
-                    <img alt="" src={image.thumbnailUrl} />
-                  </Surface>
-                ) : null}
-                <Paragraph>{copy.galleryPhotoLabel(index + 1, image.sortOrder)}</Paragraph>
-              </Surface>
-              <Link
-                className="button button--secondary button--sm"
-                href={adminEventGalleryRemovePath(locale, eventId, [image.imageId])}
-              >
-                {copy.galleryRemoveAction}
-              </Link>
-            </Surface>
-          ))}
-        </Surface>
+        <AdminEventGalleryManager
+          copy={{
+            removeBulkAction: copy.galleryRemoveBulkAction,
+            saveOrderAction: copy.gallerySaveOrderAction,
+            reorderHint: copy.galleryReorderHint,
+          }}
+          eventId={eventId}
+          items={managerItems}
+          locale={locale}
+          reorderAction={galleryHref}
+        />
       )}
     </AdminPageShell>
   );

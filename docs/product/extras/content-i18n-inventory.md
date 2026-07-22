@@ -143,7 +143,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 - Venue check-in inline copy (`BookingsView.tsx`)
 - Event detail checkout-card CTA/notice strings (guest unlock, membership notices, “Secure RSVP // No refunds”, total label) — live in `EventDetailPage.tsx` / locale helpers, not the old `translations.ts` catalog; see `ui/ui-component-map.md` Event detail entry. EventCard primary CTA uses catalog `bookNow` / `waitlist` for all viewer states (guest included).
 - Event detail gallery section + slider a11y (`apps/web/app/lib/event-detail-gallery-copy.ts`): section title Galerie/Gallery; Previous/Next/Close labels; photo alt “Foto N” / “Photo N”.
-- Admin event gallery manage copy (`apps/web/app/lib/admin-content.ts`): `galleryTitle`, `gallerySubtitle`, `galleryCapacity`, `galleryEmpty`, `galleryAdd*` / `galleryRemove*` / `galleryManageAction` / `galleryPhotoLabel` / `gallerySelectedFilesLabel`; capacity/duplicate validation messages via `mapCatalogError`.
+- Admin event gallery manage copy (`apps/web/app/lib/admin-content.ts`): `galleryTitle`, `gallerySubtitle`, `galleryCapacity`, `galleryEmpty`, `galleryAdd*` / `galleryRemove*` / `galleryManageAction` / `galleryPhotoLabel` / `gallerySelectLabel` / `galleryReorderHint` / `gallerySaveOrderAction` / `gallerySelectedFilesLabel`; capacity/duplicate/reorder validation messages via `mapCatalogError`.
 
 ## Recommendation
 

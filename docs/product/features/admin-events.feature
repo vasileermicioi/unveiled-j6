@@ -100,20 +100,23 @@ Feature: Admin — Event Management
 
   Scenario: Admin removes selected gallery photos
     Given an event has two or more gallery photos
-    When I confirm removal of one or more gallery images on "/:locale/admin/events/:id/gallery/remove"
+    When I select one or more photos on the gallery grid
+    And I open remove confirm via "Remove photos" / "Fotos entfernen"
+    And I confirm with form POST
     Then those images disappear from the event gallery list
     And unreferenced image objects are cleaned up from storage
 
-  Scenario: Admin removes a single gallery photo via discrete action
-    Given an event has at least one gallery photo
-    When I open remove confirm for one gallery image from the gallery list
-    And I confirm with form POST
-    Then that image is removed from the event gallery list
+  Scenario: Admin reorders gallery photos by drag and drop
+    Given an event has two or more gallery photos
+    When I drag a gallery photo to a new position on the grid
+    And I save the order ("Save order" / "Reihenfolge speichern")
+    Then the new order is saved (sort_order) and shown after reload
 
-  Scenario: Gallery manage is available for existing events
-    When I open the edit page for an existing event
-    Then I see a path to manage that event's gallery photos ("Galerie" / "Gallery")
-    And gallery manage is not required on the create-event form
+  Scenario: Gallery manage is available from the featured list
+    Given an event is on the featured list
+    When I open the Featured tab ("/:locale/admin/featured")
+    Then I see a path to manage that event's gallery photos
+    And gallery manage is not shown on the Events list or create/edit event forms
 
   Scenario: Gallery capacity is enforced
     Given an event already has 12 gallery photos

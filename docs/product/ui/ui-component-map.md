@@ -45,7 +45,7 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 | Surface | Route | Notes |
 |---|---|---|
 | **Guest marketing home** | `/:locale` | Guests only (signed-in → role home). Headline + phone + plan card + signup CTA + benefits |
-| **Discover** | `/:locale/discover` | `PageSectionHeader` + admin-**featured** upcoming EventCards (not automatic catalog slice); empty featured state copy; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); Book Now / Bin dabei (or Waitlist) → public detail. Booking-eligible USER redirected to `/events`. |
+| **Discover** | `/:locale/discover` | `PageSectionHeader` + admin-**featured** EventCards including past featured (not automatic catalog slice; no upcoming-only filter); empty featured state copy; Partner venues logo marquee (eyebrow + continuous strip; hidden when empty); Book Now / Bin dabei (or Waitlist) → public detail. Booking-eligible USER redirected to `/events`. |
 | **Member feed** | `/events` | Booking-eligible USER only (non-active → Discover). `PageSectionHeader`; filters (GET query params), pagination, EventCard grid |
 | **Map** | `/events/map` | Same audience gate as feed. MapLibre + OSM island; cookie-gated; marker popups expose a large close control (~44px hit target, keyboard-accessible) |
 | **Admin Featured** | `/admin/featured*` | SSR list / search-add / remove-from-featured (keeps catalog event); see `admin-events.feature` |
@@ -78,7 +78,7 @@ Four SSR steps: `/onboarding/age` → `interests` → `location` → `timing`. N
 | Area | Routes | Notes |
 |---|---|---|
 | Dashboard | `/admin` | Ops overview + demo seed control if present |
-| Events | `/admin/events/*` | SSR CRUD, series, codes export; primary image upload; **gallery manage** at `/admin/events/:id/gallery*` (list / multi-add via Pica / SSR remove confirm; max 12; entry from event edit “Galerie” / “Gallery”) |
+| Events | `/admin/events/*` | SSR CRUD, series, codes export; primary image upload; **gallery manage** at `/admin/events/:id/gallery*` (grid + DnD reorder with Save order + checkbox select → SSR remove confirm; multi-add via Pica; max 12; entry from **Featured** list only — not Events list or event edit) |
 | Partners (venues) | `/admin/partners/*` | Venue CRUD only — **no** portal-access / venue-QR pages in MVP |
 | Users | `/admin/users/*` | Support actions as dedicated pages |
 | Waitlist / bookings | `/admin/waitlist/*`, cancel, export | |

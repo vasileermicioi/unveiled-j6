@@ -1,14 +1,9 @@
-import { Link, Surface } from "@heroui/react";
 import { getEventById, listPartners, updateEvent } from "@unveiled/db";
 import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
-import {
-  AdminPageShell,
-  adminEventGalleryPath,
-  adminEventsPath,
-} from "../../../../../components/admin/AdminPageShell";
+import { AdminPageShell, adminEventsPath } from "../../../../../components/admin/AdminPageShell";
 import { eventListPath } from "../../../../../components/admin/EventAdminForm";
 import { NotFoundPage } from "../../../../../components/NotFoundPage";
 import EventAdminForm from "../../../../../islands/EventAdminForm";
@@ -45,16 +40,6 @@ function renderEditPage(
   return renderAdminPage(
     c,
     <AdminPageShell
-      actions={
-        <Surface className="flex flex-wrap gap-3" variant="transparent">
-          <Link
-            className="button button--secondary button--md"
-            href={adminEventGalleryPath(options.locale, options.eventId)}
-          >
-            {copy.galleryManageAction}
-          </Link>
-        </Surface>
-      }
       breadcrumbs={[
         { label: copy.eventsTitle, href: adminEventsPath(options.locale) },
         { label: copy.editEventTitle },

@@ -335,13 +335,19 @@ The system SHALL provide navigation between `/:locale/events` and `/:locale/even
 
 ### Requirement: Discover shows curated featured events
 
-The system SHALL render Discover (`/:locale/discover`) using only admin-featured upcoming events (`listFeaturedEvents` with `upcomingOnly: true`), not an automatic slice of the full upcoming catalog. Guests and signed-in `USER` accounts without a booking-eligible subscription (`ACTIVE` or `CANCELLED_PENDING`) MAY view Discover without authentication. When a signed-in `USER` with a booking-eligible subscription requests Discover, the system SHALL redirect them with `302` to `/:locale/events`. `ADMIN` viewers SHALL retain access to Discover (no redirect to the member feed). Public event detail (`/:locale/events/:id`) remains ungated.
+The system SHALL render Discover (`/:locale/discover`) using admin-featured events (`listFeaturedEvents` without an upcoming-only filter), not an automatic slice of the full catalog. Featured events whose `date_time` is in the past SHALL still appear on Discover; Discover has no date-period filter. Guests and signed-in `USER` accounts without a booking-eligible subscription (`ACTIVE` or `CANCELLED_PENDING`) MAY view Discover without authentication. When a signed-in `USER` with a booking-eligible subscription requests Discover, the system SHALL redirect them with `302` to `/:locale/events`. `ADMIN` viewers SHALL retain access to Discover (no redirect to the member feed). Public event detail (`/:locale/events/:id`) remains ungated.
 
 #### Scenario: Public discovery preview for guests
 
 - **WHEN** a guest visits Discover
-- **THEN** they see the curated featured upcoming events (no auth required)
+- **THEN** they see the curated featured events (no auth required), including featured events that are already past
 - **AND** they do not see the full member `/events` feed
+
+#### Scenario: Past featured event remains on Discover
+
+- **WHEN** an admin-featured event has a `date_time` in the past
+- **AND** a guest visits Discover
+- **THEN** that featured event still appears on Discover
 
 #### Scenario: Discover is for non-active membership audiences
 

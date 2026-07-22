@@ -172,12 +172,13 @@ test.describe("event-discovery.feature", () => {
     });
 
     await page.getByRole("button", { name: /^(foto|photo)\s*1$/i }).click();
-    await expect(page.getByRole("button", { name: /nächstes foto|next photo/i })).toBeVisible({
+    await expect(page.getByRole("button", { name: /^(weiter|next)$/i })).toBeVisible({
       timeout: 10_000,
     });
-    await page.getByRole("button", { name: /nächstes foto|next photo/i }).click();
-    await page.getByRole("button", { name: /vorheriges foto|previous photo/i }).click();
-    await page.getByRole("button", { name: /galerie schließen|close gallery/i }).click();
+    await page.getByRole("button", { name: /^(weiter|next)$/i }).click();
+    await page.getByRole("button", { name: /^(zurück|prev)$/i }).click();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: /^(weiter|next)$/i })).toHaveCount(0);
   });
 
   test("Scenario: No gallery images", async ({ page, locale }) => {
@@ -523,7 +524,7 @@ test.describe("event-discovery.feature", () => {
     const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
     await expect(detailCta).toBeVisible({ timeout: 15_000 });
     await expect(detailCta).toHaveAttribute("href", new RegExp(`/${locale}/events/[^/?#]+`));
-    // Prefer theaterFuture — tonight (daysFromToday: 0) may already be past for upcomingOnly.
+    // Prefer theaterFuture for stable upcoming contrast; past featured still appear on Discover.
     await expect(page.getByText(TITLES.theaterFuture)).toBeVisible({ timeout: 15_000 });
 
     // Partner venues section

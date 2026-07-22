@@ -611,7 +611,7 @@ Categories align with onboarding `INTERESTS` (`Theater`, `Ausstellung`, `Konzert
 
 1. Fresh seed: `bun run seed:demo` (or `-- --reset` on a disposable DB).
 2. As guest, open public detail for the theater featured demo → end-of-page **Galerie / Gallery** with ≥2 thumbs → open slider → next/prev/close.
-3. As ADMIN → event edit → **Galerie / Gallery** → add multiple photos (Pica) → list shows capacity `N / 12` → remove one via discrete action or multi-select confirm.
+3. As ADMIN → **Featured** list → gallery action on a featured row → add multiple photos (Pica) → list shows capacity `N / 12` → remove one via discrete action or multi-select confirm. Gallery manage is not on the Events list or event edit.
 4. Confirm primary hero on cards/detail is unchanged; Discover featured curation is independent of gallery display.
 
 ### Phase 5 demo script

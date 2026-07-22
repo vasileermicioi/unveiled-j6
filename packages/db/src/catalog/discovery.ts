@@ -67,12 +67,11 @@ function normalizeFilterList(value?: string | string[]): string[] {
 function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
   const window = resolveFeedWindow(filters);
   // Default: all upcoming (`date_time >= now`), soonest first via orderBy.
-  // Optional from/to narrows to an inclusive Europe/Berlin calendar range.
-  const conditions: SQL[] = [gte(events.dateTime, now)];
-
-  if (window) {
-    conditions.push(gte(events.dateTime, window.start), lt(events.dateTime, window.end));
-  }
+  // Optional from/to replaces that default with an inclusive Europe/Berlin calendar range
+  // (past days are allowed when the period filter includes them).
+  const conditions: SQL[] = window
+    ? [gte(events.dateTime, window.start), lt(events.dateTime, window.end)]
+    : [gte(events.dateTime, now)];
 
   const categories = normalizeFilterList(filters.category);
   if (categories.length === 1) {

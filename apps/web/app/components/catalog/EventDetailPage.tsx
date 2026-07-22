@@ -70,6 +70,10 @@ function pastMessage(locale: Locale): string {
     : "This event has already taken place.";
 }
 
+function browseEventsLabel(locale: Locale): string {
+  return locale === "de" ? "Mehr Events" : "Browse events";
+}
+
 function unlockCtaLabel(locale: Locale): string {
   return locale === "de" ? "Einloggen zum Freischalten" : "Log in to unlock";
 }
@@ -268,8 +272,26 @@ function resolveCheckoutActions(
   const membershipPath = localizedPath(locale, "membership");
 
   if (isPast) {
+    // Guests: identical checkout to upcoming (same copy/CTAs). Signed-in: past status.
+    if (viewer.kind === "guest") {
+      return {
+        primaryAction: {
+          type: "login",
+          loginPath,
+          returnPath: bookPath,
+          label: unlockCtaLabel(locale),
+        },
+        secondaryAction: { href: signupPath, label: signupLabel(locale) },
+        noticeText: guestNotice(locale),
+        statusMessage: null,
+        showTicketControls: false,
+      };
+    }
+
+    const browseHref =
+      viewer.kind === "eligible" ? localizedPath(locale, "events") : localizedPath(locale, "");
     return {
-      primaryAction: null,
+      primaryAction: { type: "link", href: browseHref, label: browseEventsLabel(locale) },
       secondaryAction: null,
       noticeText: null,
       statusMessage: pastMessage(locale),

@@ -176,7 +176,10 @@ export type AdminCopy = {
   galleryRemoveSelectLabel: string;
   galleryRemoveSelectHint: string;
   galleryRemoveSelectionRequired: string;
-  galleryPhotoLabel: (index: number, sortOrder: number) => string;
+  galleryPhotoLabel: (index: number) => string;
+  gallerySelectLabel: (index: number) => string;
+  galleryReorderHint: string;
+  gallerySaveOrderAction: string;
   gallerySelectedFilesLabel: (count: number) => string;
   waitlistTitle: string;
   waitlistSubtitle: string;
@@ -484,7 +487,7 @@ const copy: Record<Locale, AdminCopy> = {
       `Mehrere Dateien auswählen (Pica im Browser). Noch ${remaining} Plätze frei (max. 12).`,
     galleryAddSubmit: "Fotos speichern",
     galleryAddRequired: "Mindestens ein Bild mit fertigen Varianten ist erforderlich.",
-    galleryManageAction: "Galerie",
+    galleryManageAction: "Galerie-Fotos verwalten",
     galleryRemoveAction: "Entfernen",
     galleryRemoveBulkAction: "Fotos entfernen",
     galleryRemoveTitle: "Galerie-Fotos entfernen",
@@ -494,7 +497,11 @@ const copy: Record<Locale, AdminCopy> = {
     galleryRemoveSelectLabel: "Fotos auswählen",
     galleryRemoveSelectHint: "Mehrfachauswahl mit Strg/Cmd-Klick.",
     galleryRemoveSelectionRequired: "Wähle mindestens ein Foto zum Entfernen.",
-    galleryPhotoLabel: (index, sortOrder) => `Foto ${index} · Reihenfolge ${sortOrder}`,
+    galleryPhotoLabel: (index) => `Foto ${index}`,
+    gallerySelectLabel: (index) => `Foto ${index} auswählen`,
+    galleryReorderHint:
+      "Ziehen zum Sortieren, dann Reihenfolge speichern. Auswählen, dann Fotos entfernen.",
+    gallerySaveOrderAction: "Reihenfolge speichern",
     gallerySelectedFilesLabel: (count) => `${count} Dateien vorbereitet`,
     waitlistTitle: "Warteliste",
     waitlistSubtitle: "Einträge filtern und manuell befördern.",
@@ -808,7 +815,7 @@ const copy: Record<Locale, AdminCopy> = {
       `Select multiple files (Pica in the browser). ${remaining} slot(s) remaining (max 12).`,
     galleryAddSubmit: "Save photos",
     galleryAddRequired: "At least one image with ready variants is required.",
-    galleryManageAction: "Gallery",
+    galleryManageAction: "Manage gallery photos",
     galleryRemoveAction: "Remove",
     galleryRemoveBulkAction: "Remove photos",
     galleryRemoveTitle: "Remove gallery photos",
@@ -818,7 +825,10 @@ const copy: Record<Locale, AdminCopy> = {
     galleryRemoveSelectLabel: "Select photos",
     galleryRemoveSelectHint: "Multi-select with Ctrl/Cmd-click.",
     galleryRemoveSelectionRequired: "Select at least one photo to remove.",
-    galleryPhotoLabel: (index, sortOrder) => `Photo ${index} · order ${sortOrder}`,
+    galleryPhotoLabel: (index) => `Photo ${index}`,
+    gallerySelectLabel: (index) => `Select photo ${index}`,
+    galleryReorderHint: "Drag to reorder, then save order. Select photos, then remove.",
+    gallerySaveOrderAction: "Save order",
     gallerySelectedFilesLabel: (count) => `${count} files ready`,
     waitlistTitle: "Waitlist",
     waitlistSubtitle: "Filter entries and promote manually.",
@@ -1055,6 +1065,12 @@ export function mapCatalogErrorCode(
     return locale === "de"
       ? "Ein Galerie-Bild ist doppelt oder bereits vorhanden."
       : "A gallery image is duplicated or already on the event.";
+  }
+
+  if (code === "GALLERY_REORDER_INVALID") {
+    return locale === "de"
+      ? "Die Galerie-Reihenfolge ist ungültig. Bitte lade die Seite neu und versuche es erneut."
+      : "That gallery order is invalid. Reload the page and try again.";
   }
 
   if (code === "PARTNER_HAS_EVENTS") {

@@ -37,7 +37,8 @@ export default createRoute(async (c) => {
   if (db) {
     try {
       const [featuredEvents, partnerRows] = await Promise.all([
-        listFeaturedEvents(db, { upcomingOnly: true }),
+        // Show all curated featured rows (including past) — Discover has no date filter.
+        listFeaturedEvents(db),
         listPartners(db, { limit: 8 }),
       ]);
 

@@ -339,16 +339,33 @@ test.describe("admin-events.feature", () => {
     expect(body).toMatch(/booking_id|redemption_code/i);
   });
 
-  test("Scenario: Gallery manage is available for existing events", async ({ page, locale }) => {
+  test("Scenario: Gallery manage is available from the featured list", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     const event = await createEventViaUI(page, locale, { partnerName: partner.name });
 
-    await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
-    await expect(page.getByRole("link", { name: /^(galerie|gallery)$/i })).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.getByRole("link", { name: /^(galerie|gallery)$/i }).click();
+    await page.goto(`/${locale}/admin/events`);
+    const eventsRow = page.getByRole("row").filter({ hasText: event.title });
+    await expect(eventsRow).toBeVisible({ timeout: 15_000 });
+    await expect(
+      eventsRow.getByRole("link", { name: /galerie-fotos verwalten|manage gallery photos/i }),
+    ).toHaveCount(0);
+
+    await navigateAdminTab(page, locale, "featured");
+    await page.getByRole("link", { name: /event hinzufügen|add event/i }).click();
+    await page.goto(`/${locale}/admin/featured/add?q=${encodeURIComponent(event.title)}`);
+    const addRow = page.getByRole("row").filter({ hasText: event.title });
+    await expect(addRow).toBeVisible({ timeout: 15_000 });
+    await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), { timeout: 30_000 });
+
+    const featuredRow = page.getByRole("row").filter({ hasText: event.title });
+    await expect(
+      featuredRow.getByRole("link", { name: /galerie-fotos verwalten|manage gallery photos/i }),
+    ).toBeVisible({ timeout: 15_000 });
+    await featuredRow
+      .getByRole("link", { name: /galerie-fotos verwalten|manage gallery photos/i })
+      .click();
     await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery`));
     await expect(page.getByRole("heading", { name: /event-galerie|event gallery/i })).toBeVisible();
   });
@@ -378,37 +395,6 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByText(/2\s*\/\s*12/)).toBeVisible({ timeout: 15_000 });
   });
 
-  test("Scenario: Admin removes a single gallery photo via discrete action", async ({
-    page,
-    locale,
-  }) => {
-    test.setTimeout(120_000);
-    test.skip(!r2Configured(), "R2 vars not configured");
-    const partner = await createPartnerViaUI(page, locale);
-    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
-
-    await page.goto(`/${locale}/admin/events/${event.eventId}/gallery/add`);
-    await page
-      .locator('input[type="file"]')
-      .setInputFiles([SAMPLE_EVENT_IMAGE, SAMPLE_EVENT_IMAGE]);
-    await expect(page.getByText(/2 dateien vorbereitet|2 files prepared/i)).toBeVisible({
-      timeout: 60_000,
-    });
-    await page.getByRole("button", { name: /fotos speichern|save photos/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery/?$`), {
-      timeout: 90_000,
-    });
-
-    const firstRemove = page.getByRole("link", { name: /^(entfernen|remove)$/i }).first();
-    await firstRemove.click();
-    await expect(page).toHaveURL(/\/gallery\/remove/);
-    await page.getByRole("button", { name: /fotos entfernen|remove photos/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery/?$`), {
-      timeout: 60_000,
-    });
-    await expect(page.getByText(/1\s*\/\s*12/)).toBeVisible({ timeout: 15_000 });
-  });
-
   test("Scenario: Admin removes selected gallery photos", async ({ page, locale }) => {
     test.setTimeout(120_000);
     test.skip(!r2Configured(), "R2 vars not configured");
@@ -427,15 +413,12 @@ test.describe("admin-events.feature", () => {
       timeout: 90_000,
     });
 
+    const checkboxes = page.locator(".admin-event-gallery__checkbox");
+    await expect(checkboxes).toHaveCount(2, { timeout: 15_000 });
+    await checkboxes.nth(0).check({ force: true });
+    await checkboxes.nth(1).check({ force: true });
     await page.getByRole("link", { name: /fotos entfernen|remove photos/i }).click();
     await expect(page).toHaveURL(/\/gallery\/remove/);
-    const select = page.getByLabel(/fotos auswählen|select photos/i);
-    await expect(select).toBeVisible({ timeout: 15_000 });
-    const values = await select
-      .locator("option")
-      .evaluateAll((opts) => opts.map((opt) => (opt as HTMLOptionElement).value).filter(Boolean));
-    expect(values.length).toBeGreaterThanOrEqual(2);
-    await select.selectOption(values.slice(0, 2));
     await page.getByRole("button", { name: /fotos entfernen|remove photos/i }).click();
     await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery/?$`), {
       timeout: 60_000,
@@ -443,6 +426,64 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByText(/noch keine galerie-fotos|no gallery photos yet/i)).toBeVisible({
       timeout: 15_000,
     });
+  });
+
+  test("Scenario: Admin reorders gallery photos by drag and drop", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+
+    await page.goto(`/${locale}/admin/events/${event.eventId}/gallery/add`);
+    await page
+      .locator('input[type="file"]')
+      .setInputFiles([SAMPLE_EVENT_IMAGE, SAMPLE_EVENT_IMAGE]);
+    await expect(page.getByText(/2 dateien vorbereitet|2 files prepared/i)).toBeVisible({
+      timeout: 60_000,
+    });
+    await page.getByRole("button", { name: /fotos speichern|save photos/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery/?$`), {
+      timeout: 90_000,
+    });
+
+    const tiles = page.locator(".admin-event-gallery__tile");
+    await expect(tiles).toHaveCount(2, { timeout: 15_000 });
+    const firstSrcBefore = await tiles.nth(0).locator("img").getAttribute("src");
+    const secondSrcBefore = await tiles.nth(1).locator("img").getAttribute("src");
+    expect(firstSrcBefore).toBeTruthy();
+    expect(secondSrcBefore).toBeTruthy();
+
+    const firstBox = await tiles.nth(0).boundingBox();
+    const secondBox = await tiles.nth(1).boundingBox();
+    expect(firstBox).toBeTruthy();
+    expect(secondBox).toBeTruthy();
+    if (!firstBox || !secondBox) {
+      return;
+    }
+
+    const saveOrder = page.getByRole("button", { name: /reihenfolge speichern|save order/i });
+    await expect(saveOrder).toBeDisabled();
+
+    await page.mouse.move(firstBox.x + firstBox.width / 2, firstBox.y + firstBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(secondBox.x + secondBox.width / 2, secondBox.y + secondBox.height / 2, {
+      steps: 12,
+    });
+    await page.mouse.up();
+
+    await expect(saveOrder).toBeEnabled({ timeout: 10_000 });
+    await saveOrder.click();
+
+    await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery/?$`), {
+      timeout: 60_000,
+    });
+    await expect(page.locator(".admin-event-gallery__tile")).toHaveCount(2, { timeout: 15_000 });
+    const firstSrcAfter = await page
+      .locator(".admin-event-gallery__tile")
+      .nth(0)
+      .locator("img")
+      .getAttribute("src");
+    expect(firstSrcAfter).toBe(secondSrcBefore);
   });
 
   test("Scenario: Gallery capacity is enforced", async () => {

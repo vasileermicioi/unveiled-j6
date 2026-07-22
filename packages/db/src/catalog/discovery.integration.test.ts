@@ -117,6 +117,72 @@ describe("discovery integration", () => {
     }
   });
 
+  test("period filter replaces upcoming default and can include past days", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const image = await createTestImage();
+    const partner = await createPartner(db, {
+      name: `Discovery Past Range ${suffix}`,
+      address: "Paststraße 1, Berlin",
+      contactEmail: `discovery-past-range-${suffix}@example.com`,
+      logoPrebuilt: image,
+      skipUpload: true,
+    });
+
+    const now = new Date("2026-07-09T14:00:00.000Z");
+    const past = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Past In Range ${suffix}`,
+      description: "Description",
+      address: "Paststraße 1, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date("2026-07-07T18:00:00.000Z"),
+      creditPrice: 1,
+      secretCode: `PAST${suffix.slice(0, 4)}`,
+      imagePrebuilt: image,
+      skipUpload: true,
+    });
+    const future = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Future Outside Range ${suffix}`,
+      description: "Description",
+      address: "Paststraße 1, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date("2026-07-12T18:00:00.000Z"),
+      creditPrice: 1,
+      secretCode: `FUTR${suffix.slice(0, 4)}`,
+      imagePrebuilt: image,
+      skipUpload: true,
+    });
+
+    try {
+      const defaultFeed = await listMemberFeedEvents(db, { now });
+      expect(defaultFeed.items.map((row) => row.id)).not.toContain(past.id);
+
+      const ranged = await listMemberFeedEvents(db, {
+        now,
+        from: "2026-07-07",
+        to: "2026-07-07",
+      });
+      const rangedIds = new Set(ranged.items.map((row) => row.id));
+      expect(rangedIds.has(past.id)).toBe(true);
+      expect(rangedIds.has(future.id)).toBe(false);
+    } finally {
+      await deleteEvent(db, past.id, { skipBucket: true });
+      await deleteEvent(db, future.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
   test("custom date range narrows upcoming and supports category/partner filters", async () => {
     if (!databaseUrl) {
       console.warn("DATABASE_URL not set — skipping integration test");

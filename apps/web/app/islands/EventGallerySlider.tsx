@@ -1,8 +1,8 @@
-import { Button, Modal, Surface, useOverlayState } from "@heroui/react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Button, Modal, Paragraph, Surface, useOverlayState } from "@heroui/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 
-import type { EventDetailGalleryCopy } from "../lib/event-detail-gallery-copy";
+import { type EventDetailGalleryCopy, galleryPhotoAlt } from "../lib/event-detail-gallery-copy";
 import type { PublicEventGalleryImage } from "../lib/public-event-gallery";
 
 export type EventGallerySliderProps = {
@@ -12,6 +12,7 @@ export type EventGallerySliderProps = {
 
 /**
  * Thumbnail grid + lightbox. Wrap-around prev/next for galleries ≤12.
+ * Dismiss via backdrop click or Escape (no close control).
  * Read-only — no catalog mutations.
  */
 export default function EventGallerySlider({ images, copy }: EventGallerySliderProps) {
@@ -19,6 +20,7 @@ export default function EventGallerySlider({ images, copy }: EventGallerySliderP
   const [index, setIndex] = useState(0);
   const triggerRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const wasOpenRef = useRef(false);
+  const dismissHintId = useId();
 
   const openAt = (nextIndex: number) => {
     setIndex(nextIndex);
@@ -60,51 +62,55 @@ export default function EventGallerySlider({ images, copy }: EventGallerySliderP
     return null;
   }
 
+  const showNav = images.length > 1;
+
   return (
     <Surface className="event-detail-gallery__slider" variant="transparent">
       <Surface
         className="event-detail-gallery__grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
         variant="transparent"
       >
-        {images.map((image, imageIndex) => (
-          <Button
-            aria-label={copy.photoAlt(imageIndex + 1)}
-            className="event-detail-gallery__thumb-button"
-            key={image.imageId}
-            onPress={() => openAt(imageIndex)}
-            ref={(node) => {
-              triggerRefs.current[imageIndex] = node;
-            }}
-          >
-            <img
-              alt={copy.photoAlt(imageIndex + 1)}
-              className="event-detail-gallery__thumb"
-              decoding="async"
-              loading="lazy"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              src={image.thumbSrc}
-              srcSet={image.thumbSrcSet}
-            />
-          </Button>
-        ))}
+        {images.map((image, imageIndex) => {
+          const alt = galleryPhotoAlt(copy, imageIndex + 1);
+          return (
+            <Button
+              aria-label={alt}
+              className="event-detail-gallery__thumb-button"
+              key={image.imageId}
+              onPress={() => openAt(imageIndex)}
+              ref={(node) => {
+                triggerRefs.current[imageIndex] = node;
+              }}
+            >
+              <img
+                alt={alt}
+                className="event-detail-gallery__thumb"
+                decoding="async"
+                loading="lazy"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                src={image.thumbSrc}
+                srcSet={image.thumbSrcSet}
+              />
+            </Button>
+          );
+        })}
       </Surface>
 
       <Modal state={modalState}>
-        <Modal.Backdrop isDismissable variant="blur">
+        <Modal.Backdrop className="event-detail-gallery__backdrop" isDismissable variant="opaque">
           <Modal.Container placement="center" size="cover">
-            <Modal.Dialog aria-label={copy.sectionTitle} className="event-detail-gallery__dialog">
-              <Modal.Header className="event-detail-gallery__dialog-header flex items-center justify-end">
-                <Modal.CloseTrigger
-                  aria-label={copy.closeLabel}
-                  className="button button--secondary button--md"
-                >
-                  <X aria-hidden size={20} strokeWidth={2.25} />
-                </Modal.CloseTrigger>
-              </Modal.Header>
-              <Modal.Body className="event-detail-gallery__dialog-body flex flex-col gap-4">
+            <Modal.Dialog
+              aria-describedby={dismissHintId}
+              aria-label={copy.sectionTitle}
+              className="event-detail-gallery__dialog"
+            >
+              <Modal.Body className="event-detail-gallery__dialog-body">
+                <Paragraph className="sr-only" id={dismissHintId}>
+                  {copy.closeLabel}
+                </Paragraph>
                 <Surface className="event-detail-gallery__stage" variant="transparent">
                   <img
-                    alt={copy.photoAlt(index + 1)}
+                    alt={galleryPhotoAlt(copy, index + 1)}
                     className="event-detail-gallery__full"
                     decoding="async"
                     sizes="(max-width: 1280px) 100vw, 1280px"
@@ -112,29 +118,36 @@ export default function EventGallerySlider({ images, copy }: EventGallerySliderP
                     srcSet={active.fullSrcSet}
                   />
                 </Surface>
-                {images.length > 1 ? (
-                  <Surface
-                    className="event-detail-gallery__controls flex items-center justify-between gap-3"
-                    variant="transparent"
-                  >
+                <Surface
+                  className="event-detail-gallery__pager flex items-center justify-center gap-6"
+                  variant="transparent"
+                >
+                  {showNav ? (
                     <Button
                       aria-label={copy.previousLabel}
-                      className="button button--secondary button--md"
+                      className="event-detail-gallery__pager-link"
                       onPress={() =>
                         setIndex((current) => (current - 1 + images.length) % images.length)
                       }
                     >
-                      <ChevronLeft aria-hidden size={20} strokeWidth={2.25} />
+                      <ChevronLeft aria-hidden size={16} strokeWidth={2.5} />
+                      {copy.previousLabel}
                     </Button>
+                  ) : null}
+                  <Paragraph className="event-detail-gallery__counter">
+                    {index + 1} / {images.length}
+                  </Paragraph>
+                  {showNav ? (
                     <Button
                       aria-label={copy.nextLabel}
-                      className="button button--secondary button--md"
+                      className="event-detail-gallery__pager-link"
                       onPress={() => setIndex((current) => (current + 1) % images.length)}
                     >
-                      <ChevronRight aria-hidden size={20} strokeWidth={2.25} />
+                      {copy.nextLabel}
+                      <ChevronRight aria-hidden size={16} strokeWidth={2.5} />
                     </Button>
-                  </Surface>
-                ) : null}
+                  ) : null}
+                </Surface>
               </Modal.Body>
             </Modal.Dialog>
           </Modal.Container>

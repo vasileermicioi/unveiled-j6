@@ -34,7 +34,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 |---|---|---|
 | `/:locale` | — | **Guest home** — membership marketing + signup CTA. Signed-in booking-eligible `USER` → `/events` (or onboarding); non-active `USER` → `/discover`; `ADMIN` → `/admin` |
 | `/discover` | — | **302** → `/:locale/discover` |
-| `/:locale/discover` | — | **Discover** — admin-featured upcoming events + partner venues. Guests + non-booking-eligible `USER` OK; booking-eligible `USER` → **302** `/events`; `ADMIN` keeps access (QA) |
+| `/:locale/discover` | — | **Discover** — admin-featured events (including past featured) + partner venues. Guests + non-booking-eligible `USER` OK; booking-eligible `USER` → **302** `/events`; `ADMIN` keeps access (QA) |
 | `/how-it-works` | — | Static explainer |
 | `/faq` | — | FAQ accordion |
 | `/membership` | — | Plan details; Stripe checkout when signed in (Phase 6+) |

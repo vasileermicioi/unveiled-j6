@@ -9,6 +9,7 @@ import {
   listEventGalleryImages,
   MAX_EVENT_GALLERY_IMAGES,
   removeEventGalleryImages,
+  reorderEventGalleryImages,
 } from "./event-gallery-images";
 import { createEvent, deleteEvent, getEventById } from "./events";
 import { persistPrebuiltImage } from "./images";
@@ -106,6 +107,66 @@ describe("event gallery images integration", () => {
       if (overflowId) {
         await db.delete(images).where(eq(images.id, overflowId));
       }
+    }
+  });
+
+  test("reorder persists sort_order and rejects invalid permutations", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const partner = await createPartner(db, {
+      name: `Gallery Reorder ${suffix}`,
+      address: "Reorderstraße 1, Berlin",
+      contactEmail: `gallery-reorder-${suffix}@example.com`,
+      logoPrebuilt: createTestImagePrebuilt(),
+      skipUpload: true,
+    });
+
+    const event = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Reorder Gallery ${suffix}`,
+      description: "Description",
+      address: "Reorderstraße 1, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date("2026-07-22T18:00:00.000Z"),
+      creditPrice: 1,
+      secretCode: `GR${suffix.slice(0, 6)}`,
+      imagePrebuilt: createTestImagePrebuilt(),
+      skipUpload: true,
+    });
+
+    const galleryIdA = await persistGalleryImage(db);
+    const galleryIdB = await persistGalleryImage(db);
+    const galleryIdC = await persistGalleryImage(db);
+
+    try {
+      await addEventGalleryImages(db, event.id, [galleryIdA, galleryIdB, galleryIdC]);
+
+      const reordered = await reorderEventGalleryImages(db, event.id, [
+        galleryIdC,
+        galleryIdA,
+        galleryIdB,
+      ]);
+      expect(reordered.map((row) => row.imageId)).toEqual([galleryIdC, galleryIdA, galleryIdB]);
+      expect(reordered.map((row) => row.sortOrder)).toEqual([0, 1, 2]);
+
+      let invalidError: unknown;
+      try {
+        await reorderEventGalleryImages(db, event.id, [galleryIdA, galleryIdB]);
+      } catch (error) {
+        invalidError = error;
+      }
+      expect(invalidError).toBeInstanceOf(CatalogValidationError);
+      expect((invalidError as CatalogValidationError).code).toBe("GALLERY_REORDER_INVALID");
+    } finally {
+      await deleteEvent(db, event.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
     }
   });
 

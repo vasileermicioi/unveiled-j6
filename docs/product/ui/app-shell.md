@@ -32,7 +32,7 @@ Role-aware header variants (guest, member, admin) composed from shared pieces �
 
 ### Discover → Events (nav / CTA contract)
 
-- Guests and non-booking-eligible members: primary nav **Discover** → `/:locale/discover` (admin-featured upcoming preview).
+- Guests and non-booking-eligible members: primary nav **Discover** → `/:locale/discover` (admin-featured preview, including past featured).
 - Booking-eligible members: primary nav **Browse events** → `/:locale/events` (full feed). Hitting `/discover` redirects to `/events`.
 - Guests reach the **full event browse** via signup/login **and** an active subscription — not via an ungated `/events` list. Inactive members land on Discover when they hit `/events` or `/events/map`.
 - Preview cards on Discover link to public `/events/:id`.
