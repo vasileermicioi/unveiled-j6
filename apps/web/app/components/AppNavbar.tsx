@@ -40,8 +40,9 @@ export function AppNavbar({
   const profileHref = localizedPath(locale, "profile");
   const isAdmin = session?.user.role === "ADMIN";
   const isUser = session?.user.role === "USER";
-  // Credits are a member (USER) concept — hide for ADMIN / PARTNER.
-  const creditsLabel = isUser ? copy.formatCredits(session.user.credits) : undefined;
+  // Credits only for booking-eligible USERs — guests / inactive / past-due omit the chip.
+  const creditsLabel =
+    isUser && canBrowseEvents ? copy.formatCredits(session.user.credits) : undefined;
   const showSavedNav = isUser;
   const showBookingsNav = isUser;
   const showProfileNav = isUser;

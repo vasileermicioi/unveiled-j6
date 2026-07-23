@@ -76,6 +76,18 @@ export const MembershipRequired: Story = () => (
 MembershipRequired.storyName = "EventDetailPage / Membership required";
 MembershipRequired.meta = wideMeta;
 
+/** Past event + inactive member: membership CTA (no “already taken place”). */
+export const MembershipRequiredPast: Story = () => (
+  <EventDetailPage
+    closeHref={`/${storyLocale}/discover`}
+    event={{ ...mockEvent, dateTime: new Date("2020-01-01T20:00:00+01:00") }}
+    locale={storyLocale}
+    viewer={{ kind: "membership_required" }}
+  />
+);
+MembershipRequiredPast.storyName = "EventDetailPage / Membership required (past)";
+MembershipRequiredPast.meta = wideMeta;
+
 export const PastDue: Story = () => (
   <EventDetailPage
     closeHref={`/${storyLocale}/events`}

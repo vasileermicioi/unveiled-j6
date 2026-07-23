@@ -272,29 +272,52 @@ function resolveCheckoutActions(
   const membershipPath = localizedPath(locale, "membership");
 
   if (isPast) {
-    // Guests: identical checkout to upcoming (same copy/CTAs). Signed-in: past status.
-    if (viewer.kind === "guest") {
+    // Past status copy only for booking-eligible members. Guests and inactive /
+    // past-due viewers get the same unlock/subscribe CTAs as for upcoming events.
+    if (viewer.kind === "eligible") {
       return {
         primaryAction: {
-          type: "login",
-          loginPath,
-          returnPath: bookPath,
-          label: unlockCtaLabel(locale),
+          type: "link",
+          href: localizedPath(locale, "events"),
+          label: browseEventsLabel(locale),
         },
-        secondaryAction: { href: signupPath, label: signupLabel(locale) },
-        noticeText: guestNotice(locale),
+        secondaryAction: null,
+        noticeText: null,
+        statusMessage: pastMessage(locale),
+        showTicketControls: false,
+      };
+    }
+
+    if (viewer.kind === "past_due") {
+      return {
+        primaryAction: { type: "link", href: membershipPath, label: pastDueLabel(locale) },
+        secondaryAction: null,
+        noticeText: pastDueNotice(locale),
         statusMessage: null,
         showTicketControls: false,
       };
     }
 
-    const browseHref =
-      viewer.kind === "eligible" ? localizedPath(locale, "events") : localizedPath(locale, "");
+    if (viewer.kind === "membership_required") {
+      return {
+        primaryAction: { type: "link", href: membershipPath, label: membershipLabel(locale) },
+        secondaryAction: null,
+        noticeText: membershipNotice(locale),
+        statusMessage: null,
+        showTicketControls: false,
+      };
+    }
+
     return {
-      primaryAction: { type: "link", href: browseHref, label: browseEventsLabel(locale) },
-      secondaryAction: null,
-      noticeText: null,
-      statusMessage: pastMessage(locale),
+      primaryAction: {
+        type: "login",
+        loginPath,
+        returnPath: bookPath,
+        label: unlockCtaLabel(locale),
+      },
+      secondaryAction: { href: signupPath, label: signupLabel(locale) },
+      noticeText: guestNotice(locale),
+      statusMessage: null,
       showTicketControls: false,
     };
   }
@@ -320,6 +343,27 @@ function resolveCheckoutActions(
       secondaryAction: { href: signupPath, label: signupLabel(locale) },
       noticeText: null,
       statusMessage: waitlistGuestMessage(locale),
+      showTicketControls: false,
+    };
+  }
+
+  // Inactive / past-due: keep subscribe CTAs (no bare sold-out dead-end).
+  if (isSoldOut && viewer.kind === "past_due") {
+    return {
+      primaryAction: { type: "link", href: membershipPath, label: pastDueLabel(locale) },
+      secondaryAction: null,
+      noticeText: pastDueNotice(locale),
+      statusMessage: null,
+      showTicketControls: false,
+    };
+  }
+
+  if (isSoldOut && viewer.kind === "membership_required") {
+    return {
+      primaryAction: { type: "link", href: membershipPath, label: membershipLabel(locale) },
+      secondaryAction: null,
+      noticeText: membershipNotice(locale),
+      statusMessage: null,
       showTicketControls: false,
     };
   }
