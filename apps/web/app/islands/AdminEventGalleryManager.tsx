@@ -1,3 +1,5 @@
+"use client";
+
 import {
   closestCenter,
   DndContext,
@@ -15,11 +17,15 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Button, Label, Link, Paragraph, Surface } from "@heroui/react";
+import { Button, Link, Paragraph, Surface } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 
 import { adminEventGalleryRemovePath } from "../components/admin/admin-tabs";
 import type { Locale } from "../lib/locale";
+
+function stopDragGesture(event: { stopPropagation: () => void }) {
+  event.stopPropagation();
+}
 
 export type AdminGalleryManagerItem = {
   imageId: string;
@@ -61,28 +67,36 @@ function SortableTile({ item, selected, onToggle }: SortableTileProps) {
     <Surface
       className={`admin-event-gallery__tile${isDragging ? " admin-event-gallery__tile--dragging" : ""}${selected ? " admin-event-gallery__tile--selected" : ""}`}
       ref={setNodeRef}
+      render={(domProps) => (
+        <div {...domProps} {...attributes} {...listeners}>
+          {domProps.children}
+        </div>
+      )}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
       }}
       variant="transparent"
-      {...attributes}
-      {...listeners}
     >
-      <Label className="admin-event-gallery__select">
+      <label
+        className="admin-event-gallery__select"
+        onMouseDown={stopDragGesture}
+        onPointerDown={stopDragGesture}
+        onTouchStart={stopDragGesture}
+      >
         <input
           aria-label={item.selectLabel}
           checked={selected}
           className="admin-event-gallery__checkbox"
           onChange={() => onToggle(item.imageId)}
-          onClick={(event) => event.stopPropagation()}
-          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={stopDragGesture}
+          onPointerDown={stopDragGesture}
           type="checkbox"
         />
         <Surface aria-hidden className="admin-event-gallery__select-icon" variant="transparent">
           <Paragraph className="sr-only"> </Paragraph>
         </Surface>
-      </Label>
+      </label>
       {item.thumbnailUrl ? (
         <img
           alt={item.label}

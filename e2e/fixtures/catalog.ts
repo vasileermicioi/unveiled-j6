@@ -1,13 +1,16 @@
 import {
   addFeaturedEvent,
+  addFeaturedPartner,
   CatalogValidationError,
   createDb,
   eq,
   events,
   listEventGalleryImages,
   listEvents,
+  listFeaturedPartners,
   listPartners,
   removeFeaturedEvent,
+  removeFeaturedPartner,
 } from "@unveiled/db";
 import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 
@@ -51,7 +54,9 @@ function isAlreadyFeaturedError(error: unknown): boolean {
     return true;
   }
   const message = error instanceof Error ? error.message : String(error);
-  return /featured_events_pkey|duplicate key|already featured/i.test(message);
+  return /featured_events_pkey|featured_partners_pkey|duplicate key|already featured/i.test(
+    message,
+  );
 }
 
 /**
@@ -86,6 +91,60 @@ function requireDatabaseUrl(): string {
     throw new Error("DATABASE_URL is required for featured catalog E2E fixtures");
   }
   return url;
+}
+
+/**
+ * Align demo featured partners for Discover e2e: at least one featured and one
+ * non-featured partner (by name) for curated Partner venues contrast.
+ */
+export async function ensureDemoFeaturedPartnersSplit(): Promise<{
+  featuredName: string;
+  nonFeaturedName: string;
+}> {
+  const db = createDb(requireDatabaseUrl());
+  const all = await listPartners(db, { limit: 100 });
+  if (all.length < 2) {
+    throw new Error(
+      `Need ≥2 catalog partners for featured-partners Discover contrast (found ${all.length}). Run: bun run seed:demo`,
+    );
+  }
+
+  const firstPartner = all[0];
+  if (!firstPartner) {
+    throw new Error("Need ≥2 catalog partners for featured-partners Discover contrast");
+  }
+
+  let featured = await listFeaturedPartners(db);
+  if (featured.length === 0) {
+    try {
+      await addFeaturedPartner(db, firstPartner.id);
+    } catch (error) {
+      if (!isAlreadyFeaturedError(error)) {
+        throw error;
+      }
+    }
+    featured = await listFeaturedPartners(db);
+  }
+
+  const featuredIds = new Set(featured.map((partner) => partner.id));
+  let nonFeatured = all.find((partner) => !featuredIds.has(partner.id));
+  if (!nonFeatured) {
+    // All partners featured — free the last one for contrast.
+    const last = all[all.length - 1];
+    if (!last) {
+      throw new Error("Need ≥2 catalog partners for featured-partners Discover contrast");
+    }
+    await removeFeaturedPartner(db, last.id);
+    nonFeatured = last;
+    featured = await listFeaturedPartners(db);
+  }
+
+  const featuredRow = featured[0];
+  if (!featuredRow) {
+    throw new Error("Failed to ensure at least one featured partner for Discover e2e");
+  }
+
+  return { featuredName: featuredRow.name, nonFeaturedName: nonFeatured.name };
 }
 
 /**

@@ -20,7 +20,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 ## Guest home, Discover & public marketing
 
-**Guest marketing home is locale home.** `/:locale` renders the membership conversion landing (headline, phone mockup, plan card, benefits). **Discover** is `/:locale/discover` (admin-**featured** upcoming events + partner venue highlights). Bare `/discover` **302** redirects to `/:locale/discover` via `Accept-Language`.
+**Guest marketing home is locale home.** `/:locale` renders the membership conversion landing (headline, phone mockup, plan card, benefits). **Discover** is `/:locale/discover` (admin-curated **featured events** + admin-curated **featured partners** Partner venues marquee — not an automatic catalog slice). Bare `/discover` **302** redirects to `/:locale/discover` via `Accept-Language`.
 
 ### Guest journey (Home → Discover → Events)
 
@@ -34,7 +34,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 |---|---|---|
 | `/:locale` | — | **Guest home** — membership marketing + signup CTA. Signed-in booking-eligible `USER` → `/events` (or onboarding); non-active `USER` → `/discover`; `ADMIN` → `/admin` |
 | `/discover` | — | **302** → `/:locale/discover` |
-| `/:locale/discover` | — | **Discover** — admin-featured events (including past featured) + partner venues. Guests + non-booking-eligible `USER` OK; booking-eligible `USER` → **302** `/events`; `ADMIN` keeps access (QA) |
+| `/:locale/discover` | — | **Discover** — admin-featured events (including past featured) + Partner venues from admin-curated `featured_partners` (up to 8 by `sort_order`; section hidden when empty). Guests + non-booking-eligible `USER` OK; booking-eligible `USER` → **302** `/events`; `ADMIN` keeps access (QA) |
 | `/how-it-works` | — | Static explainer |
 | `/faq` | — | FAQ accordion |
 | `/membership` | — | Plan details; Stripe checkout when signed in (Phase 6+) |
@@ -104,7 +104,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 | **Guest** | Discover → `/discover`, FAQ; Log in (Sign up via auth routes; How it works / Membership via direct URL / in-flow CTAs) | Featured preview → `/events/:id`; full feed via signup/login + active sub → `/events` |
 | **Member (`USER`) non-active** | Discover → `/discover`, FAQ; Saved + Bookings; credits badge; profile; logout | Discover featured list; `/events` / map redirect to Discover; public detail |
 | **Member (`USER`) booking-eligible** | **Browse events** → `/events`, FAQ; Saved + Bookings; credits badge; profile; logout | `/events`, `/events/map`, `/saved`, public detail |
-| **Admin** | Discover + FAQ where shared; admin chrome → `/admin` | Catalog via `/admin/events`; Featured tab at `/admin/featured` |
+| **Admin** | Discover + FAQ where shared; admin chrome → `/admin` | Catalog via `/admin/events`; **Featured events** at `/admin/featured`; **Featured partners** at `/admin/featured-partners` |
 
 See `ui/app-shell.md` for header/footer detail.
 
@@ -124,9 +124,12 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin/events/:id/gallery/remove` | ✅ | ADMIN | Remove one or many gallery photos (confirm) |
 | `/admin/events/:id/delete` | ✅ | ADMIN | Delete confirmation |
 | `/admin/events/:id/codes` | ✅ | ADMIN | Export redemption codes (CSV) |
-| `/admin/featured` | ✅ | ADMIN | Featured events list |
+| `/admin/featured` | ✅ | ADMIN | Featured events list (tab label **Featured events** / **Empfohlene Events**) |
 | `/admin/featured/add?q=` | ✅ | ADMIN | Search and add featured event |
 | `/admin/featured/:eventId/remove` | ✅ | ADMIN | Remove from featured (catalog event kept) |
+| `/admin/featured-partners` | ✅ | ADMIN | Featured partners grid (drag reorder + Save order; tab label **Featured partners** / **Empfohlene Partner**) |
+| `/admin/featured-partners/add?q=` | ✅ | ADMIN | Search and add featured partner |
+| `/admin/featured-partners/remove?partnerIds=` | ✅ | ADMIN | Remove one or many from featured (catalog partners kept) |
 | `/admin/bookings/:id/cancel` | ✅ | ADMIN | Cancel booking (+ waitlist promo path) |
 | `/admin/waitlist?eventId=&status=&page=` | ✅ | ADMIN | Waitlist list |
 | `/admin/waitlist/:id/promote` | ✅ | ADMIN | Manual promote |

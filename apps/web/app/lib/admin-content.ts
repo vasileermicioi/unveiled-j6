@@ -29,6 +29,7 @@ export type AdminCopy = {
   tabPartners: string;
   tabEvents: string;
   tabFeatured: string;
+  tabFeaturedPartners: string;
   tabUsers: string;
   tabWaitlist: string;
   kpiPartners: string;
@@ -160,6 +161,22 @@ export type AdminCopy = {
   featuredRemoveTitle: string;
   featuredRemoveBody: (title: string, date: string) => string;
   featuredRemoveConfirm: string;
+  featuredPartnersTitle: string;
+  featuredPartnersSubtitle: string;
+  featuredPartnersEmpty: string;
+  featuredPartnersAddAction: string;
+  featuredPartnersAddTitle: string;
+  featuredPartnersAddSubtitle: string;
+  featuredPartnersAddEmpty: string;
+  featuredPartnersAddSubmit: string;
+  featuredPartnersReorderHint: string;
+  featuredPartnersSaveOrderAction: string;
+  featuredPartnersSelectLabel: (name: string) => string;
+  featuredPartnersRemoveAction: string;
+  featuredPartnersRemoveBulkAction: string;
+  featuredPartnersRemoveTitle: string;
+  featuredPartnersRemoveBody: string;
+  featuredPartnersRemoveConfirm: string;
   galleryTitle: string;
   gallerySubtitle: (eventTitle: string) => string;
   galleryCapacity: (count: number, max: number) => string;
@@ -343,7 +360,8 @@ const copy: Record<Locale, AdminCopy> = {
     tabOverview: "Übersicht",
     tabPartners: "Partner",
     tabEvents: "Events",
-    tabFeatured: "Empfohlen",
+    tabFeatured: "Empfohlene Events",
+    tabFeaturedPartners: "Empfohlene Partner",
     tabUsers: "Mitglieder",
     tabWaitlist: "Warteliste",
     kpiPartners: "Partner",
@@ -480,6 +498,25 @@ const copy: Record<Locale, AdminCopy> = {
     featuredRemoveBody: (title, date) =>
       `„${title}" (${date}) aus der Featured-Liste entfernen? Das Event bleibt im Katalog unter Events erhalten.`,
     featuredRemoveConfirm: "Aus Featured entfernen",
+    featuredPartnersTitle: "Empfohlene Partner",
+    featuredPartnersSubtitle: "Kuratiere die Partnerorte-Liste für Discover.",
+    featuredPartnersEmpty:
+      "Noch keine empfohlenen Partner. Füge Katalog-Partner über die Suche hinzu.",
+    featuredPartnersAddAction: "Partner hinzufügen",
+    featuredPartnersAddTitle: "Empfohlenen Partner hinzufügen",
+    featuredPartnersAddSubtitle: "Suche bestehende Katalog-Partner, die noch nicht empfohlen sind.",
+    featuredPartnersAddEmpty: "Keine passenden Partner gefunden.",
+    featuredPartnersAddSubmit: "Zur Featured-Liste",
+    featuredPartnersReorderHint:
+      "Zum Sortieren ziehen, dann Reihenfolge speichern. Partner auswählen, dann entfernen.",
+    featuredPartnersSaveOrderAction: "Reihenfolge speichern",
+    featuredPartnersSelectLabel: (name) => `„${name}" auswählen`,
+    featuredPartnersRemoveAction: "Entfernen",
+    featuredPartnersRemoveBulkAction: "Partner entfernen",
+    featuredPartnersRemoveTitle: "Aus Featured entfernen",
+    featuredPartnersRemoveBody:
+      "Ausgewählte Partner aus der Featured-Liste entfernen? Die Partner bleiben im Katalog unter Partner erhalten.",
+    featuredPartnersRemoveConfirm: "Aus Featured entfernen",
     galleryTitle: "Event-Galerie",
     gallerySubtitle: (eventTitle) => `Galerie-Fotos für „${eventTitle}"`,
     galleryCapacity: (count, max) => `${count} / ${max} Fotos`,
@@ -672,7 +709,8 @@ const copy: Record<Locale, AdminCopy> = {
     tabOverview: "Overview",
     tabPartners: "Partners",
     tabEvents: "Events",
-    tabFeatured: "Featured",
+    tabFeatured: "Featured events",
+    tabFeaturedPartners: "Featured partners",
     tabUsers: "Users",
     tabWaitlist: "Waitlist",
     kpiPartners: "Partners",
@@ -809,6 +847,23 @@ const copy: Record<Locale, AdminCopy> = {
     featuredRemoveBody: (title, date) =>
       `Remove “${title}” (${date}) from the featured list? The event stays in the catalog under Events.`,
     featuredRemoveConfirm: "Remove from featured",
+    featuredPartnersTitle: "Featured partners",
+    featuredPartnersSubtitle: "Curate the Partner venues list shown on Discover.",
+    featuredPartnersEmpty: "No featured partners yet. Add catalog partners via search.",
+    featuredPartnersAddAction: "Add partner",
+    featuredPartnersAddTitle: "Add featured partner",
+    featuredPartnersAddSubtitle: "Search existing catalog partners that are not already featured.",
+    featuredPartnersAddEmpty: "No matching partners found.",
+    featuredPartnersAddSubmit: "Add to featured",
+    featuredPartnersReorderHint: "Drag to reorder, then save order. Select partners, then remove.",
+    featuredPartnersSaveOrderAction: "Save order",
+    featuredPartnersSelectLabel: (name) => `Select “${name}”`,
+    featuredPartnersRemoveAction: "Remove",
+    featuredPartnersRemoveBulkAction: "Remove partners",
+    featuredPartnersRemoveTitle: "Remove from featured",
+    featuredPartnersRemoveBody:
+      "Remove the selected partners from the featured list? The partners stay in the catalog under Partners.",
+    featuredPartnersRemoveConfirm: "Remove from featured",
     galleryTitle: "Event gallery",
     gallerySubtitle: (eventTitle) => `Gallery photos for “${eventTitle}”`,
     galleryCapacity: (count, max) => `${count} / ${max} photos`,
@@ -1054,9 +1109,7 @@ export function mapCatalogErrorCode(
   }
 
   if (code === "ALREADY_FEATURED") {
-    return locale === "de"
-      ? "Dieses Event ist bereits in der Featured-Liste."
-      : "This event is already featured.";
+    return locale === "de" ? "Bereits in der Featured-Liste." : "Already on the featured list.";
   }
 
   if (code === "GALLERY_LIMIT_EXCEEDED") {
@@ -1075,6 +1128,12 @@ export function mapCatalogErrorCode(
     return locale === "de"
       ? "Die Galerie-Reihenfolge ist ungültig. Bitte lade die Seite neu und versuche es erneut."
       : "That gallery order is invalid. Reload the page and try again.";
+  }
+
+  if (code === "FEATURED_PARTNERS_REORDER_INVALID") {
+    return locale === "de"
+      ? "Die Featured-Partner-Reihenfolge ist ungültig. Bitte lade die Seite neu und versuche es erneut."
+      : "That featured partners order is invalid. Reload the page and try again.";
   }
 
   if (code === "PARTNER_HAS_EVENTS") {

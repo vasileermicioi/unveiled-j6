@@ -43,6 +43,13 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-partners.feature` | Edit a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Edit a partner` | `pass` |  |
 | `admin-partners.feature` | Renaming a partner propagates to its events | `e2e/specs/admin-partners.spec.ts` · `Scenario: Renaming a partner propagates to its events` | `pass` |  |
 | `admin-partners.feature` | Delete a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Delete a partner` | `pass` | Venue CRUD (MVP); portal/QR scenarios below stay post-MVP |
+| `admin-partners.feature` | List featured partners | `e2e/specs/admin-partners.spec.ts` · `Scenario: List featured partners` | `pass` | Needs `E2E_ADMIN_*`; grid + Save order / Remove partners chrome |
+| `admin-partners.feature` | Add by searching existing partners | `e2e/specs/admin-partners.spec.ts` · `Scenario: Add by searching existing partners` | `pass` | Needs `E2E_ADMIN_*` |
+| `admin-partners.feature` | Admin reorders featured partners by drag and drop | `e2e/specs/admin-partners.spec.ts` · `Scenario: Admin reorders featured partners by drag and drop` | `pass` | Needs `E2E_ADMIN_*`; HTML5 DnD via Playwright |
+| `admin-partners.feature` | Admin remove from featured partners keeps venue | `e2e/specs/admin-partners.spec.ts` · `Scenario: Admin remove from featured partners keeps venue` | `pass` | Needs `E2E_ADMIN_*`; checkbox + bulk remove confirm |
+| `admin-partners.feature` | Empty featured partners list | — | `skip` | Deferred — owner: featured-partners step 03; shared-DB empty state brittle; covered by admin empty-state copy + manual smoke |
+| `admin-events.feature` | List featured events | `e2e/specs/admin-events.spec.ts` · `Scenario: List featured events` | `pass` | Asserts **Featured events** / **Featured partners** tab labels |
+| `admin-events.feature` | Admin remove from featured keeps catalog event | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin remove from featured keeps catalog event` | `pass` | R2 env-skip when vars missing |
 | `admin-users.feature` | List all members | `e2e/specs/admin-users.spec.ts` · `Scenario: List all members` | `pass` | Needs `DATABASE_URL` + `E2E_ADMIN_*` |
 | `admin-users.feature` | Search members | `e2e/specs/admin-users.spec.ts` · `Scenario: Search members` | `pass` |  |
 | `admin-users.feature` | View a member's collapsed summary | `e2e/specs/admin-users.spec.ts` · `Scenario: View a member's collapsed summary` | `pass` | List row columns (role, subscription, credits, …) |
@@ -97,7 +104,10 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `credits-subscription.feature` | Admin freezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin freezes a member's account` | `pass` | ACTIVE → UNPAID via admin freeze |
 | `credits-subscription.feature` | Admin unfreezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin unfreezes a member's account` | `pass` | UNPAID → ACTIVE; no Stripe call |
 | `credits-subscription.feature` | Admin creates a complimentary ticket | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin creates a complimentary ticket` | `pass` | Shared booking path, no credit charge |
-| `event-discovery.feature` | Public discovery preview for guests | `e2e/specs/event-discovery.spec.ts` · `Scenario: Public discovery preview for guests` | `pass` |  |
+| `event-discovery.feature` | Public discovery preview for guests | `e2e/specs/event-discovery.spec.ts` · `Scenario: Public discovery preview for guests` | `pass` | Partner venues section visible when seed has featured partners |
+| `event-discovery.feature` | Guest sees featured Discover | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees featured Discover` | `pass` | Needs `DATABASE_URL`; `ensureDemoFeaturedSplit` |
+| `event-discovery.feature` | Guest sees featured partners only | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees featured partners only` | `pass` | Needs `DATABASE_URL`; `ensureDemoFeaturedPartnersSplit` |
+| `event-discovery.feature` | Empty featured partners hides Partner venues | — | `skip` | Deferred — owner: featured-partners step 03; clearing all featured partners on shared staging DB risks parallel Discover tests |
 | `event-discovery.feature` | Guest can view public event detail without authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest can view public event detail without authentication` | `pass` |  |
 | `event-discovery.feature` | Guest views gallery on event detail | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest views gallery on event detail` | `pass` | Needs `DATABASE_URL` + R2; `ensureDemoEventGallery` |
 | `event-discovery.feature` | No gallery images | `e2e/specs/event-discovery.spec.ts` · `Scenario: No gallery images` | `pass` | Uses seeded konzert (no gallery) |

@@ -4,6 +4,7 @@ export * from "./errors";
 export * from "./event-gallery-images";
 export * from "./events";
 export * from "./featured-events";
+export * from "./featured-partners";
 // Image pipeline (`@unveiled/images` / sip WASM) — import `@unveiled/db/catalog/images`
 // from server routes only. Do not re-export here (pulls WASM into client islands).
 export * from "./partners";

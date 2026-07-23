@@ -3,6 +3,7 @@ export * from "./credit-ledger";
 export * from "./event-gallery-images";
 export * from "./events";
 export * from "./featured-events";
+export * from "./featured-partners";
 export * from "./images";
 export * from "./partners";
 export * from "./saved-events";

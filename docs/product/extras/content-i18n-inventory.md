@@ -136,8 +136,9 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 - Landing page hero/marketing copy (inline in `App.tsx`)
 - How It Works page steps/value points (`HowItWorksPage.tsx`)
 - FAQ questions/answers (`HelpSection.tsx` — hardcoded 3 Q&As per language)
-- Discover/marketing page copy (`apps/web/app/lib/content/discover.ts` — featured empty state: "Aktuell keine empfohlenen Events." / "No featured events right now.")
+- Discover/marketing page copy (`apps/web/app/lib/content/discover.ts` — featured empty state: "Aktuell keine empfohlenen Events." / "No featured events right now."; Partner venues eyebrow "Partnerorte" / "Partner venues")
 - App shell nav Discover / Browse events strings (`apps/web/app/lib/copy.ts` — `nav.discover`, `browseEvents`)
+- Admin Featured events + Featured partners chrome (`apps/web/app/lib/admin-content.ts`): `tabFeatured` Empfohlene Events / Featured events; `tabFeaturedPartners` Empfohlene Partner / Featured partners; `featured*` + `featuredPartners*` list/add/remove titles, empty states, confirm copy (remove keeps catalog partner/event); Featured partners grid: `featuredPartnersReorderHint`, `featuredPartnersSaveOrderAction`, `featuredPartnersRemoveBulkAction`, `featuredPartnersSelectLabel`
 - Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getDistrictLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants` (e.g. `X-Berg`). District UI labels: DE uses Berlin shorthand for `X-Berg` / `P-Berg` / `F-Hain` (other districts keep proper names); EN uses expanded names (`Kreuzberg`, `Prenzlauer Berg`, `Friedrichshain`). Timing/days/languages/moods are translated per locale. Section chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`).
 - "SECURE RSVP // NO REFUNDS" booking policy copy (hardcoded in `BookingModal.tsx`, not in `translations.ts`)
 - Venue check-in inline copy (`BookingsView.tsx`)

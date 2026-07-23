@@ -130,6 +130,40 @@ export function parseGalleryImageIds(body: ParsedBody, asString: AsString): stri
 
 /** Parses `imageIds` from a query string (repeated keys and/or comma-separated). */
 export function parseGalleryImageIdsFromQuery(values: string | string[] | undefined): string[] {
+  return parseIdListFromQuery(values);
+}
+
+/**
+ * Parses repeated (or single) `partnerIds` form fields into a de-duplicated string list.
+ */
+export function parseFeaturedPartnerIds(body: ParsedBody, asString: AsString): string[] {
+  const raw = body.partnerIds;
+  if (raw === undefined) {
+    return [];
+  }
+
+  const values = Array.isArray(raw) ? raw : [raw];
+  const ids: string[] = [];
+  const seen = new Set<string>();
+
+  for (const value of values) {
+    const id = asString(value)?.trim();
+    if (!id || seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    ids.push(id);
+  }
+
+  return ids;
+}
+
+/** Parses `partnerIds` from a query string (repeated keys and/or comma-separated). */
+export function parseFeaturedPartnerIdsFromQuery(values: string | string[] | undefined): string[] {
+  return parseIdListFromQuery(values);
+}
+
+function parseIdListFromQuery(values: string | string[] | undefined): string[] {
   if (values === undefined) {
     return [];
   }

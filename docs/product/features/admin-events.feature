@@ -114,7 +114,7 @@ Feature: Admin — Event Management
 
   Scenario: Gallery manage is available from the featured list
     Given an event is on the featured list
-    When I open the Featured tab ("/:locale/admin/featured")
+    When I open the Featured events tab ("/:locale/admin/featured")
     Then I see a path to manage that event's gallery photos
     And gallery manage is not shown on the Events list or create/edit event forms
 
@@ -125,7 +125,7 @@ Feature: Admin — Event Management
     And the primary hero image is unchanged
 
   Scenario: List featured events
-    When I open the Featured tab ("/:locale/admin/featured")
+    When I open the Featured events tab ("/:locale/admin/featured")
     Then I see the current featured list ordered by sort_order
     And each row shows at least title, partner, and date/time
 

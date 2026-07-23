@@ -1,4 +1,4 @@
-import { listFeaturedEvents, listPartners } from "@unveiled/db";
+import { listFeaturedEvents, listFeaturedPartners } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { DiscoverPage } from "../../components/marketing/DiscoverPage";
@@ -39,7 +39,7 @@ export default createRoute(async (c) => {
       const [featuredEvents, partnerRows] = await Promise.all([
         // Show all curated featured rows (including past) — Discover has no date filter.
         listFeaturedEvents(db),
-        listPartners(db, { limit: 8 }),
+        listFeaturedPartners(db, { limit: 8 }),
       ]);
 
       events = featuredEvents.map(toEventCardItem);

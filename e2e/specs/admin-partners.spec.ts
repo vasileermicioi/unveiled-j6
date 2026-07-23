@@ -1,5 +1,6 @@
 import {
   adminLabels,
+  adminTabLabels,
   createEventViaUI,
   createPartnerViaUI,
   deletePartnerViaUI,
@@ -132,6 +133,146 @@ test.describe("admin-partners.feature", () => {
   test("Scenario: Delete a partner", async ({ page, locale }) => {
     const partner = await createPartnerViaUI(page, locale);
     await deletePartnerViaUI(page, locale, partner.name);
+  });
+
+  test("Scenario: List featured partners", async ({ page, locale }) => {
+    const partner = await createPartnerViaUI(page, locale);
+    await navigateAdminTab(page, locale, "featured-partners");
+    await page.getByRole("link", { name: /partner hinzufügen|add partner/i }).click();
+    await page.goto(`/${locale}/admin/featured-partners/add?q=${encodeURIComponent(partner.name)}`);
+    const addRow = page.getByRole("row").filter({ hasText: partner.name });
+    await expect(addRow).toBeVisible({ timeout: 15_000 });
+    await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
+      timeout: 30_000,
+    });
+
+    const tabs = page.getByRole("tablist");
+    await expect(tabs.getByRole("link", { name: adminTabLabels.featuredPartners })).toBeVisible();
+    await expect(tabs.getByRole("link", { name: adminTabLabels.featuredEvents })).toBeVisible();
+    // Bare legacy labels must not be the tab accessible names.
+    await expect(tabs.getByRole("link", { name: /^featured$/i })).toHaveCount(0);
+    await expect(tabs.getByRole("link", { name: /^empfohlen$/i })).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: /^empfohlene partner$|^featured partners$/i }),
+    ).toBeVisible();
+    await expect(page.getByText(partner.name, { exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /reihenfolge speichern|save order/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /partner entfernen|remove partners/i }),
+    ).toBeVisible();
+  });
+
+  test("Scenario: Add by searching existing partners", async ({ page, locale }) => {
+    const partner = await createPartnerViaUI(page, locale);
+    await navigateAdminTab(page, locale, "featured-partners");
+    await page.getByRole("link", { name: /partner hinzufügen|add partner/i }).click();
+    await expect(page).toHaveURL(/\/admin\/featured-partners\/add/);
+    await page.goto(`/${locale}/admin/featured-partners/add?q=${encodeURIComponent(partner.name)}`);
+    const addRow = page.getByRole("row").filter({ hasText: partner.name });
+    await expect(addRow).toBeVisible({ timeout: 15_000 });
+    await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
+      timeout: 30_000,
+    });
+    await expect(page.getByText(partner.name, { exact: true }).first()).toBeVisible();
+  });
+
+  test("Scenario: Admin reorders featured partners by drag and drop", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    const partnerA = await createPartnerViaUI(page, locale);
+    const partnerB = await createPartnerViaUI(page, locale);
+
+    for (const partner of [partnerA, partnerB]) {
+      await navigateAdminTab(page, locale, "featured-partners");
+      await page.getByRole("link", { name: /partner hinzufügen|add partner/i }).click();
+      await page.goto(
+        `/${locale}/admin/featured-partners/add?q=${encodeURIComponent(partner.name)}`,
+      );
+      const addRow = page.getByRole("row").filter({ hasText: partner.name });
+      await expect(addRow).toBeVisible({ timeout: 15_000 });
+      await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
+      await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
+        timeout: 30_000,
+      });
+    }
+
+    const tileA = page
+      .locator(".admin-featured-partners__tile")
+      .filter({ hasText: partnerA.name })
+      .first();
+    const tileB = page
+      .locator(".admin-featured-partners__tile")
+      .filter({ hasText: partnerB.name })
+      .first();
+    await expect(tileA).toBeVisible({ timeout: 15_000 });
+    await expect(tileB).toBeVisible({ timeout: 15_000 });
+
+    const saveOrder = page.getByRole("button", { name: /reihenfolge speichern|save order/i });
+    await expect(saveOrder).toBeDisabled();
+
+    const boxA = await tileA.boundingBox();
+    const boxB = await tileB.boundingBox();
+    expect(boxA).toBeTruthy();
+    expect(boxB).toBeTruthy();
+    if (!boxA || !boxB) {
+      return;
+    }
+
+    await page.mouse.move(boxA.x + boxA.width / 2, boxA.y + boxA.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(boxB.x + boxB.width / 2, boxB.y + boxB.height / 2, { steps: 12 });
+    await page.mouse.up();
+
+    await expect(saveOrder).toBeEnabled({ timeout: 10_000 });
+    await saveOrder.click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
+      timeout: 30_000,
+    });
+    await expect(
+      page.locator(".admin-featured-partners__tile").filter({ hasText: partnerA.name }).first(),
+    ).toBeVisible();
+  });
+
+  test("Scenario: Admin remove from featured partners keeps venue", async ({ page, locale }) => {
+    const partner = await createPartnerViaUI(page, locale);
+    await navigateAdminTab(page, locale, "featured-partners");
+    await page.getByRole("link", { name: /partner hinzufügen|add partner/i }).click();
+    await page.goto(`/${locale}/admin/featured-partners/add?q=${encodeURIComponent(partner.name)}`);
+    const addRow = page.getByRole("row").filter({ hasText: partner.name });
+    await expect(addRow).toBeVisible({ timeout: 15_000 });
+    await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
+      timeout: 30_000,
+    });
+
+    const tile = page
+      .locator(".admin-featured-partners__tile")
+      .filter({ hasText: partner.name })
+      .first();
+    await expect(tile).toBeVisible({ timeout: 15_000 });
+    await tile.locator(".admin-featured-partners__checkbox").check({ force: true });
+    await page.getByRole("link", { name: /partner entfernen|remove partners/i }).click();
+    await expect(page).toHaveURL(/\/admin\/featured-partners\/remove/);
+    await page
+      .getByRole("button", { name: /aus featured entfernen|remove from featured/i })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
+      timeout: 30_000,
+    });
+    await expect(
+      page.locator(".admin-featured-partners__tile").filter({ hasText: partner.name }),
+    ).toHaveCount(0);
+
+    await page.goto(`/${locale}/discover`);
+    await expect(page.getByLabel(partner.name, { exact: true })).toHaveCount(0);
+
+    await navigateAdminTab(page, locale, "partners");
+    await expect(page.getByRole("row").filter({ hasText: partner.name })).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test("Scenario: Regenerate a partner's venue check-in QR token", {

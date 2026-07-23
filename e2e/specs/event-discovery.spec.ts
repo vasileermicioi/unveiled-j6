@@ -7,6 +7,7 @@ import { expect, type Locale, test } from "../fixtures/base";
 import { activateMemberForBooking, hasDatabaseUrl } from "../fixtures/billing";
 import {
   ensureDemoEventGallery,
+  ensureDemoFeaturedPartnersSplit,
   ensureDemoFeaturedSplit,
   getEventIdByTitle,
   getPartnerIdByName,
@@ -543,6 +544,25 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByText(TITLES.theaterFuture)).toBeVisible({ timeout: 15_000 });
     // Non-featured upcoming catalog event must not appear solely for being soon.
     await expect(page.getByText(TITLES.konzert)).toHaveCount(0);
+  });
+
+  test("Scenario: Guest sees featured partners only", async ({ page, locale }) => {
+    test.skip(
+      !hasDatabaseUrl(),
+      "DATABASE_URL required to ensure featured partners Discover seed split",
+    );
+    const { featuredName, nonFeaturedName } = await ensureDemoFeaturedPartnersSplit();
+    await page.context().clearCookies();
+    await page.goto(`/${locale}/discover`);
+
+    await expect(page.getByText(/partnerorte|partner venues/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    // Partner tiles expose name via aria-label (decorative logos / initials).
+    await expect(page.getByLabel(featuredName, { exact: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByLabel(nonFeaturedName, { exact: true })).toHaveCount(0);
   });
 
   test("Scenario: Inactive member cannot browse the full feed", async ({ page, locale }) => {

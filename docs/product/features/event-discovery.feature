@@ -35,6 +35,20 @@ Feature: Event Discovery
     Then the featured event appears
     And the non-featured upcoming catalog event does not appear solely for being soon
 
+  Scenario: Guest sees featured partners only
+    Given I am not signed in
+    And at least one partner is admin-featured
+    And at least one other catalog partner is not featured
+    When I visit Discover ("/:locale/discover")
+    Then the featured partner appears in Partner venues
+    And the non-featured partner does not appear solely for existing in the catalog
+
+  Scenario: Empty featured partners hides Partner venues
+    Given I am not signed in
+    And no featured partners exist
+    When I visit Discover ("/:locale/discover")
+    Then the Partner venues section is not shown
+
   Scenario: Past featured event remains on Discover
     Given I am not signed in
     And an admin-featured event has a date/time in the past

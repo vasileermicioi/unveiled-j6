@@ -46,3 +46,35 @@ Feature: Admin — Partner Management
   Scenario: Delete a partner
     When I delete a partner
     Then the partner record is removed
+
+  Scenario: List featured partners
+    When I open the Featured partners tab ("/:locale/admin/featured-partners")
+    Then I see the current featured partners grid ordered by sort_order
+    And each tile shows at least name (and logo thumbnail when present)
+    And I see a path to save order and remove selected partners
+
+  Scenario: Add by searching existing partners
+    When I search on the featured partners add page ("/:locale/admin/featured-partners/add?q=")
+    Then I see matching catalog partners that are not already featured
+    And submitting add creates a featured row for that partner
+    And I am redirected to the featured partners list
+
+  Scenario: Admin reorders featured partners by drag and drop
+    Given at least two partners are on the Featured partners list
+    When I drag a partner tile to a new position on the grid
+    And I save the order ("Save order" / "Reihenfolge speichern")
+    Then the new order is saved (sort_order) and shown after reload
+
+  Scenario: Admin remove from featured partners keeps venue
+    Given a partner is on the Featured partners list
+    When I select that partner on the grid
+    And I open remove confirm ("/:locale/admin/featured-partners/remove?partnerIds=")
+    And I confirm remove
+    Then the partner disappears from the featured partners list
+    And Discover no longer lists it in Partner venues
+    And the partner remains available in "/:locale/admin/partners"
+
+  Scenario: Empty featured partners list
+    Given no featured partner rows exist
+    When I open "/:locale/admin/featured-partners"
+    Then I see an empty state and a path to add featured partners

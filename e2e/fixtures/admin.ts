@@ -77,16 +77,30 @@ export function futureDateISO(daysAhead: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-export type AdminTab = "overview" | "partners" | "events" | "featured" | "users" | "waitlist";
+export type AdminTab =
+  | "overview"
+  | "partners"
+  | "events"
+  | "featured"
+  | "featured-partners"
+  | "users"
+  | "waitlist";
 
 const TAB_HREF: Record<AdminTab, string> = {
   overview: "admin",
   partners: "admin/partners",
   events: "admin/events",
   featured: "admin/featured",
+  "featured-partners": "admin/featured-partners",
   users: "admin/users",
   waitlist: "admin/waitlist",
 };
+
+/** Admin chrome tab labels after Featured events rename (never bare Featured / Empfohlen). */
+export const adminTabLabels = {
+  featuredEvents: /^empfohlene events$|^featured events$/i,
+  featuredPartners: /^empfohlene partner$|^featured partners$/i,
+} as const;
 
 export async function navigateAdminTab(page: Page, locale: Locale, tab: AdminTab): Promise<void> {
   await page.goto(`/${locale}/${TAB_HREF[tab]}`);

@@ -10,6 +10,7 @@ import { DEMO_DISCOVERY_TITLES } from "./demo-discovery-titles";
 import { addEventGalleryImages } from "./event-gallery-images";
 import { countEvents, createEvent, listEvents } from "./events";
 import { addFeaturedEvent } from "./featured-events";
+import { addFeaturedPartner } from "./featured-partners";
 import { deleteImageRecord, persistPrebuiltImage } from "./images";
 import { countPartners, createPartner, listPartners } from "./partners";
 import { getDemoCatalog, readDemoSeedPrebuilt } from "./seed-data";
@@ -20,6 +21,9 @@ const DEMO_FEATURED_TITLES: readonly string[] = [
   DEMO_DISCOVERY_TITLES.theaterFuture,
   DEMO_DISCOVERY_TITLES.ausstellung,
 ];
+
+/** How many seeded partners to feature on Discover (leave others non-featured for contrast). */
+const DEMO_FEATURED_PARTNER_LIMIT = 4;
 
 /**
  * Featured upcoming host for demo gallery (≥2 images). Prefer theaterFuture —
@@ -124,9 +128,11 @@ export async function runDemoSeed(
   const pauseMs = SEED_IMAGE_PAUSE_MS;
 
   const createdByTitle = new Map<string, string>();
+  const createdPartners: { id: string; hasLogo: boolean }[] = [];
 
   for (const entry of getDemoCatalog()) {
     const partner = await createPartner(db, entry.partner);
+    createdPartners.push({ id: partner.id, hasLogo: Boolean(partner.logoImageId) });
     await sleep(pauseMs);
 
     for (const eventInput of entry.events) {
@@ -145,6 +151,19 @@ export async function runDemoSeed(
     if (eventId) {
       await addFeaturedEvent(db, eventId);
     }
+  }
+
+  // Prefer partners with logos; leave ≥1 non-featured when the catalog has 2+.
+  const featuredPartnerCandidates = [
+    ...createdPartners.filter((p) => p.hasLogo),
+    ...createdPartners.filter((p) => !p.hasLogo),
+  ];
+  const maxFeaturedPartners =
+    createdPartners.length <= 1
+      ? createdPartners.length
+      : Math.min(DEMO_FEATURED_PARTNER_LIMIT, createdPartners.length - 1);
+  for (const partner of featuredPartnerCandidates.slice(0, maxFeaturedPartners)) {
+    await addFeaturedPartner(db, partner.id);
   }
 
   const galleryHostId = createdByTitle.get(DEMO_GALLERY_HOST_TITLE);

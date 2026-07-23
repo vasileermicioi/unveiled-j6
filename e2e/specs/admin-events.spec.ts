@@ -4,6 +4,7 @@ import type { Page } from "@playwright/test";
 import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 import {
   adminLabels,
+  adminTabLabels,
   createEventViaUI,
   createPartnerViaUI,
   deleteEventViaUI,
@@ -491,6 +492,19 @@ test.describe("admin-events.feature", () => {
       true,
       "Driving 12× Pica multi-upload in Playwright is slow/brittle — covered by @unveiled/db gallery unit/integration tests; manual smoke via admin add when at cap",
     );
+  });
+
+  test("Scenario: List featured events", async ({ page, locale }) => {
+    await navigateAdminTab(page, locale, "featured");
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`));
+    const tabs = page.getByRole("tablist");
+    await expect(tabs.getByRole("link", { name: adminTabLabels.featuredEvents })).toBeVisible();
+    await expect(tabs.getByRole("link", { name: adminTabLabels.featuredPartners })).toBeVisible();
+    await expect(tabs.getByRole("link", { name: /^featured$/i })).toHaveCount(0);
+    await expect(tabs.getByRole("link", { name: /^empfohlen$/i })).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: /^empfohlene events$|^featured events$/i }),
+    ).toBeVisible();
   });
 
   test("Scenario: Admin remove from featured keeps catalog event", async ({ page, locale }) => {

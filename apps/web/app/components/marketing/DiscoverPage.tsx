@@ -9,6 +9,9 @@ import { PageSectionHeader } from "./PageSectionHeader";
 
 const PARTNERS_HEADING_ID = "discover-partners-heading";
 
+/** Enough tiles per marquee group to fill wide viewports (item ≈ 13rem with gap). */
+const MARQUEE_MIN_ITEMS_PER_GROUP = 10;
+
 type DiscoverPageProps = {
   content: DiscoverContent;
   locale: Locale;
@@ -16,20 +19,50 @@ type DiscoverPageProps = {
   partners: DiscoverPartnerTile[];
 };
 
+type MarqueeSlot = {
+  partner: DiscoverPartnerTile;
+  /** Stable key across duplicate partner rows in the padded sequence. */
+  slotKey: string;
+  announce: boolean;
+};
+
+function buildMarqueeSlots(partners: DiscoverPartnerTile[]): MarqueeSlot[] {
+  if (partners.length === 0) {
+    return [];
+  }
+  // Always include every partner once; pad with repeats so the strip fills wide viewports.
+  const target = Math.max(MARQUEE_MIN_ITEMS_PER_GROUP, partners.length);
+  const slots: MarqueeSlot[] = [];
+  let cycle = 0;
+  while (slots.length < target) {
+    for (const partner of partners) {
+      slots.push({
+        partner,
+        slotKey: `${partner.id}-c${cycle}`,
+        announce: cycle === 0,
+      });
+      if (slots.length >= target) {
+        break;
+      }
+    }
+    cycle += 1;
+  }
+  return slots;
+}
+
 function PartnerLogoCell({
   partner,
-  clone = false,
+  announce = false,
 }: {
   partner: DiscoverPartnerTile;
-  clone?: boolean;
+  /** Only the first group’s first pass of each partner is announced. */
+  announce?: boolean;
 }) {
   return (
     <Surface
-      aria-hidden={clone || undefined}
-      aria-label={clone ? undefined : partner.name}
-      className={
-        clone ? "discover-partners__item discover-partners__item--clone" : "discover-partners__item"
-      }
+      aria-hidden={announce ? undefined : true}
+      aria-label={announce ? partner.name : undefined}
+      className="discover-partners__item"
       variant="transparent"
     >
       {partner.logoUrl ? (
@@ -37,7 +70,8 @@ function PartnerLogoCell({
           alt=""
           className="discover-partners__logo"
           decoding="async"
-          loading="lazy"
+          // Eager: clones start off-screen; lazy leaves blank cells as they scroll in.
+          loading="eager"
           src={partner.logoUrl}
         />
       ) : (
@@ -50,6 +84,8 @@ function PartnerLogoCell({
 }
 
 export function DiscoverPage({ content, locale, events, partners }: DiscoverPageProps) {
+  const marqueeSlots = buildMarqueeSlots(partners);
+
   return (
     <Surface
       className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:gap-12 lg:px-8"
@@ -100,12 +136,25 @@ export function DiscoverPage({ content, locale, events, partners }: DiscoverPage
 
           <Surface className="discover-partners__viewport" variant="transparent">
             <Surface className="discover-partners__track" variant="transparent">
-              {partners.map((partner) => (
-                <PartnerLogoCell key={`${partner.id}-a`} partner={partner} />
-              ))}
-              {partners.map((partner) => (
-                <PartnerLogoCell clone key={`${partner.id}-b`} partner={partner} />
-              ))}
+              {/* Two identical groups: translateX(-50%) loops without a seam. */}
+              <Surface className="discover-partners__group" variant="transparent">
+                {marqueeSlots.map((slot) => (
+                  <PartnerLogoCell
+                    announce={slot.announce}
+                    key={`a-${slot.slotKey}`}
+                    partner={slot.partner}
+                  />
+                ))}
+              </Surface>
+              <Surface
+                aria-hidden="true"
+                className="discover-partners__group discover-partners__group--clone"
+                variant="transparent"
+              >
+                {marqueeSlots.map((slot) => (
+                  <PartnerLogoCell key={`b-${slot.slotKey}`} partner={slot.partner} />
+                ))}
+              </Surface>
             </Surface>
           </Surface>
         </Surface>

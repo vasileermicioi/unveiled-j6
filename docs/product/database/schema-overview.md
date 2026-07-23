@@ -4,7 +4,7 @@ Complete production-MVP schema (including booking/credits/waitlist tables even i
 
 ## Entity overview
 
-Tables: `users`, `subscriptions` (1:1), `saved_events`, `featured_events`, `partners`, `images`, `events`, `event_gallery_images`, `bookings`, `waitlist_entries`, `credit_ledger`.
+Tables: `users`, `subscriptions` (1:1), `saved_events`, `featured_events`, `featured_partners`, `partners`, `images`, `events`, `event_gallery_images`, `bookings`, `waitlist_entries`, `credit_ledger`.
 
 ---
 
@@ -149,6 +149,20 @@ Removing a featured row MUST NOT delete the underlying `events` row. Full Discov
 
 ---
 
+### `featured_partners`
+
+Admin-curated Discover Partner venues list (join table; no duplicated partner payload).
+
+| Field | Type | Notes |
+|---|---|---|
+| `partner_id` | FK → `partners.id`, PK | One featured row per partner; **ON DELETE CASCADE** |
+| `sort_order` | integer | Append on add; Discover/admin order by `sort_order` then partner name |
+| `created_at` | timestamptz | |
+
+Removing a featured row MUST NOT delete the underlying `partners` row. Discover displays up to 8 by `sort_order`; admin may hold a longer curated list. Empty curated list hides the Partner venues section on Discover.
+
+---
+
 ### `event_gallery_images`
 
 Optional ordered photo gallery per event (separate from required primary `events.image_id`).
@@ -225,7 +239,9 @@ erDiagram
   partners ||--o| users : "portalUserId"
   partners ||--o{ events : "partnerId"
   partners ||--o{ bookings : "partnerId (denormalized)"
+  partners ||--o{ featured_partners : "partnerId"
   events ||--o{ bookings : "eventId"
+  events ||--o{ featured_events : "eventId"
   events ||--o{ waitlist_entries : "eventId"
   users }o--o{ events : "savedEventIds (recommend join table)"
   images ||--o| partners : "logoImageId"

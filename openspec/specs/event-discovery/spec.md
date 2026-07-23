@@ -362,6 +362,23 @@ The system SHALL render Discover (`/:locale/discover`) using admin-featured even
 - **THEN** Discover is rendered (or otherwise remains reachable)
 - **AND** they are not redirected to `/:locale/events`
 
+### Requirement: Discover Partner venues uses featured partners
+
+Discover (`/:locale/discover`) SHALL render the Partner venues logo marquee from admin-curated `featured_partners` (ordered by `sort_order`, display up to 8), not from an automatic slice of all partners. When the curated list is empty, the Partner venues section SHALL be omitted. Featured events behavior on Discover is unchanged.
+
+#### Scenario: Guest sees curated partner venues
+
+- **GIVEN** at least one partner is admin-featured and at least one other partner is not
+- **WHEN** a guest visits Discover
+- **THEN** the featured partner appears in Partner venues
+- **AND** the non-featured partner does not appear solely for being in the catalog
+
+#### Scenario: Empty featured partners hides section
+
+- **GIVEN** no featured partners exist
+- **WHEN** a guest visits Discover
+- **THEN** the Partner venues section is not shown
+
 ### Requirement: Member event list requires active subscription
 
 The system SHALL allow the member event list and map (`/:locale/events`, `/:locale/events/map`) only for signed-in `USER` accounts with a booking-eligible subscription status (`ACTIVE` or `CANCELLED_PENDING`, via `isBookingEligibleStatus`). Guests SHALL continue to receive the existing auth redirect. A signed-in `USER` without a booking-eligible subscription SHALL be redirected with `302` to `/:locale/discover` and SHALL NOT see the full upcoming catalog. `ADMIN` access to these member feed routes SHALL follow existing admin/member guard behavior without using Discover as the inactive-member landing for admins.
@@ -552,3 +569,23 @@ The system’s BDD/e2e suite SHALL cover featured-only Discover, non-active Disc
 
 - **WHEN** a reader opens sitemap, app-shell, and static Discover copy docs
 - **THEN** they describe the Discover ↔ Browse events split and redirects consistent with the parent guide step 03 table
+
+### Requirement: Product docs match featured partners on Discover
+
+`docs/product/` SHALL document Discover Partner venues as admin-curated `featured_partners` (up to 8 by `sort_order`), not an automatic catalog slice. Empty curated list hides the section. Sitemap, static Discover copy, component map, schema overview, i18n inventory, gaps-and-decisions, and coverage matrix SHALL match shipped behavior including the **Featured events** admin tab label and **Featured partners** admin routes.
+
+#### Scenario: Feature files document featured partners
+
+- **WHEN** product Gherkin and sitemap are read after this step
+- **THEN** they include Featured partners admin list/add/remove and Discover curated partner venues behavior
+- **AND** the admin tab for `/admin/featured` is named Featured events
+
+### Requirement: Automated coverage for featured partners
+
+The BDD/e2e suite SHALL cover (or matrix-defer with owner): Featured events tab label/navigation still works; Featured partners add/remove keeps the venue; Discover shows curated partners only and hides Partner venues when none are featured. Playwright SHALL use proximity/layout selectors only. Demo seed SHALL create a small set of `featured_partners` rows so Discover Partner venues can be non-empty after `seed:demo`.
+
+#### Scenario: Guest sees featured partners only
+
+- **WHEN** a guest visits Discover with a mixed featured/non-featured partner set
+- **THEN** featured partners appear in Partner venues
+- **AND** non-featured partners do not appear solely for existing in the catalog

@@ -57,6 +57,13 @@
       "when": 1784697135699,
       "tag": "0007_massive_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784795288916,
+      "tag": "0008_blushing_shiva",
+      "breakpoints": true
     }
   ]
 }
