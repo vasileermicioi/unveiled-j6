@@ -14,19 +14,11 @@ globs = ["**/*.wasm"]
 type = "CompiledWasm"
 fallthrough = true
 
-# Staging runtime vars — mirrored from repo-root `.env` (+ SITE_URL for this host).
-# Prefer `bun run secrets:workers` for Stripe/Resend and other credentials (not committed here).
-# Redeploy after changes: `bun run deploy:workers`
-[vars]
-SITE_URL = "https://unveiled-j6.deepcode.xyz"
-DATABASE_URL = "postgresql://neondb_owner:npg_r6oNJgfhtH5a@ep-cool-paper-as4ei8ob-pooler.c-4.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-AUTH_URL = "https://ep-cool-paper-as4ei8ob.neonauth.c-4.eu-central-1.aws.neon.tech/neondb/auth"
-S3_ENDPOINT = "https://0d81fbd97853b532cb07ea902d289f77.r2.cloudflarestorage.com"
-S3_REGION = "auto"
-S3_BUCKET = "unveiled-j6"
-S3_ACCESS_KEY_ID = "6d7c919ffc6b4612d2dd483c4c945628"
-S3_SECRET_ACCESS_KEY = "12a912480159c498347ef747ee777c46636145bc8b17874cc965b51e0d883218"
-IMAGE_PUBLIC_BASE_URL = "https://pub-8c02bc7bbd724290a0d1d3346c0d7ccd.r2.dev"
+# Do NOT put credentials in [vars] — they are committed to git and uploaded as
+# dashboard Plaintext on every deploy. Set runtime config via:
+#   bun run secrets:workers          # from repo-root .env (gitignored)
+#   or Cloudflare dashboard → Secrets (preferred for credentials)
+# Optional non-secret public config may go in [vars] (e.g. feature flags).
 
 [assets]
 directory = "dist"

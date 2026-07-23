@@ -121,7 +121,7 @@ Locally, root `.env` supplies the same vars (`bun --env-file=.env` on `db:migrat
 | `RESEND_API_KEY` | 6+ | Resend API key |
 | `DAILY_CODES_FROM_EMAIL` | 6+ | Verified From address |
 
-Staging may still mirror `SITE_URL` / DB / Auth / R2 in `wrangler.toml` `[vars]` for convenience. Production should use dashboard Secrets + `bun run secrets:workers` so credentials are not committed; `keep_vars` keeps any dashboard-only plaintext vars across deploys.
+**Never commit credentials in `wrangler.toml` `[vars]`.** Deploy uploads that block as dashboard **Plaintext** (readable in the UI). Use dashboard **Secrets** or `bun run secrets:workers` (reads gitignored root `.env`). `keep_vars` keeps dashboard-only plaintext vars across deploys; encrypted Secrets already survive deploy.
 
 **Verify after deploy:**
 
@@ -130,7 +130,7 @@ curl https://unveiled-j6.deepcode.xyz/api/health/runtime
 # {"configured":{"AUTH_URL":true,"DATABASE_URL":true,"SITE_URL":true}}
 ```
 
-If any value is `false`, check `apps/web/wrangler.toml` `[vars]` and redeploy.
+If any value is `false`, set the missing keys via `bun run secrets:workers` or the Cloudflare dashboard (Secrets), then redeploy.
 
 Set secrets via dashboard or from repo-root `.env`:
 
