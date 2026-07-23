@@ -7,9 +7,12 @@
 #     mechanics (immediate CANCELLED_PENDING, access retained until period end).
 #   - Account deletion and data export (GDPR) are new capabilities surfaced from this page — full
 #     scenarios live in auth.feature since they're identity-lifecycle actions, not billing actions.
-#   - Account IA uses admin-style navigational tabs (wallet, personal details, vibes, billing,
-#     password, export, delete). The previous stacked Account link card on /profile is removed.
-#     Identity edits live on /profile/details; /profile is the credit wallet tab.
+#   - Account IA uses admin-style navigational tabs (Membership, personal details, vibes, billing,
+#     password, export, delete). Tabs render above PageSectionHeader; tablist, header rule, and
+#     content card share the same column width. The previous stacked Account link card on /profile
+#     is removed. Identity edits live on /profile/details; /profile is the membership manage home
+#     (Stripe Customer Portal CTA when portal-eligible; membership checkout CTA when inactive).
+#     There is no credit-wallet / refill account-home tab.
 
 Feature: Member Profile
   As a member
@@ -47,10 +50,12 @@ Feature: Member Profile
     When I update my interests, moods, districts, travel radius, timing, preferred days, languages, or accessibility needs
     Then my profile preferences are saved
 
-  Scenario: View credit wallet
-    When I view my profile
-    Then I see my current credit balance
+  Scenario: View membership home
+    When I view my profile with a portal-eligible subscription
+    Then I see a membership-style account panel with a manage-subscription control
+    And I do not see a credit-wallet balance panel or refill control
+    And the account tablist appears above the account page heading
 
-  Scenario: Refill credits
-    When I choose to refill my credits
+  Scenario: Inactive member starts membership from profile home
+    When I view my profile without an active portal-eligible subscription and choose to start membership
     Then I am taken to the membership checkout page

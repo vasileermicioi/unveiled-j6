@@ -8,7 +8,11 @@ import { AdminPageShell } from "./AdminPageShell";
 const copy = getAdminCopy(storyLocale);
 
 export const WithCard: Story = () => (
-  <AdminPageShell subtitle={copy.eventsSubtitle} title={copy.eventsTitle}>
+  <AdminPageShell
+    eyebrow={copy.pageEyebrow}
+    subtitle={copy.eventsSubtitle}
+    title={copy.eventsTitle}
+  >
     <Paragraph color="muted">List content inside card shell.</Paragraph>
   </AdminPageShell>
 );
@@ -21,6 +25,7 @@ export const Overview: Story = () => (
         {copy.seedDemo}
       </Link>
     }
+    eyebrow={copy.pageEyebrow}
     subtitle={copy.dashboardSubtitle}
     title={copy.dashboardTitle}
     wrapInCard={false}

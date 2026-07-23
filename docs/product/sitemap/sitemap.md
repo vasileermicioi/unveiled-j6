@@ -88,7 +88,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 | `/waitlist/:id/cancel` | ✅ | USER | Cancel own waitlist entry |
 | `/saved` | ✅ | USER | Saved events |
 | `/bookings?page=` | ✅ | USER | My Tickets |
-| `/profile` | ✅ | USER | Account home (credit wallet tab) |
+| `/profile` | ✅ | USER | Account home (membership manage; Stripe portal CTA) |
 | `/profile/details` | ✅ | USER | Personal details tab (identity form POST) |
 | `/profile/billing` | ✅ | USER | Billing tab; cancel sub, Stripe portal |
 | `/profile/billing/cancel` | ✅ | USER | Cancel subscription confirm (billing tab active) |

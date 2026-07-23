@@ -29,6 +29,7 @@ export function AdminCancelBookingPage({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.usersTitle, href: adminUsersPath(locale) },
         { label: booking.userId, href: memberHref },

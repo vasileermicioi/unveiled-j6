@@ -20,6 +20,8 @@ export const ADMIN_PARTNERS_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE;
 
 export type AdminCopy = {
   navDashboard: string;
+  /** Shared PageSectionHeader eyebrow for AdminPageShell (stable across pages). */
+  pageEyebrow: string;
   dashboardTitle: string;
   dashboardSubtitle: string;
   tabNavLabel: string;
@@ -334,6 +336,7 @@ export type AdminCopy = {
 const copy: Record<Locale, AdminCopy> = {
   de: {
     navDashboard: "Admin",
+    pageEyebrow: "Verwaltung",
     dashboardTitle: "Admin-Dashboard",
     dashboardSubtitle: "Katalog-Kennzahlen.",
     tabNavLabel: "Admin-Bereiche",
@@ -662,6 +665,7 @@ const copy: Record<Locale, AdminCopy> = {
   },
   en: {
     navDashboard: "Admin",
+    pageEyebrow: "Admin",
     dashboardTitle: "Admin dashboard",
     dashboardSubtitle: "Catalog metrics.",
     tabNavLabel: "Admin sections",

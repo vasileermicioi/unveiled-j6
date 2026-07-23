@@ -144,6 +144,8 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 - Event detail checkout-card CTA/notice strings (guest unlock, membership notices, “Secure RSVP // No refunds”, total label) — live in `EventDetailPage.tsx` / locale helpers, not the old `translations.ts` catalog; see `ui/ui-component-map.md` Event detail entry. EventCard primary CTA uses catalog `bookNow` / `waitlist` for all viewer states (guest included).
 - Event detail gallery section + slider a11y (`apps/web/app/lib/event-detail-gallery-copy.ts`): section title Galerie/Gallery; Previous/Next/Close labels; photo alt “Foto N” / “Photo N”.
 - Admin event gallery manage copy (`apps/web/app/lib/admin-content.ts`): `galleryTitle`, `gallerySubtitle`, `galleryCapacity`, `galleryEmpty`, `galleryAdd*` / `galleryRemove*` / `galleryManageAction` / `galleryPhotoLabel` / `gallerySelectLabel` / `galleryReorderHint` / `gallerySaveOrderAction` / `gallerySelectedFilesLabel`; capacity/duplicate/reorder validation messages via `mapCatalogError`.
+- Admin shared page eyebrow (`apps/web/app/lib/admin-content.ts` `pageEyebrow`): "Admin" / "Verwaltung" — used by every `AdminPageShell` `PageSectionHeader`.
+- Member profile account chrome + membership home (`apps/web/app/lib/profile-content.ts`): `eyebrow` Account/Konto; `title` Your account/Dein Konto; tab labels Membership/Mitgliedschaft, Personal details/Persönliche Daten, Vibes / Preferences, Billing/Abrechnung, Change password/Passwort ändern, Export data/Daten exportieren, Delete account/Konto löschen; `membershipTitle` / `membershipSubtitle`; `manageSubscriptionCta` Manage subscription/Abo verwalten; `startMembershipCta` Start membership/Mitgliedschaft starten.
 
 ## Recommendation
 

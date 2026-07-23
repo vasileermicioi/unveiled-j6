@@ -23,7 +23,7 @@ export function DeleteAccountPage({ locale, copy, error = null }: DeleteAccountP
       headline={copy.deleteTitle}
       locale={locale}
     >
-      <Card className="mx-auto w-full max-w-2xl">
+      <Card className="w-full">
         <Card.Content className="flex flex-col gap-6">
           {error ? <Paragraph>{error}</Paragraph> : null}
           <Paragraph>{copy.deleteSubtitle}</Paragraph>

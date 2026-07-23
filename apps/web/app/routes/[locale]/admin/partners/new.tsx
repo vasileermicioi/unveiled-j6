@@ -42,6 +42,7 @@ export const POST = createRoute(async (c) => {
     return renderAdminPage(
       c,
       <AdminPageShell
+        eyebrow={copy.pageEyebrow}
         breadcrumbs={[
           { label: copy.partnersTitle, href: adminPartnersPath(guard.locale) },
           { label: copy.newPartnerTitle },
@@ -84,6 +85,7 @@ export default createRoute(async (c) => {
   return renderAdminPage(
     c,
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.partnersTitle, href: adminPartnersPath(guard.locale) },
         { label: copy.newPartnerTitle },

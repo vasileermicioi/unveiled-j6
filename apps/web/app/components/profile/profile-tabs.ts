@@ -2,7 +2,7 @@ import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
 export type ProfileTab =
-  | "wallet"
+  | "membership"
   | "details"
   | "preferences"
   | "billing"
@@ -11,7 +11,7 @@ export type ProfileTab =
   | "delete-account";
 
 export const PROFILE_TAB_ORDER: ProfileTab[] = [
-  "wallet",
+  "membership",
   "details",
   "preferences",
   "billing",
@@ -20,7 +20,7 @@ export const PROFILE_TAB_ORDER: ProfileTab[] = [
   "delete-account",
 ];
 
-export function profileWalletPath(locale: Locale): string {
+export function profileMembershipPath(locale: Locale): string {
   return localizedPath(locale, "profile");
 }
 
@@ -67,5 +67,5 @@ export function inferProfileTab(pathname: string): ProfileTab {
   if (pathname.includes("/profile/delete-account")) {
     return "delete-account";
   }
-  return "wallet";
+  return "membership";
 }

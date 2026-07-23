@@ -26,6 +26,7 @@ export function AdminDeleteAccountForm({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.usersTitle, href: adminUsersPath(locale) },
         { label: memberLabel, href: cancelHref },

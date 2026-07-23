@@ -1,27 +1,32 @@
 # Member Profile
 
-Authenticated member account home: tabbed credit wallet and personal details, cultural preferences (“Vibes”) editor, password-change entry via Neon Auth / Better Auth UI, profile billing (Customer Portal + cancel), and profile tab navigation.
+Authenticated member account home: tabbed membership manage surface and personal details, cultural preferences (“Vibes”) editor, password-change entry via Neon Auth / Better Auth UI, profile billing (Customer Portal + cancel), and profile tab navigation.
 
 ## Requirements
 
-### Requirement: Profile identity and wallet
+### Requirement: Profile identity and membership home
 
-The system SHALL provide an authenticated credit-wallet surface at `/:locale/profile` where members can view their current credit balance and refill via membership. Personal details (first name, last name, email) SHALL be editable on a dedicated account tab route `/:locale/profile/details` via SSR form POST. Identity persistence SHALL update `public.users` profile/email fields through a package-level helper (not route-only logic). Email changes SHALL remain aligned with Neon Auth / Better Auth identity (no second user store).
+The system SHALL provide an authenticated membership home surface at `/:locale/profile` styled like the membership marketing card (headline/status, vertical perk list, primary CTA). The primary CTA for members with a linked Stripe customer SHALL open the Stripe Customer Portal via SSR form POST to manage the subscription. Members without a portal-eligible subscription SHALL see a CTA to `/:locale/membership` checkout. The account home SHALL NOT present a credit-wallet balance panel or a “Refill credits” control. Personal details (first name, last name, email) SHALL remain editable on `/:locale/profile/details` via SSR form POST. Identity persistence SHALL update `public.users` profile/email fields through a package-level helper (not route-only logic). Email changes SHALL remain aligned with Neon Auth / Better Auth identity (no second user store).
+
+#### Scenario: View membership home
+
+- **WHEN** a signed-in member opens `/profile`
+- **THEN** they see a membership-style account panel (not a credit-wallet balance / refill panel)
+
+#### Scenario: Manage subscription from profile home
+
+- **WHEN** a signed-in member with a Stripe customer id chooses to manage their subscription from `/profile`
+- **THEN** they are redirected to the Stripe Customer Portal (SSR form POST)
+
+#### Scenario: Inactive member starts membership from profile home
+
+- **WHEN** a signed-in member without an active portal-eligible subscription opens `/profile` and chooses to start/reactivate membership
+- **THEN** they are taken to `/:locale/membership`
 
 #### Scenario: View and edit identity
 
 - **WHEN** a signed-in member submits updated first name, last name, or email on `/profile/details`
 - **THEN** the account profile reflects the new values
-
-#### Scenario: View credit wallet
-
-- **WHEN** a signed-in member opens `/profile`
-- **THEN** their current credit balance is shown
-
-#### Scenario: Refill credits
-
-- **WHEN** a signed-in member chooses to refill credits from `/profile`
-- **THEN** they are taken to the membership checkout page (`/:locale/membership`)
 
 #### Scenario: Guest blocked from profile
 
@@ -64,7 +69,7 @@ The system SHALL allow members to change their password through the Neon Auth / 
 
 ### Requirement: Profile navigation entry points
 
-The system SHALL expose account-section navigation as the profile tablist to preferences, **billing** (`/:locale/profile/billing` — implemented page, not a stub-only path), password change, **data export** (`/:locale/profile/data-export`), **account deletion** (`/:locale/profile/delete-account`), and personal details (`/:locale/profile/details`), plus membership refill from the wallet tab. The member app shell SHALL provide a Profile control linking to `/:locale/profile` for signed-in USERs. A stacked Account link card on `/profile` SHALL NOT be required once tabs ship.
+The system SHALL expose account-section navigation as the profile tablist to preferences, **billing** (`/:locale/profile/billing` — implemented page, not a stub-only path), password change, **data export** (`/:locale/profile/data-export`), **account deletion** (`/:locale/profile/delete-account`), personal details (`/:locale/profile/details`), and membership home (`/:locale/profile`). Membership refill-from-wallet SHALL NOT be required. The member app shell SHALL provide a Profile control linking to `/:locale/profile` for signed-in USERs. A stacked Account link card on `/profile` SHALL NOT be required once tabs ship.
 
 #### Scenario: Profile links to preferences and billing
 
@@ -88,12 +93,12 @@ The system SHALL expose account-section navigation as the profile tablist to pre
 
 ### Requirement: Tabbed account navigation
 
-The member account area SHALL expose Credit wallet, Personal details, Vibes/Preferences, Billing, Change password, Export data, and Delete account as navigational tabs using the same link-tablist pattern as admin (`role="tablist"`, active tab via route). The previous stacked Account link card listing those destinations SHALL be removed once tabs ship. Each tab target SHALL remain an SSR page; identity and preference mutations SHALL continue as form POST on their dedicated routes.
+The member account area SHALL expose **Membership** (home at `/:locale/profile`), Personal details, Vibes/Preferences, Billing, Change password, Export data, and Delete account as navigational tabs using the same link-tablist pattern as admin (`role="tablist"`, active tab via route). The previous Credit wallet tab label and wallet panel SHALL be removed. Each tab target SHALL remain an SSR page; identity and preference mutations SHALL continue as form POST on their dedicated routes.
 
 #### Scenario: Account sections are tabs
 
 - **WHEN** a signed-in member opens `/en/profile`
-- **THEN** they see a horizontal tablist for account sections and can open Personal details, Vibes/Preferences, Billing, and the other account destinations from tabs instead of a stacked link card
+- **THEN** they see a horizontal tablist including Membership (not Credit wallet) and can open the other account destinations from tabs
 
 #### Scenario: Deep links keep working
 
@@ -145,12 +150,12 @@ The system SHALL provide authenticated `/:locale/profile/billing` showing curren
 
 ### Requirement: Phase 7 profile Playwright and Ladle coverage
 
-The system SHALL ship Playwright coverage at `e2e/specs/profile.spec.ts` for in-scope `profile.feature` scenarios (identity, password-change entry, preferences, wallet, refill, billing view/update/cancel entry points, and GDPR entry points) using verbatim Scenario titles and proximity selectors. Ladle SHALL include stories for profile billing, preferences, and GDPR export/delete confirm compositions (and related profile pages as needed). `Scenario: Access account deletion and data export` SHALL pass by asserting reachable export/delete entry points (and MAY assert page headings after navigation). Full export download and deletion mechanics MAY remain covered primarily in `auth.spec.ts`. Customer Portal deep hosted flows MAY assert SSR redirect / opt-in policy documented in `e2e/README.md` rather than requiring full Stripe Portal automation in default CI.
+The system SHALL ship Playwright coverage at `e2e/specs/profile.spec.ts` for in-scope `profile.feature` scenarios (identity, password-change entry, preferences, membership home / inactive checkout CTA, billing view/update/cancel entry points, and GDPR entry points) using verbatim Scenario titles and proximity selectors. Coverage SHALL assert membership home CTAs and that the account tablist precedes the account `PageSectionHeader` heading. Ladle SHALL include stories for profile billing, preferences, membership home, and GDPR export/delete confirm compositions (and related profile pages as needed). `Scenario: Access account deletion and data export` SHALL pass by asserting reachable export/delete entry points (and MAY assert page headings after navigation). Full export download and deletion mechanics MAY remain covered primarily in `auth.spec.ts`. Customer Portal deep hosted flows MAY assert SSR redirect / opt-in policy documented in `e2e/README.md` rather than requiring full Stripe Portal automation in default CI. Credit-wallet / refill account-home scenarios SHALL NOT remain as required profile e2e titles.
 
 #### Scenario: Profile spec covers shipped surfaces
 
 - **WHEN** `bun run test:e2e` executes `e2e/specs/profile.spec.ts`
-- **THEN** identity, preferences, wallet, refill, billing entry, and GDPR entry scenarios pass or record named env skips only
+- **THEN** identity, preferences, membership home, inactive checkout CTA, billing entry, and GDPR entry scenarios pass or record named env skips only
 
 #### Scenario: Profile Ladle includes GDPR compositions
 
@@ -166,6 +171,30 @@ The system SHALL ship Playwright coverage at `e2e/specs/profile.spec.ts` for in-
 
 - **WHEN** Phase 7 closes
 - **THEN** `profile.feature` rows are `pass`, `skip`, or `deferred` — not `unshipped`
+
+#### Scenario: Profile e2e asserts tabs above header
+
+- **WHEN** a signed-in member opens `/profile` in Playwright
+- **THEN** the account tablist is above the account page heading (proximity / layout order)
+
+### Requirement: Product docs and BDD match membership home
+
+`docs/product/features/profile.feature`, sitemap, UI maps, and Playwright coverage SHALL describe `/profile` as the membership manage home (Stripe portal CTA; membership checkout when ineligible) with tablist above `PageSectionHeader`, and SHALL NOT describe a credit-wallet / refill account-home tab.
+
+#### Scenario: Profile feature file has no credit-wallet account home
+
+- **WHEN** an implementer reads `docs/product/features/profile.feature`
+- **THEN** account-home scenarios describe membership manage (not credit wallet / refill)
+
+#### Scenario: Coverage matrix tracks membership home e2e
+
+- **WHEN** an implementer reads `docs/product/testing/coverage-matrix.md` profile rows
+- **THEN** Playwright entries match the membership-home scenarios (or explicit skip with reason)
+
+#### Scenario: Sitemap profile row is membership home
+
+- **WHEN** an implementer reads the `/profile` row in `docs/product/sitemap/sitemap.md`
+- **THEN** the blurb describes membership manage home, not a credit-wallet tab
 
 ### Requirement: GDPR profile Ladle coverage
 
@@ -206,14 +235,27 @@ The cultural preferences editor at `/:locale/profile/preferences` SHALL render h
 - **THEN** hangout options use expanded labels (e.g. Kreuzberg)
 - **AND** under `/de/profile/preferences` the X-Berg, P-Berg, and F-Hain options show Berlin shorthand
 
-### Requirement: Account page section header
-Member account pages under `/:locale/profile*` SHALL use the shared `PageSectionHeader` pattern (eyebrow + headline) used by other member surfaces such as Saved and My Tickets, instead of a standalone heading plus muted subtitle-only intro. Page-level muted subtitles under the title SHALL NOT be shown; essential instructional copy for destructive or GDPR flows MAY remain in card body content below the header.
+### Requirement: Account page chrome order and width
+
+Member account pages under `/:locale/profile*` SHALL render the profile tablist **above** the shared `PageSectionHeader` (eyebrow + headline + rule), matching admin tab-above-title order. The tablist, page header (including the header rule), and primary content card SHALL share the same admin-width content shell (`max-w-7xl`) so the header is not wider than the card. Member account pages SHALL use the shared `PageSectionHeader` pattern used by other member surfaces such as Saved and My Tickets, instead of a standalone heading plus muted subtitle-only intro. Page-level muted subtitles under the title SHALL NOT be shown; essential instructional copy for destructive or GDPR flows MAY remain in card body content below the header.
+
+#### Scenario: Tabs above account title
+
+- **WHEN** a signed-in member opens `/en/profile` or another `/en/profile/*` tab route
+- **THEN** the account tablist appears above the account `PageSectionHeader` title
+
+#### Scenario: Header matches content column width
+
+- **WHEN** a signed-in member opens `/en/profile`
+- **THEN** the page header rule aligns to the same column width as the tab track and content card
 
 #### Scenario: Profile header matches member app chrome
+
 - **WHEN** a signed-in member opens `/en/profile`
 - **THEN** the page intro uses the same eyebrow + headline header component pattern as `/en/saved`
 - **AND** a muted subtitle line is not shown directly under the page title
 
 #### Scenario: Account subpages share PageSectionHeader
+
 - **WHEN** a signed-in member opens `/en/profile/details`, `/en/profile/preferences`, `/en/profile/billing`, `/en/profile/security`, `/en/profile/data-export`, or `/en/profile/delete-account`
 - **THEN** each page intro uses `PageSectionHeader` with a localized eyebrow and headline

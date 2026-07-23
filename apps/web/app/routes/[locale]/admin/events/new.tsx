@@ -46,6 +46,7 @@ export const POST = createRoute(async (c) => {
     return renderAdminPage(
       c,
       <AdminPageShell
+        eyebrow={copy.pageEyebrow}
         breadcrumbs={[
           { label: copy.eventsTitle, href: adminEventsPath(guard.locale) },
           { label: copy.newEventTitle },
@@ -83,6 +84,7 @@ export default createRoute(async (c) => {
   return renderAdminPage(
     c,
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.eventsTitle, href: adminEventsPath(guard.locale) },
         { label: copy.newEventTitle },

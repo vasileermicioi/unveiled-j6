@@ -25,6 +25,7 @@ export function AdminWaitlistPromotePage({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.waitlistTitle, href: listHref },
         { label: copy.waitlistPromoteTitle },

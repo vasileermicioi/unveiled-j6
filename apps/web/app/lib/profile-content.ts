@@ -5,9 +5,12 @@ export type ProfileCopy = {
   title: string;
   subtitle: string;
   tabNavLabel: string;
-  walletTitle: string;
-  walletBalance: (credits: number) => string;
-  refillCta: string;
+  membershipTabLabel: string;
+  detailsTabLabel: string;
+  membershipTitle: string;
+  membershipSubtitle: string;
+  manageSubscriptionCta: string;
+  startMembershipCta: string;
   identityTitle: string;
   firstNameLabel: string;
   lastNameLabel: string;
@@ -33,11 +36,14 @@ const copy: Record<Locale, ProfileCopy> = {
   de: {
     eyebrow: "Konto",
     title: "Dein Konto",
-    subtitle: "Identität, Credits und Vibes verwalten.",
+    subtitle: "Mitgliedschaft, Identität und Vibes verwalten.",
     tabNavLabel: "Kontobereiche",
-    walletTitle: "Credit-Wallet",
-    walletBalance: (credits) => `${credits} Credits`,
-    refillCta: "Credits aufladen",
+    membershipTabLabel: "Mitgliedschaft",
+    detailsTabLabel: "Persönliche Daten",
+    membershipTitle: "Deine Mitgliedschaft",
+    membershipSubtitle: "Abo verwalten und Vorteile im Überblick.",
+    manageSubscriptionCta: "Abo verwalten",
+    startMembershipCta: "Mitgliedschaft starten",
     identityTitle: "Persönliche Daten",
     firstNameLabel: "Vorname",
     lastNameLabel: "Nachname",
@@ -61,11 +67,14 @@ const copy: Record<Locale, ProfileCopy> = {
   en: {
     eyebrow: "Account",
     title: "Your account",
-    subtitle: "Manage identity, credits, and vibes.",
+    subtitle: "Manage membership, identity, and vibes.",
     tabNavLabel: "Account sections",
-    walletTitle: "Credit wallet",
-    walletBalance: (credits) => `${credits} credits`,
-    refillCta: "Refill credits",
+    membershipTabLabel: "Membership",
+    detailsTabLabel: "Personal details",
+    membershipTitle: "Your membership",
+    membershipSubtitle: "Manage your subscription and see your perks.",
+    manageSubscriptionCta: "Manage subscription",
+    startMembershipCta: "Start membership",
     identityTitle: "Personal details",
     firstNameLabel: "First name",
     lastNameLabel: "Last name",

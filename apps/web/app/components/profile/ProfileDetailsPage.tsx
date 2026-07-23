@@ -34,7 +34,7 @@ export function ProfileDetailsPage({
       headline={copy.identityTitle}
       locale={locale}
     >
-      <Card className="mx-auto w-full max-w-2xl">
+      <Card className="w-full">
         <Card.Content className="flex flex-col gap-6">
           {error ? <Paragraph>{error}</Paragraph> : null}
           {success ? <Paragraph>{success}</Paragraph> : null}

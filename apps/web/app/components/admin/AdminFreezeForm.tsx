@@ -38,6 +38,7 @@ export function AdminFreezeForm({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.usersTitle, href: adminUsersPath(locale) },
         { label: memberLabel, href: cancelHref },

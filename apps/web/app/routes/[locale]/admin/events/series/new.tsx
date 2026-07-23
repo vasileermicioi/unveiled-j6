@@ -36,6 +36,7 @@ function renderSeriesPage(
   return renderAdminPage(
     c,
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.eventsTitle, href: adminEventsPath(options.locale) },
         { label: copy.newEventSeriesTitle },

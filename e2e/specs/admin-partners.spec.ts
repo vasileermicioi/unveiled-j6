@@ -28,6 +28,9 @@ test.describe("admin-partners.feature", () => {
   test("Scenario: Create a partner", async ({ page, locale }) => {
     const partner = await createPartnerViaUI(page, locale);
     await navigateAdminTab(page, locale, "partners");
+    // PageSectionHeader: Admin/Verwaltung eyebrow + Partners/Partner title (proximity roles/names).
+    await expect(page.getByText(/^verwaltung$|^admin$/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^partner$|^partners$/i })).toBeVisible();
     await expect(page.getByText(partner.name).first()).toBeVisible();
     await expect(page.getByText(partner.contactEmail).first()).toBeVisible();
   });

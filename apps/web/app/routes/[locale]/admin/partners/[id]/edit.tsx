@@ -49,6 +49,7 @@ function renderEditPage(
   return renderAdminPage(
     c,
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.partnersTitle, href: adminPartnersPath(options.locale) },
         { label: copy.editPartnerTitle },

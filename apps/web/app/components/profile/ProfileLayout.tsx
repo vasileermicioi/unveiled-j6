@@ -24,12 +24,14 @@ export function ProfileLayout({
 }: ProfileLayoutProps) {
   return (
     <Surface
-      className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 md:py-14"
+      className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-10 sm:px-6 md:py-14 lg:px-8"
       variant="transparent"
     >
-      <PageSectionHeader eyebrow={eyebrow} headline={headline} />
       <ProfileTabNav activeTab={activeTab} locale={locale} />
-      {children}
+      <Surface className="flex w-full flex-col gap-6" variant="transparent">
+        <PageSectionHeader eyebrow={eyebrow} headline={headline} />
+        {children}
+      </Surface>
     </Surface>
   );
 }

@@ -26,6 +26,7 @@ export function AdminFeaturedRemovePage({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.featuredTitle, href: listHref },
         { label: copy.featuredRemoveTitle },

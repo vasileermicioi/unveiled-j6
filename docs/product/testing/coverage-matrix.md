@@ -129,8 +129,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `profile.feature` | Cancel subscription | `e2e/specs/profile.spec.ts` · `Scenario: Cancel subscription` | `pass` | Confirm page + seeded `CANCELLED_PENDING` |
 | `profile.feature` | Access account deletion and data export | `e2e/specs/profile.spec.ts` · `Scenario: Access account deletion and data export` | `pass` | Entry links + page headings; full mechanics in `auth.spec.ts` |
 | `profile.feature` | Edit cultural preferences ("Vibes") | `e2e/specs/profile.spec.ts` · `Scenario: Edit cultural preferences ("Vibes")` | `pass` |  |
-| `profile.feature` | View credit wallet | `e2e/specs/profile.spec.ts` · `Scenario: View credit wallet` | `pass` |  |
-| `profile.feature` | Refill credits | `e2e/specs/profile.spec.ts` · `Scenario: Refill credits` | `pass` |  |
+| `profile.feature` | View membership home | `e2e/specs/profile.spec.ts` · `Scenario: View membership home` | `pass` | Membership panel + manage CTA; tablist above account heading; skip if no `DATABASE_URL` |
+| `profile.feature` | Inactive member starts membership from profile home | `e2e/specs/profile.spec.ts` · `Scenario: Inactive member starts membership from profile home` | `pass` | Checkout CTA → `/membership`; skip if no `DATABASE_URL` |
 | `static-pages.feature` | Guest marketing home is the locale home page | `e2e/specs/static-pages.spec.ts` · `Scenario: Guest marketing home is the locale home page` | `pass` |  |
 | `static-pages.feature` | Signed-in users are redirected away from the guest marketing home | — | `deferred` | Covered by unit `resolvePostAuthRedirect` + index route; e2e optional |
 | `static-pages.feature` | Discover is available at /discover | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover is available at /discover` | `pass` |  |

@@ -31,6 +31,7 @@ export function AdminEventGalleryAddPage({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.eventsTitle, href: adminEventsPath(locale) },
         { label: copy.editEventTitle, href: `/${locale}/admin/events/${eventId}/edit` },

@@ -33,7 +33,12 @@ export function AdminWaitlistListPage({
   const listPath = adminWaitlistPath(locale);
 
   return (
-    <AdminPageShell subtitle={copy.waitlistSubtitle} title={copy.waitlistTitle} wrapInCard={false}>
+    <AdminPageShell
+      eyebrow={copy.pageEyebrow}
+      subtitle={copy.waitlistSubtitle}
+      title={copy.waitlistTitle}
+      wrapInCard={false}
+    >
       <AdminWaitlistSearchForm
         action={listPath}
         defaultEventId={eventId}

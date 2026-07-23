@@ -89,7 +89,7 @@ Localized 404 with secondary back-to-home CTA.
 **Path:** `components/marketing/PageSectionHeader.tsx`  
 **Theme:** `.page-section-header` (on brand yellow)
 
-Default page/section header: muted uppercase eyebrow, bold headline (`h1` or section heading), full-width rule beneath. Used on Discover, FAQ, auth (`AuthPageLayout`), and member browse surfaces.
+Default page/section header: muted uppercase eyebrow, bold headline (`h1` or section heading), full-width rule beneath. Used on Discover, FAQ, auth (`AuthPageLayout`), member browse, member account/profile (`ProfileLayout`), and admin `AdminPageShell` titles (eyebrow Admin/Verwaltung). On profile pages the tablist renders above this header.
 
 ```tsx
 <PageSectionHeader

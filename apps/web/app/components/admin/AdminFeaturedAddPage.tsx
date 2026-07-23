@@ -23,6 +23,7 @@ export function AdminFeaturedAddPage({ locale, events, query, error }: AdminFeat
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       breadcrumbs={[
         { label: copy.featuredTitle, href: listHref },
         { label: copy.featuredAddTitle },

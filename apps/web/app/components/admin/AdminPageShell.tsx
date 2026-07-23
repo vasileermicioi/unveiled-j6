@@ -1,5 +1,7 @@
-import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
+import { Card, Link, Paragraph, Surface } from "@heroui/react";
 import type { ReactNode } from "react";
+
+import { PageSectionHeader } from "../marketing/PageSectionHeader";
 
 type AdminBreadcrumb = {
   label: string;
@@ -8,6 +10,8 @@ type AdminBreadcrumb = {
 
 type AdminPageShellProps = {
   title: string;
+  /** Localized Admin PageSectionHeader eyebrow (from admin-content `pageEyebrow`). */
+  eyebrow: string;
   subtitle?: string;
   breadcrumbs?: AdminBreadcrumb[];
   actions?: ReactNode;
@@ -18,6 +22,7 @@ type AdminPageShellProps = {
 
 export function AdminPageShell({
   title,
+  eyebrow,
   subtitle,
   breadcrumbs = [],
   actions,
@@ -45,7 +50,7 @@ export function AdminPageShell({
             ))}
           </Surface>
         ) : null}
-        <Heading level={1}>{title}</Heading>
+        <PageSectionHeader eyebrow={eyebrow} headline={title} />
         {subtitle ? (
           <Paragraph className="admin-shell__subtitle" color="muted">
             {subtitle}

@@ -57,7 +57,7 @@ export function BillingPage({
 
   return (
     <ProfileLayout activeTab="billing" eyebrow={copy.eyebrow} headline={copy.title} locale={locale}>
-      <Card className="mx-auto w-full max-w-2xl">
+      <Card className="w-full">
         <Card.Header className="flex flex-col gap-3">
           <Heading level={2}>{copy.planLabel}</Heading>
           {status ? (

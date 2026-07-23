@@ -23,6 +23,7 @@ export async function loadUserSubscription(userId: string): Promise<Subscription
 
 export async function handleBillingPortalPost(
   c: Context,
+  options?: { returnPath?: string },
 ): Promise<
   | { kind: "redirect"; location: string }
   | { kind: "error"; locale: Locale; message: string; subscription: Subscription | null }
@@ -66,7 +67,8 @@ export async function handleBillingPortalPost(
   }
 
   const siteUrl = getSiteUrl();
-  const returnUrl = `${siteUrl}/${locale}/profile/billing`;
+  const returnPath = options?.returnPath ?? "profile/billing";
+  const returnUrl = `${siteUrl}/${locale}/${returnPath}`;
   const stripe = createStripeClient(secretKey);
 
   try {

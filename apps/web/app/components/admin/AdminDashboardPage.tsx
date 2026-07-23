@@ -36,6 +36,7 @@ export function AdminDashboardPage({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       actions={actions}
       subtitle={copy.dashboardSubtitle}
       title={copy.dashboardTitle}

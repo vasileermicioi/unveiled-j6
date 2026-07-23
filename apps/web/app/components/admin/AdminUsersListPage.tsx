@@ -39,7 +39,11 @@ export function AdminUsersListPage({
   });
 
   return (
-    <AdminPageShell subtitle={copy.usersSubtitle} title={copy.usersTitle}>
+    <AdminPageShell
+      eyebrow={copy.pageEyebrow}
+      subtitle={copy.usersSubtitle}
+      title={copy.usersTitle}
+    >
       {successMessage ? (
         <Paragraph className="admin-flash admin-flash--success">{successMessage}</Paragraph>
       ) : null}

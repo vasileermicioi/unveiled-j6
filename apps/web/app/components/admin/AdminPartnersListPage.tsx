@@ -36,6 +36,7 @@ export function AdminPartnersListPage({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       actions={
         <Link
           className="button button--primary button--md"

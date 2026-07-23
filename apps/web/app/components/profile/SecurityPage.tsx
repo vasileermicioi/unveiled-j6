@@ -19,7 +19,7 @@ export function SecurityPage({ locale, copy }: SecurityPageProps) {
       headline={copy.securityTitle}
       locale={locale}
     >
-      <Card className="mx-auto w-full max-w-2xl">
+      <Card className="w-full">
         <Card.Content>
           <ProfileSecuritySettings locale={locale} />
         </Card.Content>

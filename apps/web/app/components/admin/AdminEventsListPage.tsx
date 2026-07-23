@@ -36,6 +36,7 @@ export function AdminEventsListPage({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       actions={
         <Surface className="flex flex-wrap gap-3" variant="transparent">
           <Link

@@ -10,9 +10,9 @@ import {
   profileDataExportPath,
   profileDeleteAccountPath,
   profileDetailsPath,
+  profileMembershipPath,
   profilePreferencesPath,
   profileSecurityPath,
-  profileWalletPath,
 } from "./profile-tabs";
 
 type ProfileTabNavProps = {
@@ -24,8 +24,8 @@ export function ProfileTabNav({ locale, activeTab }: ProfileTabNavProps) {
   const copy = getProfileCopy(locale);
 
   const tabs: { id: ProfileTab; href: string; label: string }[] = [
-    { id: "wallet", href: profileWalletPath(locale), label: copy.walletTitle },
-    { id: "details", href: profileDetailsPath(locale), label: copy.identityTitle },
+    { id: "membership", href: profileMembershipPath(locale), label: copy.membershipTabLabel },
+    { id: "details", href: profileDetailsPath(locale), label: copy.detailsTabLabel },
     { id: "preferences", href: profilePreferencesPath(locale), label: copy.preferencesLink },
     { id: "billing", href: profileBillingPath(locale), label: copy.billingLink },
     { id: "security", href: profileSecurityPath(locale), label: copy.passwordLink },

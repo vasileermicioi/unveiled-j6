@@ -47,6 +47,7 @@ export function AdminEventGalleryListPage({
 
   return (
     <AdminPageShell
+      eyebrow={copy.pageEyebrow}
       actions={
         <Surface className="flex flex-wrap gap-3" variant="transparent">
           <Link className="button button--primary button--md" href={addHref}>

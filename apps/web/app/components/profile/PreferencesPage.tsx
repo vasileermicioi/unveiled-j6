@@ -32,7 +32,7 @@ export function PreferencesPage({
       headline={copy.preferencesTitle}
       locale={locale}
     >
-      <Card className="onboarding-card mx-auto w-full max-w-2xl">
+      <Card className="onboarding-card w-full">
         <Card.Content className="flex flex-col gap-6">
           {error ? <Paragraph>{error}</Paragraph> : null}
           {success ? <Paragraph>{success}</Paragraph> : null}

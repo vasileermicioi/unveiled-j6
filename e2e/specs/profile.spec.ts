@@ -45,7 +45,10 @@ test.describe("profile.feature", () => {
     await expect(
       page.getByRole("tablist", { name: /kontobereiche|account sections/i }),
     ).toBeVisible();
-    await page.getByRole("link", { name: /persönliche daten|personal details/i }).click();
+    await page
+      .getByRole("tablist", { name: /kontobereiche|account sections/i })
+      .getByRole("link", { name: /persönliche daten|personal details/i })
+      .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/profile/details`));
     await expect(
       page.getByRole("heading", { name: /persönliche daten|personal details/i }),
@@ -175,23 +178,46 @@ test.describe("profile.feature", () => {
     await expect(page.getByText(/präferenzen gespeichert|preferences saved/i)).toBeVisible();
   });
 
-  test("Scenario: View credit wallet", async ({ page, locale }) => {
+  test("Scenario: View membership home", async ({ page, locale }) => {
     test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
 
     const user = await onboardFreshMember(page, locale);
     await activateMemberForBooking(user.email, 12);
+    await setStripeBillingIds(user.email, uniqueStripeIds("membership-home"));
     await page.goto(`/${locale}/profile`);
-    await expect(page.getByRole("heading", { name: /credit-wallet|credit wallet/i })).toBeVisible();
-    await expect(page.getByRole("main").getByText(/12 credits/i)).toBeVisible();
+
+    const tabs = page.getByRole("tablist", { name: /kontobereiche|account sections/i });
+    const accountHeading = page.getByRole("heading", { name: /dein konto|your account/i });
+    await expect(tabs).toBeVisible();
+    await expect(accountHeading).toBeVisible();
+    const tabBox = await tabs.boundingBox();
+    const headingBox = await accountHeading.boundingBox();
+    expect(tabBox && headingBox && tabBox.y < headingBox.y).toBeTruthy();
+
+    await expect(
+      page.getByRole("heading", { name: /your membership|deine mitgliedschaft/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /manage subscription|abo verwalten/i }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: /refill credits|credits aufladen/i })).toHaveCount(
+      0,
+    );
     expect(await getUserCredits(user.email)).toBe(12);
   });
 
-  test("Scenario: Refill credits", async ({ page, locale }) => {
+  test("Scenario: Inactive member starts membership from profile home", async ({
+    page,
+    locale,
+  }) => {
     test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
 
     await onboardFreshMember(page, locale);
     await page.goto(`/${locale}/profile`);
-    await page.getByRole("link", { name: /credits aufladen|refill credits/i }).click();
+    await expect(
+      page.getByRole("heading", { name: /your membership|deine mitgliedschaft/i }),
+    ).toBeVisible();
+    await page.getByRole("link", { name: /start membership|mitgliedschaft starten/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/membership`));
   });
 });

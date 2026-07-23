@@ -21,7 +21,7 @@ export function DataExportPage({ locale, copy }: DataExportPageProps) {
       headline={copy.exportTitle}
       locale={locale}
     >
-      <Card className="mx-auto w-full max-w-2xl">
+      <Card className="w-full">
         <Card.Content className="flex flex-col gap-6">
           <Paragraph>{copy.exportSubtitle}</Paragraph>
           <Link className="button button--primary button--md sm:max-w-xs" href={downloadHref}>
