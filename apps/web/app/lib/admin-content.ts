@@ -281,6 +281,7 @@ export type AdminCopy = {
   partnerLabel: string;
   titleLabel: string;
   descriptionLabel: string;
+  descriptionMarkdownHint: string;
   neighborhoodLabel: string;
   categoryLabel: string;
   eventTypeLabel: string;
@@ -630,6 +631,8 @@ const copy: Record<Locale, AdminCopy> = {
     partnerLabel: "Partner",
     titleLabel: "Titel",
     descriptionLabel: "Beschreibung",
+    descriptionMarkdownHint:
+      "Markdown wird unterstützt (Überschriften, Listen, Links, Hervorhebung).",
     neighborhoodLabel: "Kiez",
     categoryLabel: "Kategorie",
     eventTypeLabel: "Event-Typ",
@@ -976,6 +979,7 @@ const copy: Record<Locale, AdminCopy> = {
     partnerLabel: "Partner",
     titleLabel: "Title",
     descriptionLabel: "Description",
+    descriptionMarkdownHint: "Markdown is supported (headings, lists, links, emphasis).",
     neighborhoodLabel: "Neighborhood",
     categoryLabel: "Category",
     eventTypeLabel: "Event type",

@@ -17,6 +17,16 @@ Feature: Admin — Event Management
     Then the event is added to the catalog
     And its remaining capacity defaults to its total capacity
     And its startTimeMinutes and weekday are computed from its dateTime
+    # description is Markdown source (MDXEditor-assisted); other required fields unchanged
+
+  Scenario: Admin authors Markdown description
+    When I create or edit an event and enter Markdown in the description editor
+    Then the event is saved with that Markdown source
+    And guests see rendered Markdown on the public event detail page
+
+  Scenario: Series create uses the same Markdown description editor
+    When I open the series create form
+    Then the shared base fields include the same MDXEditor-based description control
 
   Scenario: Supply the event image as a direct upload
     When I create or edit an event and upload an image file
@@ -64,6 +74,7 @@ Feature: Admin — Event Management
   Scenario: Edit event details
     When I update an event's title, description, image, price, or redemption configuration
     Then the changes are saved and reflected in the feed
+    # description remains Markdown source; the editor is initialized from stored Markdown
 
   Scenario: Delete an event
     When I delete an event

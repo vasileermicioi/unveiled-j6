@@ -260,6 +260,16 @@ Mobile drawer: plain-text links under section labels (Navigation / Language / Ac
 
 ---
 
+### `EventDescriptionEditor`
+
+**Path:** `islands/EventDescriptionEditor.tsx` (implementation: `components/admin/EventDescriptionEditor.tsx` + dynamic `EventDescriptionMdx.tsx`)
+
+Admin-only Markdown authoring for event create/edit/series (`EventAdminBaseFields`). Uses `@mdxeditor/editor` (form-control exception). Keeps a native `textarea` named `description` in sync for SSR form POST. Public pages never import this island.
+
+Related SSR renderer (not an island): `components/MarkdownContent.tsx` — GFM via `react-markdown` + `remark-gfm`, HeroUI-mapped nodes, themed under `.event-description-markdown`. Used on public event detail.
+
+---
+
 ## Future components (not built — do not invent locally)
 
 From `docs/product/ui/ui-component-map.md` — will land in later phases:

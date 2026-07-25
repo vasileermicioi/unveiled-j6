@@ -553,9 +553,64 @@ The public locale home `/:locale` (Discover) SHALL render up to six upcoming eve
 - **WHEN** at least one future event exists in the catalog
 - **THEN** `/` (locale home) displays up to six EventCards ordered by ascending `date_time`
 
+### Requirement: Event description is Markdown at rest
+
+The system SHALL store each event's `description` as Markdown text in `events.description` (existing text column; no separate HTML column). Product schema documentation SHALL state that `events.description` is Markdown text at rest, rendered with GFM on public detail and authored via MDXEditor in admin.
+
+#### Scenario: Plain text remains valid
+
+- **WHEN** an event description contains only plain paragraphs without Markdown syntax
+- **THEN** public rendering shows the same readable text as before
+
+#### Scenario: Schema documentation matches storage
+
+- **WHEN** an implementer reads `docs/product/database/schema-overview.md` for `events.description`
+- **THEN** the field is documented as Markdown at rest (not opaque plain-only text)
+
+### Requirement: Demo seed includes Markdown description
+
+Demo seed data SHALL include at least one upcoming event whose description uses multi-block Markdown (heading, list, and a link) so staging demos exercise the render pipeline. The seed path remains the Abundo fixture consumed by `@unveiled/db` catalog seed (`fixtures/abundo-berlin-demo.json` via `seed-data.ts`).
+
+#### Scenario: Seeded Markdown event
+
+- **WHEN** demo seed runs on an empty catalog
+- **THEN** at least one seeded event description contains Markdown structure beyond a single plain paragraph (heading, list, and a link)
+
+### Requirement: Product schema documents Markdown description
+
+Product schema documentation (`docs/product/database/schema-overview.md`) SHALL state that `events.description` is Markdown text at rest, rendered with GFM on public detail and authored via MDXEditor in admin. Canonical UI docs SHALL record the public `MarkdownContent` surface and the admin MDXEditor form-control exception (`ui-component-map.md`, `design-system.md`, `docs/COMPONENTS.md`) and SHALL log the decision in `gaps-and-decisions.md`.
+
+#### Scenario: Schema overview notes Markdown at rest
+
+- **WHEN** an agent reads the `events.description` field documentation in `schema-overview.md`
+- **THEN** it states that the value is Markdown text at rest
+
+#### Scenario: Design system lists MDXEditor exception
+
+- **WHEN** an agent reads `docs/product/ui/design-system.md` form-control exceptions
+- **THEN** MDXEditor is listed alongside the existing image-upload / geo-picker / `@better-auth-ui/*` exceptions
+
+### Requirement: Public event detail renders Markdown with GFM
+
+The system SHALL render the event description on the public event detail page using Markdown with GitHub-Flavored Markdown (GFM) extensions, without executing or embedding raw HTML from the description.
+
+#### Scenario: Emphasis and lists render
+
+- **WHEN** a guest opens `/:locale/events/:id` for an event whose description includes emphasis and a Markdown list
+- **THEN** the identity column shows formatted emphasis and list structure rather than raw Markdown markers
+
+### Requirement: SEO and JSON-LD use plain text from Markdown
+
+The system SHALL derive meta description and `schema.org/Event` `description` from a plain-text extraction of the Markdown description (then truncate for meta as today).
+
+#### Scenario: Meta description has no Markdown markers
+
+- **WHEN** an event description contains Markdown markers such as `**bold**` or `# Heading`
+- **THEN** the SSR `<meta name="description">` and JSON-LD `description` contain the readable plain text without those markers
+
 ### Requirement: Public event detail page
 
-The web app SHALL serve `/:locale/events/:id` without requiring authentication for guests and crawlers, presenting a checkout-focused layout: an identity column (category // partner, title, description, location, hero image) and a summary/action card showing ticket quantity affordance (when applicable), contextual membership/auth messaging, and the primary next-step CTA. Membership credit cost/total and event date/time chrome SHALL be visible only to booking-eligible viewers (SSR `EventDetailViewer.kind === "eligible"` / `ACTIVE` + `CANCELLED_PENDING`); guests and other non–booking-eligible signed-in viewers SHALL NOT see those fields in the page UI. On large viewports the identity column and summary card SHALL share a common top alignment within the main content grid. The hero image SHALL span the identity column width and use responsive sizing appropriate to sm/md/lg viewports (not a permanently undersized inset box). Share/OG metadata SHALL continue to be rendered. JSON-LD `schema.org/Event` MAY still include `startDate` for crawlers even when UI date chrome is gated. Product docs under `docs/product/` (sitemap auth column, SEO indexability, authorization matrix) SHALL mark this route as public (`Auth` empty/`—`, not USER-required). Bookable future events (`date_time` in the future and remaining capacity > 0) SHALL be indexable; sold-out and past events SHALL still render HTTP 200 with a clear state and `noindex, follow`. Booking, waitlist, and save mutations SHALL remain on dedicated authenticated routes; the detail page SHALL NOT create bookings or ledger entries. A close control SHALL navigate via Link to Discover or the member events feed (or a safe `returnTo`), not dismiss a client-only modal.
+The web app SHALL serve `/:locale/events/:id` without requiring authentication for guests and crawlers, presenting a checkout-focused layout: an identity column (category // partner, title, **description rendered as Markdown/GFM** via the shared Markdown pipeline, location, hero image) and a summary/action card showing ticket quantity affordance (when applicable), contextual membership/auth messaging, and the primary next-step CTA. Membership credit cost/total and event date/time chrome SHALL be visible only to booking-eligible viewers (SSR `EventDetailViewer.kind === "eligible"` / `ACTIVE` + `CANCELLED_PENDING`); guests and other non–booking-eligible signed-in viewers SHALL NOT see those fields in the page UI. On large viewports the identity column and summary card SHALL share a common top alignment within the main content grid. The hero image SHALL span the identity column width and use responsive sizing appropriate to sm/md/lg viewports (not a permanently undersized inset box). Share/OG metadata SHALL continue to be rendered, with meta description and JSON-LD `description` derived from plain-text extraction of the Markdown description. JSON-LD `schema.org/Event` MAY still include `startDate` for crawlers even when UI date chrome is gated. Product docs under `docs/product/` (sitemap auth column, SEO indexability, authorization matrix) SHALL mark this route as public (`Auth` empty/`—`, not USER-required). Bookable future events (`date_time` in the future and remaining capacity > 0) SHALL be indexable; sold-out and past events SHALL still render HTTP 200 with a clear state and `noindex, follow`. Booking, waitlist, and save mutations SHALL remain on dedicated authenticated routes; the detail page SHALL NOT create bookings or ledger entries. A close control SHALL navigate via Link to Discover or the member events feed (or a safe `returnTo`), not dismiss a client-only modal.
 
 #### Scenario: Guest opens a shared event link
 
@@ -610,7 +665,7 @@ The web app SHALL serve `/:locale/events/:id` without requiring authentication f
 #### Scenario: Event JSON-LD stub
 
 - **WHEN** the event detail HTML is rendered
-- **THEN** a `schema.org/Event` JSON-LD block includes at minimum name, startDate, location, image (hero-1920 URL), description, and organizer
+- **THEN** a `schema.org/Event` JSON-LD block includes at minimum name, startDate, location, image (hero-1920 URL), description (plain text derived from Markdown), and organizer
 
 #### Scenario: Unknown event id
 
@@ -621,6 +676,11 @@ The web app SHALL serve `/:locale/events/:id` without requiring authentication f
 
 - **WHEN** an agent reads `docs/product/sitemap/sitemap.md` after this change
 - **THEN** `/events/:id` has Auth empty/`—` (not USER-required) while `/events/:id/book` and waitlist remain gated
+
+#### Scenario: Identity description renders Markdown
+
+- **WHEN** a guest opens `/:locale/events/:id` for an event whose description includes Markdown emphasis or a list
+- **THEN** the identity column presents rendered Markdown/GFM rather than a single unparsed plain-text paragraph
 
 ### Requirement: Detail checkout quantity affordance
 

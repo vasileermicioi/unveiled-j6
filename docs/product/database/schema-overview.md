@@ -99,7 +99,7 @@ No per-variant rows or columns — the six filenames are a fixed, universal conv
 | `id` | text/uuid, PK | |
 | `partner_id` | text/uuid, FK → `partners.id` | |
 | `partner_name` | text | **Denormalized** from `partners.name` — kept in sync on partner rename in the old app. Recommend either (a) keeping the denormalization with an app-layer sync step, or (b) dropping it and always joining `partners` — Postgres makes the join cheap, so (b) is likely simpler now |
-| `title`, `description`, `address`, `neighborhood` | text | |
+| `title`, `description`, `address`, `neighborhood` | text | `description` is **Markdown at rest** (GFM on public detail via `MarkdownContent`; authored in admin via MDXEditor). Plain text remains valid Markdown. No separate HTML column. |
 | `image_id` | uuid, FK → `images.id`, **not nullable** | **Was `image_url` (text)** — replaced by a real image with generated size variants; see `extras/image-uploads.md`. Stays required, matching today's `image` field being non-optional on event create/edit (`features/admin-events.feature`) |
 | `category`, `event_type` | text | Free-form strings today — consider enum/lookup table if the category list is meant to be fixed |
 | `tags` | text[] | |

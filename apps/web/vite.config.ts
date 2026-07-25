@@ -8,9 +8,13 @@ import honox from "honox/vite";
 import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from "vite";
 
 const repoRoot = path.resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
-const qsShimPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "ssr-shims/qs.js");
+const webAppDir = path.dirname(fileURLToPath(import.meta.url));
+const qsShimPath = path.join(webAppDir, "ssr-shims/qs.js");
+const styleToJsShimPath = path.join(webAppDir, "ssr-shims/style-to-js.js");
+const debugShimPath = path.join(webAppDir, "ssr-shims/debug.js");
+const extendShimPath = path.join(webAppDir, "ssr-shims/extend.js");
 
-const serverEntry = path.join(path.dirname(fileURLToPath(import.meta.url)), "app/server.ts");
+const serverEntry = path.join(webAppDir, "app/server.ts");
 
 /** Paths outside the web app that should not trigger dev-server reloads. */
 const devIgnoreWatching = [
@@ -120,6 +124,12 @@ export default defineConfig(({ command, mode }) => {
       alias: {
         // Stripe ESM → CJS `qs` blows up Vite SSR (`require is not defined`).
         qs: qsShimPath,
+        // react-markdown → hast-util-to-jsx-runtime → CJS `style-to-js` (same issue).
+        "style-to-js": styleToJsShimPath,
+        // react-markdown → micromark → CJS `debug` (`module is not defined`).
+        debug: debugShimPath,
+        // react-markdown → unified → CJS `extend` (`module is not defined`).
+        extend: extendShimPath,
       },
       conditions: workerSsrBuild
         ? ["workerd", "worker", "module", "browser", "development|production"]

@@ -53,7 +53,7 @@ Prefer **native** HTML controls for choice, numeric, date, and file fields when 
 
 Keep HeroUI for text fields (`TextField` / `TextArea`), buttons, labels, and layout chrome. Native controls MAY be wrapped in HeroUI `Label` / `Surface` / `Field`. Theme styling belongs in `globals.css` tokens (Discover `.event-feed-filters__select`, onboarding preference cards, admin `.admin-native-select` / `.admin-native-number`) — not ad-hoc per-route colors.
 
-**Exceptions (keep non-native):** admin image upload / Pica processing UI; `EventGeoPicker` / map islands; `@better-auth-ui/*` auth chrome.
+**Exceptions (keep non-native):** admin image upload / Pica processing UI; `EventGeoPicker` / map islands; admin event description **MDXEditor** (`EventDescriptionEditor` island — still submits Markdown via SSR form field `description`); `@better-auth-ui/*` auth chrome.
 
 Preference allowlist keys stay locale-invariant; user-visible option labels come from locale copy (`onboarding-content.ts`).
 

@@ -12,6 +12,7 @@ import type {
 } from "./content/types";
 import type { Locale } from "./locale";
 import { LOCALES, localizedPath, switchLocalePath } from "./locale";
+import { markdownToPlainText } from "./markdown";
 import { absoluteUrl, getDefaultOgImage } from "./site-config";
 
 const SITE_NAME = "Unveiled Berlin";
@@ -129,7 +130,7 @@ export function eventDetailPageMeta(
   robots?: string;
 } {
   const title = `${event.title} at ${event.partnerName}`;
-  const description = truncateDescription(event.description);
+  const description = truncateDescription(markdownToPlainText(event.description));
   let ogImage: string | undefined;
 
   try {
@@ -179,7 +180,7 @@ export function buildEventJsonLd(event: Event): EventJsonLd {
     "@type": "Event",
     name: event.title,
     startDate: event.dateTime.toISOString(),
-    description: event.description,
+    description: markdownToPlainText(event.description),
     image,
     location: {
       "@type": "Place",

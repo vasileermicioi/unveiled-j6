@@ -1,8 +1,8 @@
 "use client";
 
-import { Description, Input, Label, Surface, TextArea, TextField } from "@heroui/react";
+import { Description, Input, Label, Surface, TextField } from "@heroui/react";
 import type { SecretCodeMode, TicketType, TimingMode } from "@unveiled/db";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import {
   getAdminCopy,
@@ -16,6 +16,7 @@ import type { Locale } from "../../lib/locale";
 import { AdminFormNumberField } from "./AdminFormNumberField";
 import { AdminFormSelect } from "./AdminFormSelect";
 import { EventAdminDateTimeFields } from "./EventAdminDateFields";
+import { EventDescriptionEditor } from "./EventDescriptionEditor";
 import { EventGeoPicker } from "./EventGeoPicker";
 import { EventImageUpload } from "./EventImageUpload";
 import type { EventFormDefaults, PartnerOption } from "./event-admin-types";
@@ -53,6 +54,9 @@ export function EventAdminBaseFields({
   const categoryOptions = getEventCategoryOptions(locale);
   const eventTypeOptions = getEventTypeOptions(locale);
   const neighborhoodOptions = getEventNeighborhoodOptions(locale, defaults?.neighborhood);
+  const descriptionFieldId = useId();
+  const descriptionLabelId = useId();
+  const descriptionHintId = useId();
   const [ticketType, setTicketType] = useState<TicketType>(defaultTicketType(defaults));
   const [secretCodeMode, setSecretCodeMode] = useState<SecretCodeMode>(
     defaultSecretCodeMode(defaults),
@@ -74,10 +78,22 @@ export function EventAdminBaseFields({
         <Input />
       </TextField>
 
-      <TextField defaultValue={defaults?.description} fullWidth isRequired name="description">
-        <Label>{copy.descriptionLabel}</Label>
-        <TextArea rows={4} />
-      </TextField>
+      {/*
+        Description uses MDXEditor (non-native exception with image upload / geo picker).
+        SSR POST still submits native name="description". design-system.md sync → step 03.
+      */}
+      <Surface className="flex flex-col gap-2" variant="transparent">
+        <Label id={descriptionLabelId}>{copy.descriptionLabel}</Label>
+        <EventDescriptionEditor
+          aria-describedby={descriptionHintId}
+          aria-labelledby={descriptionLabelId}
+          id={descriptionFieldId}
+          initialMarkdown={defaults?.description ?? ""}
+          name="description"
+          required
+        />
+        <Description id={descriptionHintId}>{copy.descriptionMarkdownHint}</Description>
+      </Surface>
 
       <TextField defaultValue={defaults?.address} fullWidth isRequired name="address">
         <Label>{copy.addressLabel}</Label>

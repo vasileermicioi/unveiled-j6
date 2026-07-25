@@ -14,6 +14,7 @@ import { getEventDetailGalleryCopy } from "../../lib/event-detail-gallery-copy";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import type { PublicEventGalleryImage } from "../../lib/public-event-gallery";
+import MarkdownContent from "../MarkdownContent";
 
 const META_ICON_SIZE = 14;
 
@@ -483,7 +484,10 @@ export function EventDetailPage({
           <Heading className="event-detail--checkout__title" level={1}>
             {event.title}
           </Heading>
-          <Paragraph className="event-detail--checkout__description">{event.description}</Paragraph>
+          <MarkdownContent
+            className="event-detail--checkout__description"
+            markdown={event.description}
+          />
           <Surface className="event-detail--checkout__rule" variant="transparent">
             <Paragraph className="sr-only">—</Paragraph>
           </Surface>

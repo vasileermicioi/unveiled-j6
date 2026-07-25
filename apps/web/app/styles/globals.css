@@ -789,6 +789,89 @@
     color: var(--color-brand-dark);
   }
 
+  /* Markdown description chrome — native list/table/code under themed scope */
+  .event-description-markdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    color: var(--color-brand-dark);
+    font-family: var(--font-sans);
+  }
+
+  .event-description-markdown .heading,
+  .event-description-markdown .paragraph {
+    color: var(--color-brand-dark);
+  }
+
+  .event-description-markdown .link {
+    color: var(--color-brand-dark);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    font-weight: 600;
+  }
+
+  .event-description-markdown .link:hover,
+  .event-description-markdown .link[data-hovered="true"] {
+    color: var(--color-brand-dark);
+    text-decoration-thickness: 2px;
+  }
+
+  .event-description-markdown ul,
+  .event-description-markdown ol {
+    margin: 0;
+    padding-inline-start: 1.25rem;
+    color: var(--color-brand-dark);
+  }
+
+  .event-description-markdown li {
+    margin-block: 0.25rem;
+  }
+
+  .event-description-markdown blockquote {
+    margin: 0;
+    padding-inline-start: 0.75rem;
+    border-inline-start: 3px solid var(--color-brand-dark);
+    color: var(--color-brand-dark);
+  }
+
+  .event-description-markdown hr {
+    width: 100%;
+    margin: 0.25rem 0;
+    border: none;
+    border-top: 2px solid var(--color-brand-dark);
+  }
+
+  .event-description-markdown table {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    color: var(--color-brand-dark);
+  }
+
+  .event-description-markdown th,
+  .event-description-markdown td {
+    border: 1px solid var(--color-brand-dark);
+    padding: 0.35rem 0.5rem;
+    text-align: start;
+  }
+
+  .event-description-markdown pre {
+    margin: 0;
+    overflow-x: auto;
+    border: 1px solid var(--color-brand-dark);
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-brand-dark);
+    background-color: var(--color-brand-cream);
+    box-shadow: none;
+  }
+
+  .event-description-markdown :not(pre) > code {
+    font-size: 0.875em;
+    color: var(--color-brand-dark);
+  }
+
   .event-detail--checkout__rule {
     width: 100%;
     border-top: 2px solid var(--color-brand-dark);
@@ -1860,6 +1943,98 @@
     font: inherit;
     font-weight: 600;
     box-shadow: none;
+  }
+
+  /* Admin MDXEditor — event description Markdown (event-markdown-02) */
+  .admin-event-description-editor {
+    position: relative;
+    width: 100%;
+  }
+
+  .admin-event-description-editor__mdx {
+    width: 100%;
+    border: var(--border-width) solid var(--border);
+    border-radius: 0;
+    background-color: var(--field-background);
+    color: var(--foreground);
+    box-shadow: none;
+  }
+
+  .admin-event-description-editor__mdx .mdxeditor-toolbar {
+    border-bottom: var(--border-width) solid var(--border);
+    border-radius: 0;
+    background-color: var(--field-background);
+    box-shadow: none;
+  }
+
+  .admin-event-description-editor__content {
+    min-height: 10rem;
+    padding: 0.75rem;
+    font: inherit;
+    font-family: var(--font-sans);
+    color: var(--foreground);
+  }
+
+  .admin-event-description-editor__content a {
+    color: var(--foreground);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    font-weight: 600;
+  }
+
+  .admin-event-description-editor__content ul,
+  .admin-event-description-editor__content ol {
+    margin: 0.25rem 0;
+    padding-inline-start: 1.25rem;
+  }
+
+  .admin-event-description-editor__content h1,
+  .admin-event-description-editor__content h2,
+  .admin-event-description-editor__content h3,
+  .admin-event-description-editor__content h4,
+  .admin-event-description-editor__content h5,
+  .admin-event-description-editor__content h6 {
+    margin: 0.5rem 0 0.25rem;
+    font-family: var(--font-sans);
+    font-weight: 900;
+    color: var(--foreground);
+  }
+
+  .admin-event-description-editor__fallback {
+    width: 100%;
+    min-height: 8rem;
+    padding: 0.5rem 0.75rem;
+    border: var(--border-width) solid var(--border);
+    border-radius: 0;
+    background-color: var(--field-background);
+    color: var(--foreground);
+    font: inherit;
+    font-weight: 600;
+    box-shadow: none;
+    resize: vertical;
+  }
+
+  .admin-event-description-editor__fallback:focus {
+    outline: none;
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
+  .admin-event-description-editor__fallback:focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+
+  .admin-event-description-editor__sync {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .admin-native-number:focus {
