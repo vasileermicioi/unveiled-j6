@@ -30,7 +30,7 @@ Feature: Onboarding
   Scenario: Already-onboarded users skip onboarding
     Given my onboarding is already marked complete
     When I try to access the onboarding wizard directly
-    Then I am redirected to the events feed instead
+    Then I am redirected away from the wizard (events feed or Discover, per booking eligibility)
 
   Scenario: Step 1 — age group (skippable)
     Given I am on onboarding step 1
@@ -40,20 +40,21 @@ Feature: Onboarding
 
   Scenario: Step 2 — interests and moods
     Given I am on onboarding step 2
-    Then I can multi-select interests via native checkbox from: Theater, Kino, Museum, Ausstellung, Konzert, Talk/Lesung, Comedy, Tanz/Performance
+    Then I can multi-select interests via native checkbox from: Theater, Kino, Museum, Ausstellung, Konzert, Talk/Lesung, Comedy, Tanz/Performance, Other
+    And when I select Other I can enter free-text interest text
     And I can multi-select moods via native checkbox from: Leicht, Experimentell, Klassisch, Politisch, Fam
 
-  Scenario: Step 3 — districts and travel radius
+  Scenario: Step 3 — hangout districts
     Given I am on onboarding step 3
-    Then I can multi-select districts via native checkbox from: Mitte, X-Berg, P-Berg, Charlottenburg, Wedding, F-Hain, Schöneberg
-    And I can set a maximum travel distance between 1 and 25 km via native number input
+    Then I can multi-select districts via native checkbox from the 12 official Berlin Bezirke: Mitte, Friedrichshain-Kreuzberg, Pankow, Charlottenburg-Wilmersdorf, Spandau, Steglitz-Zehlendorf, Tempelhof-Schöneberg, Neukölln, Treptow-Köpenick, Marzahn-Hellersdorf, Lichtenberg, Reinickendorf
+    And I cannot set a travel distance / radius
 
   Scenario: Step 4 — timing, days, languages, accessibility
     Given I am on onboarding step 4
     Then I can choose preferred timing via native checkbox from: After Work, Weekend, Day
     And I can multi-select preferred days Monday through Sunday via native checkbox
-    And I can choose preferred languages via native checkbox from: DE, EN, Non-Verbal
-    And I can choose an accessibility requirement via native checkbox
+    And I can multi-select preferred languages via a searchable native-checkbox list with German and English first (Non-Verbal is not offered)
+    And I can answer "Accessibility needed?" via a native Yes/Ja checkbox
 
   Scenario: Completing onboarding
     Given I have completed all onboarding steps

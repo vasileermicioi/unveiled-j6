@@ -252,13 +252,13 @@ function neighborhoodFromAddress(address: string): string {
   const plz = m?.[1] ?? "";
   const prefix = plz.slice(0, 3);
   if (["101", "105"].includes(prefix)) return "Mitte";
-  if (["102"].includes(prefix)) return "F-Hain";
-  if (["104"].includes(prefix)) return "P-Berg";
-  if (["106", "107"].includes(prefix)) return "Charlottenburg";
-  if (["109", "120", "123"].includes(prefix)) return "X-Berg";
-  if (["133", "134"].includes(prefix)) return "Wedding";
-  if (plz.startsWith("108")) return "Schöneberg";
-  if (plz.startsWith("12")) return "X-Berg";
+  if (["102"].includes(prefix)) return "Friedrichshain-Kreuzberg";
+  if (["104"].includes(prefix)) return "Pankow";
+  if (["106", "107"].includes(prefix)) return "Charlottenburg-Wilmersdorf";
+  if (["109", "120", "123"].includes(prefix)) return "Friedrichshain-Kreuzberg";
+  if (["133", "134"].includes(prefix)) return "Mitte";
+  if (plz.startsWith("108")) return "Tempelhof-Schöneberg";
+  if (plz.startsWith("12")) return "Friedrichshain-Kreuzberg";
   return "Mitte";
 }
 

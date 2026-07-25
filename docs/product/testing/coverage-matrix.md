@@ -126,11 +126,11 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Saving requires authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Saving requires authentication` | `pass` |  |
 | `onboarding.feature` | Onboarding is required before using the app | `e2e/specs/onboarding.spec.ts` · `Scenario: Onboarding is required before using the app` | `pass` |  |
 | `onboarding.feature` | Non-USER roles skip onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Non-USER roles skip onboarding` | `pass` |  |
-| `onboarding.feature` | Already-onboarded users skip onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Already-onboarded users skip onboarding` | `pass` |  |
+| `onboarding.feature` | Already-onboarded users skip onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Already-onboarded users skip onboarding` | `pass` | Redirect may be `/events` or `/discover` by booking eligibility |
 | `onboarding.feature` | Step 1 — age group (skippable) | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 1 — age group (skippable)` | `pass` |  |
-| `onboarding.feature` | Step 2 — interests and moods | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 2 — interests and moods` | `pass` |  |
-| `onboarding.feature` | Step 3 — districts and travel radius | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 3 — districts and travel radius` | `pass` |  |
-| `onboarding.feature` | Step 4 — timing, days, languages, accessibility | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 4 — timing, days, languages, accessibility` | `pass` |  |
+| `onboarding.feature` | Step 2 — interests and moods | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 2 — interests and moods` | `pass` | Asserts Other / Sonstiges visibility; Other+text submit covered by auth unit tests |
+| `onboarding.feature` | Step 3 — hangout districts | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 3 — hangout districts` | `pass` | 12 Bezirke; no travel radius |
+| `onboarding.feature` | Step 4 — timing, days, languages, accessibility | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 4 — timing, days, languages, accessibility` | `pass` | Searchable languages; Accessibility needed? Yes/Ja |
 | `onboarding.feature` | Completing onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Completing onboarding` | `pass` |  |
 | `profile.feature` | View and edit identity | `e2e/specs/profile.spec.ts` · `Scenario: View and edit identity` | `pass` |  |
 | `profile.feature` | Change password | `e2e/specs/profile.spec.ts` · `Scenario: Change password` | `pass` | Asserts `/profile/security` entry; Neon Auth owns mutation |
@@ -138,7 +138,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `profile.feature` | Update billing information | `e2e/specs/profile.spec.ts` · `Scenario: Update billing information` | `pass` | Portal CTA + error path with fake `cus_*`; deep Portal = staging |
 | `profile.feature` | Cancel subscription | `e2e/specs/profile.spec.ts` · `Scenario: Cancel subscription` | `pass` | Confirm page + seeded `CANCELLED_PENDING` |
 | `profile.feature` | Access account deletion and data export | `e2e/specs/profile.spec.ts` · `Scenario: Access account deletion and data export` | `pass` | Entry links + page headings; full mechanics in `auth.spec.ts` |
-| `profile.feature` | Edit cultural preferences ("Vibes") | `e2e/specs/profile.spec.ts` · `Scenario: Edit cultural preferences ("Vibes")` | `pass` |  |
+| `profile.feature` | Edit cultural preferences ("Vibes") | `e2e/specs/profile.spec.ts` · `Scenario: Edit cultural preferences ("Vibes")` | `pass` | No travel radius; Bezirke / languages / accessibility / Other surfaces |
 | `profile.feature` | View membership home | `e2e/specs/profile.spec.ts` · `Scenario: View membership home` | `pass` | Membership panel + manage CTA; tablist above account heading; skip if no `DATABASE_URL` |
 | `profile.feature` | Inactive member starts membership from profile home | `e2e/specs/profile.spec.ts` · `Scenario: Inactive member starts membership from profile home` | `pass` | Checkout CTA → `/membership`; skip if no `DATABASE_URL` |
 | `static-pages.feature` | Guest marketing home is the locale home page | `e2e/specs/static-pages.spec.ts` · `Scenario: Guest marketing home is the locale home page` | `pass` |  |

@@ -1,4 +1,5 @@
 import { Label } from "@heroui/react";
+import type { ChangeEventHandler } from "react";
 
 type NativePreferenceOptionProps = {
   type: "checkbox" | "radio";
@@ -6,6 +7,7 @@ type NativePreferenceOptionProps = {
   value: string;
   label: string;
   defaultChecked?: boolean;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
 };
 
 function optionId(name: string, value: string): string {
@@ -19,6 +21,7 @@ export function NativePreferenceOption({
   value,
   label,
   defaultChecked = false,
+  onChange,
 }: NativePreferenceOptionProps) {
   const id = optionId(name, value);
 
@@ -29,6 +32,7 @@ export function NativePreferenceOption({
         defaultChecked={defaultChecked}
         id={id}
         name={name}
+        onChange={onChange}
         type={type}
         value={value}
       />

@@ -39,7 +39,8 @@ test.describe("onboarding.feature", () => {
     const { email, password } = await signupFreshUser(page, locale);
     await completeOnboardingWizard(page, locale);
     await page.goto(`/${locale}/onboarding/age`);
-    await expect(page).toHaveURL(new RegExp(`/${locale}/events`));
+    // Inactive / non-booking-eligible USERs land on Discover; booking-eligible on /events.
+    await expect(page).toHaveURL(new RegExp(`/${locale}/(events|discover)`));
     void email;
     void password;
   });
@@ -62,18 +63,24 @@ test.describe("onboarding.feature", () => {
     await expect(page.getByRole("checkbox", { name: "Theater" })).toBeVisible();
     await expect(page.getByRole("checkbox", { name: "Kino" })).toBeVisible();
     await expect(
+      page.getByRole("checkbox", { name: locale === "de" ? "Sonstiges" : "Other" }),
+    ).toBeVisible();
+    await expect(
       page.getByRole("checkbox", { name: locale === "de" ? "Leicht" : "Light" }),
     ).toBeVisible();
     await completeInterestsStep(page, locale);
   });
 
-  test("Scenario: Step 3 — districts and travel radius", async ({ page, locale }) => {
+  test("Scenario: Step 3 — hangout districts", async ({ page, locale }) => {
     await signupFreshUser(page, locale);
     await completeAgeStep(page, locale);
     await completeInterestsStep(page, locale);
     await expect(page.getByText(/wo bist du unterwegs|where do you hang out/i)).toBeVisible();
-    await expect(page.getByText("Mitte")).toBeVisible();
-    await expect(page.getByText(/wie weit|how far/i)).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: "Mitte" })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: "Neukölln" })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: "Friedrichshain-Kreuzberg" })).toBeVisible();
+    await expect(page.getByText(/wie weit|how far|travel/i)).toHaveCount(0);
+    await expect(page.getByRole("spinbutton")).toHaveCount(0);
     await completeLocationStep(page, locale);
   });
 
@@ -85,10 +92,16 @@ test.describe("onboarding.feature", () => {
     await expect(page.getByText(/wann hast du zeit|when do you have time/i)).toBeVisible();
     await expect(page.getByText(/welche tage|which days/i)).toBeVisible();
     await expect(page.getByText(/sprachen|languages/i).first()).toBeVisible();
-    await expect(page.getByText(/barrierefreiheit\?|accessibility\?/i)).toBeVisible();
+    await expect(
+      page.getByPlaceholder(locale === "de" ? /sprachen suchen/i : /search languages/i),
+    ).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /non-verbal/i })).toHaveCount(0);
+    await expect(
+      page.getByText(/barrierefreiheit benötigt\?|accessibility needed\?/i),
+    ).toBeVisible();
     await expect(
       page.getByRole("checkbox", {
-        name: /^(erforderlich|required)$/i,
+        name: locale === "de" ? /^ja$/i : /^yes$/i,
       }),
     ).toBeVisible();
     await completeTimingStep(page, locale);

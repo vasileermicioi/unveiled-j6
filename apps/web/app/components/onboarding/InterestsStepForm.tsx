@@ -1,7 +1,9 @@
 "use client";
 
 import { Form, Label, Surface } from "@heroui/react";
+import { INTERESTS_OTHER_MAX_LENGTH } from "@unveiled/auth/constants";
 import type { UserProfile } from "@unveiled/db";
+import { useState } from "react";
 
 import type { Locale } from "../../lib/locale";
 import {
@@ -24,6 +26,7 @@ export function InterestsStepForm({ locale, profile }: InterestsStepFormProps) {
   const copy = getOnboardingCopy(locale);
   const selectedInterests = profile.interests ?? [];
   const selectedMoods = profile.moods ?? [];
+  const [otherChecked, setOtherChecked] = useState(selectedInterests.includes("Other"));
 
   return (
     <Form className="onboarding-form flex flex-col gap-8" method="post">
@@ -39,11 +42,31 @@ export function InterestsStepForm({ locale, profile }: InterestsStepFormProps) {
               key={value}
               label={getInterestLabel(locale, value)}
               name="interests"
+              onChange={
+                value === "Other" ? (event) => setOtherChecked(event.target.checked) : undefined
+              }
               type="checkbox"
               value={value}
             />
           ))}
         </Surface>
+        {otherChecked ? (
+          <Surface className="flex flex-col gap-2" variant="transparent">
+            <Label className="onboarding-form__section-label" htmlFor="interests_other">
+              {copy.interestsOtherLabel}
+            </Label>
+            <input
+              className="onboarding-form__language-filter"
+              defaultValue={profile.interests_other ?? ""}
+              id="interests_other"
+              maxLength={INTERESTS_OTHER_MAX_LENGTH}
+              name="interests_other"
+              placeholder={copy.interestsOtherPlaceholder}
+              required
+              type="text"
+            />
+          </Surface>
+        ) : null}
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">

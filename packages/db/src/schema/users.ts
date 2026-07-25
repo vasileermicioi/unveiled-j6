@@ -20,6 +20,8 @@ export type UserProfile = {
   last_name?: string | null;
   age_group?: AgeGroup | null;
   interests?: string[] | null;
+  /** Free-text interest when `interests` includes `Other`; null when Other is unchecked. */
+  interests_other?: string | null;
   moods?: string[] | null;
   districts?: string[] | null;
   timing?: string[] | null;

@@ -2,8 +2,6 @@ import {
   AGE_GROUPS,
   DISTRICTS,
   INTERESTS,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
   MOODS,
   PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
@@ -20,18 +18,20 @@ type OnboardingCopy = {
   ageLabel: string;
   ageSubtitle: string;
   interestLabel: string;
+  interestsOtherLabel: string;
+  interestsOtherPlaceholder: string;
   moodLabel: string;
   districtLabel: string;
-  radiusLabel: string;
+  districtSubtitle: string;
   timingLabel: string;
   daysLabel: string;
   languagePrefLabel: string;
+  languageSearchPlaceholder: string;
   accessibilitySectionLabel: string;
   accessibilityOptionLabel: string;
   next: string;
   skip: string;
   finish: string;
-  km: string;
   validationError: string;
   stepOf: (current: number, total: number) => string;
 };
@@ -43,18 +43,20 @@ const copy: Record<Locale, OnboardingCopy> = {
     ageLabel: "WIE ALT BIST DU?",
     ageSubtitle: "Keine Sorge, nur für die Statistik (und Altersbeschränkungen).",
     interestLabel: "WAS INTERESSIERT DICH?",
+    interestsOtherLabel: "Beschreibe dein Interesse",
+    interestsOtherPlaceholder: "z. B. Spoken Word",
     moodLabel: "WELCHE VIBES SUCHST DU?",
     districtLabel: "WO BIST DU UNTERWEGS?",
-    radiusLabel: "WIE WEIT WÜRDEST DU FAHREN?",
+    districtSubtitle: "Wähle einen oder mehrere Berliner Bezirke.",
     timingLabel: "WANN HAST DU ZEIT?",
     daysLabel: "WELCHE TAGE?",
     languagePrefLabel: "SPRACHEN?",
-    accessibilitySectionLabel: "BARRIEREFREIHEIT?",
-    accessibilityOptionLabel: "Erforderlich",
+    languageSearchPlaceholder: "Sprachen suchen",
+    accessibilitySectionLabel: "Barrierefreiheit benötigt?",
+    accessibilityOptionLabel: "Ja",
     next: "WEITER",
     skip: "ÜBERSPRINGEN",
     finish: "FERTIG",
-    km: "km",
     validationError: "Bitte prüfe deine Auswahl und versuche es erneut.",
     stepOf: (current, total) => `Schritt ${current} von ${total}`,
   },
@@ -64,18 +66,20 @@ const copy: Record<Locale, OnboardingCopy> = {
     ageLabel: "HOW OLD ARE YOU?",
     ageSubtitle: "Don't worry, just for stats (and age restrictions).",
     interestLabel: "WHAT INTERESTS YOU?",
+    interestsOtherLabel: "Describe your interest",
+    interestsOtherPlaceholder: "e.g. Spoken word",
     moodLabel: "WHAT VIBES ARE YOU AFTER?",
     districtLabel: "WHERE DO YOU HANG OUT?",
-    radiusLabel: "HOW FAR WOULD YOU TRAVEL?",
+    districtSubtitle: "Pick one or more Berlin districts.",
     timingLabel: "WHEN DO YOU HAVE TIME?",
     daysLabel: "WHICH DAYS?",
     languagePrefLabel: "LANGUAGES?",
-    accessibilitySectionLabel: "ACCESSIBILITY?",
-    accessibilityOptionLabel: "Required",
+    languageSearchPlaceholder: "Search languages",
+    accessibilitySectionLabel: "Accessibility needed?",
+    accessibilityOptionLabel: "Yes",
     next: "NEXT",
     skip: "SKIP",
     finish: "FINISH",
-    km: "km",
     validationError: "Please check your selections and try again.",
     stepOf: (current, total) => `Step ${current} of ${total}`,
   },
@@ -119,14 +123,88 @@ const languageLabels: Record<Locale, Record<(typeof PREFERRED_LANGUAGES)[number]
   de: {
     DE: "Deutsch",
     EN: "Englisch",
-    "Non-Verbal": "Nonverbal",
+    AR: "Arabisch",
+    BG: "Bulgarisch",
+    CS: "Tschechisch",
+    DA: "Dänisch",
+    EL: "Griechisch",
+    ES: "Spanisch",
+    FA: "Persisch",
+    FI: "Finnisch",
+    FR: "Französisch",
+    HE: "Hebräisch",
+    HI: "Hindi",
+    HR: "Kroatisch",
+    HU: "Ungarisch",
+    IT: "Italienisch",
+    JA: "Japanisch",
+    KO: "Koreanisch",
+    NL: "Niederländisch",
+    NO: "Norwegisch",
+    PL: "Polnisch",
+    PT: "Portugiesisch",
+    RO: "Rumänisch",
+    RU: "Russisch",
+    SV: "Schwedisch",
+    TR: "Türkisch",
+    UK: "Ukrainisch",
+    VI: "Vietnamesisch",
+    ZH: "Chinesisch",
   },
   en: {
     DE: "German",
     EN: "English",
-    "Non-Verbal": "Non-verbal",
+    AR: "Arabic",
+    BG: "Bulgarian",
+    CS: "Czech",
+    DA: "Danish",
+    EL: "Greek",
+    ES: "Spanish",
+    FA: "Persian",
+    FI: "Finnish",
+    FR: "French",
+    HE: "Hebrew",
+    HI: "Hindi",
+    HR: "Croatian",
+    HU: "Hungarian",
+    IT: "Italian",
+    JA: "Japanese",
+    KO: "Korean",
+    NL: "Dutch",
+    NO: "Norwegian",
+    PL: "Polish",
+    PT: "Portuguese",
+    RO: "Romanian",
+    RU: "Russian",
+    SV: "Swedish",
+    TR: "Turkish",
+    UK: "Ukrainian",
+    VI: "Vietnamese",
+    ZH: "Chinese",
   },
 };
+
+export type PreferredLanguageOption = {
+  code: (typeof PREFERRED_LANGUAGES)[number];
+  label: string;
+};
+
+/** DE and EN first; remaining codes A–Z by locale display label. */
+export function getPreferredLanguageOptions(locale: Locale): PreferredLanguageOption[] {
+  const pinned = PREFERRED_LANGUAGES.filter((code) => code === "DE" || code === "EN").map(
+    (code) => ({
+      code,
+      label: languageLabels[locale][code],
+    }),
+  );
+  const rest = PREFERRED_LANGUAGES.filter((code) => code !== "DE" && code !== "EN")
+    .map((code) => ({
+      code,
+      label: languageLabels[locale][code],
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, locale, { sensitivity: "base" }));
+  return [...pinned, ...rest];
+}
 
 const interestLabels: Record<Locale, Record<(typeof INTERESTS)[number], string>> = {
   de: {
@@ -138,6 +216,7 @@ const interestLabels: Record<Locale, Record<(typeof INTERESTS)[number], string>>
     "Talk/Lesung": "Talk/Lesung",
     Comedy: "Comedy",
     "Tanz/Performance": "Tanz/Performance",
+    Other: "Sonstiges",
   },
   en: {
     Theater: "Theater",
@@ -148,6 +227,7 @@ const interestLabels: Record<Locale, Record<(typeof INTERESTS)[number], string>>
     "Talk/Lesung": "Talk / Reading",
     Comedy: "Comedy",
     "Tanz/Performance": "Dance / Performance",
+    Other: "Other",
   },
 };
 
@@ -171,21 +251,31 @@ const moodLabels: Record<Locale, Record<(typeof MOODS)[number], string>> = {
 const districtLabels: Record<Locale, Record<(typeof DISTRICTS)[number], string>> = {
   de: {
     Mitte: "Mitte",
-    "X-Berg": "X-Berg",
-    "P-Berg": "P-Berg",
-    Charlottenburg: "Charlottenburg",
-    Wedding: "Wedding",
-    "F-Hain": "F-Hain",
-    Schöneberg: "Schöneberg",
+    "Friedrichshain-Kreuzberg": "Friedrichshain-Kreuzberg",
+    Pankow: "Pankow",
+    "Charlottenburg-Wilmersdorf": "Charlottenburg-Wilmersdorf",
+    Spandau: "Spandau",
+    "Steglitz-Zehlendorf": "Steglitz-Zehlendorf",
+    "Tempelhof-Schöneberg": "Tempelhof-Schöneberg",
+    Neukölln: "Neukölln",
+    "Treptow-Köpenick": "Treptow-Köpenick",
+    "Marzahn-Hellersdorf": "Marzahn-Hellersdorf",
+    Lichtenberg: "Lichtenberg",
+    Reinickendorf: "Reinickendorf",
   },
   en: {
     Mitte: "Mitte",
-    "X-Berg": "Kreuzberg",
-    "P-Berg": "Prenzlauer Berg",
-    Charlottenburg: "Charlottenburg",
-    Wedding: "Wedding",
-    "F-Hain": "Friedrichshain",
-    Schöneberg: "Schöneberg",
+    "Friedrichshain-Kreuzberg": "Friedrichshain-Kreuzberg",
+    Pankow: "Pankow",
+    "Charlottenburg-Wilmersdorf": "Charlottenburg-Wilmersdorf",
+    Spandau: "Spandau",
+    "Steglitz-Zehlendorf": "Steglitz-Zehlendorf",
+    "Tempelhof-Schöneberg": "Tempelhof-Schöneberg",
+    Neukölln: "Neukölln",
+    "Treptow-Köpenick": "Treptow-Köpenick",
+    "Marzahn-Hellersdorf": "Marzahn-Hellersdorf",
+    Lichtenberg: "Lichtenberg",
+    Reinickendorf: "Reinickendorf",
   },
 };
 
@@ -222,7 +312,7 @@ export function getOnboardingStepMeta(locale: Locale, step: OnboardingStepKey) {
     case "location":
       return {
         heading: shared.districtLabel,
-        description: shared.radiusLabel,
+        description: shared.districtSubtitle,
         stepNumber: 3 as const,
       };
     case "timing":
@@ -265,14 +355,4 @@ export function getPreferredLanguageLabel(
   return languageLabels[locale][value];
 }
 
-export {
-  AGE_GROUPS,
-  DISTRICTS,
-  INTERESTS,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
-  MOODS,
-  PREFERRED_LANGUAGES,
-  TIMING_OPTIONS,
-  WEEKDAYS,
-};
+export { AGE_GROUPS, DISTRICTS, INTERESTS, MOODS, PREFERRED_LANGUAGES, TIMING_OPTIONS, WEEKDAYS };

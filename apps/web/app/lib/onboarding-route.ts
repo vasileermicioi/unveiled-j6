@@ -85,16 +85,13 @@ export function parseInterestsPayload(body: ParsedBody): InterestsStepPayload {
   return {
     interests: asStringArray(body.interests),
     moods: asStringArray(body.moods),
+    interests_other: asString(body.interests_other) ?? "",
   };
 }
 
 export function parseLocationPayload(body: ParsedBody): LocationStepPayload {
-  const maxDistanceRaw = asString(body.max_distance);
-  const max_distance = maxDistanceRaw ? Number.parseInt(maxDistanceRaw, 10) : Number.NaN;
-
   return {
     districts: asStringArray(body.districts),
-    max_distance,
   };
 }
 

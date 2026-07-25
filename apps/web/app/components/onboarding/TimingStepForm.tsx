@@ -3,13 +3,13 @@
 import { Form, Label, Surface } from "@heroui/react";
 import type { UserProfile } from "@unveiled/db";
 
+import LanguageMultiSelect from "../../islands/LanguageMultiSelect";
 import type { Locale } from "../../lib/locale";
 import {
   getOnboardingCopy,
-  getPreferredLanguageLabel,
+  getPreferredLanguageOptions,
   getTimingLabel,
   getWeekdayLabel,
-  PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
   WEEKDAYS,
 } from "../../lib/onboarding-content";
@@ -70,21 +70,12 @@ export function TimingStepForm({ locale, profile }: TimingStepFormProps) {
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{copy.languagePrefLabel}</Label>
-        <Surface
-          className="onboarding-form__options onboarding-form__options--grid-three"
-          variant="transparent"
-        >
-          {PREFERRED_LANGUAGES.map((value) => (
-            <NativePreferenceOption
-              defaultChecked={selectedLanguages.includes(value)}
-              key={value}
-              label={getPreferredLanguageLabel(locale, value)}
-              name="preferred_languages"
-              type="checkbox"
-              value={value}
-            />
-          ))}
-        </Surface>
+        <LanguageMultiSelect
+          filterPlaceholder={copy.languageSearchPlaceholder}
+          name="preferred_languages"
+          options={getPreferredLanguageOptions(locale)}
+          selected={selectedLanguages}
+        />
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">

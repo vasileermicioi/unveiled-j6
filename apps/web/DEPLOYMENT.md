@@ -341,12 +341,12 @@ Use a **new signup** or reset an existing test user (see [Repeat demo reset](#re
 1. Open `https://<staging-host>/de/signup` and register a new USER (email/password or Google OAuth).
 2. After signup, confirm redirect to `/de/onboarding/age` (or current resumed step).
 3. **Step 1 — Age:** select an age group (e.g. `26-35`) and continue, **or** skip without selecting.
-4. **Step 2 — Interests:** select at least one interest and mood; submit → `/de/onboarding/location`.
-5. **Step 3 — Location:** select districts and set travel radius (1–25 km); submit → `/de/onboarding/timing`.
-6. **Step 4 — Timing:** select timing, preferred days, languages, and accessibility toggle; submit → `/de/membership`.
+4. **Step 2 — Interests:** select at least one interest and mood (optional: Other + free text); submit → `/de/onboarding/location`.
+5. **Step 3 — Location:** select one or more of the 12 Berlin Bezirke (no travel radius); submit → `/de/onboarding/timing`.
+6. **Step 4 — Timing:** select timing, preferred days, searchable languages (DE/EN first), and Accessibility needed? (Yes/Ja); submit → `/de/membership`.
 7. In Neon Postgres, inspect `public.users.profile` for the test user:
    - `onboarding_complete = true`
-   - Captured arrays (`interests`, `moods`, `districts`, `timing`, `preferred_days`, `preferred_languages`) and flags (`accessibility`, optional `age_group`) populated
+   - Captured arrays (`interests`, `moods`, `districts`, `timing`, `preferred_days`, `preferred_languages`), optional `interests_other`, and flags (`accessibility`, optional `age_group`) populated; `max_distance` null
    - `behavior.onboarding_completed_at` set (Europe/Berlin ISO timestamp)
 8. Repeat steps 1–7 on `/en/onboarding/*` to confirm EN locale parity.
 

@@ -13,8 +13,7 @@ import {
   type AgeGroup,
   DISTRICTS,
   INTERESTS,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
+  INTERESTS_OTHER_MAX_LENGTH,
   MOODS,
   PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
@@ -26,8 +25,7 @@ export {
   type AgeGroup,
   DISTRICTS,
   INTERESTS,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
+  INTERESTS_OTHER_MAX_LENGTH,
   MOODS,
   PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
@@ -41,11 +39,11 @@ export type AgeStepPayload = { skip: true } | { age_group: AgeGroup };
 export type InterestsStepPayload = {
   interests: string[];
   moods: string[];
+  interests_other?: string | null;
 };
 
 export type LocationStepPayload = {
   districts: string[];
-  max_distance: number;
 };
 
 export type TimingStepPayload = {
@@ -94,15 +92,6 @@ function assertAllowlist(
     if (!allowed.includes(value)) {
       throw new OnboardingValidationError(code, `Invalid value: ${value}`);
     }
-  }
-}
-
-function assertMaxDistance(value: number): void {
-  if (!Number.isInteger(value) || value < MAX_DISTANCE_MIN || value > MAX_DISTANCE_MAX) {
-    throw new OnboardingValidationError(
-      "invalid_max_distance",
-      `max_distance must be an integer between ${MAX_DISTANCE_MIN} and ${MAX_DISTANCE_MAX}`,
-    );
   }
 }
 
@@ -186,7 +175,7 @@ function isInterestsStepDone(profile: UserProfile): boolean {
 }
 
 function isLocationStepDone(profile: UserProfile): boolean {
-  return profile.districts != null && profile.max_distance != null;
+  return profile.districts != null;
 }
 
 function inferOnboardingStep(profile: UserProfile): OnboardingStep {
@@ -235,17 +224,34 @@ export function validateOnboardingStepPayload(
     }
 
     case "interests": {
-      const { interests, moods } = payload as InterestsStepPayload;
+      const { interests, moods, interests_other } = payload as InterestsStepPayload;
       assertAllowlist(interests, INTERESTS, "invalid_interest");
       assertAllowlist(moods, MOODS, "invalid_mood");
-      return { interests, moods };
+
+      if (interests.includes("Other")) {
+        const trimmed = (interests_other ?? "").trim();
+        if (!trimmed) {
+          throw new OnboardingValidationError(
+            "interests_other_required",
+            "interests_other is required when Other is selected",
+          );
+        }
+        if (trimmed.length > INTERESTS_OTHER_MAX_LENGTH) {
+          throw new OnboardingValidationError(
+            "interests_other_too_long",
+            `interests_other must be at most ${INTERESTS_OTHER_MAX_LENGTH} characters`,
+          );
+        }
+        return { interests, moods, interests_other: trimmed };
+      }
+
+      return { interests, moods, interests_other: null };
     }
 
     case "location": {
-      const { districts, max_distance } = payload as LocationStepPayload;
+      const { districts } = payload as LocationStepPayload;
       assertAllowlist(districts, DISTRICTS, "invalid_district");
-      assertMaxDistance(max_distance);
-      return { districts, max_distance };
+      return { districts, max_distance: null };
     }
 
     case "timing": {

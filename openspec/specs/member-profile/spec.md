@@ -40,12 +40,14 @@ The system SHALL provide an authenticated membership home surface at `/:locale/p
 
 ### Requirement: Cultural preferences editor
 
-The system SHALL provide `/:locale/profile/preferences` where signed-in members can edit interests, moods, districts, travel radius (`max_distance`), timing, preferred days, preferred languages, and accessibility needs via SSR form POST. Allowed values SHALL reuse the onboarding preference allowlists. Persistence SHALL merge into `users.profile`, set `behavior.preferences_updated_at` (Europe/Berlin semantics), and MUST NOT mutate `behavior.onboarding_step` or `profile.onboarding_complete`.
+The system SHALL provide `/:locale/profile/preferences` where signed-in members can edit interests (including Other + free text), moods, districts, timing, preferred days, preferred languages, and accessibility needs via SSR form POST. Allowed values SHALL reuse the onboarding preference allowlists (including the 12 Berlin Bezirke for districts). Travel radius (`max_distance`) SHALL NOT be collected or required. Persistence SHALL merge into `users.profile`, set `max_distance` to `null`, set `behavior.preferences_updated_at` (Europe/Berlin semantics), and MUST NOT mutate `behavior.onboarding_step` or `profile.onboarding_complete`.
 
 #### Scenario: Edit cultural preferences ("Vibes")
 
-- **WHEN** a signed-in member updates preference fields and saves on `/profile/preferences`
+- **WHEN** a signed-in member updates interests (including Other + free text), moods, districts (12 Bezirke), timing, preferred days, languages (searchable list), or accessibility needs and saves on `/profile/preferences`
 - **THEN** the preferences are persisted on their profile
+- **AND** `max_distance` is cleared to `null`
+- **AND** travel radius is not part of the Vibes form
 
 #### Scenario: Preference save preserves onboarding state
 
@@ -55,7 +57,7 @@ The system SHALL provide `/:locale/profile/preferences` where signed-in members 
 
 #### Scenario: Invalid preference values rejected
 
-- **WHEN** a preference payload contains a value outside the onboarding allowlists or an out-of-range travel radius
+- **WHEN** a preference payload contains a value outside the onboarding allowlists
 - **THEN** the update fails validation without mutating preference fields
 
 ### Requirement: Password change entry
@@ -206,12 +208,14 @@ The system SHALL provide Ladle stories for member GDPR compositions `DataExportP
 - **THEN** DataExport, DeleteAccount confirm/error, and AdminDeleteAccount confirm/error stories load
 
 ### Requirement: Profile preferences use native localized controls
-The cultural preferences editor at `/:locale/profile/preferences` SHALL use the same native HTML form controls and DE/EN option-label contract as onboarding preference steps. Persistence, allowlists, and SSR form POST behavior remain unchanged.
+The cultural preferences editor at `/:locale/profile/preferences` SHALL use the same native HTML form controls and DE/EN option-label contract as onboarding preference steps. Persistence, allowlists, and SSR form POST behavior remain unchanged except that travel radius is not collected, preferred languages use the searchable multi-select pattern, and interests may include Other with free text (`interests_other`).
 
 #### Scenario: Profile vibes editor shows native checkboxes
 - **WHEN** a signed-in member opens `/profile/preferences`
-- **THEN** multi-value preference fields render as native checkboxes with visible labels
-- **AND** travel radius uses a native number input or native select
+- **THEN** multi-value preference fields (other than the languages searchable control) render as native checkboxes with visible labels
+- **AND** preferred languages use native checkboxes inside a searchable client-side filter control (not HeroUI Select)
+- **AND** when Other is selected under interests, a native text input or textarea captures `interests_other`
+- **AND** travel radius is NOT shown
 - **AND** accessibility uses a native checkbox with a short option label under a section title
 
 #### Scenario: Profile preference options follow locale
@@ -219,21 +223,45 @@ The cultural preferences editor at `/:locale/profile/preferences` SHALL use the 
 - **THEN** option labels are German according to onboarding locale maps
 - **AND** under `/en/profile/preferences` the same options are English
 
+### Requirement: Profile interests Other shares onboarding free-text rules
+The cultural preferences editor at `/:locale/profile/preferences` SHALL offer the same `Other` interest checkbox and free-text field as onboarding step 2. Persistence and validation SHALL match: `Other` in `interests` requires trimmed non-empty `interests_other` (max 100 characters); when `Other` is absent, `interests_other` SHALL be null. Labels SHALL be EN `Other` / DE `Sonstiges`.
+
+#### Scenario: Profile Other interest requires text
+- **WHEN** a signed-in member selects Other on `/profile/preferences` and submits without free text
+- **THEN** the save is rejected with a validation error
+
+#### Scenario: Profile Other interest saves free text
+- **WHEN** a signed-in member selects Other, enters free text, and saves preferences
+- **THEN** `interests` contains `Other` and `interests_other` stores the trimmed text
+
 ### Requirement: Profile accessibility section shares onboarding chrome
-The cultural preferences editor at `/:locale/profile/preferences` SHALL present accessibility with the same section-label + options layout and shared copy keys as onboarding step 4 (locale section title + short option chip). The persisted value SHALL remain a boolean posted as `accessibility`.
+The cultural preferences editor at `/:locale/profile/preferences` SHALL present accessibility with the same question + yes-checkbox chrome and shared copy keys as onboarding step 4 (EN `Accessibility needed?` / `Yes`, DE `Barrierefreiheit benötigt?` / `Ja`). The persisted value SHALL remain a boolean posted as `accessibility`.
 
 #### Scenario: Profile preferences accessibility mirrors Languages
 - **WHEN** a signed-in member views `/profile/preferences`
-- **THEN** accessibility has a section title above its checkbox option, parallel to the Languages block
-- **AND** the option label is the short locale string (not the former full-question chip alone)
+- **THEN** accessibility has the accessibility question above its Yes/Ja checkbox, parallel to the Languages block
+- **AND** the option label is the short affirmative (EN `Yes`, DE `Ja`)
+
+### Requirement: Profile preferred languages share onboarding searchable multi-select
+The cultural preferences editor at `/:locale/profile/preferences` SHALL use the same searchable preferred-languages multi-select as onboarding step 4: client-side filter only, `DE`/`EN` first when the filter is empty, remaining options A–Z by locale label, `Non-Verbal` not offered, values validated against `@unveiled/auth/constants` `PREFERRED_LANGUAGES`, and selected values still submitted when they do not match the active filter.
+
+#### Scenario: Profile languages searchable list pins DE and EN
+- **WHEN** a signed-in member opens the languages control on `/profile/preferences` with an empty filter
+- **THEN** the first two options are German and English (locale labels)
+- **AND** typing in the filter narrows the visible options client-side
+- **AND** Non-Verbal is not offered
 
 ### Requirement: Profile hangout labels share onboarding district maps
-The cultural preferences editor at `/:locale/profile/preferences` SHALL render hangout (district) option labels via the same `getDistrictLabel` locale maps as onboarding. German UI SHALL show Berlin shorthand for `X-Berg`, `P-Berg`, and `F-Hain`; English UI SHALL show expanded district names. Stored values SHALL remain allowlist keys.
+The cultural preferences editor at `/:locale/profile/preferences` SHALL render hangout (district) option labels via the same `getDistrictLabel` locale maps as onboarding. Stored values SHALL be the 12 official Berlin Bezirk names from `@unveiled/auth/constants` `DISTRICTS`. DE and EN labels SHALL use those proper Bezirk names (no informal shorthand such as `X-Berg`).
 
-#### Scenario: Profile preferences hangout chips follow locale
-- **WHEN** a member views `/en/profile/preferences`
-- **THEN** hangout options use expanded labels (e.g. Kreuzberg)
-- **AND** under `/de/profile/preferences` the X-Berg, P-Berg, and F-Hain options show Berlin shorthand
+#### Scenario: Profile preferences offer Berlin Bezirke
+- **WHEN** a member views `/profile/preferences`
+- **THEN** hangout options are the 12 official Bezirke (e.g. Friedrichshain-Kreuzberg, Neukölln)
+- **AND** there is no travel-distance control
+
+#### Scenario: Profile hangout labels match onboarding in both locales
+- **WHEN** a member views `/en/profile/preferences` or `/de/profile/preferences`
+- **THEN** hangout option labels are the official Bezirk names, not informal shorthand or EN-only expansions like `Kreuzberg`
 
 ### Requirement: Account page chrome order and width
 
@@ -259,3 +287,19 @@ Member account pages under `/:locale/profile*` SHALL render the profile tablist 
 
 - **WHEN** a signed-in member opens `/en/profile/details`, `/en/profile/preferences`, `/en/profile/billing`, `/en/profile/security`, `/en/profile/data-export`, or `/en/profile/delete-account`
 - **THEN** each page intro uses `PageSectionHeader` with a localized eyebrow and headline
+
+### Requirement: Product docs and Playwright match Vibes preference options
+
+`docs/product/features/profile.feature` Scenario “Edit cultural preferences ("Vibes")” and `e2e/specs/profile.spec.ts` SHALL describe / exercise the shipped Vibes editor: interests (including Other + free text), moods, 12 Bezirke districts, timing, preferred days, searchable languages, and accessibility needs — and SHALL NOT require or show travel radius. Coverage-matrix rows for that Scenario SHALL match the updated title/assertions.
+
+#### Scenario: Profile feature file Vibes has no travel radius
+
+- **WHEN** an implementer reads the Vibes scenario in `docs/product/features/profile.feature`
+- **THEN** it mentions updating interests (including Other + free text), districts (12 Bezirke), languages (searchable list), or accessibility needs as implemented
+- **AND** travel radius is not part of the Vibes form
+
+#### Scenario: Profile e2e Vibes asserts no travel radius
+
+- **WHEN** `e2e/specs/profile.spec.ts` runs Scenario Edit cultural preferences ("Vibes")
+- **THEN** the preferences form has no travel-distance control
+- **AND** saving preferences still succeeds

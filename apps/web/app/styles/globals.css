@@ -1697,6 +1697,27 @@
     box-shadow: none;
   }
 
+  .onboarding-form__language-filter {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.5rem 0.75rem;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--border);
+    border-radius: 0;
+    background-color: var(--field-background);
+    color: var(--foreground);
+    font: inherit;
+    font-weight: 700;
+    box-shadow: none;
+  }
+
+  .onboarding-form__language-filter:focus {
+    outline: none;
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
   .onboarding-form .button.button--primary,
   .onboarding-form .button.button--secondary {
     width: 100%;

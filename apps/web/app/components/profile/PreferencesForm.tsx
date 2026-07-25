@@ -1,8 +1,11 @@
 "use client";
 
-import { Button, Form, Label, Paragraph, Surface } from "@heroui/react";
+import { Button, Form, Label, Surface } from "@heroui/react";
+import { INTERESTS_OTHER_MAX_LENGTH } from "@unveiled/auth/constants";
 import type { UserProfile } from "@unveiled/db";
+import { useState } from "react";
 
+import LanguageMultiSelect from "../../islands/LanguageMultiSelect";
 import type { Locale } from "../../lib/locale";
 import {
   DISTRICTS,
@@ -10,14 +13,11 @@ import {
   getInterestLabel,
   getMoodLabel,
   getOnboardingCopy,
-  getPreferredLanguageLabel,
+  getPreferredLanguageOptions,
   getTimingLabel,
   getWeekdayLabel,
   INTERESTS,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
   MOODS,
-  PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
   WEEKDAYS,
 } from "../../lib/onboarding-content";
@@ -33,13 +33,13 @@ type PreferencesFormProps = {
 
 export function PreferencesForm({ locale, profile, copy, action }: PreferencesFormProps) {
   const onboarding = getOnboardingCopy(locale);
-  const defaultDistance = profile.max_distance ?? 10;
   const selectedInterests = profile.interests ?? [];
   const selectedMoods = profile.moods ?? [];
   const selectedDistricts = profile.districts ?? [];
   const selectedTiming = profile.timing ?? [];
   const selectedDays = profile.preferred_days ?? [];
   const selectedLanguages = profile.preferred_languages ?? [];
+  const [otherChecked, setOtherChecked] = useState(selectedInterests.includes("Other"));
 
   return (
     <Form action={action} className="onboarding-form flex flex-col gap-8" method="post">
@@ -55,11 +55,31 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
               key={value}
               label={getInterestLabel(locale, value)}
               name="interests"
+              onChange={
+                value === "Other" ? (event) => setOtherChecked(event.target.checked) : undefined
+              }
               type="checkbox"
               value={value}
             />
           ))}
         </Surface>
+        {otherChecked ? (
+          <Surface className="flex flex-col gap-2" variant="transparent">
+            <Label className="onboarding-form__section-label" htmlFor="interests_other">
+              {onboarding.interestsOtherLabel}
+            </Label>
+            <input
+              className="onboarding-form__language-filter"
+              defaultValue={profile.interests_other ?? ""}
+              id="interests_other"
+              maxLength={INTERESTS_OTHER_MAX_LENGTH}
+              name="interests_other"
+              placeholder={onboarding.interestsOtherPlaceholder}
+              required
+              type="text"
+            />
+          </Surface>
+        ) : null}
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
@@ -98,25 +118,6 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
             />
           ))}
         </Surface>
-      </Surface>
-
-      <Surface className="onboarding-form__number-field flex flex-col gap-2" variant="transparent">
-        <Label className="onboarding-form__section-label" htmlFor="profile_max_distance">
-          {onboarding.radiusLabel}
-        </Label>
-        <input
-          className="onboarding-form__native-number"
-          defaultValue={defaultDistance}
-          id="profile_max_distance"
-          max={MAX_DISTANCE_MAX}
-          min={MAX_DISTANCE_MIN}
-          name="max_distance"
-          step={1}
-          type="number"
-        />
-        <Paragraph color="muted" size="sm">
-          {onboarding.km}
-        </Paragraph>
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
@@ -159,21 +160,12 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <Label className="onboarding-form__section-label">{onboarding.languagePrefLabel}</Label>
-        <Surface
-          className="onboarding-form__options onboarding-form__options--grid-three"
-          variant="transparent"
-        >
-          {PREFERRED_LANGUAGES.map((value) => (
-            <NativePreferenceOption
-              defaultChecked={selectedLanguages.includes(value)}
-              key={value}
-              label={getPreferredLanguageLabel(locale, value)}
-              name="preferred_languages"
-              type="checkbox"
-              value={value}
-            />
-          ))}
-        </Surface>
+        <LanguageMultiSelect
+          filterPlaceholder={onboarding.languageSearchPlaceholder}
+          name="preferred_languages"
+          options={getPreferredLanguageOptions(locale)}
+          selected={selectedLanguages}
+        />
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">

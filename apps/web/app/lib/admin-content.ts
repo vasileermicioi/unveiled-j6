@@ -1,9 +1,9 @@
 import {
   AGE_GROUPS,
   DISTRICTS,
+  EVENT_LANGUAGES,
   EVENT_TYPES,
   INTERESTS,
-  PREFERRED_LANGUAGES,
 } from "@unveiled/auth/constants";
 import type { CatalogErrorCode } from "@unveiled/db/catalog/errors";
 
@@ -91,6 +91,7 @@ export type AdminCopy = {
   usersEmptyPreferences: string;
   usersEmptyBehavior: string;
   usersPrefInterests: string;
+  usersPrefInterestsOther: string;
   usersPrefMoods: string;
   usersPrefDistricts: string;
   usersPrefTiming: string;
@@ -423,6 +424,7 @@ const copy: Record<Locale, AdminCopy> = {
     usersEmptyPreferences: "Keine Präferenzen hinterlegt.",
     usersEmptyBehavior: "Keine Verhaltensdaten vorhanden.",
     usersPrefInterests: "Interessen",
+    usersPrefInterestsOther: "Sonstiges Interesse",
     usersPrefMoods: "Stimmungen",
     usersPrefDistricts: "Bezirke",
     usersPrefTiming: "Tageszeit",
@@ -772,6 +774,7 @@ const copy: Record<Locale, AdminCopy> = {
     usersEmptyPreferences: "No preferences on file.",
     usersEmptyBehavior: "No behavior analytics available.",
     usersPrefInterests: "Interests",
+    usersPrefInterestsOther: "Other interest",
     usersPrefMoods: "Moods",
     usersPrefDistricts: "Districts",
     usersPrefTiming: "Timing",
@@ -1160,7 +1163,7 @@ export type AdminSelectOption = {
 };
 
 export function getEventLanguageOptions(locale: Locale): AdminSelectOption[] {
-  return PREFERRED_LANGUAGES.map((id) => ({
+  return EVENT_LANGUAGES.map((id) => ({
     id,
     label: getPreferredLanguageLabel(locale, id),
   }));

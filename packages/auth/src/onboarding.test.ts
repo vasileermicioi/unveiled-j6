@@ -35,10 +35,7 @@ describe("getOnboardingStepPath", () => {
 
   test("progress resumes at timing after location", () => {
     expect(
-      getOnboardingStepPath(
-        { interests: ["Kino"], moods: ["Leicht"], districts: ["Mitte"], max_distance: 10 },
-        {},
-      ),
+      getOnboardingStepPath({ interests: ["Kino"], moods: ["Leicht"], districts: ["Mitte"] }, {}),
     ).toBe("/onboarding/timing");
   });
 
@@ -59,24 +56,111 @@ describe("validateOnboardingStepPayload", () => {
     ).toThrow(OnboardingValidationError);
   });
 
-  test("rejects max_distance out of range", () => {
+  test("rejects Other interest without free text", () => {
     expect(() =>
-      validateOnboardingStepPayload("location", {
-        districts: ["Mitte"],
-        max_distance: 0,
-      }),
-    ).toThrow(OnboardingValidationError);
-
-    expect(() =>
-      validateOnboardingStepPayload("location", {
-        districts: ["Mitte"],
-        max_distance: 26,
+      validateOnboardingStepPayload("interests", {
+        interests: ["Other"],
+        moods: ["Leicht"],
+        interests_other: "   ",
       }),
     ).toThrow(OnboardingValidationError);
   });
 
+  test("accepts Other interest with trimmed free text", () => {
+    expect(
+      validateOnboardingStepPayload("interests", {
+        interests: ["Kino", "Other"],
+        moods: ["Leicht"],
+        interests_other: "  Spoken word  ",
+      }),
+    ).toEqual({
+      interests: ["Kino", "Other"],
+      moods: ["Leicht"],
+      interests_other: "Spoken word",
+    });
+  });
+
+  test("clears interests_other when Other is not selected", () => {
+    expect(
+      validateOnboardingStepPayload("interests", {
+        interests: ["Kino"],
+        moods: ["Leicht"],
+        interests_other: "should be ignored",
+      }),
+    ).toEqual({
+      interests: ["Kino"],
+      moods: ["Leicht"],
+      interests_other: null,
+    });
+  });
+
+  test("rejects Other interest free text over max length", () => {
+    expect(() =>
+      validateOnboardingStepPayload("interests", {
+        interests: ["Other"],
+        moods: ["Leicht"],
+        interests_other: "x".repeat(101),
+      }),
+    ).toThrow(OnboardingValidationError);
+  });
+
+  test("rejects invalid district", () => {
+    expect(() =>
+      validateOnboardingStepPayload("location", {
+        districts: ["X-Berg"],
+      }),
+    ).toThrow(OnboardingValidationError);
+  });
+
+  test("location payload clears max_distance", () => {
+    expect(
+      validateOnboardingStepPayload("location", {
+        districts: ["Mitte", "Pankow"],
+      }),
+    ).toEqual({
+      districts: ["Mitte", "Pankow"],
+      max_distance: null,
+    });
+  });
+
   test("age skip returns empty profile update", () => {
     expect(validateOnboardingStepPayload("age", { skip: true })).toEqual({});
+  });
+
+  test("accepts expanded preferred languages and accessibility boolean", () => {
+    expect(
+      validateOnboardingStepPayload("timing", {
+        timing: ["Weekend"],
+        preferred_days: ["Saturday"],
+        preferred_languages: ["DE", "FR", "TR"],
+        accessibility: true,
+      }),
+    ).toEqual({
+      timing: ["Weekend"],
+      preferred_days: ["Saturday"],
+      preferred_languages: ["DE", "FR", "TR"],
+      accessibility: true,
+    });
+  });
+
+  test("rejects Non-Verbal and unknown preferred languages", () => {
+    expect(() =>
+      validateOnboardingStepPayload("timing", {
+        timing: ["Weekend"],
+        preferred_days: ["Saturday"],
+        preferred_languages: ["Non-Verbal"],
+        accessibility: false,
+      }),
+    ).toThrow(OnboardingValidationError);
+
+    expect(() =>
+      validateOnboardingStepPayload("timing", {
+        timing: ["Weekend"],
+        preferred_days: ["Saturday"],
+        preferred_languages: ["XX"],
+        accessibility: false,
+      }),
+    ).toThrow(OnboardingValidationError);
   });
 });
 
@@ -163,8 +247,7 @@ describe("saveOnboardingStep and completeOnboarding", () => {
         moods: ["Leicht", "Klassisch"],
       });
       await saveOnboardingStep(db, userId, "location", {
-        districts: ["Mitte", "P-Berg"],
-        max_distance: 10,
+        districts: ["Mitte", "Pankow"],
       });
       await saveOnboardingStep(db, userId, "timing", {
         timing: ["Weekend", "After Work"],
@@ -179,8 +262,8 @@ describe("saveOnboardingStep and completeOnboarding", () => {
       expect(completed.profile.age_group).toBe("26-35");
       expect(completed.profile.interests).toEqual(["Kino", "Theater"]);
       expect(completed.profile.moods).toEqual(["Leicht", "Klassisch"]);
-      expect(completed.profile.districts).toEqual(["Mitte", "P-Berg"]);
-      expect(completed.profile.max_distance).toBe(10);
+      expect(completed.profile.districts).toEqual(["Mitte", "Pankow"]);
+      expect(completed.profile.max_distance).toBeNull();
       expect(completed.profile.timing).toEqual(["Weekend", "After Work"]);
       expect(completed.profile.preferred_days).toEqual(["Friday", "Saturday"]);
       expect(completed.profile.preferred_languages).toEqual(["DE", "EN"]);

@@ -14,8 +14,8 @@ const databaseUrl = process.env.DATABASE_URL;
 const validPreferences = {
   interests: ["Kino"],
   moods: ["Leicht"],
+  interests_other: null as string | null,
   districts: ["Mitte"],
-  max_distance: 10,
   timing: ["Weekend"],
   preferred_days: ["Saturday"],
   preferred_languages: ["DE"],
@@ -32,33 +32,59 @@ describe("validateCulturalPreferencesPayload", () => {
     ).toThrow(ProfileValidationError);
   });
 
-  test("rejects max_distance out of range", () => {
+  test("rejects invalid district", () => {
     expect(() =>
       validateCulturalPreferencesPayload({
         ...validPreferences,
-        max_distance: 0,
-      }),
-    ).toThrow(ProfileValidationError);
-
-    expect(() =>
-      validateCulturalPreferencesPayload({
-        ...validPreferences,
-        max_distance: 26,
+        districts: ["X-Berg"],
       }),
     ).toThrow(ProfileValidationError);
   });
 
-  test("accepts valid preference payload", () => {
+  test("accepts valid preference payload and clears max_distance", () => {
     expect(validateCulturalPreferencesPayload(validPreferences)).toEqual({
       interests: ["Kino"],
       moods: ["Leicht"],
+      interests_other: null,
       districts: ["Mitte"],
-      max_distance: 10,
+      max_distance: null,
       timing: ["Weekend"],
       preferred_days: ["Saturday"],
       preferred_languages: ["DE"],
       accessibility: false,
     });
+  });
+
+  test("accepts Other interest with free text on profile preferences", () => {
+    expect(
+      validateCulturalPreferencesPayload({
+        ...validPreferences,
+        interests: ["Other"],
+        interests_other: "Cabaret",
+      }),
+    ).toMatchObject({
+      interests: ["Other"],
+      interests_other: "Cabaret",
+    });
+  });
+
+  test("rejects Other interest without free text on profile preferences", () => {
+    expect(() =>
+      validateCulturalPreferencesPayload({
+        ...validPreferences,
+        interests: ["Other"],
+        interests_other: "",
+      }),
+    ).toThrow(ProfileValidationError);
+  });
+
+  test("rejects Non-Verbal preferred language", () => {
+    expect(() =>
+      validateCulturalPreferencesPayload({
+        ...validPreferences,
+        preferred_languages: ["Non-Verbal"],
+      }),
+    ).toThrow(ProfileValidationError);
   });
 });
 
@@ -99,7 +125,7 @@ describe("updateCulturalPreferences", () => {
       expect(updated.profile.interests).toEqual(["Kino"]);
       expect(updated.profile.moods).toEqual(["Leicht"]);
       expect(updated.profile.districts).toEqual(["Mitte"]);
-      expect(updated.profile.max_distance).toBe(10);
+      expect(updated.profile.max_distance).toBeNull();
       expect(updated.behavior.onboarding_step).toBeNull();
       expect(updated.behavior.onboarding_completed_at).toBe("2026-01-01T12:00:00+01:00");
       expect(updated.behavior.preferences_updated_at).toBeTruthy();

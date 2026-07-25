@@ -33,18 +33,22 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `ageLabel` | WIE ALT BIST DU? | HOW OLD ARE YOU? |
 | `ageSubtitle` | Keine Sorge, nur für die Statistik (und Altersbeschränkungen). | Don't worry, just for stats (and age restrictions). |
 | `interestLabel` | WAS INTERESSIERT DICH? | WHAT INTERESTS YOU? |
+| `interestsOtherLabel` | Beschreibe dein Interesse | Describe your interest |
+| `interestsOtherPlaceholder` | z. B. Spoken Word | e.g. Spoken word |
 | `moodLabel` | WELCHE VIBES SUCHST DU? | WHAT VIBES ARE YOU AFTER? |
 | `districtLabel` | WO BIST DU UNTERWEGS? | WHERE DO YOU HANG OUT? |
-| `radiusLabel` | WIE WEIT WÜRDEST DU FAHREN? | HOW FAR WOULD YOU TRAVEL? |
+| `districtSubtitle` | Wähle einen oder mehrere Berliner Bezirke. | Pick one or more Berlin districts. |
 | `timingLabel` | WANN HAST DU ZEIT? | WHEN DO YOU HAVE TIME? |
 | `daysLabel` | WELCHE TAGE? | WHICH DAYS? |
 | `languagePrefLabel` | SPRACHEN? | LANGUAGES? |
-| `accessibilitySectionLabel` | BARRIEREFREIHEIT? | ACCESSIBILITY? |
-| `accessibilityOptionLabel` | Erforderlich | Required |
+| `languageSearchPlaceholder` | Sprachen suchen | Search languages |
+| `accessibilitySectionLabel` | Barrierefreiheit benötigt? | Accessibility needed? |
+| `accessibilityOptionLabel` | Ja | Yes |
 | `finish` | FERTIG | FINISH |
 | `next` | WEITER | NEXT |
 | `skip` | ÜBERSPRINGEN | SKIP |
-| `km` | km | km |
+| ~~`radiusLabel`~~ | _(unused — travel radius not collected)_ | _(unused — travel radius not collected)_ |
+| ~~`km`~~ | _(unused — travel radius not collected)_ | _(unused — travel radius not collected)_ |
 | `eventList` | Events | Events |
 | `createEvent` | Event erstellen | Create Event |
 | `nav.discover` (shell) | Entdecken | Discover |
@@ -139,7 +143,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 - Discover/marketing page copy (`apps/web/app/lib/content/discover.ts` — featured empty state: "Aktuell keine empfohlenen Events." / "No featured events right now."; Partner venues eyebrow "Partnerorte" / "Partner venues")
 - App shell nav Discover / Browse events strings (`apps/web/app/lib/copy.ts` — `nav.discover`, `browseEvents`)
 - Admin Featured events + Featured partners chrome (`apps/web/app/lib/admin-content.ts`): `tabFeatured` Empfohlene Events / Featured events; `tabFeaturedPartners` Empfohlene Partner / Featured partners; `featured*` + `featuredPartners*` list/add/remove titles, empty states, confirm copy (remove keeps catalog partner/event); Featured partners grid: `featuredPartnersReorderHint`, `featuredPartnersSaveOrderAction`, `featuredPartnersRemoveBulkAction`, `featuredPartnersSelectLabel`
-- Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getDistrictLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants` (e.g. `X-Berg`). District UI labels: DE uses Berlin shorthand for `X-Berg` / `P-Berg` / `F-Hain` (other districts keep proper names); EN uses expanded names (`Kreuzberg`, `Prenzlauer Berg`, `Friedrichshain`). Timing/days/languages/moods are translated per locale. Section chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`).
+- Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getDistrictLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants`: 12 official Berlin Bezirke for `DISTRICTS` (same string for key and DE/EN label); `INTERESTS` includes `Other` (DE `Sonstiges`); member `PREFERRED_LANGUAGES` (no `Non-Verbal`; DE/EN pinned first in UI). Timing/days/moods are translated per locale. Section chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`): interests Other free-text labels, language search placeholder, Accessibility needed? / Yes|Ja. Travel radius (`radiusLabel` / `km`) is not collected.
 - "SECURE RSVP // NO REFUNDS" booking policy copy (hardcoded in `BookingModal.tsx`, not in `translations.ts`)
 - Venue check-in inline copy (`BookingsView.tsx`)
 - Event detail checkout-card CTA/notice strings (guest unlock, membership notices, “Secure RSVP // No refunds”, total label) — live in `EventDetailPage.tsx` / locale helpers, not the old `translations.ts` catalog; see `ui/ui-component-map.md` Event detail entry. EventCard primary CTA uses catalog `bookNow` / `waitlist` for all viewer states (guest included).

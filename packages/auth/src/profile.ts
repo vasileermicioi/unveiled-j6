@@ -55,10 +55,10 @@ export function validateCulturalPreferencesPayload(
     const interestsUpdate = validateOnboardingStepPayload("interests", {
       interests: payload.interests,
       moods: payload.moods,
+      interests_other: payload.interests_other,
     });
     const locationUpdate = validateOnboardingStepPayload("location", {
       districts: payload.districts,
-      max_distance: payload.max_distance,
     });
     const timingUpdate = validateOnboardingStepPayload("timing", {
       timing: payload.timing,

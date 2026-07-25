@@ -47,8 +47,9 @@ Feature: Member Profile
     Then I can request a data export or request full account deletion (full mechanics in auth.feature)
 
   Scenario: Edit cultural preferences ("Vibes")
-    When I update my interests, moods, districts, travel radius, timing, preferred days, languages, or accessibility needs
+    When I update my interests (including Other + free text), moods, districts (12 Bezirke), timing, preferred days, languages (searchable list), or accessibility needs
     Then my profile preferences are saved
+    And travel radius is not part of the Vibes form
 
   Scenario: View membership home
     When I view my profile with a portal-eligible subscription

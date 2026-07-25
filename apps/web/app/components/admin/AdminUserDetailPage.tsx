@@ -128,16 +128,20 @@ export function AdminUserDetailPage({
 
   const preferenceRows: DetailRow[] = [
     { label: copy.usersPrefInterests, value: formatList(profile.interests) },
+    {
+      label: copy.usersPrefInterestsOther,
+      value: profile.interests_other?.trim() ? profile.interests_other.trim() : null,
+    },
     { label: copy.usersPrefMoods, value: formatList(profile.moods) },
     { label: copy.usersPrefDistricts, value: formatList(profile.districts) },
     { label: copy.usersPrefTiming, value: formatList(profile.timing) },
     { label: copy.usersPrefDays, value: formatList(profile.preferred_days) },
     { label: copy.usersPrefLanguages, value: formatList(profile.preferred_languages) },
     { label: copy.usersPrefAgeGroup, value: profile.age_group ?? null },
-    {
-      label: copy.usersPrefRadius,
-      value: profile.max_distance == null ? null : `${profile.max_distance} km`,
-    },
+    // Travel radius is not collected; only show legacy non-null values for intel.
+    ...(profile.max_distance == null
+      ? []
+      : [{ label: copy.usersPrefRadius, value: `${profile.max_distance} km` }]),
     {
       label: copy.usersPrefAccessibility,
       value: formatBool(profile.accessibility, copy),

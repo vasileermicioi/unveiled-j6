@@ -174,6 +174,18 @@ test.describe("profile.feature", () => {
     await expect(
       page.getByRole("heading", { name: /vibes|präferenzen|preferences/i }),
     ).toBeVisible();
+    await expect(page.getByText(/wie weit|how far|travel radius|max distance/i)).toHaveCount(0);
+    await expect(page.getByRole("spinbutton")).toHaveCount(0);
+    await expect(page.getByRole("checkbox", { name: "Mitte" })).toBeVisible();
+    await expect(
+      page.getByRole("checkbox", { name: locale === "de" ? "Sonstiges" : "Other" }),
+    ).toBeVisible();
+    await expect(
+      page.getByPlaceholder(locale === "de" ? /sprachen suchen/i : /search languages/i),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/barrierefreiheit benötigt\?|accessibility needed\?/i),
+    ).toBeVisible();
     await page.getByRole("button", { name: /präferenzen speichern|save preferences/i }).click();
     await expect(page.getByText(/präferenzen gespeichert|preferences saved/i)).toBeVisible();
   });

@@ -28,7 +28,8 @@ Tables: `users`, `subscriptions` (1:1), `saved_events`, `featured_events`, `feat
 | `first_name`, `last_name` | text, nullable — set to `NULL`/anonymized placeholder on account deletion (see "Account deletion" below) |
 | `age_group` | enum: `18-25`, `26-35`, `36-50`, `50+`, nullable |
 | `interests`, `moods`, `districts`, `timing`, `preferred_days`, `preferred_languages` | text[] (Postgres native arrays are fine here — low cardinality, not relational) |
-| `max_distance` | integer (km) |
+| `interests_other` | text, nullable — free-text interest when `interests` includes `Other`; null when Other is not selected |
+| `max_distance` | integer (km), **legacy/unused** — not collected in onboarding or Vibes; preference saves clear it to `null` (no SQL migration to drop the JSON key) |
 | `accessibility` | boolean |
 | `language` | enum: `DE`, `EN` |
 | `onboarding_complete` | boolean |

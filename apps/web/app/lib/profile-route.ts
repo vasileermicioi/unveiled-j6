@@ -55,14 +55,11 @@ export function parseIdentityPayload(body: ParsedBody): ProfileIdentityPayload {
 }
 
 export function parsePreferencesPayload(body: ParsedBody): CulturalPreferencesPayload {
-  const maxDistanceRaw = asString(body.max_distance);
-  const max_distance = maxDistanceRaw ? Number.parseInt(maxDistanceRaw, 10) : Number.NaN;
-
   return {
     interests: asStringArray(body.interests),
     moods: asStringArray(body.moods),
+    interests_other: asString(body.interests_other),
     districts: asStringArray(body.districts),
-    max_distance,
     timing: asStringArray(body.timing),
     preferred_days: asStringArray(body.preferred_days),
     preferred_languages: asStringArray(body.preferred_languages),
