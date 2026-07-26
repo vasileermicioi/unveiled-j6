@@ -138,7 +138,7 @@ export type MembershipCheckoutContent = {
 export type LegalSection = {
   id: string;
   title: string;
-  placeholder: string;
+  body: readonly string[];
 };
 
 export type LegalContent = {

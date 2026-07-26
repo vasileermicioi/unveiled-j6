@@ -67,6 +67,7 @@ Feature: Static and Marketing Pages
   Scenario: Legal pages exist and are linked from the footer
     When I visit the Impressum, Privacy Policy, or Terms of Service page
     Then I see the corresponding legal content in my selected language
+    And each page shows non-placeholder body sections in the selected language
     And each is linked from the site footer on every page
 
   Scenario: Cookie consent banner on first visit

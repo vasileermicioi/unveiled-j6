@@ -135,6 +135,18 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `checkIn` | Check-In | Check-In |
 | `checkedIn` | Eingeloggt | Checked-In |
 
+## Legal pages (`apps/web/app/lib/content/legal.ts`)
+
+Bilingual Impressum / Privacy / Terms module for `LegalPage`. Footer links: `footer.legal.*` in `apps/web/app/lib/copy.ts`.
+
+| Page key | DE `pageTitle` | EN `pageTitle` | Route |
+|---|---|---|---|
+| `impressum` | Impressum | Imprint | `/:locale/impressum` |
+| `privacy` | Datenschutz | Privacy Policy | `/:locale/privacy` |
+| `terms` | AGB | Terms of Service | `/:locale/terms` |
+
+Chrome: eyebrow `Rechtliches` / `Legal`. Section model: `id`, `title`, `body: string[]`. Body uses foreground color (not muted). See `docs/product/ui/static-pages-content.md` § Legal pages.
+
 ## Content not captured in `translations.ts` (extract manually from components if needed)
 
 - Landing page hero/marketing copy (inline in `App.tsx`)

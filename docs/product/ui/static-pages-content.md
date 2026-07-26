@@ -63,6 +63,25 @@ Public page without login for guests and non-booking-eligible members. Navbar â€
 
 ---
 
+## Legal pages (`/impressum`, `/privacy`, `/terms`)
+
+Footer LEGAL column â†’ three links. Component: `LegalPage.tsx`. Content module: `apps/web/app/lib/content/legal.ts`.
+
+| Route | DE title | EN title |
+|---|---|---|
+| `/:locale/impressum` | Impressum | Imprint |
+| `/:locale/privacy` | Datenschutz | Privacy Policy |
+| `/:locale/terms` | AGB | Terms of Service |
+
+- Layout matches FAQ: on-yellow `PageSectionHeader` + intro; then a `help-section` card with eyebrow, page title, `support@unveiled.berlin` mailto, and the shared **`FaqAccordion`** island (~3 sections per page; `answer` may be `string[]`). Body text uses **foreground** color (not muted gray).
+- Operator identity on Impressum; Privacy/Terms refer to it instead of repeating full contact blocks.
+- Sections use `title` + `body: string[]`. Single-open accordion; first section expanded by default.
+- Copy is **operational** MVP text; formal counsel review still recommended before production launch.
+- Terms state that unused **credits do not roll over**. Do not reintroduce rollover claims from the old marketing FAQ.
+- Full bilingual prose lives in `legal.ts`.
+
+---
+
 ## FAQ (`/faq`, component `FaqPage.tsx` + `HelpSection.tsx`)
 
 ### 1. Page header

@@ -3,18 +3,38 @@ import { useEffect, useState } from "react";
 
 export type FaqAccordionItem = {
   question: string;
-  answer: string;
+  /** Single answer, or multiple paragraphs (legal pages). */
+  answer: string | readonly string[];
 };
 
 type FaqAccordionProps = {
   items: readonly FaqAccordionItem[];
 };
 
+function answerParagraphs(answer: string | readonly string[]): string[] {
+  return typeof answer === "string" ? [answer] : [...answer];
+}
+
+function AnswerBody({ answer }: { answer: string | readonly string[] }) {
+  const paragraphs = answerParagraphs(answer);
+  if (paragraphs.length === 1) {
+    return <Paragraph>{paragraphs[0]}</Paragraph>;
+  }
+  return (
+    <Surface className="flex flex-col gap-3" variant="transparent">
+      {paragraphs.map((paragraph) => (
+        <Paragraph key={paragraph}>{paragraph}</Paragraph>
+      ))}
+    </Surface>
+  );
+}
+
 function FaqAccordionFallback({ items }: FaqAccordionProps) {
   return (
     <Surface className="faq-accordion faq-accordion--static" variant="transparent">
       {items.map((item, index) => {
         const isExpanded = index === 0;
+        const paragraphs = answerParagraphs(item.answer);
 
         return (
           <Surface
@@ -25,7 +45,18 @@ function FaqAccordionFallback({ items }: FaqAccordionProps) {
             <Paragraph className="faq-accordion__trigger">{item.question}</Paragraph>
             {isExpanded ? (
               <Surface className="faq-accordion__panel" variant="transparent">
-                <Paragraph className="faq-accordion__answer">{item.answer}</Paragraph>
+                {paragraphs.length === 1 ? (
+                  <Paragraph className="faq-accordion__answer">{paragraphs[0]}</Paragraph>
+                ) : (
+                  <Surface
+                    className="faq-accordion__answer flex flex-col gap-3"
+                    variant="transparent"
+                  >
+                    {paragraphs.map((paragraph) => (
+                      <Paragraph key={paragraph}>{paragraph}</Paragraph>
+                    ))}
+                  </Surface>
+                )}
               </Surface>
             ) : null}
           </Surface>
@@ -60,7 +91,7 @@ export default function FaqAccordion({ items }: FaqAccordionProps) {
           </Accordion.Heading>
           <Accordion.Panel>
             <Accordion.Body>
-              <Paragraph>{item.answer}</Paragraph>
+              <AnswerBody answer={item.answer} />
             </Accordion.Body>
           </Accordion.Panel>
         </Accordion.Item>

@@ -131,7 +131,7 @@ The public Discover experience (locale home `/:locale`) SHALL present marketing 
 
 ### Requirement: Legal pages
 
-The routes `/:locale/impressum`, `/:locale/privacy`, and `/:locale/terms` SHALL render structured legal content in the visitor's selected language and be linked from the site footer on every page.
+The routes `/:locale/impressum`, `/:locale/privacy`, and `/:locale/terms` SHALL render structured legal content in the visitor's selected language and be linked from the site footer on every page. Body copy SHALL use foreground contrast (not muted gray).
 
 #### Scenario: Impressum accessible
 
@@ -157,6 +157,85 @@ The routes `/:locale/impressum`, `/:locale/privacy`, and `/:locale/terms` SHALL 
 
 - **WHEN** a crawler requests `/en/impressum`
 - **THEN** the response includes a unique `<title>`, `<meta name="description">`, canonical, hreflang alternates, and Open Graph tags in the initial HTML
+
+### Requirement: Legal page section body content
+
+The system SHALL render each legal page section with a title and one or more body paragraphs sourced from localized content modules (not a single `placeholder` field). Each body entry SHALL be rendered as its own HeroUI `Paragraph` with foreground color on Impressum, Privacy, and Terms routes.
+
+#### Scenario: Legal section shows body paragraphs
+
+- **WHEN** a visitor opens Impressum, Privacy, or Terms
+- **THEN** each listed section shows its title and at least one body paragraph from the content module
+- **AND** the page does not rely on a `placeholder` field name in the content model
+
+### Requirement: Impressum shows operator identity
+
+The system SHALL publish a bilingual Impressum/Imprint page with operator name, representatives, postal address in Berlin, contact phone and email, content-responsibility statement, and standard liability/copyright notices — without placeholder copy. Privacy and Terms MAY refer to Impressum for operator identity instead of repeating full contact blocks.
+
+#### Scenario: Impressum linked from footer shows real identity
+
+- **WHEN** a visitor opens Impressum / Imprint from the footer LEGAL column
+- **THEN** they see unveiled berlin operator details (representatives, Berlin address, phone, support email)
+- **AND** the page language matches the URL locale (`de` or `en`)
+
+#### Scenario: Impressum has no placeholder body copy
+
+- **WHEN** a visitor views `/de/impressum` or `/en/impressum`
+- **THEN** impressum section bodies do not contain Platzhalter or “Placeholder —” / “pending legal review” strings
+
+### Requirement: Privacy policy describes membership data processing
+
+The system SHALL publish a bilingual Privacy Policy that identifies the controller (or refers to Impressum), categories of personal data, purposes/legal bases at a high level, key processors, cookie/consent behavior for non-essential map tiles, retention overview, and data-subject rights — without placeholder copy.
+
+#### Scenario: Privacy page covers controller and rights
+
+- **WHEN** a visitor opens Privacy / Datenschutz
+- **THEN** they see a reference to the Berlin operator identity and contact email
+- **AND** they see coverage of processing purposes, cookies/consent, and GDPR rights
+- **AND** the page language matches the URL locale
+
+#### Scenario: Privacy page has no placeholder body copy
+
+- **WHEN** a visitor views `/de/privacy` or `/en/privacy`
+- **THEN** privacy section bodies do not contain Platzhalter or “Placeholder —” / “pending legal review” strings
+
+### Requirement: Terms describe membership credits and booking
+
+The system SHALL publish bilingual Terms of Service / AGB covering membership subscription, credit allotment and expiry (no rollover), booking/admission via partner venues, cancellation at a high level, liability, and governing law — without placeholder copy.
+
+#### Scenario: Terms state credits do not roll over
+
+- **WHEN** a visitor reads the Terms / AGB page
+- **THEN** the copy states that unused credits do not roll over to the next period
+- **AND** the page language matches the URL locale
+
+#### Scenario: Terms page has no placeholder body copy
+
+- **WHEN** a visitor views `/de/terms` or `/en/terms`
+- **THEN** terms section bodies do not contain Platzhalter or “Placeholder —” / “pending legal review” strings
+
+#### Scenario: Terms cover membership booking and cancellation
+
+- **WHEN** a visitor opens Terms / AGB
+- **THEN** they see coverage of membership/subscription, credits, bookings/admission, and cancellation
+- **AND** the page language matches the URL locale
+
+### Requirement: Legal pages are complete and regression-tested
+
+The system SHALL keep Impressum, Privacy Policy, and Terms of Service linked from the footer LEGAL column, fully localized, free of placeholder copy, and covered by e2e assertions that verify distinctive body content on each page.
+
+#### Scenario: Legal pages exist and are linked from the footer
+
+- **WHEN** I visit the Impressum, Privacy Policy, or Terms of Service page
+- **THEN** I see the corresponding legal content in my selected language
+- **AND** each page shows non-placeholder body sections (not “pending legal review” stubs)
+- **AND** each is linked from the site footer on every page
+
+#### Scenario: Legal page body content is distinctive and non-placeholder
+
+- **WHEN** a visitor opens `/de|en/impressum`, `/de|en/privacy`, or `/de|en/terms`
+- **THEN** the page shows at least one distinctive real body string for that page type (e.g. Berlin address on Impressum, rights cue on Privacy, credits no-rollover cue on Terms)
+- **AND** the rendered page does not contain `Platzhalter` or `pending legal review`
 
 ### Requirement: Cookie consent banner
 

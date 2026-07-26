@@ -972,7 +972,7 @@ After deploy (with `SITE_URL` set to the staging origin), confirm:
 1. All public routes render in DE and EN: `/` (guest marketing home), `/discover`, `/how-it-works`, `/faq`, `/membership`, `/impressum`, `/privacy`, `/terms` (bare `/discover` redirects to `/:locale/discover`)
 2. Footer legal links work on every page
 3. `curl -s $SITE_URL/robots.txt` — shows `Allow`, `Disallow`, and `Sitemap:` lines
-4. `curl -s $SITE_URL/sitemap.xml` — valid XML with 14 URLs (`/de`, `/en/terms`, etc.); no `/events/` URLs
+4. `curl -s $SITE_URL/sitemap.xml` — valid XML with marketing/legal locale URLs (`/de`, `/en/terms`, etc.); no `/events/` URLs until bookable events are included
 5. View Source on `/en/faq` — server-rendered `<title>`, description, canonical, hreflang, and `og:image` pointing at `/og-default.png`
 6. Cookie consent banner appears on first visit; Accept/Decline persists across reloads until storage is cleared
 7. Browser console shows no errors on `/de` and `/en`

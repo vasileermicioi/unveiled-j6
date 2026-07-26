@@ -151,7 +151,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `static-pages.feature` | FAQ | `e2e/specs/static-pages.spec.ts` · `Scenario: FAQ` | `pass` |  |
 | `static-pages.feature` | Bare /discover redirects to localized Discover | `e2e/specs/static-pages.spec.ts` · `Scenario: Bare /discover redirects to localized Discover` | `pass` |  |
 | `static-pages.feature` | Bilingual content | `e2e/specs/static-pages.spec.ts` · `Scenario: Bilingual content` | `pass` |  |
-| `static-pages.feature` | Legal pages exist and are linked from the footer | `e2e/specs/static-pages.spec.ts` · `Scenario: Legal pages exist and are linked from the footer` | `pass` |  |
+| `static-pages.feature` | Legal pages exist and are linked from the footer | `e2e/specs/static-pages.spec.ts` · `Scenario: Legal pages exist and are linked from the footer` | `pass` | Three footer LEGAL links; distinctive body (address / rights / credits no-rollover); foreground card copy |
 | `static-pages.feature` | Cookie consent banner on first visit | `e2e/specs/static-pages.spec.ts` · `Scenario: Cookie consent banner on first visit` | `pass` |  |
 | `static-pages.feature` | Declining consent disables the map embed | `e2e/specs/static-pages.spec.ts` · `Scenario: Declining consent disables the map embed` | `pass` |  |
 | `static-pages.feature` | Error tracking is not gated behind consent | `e2e/specs/static-pages.spec.ts` · `Scenario: Error tracking is not gated behind consent` | `pass` | Server-only Sentry (`SENTRY_DSN`); no `window.Sentry` — asserts tracking is not consent-gated |

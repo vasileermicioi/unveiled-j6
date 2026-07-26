@@ -12,9 +12,10 @@ Mapping aid for HeroUI rebuilds. Visual language: `design-tokens.md`. Ownership:
 |---|---|---|
 | Navbar / Header | `apps/web` | Slim marketing nav: Discover (guests / non-active) or Browse events (booking-eligible) + FAQ; **ADMIN omits Discover/FAQ**; guest auth Log in only; How it works / Membership / Sign up out of header and footer nav — see `app-shell.md` |
 | Logo | `@unveiled/ui` | Three SVG tones — `assets-inventory.md`; Ladle stories under `packages/ui` |
-| Footer | `apps/web` | Guest/member: Discover → `/:locale/discover` (no Browse events swap) + FAQ; **ADMIN omits Navigation column**; legal + contact remain (no How it works / Membership) |
+| Footer | `apps/web` | Guest/member: Discover → `/:locale/discover` (no Browse events swap) + FAQ; **ADMIN omits Navigation column**; legal (Impressum / Privacy / Terms) + contact remain (no How it works / Membership) |
 | **PageSectionHeader** | `apps/web` | Default on-yellow page/section header: muted uppercase eyebrow + bold headline + full-width rule. Used on Discover, FAQ, auth, member feed/browse, book/confirm, waitlist join/cancel, Saved, My Tickets, member account/profile pages (`/profile*`), and admin `AdminPageShell` titles (eyebrow Admin/Verwaltung) — distinct from bordered `PageHero` card heroes and the membership marketing hero card |
 | Help / FAQ accordion | `apps/web` | HeroUI `Accordion` in `Card` |
+| Legal pages | `apps/web` | `LegalPage` + `help-section` card + shared `FaqAccordion`; foreground body (not muted) |
 | Cookie banner | `apps/web` island | Accept/decline; gates map tiles |
 
 ---

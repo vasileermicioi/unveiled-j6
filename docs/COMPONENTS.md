@@ -250,8 +250,6 @@ HeroUI Accordion, single-open, first item expanded. SSR static fallback with mat
 <FaqAccordion items={section.items} />
 ```
 
----
-
 ### `AppNavbarMenu`
 
 **Path:** `islands/AppNavbarMenu.tsx`

@@ -165,12 +165,14 @@ Language switch: `switchLocalePath(pathname, "en")` preserves path.
 
 ## 9. Accordion block (FAQ style)
 
-**Reference:** `HelpSection` + `FaqAccordion` + `.help-section` theme
+**Reference:** `HelpSection` + `FaqAccordion` + `.help-section` theme.
 
 Collapsed items: white bordered box, uppercase question.  
-Expanded item: dark header + cream text, answer panel below with normal body copy.
+Expanded item: dark header + cream text, answer panel below with normal body copy (foreground, not muted gray).
 
 Island required for interactivity. SSR fallback must match visual structure.
+
+Legal pages (`LegalPage` + `.legal-section`) use the same white-card + foreground body look **without** accordion — one page per topic (Impressum / Privacy / Terms).
 
 ---
 

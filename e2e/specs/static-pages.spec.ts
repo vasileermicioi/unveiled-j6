@@ -219,13 +219,40 @@ test.describe("static-pages.feature", () => {
 
     await impressum.click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/impressum`));
+    const main = page.getByRole("main");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(main.getByRole("button").first()).toBeVisible();
+    await expect(main.getByText(/Luisenstra(ß|ss)e|10117 Berlin/i).first()).toBeVisible();
+    await expect(main.getByRole("link", { name: /support@unveiled\.berlin/i })).toBeVisible();
+    await expect(main).not.toContainText(/Platzhalter|pending legal review/i);
 
     await page.goto(`/${locale}/privacy`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await page
+      .getByRole("main")
+      .getByRole("button", { name: /empfänger|recipients|cookies/i })
+      .click();
+    await expect(
+      page
+        .getByRole("main")
+        .getByText(/Rechte|rights/i)
+        .first(),
+    ).toBeVisible();
+    await expect(page.getByRole("main")).not.toContainText(/Platzhalter|pending legal review/i);
 
     await page.goto(`/${locale}/terms`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await page
+      .getByRole("main")
+      .getByRole("button", { name: /credits/i })
+      .click();
+    await expect(
+      page
+        .getByRole("main")
+        .getByText(/do not roll over|rollen nicht|nicht .*übertragen/i)
+        .first(),
+    ).toBeVisible();
+    await expect(page.getByRole("main")).not.toContainText(/Platzhalter|pending legal review/i);
   });
 
   test("Scenario: Cookie consent banner on first visit", async ({ page, locale }) => {

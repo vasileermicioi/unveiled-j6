@@ -31,8 +31,6 @@ describe("isSvgBlob", () => {
     expect(isSvgBlob(new File(["<svg/>"], "logo.SVG", { type: "application/octet-stream" }))).toBe(
       true,
     );
-    expect(isSvgBlob(new Blob([new Uint8Array([0xff, 0xd8])], { type: "image/jpeg" }))).toBe(
-      false,
-    );
+    expect(isSvgBlob(new Blob([new Uint8Array([0xff, 0xd8])], { type: "image/jpeg" }))).toBe(false);
   });
 });
