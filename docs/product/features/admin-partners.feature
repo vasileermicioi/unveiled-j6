@@ -4,7 +4,7 @@
 # Post-MVP (parked under features/post-mvp/): portal-access provisioning and
 # venue check-in QR token regenerate — see partner-and-checkin.feature.
 #
-# Partner "logo" is an optional upload (six JPEG variants via @unveiled/images) —
+# Partner "logo" is a required upload (five WebP variants via @unveiled/images) —
 # see extras/image-uploads.md.
 
 Feature: Admin — Partner Management
@@ -16,13 +16,18 @@ Feature: Admin — Partner Management
     Given I am signed in as "ADMIN"
 
   Scenario: Create a partner
-    When I create a partner with a name, contact email, address, and optionally a logo image
+    When I create a partner with a name, contact email, address, and a logo image
     Then the partner is added to the catalog as a venue record
+    And the partner has a non-null logo image
 
-  Scenario: Supply the partner logo as a direct upload or a remote URL
-    When I create or edit a partner and either upload a logo image file or paste a logo image URL
-    Then it is processed into the standard set of size variants and stored in object storage, exactly like an event image (see extras/image-uploads.md)
-    And the partner's logo remains optional either way — omitting both leaves the partner without a logo
+  Scenario: Supply the partner logo as a direct upload
+    When I create or edit a partner and upload a logo image file
+    Then it is processed into five WebP size variants client-side and stored in object storage, exactly like an event image (see extras/image-uploads.md)
+    And the admin sees a resized-variant preview gallery for the processed (or existing) logo
+
+  Scenario: Partner logo is required
+    When I attempt to create a partner without uploading a logo image
+    Then the creation is rejected until a logo is provided
 
   Scenario Outline: Partner creation validation
     When I submit a partner with <field> set to "<value>"
@@ -50,7 +55,7 @@ Feature: Admin — Partner Management
   Scenario: List featured partners
     When I open the Featured partners tab ("/:locale/admin/featured-partners")
     Then I see the current featured partners grid ordered by sort_order
-    And each tile shows at least name (and logo thumbnail when present)
+    And each tile shows at least name and logo thumbnail
     And I see a path to save order and remove selected partners
 
   Scenario: Add by searching existing partners

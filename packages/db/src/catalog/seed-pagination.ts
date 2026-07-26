@@ -166,7 +166,7 @@ export function printSeedAdminPaginationHelp(): void {
 
 Seeds synthetic partners and events for manual admin list pagination testing.
 Rows are prefixed "${PAGINATION_PARTNER_PREFIX}" / "${PAGINATION_EVENT_PREFIX}".
-Each row gets a committed prebuilt six-variant JPEG pack uploaded to R2.
+Each row gets a committed prebuilt five-variant WebP pack uploaded to R2.
 
 Options:
   --partners=N     Number of partners to create (default ${DEFAULT_PAGINATION_PARTNER_COUNT})

@@ -1,9 +1,17 @@
 /**
- * Bake six JPEG variants next to each seed source JPEG for Workers-safe demo seed.
+ * Bake five WebP variants next to each seed source JPEG for Workers-safe demo seed.
  *
  * Usage: bun scripts/bake-seed-image-variants.ts
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { join, relative } from "node:path";
 
 import { VARIANT_FILENAMES } from "../packages/images/src/constants.ts";
@@ -33,12 +41,26 @@ function listJpegFiles(dir: string): string[] {
 
 async function bakeOne(sourcePath: string): Promise<void> {
   const variantsDir = `${sourcePath}.variants`;
+  if (existsSync(variantsDir)) {
+    rmSync(variantsDir, { recursive: true, force: true });
+  }
   mkdirSync(variantsDir, { recursive: true });
   const buffer = readFileSync(sourcePath);
   const prebuilt = await bufferToPrebuiltVariants(buffer, { source: "UPLOAD" });
   for (const filename of VARIANT_FILENAMES) {
     writeFileSync(join(variantsDir, filename), prebuilt.variants[filename]);
   }
+  writeFileSync(
+    join(variantsDir, "meta.json"),
+    `${JSON.stringify(
+      {
+        width: prebuilt.claimedWidth ?? 0,
+        height: prebuilt.claimedHeight ?? 0,
+      },
+      null,
+      2,
+    )}\n`,
+  );
   console.log(`baked ${relative(ROOT, variantsDir)}`);
 }
 
@@ -47,7 +69,7 @@ async function main() {
     throw new Error(`Missing seed images dir: ${SEED_ROOT}`);
   }
   const files = listJpegFiles(SEED_ROOT);
-  console.log(`Baking variants for ${files.length} seed JPEGs…`);
+  console.log(`Baking WebP variants for ${files.length} seed JPEGs…`);
   for (const file of files) {
     await bakeOne(file);
   }

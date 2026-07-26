@@ -1,5 +1,5 @@
 import type { Event, Partner } from "@unveiled/db";
-import { buildVariantUrl } from "@unveiled/images/urls";
+import { buildVariantUrl, readImagePublicBaseUrl } from "@unveiled/images/urls";
 
 import type { EventFormDefaults } from "../components/admin/event-admin-types";
 import {
@@ -14,10 +14,18 @@ export function toPartnerOptions(partners: Partner[]): PartnerOption[] {
   return partners.map((partner) => ({ id: partner.id, name: partner.name }));
 }
 
+function resolveImagePublicBaseUrl(): string | null {
+  try {
+    return readImagePublicBaseUrl();
+  } catch {
+    return null;
+  }
+}
+
 export function eventToFormDefaults(event: Event): EventFormDefaults & { partnerId: string } {
   let currentImageUrl: string | null = null;
   try {
-    currentImageUrl = buildVariantUrl(event.imageId, "small-320.jpg");
+    currentImageUrl = buildVariantUrl(event.imageId, "small-320.webp");
   } catch {
     currentImageUrl = null;
   }
@@ -48,6 +56,8 @@ export function eventToFormDefaults(event: Event): EventFormDefaults & { partner
     lng: event.lng,
     mapZoom: event.mapZoom,
     currentImageUrl,
+    currentImageId: event.imageId,
+    imagePublicBaseUrl: resolveImagePublicBaseUrl(),
   };
 }
 
@@ -78,5 +88,7 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     lng: values.lng,
     mapZoom: values.mapZoom,
     currentImageUrl: null,
+    currentImageId: null,
+    imagePublicBaseUrl: resolveImagePublicBaseUrl(),
   };
 }

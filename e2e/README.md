@@ -45,7 +45,7 @@ SITE_URL=https://your-staging-host bun run test:e2e
 | `E2E_STRIPE_CHECKOUT` | Optional (`1`) | Drive hosted Stripe Checkout in Playwright (needs webhook forwarding) |
 | `STRIPE_*` / `RESEND_*` | Staging / local app | Required for real Checkout + confirmation email (see `DEPLOYMENT.md` Phase 6) |
 
-Image create/edit tests call `test.skip('R2 vars not configured')` when any of the six R2 vars is missing. Admin uploads generate variants **in the browser with Pica** (JS required) and work against **`bun run dev`** (default) and, when configured, against a **Workers preview or staging** base URL (`SITE_URL` / Playwright `baseURL` + the same six R2 vars). Do not skip image specs solely because the host is Workers.
+Image create/edit tests call `test.skip('R2 vars not configured')` when any of the six R2 env vars is missing. Admin uploads generate **five WebP** variants **in the browser with Pica** (JS required; no sip) and work against **`bun run dev`** (default) and, when configured, against a **Workers preview or staging** base URL (`SITE_URL` / Playwright `baseURL` + the same six R2 vars). Partner create always attaches a logo. Do not skip image specs solely because the host is Workers.
 
 **Fallbacks (local only):**
 
@@ -192,7 +192,7 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | Regenerate venue check-in QR token | `admin-partners.spec.ts` | post-MVP — no admin UI (domain helper only) |
 | Portal access (create / exists / email) | `admin-partners.spec.ts` | post-MVP — portal access UI not built |
 | Seed demo (empty env) | `admin-events.spec.ts` | Skips when catalog not empty (seed button hidden) |
-| Image upload / logo processing | `admin-*.spec.ts` | `R2 vars not configured` when any of six R2 vars missing |
+| Image upload / logo processing | `admin-*.spec.ts` | `R2 vars not configured` when any of six R2 env vars missing; asserts `.webp` variant URLs |
 | Admin events / partners suite | `admin-events` / `admin-partners` | Skips when `E2E_ADMIN_*` unset (named env skip; was a throw before Phase 8 close) |
 | Activating via real Stripe Checkout | `credits-subscription.spec.ts` | Skips unless `E2E_STRIPE_CHECKOUT=1`; staging smoke is SoT |
 | Monthly renewal resets credits | `credits-subscription.spec.ts` | Billing package / webhook tests; no e2e renewal clock |

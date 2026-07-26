@@ -30,8 +30,8 @@ function asFile(value: string | File | (string | File)[] | undefined): File | Bl
   return value instanceof File || value instanceof Blob ? value : undefined;
 }
 
-function jpegFile(name: string, bytes = 12): File {
-  return new File([new Uint8Array(bytes)], name, { type: "image/jpeg" });
+function webpFile(name: string, bytes = 12): File {
+  return new File([new Uint8Array(bytes)], name, { type: "image/webp" });
 }
 
 function completePrebuiltBody(extra: Record<string, string | File> = {}) {
@@ -41,7 +41,7 @@ function completePrebuiltBody(extra: Record<string, string | File> = {}) {
     claimedHeight: "800",
   };
   for (const filename of VARIANT_FILENAMES) {
-    body[filename] = jpegFile(filename);
+    body[filename] = webpFile(filename);
   }
   return { ...body, ...extra };
 }
@@ -54,7 +54,7 @@ function gallerySetFields(index: number, imageId: string): Record<string, string
     [`${prefix}claimedHeight`]: "800",
   };
   for (const filename of VARIANT_FILENAMES) {
-    body[`${prefix}${filename}`] = jpegFile(filename);
+    body[`${prefix}${filename}`] = webpFile(filename);
   }
   return body;
 }
@@ -71,7 +71,7 @@ describe("parsePrebuiltImageVariants", () => {
 
   test("returns null when any variant is missing", async () => {
     const body = completePrebuiltBody();
-    delete body["small-320.jpg"];
+    delete body["small-320.webp"];
     const parsed = await parsePrebuiltImageVariants(body, asString, asFile);
     expect(parsed).toBeNull();
   });
@@ -120,7 +120,7 @@ describe("parsePrebuiltImageVariantSets", () => {
       ...gallerySetFields(0, "11111111-1111-1111-1111-111111111111"),
       ...gallerySetFields(1, "22222222-2222-2222-2222-222222222222"),
     };
-    delete body["gallery[1].small-320.jpg"];
+    delete body["gallery[1].small-320.webp"];
     const parsed = await parsePrebuiltImageVariantSets(body, asString, asFile);
     expect(parsed).toEqual([]);
   });

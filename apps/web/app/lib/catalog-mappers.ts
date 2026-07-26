@@ -29,12 +29,10 @@ export function toDiscoverPartnerTile(partner: Partner): DiscoverPartnerTile {
   const initial = partner.name.trim().charAt(0).toUpperCase() || "?";
   let logoUrl: string | undefined;
 
-  if (partner.logoImageId) {
-    try {
-      logoUrl = buildVariantUrl(partner.logoImageId, "medium-640.jpg");
-    } catch {
-      logoUrl = undefined;
-    }
+  try {
+    logoUrl = buildVariantUrl(partner.logoImageId, "medium-640.webp");
+  } catch {
+    logoUrl = undefined;
   }
 
   return {

@@ -36,10 +36,10 @@ describe("toPublicEventGalleryImages", () => {
     expect(items).toHaveLength(1);
     expect(items[0]?.imageId).toBe(id);
     expect(items[0]?.sortOrder).toBe(0);
-    expect(items[0]?.thumbSrc).toContain(`/images/${id}/medium-640.jpg`);
-    expect(items[0]?.thumbSrcSet).toContain("small-320.jpg");
-    expect(items[0]?.fullSrc).toContain(`/images/${id}/large-1280.jpg`);
-    expect(items[0]?.fullSrcSet).toContain("medium-640.jpg");
+    expect(items[0]?.thumbSrc).toContain(`/images/${id}/medium-640.webp`);
+    expect(items[0]?.thumbSrcSet).toContain("small-320.webp");
+    expect(items[0]?.fullSrc).toContain(`/images/${id}/large-1280.webp`);
+    expect(items[0]?.fullSrcSet).toContain("medium-640.webp");
   });
 
   test("skips rows when public base URL is missing", () => {

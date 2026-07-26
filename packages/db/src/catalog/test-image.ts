@@ -8,7 +8,7 @@ import {
 } from "@unveiled/images";
 
 /**
- * Load a committed six-variant JPEG pack for Bun tests/seed helpers.
+ * Load a committed five-variant WebP pack for Bun tests/seed helpers.
  * Does not import `@unveiled/images/offline` or `/client` (Workers-safe type graph).
  */
 export function createTestImagePrebuilt(): PrebuiltImageVariantsInput {
@@ -20,10 +20,27 @@ export function createTestImagePrebuilt(): PrebuiltImageVariantsInput {
     variants[filename] = readFileSync(join(fixturesDir, filename));
   }
 
+  let claimedWidth = 800;
+  let claimedHeight = 420;
+  try {
+    const meta = JSON.parse(readFileSync(join(fixturesDir, "meta.json"), "utf8")) as {
+      width?: number;
+      height?: number;
+    };
+    if (typeof meta.width === "number" && meta.width >= 1) {
+      claimedWidth = meta.width;
+    }
+    if (typeof meta.height === "number" && meta.height >= 1) {
+      claimedHeight = meta.height;
+    }
+  } catch {
+    // Keep defaults.
+  }
+
   return {
     imageId: crypto.randomUUID(),
     variants,
-    claimedWidth: 800,
-    claimedHeight: 420,
+    claimedWidth,
+    claimedHeight,
   };
 }

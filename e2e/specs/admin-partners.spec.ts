@@ -27,6 +27,7 @@ test.describe("admin-partners.feature", () => {
   });
 
   test("Scenario: Create a partner", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     await navigateAdminTab(page, locale, "partners");
     // PageSectionHeader: Admin/Verwaltung eyebrow + Partners/Partner title (proximity roles/names).
@@ -34,12 +35,13 @@ test.describe("admin-partners.feature", () => {
     await expect(page.getByRole("heading", { name: /^partner$|^partners$/i })).toBeVisible();
     await expect(page.getByText(partner.name).first()).toBeVisible();
     await expect(page.getByText(partner.contactEmail).first()).toBeVisible();
+    const row = page.getByRole("row").filter({ hasText: partner.name });
+    const logo = row.locator("img").first();
+    await expect(logo).toBeVisible({ timeout: 15_000 });
+    await expect(logo).toHaveAttribute("src", /small-320\.webp(?:\?|$)/);
   });
 
-  test("Scenario: Supply the partner logo as a direct upload or a remote URL", async ({
-    page,
-    locale,
-  }) => {
+  test("Scenario: Supply the partner logo as a direct upload", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     // Admin UI is upload-only (no logo URL field). Remote URL path is seed/CLI only.
     const partner = await createPartnerViaUI(page, locale, { logoPath: SAMPLE_EVENT_IMAGE });
@@ -48,7 +50,25 @@ test.describe("admin-partners.feature", () => {
     // Logo <img alt=""> is decorative — not exposed as role=img; assert DOM presence.
     const logo = row.locator("img").first();
     await expect(logo).toBeVisible({ timeout: 15_000 });
-    await expect(logo).toHaveAttribute("src", /small-320\.jpg(?:\?|$)/);
+    await expect(logo).toHaveAttribute("src", /small-320\.webp(?:\?|$)/);
+  });
+
+  test("Scenario: Partner logo is required", async ({ page, locale }) => {
+    await page.goto(`/${locale}/admin/partners/new`);
+    await expect(
+      page.getByRole("heading", { name: /partner anlegen|create partner/i }),
+    ).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
+    await fillTextbox(page, adminLabels.name, `No Logo ${uniqueSuffix()}`);
+    await fillTextbox(page, adminLabels.email, `nologo-${uniqueSuffix()}@example.com`);
+    await fillTextbox(page, adminLabels.address, "Berlin");
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/new`));
+    await expect(
+      page.getByText(/partner-logo ist erforderlich|partner logo is required/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test('Scenario Outline: Partner creation validation — name = ""', async ({ page, locale }) => {
@@ -68,10 +88,13 @@ test.describe("admin-partners.feature", () => {
     page,
     locale,
   }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
     await page.goto(`/${locale}/admin/partners/new`);
     await fillTextbox(page, adminLabels.name, `E2E Invalid Email ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.email, "not-an-email");
     await fillTextbox(page, adminLabels.address, "Somewhere, Berlin");
+    // BDD exception: file-input — attach logo so submit reaches field validation
+    await page.locator('input[name="logo"]').setInputFiles(SAMPLE_EVENT_IMAGE);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/new`));
     const emailField = page.getByRole("textbox", { name: adminLabels.email, exact: true });
@@ -100,6 +123,7 @@ test.describe("admin-partners.feature", () => {
   });
 
   test("Scenario: Edit a partner", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     const row = page.getByRole("row").filter({ hasText: partner.name });
     await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
@@ -131,11 +155,13 @@ test.describe("admin-partners.feature", () => {
   });
 
   test("Scenario: Delete a partner", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     await deletePartnerViaUI(page, locale, partner.name);
   });
 
   test("Scenario: List featured partners", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     await navigateAdminTab(page, locale, "featured-partners");
     await page.getByRole("link", { name: /partner hinzufügen|add partner/i }).click();
@@ -166,6 +192,7 @@ test.describe("admin-partners.feature", () => {
   });
 
   test("Scenario: Add by searching existing partners", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     await navigateAdminTab(page, locale, "featured-partners");
     await page.getByRole("link", { name: /partner hinzufügen|add partner/i }).click();
@@ -182,6 +209,7 @@ test.describe("admin-partners.feature", () => {
 
   test("Scenario: Admin reorders featured partners by drag and drop", async ({ page, locale }) => {
     test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
     const partnerA = await createPartnerViaUI(page, locale);
     const partnerB = await createPartnerViaUI(page, locale);
 
@@ -237,6 +265,7 @@ test.describe("admin-partners.feature", () => {
   });
 
   test("Scenario: Admin remove from featured partners keeps venue", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     await navigateAdminTab(page, locale, "featured-partners");
     await page.getByRole("link", { name: /partner hinzufügen|add partner/i }).click();

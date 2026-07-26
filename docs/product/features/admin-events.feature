@@ -2,7 +2,7 @@
 # Dedicated SSR pages: /admin/events/new, /admin/events/:id/edit, etc. (see sitemap).
 # Partner self-service event CRUD is post-MVP (features/post-mvp/). Admin retains
 # unrestricted cross-venue event management in MVP.
-# Event image = required file upload → six JPEG variants (extras/image-uploads.md).
+# Event image = required file upload → five WebP variants (extras/image-uploads.md).
 
 Feature: Admin — Event Management
   As an admin
@@ -30,8 +30,9 @@ Feature: Admin — Event Management
 
   Scenario: Supply the event image as a direct upload
     When I create or edit an event and upload an image file
-    Then the file is processed into the standard set of size variants and stored in object storage
+    Then the file is processed into five WebP size variants client-side and stored in object storage
     And the event's image is set to the resulting image (see extras/image-uploads.md)
+    And the admin sees a resized-variant preview gallery for the processed (or existing) image
 
   Scenario: Event image is required
     When I attempt to create or edit an event without uploading an image
@@ -105,7 +106,7 @@ Feature: Admin — Event Management
     Given an existing event in the catalog
     When I open the event gallery add page ("/:locale/admin/events/:id/gallery/add")
     And I submit multiple valid image files
-    Then each file is processed into six JPEG variants client-side and stored as gallery images
+    Then each file is processed into five WebP variants client-side and stored as gallery images
     And I am redirected to the event gallery list showing the new photos
     And the primary hero image is unchanged
 

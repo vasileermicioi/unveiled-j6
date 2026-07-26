@@ -16,7 +16,7 @@ import type { CreatePartnerInput } from "./partners";
  * Demo catalog seed — Berlin events from Abundo + local images.
  *
  * Fixture: `fixtures/abundo-berlin-demo.json`
- * Images:  `public/images/seed/{partners,events}/*.jpg` plus `*.jpg.variants/` packs
+ * Images:  `public/images/seed/{partners,events}/*.jpg` plus `*.jpg.variants/` WebP packs
  * Refresh: `bun scripts/fetch-abundo-seed.ts` then `bun scripts/bake-seed-image-variants.ts`
  *
  * Absolute dates are not stored; `daysFromToday` / hour / minute resolve at seed time.
@@ -173,9 +173,31 @@ function readSeedPrebuilt(
     variants[filename] = readFileSync(abs);
   }
 
+  const metaPath = join(variantsDir, "meta.json");
+  let claimedWidth: number | undefined;
+  let claimedHeight: number | undefined;
+  if (existsSync(metaPath)) {
+    try {
+      const meta = JSON.parse(readFileSync(metaPath, "utf8")) as {
+        width?: number;
+        height?: number;
+      };
+      if (typeof meta.width === "number" && meta.width >= 1) {
+        claimedWidth = meta.width;
+      }
+      if (typeof meta.height === "number" && meta.height >= 1) {
+        claimedHeight = meta.height;
+      }
+    } catch {
+      // Fall through — persist will reject without claims.
+    }
+  }
+
   return {
     imageId: crypto.randomUUID(),
     variants,
+    ...(claimedWidth !== undefined ? { claimedWidth } : {}),
+    ...(claimedHeight !== undefined ? { claimedHeight } : {}),
   };
 }
 
@@ -215,15 +237,20 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
       contactEmail: partner.contactEmail,
     };
 
-    if (logoPath) {
-      partnerInput.logoPrebuilt = readSeedPrebuilt(imagesRoot, logoPath, `partner ${partner.key}`);
-      if (partner.logoSourceUrl) {
-        partnerInput.logoUrl = partner.logoSourceUrl;
+    if (!logoPath) {
+      if (partner.logoUrl) {
+        throw new Error(
+          `Partner ${partner.key} has logoUrl but no logoPath variants. Refresh seed images.`,
+        );
       }
-    } else if (partner.logoUrl) {
       throw new Error(
-        `Partner ${partner.key} has logoUrl but no logoPath variants. Refresh seed images.`,
+        `Partner ${partner.key} is missing required logoPath. Every seed partner must have a logo.`,
       );
+    }
+
+    partnerInput.logoPrebuilt = readSeedPrebuilt(imagesRoot, logoPath, `partner ${partner.key}`);
+    if (partner.logoSourceUrl) {
+      partnerInput.logoUrl = partner.logoSourceUrl;
     }
 
     catalog.push({

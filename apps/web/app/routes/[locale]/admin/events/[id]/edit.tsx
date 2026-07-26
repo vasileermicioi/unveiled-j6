@@ -145,6 +145,8 @@ export const POST = createRoute(async (c) => {
         ...existingDefaults,
         ...formValuesToDefaults(await parseEventFormBodyFromRequest(body)),
         currentImageUrl: existingDefaults.currentImageUrl,
+        currentImageId: existingDefaults.currentImageId,
+        imagePublicBaseUrl: existingDefaults.imagePublicBaseUrl,
       };
     } catch {
       // keep existing defaults

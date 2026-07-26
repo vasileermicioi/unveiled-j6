@@ -14,7 +14,7 @@
     "lint": "biome check .",
     "typecheck": "bun run --filter '*' typecheck",
     "db:generate": "bun --env-file=.env --filter @unveiled/db generate",
-    "db:migrate": "bun --env-file=.env --filter @unveiled/db migrate",
+    "db:migrate": "bun --env-file=.env scripts/backfill-partner-logos.ts && bun --env-file=.env --filter @unveiled/db migrate",
     "seed:demo": "bun --env-file=.env scripts/seed-demo.ts",
     "seed:fetch-abundo": "bun scripts/fetch-abundo-seed.ts",
     "seed:admin-pagination": "bun --env-file=.env scripts/seed-admin-pagination.ts",

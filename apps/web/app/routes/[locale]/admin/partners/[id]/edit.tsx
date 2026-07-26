@@ -1,6 +1,6 @@
 import { getPartnerById, updatePartner } from "@unveiled/db";
 import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
-import { buildVariantUrl } from "@unveiled/images/urls";
+import { buildVariantUrl, readImagePublicBaseUrl } from "@unveiled/images/urls";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
@@ -18,13 +18,17 @@ import {
 import { getAuthOptions } from "../../../../../lib/auth";
 import type { Locale } from "../../../../../lib/locale";
 
-function buildPartnerLogoUrl(logoImageId: string | null): string | null {
-  if (!logoImageId) {
+function buildPartnerLogoUrl(logoImageId: string): string | null {
+  try {
+    return buildVariantUrl(logoImageId, "small-320.webp");
+  } catch {
     return null;
   }
+}
 
+function resolveImagePublicBaseUrl(): string | null {
   try {
-    return buildVariantUrl(logoImageId, "small-320.jpg");
+    return readImagePublicBaseUrl();
   } catch {
     return null;
   }
@@ -41,6 +45,8 @@ function renderEditPage(
       contactEmail: string;
       address: string;
       currentLogoUrl?: string | null;
+      currentLogoImageId?: string | null;
+      imagePublicBaseUrl?: string | null;
     };
   },
 ) {
@@ -117,9 +123,7 @@ export const POST = createRoute(async (c) => {
 
     return c.redirect(partnerListPath(guard.locale), 302);
   } catch (error) {
-    if (existing.logoImageId) {
-      await ensureImageVariantsUploaded(db, existing.logoImageId);
-    }
+    await ensureImageVariantsUploaded(db, existing.logoImageId);
 
     return renderEditPage(c, {
       locale: guard.locale,
@@ -130,6 +134,8 @@ export const POST = createRoute(async (c) => {
         contactEmail: values?.contactEmail ?? existing.contactEmail,
         address: values?.address ?? existing.address,
         currentLogoUrl: buildPartnerLogoUrl(existing.logoImageId),
+        currentLogoImageId: existing.logoImageId,
+        imagePublicBaseUrl: resolveImagePublicBaseUrl(),
       },
     });
   }
@@ -162,9 +168,7 @@ export default createRoute(async (c) => {
     });
   }
 
-  if (partner.logoImageId) {
-    await ensureImageVariantsUploaded(db, partner.logoImageId);
-  }
+  await ensureImageVariantsUploaded(db, partner.logoImageId);
 
   return renderEditPage(c, {
     locale: guard.locale,
@@ -174,6 +178,8 @@ export default createRoute(async (c) => {
       contactEmail: partner.contactEmail,
       address: partner.address,
       currentLogoUrl: buildPartnerLogoUrl(partner.logoImageId),
+      currentLogoImageId: partner.logoImageId,
+      imagePublicBaseUrl: resolveImagePublicBaseUrl(),
     },
   });
 });

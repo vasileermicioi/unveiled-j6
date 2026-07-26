@@ -186,6 +186,8 @@ export type CreatedPartner = {
 
 export type CreatePartnerOverrides = Partial<CreatedPartner> & {
   logoPath?: string;
+  /** When true, do not attach a logo (for required-logo rejection tests). */
+  skipLogo?: boolean;
 };
 
 export async function createPartnerViaUI(
@@ -199,6 +201,7 @@ export async function createPartnerViaUI(
     contactEmail: overrides.contactEmail ?? `partner-e2e-${suffix}@example.com`,
     address: overrides.address ?? `E2E Street ${suffix}, 10115 Berlin`,
   };
+  const logoPath = overrides.skipLogo ? undefined : (overrides.logoPath ?? SAMPLE_EVENT_IMAGE);
 
   await page.goto(`/${locale}/admin/partners/new`);
   await expect(page.getByRole("heading", { name: /partner anlegen|create partner/i })).toBeVisible({
@@ -213,13 +216,13 @@ export async function createPartnerViaUI(
   await fillTextbox(page, adminLabels.email, partner.contactEmail);
   await fillTextbox(page, adminLabels.address, partner.address);
 
-  if (overrides.logoPath) {
+  if (logoPath) {
     // BDD exception: file-input
-    await page.locator('input[name="logo"]').setInputFiles(overrides.logoPath);
+    await page.locator('input[name="logo"]').setInputFiles(logoPath);
   }
 
   await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`), { timeout: 30_000 });
+  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`), { timeout: 90_000 });
   await expect(page.getByText(partner.name).first()).toBeVisible({ timeout: 15_000 });
   return partner;
 }

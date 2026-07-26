@@ -5,3 +5,4 @@
 
 export { bufferToPrebuiltVariants } from "./buffer-to-prebuilt";
 export { createSolidJpeg, type RgbColor } from "./create-solid-jpeg";
+export { createSolidWebp } from "./create-solid-webp";

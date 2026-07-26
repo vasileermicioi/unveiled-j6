@@ -80,8 +80,8 @@ Four SSR steps: `/onboarding/age` → `interests` → `location` → `timing`. N
 |---|---|---|
 | **AdminPageShell** | `/admin/*` (authenticated admin pages) | Shared page chrome: breadcrumbs (optional) → `PageSectionHeader` (eyebrow Admin/Verwaltung + title + rule) → optional muted subtitle below rule → optional actions → card/overview children. Admin tab nav stays **above** the shell title (same order as member profile tabs). |
 | Dashboard | `/admin` | Ops overview + demo seed control if present |
-| Events | `/admin/events/*` | SSR CRUD, series, codes export; primary image upload; description field = **MDXEditor** island (`EventDescriptionEditor`) submitting Markdown via form POST `description`; **gallery manage** at `/admin/events/:id/gallery*` (grid + DnD reorder with Save order + checkbox select → SSR remove confirm; multi-add via Pica; max 12; entry from **Featured** list only — not Events list or event edit) |
-| Partners (venues) | `/admin/partners/*` | Venue CRUD only — **no** portal-access / venue-QR pages in MVP |
+| Events | `/admin/events/*` | SSR CRUD, series, codes export; primary image upload (`EventImageUpload` + `AdminImageVariantGallery` — five WebP tiles; client errors block submit); description field = **MDXEditor** island (`EventDescriptionEditor`) submitting Markdown via form POST `description`; **gallery manage** at `/admin/events/:id/gallery*` (grid + DnD reorder with Save order + checkbox select → SSR remove confirm; multi-add via Pica → five WebP; max 12; entry from **Featured** list only — not Events list or event edit) |
+| Partners (venues) | `/admin/partners/*` | Venue CRUD with **required** logo upload (`PartnerLogoUpload` + `AdminImageVariantGallery`); **no** portal-access / venue-QR pages in MVP |
 | Users | `/admin/users/*` | Support actions as dedicated pages |
 | Waitlist / bookings | `/admin/waitlist/*`, cancel, export | |
 

@@ -6,5 +6,5 @@
     "resolveJsonModule": true
   },
   "include": ["src/**/*.ts", "src/**/*.json", "drizzle.config.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["src/**/*.test.ts", "src/catalog/backfill-partner-logos.ts"]
 }

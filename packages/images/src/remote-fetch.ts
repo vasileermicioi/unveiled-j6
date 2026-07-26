@@ -1,9 +1,4 @@
-import {
-  ACCEPTED_MIME_TYPES,
-  type AcceptedMimeType,
-  MAX_UPLOAD_BYTES,
-  REMOTE_FETCH_TIMEOUT_MS,
-} from "./constants";
+import { REMOTE_FETCH_MAX_BYTES, REMOTE_FETCH_TIMEOUT_MS } from "./constants";
 import { ImageValidationError, validateRemoteContentType } from "./errors";
 
 export const REMOTE_IMAGE_USER_AGENT =
@@ -11,7 +6,7 @@ export const REMOTE_IMAGE_USER_AGENT =
 
 export type FetchedRemoteImage = {
   bytes: Uint8Array;
-  contentType: AcceptedMimeType;
+  contentType: string;
   finalUrl: string;
 };
 
@@ -83,7 +78,8 @@ export function assertSafeRemoteImageUrl(rawUrl: string): URL {
 
 /**
  * Server-side fetch of remote image bytes for the admin bytes proxy.
- * Does not resize — returns raw bytes after size/type checks.
+ * Does not resize — returns raw bytes after abuse-cap / type checks.
+ * `REMOTE_FETCH_MAX_BYTES` is a DoS guard, not a product upload limit.
  */
 export async function fetchRemoteImageBytes(rawUrl: string): Promise<FetchedRemoteImage> {
   const safeUrl = assertSafeRemoteImageUrl(rawUrl);
@@ -115,8 +111,10 @@ export async function fetchRemoteImageBytes(rawUrl: string): Promise<FetchedRemo
     const contentLengthHeader = response.headers.get("content-length");
     if (contentLengthHeader) {
       const contentLength = Number.parseInt(contentLengthHeader, 10);
-      if (!Number.isNaN(contentLength) && contentLength > MAX_UPLOAD_BYTES) {
-        throw new ImageValidationError(`Image exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`);
+      if (!Number.isNaN(contentLength) && contentLength > REMOTE_FETCH_MAX_BYTES) {
+        throw new ImageValidationError(
+          `Remote image exceeds proxy abuse limit of ${REMOTE_FETCH_MAX_BYTES} bytes`,
+        );
       }
     }
 
@@ -124,8 +122,10 @@ export async function fetchRemoteImageBytes(rawUrl: string): Promise<FetchedRemo
     if (arrayBuffer.byteLength === 0) {
       throw new ImageValidationError("Image file is empty");
     }
-    if (arrayBuffer.byteLength > MAX_UPLOAD_BYTES) {
-      throw new ImageValidationError(`Image exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`);
+    if (arrayBuffer.byteLength > REMOTE_FETCH_MAX_BYTES) {
+      throw new ImageValidationError(
+        `Remote image exceeds proxy abuse limit of ${REMOTE_FETCH_MAX_BYTES} bytes`,
+      );
     }
 
     return {
@@ -147,5 +147,5 @@ export async function fetchRemoteImageBytes(rawUrl: string): Promise<FetchedRemo
 
 export function isAcceptedImageContentType(contentType: string | null): boolean {
   const normalized = contentType?.split(";")[0]?.trim().toLowerCase() ?? "";
-  return ACCEPTED_MIME_TYPES.includes(normalized as AcceptedMimeType);
+  return normalized.startsWith("image/");
 }

@@ -274,7 +274,9 @@ export function EventAdminBaseFields({
       </Surface>
 
       <EventImageUpload
+        currentImageId={defaults?.currentImageId}
         currentImageUrl={defaults?.currentImageUrl}
+        imagePublicBaseUrl={defaults?.imagePublicBaseUrl}
         isEdit={isEdit}
         locale={locale}
       />

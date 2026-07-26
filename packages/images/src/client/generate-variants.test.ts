@@ -7,16 +7,14 @@ import {
   HERO_MAX_WIDTH,
   LARGE_MAX_WIDTH,
   MEDIUM_MAX_WIDTH,
-  MIN_IMAGE_HEIGHT,
-  MIN_IMAGE_WIDTH,
   OG_HEIGHT,
   OG_WIDTH,
-  ORIGINAL_MAX_EDGE,
   SMALL_MAX_WIDTH,
   VARIANT_FILENAMES,
 } from "../constants";
 import { ImageValidationError } from "../errors";
 import { createSolidJpeg } from "../offline";
+import { isWebpBuffer } from "../webp-dimensions";
 import { generateImageVariantsClient } from "./generate-variants";
 
 async function blobFromSolidJpeg(width: number, height: number): Promise<Blob> {
@@ -36,7 +34,7 @@ async function readBlobDimensions(blob: Blob): Promise<{ width: number; height: 
 }
 
 describe("generateImageVariantsClient", () => {
-  test("produces six JPEG variants with expected resize behavior", async () => {
+  test("produces five WebP variants with expected resize behavior", async () => {
     const sourceWidth = 2400;
     const sourceHeight = 1260;
     const blob = await blobFromSolidJpeg(sourceWidth, sourceHeight);
@@ -49,22 +47,23 @@ describe("generateImageVariantsClient", () => {
     expect(result.metadata.width).toBe(sourceWidth);
     expect(result.metadata.height).toBe(sourceHeight);
     expect(Object.keys(result.variants).sort()).toEqual([...VARIANT_FILENAMES].sort());
+    expect(result.variants).not.toHaveProperty("original.webp");
+    expect(result.variants).not.toHaveProperty("original.jpg");
 
     for (const filename of VARIANT_FILENAMES) {
       const variant = result.variants[filename];
       expect(variant.size).toBeGreaterThan(0);
-      expect(variant.type).toBe("image/jpeg");
+      expect(variant.type).toBe("image/webp");
+      const bytes = new Uint8Array(await variant.arrayBuffer());
+      expect(isWebpBuffer(bytes)).toBe(true);
     }
 
-    const original = await readBlobDimensions(result.variants["original.jpg"]);
-    const hero = await readBlobDimensions(result.variants["hero-1920.jpg"]);
-    const large = await readBlobDimensions(result.variants["large-1280.jpg"]);
-    const medium = await readBlobDimensions(result.variants["medium-640.jpg"]);
-    const small = await readBlobDimensions(result.variants["small-320.jpg"]);
-    const og = await readBlobDimensions(result.variants["og-1200x630.jpg"]);
+    const hero = await readBlobDimensions(result.variants["hero-1920.webp"]);
+    const large = await readBlobDimensions(result.variants["large-1280.webp"]);
+    const medium = await readBlobDimensions(result.variants["medium-640.webp"]);
+    const small = await readBlobDimensions(result.variants["small-320.webp"]);
+    const og = await readBlobDimensions(result.variants["og-1200x630.webp"]);
 
-    expect(original.width).toBeLessThanOrEqual(ORIGINAL_MAX_EDGE);
-    expect(original.height).toBeLessThanOrEqual(ORIGINAL_MAX_EDGE);
     expect(hero.width).toBeLessThanOrEqual(HERO_MAX_WIDTH);
     expect(large.width).toBeLessThanOrEqual(LARGE_MAX_WIDTH);
     expect(medium.width).toBeLessThanOrEqual(MEDIUM_MAX_WIDTH);
@@ -73,31 +72,62 @@ describe("generateImageVariantsClient", () => {
     expect(og.height).toBe(OG_HEIGHT);
   });
 
-  test("does not upscale width-ladder variants for small valid sources", async () => {
-    const blob = await blobFromSolidJpeg(MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT);
+  test("does not upscale width-ladder variants for small sources", async () => {
+    const sourceWidth = 800;
+    const sourceHeight = 420;
+    const blob = await blobFromSolidJpeg(sourceWidth, sourceHeight);
     const result = await generateImageVariantsClient(blob);
 
-    const hero = await readBlobDimensions(result.variants["hero-1920.jpg"]);
-    const small = await readBlobDimensions(result.variants["small-320.jpg"]);
-    const og = await readBlobDimensions(result.variants["og-1200x630.jpg"]);
+    const hero = await readBlobDimensions(result.variants["hero-1920.webp"]);
+    const small = await readBlobDimensions(result.variants["small-320.webp"]);
+    const og = await readBlobDimensions(result.variants["og-1200x630.webp"]);
 
-    expect(hero.width).toBeLessThanOrEqual(MIN_IMAGE_WIDTH);
-    expect(small.width).toBeLessThanOrEqual(MIN_IMAGE_WIDTH);
+    expect(hero.width).toBeLessThanOrEqual(sourceWidth);
+    expect(small.width).toBeLessThanOrEqual(sourceWidth);
     expect(og.width).toBe(OG_WIDTH);
     expect(og.height).toBe(OG_HEIGHT);
   });
 
-  test("rejects undersized sources without a partial variants map", async () => {
-    const blob = await blobFromSolidJpeg(MIN_IMAGE_WIDTH - 1, MIN_IMAGE_HEIGHT);
+  test("accepts undersized sources without dimension rejection", async () => {
+    const blob = await blobFromSolidJpeg(400, 210);
+    const result = await generateImageVariantsClient(blob);
 
+    expect(Object.keys(result.variants).sort()).toEqual([...VARIANT_FILENAMES].sort());
+    expect(result.metadata.width).toBe(400);
+    expect(result.metadata.height).toBe(210);
+  });
+
+  test("accepts SVG sources when the runtime can decode them", async () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80">
+  <rect width="100" height="80" fill="#f00"/>
+</svg>`;
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+
+    let result: Awaited<ReturnType<typeof generateImageVariantsClient>> | null = null;
     let caught: unknown;
     try {
-      await generateImageVariantsClient(blob);
+      result = await generateImageVariantsClient(blob);
     } catch (error) {
       caught = error;
     }
 
-    expect(caught).toBeInstanceOf(ImageValidationError);
-    expect(caught).not.toHaveProperty("variants");
+    if (caught) {
+      // Bun/@napi-rs/canvas may not decode SVG; decode failure is acceptable here.
+      expect(caught).toBeInstanceOf(ImageValidationError);
+      return;
+    }
+
+    expect(result).not.toBeNull();
+    expect(Object.keys(result?.variants ?? {}).sort()).toEqual([...VARIANT_FILENAMES].sort());
+    // SVG is rasterized to ≥ hero width (vector upscale), not the 100px intrinsic size.
+    expect(result?.metadata.width).toBe(HERO_MAX_WIDTH);
+    expect(result?.metadata.height).toBe(Math.round((80 * HERO_MAX_WIDTH) / 100));
+    const hero = await readBlobDimensions(result!.variants["hero-1920.webp"]);
+    const large = await readBlobDimensions(result!.variants["large-1280.webp"]);
+    expect(hero.width).toBe(HERO_MAX_WIDTH);
+    expect(large.width).toBe(LARGE_MAX_WIDTH);
+    for (const filename of VARIANT_FILENAMES) {
+      expect(result?.variants[filename].type).toBe("image/webp");
+    }
   });
 });

@@ -7,7 +7,9 @@ export const partners = pgTable("partners", {
   name: text("name").notNull(),
   address: text("address").notNull(),
   contactEmail: text("contact_email").notNull(),
-  logoImageId: uuid("logo_image_id").references(() => images.id, { onDelete: "restrict" }),
+  logoImageId: uuid("logo_image_id")
+    .notNull()
+    .references(() => images.id, { onDelete: "restrict" }),
   venueCheckInToken: text("venue_check_in_token").unique(),
   portalUserId: text("portal_user_id").references(() => users.id, { onDelete: "restrict" }),
   portalUserEmail: text("portal_user_email"),

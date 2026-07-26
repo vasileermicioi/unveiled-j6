@@ -2,11 +2,8 @@ import { imageObjectsExist } from "./s3";
 
 export {
   ACCEPTED_IMAGE_FILE_ACCEPT,
-  ACCEPTED_MIME_TYPES,
-  type AcceptedMimeType,
-  MAX_UPLOAD_BYTES,
-  MIN_IMAGE_HEIGHT,
-  MIN_IMAGE_WIDTH,
+  LEGACY_JPEG_VARIANT_FILENAMES,
+  REMOTE_FETCH_MAX_BYTES,
   REMOTE_FETCH_TIMEOUT_MS,
   VARIANT_FILENAMES,
   type VariantFilename,
@@ -43,6 +40,12 @@ export {
 export type { ImageSource, ProcessedImageMetadata, ProcessedImageResult } from "./types";
 export { buildVariantUrl, readImagePublicBaseUrl } from "./urls";
 export { validateImageBuffer } from "./validation";
+export {
+  isWebpBuffer,
+  readWebpDimensions,
+  requireWebpDimensions,
+  type WebpDimensions,
+} from "./webp-dimensions";
 
 /**
  * Best-effort check that variant objects exist. Does not re-fetch or resize —

@@ -82,10 +82,11 @@ test.describe("admin-events.feature", () => {
     // Hero alt is the event title — prefer role over CSS/src attribute selectors.
     const hero = page.getByRole("img", { name: event.title });
     await expect(hero).toBeVisible({ timeout: 15_000 });
-    await expect(hero).toHaveAttribute("src", /(?:hero-1920|large-1280|medium-640)\.jpg(?:\?|$)/);
+    await expect(hero).toHaveAttribute("src", /(?:hero-1920|large-1280|medium-640)\.webp(?:\?|$)/);
   });
 
   test("Scenario: Event image is required", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     await page.goto(`/${locale}/admin/events/new`);
     await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
@@ -559,6 +560,7 @@ test.describe("admin-events.feature", () => {
   });
 
   test("Scenario: Seed demo data is a no-op when data exists", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
     await createPartnerViaUI(page, locale);
     await navigateAdminTab(page, locale, "overview");
     const seedButton = page.getByRole("button", { name: /demo-daten laden|load demo data/i });

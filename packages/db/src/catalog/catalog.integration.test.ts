@@ -34,12 +34,13 @@ describe("catalog integration", () => {
     }
 
     const db = createDb(databaseUrl);
+    const logo = await createTestImage();
     const image = await createTestImage();
     const partner = await createPartner(db, {
       name: "Rename Test Venue",
       address: "Teststraße 1, Berlin",
       contactEmail: `rename-${crypto.randomUUID()}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: logo,
       skipUpload: true,
     });
 
@@ -77,12 +78,13 @@ describe("catalog integration", () => {
     }
 
     const db = createDb(databaseUrl);
+    const logo = await createTestImage();
     const originalImage = await createTestImage();
     const partner = await createPartner(db, {
       name: "Image Replace Venue",
       address: "Teststraße 2, Berlin",
       contactEmail: `image-replace-${crypto.randomUUID()}@example.com`,
-      logoPrebuilt: originalImage,
+      logoPrebuilt: logo,
       skipUpload: true,
     });
 
@@ -139,6 +141,7 @@ describe("catalog integration", () => {
       name: "Seed Guard Venue",
       address: "Seedstraße 1, Berlin",
       contactEmail: `seed-guard-${crypto.randomUUID()}@example.com`,
+      logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -162,12 +165,14 @@ describe("catalog integration", () => {
       name: `Older Partner ${suffix}`,
       address: "Olderstraße 1, Berlin",
       contactEmail: `older-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
     const newer = await createPartner(db, {
       name: `Newer Partner ${suffix}`,
       address: "Newerstraße 1, Berlin",
       contactEmail: `newer-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -201,6 +206,7 @@ describe("catalog integration", () => {
       name: `Searchable Venue ${suffix}`,
       address: "Searchstraße 1, Berlin",
       contactEmail: `unique-email-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -229,6 +235,7 @@ describe("catalog integration", () => {
       name: `Event Search Partner ${suffix}`,
       address: "Eventstraße 1, Berlin",
       contactEmail: `event-search-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -257,7 +264,7 @@ describe("catalog integration", () => {
       dateTime: new Date(Date.now() + 172_800_000),
       creditPrice: 1,
       secretCode: "NEWER01",
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -297,6 +304,7 @@ describe("catalog integration", () => {
           name: `Paged Partner ${suffix}-${index}`,
           address: `Pagestraße ${index}, Berlin`,
           contactEmail: `paged-${suffix}-${index}@example.com`,
+          logoPrebuilt: createTestImagePrebuilt(),
           skipUpload: true,
         }),
       ),
@@ -331,6 +339,7 @@ describe("catalog integration", () => {
       name: "Upcoming Test Venue",
       address: "Teststraße 2, Berlin",
       contactEmail: `upcoming-${crypto.randomUUID()}@example.com`,
+      logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -364,7 +373,7 @@ describe("catalog integration", () => {
       dateTime: soonerDate,
       creditPrice: 1,
       secretCode: "SOONCODE",
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -379,7 +388,7 @@ describe("catalog integration", () => {
       dateTime: pastDate,
       creditPrice: 1,
       secretCode: "PASTCODE",
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 

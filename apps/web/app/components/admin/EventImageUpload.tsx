@@ -9,6 +9,11 @@ import type { Locale } from "../../lib/locale";
 
 import { AdminGalleryImageVariantFields, AdminImageVariantFields } from "./AdminImageVariantFields";
 import {
+  AdminImageVariantGallery,
+  AdminImageVariantGallerySummary,
+} from "./AdminImageVariantGallery";
+import {
+  hasCompleteVariants,
   mapClientImageError,
   type ProcessedAdminUpload,
   processAdminImageFiles,
@@ -17,7 +22,10 @@ import {
 export type EventImageUploadProps = {
   locale: Locale;
   isEdit?: boolean;
+  /** @deprecated Prefer currentImageId + imagePublicBaseUrl for the variant gallery. */
   currentImageUrl?: string | null;
+  currentImageId?: string | null;
+  imagePublicBaseUrl?: string | null;
   /** When true, process/emit all selected files as indexed gallery prebuilt sets. */
   multiple?: boolean;
   inputName?: string;
@@ -39,6 +47,8 @@ export function EventImageUpload({
   locale,
   isEdit = false,
   currentImageUrl = null,
+  currentImageId = null,
+  imagePublicBaseUrl = null,
   multiple = false,
   inputName = "image",
   sectionLabel,
@@ -72,31 +82,64 @@ export function EventImageUpload({
         return;
       }
 
-      if (processedListRef.current.length > 0) {
-        return;
-      }
-
+      const readyList = processedListRef.current.filter(hasCompleteVariants);
       const nativeInput = resolveNativeFileInput(document.getElementById(fileInputId));
       const hasFile = Boolean(nativeInput?.files && nativeInput.files.length > 0);
 
-      if (!hasFile) {
+      if (processingRef.current || statusRef.current === "processing") {
+        event.preventDefault();
+        setErrorMessage(copy.imageProcessingSubmitBlocked);
         return;
       }
 
-      if (processingRef.current || statusRef.current === "processing") {
+      if (statusRef.current === "error" && hasFile) {
         event.preventDefault();
+        setErrorMessage((prev) => prev ?? copy.imageProcessingError);
+        return;
+      }
+
+      if (readyList.length > 0) {
+        if (readyList.length !== processedListRef.current.length) {
+          event.preventDefault();
+          setErrorMessage(copy.imageIncompleteVariantsError);
+          setStatus("error");
+        }
+        return;
+      }
+
+      if (!hasFile) {
+        if (!isEdit && !multiple) {
+          event.preventDefault();
+          setErrorMessage(copy.imageRequiredError);
+          setStatus("error");
+          return;
+        }
+        if (multiple) {
+          event.preventDefault();
+          setErrorMessage(copy.galleryAddRequired);
+          setStatus("error");
+        }
         return;
       }
 
       // File supplied but variants not ready — block submit.
       event.preventDefault();
-      setErrorMessage(copy.imageProcessingError);
+      setErrorMessage(copy.imageIncompleteVariantsError);
       setStatus("error");
     };
 
     document.addEventListener("submit", onSubmit, true);
     return () => document.removeEventListener("submit", onSubmit, true);
-  }, [copy.imageProcessingError, fileInputId]);
+  }, [
+    copy.galleryAddRequired,
+    copy.imageIncompleteVariantsError,
+    copy.imageProcessingError,
+    copy.imageProcessingSubmitBlocked,
+    copy.imageRequiredError,
+    fileInputId,
+    isEdit,
+    multiple,
+  ]);
 
   async function handleFilesSelected(fileList: FileList | null) {
     const files = fileList ? Array.from(fileList) : [];
@@ -120,15 +163,28 @@ export function EventImageUpload({
 
     try {
       const results = await processAdminImageFiles(files, { multiple });
-      setProcessedList(results);
-      setStatus(results.length > 0 ? "ready" : "idle");
-      if (multiple && results.length > 0) {
-        setSelectedLabel(copy.gallerySelectedFilesLabel(results.length));
+      const complete = results.filter(hasCompleteVariants);
+      if (complete.length === 0) {
+        setProcessedList([]);
+        setStatus("error");
+        setErrorMessage(copy.imageIncompleteVariantsError);
+        return;
+      }
+      if (complete.length !== results.length) {
+        setProcessedList(complete);
+        setStatus("error");
+        setErrorMessage(copy.imageIncompleteVariantsError);
+        return;
+      }
+      setProcessedList(complete);
+      setStatus("ready");
+      if (multiple) {
+        setSelectedLabel(copy.gallerySelectedFilesLabel(complete.length));
       }
     } catch (error) {
       setProcessedList([]);
       setStatus("error");
-      setErrorMessage(mapClientImageError(error, copy.imageProcessingError));
+      setErrorMessage(mapClientImageError(error, copy));
     } finally {
       processingRef.current = false;
     }
@@ -137,13 +193,29 @@ export function EventImageUpload({
   const resolvedSectionLabel = sectionLabel ?? copy.imageSectionLabel;
   const resolvedHint = uploadHint ?? (isEdit ? copy.imageUploadHintEdit : copy.imageUploadHint);
   const singleProcessed = !multiple ? (processedList[0] ?? null) : null;
+  const showExistingGallery = Boolean(
+    isEdit &&
+      currentImageId &&
+      !singleProcessed &&
+      processedList.length === 0 &&
+      status !== "processing",
+  );
 
   return (
     <Surface className="flex flex-col gap-4" variant="transparent">
       <Paragraph className="onboarding-form__section-label">{resolvedSectionLabel}</Paragraph>
       <Description>{resolvedHint}</Description>
 
-      {isEdit && currentImageUrl ? (
+      {showExistingGallery ? (
+        <AdminImageVariantGallery
+          imageId={currentImageId}
+          imagePublicBaseUrl={imagePublicBaseUrl}
+          locale={locale}
+        />
+      ) : null}
+
+      {/* Fallback single thumb only when gallery cannot resolve (no imageId/base). */}
+      {isEdit && !showExistingGallery && !singleProcessed && currentImageUrl ? (
         <Surface className="admin-form__image-preview" variant="transparent">
           <img alt="" src={currentImageUrl} />
         </Surface>
@@ -174,10 +246,16 @@ export function EventImageUpload({
       </Surface>
 
       {multiple && processedList.length > 0 ? (
-        <AdminGalleryImageVariantFields processed={processedList} />
+        <>
+          <AdminImageVariantGallerySummary locale={locale} processedList={processedList} />
+          <AdminGalleryImageVariantFields processed={processedList} />
+        </>
       ) : null}
       {!multiple && singleProcessed ? (
-        <AdminImageVariantFields processed={singleProcessed} />
+        <>
+          <AdminImageVariantGallery locale={locale} processed={singleProcessed} />
+          <AdminImageVariantFields processed={singleProcessed} />
+        </>
       ) : null}
     </Surface>
   );

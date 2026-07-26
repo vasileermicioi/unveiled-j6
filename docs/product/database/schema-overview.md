@@ -65,7 +65,7 @@ Counters (`session_count`, `event_open_count`, `booking_count`, `waitlist_count`
 | `name` | text | |
 | `address` | text | |
 | `contact_email` | text | |
-| `logo_image_id` | uuid, FK → `images.id`, nullable | **Was `logo_url` (text)** — replaced by a real image with generated size variants; see `extras/image-uploads.md`. Stays nullable/optional, matching today's optional logo |
+| `logo_image_id` | uuid, FK → `images.id`, NOT NULL | **Was `logo_url` (text)** — replaced by a real image with generated size variants; see `extras/image-uploads.md`. **Required** on partner create (same five-WebP pipeline as event images); edit may replace but MUST NOT clear to NULL |
 | `venue_check_in_token` | text, unique, nullable | **Post-MVP** — QR self-check-in |
 | `portal_user_id` | text/uuid, FK → `users.id`, nullable | **Post-MVP** — partner portal login |
 | `portal_user_email` | text, nullable | **Post-MVP** — denormalized portal email |
@@ -75,20 +75,20 @@ Counters (`session_count`, `event_open_count`, `booking_count`, `waitlist_count`
 
 ### `images`
 
-**Image pipeline** — see `extras/image-uploads.md`: S3-compatible storage, **six JPEG** variants per image (`original.jpg`, `hero-1920.jpg`, `large-1280.jpg`, `medium-640.jpg`, `small-320.jpg`, `og-1200x630.jpg`). Both `events.image_id` and `partners.logo_image_id` FK into this table.
+**Image pipeline** — see `extras/image-uploads.md`: S3-compatible storage, **five WebP** variants per image (`hero-1920.webp`, `large-1280.webp`, `medium-640.webp`, `small-320.webp`, `og-1200x630.webp`). No `original` master. Both `events.image_id` and `partners.logo_image_id` FK into this table (both required on create).
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | uuid, PK | Doubles as the storage key folder name — bucket layout is `images/{id}/{variant}.jpg` (six fixed filenames per id, see `extras/image-uploads.md` §1) |
-| `original_width`, `original_height` | integer | Natural dimensions of the source file, before any resizing |
-| `source` | enum: `UPLOAD`, `REMOTE_URL` | Which of the two entry paths produced this image (`extras/image-uploads.md` §3) |
+| `id` | uuid, PK | Doubles as the storage key folder name — bucket layout is `images/{id}/{variant}.webp` (five fixed filenames per id, see `extras/image-uploads.md` §1) |
+| `original_width`, `original_height` | integer | Natural dimensions of the decoded source, before any resizing (claimed from the client when no master object is stored) |
+| `source` | enum: `UPLOAD`, `REMOTE_URL` | Which entry path produced this image (`extras/image-uploads.md` §3) |
 | `source_url` | text, nullable | The original remote URL, only set when `source = REMOTE_URL` — kept for audit/re-processing, never used for direct display (the app always serves its own bucket copy) |
 | `uploaded_by` | text/uuid, FK → `users.id`, nullable | Who triggered the upload/fetch (signed-in admin; partner uploads are **post-MVP**) |
 | `created_at` | timestamptz | |
 
-No per-variant rows or columns — the six filenames are a fixed, universal convention rather than stored data; a variant's URL is always computed as `{IMAGE_PUBLIC_BASE_URL}/images/{id}/{filename}` (`extras/image-uploads.md` §6).
+No per-variant rows or columns — the five filenames are a fixed, universal convention rather than stored data; a variant's URL is always computed as `{IMAGE_PUBLIC_BASE_URL}/images/{id}/{filename}` (`extras/image-uploads.md` §6).
 
-**Deletion:** no legal retention requirement (unlike `bookings`/`credit_ledger`). When an event/partner's image is replaced, or the event/partner itself is deleted, delete the old `images` row and all six of its bucket objects in the same request — see `extras/image-uploads.md` §8.
+**Deletion:** no legal retention requirement (unlike `bookings`/`credit_ledger`). When an event/partner's image is replaced, or the event/partner itself is deleted, delete the old `images` row and all five of its bucket objects in the same request — see `extras/image-uploads.md` §8.
 
 ---
 

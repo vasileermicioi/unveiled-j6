@@ -23,7 +23,7 @@ export type PersistImageOptions = {
 export type PersistPrebuiltImageOptions = PersistImageOptions &
   Pick<PersistPrebuiltOptions, "source" | "sourceUrl">;
 
-/** Persist a client-built six-variant set (no server resize). */
+/** Persist a client-built five-variant WebP set (no server resize). */
 export async function persistPrebuiltImage(
   db: Db,
   input: PrebuiltImageVariantsInput,
@@ -117,11 +117,11 @@ export async function deleteImageRecord(
 export async function replacePartnerLogo(
   db: Db,
   _partnerId: string,
-  currentLogoImageId: string | null,
+  currentLogoImageId: string,
   upload?: Buffer | null,
   url?: string | null,
   options: PersistImageOptions = {},
-): Promise<string | null> {
+): Promise<string> {
   const source = validateImageSourceExclusive(upload, url, { prebuilt: options.prebuilt });
   if (!source) {
     return currentLogoImageId;

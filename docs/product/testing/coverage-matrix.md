@@ -18,8 +18,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | Feature file | Scenario title | Playwright | Status | Notes |
 |---|---|---|---|---|
 | `admin-events.feature` | Create a single event | `e2e/specs/admin-events.spec.ts` · `Scenario: Create a single event` | `pass` |  |
-| `admin-events.feature` | Supply the event image as a direct upload | `e2e/specs/admin-events.spec.ts` · `Scenario: Supply the event image as a direct upload` | `pass` |  |
-| `admin-events.feature` | Event image is required | `e2e/specs/admin-events.spec.ts` · `Scenario: Event image is required` | `pass` |  |
+| `admin-events.feature` | Supply the event image as a direct upload | `e2e/specs/admin-events.spec.ts` · `Scenario: Supply the event image as a direct upload` | `pass` | R2 env-skip; asserts `.webp` hero/srcset |
+| `admin-events.feature` | Event image is required | `e2e/specs/admin-events.spec.ts` · `Scenario: Event image is required` | `pass` | R2 env-skip (create partner needs logo); client required-image block |
 | `admin-events.feature` | Redemption configuration validation on create | `e2e/specs/admin-events.spec.ts` (create flows) | `pass` | Covered alongside event create |
 | `admin-events.feature` | Shared generated code is created automatically | `e2e/specs/admin-events.spec.ts` · `Scenario: Shared generated code is created automatically` | `pass` |  |
 | `admin-events.feature` | Default values on creation | `e2e/specs/admin-events.spec.ts` · `Scenario: Default values on creation` | `pass` |  |
@@ -37,16 +37,17 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-events.feature` | Admin reorders gallery photos by drag and drop | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin reorders gallery photos by drag and drop` | `pass` | R2 env-skip; HTML5 DnD via Playwright |
 | `admin-events.feature` | Gallery manage is available from the featured list | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery manage is available from the featured list` | `pass` | R2 env-skip when vars missing |
 | `admin-events.feature` | Gallery capacity is enforced | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery capacity is enforced` | `skip` | Named skip — 12× Pica upload brittle; covered by `@unveiled/db` gallery tests |
-| `admin-partners.feature` | Create a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Create a partner` | `pass` |  |
-| `admin-partners.feature` | Supply the partner logo as a direct upload or a remote URL | `e2e/specs/admin-partners.spec.ts` · `Scenario: Supply the partner logo as a direct upload or a remote URL` | `pass` | R2 env-skip when vars missing |
-| `admin-partners.feature` | Partner creation validation | `e2e/specs/admin-partners.spec.ts` (validation paths in create flows) | `pass` | Covered alongside create partner |
-| `admin-partners.feature` | Edit a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Edit a partner` | `pass` |  |
-| `admin-partners.feature` | Renaming a partner propagates to its events | `e2e/specs/admin-partners.spec.ts` · `Scenario: Renaming a partner propagates to its events` | `pass` |  |
-| `admin-partners.feature` | Delete a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Delete a partner` | `pass` | Venue CRUD (MVP); portal/QR scenarios below stay post-MVP |
-| `admin-partners.feature` | List featured partners | `e2e/specs/admin-partners.spec.ts` · `Scenario: List featured partners` | `pass` | Needs `E2E_ADMIN_*`; grid + Save order / Remove partners chrome |
-| `admin-partners.feature` | Add by searching existing partners | `e2e/specs/admin-partners.spec.ts` · `Scenario: Add by searching existing partners` | `pass` | Needs `E2E_ADMIN_*` |
-| `admin-partners.feature` | Admin reorders featured partners by drag and drop | `e2e/specs/admin-partners.spec.ts` · `Scenario: Admin reorders featured partners by drag and drop` | `pass` | Needs `E2E_ADMIN_*`; HTML5 DnD via Playwright |
-| `admin-partners.feature` | Admin remove from featured partners keeps venue | `e2e/specs/admin-partners.spec.ts` · `Scenario: Admin remove from featured partners keeps venue` | `pass` | Needs `E2E_ADMIN_*`; checkbox + bulk remove confirm |
+| `admin-partners.feature` | Create a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Create a partner` | `pass` | R2 env-skip; logo required (five WebP) |
+| `admin-partners.feature` | Supply the partner logo as a direct upload | `e2e/specs/admin-partners.spec.ts` · `Scenario: Supply the partner logo as a direct upload` | `pass` | R2 env-skip when vars missing; asserts `small-320.webp` |
+| `admin-partners.feature` | Partner logo is required | `e2e/specs/admin-partners.spec.ts` · `Scenario: Partner logo is required` | `pass` | Client block; no R2 required |
+| `admin-partners.feature` | Partner creation validation | `e2e/specs/admin-partners.spec.ts` (validation paths in create flows) | `pass` | Covered alongside create partner; email path attaches logo + R2 skip |
+| `admin-partners.feature` | Edit a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Edit a partner` | `pass` | R2 env-skip (create attaches logo) |
+| `admin-partners.feature` | Renaming a partner propagates to its events | `e2e/specs/admin-partners.spec.ts` · `Scenario: Renaming a partner propagates to its events` | `pass` | R2 env-skip when vars missing |
+| `admin-partners.feature` | Delete a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Delete a partner` | `pass` | R2 env-skip; venue CRUD (MVP); portal/QR scenarios below stay post-MVP |
+| `admin-partners.feature` | List featured partners | `e2e/specs/admin-partners.spec.ts` · `Scenario: List featured partners` | `pass` | Needs `E2E_ADMIN_*` + R2; grid + Save order / Remove partners chrome |
+| `admin-partners.feature` | Add by searching existing partners | `e2e/specs/admin-partners.spec.ts` · `Scenario: Add by searching existing partners` | `pass` | Needs `E2E_ADMIN_*` + R2 |
+| `admin-partners.feature` | Admin reorders featured partners by drag and drop | `e2e/specs/admin-partners.spec.ts` · `Scenario: Admin reorders featured partners by drag and drop` | `pass` | Needs `E2E_ADMIN_*` + R2; HTML5 DnD via Playwright |
+| `admin-partners.feature` | Admin remove from featured partners keeps venue | `e2e/specs/admin-partners.spec.ts` · `Scenario: Admin remove from featured partners keeps venue` | `pass` | Needs `E2E_ADMIN_*` + R2; checkbox + bulk remove confirm |
 | `admin-partners.feature` | Empty featured partners list | — | `skip` | Deferred — owner: featured-partners step 03; shared-DB empty state brittle; covered by admin empty-state copy + manual smoke |
 | `admin-events.feature` | List featured events | `e2e/specs/admin-events.spec.ts` · `Scenario: List featured events` | `pass` | Asserts **Featured events** / **Featured partners** tab labels |
 | `admin-events.feature` | Admin remove from featured keeps catalog event | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin remove from featured keeps catalog event` | `pass` | R2 env-skip when vars missing |

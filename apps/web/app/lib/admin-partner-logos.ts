@@ -1,22 +1,18 @@
 import { buildVariantUrl } from "@unveiled/images/urls";
 
-type PartnerWithOptionalLogo = {
+type PartnerWithLogo = {
   id: string;
-  logoImageId: string | null;
+  logoImageId: string;
 };
 
 export function buildPartnerLogoUrls(
-  partners: PartnerWithOptionalLogo[],
+  partners: PartnerWithLogo[],
 ): Record<string, string | undefined> {
   const logoUrls: Record<string, string | undefined> = {};
 
   for (const partner of partners) {
-    if (!partner.logoImageId) {
-      continue;
-    }
-
     try {
-      logoUrls[partner.id] = buildVariantUrl(partner.logoImageId, "small-320.jpg");
+      logoUrls[partner.id] = buildVariantUrl(partner.logoImageId, "small-320.webp");
     } catch {
       logoUrls[partner.id] = undefined;
     }

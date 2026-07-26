@@ -10,8 +10,6 @@ import {
   OG_HEIGHT,
   OG_QUALITY,
   OG_WIDTH,
-  ORIGINAL_MAX_EDGE,
-  ORIGINAL_QUALITY,
   SMALL_MAX_WIDTH,
   SMALL_QUALITY,
   VARIANT_FILENAMES,
@@ -69,30 +67,27 @@ function fitMaxWidth(srcWidth: number, srcHeight: number, maxWidth: number): Siz
   return { width, height };
 }
 
-function fitMaxEdge(srcWidth: number, srcHeight: number, maxEdge: number): Size {
-  const longest = Math.max(srcWidth, srcHeight);
-  if (longest <= maxEdge) {
-    return { width: srcWidth, height: srcHeight };
-  }
-  const scale = maxEdge / longest;
-  return {
-    width: Math.max(1, Math.round(srcWidth * scale)),
-    height: Math.max(1, Math.round(srcHeight * scale)),
-  };
-}
-
-function jpegQuality(qualityPercent: number): number {
+function webpQuality(qualityPercent: number): number {
   return Math.min(1, Math.max(0, qualityPercent / 100));
 }
 
-async function encodeJpeg(canvas: ClientCanvas, qualityPercent: number): Promise<Blob> {
-  const blob = await getResizer().toBlob(canvas, "image/jpeg", jpegQuality(qualityPercent));
-  if (!blob || blob.size === 0) {
-    throw new Error("Failed to encode JPEG variant");
+async function encodeWebp(canvas: ClientCanvas, qualityPercent: number): Promise<Blob> {
+  let blob: Blob | null = null;
+  try {
+    blob = await getResizer().toBlob(canvas, "image/webp", webpQuality(qualityPercent));
+  } catch {
+    blob = null;
   }
-  return blob.type === "image/jpeg"
+
+  if (!blob || blob.size === 0) {
+    throw new ImageValidationError(
+      "WebP encoding is not supported in this browser (canvas.toBlob image/webp failed)",
+    );
+  }
+
+  return blob.type === "image/webp"
     ? blob
-    : new Blob([await blob.arrayBuffer()], { type: "image/jpeg" });
+    : new Blob([await blob.arrayBuffer()], { type: "image/webp" });
 }
 
 async function resizeLadderVariant(
@@ -103,12 +98,12 @@ async function resizeLadderVariant(
   qualityPercent: number,
 ): Promise<Blob> {
   if (target.width === srcWidth && target.height === srcHeight) {
-    return encodeJpeg(source, qualityPercent);
+    return encodeWebp(source, qualityPercent);
   }
 
   const dest = createClientCanvas(target.width, target.height);
   await getResizer().resize(source, dest);
-  return encodeJpeg(dest, qualityPercent);
+  return encodeWebp(dest, qualityPercent);
 }
 
 function createOgCoverCrop(
@@ -128,8 +123,9 @@ function createOgCoverCrop(
 }
 
 /**
- * Browser-side generator mirroring server `generateImageVariants` rules:
- * six JPEG filenames, downscale-only ladder, OG center cover-crop to 1200×630.
+ * Browser-side generator: five WebP filenames, downscale-only ladder,
+ * OG center cover-crop to 1200×630. Accepts any browser-decodable source
+ * (including SVG — vectors are rasterized at ≥ hero width so ladder sizes stay sharp).
  * Does not import `@standardagents/sip`.
  */
 export async function generateImageVariantsClient(
@@ -155,20 +151,12 @@ export async function generateImageVariantsClient(
   const imageId = options.imageId ?? crypto.randomUUID();
   const sourceKind = options.source ?? "UPLOAD";
 
-  const originalSize = fitMaxEdge(decoded.width, decoded.height, ORIGINAL_MAX_EDGE);
   const heroSize = fitMaxWidth(decoded.width, decoded.height, HERO_MAX_WIDTH);
   const largeSize = fitMaxWidth(decoded.width, decoded.height, LARGE_MAX_WIDTH);
   const mediumSize = fitMaxWidth(decoded.width, decoded.height, MEDIUM_MAX_WIDTH);
   const smallSize = fitMaxWidth(decoded.width, decoded.height, SMALL_MAX_WIDTH);
 
   // Sequential: keep peak memory predictable for large admin uploads.
-  const original = await resizeLadderVariant(
-    decoded.canvas,
-    decoded.width,
-    decoded.height,
-    originalSize,
-    ORIGINAL_QUALITY,
-  );
   const hero1920 = await resizeLadderVariant(
     decoded.canvas,
     decoded.width,
@@ -197,18 +185,17 @@ export async function generateImageVariantsClient(
     smallSize,
     SMALL_QUALITY,
   );
-  const og1200x630 = await encodeJpeg(
+  const og1200x630 = await encodeWebp(
     createOgCoverCrop(decoded.canvas, decoded.width, decoded.height),
     OG_QUALITY,
   );
 
   const variants = {
-    "original.jpg": original,
-    "hero-1920.jpg": hero1920,
-    "large-1280.jpg": large1280,
-    "medium-640.jpg": medium640,
-    "small-320.jpg": small320,
-    "og-1200x630.jpg": og1200x630,
+    "hero-1920.webp": hero1920,
+    "large-1280.webp": large1280,
+    "medium-640.webp": medium640,
+    "small-320.webp": small320,
+    "og-1200x630.webp": og1200x630,
   } satisfies Record<VariantFilename, Blob>;
 
   for (const filename of VARIANT_FILENAMES) {

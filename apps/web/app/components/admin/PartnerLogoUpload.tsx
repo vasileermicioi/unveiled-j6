@@ -8,7 +8,9 @@ import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
 import { AdminImageVariantFields } from "./AdminImageVariantFields";
+import { AdminImageVariantGallery } from "./AdminImageVariantGallery";
 import {
+  hasCompleteVariants,
   mapClientImageError,
   type ProcessedAdminUpload,
   processAdminImageFiles,
@@ -17,7 +19,10 @@ import {
 export type PartnerLogoUploadProps = {
   locale: Locale;
   isEdit?: boolean;
+  /** @deprecated Prefer currentLogoImageId + imagePublicBaseUrl for the variant gallery. */
   currentLogoUrl?: string | null;
+  currentLogoImageId?: string | null;
+  imagePublicBaseUrl?: string | null;
   /** Reserved for featured-event-gallery reuse; partner logo stays single-file. */
   multiple?: boolean;
   inputName?: string;
@@ -37,6 +42,8 @@ export function PartnerLogoUpload({
   locale,
   isEdit = false,
   currentLogoUrl = null,
+  currentLogoImageId = null,
+  imagePublicBaseUrl = null,
   multiple = false,
   inputName = "logo",
 }: PartnerLogoUploadProps) {
@@ -68,29 +75,63 @@ export function PartnerLogoUpload({
         return;
       }
 
-      if (processedRef.current) {
+      const ready =
+        processedRef.current && hasCompleteVariants(processedRef.current)
+          ? processedRef.current
+          : null;
+      const nativeInput = resolveNativeFileInput(document.getElementById(fileInputId));
+      const hasFile = Boolean(nativeInput?.files && nativeInput.files.length > 0);
+
+      if (processingRef.current || statusRef.current === "processing") {
+        event.preventDefault();
+        setErrorMessage(copy.imageProcessingSubmitBlocked);
         return;
       }
 
-      const nativeInput = resolveNativeFileInput(document.getElementById(fileInputId));
-      const hasFile = Boolean(nativeInput?.files && nativeInput.files.length > 0);
+      if (statusRef.current === "error" && hasFile) {
+        event.preventDefault();
+        setErrorMessage((prev) => prev ?? copy.imageProcessingError);
+        return;
+      }
+
+      if (ready) {
+        return;
+      }
+
+      if (processedRef.current && !ready) {
+        event.preventDefault();
+        setErrorMessage(copy.imageIncompleteVariantsError);
+        setStatus("error");
+        return;
+      }
+
+      // Create requires a processed logo; edit may omit (keep existing).
+      if (!isEdit && !hasFile) {
+        event.preventDefault();
+        setErrorMessage(copy.logoRequiredError);
+        setStatus("error");
+        return;
+      }
+
       if (!hasFile) {
         return;
       }
 
-      if (processingRef.current || statusRef.current === "processing") {
-        event.preventDefault();
-        return;
-      }
-
       event.preventDefault();
-      setErrorMessage(copy.imageProcessingError);
+      setErrorMessage(copy.imageIncompleteVariantsError);
       setStatus("error");
     };
 
     document.addEventListener("submit", onSubmit, true);
     return () => document.removeEventListener("submit", onSubmit, true);
-  }, [copy.imageProcessingError, fileInputId]);
+  }, [
+    copy.imageIncompleteVariantsError,
+    copy.imageProcessingError,
+    copy.imageProcessingSubmitBlocked,
+    copy.logoRequiredError,
+    fileInputId,
+    isEdit,
+  ]);
 
   async function handleFilesSelected(fileList: FileList | null) {
     const files = fileList ? Array.from(fileList) : [];
@@ -111,23 +152,41 @@ export function PartnerLogoUpload({
     try {
       const results = await processAdminImageFiles(files, { multiple });
       const first = results[0] ?? null;
+      if (!first || !hasCompleteVariants(first)) {
+        setProcessed(null);
+        setStatus("error");
+        setErrorMessage(copy.imageIncompleteVariantsError);
+        return;
+      }
       setProcessed(first);
-      setStatus(first ? "ready" : "idle");
+      setStatus("ready");
     } catch (error) {
       setProcessed(null);
       setStatus("error");
-      setErrorMessage(mapClientImageError(error, copy.imageProcessingError));
+      setErrorMessage(mapClientImageError(error, copy));
     } finally {
       processingRef.current = false;
     }
   }
+
+  const showExistingGallery = Boolean(
+    isEdit && currentLogoImageId && !processed && status !== "processing",
+  );
 
   return (
     <Surface className="flex flex-col gap-4" variant="transparent">
       <Paragraph className="onboarding-form__section-label">{copy.logoFileLabel}</Paragraph>
       <Description>{isEdit ? copy.logoUploadHintEdit : copy.logoUploadHint}</Description>
 
-      {isEdit && currentLogoUrl ? (
+      {showExistingGallery ? (
+        <AdminImageVariantGallery
+          imageId={currentLogoImageId}
+          imagePublicBaseUrl={imagePublicBaseUrl}
+          locale={locale}
+        />
+      ) : null}
+
+      {isEdit && !showExistingGallery && !processed && currentLogoUrl ? (
         <Surface className="admin-form__image-preview" variant="transparent">
           <img alt="" src={currentLogoUrl} />
         </Surface>
@@ -152,7 +211,12 @@ export function PartnerLogoUpload({
       {status === "ready" && selectedLabel ? <Description>{selectedLabel}</Description> : null}
       {errorMessage ? <Description>{errorMessage}</Description> : null}
 
-      {processed ? <AdminImageVariantFields processed={processed} /> : null}
+      {processed ? (
+        <>
+          <AdminImageVariantGallery locale={locale} processed={processed} />
+          <AdminImageVariantFields processed={processed} />
+        </>
+      ) : null}
     </Surface>
   );
 }

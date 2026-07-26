@@ -26,6 +26,8 @@ export type EventFormDefaults = Partial<{
   lng: string | null;
   mapZoom: number | null;
   currentImageUrl: string | null;
+  currentImageId: string | null;
+  imagePublicBaseUrl: string | null;
 }>;
 
 export type PartnerOption = {

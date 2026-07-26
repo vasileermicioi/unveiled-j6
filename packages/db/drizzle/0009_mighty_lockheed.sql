@@ -1,0 +1,1 @@
+ALTER TABLE "partners" ALTER COLUMN "logo_image_id" SET NOT NULL;

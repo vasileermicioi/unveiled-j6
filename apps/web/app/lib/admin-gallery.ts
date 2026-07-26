@@ -7,7 +7,7 @@ export function toAdminGalleryListItems(rows: EventGalleryImageRow[]): AdminGall
   return rows.map((row) => {
     let thumbnailUrl: string | null = null;
     try {
-      thumbnailUrl = buildVariantUrl(row.imageId, "small-320.jpg");
+      thumbnailUrl = buildVariantUrl(row.imageId, "small-320.webp");
     } catch {
       thumbnailUrl = null;
     }

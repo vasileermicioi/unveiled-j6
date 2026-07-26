@@ -1,5 +1,3 @@
-import { ACCEPTED_MIME_TYPES, type AcceptedMimeType } from "./constants";
-
 export class ImageValidationError extends Error {
   constructor(message: string) {
     super(message);
@@ -7,10 +5,11 @@ export class ImageValidationError extends Error {
   }
 }
 
-export function validateRemoteContentType(contentType: string | null): AcceptedMimeType {
+/** Accept any `image/*` content type for the admin remote bytes proxy (incl. SVG). */
+export function validateRemoteContentType(contentType: string | null): string {
   const normalized = contentType?.split(";")[0]?.trim().toLowerCase() ?? "";
-  if (!ACCEPTED_MIME_TYPES.includes(normalized as AcceptedMimeType)) {
-    throw new ImageValidationError("Remote URL must point to a JPEG, PNG, or WebP image");
+  if (!normalized.startsWith("image/")) {
+    throw new ImageValidationError("Remote URL must point to an image");
   }
-  return normalized as AcceptedMimeType;
+  return normalized;
 }

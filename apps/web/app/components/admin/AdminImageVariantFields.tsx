@@ -33,7 +33,7 @@ function VariantFileField({ filename, blob, fieldName }: VariantFileFieldProps) 
 
   return (
     <Input
-      accept="image/jpeg"
+      accept="image/webp"
       aria-hidden
       className="sr-only"
       id={inputId}
@@ -46,11 +46,11 @@ function VariantFileField({ filename, blob, fieldName }: VariantFileFieldProps) 
 
 type AdminImageVariantFieldsProps = {
   processed: ProcessedAdminUpload;
-  /** When set, field names become `${fieldPrefix}imageId`, `${fieldPrefix}original.jpg`, … */
+  /** When set, field names become `${fieldPrefix}imageId`, `${fieldPrefix}hero-1920.webp`, … */
   fieldPrefix?: string;
 };
 
-/** Hidden multipart fields for a client-built six-variant set (step 02 field names). */
+/** Hidden multipart fields for a client-built five-variant WebP set. */
 export function AdminImageVariantFields({
   processed,
   fieldPrefix = "",

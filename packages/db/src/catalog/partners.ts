@@ -79,38 +79,37 @@ export async function createPartner(db: Db, input: CreatePartnerInput): Promise<
   const address = requireNonEmpty(input.address, "address");
   const contactEmail = validateEmail(input.contactEmail);
 
-  let logoImageId: string | null = null;
-  const logoSource = validateImageSourceExclusive(input.logoUpload, input.logoUrl, {
+  const { attachImageToPartner, deleteImageRecord } = await catalogImages();
+  const logoImageId = await attachImageToPartner(db, "", input.logoUpload, input.logoUrl, {
+    uploadedBy: input.uploadedBy,
+    skipUpload: input.skipUpload,
     prebuilt: input.logoPrebuilt,
   });
-  if (logoSource) {
-    const { persistImageFromSource } = await catalogImages();
-    logoImageId = await persistImageFromSource(db, logoSource, {
-      uploadedBy: input.uploadedBy,
-      skipUpload: input.skipUpload,
-      prebuilt: input.logoPrebuilt,
-    });
-  }
 
   const venueCheckInToken = input.venueCheckInToken?.trim() || generateVenueCheckInToken();
 
-  const inserted = await db
-    .insert(partners)
-    .values({
-      name,
-      address,
-      contactEmail,
-      logoImageId,
-      venueCheckInToken,
-    })
-    .returning();
+  try {
+    const inserted = await db
+      .insert(partners)
+      .values({
+        name,
+        address,
+        contactEmail,
+        logoImageId,
+        venueCheckInToken,
+      })
+      .returning();
 
-  const partner = inserted[0];
-  if (!partner) {
-    throw new Error("Failed to create partner");
+    const partner = inserted[0];
+    if (!partner) {
+      throw new Error("Failed to create partner");
+    }
+
+    return partner;
+  } catch (error) {
+    await deleteImageRecord(db, logoImageId, { skipBucket: input.skipUpload });
+    throw error;
   }
-
-  return partner;
 }
 
 export async function renamePartnerSyncEvents(
@@ -148,10 +147,11 @@ export async function updatePartner(
     input.contactEmail !== undefined ? validateEmail(input.contactEmail) : existing.contactEmail;
 
   const { replacePartnerLogo, deleteImageRecord } = await catalogImages();
-  const logoImageId = await replacePartnerLogo(
+  const previousLogoImageId = existing.logoImageId;
+  const nextLogoImageId = await replacePartnerLogo(
     db,
     partnerId,
-    existing.logoImageId,
+    previousLogoImageId,
     input.logoUpload,
     input.logoUrl,
     {
@@ -161,15 +161,13 @@ export async function updatePartner(
     },
   );
 
-  const previousLogoImageId = existing.logoImageId;
-
   const updated = await db
     .update(partners)
     .set({
       name: nextName,
       address: nextAddress,
       contactEmail: nextEmail,
-      logoImageId: logoImageId ?? existing.logoImageId,
+      logoImageId: nextLogoImageId,
       updatedAt: new Date(),
     })
     .where(eq(partners.id, partnerId))
@@ -184,8 +182,7 @@ export async function updatePartner(
     await renamePartnerSyncEvents(db, partnerId, nextName);
   }
 
-  const nextLogoImageId = logoImageId ?? existing.logoImageId;
-  if (previousLogoImageId && nextLogoImageId && previousLogoImageId !== nextLogoImageId) {
+  if (previousLogoImageId !== nextLogoImageId) {
     await deleteImageRecord(db, previousLogoImageId, { skipBucket: input.skipUpload });
   }
 
@@ -240,10 +237,8 @@ export async function deletePartner(
 
   await db.delete(partners).where(eq(partners.id, partnerId));
 
-  if (logoImageId) {
-    const { deleteImageRecord } = await catalogImages();
-    await deleteImageRecord(db, logoImageId, { skipBucket: options?.skipBucket });
-  }
+  const { deleteImageRecord } = await catalogImages();
+  await deleteImageRecord(db, logoImageId, { skipBucket: options?.skipBucket });
 }
 
 export type CountPartnersOptions = {

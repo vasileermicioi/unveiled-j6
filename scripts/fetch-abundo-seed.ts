@@ -16,7 +16,9 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { bufferToPrebuiltVariants } from "../packages/images/src/offline/index.ts";
+import { createCanvas, Image } from "@napi-rs/canvas";
+
+import { isJpegBuffer } from "../packages/images/src/jpeg-dimensions.ts";
 import { validateImageBuffer } from "../packages/images/src/validation.ts";
 
 const BERLIN_CITY_ID = "01704393-9f68-70bf-8050-f527682ed3d0";
@@ -318,12 +320,28 @@ async function fetchBuffer(url: string): Promise<Buffer | null> {
   }
 }
 
-/** Validate + normalize to a seedable JPEG (original variant via offline Pica). */
+/** Validate + normalize to a seedable JPEG source (variants are baked separately as WebP). */
 async function toSeedJpeg(buffer: Buffer): Promise<Buffer | null> {
   try {
     await validateImageBuffer(buffer);
-    const prebuilt = await bufferToPrebuiltVariants(buffer, { source: "UPLOAD" });
-    return prebuilt.variants["original.jpg"];
+    if (isJpegBuffer(buffer)) {
+      return buffer;
+    }
+
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Unable to decode image for seed JPEG"));
+      img.src = buffer;
+    });
+    const width = Number(img.width);
+    const height = Number(img.height);
+    if (!width || !height) {
+      throw new Error("Unable to read image dimensions for seed JPEG");
+    }
+    const canvas = createCanvas(width, height);
+    canvas.getContext("2d").drawImage(img, 0, 0);
+    return canvas.toBuffer("image/jpeg");
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`  skip image: ${message.split("\n")[0]}`);

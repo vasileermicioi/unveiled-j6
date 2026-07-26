@@ -57,7 +57,7 @@ async function parsePrebuiltSetFromFields(
 }
 
 /**
- * Returns a complete prebuilt variant set when `imageId` and all six
+ * Returns a complete prebuilt variant set when `imageId` and all five
  * `VARIANT_FILENAMES` file fields are present and non-empty; otherwise null
  * (caller may fall back to legacy single-file / URL paths).
  */

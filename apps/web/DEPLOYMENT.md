@@ -14,11 +14,13 @@ Target custom domain: `https://staging.unveiled.berlin` (configure in Cloudflare
 
 **Cloudflare Workers** — HonoX SSR via `@hono/vite-build/cloudflare-workers` and `wrangler.toml`.
 
-**Admin image uploads** (file picker) generate the six JPEG variants **in the browser with Pica** (`@unveiled/images/client`) before the SSR form POST; the server validates and stores prebuilt variants (`persistPrebuiltImage`). Event admin UI is file-upload only. **JavaScript is required** for admin event/partner image supply. There is **no** `@standardagents/sip` / Worker-side resize.
+**Admin image uploads** (file picker) generate the **five WebP** variants **in the browser with Pica** (`@unveiled/images/client`) before the SSR form POST; the server validates and stores prebuilt variants (`persistPrebuiltImage`). Event/partner admin UI is file-upload only. **JavaScript is required** for admin event/partner image supply. There is **no** `@standardagents/sip` / Worker-side resize. Source acceptance is any browser-decodable image (incl. SVG → rasterize); no 800×420 / 8 MB product gates. Partner logos are **required** on create.
 
-Demo seed reads pre-baked `public/images/seed/**/*.jpg.variants/` packs (refresh with `bun scripts/fetch-abundo-seed.ts` then `bun scripts/bake-seed-image-variants.ts`).
+Demo seed reads pre-baked variant packs under `public/images/seed/**` (refresh with `bun scripts/fetch-abundo-seed.ts` then `bun scripts/bake-seed-image-variants.ts`).
 
-**Migrating from older pipelines:** variant filenames remain `*.jpg`. Re-seed or re-upload if objects are missing; there is no automatic migration job.
+**Migrating residual JPEG objects:** consumers serve `*.webp` only. If a bucket still has legacy `*.jpg` keys, run `bun scripts/migrate-r2-jpeg-to-webp.ts` (optional `--dry-run`) with the same six R2 env vars — see `@unveiled/images` README. Local/staging dry-run (2026-07-26) reported **no legacy JPEG objects** under `images/`. Re-check production buckets before/with deploy if they may still hold `.jpg` keys. **Owner:** staging operator / next deploy checklist. Do not add JPEG URL fallbacks in app code.
+
+**E2E note (Image pipeline step 04):** admin event/partner image specs assert `.webp` URLs and required logo; they self-skip when `E2E_ADMIN_*` or any of the six R2 vars is missing (existing patterns).
 
 Deploy artifacts:
 - `apps/web/wrangler.toml` — Workers config, static assets binding
@@ -33,7 +35,7 @@ bun install
 bun run build    # db:migrate (needs DATABASE_URL) + Workers-compatible @unveiled/web bundle
 ```
 
-Local development (Bun/Node — same sip pipeline as Workers; supports admin image upload):
+Local development (Bun/Node — same prebuilt WebP persist path as Workers; supports admin image upload):
 
 ```bash
 bun run dev
@@ -178,9 +180,9 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 
 ### Cloudflare R2 (Phase 4)
 
-The image pipeline stores six JPEG variants per upload under `images/{uuid}/{variant}.jpg` in the bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.jpg` (and sibling variant filenames — see `docs/product/extras/image-uploads.md`). Demo seed (`bun run seed:demo`) uses the same `@unveiled/images` sip path and writes `.jpg` keys.
+The image pipeline stores **five WebP** variants per upload under `images/{uuid}/{variant}.webp` in the bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.webp` (and sibling variant filenames — see `docs/product/extras/image-uploads.md`). Demo seed (`bun run seed:demo`) uses `@unveiled/images` prebuilt persist and writes `.webp` keys.
 
-If the bucket still has objects from the old WebP pipeline (`*.webp`), re-seed or re-upload so public/admin pages resolve `.jpg` variants — see the Host section migration note above.
+If the bucket still has objects from the legacy JPEG pipeline (`*.jpg`), run `bun scripts/migrate-r2-jpeg-to-webp.ts` (or re-seed / re-upload) so public/admin pages resolve `.webp` variants — see the Host section migration note above.
 
 **1. Create bucket** — Cloudflare Dashboard → **R2** → create bucket (e.g. `unveiled-j6`).
 
@@ -217,10 +219,10 @@ Expect an empty listing or object keys — not an auth error.
 
 1. Sign in as ADMIN with all six R2 vars set (Workers `[vars]` or root `.env`).
 2. Use the staging Workers URL (`bun run deploy:workers` / `dev:workers`) or `bun run dev`.
-3. Open `/:locale/admin/partners/new` (or `/:locale/admin/events/new`), choose a JPEG ≥ 800×420 px, submit.
-4. Confirm redirect success and the new row shows a `small-320.jpg` thumbnail.
-5. Edit without a new file — thumbnail unchanged. Edit with a new file — thumbnail updates.
-6. In the R2 bucket, confirm six objects under `images/{uuid}/` for the image id.
+3. Open `/:locale/admin/partners/new` (or `/:locale/admin/events/new`), choose any browser-decodable image (JPEG/PNG/WebP/SVG, …), wait for the five-tile variant gallery, submit.
+4. Confirm redirect success and the new row shows a `small-320.webp` thumbnail. Partner create without a logo must be rejected.
+5. Edit without a new file — gallery/thumbnail unchanged. Edit with a new file — gallery updates to the new five WebP sizes.
+6. In the R2 bucket, confirm five `.webp` objects under `images/{uuid}/` for the image id (no `original`).
 
 ## Cloudflare Workers setup (GitHub import)
 
@@ -455,10 +457,10 @@ Phase 4 is complete when staging supports the admin → public catalog loop with
 
 1. Schema migrated via `bun run build` (or `bun run db:migrate`) against staging `DATABASE_URL`.
 2. Sign in as ADMIN → `/de/admin`. If DB empty, run **Seed demo data** or `bun run seed:demo`. To replace an existing catalog with fresh Berlin venue demo data: `bun run seed:demo -- --reset` (deletes all partners and events first; also removes pagination seed rows). Fresh seed also features a small upcoming subset for Discover.
-3. Create a partner with logo (upload or URL) → appears on `/de/admin/partners`.
+3. Create a partner with **required** logo upload → appears on `/de/admin/partners` with `small-320.webp` thumb.
 4. Create an event with image → listed on `/de/admin/events`. Add it under **Featured** (`/de/admin/featured`) if it should appear on Discover.
 5. Open `/de/discover` — admin-featured upcoming events appear (not the full upcoming catalog).
-6. Open `/de/events/:id` **without login** — hero srcset, event copy, `og:image` uses `og-1200x630` variant URL under `IMAGE_PUBLIC_BASE_URL`.
+6. Open `/de/events/:id` **without login** — hero srcset, event copy, `og:image` uses `og-1200x630.webp` variant URL under `IMAGE_PUBLIC_BASE_URL`.
 7. View Source — Event JSON-LD stub and unique `<title>` / meta description.
 
 ### Automated verification
@@ -476,7 +478,7 @@ Public catalog surfaces (`@unveiled/ui` EventCard, locale-home Discover live gri
 
 ### Demo seed images (Wikimedia Commons)
 
-`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **prebuilt variant packs** next to local JPEGs in `public/images/seed/{partners,events}/` (`*.jpg.variants/`), then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`, and attaches **≥2 gallery images** to the featured theater demo (`DEMO_DISCOVERY_TITLES.theaterFuture`) for public detail slider demos. Refresh fixture + images with `bun run seed:fetch-abundo` then `bun scripts/bake-seed-image-variants.ts`. Seed uploads the six JPEG variants to R2 via `persistPrebuiltImage` (no Worker resize). Existing catalogs seeded before Featured Discover / Featured Event Gallery need `seed:demo -- --reset` (or manual Featured tab + gallery uploads) to populate Discover and the demo gallery.
+`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **prebuilt five-WebP variant packs** under `public/images/seed/{partners,events}/`, then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`, and attaches **≥2 gallery images** to the featured theater demo (`DEMO_DISCOVERY_TITLES.theaterFuture`) for public detail slider demos. Refresh fixture + images with `bun run seed:fetch-abundo` then `bun scripts/bake-seed-image-variants.ts`. Seed uploads the five WebP variants to R2 via `persistPrebuiltImage` (no Worker resize). Existing catalogs seeded before Featured Discover / Featured Event Gallery need `seed:demo -- --reset` (or manual Featured tab + gallery uploads) to populate Discover and the demo gallery.
 
 ```bash
 # Fresh catalog on empty DB
@@ -531,7 +533,7 @@ Selector policy, spec inventory, and skip inventory: [`e2e/README.md`](../../e2e
 
 On push to `main`: **quality** (lint → typecheck → build, including `db:migrate`) → **e2e** (timeout 20m). E2E failure fails the workflow. **Workers deploy is separate** — Cloudflare GitHub repo import / Workers Builds deploys on push; this workflow does not run `wrangler deploy` and does not use `CLOUDFLARE_API_TOKEN`. Quality **Build** needs GitHub secrets `DATABASE_URL` (+ `AUTH_URL` recommended).
 
-The e2e job uses `SITE_URL=http://localhost:3000` and `CI=true` so Playwright’s `webServer` starts local Node SSR (`bun run dev` + sip). It runs `bun run db:migrate` against the CI `DATABASE_URL` (use a **CI-dedicated** Neon branch — never `seed:demo -- --reset` against shared staging). Image specs self-skip when R2 secrets are absent.
+The e2e job uses `SITE_URL=http://localhost:3000` and `CI=true` so Playwright’s `webServer` starts local Node SSR (`bun run dev`). It runs `bun run db:migrate` against the CI `DATABASE_URL` (use a **CI-dedicated** Neon branch — never `seed:demo -- --reset` against shared staging). Image specs self-skip when R2 secrets are absent.
 
 #### GitHub Actions secrets (names only)
 

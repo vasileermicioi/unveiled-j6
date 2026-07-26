@@ -65,9 +65,7 @@ export async function resetCatalogData(
     imageIds.add(event.imageId);
   }
   for (const partner of partnersList) {
-    if (partner.logoImageId) {
-      imageIds.add(partner.logoImageId);
-    }
+    imageIds.add(partner.logoImageId);
   }
   for (const row of galleryRows) {
     imageIds.add(row.imageId);
@@ -132,7 +130,7 @@ export async function runDemoSeed(
 
   for (const entry of getDemoCatalog()) {
     const partner = await createPartner(db, entry.partner);
-    createdPartners.push({ id: partner.id, hasLogo: Boolean(partner.logoImageId) });
+    createdPartners.push({ id: partner.id, hasLogo: true });
     await sleep(pauseMs);
 
     for (const eventInput of entry.events) {

@@ -14,6 +14,8 @@ export type PartnerFormDefaults = {
   contactEmail?: string;
   address?: string;
   currentLogoUrl?: string | null;
+  currentLogoImageId?: string | null;
+  imagePublicBaseUrl?: string | null;
 };
 
 type PartnerFormProps = {
@@ -62,7 +64,9 @@ export function PartnerForm({
       </TextField>
 
       <PartnerLogoUpload
+        currentLogoImageId={defaults?.currentLogoImageId}
         currentLogoUrl={defaults?.currentLogoUrl}
+        imagePublicBaseUrl={defaults?.imagePublicBaseUrl}
         isEdit={isEdit}
         locale={locale}
       />

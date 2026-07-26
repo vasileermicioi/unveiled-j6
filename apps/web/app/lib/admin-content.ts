@@ -278,6 +278,17 @@ export type AdminCopy = {
   logoFileLabel: string;
   logoUploadHint: string;
   logoUploadHintEdit: string;
+  logoRequiredError: string;
+  imageRequiredError: string;
+  imageUndecodableError: string;
+  imageWebpUnsupportedError: string;
+  imageIncompleteVariantsError: string;
+  imageProcessingSubmitBlocked: string;
+  imageVariantGalleryLabel: string;
+  imageVariantOpenLabel: (sizeLabel: string) => string;
+  imageVariantPreviousLabel: string;
+  imageVariantNextLabel: string;
+  imageVariantCloseHint: string;
   partnerLabel: string;
   titleLabel: string;
   descriptionLabel: string;
@@ -625,9 +636,24 @@ const copy: Record<Locale, AdminCopy> = {
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
     logoFileLabel: "Logo hochladen",
-    logoUploadHint: "Optional: JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
+    logoUploadHint:
+      "Erforderlich: beliebiges browser-lesbares Bild (inkl. SVG) — wird zu WebP-Varianten verarbeitet.",
     logoUploadHintEdit:
-      "Optional: neues Logo hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten.",
+      "Neues Logo hochladen, um das aktuelle zu ersetzen — leer lassen, um es zu behalten. Logo kann nicht entfernt werden.",
+    logoRequiredError: "Partner-Logo ist erforderlich. Bitte ein Bild hochladen.",
+    imageRequiredError: "Event-Bild ist erforderlich. Bitte ein Bild hochladen und verarbeiten.",
+    imageUndecodableError:
+      "Diese Datei konnte nicht als Bild gelesen werden. Bitte eine andere Datei wählen.",
+    imageWebpUnsupportedError:
+      "Dieser Browser unterstützt keine WebP-Kodierung. Bitte einen aktuellen Browser verwenden.",
+    imageIncompleteVariantsError:
+      "Bildvarianten sind unvollständig. Bitte die Datei erneut wählen und verarbeiten.",
+    imageProcessingSubmitBlocked: "Bitte warten, bis die Bildverarbeitung abgeschlossen ist.",
+    imageVariantGalleryLabel: "Größenvarianten",
+    imageVariantOpenLabel: (sizeLabel) => `Variante ${sizeLabel} vergrößern`,
+    imageVariantPreviousLabel: "Zurück",
+    imageVariantNextLabel: "Weiter",
+    imageVariantCloseHint: "Zum Schließen Esc drücken oder außerhalb klicken",
     partnerLabel: "Partner",
     titleLabel: "Titel",
     descriptionLabel: "Beschreibung",
@@ -664,12 +690,13 @@ const copy: Record<Locale, AdminCopy> = {
     mapLocationLabel: "Standort auf der Karte",
     imageSectionLabel: "Event-Bild",
     imageFileLabel: "Event-Bild hochladen",
-    imageUploadHint: "JPEG, PNG oder WebP — min. 800×420 px, max. 8 MB.",
+    imageUploadHint:
+      "Erforderlich: beliebiges browser-lesbares Bild (inkl. SVG) — wird zu WebP-Varianten verarbeitet.",
     imageUploadHintEdit:
       "Optional: neues Bild per Datei ersetzen — leer lassen, um das aktuelle zu behalten.",
     imageProcessingInProgress: "Bild wird verarbeitet…",
     imageProcessingError:
-      "Bild konnte nicht verarbeitet werden. Bitte eine gültige Datei wählen (min. 800×420) und erneut versuchen.",
+      "Bild konnte nicht verarbeitet werden. Bitte eine gültige Datei wählen und erneut versuchen.",
     chooseImageButton: "Bild auswählen",
     imageSelectedLabel: (fileName) => `Ausgewählt: ${fileName}`,
     imageStorageError: "Bildspeicher ist nicht konfiguriert. Bitte Admin kontaktieren.",
@@ -692,7 +719,7 @@ const copy: Record<Locale, AdminCopy> = {
       name: "Name ist erforderlich.",
       contactEmail: "Gültige E-Mail-Adresse erforderlich.",
       address: "Adresse ist erforderlich.",
-      logo: "Logo-Upload und URL können nicht gleichzeitig gesetzt werden.",
+      logo: "Partner-Logo ist erforderlich. Bitte ein Bild hochladen.",
       image: "Event-Bild ist erforderlich. Bitte ein Bild hochladen.",
       partnerId: "Partner ist erforderlich.",
       title: "Titel ist erforderlich.",
@@ -973,9 +1000,24 @@ const copy: Record<Locale, AdminCopy> = {
     emailLabel: "Contact email",
     addressLabel: "Address",
     logoFileLabel: "Upload logo",
-    logoUploadHint: "Optional: JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
+    logoUploadHint:
+      "Required: any browser-decodable image (including SVG) — processed into WebP variants.",
     logoUploadHintEdit:
-      "Optional: upload a new logo to replace the current one — leave empty to keep it.",
+      "Upload a new logo to replace the current one — leave empty to keep it. The logo cannot be removed.",
+    logoRequiredError: "Partner logo is required. Please upload an image.",
+    imageRequiredError: "Event image is required. Please upload and process an image.",
+    imageUndecodableError:
+      "This file could not be read as an image. Please choose a different file.",
+    imageWebpUnsupportedError:
+      "This browser does not support WebP encoding. Please use a current browser.",
+    imageIncompleteVariantsError:
+      "Image variants are incomplete. Please re-select the file and process again.",
+    imageProcessingSubmitBlocked: "Please wait until image processing finishes.",
+    imageVariantGalleryLabel: "Size variants",
+    imageVariantOpenLabel: (sizeLabel) => `Enlarge ${sizeLabel} variant`,
+    imageVariantPreviousLabel: "Prev",
+    imageVariantNextLabel: "Next",
+    imageVariantCloseHint: "Press Escape or click outside to close",
     partnerLabel: "Partner",
     titleLabel: "Title",
     descriptionLabel: "Description",
@@ -1011,11 +1053,11 @@ const copy: Record<Locale, AdminCopy> = {
     mapLocationLabel: "Map location",
     imageSectionLabel: "Event image",
     imageFileLabel: "Upload event image",
-    imageUploadHint: "JPEG, PNG, or WebP — min 800×420 px, max 8 MB.",
+    imageUploadHint:
+      "Required: any browser-decodable image (including SVG) — processed into WebP variants.",
     imageUploadHintEdit: "Optional: replace the current image via file — leave empty to keep it.",
     imageProcessingInProgress: "Processing image…",
-    imageProcessingError:
-      "Could not process the image. Choose a valid file (min 800×420) and try again.",
+    imageProcessingError: "Could not process the image. Choose a valid file and try again.",
     chooseImageButton: "Choose image",
     imageSelectedLabel: (fileName) => `Selected: ${fileName}`,
     imageStorageError: "Image storage is not configured. Contact support.",
@@ -1037,7 +1079,7 @@ const copy: Record<Locale, AdminCopy> = {
       name: "Name is required.",
       contactEmail: "A valid email address is required.",
       address: "Address is required.",
-      logo: "Logo upload and URL cannot both be provided.",
+      logo: "Partner logo is required. Please upload an image.",
       image: "Event image is required. Please upload an image.",
       partnerId: "Partner is required.",
       title: "Title is required.",
@@ -1060,7 +1102,7 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   INVALID_EMAIL: "contactEmail",
   REQUIRED_FIELD: "name",
   CLIENT_IMAGE_REQUIRED: "image",
-  CONFLICTING_IMAGE_SOURCES: "logo",
+  CONFLICTING_IMAGE_SOURCES: "image",
   MISSING_EVENT_IMAGE: "image",
   INVALID_REDEMPTION_CONFIG: "redemption",
   DUPLICATE_SERIES_SLOTS: "series",

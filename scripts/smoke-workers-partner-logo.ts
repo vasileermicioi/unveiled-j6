@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Workers-runtime smoke: sign in as admin, POST partner create with prebuilt logo variants,
- * assert 302 + six JPEG objects in R2.
+ * assert 302 + five WebP objects in R2.
  *
  * Expects wrangler already listening on SITE_URL (default http://127.0.0.1:8787).
  */
@@ -93,7 +93,7 @@ async function main(): Promise<void> {
   form.set("claimedWidth", String(prebuilt.claimedWidth ?? 900));
   form.set("claimedHeight", String(prebuilt.claimedHeight ?? 500));
   for (const filename of VARIANT_FILENAMES) {
-    form.set(filename, new File([prebuilt.variants[filename]], filename, { type: "image/jpeg" }));
+    form.set(filename, new File([prebuilt.variants[filename]], filename, { type: "image/webp" }));
   }
 
   const create = await fetch(`${baseURL}/de/admin/partners/new`, {
@@ -145,18 +145,20 @@ async function main(): Promise<void> {
   const keys = (listed.Contents ?? []).map((o) => o.Key).filter(Boolean) as string[];
   const byId = new Map<string, string[]>();
   for (const key of keys) {
-    const match = /^images\/([^/]+)\/(.+\.jpg)$/.exec(key);
+    const match = /^images\/([^/]+)\/(.+\.webp)$/.exec(key);
     if (!match) continue;
     const [, id, file] = match;
     const arr = byId.get(id) ?? [];
     arr.push(file);
     byId.set(id, arr);
   }
-  const complete = [...byId.entries()].filter(([, files]) => files.length >= 6);
+  const complete = [...byId.entries()].filter(([, files]) =>
+    VARIANT_FILENAMES.every((name) => files.includes(name)),
+  );
   if (complete.length === 0) {
-    throw new Error("no image id with six .jpg variants found in R2 listing");
+    throw new Error("no image id with five .webp variants found in R2 listing");
   }
-  console.log(`R2 has ${complete.length} image(s) with six .jpg variants (smoke ok)`);
+  console.log(`R2 has ${complete.length} image(s) with five .webp variants (smoke ok)`);
 }
 
 main().catch((error) => {

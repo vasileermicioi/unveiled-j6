@@ -19,12 +19,8 @@ function buildPartnerLogoUrls(
   const logoUrls: Record<string, string | undefined> = {};
 
   for (const partner of partners) {
-    if (!partner.logoImageId) {
-      continue;
-    }
-
     try {
-      logoUrls[partner.id] = buildVariantUrl(partner.logoImageId, "small-320.jpg");
+      logoUrls[partner.id] = buildVariantUrl(partner.logoImageId, "small-320.webp");
     } catch {
       logoUrls[partner.id] = undefined;
     }

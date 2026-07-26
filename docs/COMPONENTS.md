@@ -270,6 +270,16 @@ Related SSR renderer (not an island): `components/MarkdownContent.tsx` — GFM v
 
 ---
 
+### `AdminImageVariantGallery`
+
+**Path:** `components/admin/AdminImageVariantGallery.tsx`
+
+Admin-only five-tile preview of resized WebP variants (`hero-1920`, `large-1280`, `medium-640`, `small-320`, `og-1200x630`) for newly processed uploads (blob object URLs) and existing `imageId`s (`buildVariantUrl`). Used by `EventImageUpload` / `PartnerLogoUpload` (and gallery-add summary). Theme: bordered tiles on the yellow page; Tailwind layout only.
+
+Related: `AdminImageVariantFields` (hidden multipart WebP fields), `EventImageUpload`, `PartnerLogoUpload` — client Pica → five WebP; localized errors block submit. Contract: `docs/product/extras/image-uploads.md`.
+
+---
+
 ## Future components (not built — do not invent locally)
 
 From `docs/product/ui/ui-component-map.md` — will land in later phases:

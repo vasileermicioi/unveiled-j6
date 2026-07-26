@@ -121,7 +121,7 @@ describe("admin-event-form helpers", () => {
       image_url: "https://example.com/poster.jpg",
     };
     for (const filename of VARIANT_FILENAMES) {
-      body[filename] = new File([new Uint8Array(12)], filename, { type: "image/jpeg" });
+      body[filename] = new File([new Uint8Array(12)], filename, { type: "image/webp" });
     }
 
     const values = await parseEventFormBody(body, asString, asFile);
@@ -144,7 +144,9 @@ describe("admin-event-form helpers", () => {
         event_date: "2026-08-01",
         event_time: "20:00",
         imageId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-        "original.jpg": new File([new Uint8Array(12)], "original.jpg", { type: "image/jpeg" }),
+        "hero-1920.webp": new File([new Uint8Array(12)], "hero-1920.webp", {
+          type: "image/webp",
+        }),
         image: new File([new Uint8Array(8)], "source.png", { type: "image/png" }),
       },
       asString,

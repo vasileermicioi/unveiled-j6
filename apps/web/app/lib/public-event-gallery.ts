@@ -12,12 +12,12 @@ export type PublicEventGalleryImage = {
 };
 
 function buildGalleryLightboxSrc(imageId: string): string {
-  return buildVariantUrl(imageId, "large-1280.jpg");
+  return buildVariantUrl(imageId, "large-1280.webp");
 }
 
 function buildGalleryLightboxSrcSet(imageId: string): string {
-  const large = buildVariantUrl(imageId, "large-1280.jpg");
-  const medium = buildVariantUrl(imageId, "medium-640.jpg");
+  const large = buildVariantUrl(imageId, "large-1280.webp");
+  const medium = buildVariantUrl(imageId, "medium-640.webp");
   return `${medium} 640w, ${large} 1280w`;
 }
 
