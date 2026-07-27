@@ -107,6 +107,13 @@ export async function navigateAdminTab(page: Page, locale: Locale, tab: AdminTab
   await expect(page.getByRole("main")).toBeVisible({ timeout: 15_000 });
 }
 
+/** Native checkbox multi-select: check an option by its accessible name. */
+export async function checkOptionByName(page: Page, name: string | RegExp): Promise<void> {
+  const checkbox = page.getByRole("checkbox", { name });
+  await expect(checkbox).toBeVisible({ timeout: 10_000 });
+  await checkbox.check();
+}
+
 /** Native `<select>`: resolve by accessible label, pick option by visible text. */
 export async function selectOptionByLabel(
   page: Page,
@@ -343,10 +350,10 @@ export async function createEventViaUI(
     await selectOptionByLabel(page, adminLabels.barrierFree, overrides.barrierFree);
   }
   if (overrides.language) {
-    await selectOptionByLabel(page, adminLabels.languages, overrides.language);
+    await checkOptionByName(page, overrides.language);
   }
   if (overrides.ageGroup) {
-    await selectOptionByLabel(page, adminLabels.ageGroups, overrides.ageGroup);
+    await checkOptionByName(page, overrides.ageGroup);
   }
 
   if (imagePath) {

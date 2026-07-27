@@ -5,6 +5,7 @@ import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 import {
   adminLabels,
   adminTabLabels,
+  checkOptionByName,
   createEventViaUI,
   createPartnerViaUI,
   deleteEventViaUI,
@@ -238,9 +239,8 @@ test.describe("admin-events.feature", () => {
     await selectOptionByLabel(page, adminLabels.slotMode, /datumsbereich|date range/i);
     await fillLabeledDateOrTime(page, adminLabels.builderStart, start);
     await fillLabeledDateOrTime(page, adminLabels.builderEnd, end);
-    await page.getByRole("button", { name: adminLabels.weekdays }).click();
-    await page.getByRole("option", { name: "Mo" }).click();
-    await page.keyboard.press("Escape");
+    await expect(page.getByText(adminLabels.weekdays).first()).toBeVisible();
+    await checkOptionByName(page, /^Mo$/);
     await fillLabeledDateOrTime(page, adminLabels.builderTime1, "19:30");
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /slots anzeigen|show slots|preview/i }).click();
@@ -319,6 +319,123 @@ test.describe("admin-events.feature", () => {
     await expect(
       page.getByText(/barrierefrei|barrier.?free|18-25|deutsch|german/i).first(),
     ).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("Scenario: Languages multi-select with search", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    await page.goto(`/${locale}/admin/events/new`);
+    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
+    await selectOptionByLabel(page, adminLabels.partner, partner.name);
+    await expect(page.getByText(adminLabels.languages).first()).toBeVisible();
+    const languageSearch = page.getByPlaceholder(/sprachen suchen|search languages/i);
+    await expect(languageSearch).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /deutsch|german/i })).toBeVisible();
+    await checkOptionByName(page, /deutsch|german/i);
+    // Filter hides unmatched unselected options; already-selected stay mounted for POST.
+    await languageSearch.fill("zzzz-no-match");
+    await expect(page.getByRole("checkbox", { name: /deutsch|german/i })).toBeChecked();
+    await languageSearch.fill("");
+    await expect(page.getByRole("checkbox", { name: /deutsch|german/i })).toBeChecked();
+  });
+
+  test("Scenario: Age groups multi-select without search", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    await page.goto(`/${locale}/admin/events/new`);
+    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
+    await selectOptionByLabel(page, adminLabels.partner, partner.name);
+    await expect(page.getByText(adminLabels.ageGroups).first()).toBeVisible();
+    // Only languages expose a search filter — age groups do not add a second one.
+    await expect(page.getByPlaceholder(/sprachen suchen|search languages/i)).toHaveCount(1);
+    await expect(page.getByRole("checkbox", { name: "18-25" })).toBeVisible();
+    await checkOptionByName(page, "18-25");
+    await expect(page.getByRole("checkbox", { name: "18-25" })).toBeChecked();
+  });
+
+  test("Scenario: Series weekdays use checkbox multi-select", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    await page.goto(`/${locale}/admin/events/series/new`);
+    await expect(page.getByRole("heading", { name: /serie|series/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
+    await selectOptionByLabel(page, adminLabels.partner, partner.name);
+    await selectOptionByLabel(page, adminLabels.slotMode, /datumsbereich|date range/i);
+    await expect(page.getByText(adminLabels.weekdays).first()).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /^Mo$/ })).toBeVisible();
+    await checkOptionByName(page, /^Mo$/);
+    await expect(page.getByRole("button", { name: adminLabels.weekdays })).toHaveCount(0);
+    await expect(page.getByLabel(adminLabels.partner, { exact: true })).toBeVisible();
+  });
+
+  test("Scenario: Add event prefills address and map from partner", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale, {
+      address: `Prefill Str. ${uniqueSuffix()}, 10115 Berlin`,
+    });
+    await page.goto(`/${locale}/admin/events/new`);
+    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
+    const addressField = page.getByRole("textbox", { name: adminLabels.address, exact: true });
+    await selectOptionByLabel(page, adminLabels.partner, partner.name);
+    await expect(addressField).toHaveValue(partner.address, { timeout: 10_000 });
+    // Live Nominatim map-pin success is not required in CI (soft-fail leaves map at default).
+  });
+
+  test("Scenario: Edit event keeps existing location when partner changes", async ({
+    page,
+    locale,
+  }) => {
+    test.setTimeout(90_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partnerA = await createPartnerViaUI(page, locale, {
+      address: `Keep-A ${uniqueSuffix()}, 10115 Berlin`,
+    });
+    const partnerB = await createPartnerViaUI(page, locale, {
+      address: `Keep-B ${uniqueSuffix()}, 10435 Berlin`,
+    });
+    const customAddress = `Custom kept ${uniqueSuffix()}, Berlin`;
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partnerA.name,
+      address: customAddress,
+    });
+
+    const row = page.getByRole("row").filter({ hasText: event.title });
+    await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
+    const addressField = page.getByRole("textbox", { name: adminLabels.address, exact: true });
+    await expect(addressField).toHaveValue(customAddress);
+    await selectOptionByLabel(page, adminLabels.partner, partnerB.name);
+    await expect(addressField).toHaveValue(customAddress);
+  });
+
+  test("Scenario: Geocode soft-fails leave address filled", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    // Address prefill is covered above; soft-fail geocode paths are unit-tested in
+    // apps/web/app/lib/geocode-berlin.test.ts. Live Nominatim failure is not forced in CI.
+    const partner = await createPartnerViaUI(page, locale, {
+      address: `Softfail Str. ${uniqueSuffix()}, 10115 Berlin`,
+    });
+    await page.goto(`/${locale}/admin/events/new`);
+    await page.waitForLoadState("networkidle");
+    await selectOptionByLabel(page, adminLabels.partner, partner.name);
+    await expect(page.getByRole("textbox", { name: adminLabels.address, exact: true })).toHaveValue(
+      partner.address,
+      { timeout: 10_000 },
+    );
   });
 
   test("Scenario: Export redemption codes for an event", async ({ page, locale }) => {

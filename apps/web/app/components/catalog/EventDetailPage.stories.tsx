@@ -1,11 +1,22 @@
 import type { Story } from "@ladle/react";
 
 import type { PublicEventGalleryImage } from "../../lib/public-event-gallery";
-import { mockEvent, mockImageId, mockSoldOutEvent, storyLocale } from "../stories/fixtures";
+import {
+  mockEvent,
+  mockImageId,
+  mockPartner,
+  mockSoldOutEvent,
+  storyLocale,
+} from "../stories/fixtures";
 import { EventDetailPage } from "./EventDetailPage";
 
-/** Wide frame so lg two-column identity/checkout alignment and DETAILS grid are reviewable. */
+/** Wide frame so lg two-row identity/checkout + image/description alignment is reviewable. */
 const wideMeta = { width: 1280 as const };
+
+const storyPartnerAttribution = {
+  name: mockPartner.name,
+  logoUrl: `https://cdn.example.com/images/${mockPartner.logoImageId}/medium-640.webp`,
+};
 
 const storyGalleryImages: PublicEventGalleryImage[] = [
   {
@@ -28,13 +39,14 @@ const storyGalleryImages: PublicEventGalleryImage[] = [
   },
 ];
 
-/** Guest: no tickets/credits/date chrome; unlock CTA remains. */
+/** Guest: no tickets/credits/date chrome; unlock CTA remains; partner logo+name in DETAILS. */
 export const Guest: Story = () => (
   <EventDetailPage
     closeHref={`/${storyLocale}`}
     event={mockEvent}
     locale={storyLocale}
     maxQty={3}
+    partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "guest" }}
   />
 );
@@ -48,6 +60,7 @@ export const Eligible: Story = () => (
     event={mockEvent}
     locale={storyLocale}
     maxQty={8}
+    partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "eligible" }}
   />
 );
@@ -59,6 +72,7 @@ export const SoldOut: Story = () => (
     closeHref={`/${storyLocale}/events`}
     event={mockSoldOutEvent}
     locale={storyLocale}
+    partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "eligible" }}
   />
 );
@@ -70,6 +84,7 @@ export const MembershipRequired: Story = () => (
     closeHref={`/${storyLocale}/events`}
     event={mockEvent}
     locale={storyLocale}
+    partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "membership_required" }}
   />
 );
@@ -82,6 +97,7 @@ export const MembershipRequiredPast: Story = () => (
     closeHref={`/${storyLocale}/discover`}
     event={{ ...mockEvent, dateTime: new Date("2020-01-01T20:00:00+01:00") }}
     locale={storyLocale}
+    partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "membership_required" }}
   />
 );
@@ -93,11 +109,26 @@ export const PastDue: Story = () => (
     closeHref={`/${storyLocale}/events`}
     event={mockEvent}
     locale={storyLocale}
+    partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "past_due" }}
   />
 );
 PastDue.storyName = "EventDetailPage / Past due";
 PastDue.meta = wideMeta;
+
+/** Name-only attribution when logo URL is absent. */
+export const PartnerNameOnly: Story = () => (
+  <EventDetailPage
+    closeHref={`/${storyLocale}`}
+    event={mockEvent}
+    locale={storyLocale}
+    maxQty={3}
+    partnerAttribution={{ name: mockPartner.name }}
+    viewer={{ kind: "guest" }}
+  />
+);
+PartnerNameOnly.storyName = "EventDetailPage / Partner name only";
+PartnerNameOnly.meta = wideMeta;
 
 /** Empty gallery prop (default) — section omitted. */
 export const WithoutGallery: Story = () => (
@@ -107,6 +138,7 @@ export const WithoutGallery: Story = () => (
     galleryImages={[]}
     locale={storyLocale}
     maxQty={3}
+    partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "guest" }}
   />
 );
@@ -121,6 +153,7 @@ export const WithGallery: Story = () => (
     galleryImages={storyGalleryImages}
     locale={storyLocale}
     maxQty={3}
+    partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "guest" }}
   />
 );

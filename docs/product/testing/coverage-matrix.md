@@ -28,7 +28,13 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-events.feature` | Update an event's capacity | `e2e/specs/admin-events.spec.ts` · `Scenario: Update an event's capacity` | `pass` |  |
 | `admin-events.feature` | Edit event details | `e2e/specs/admin-events.spec.ts` · `Scenario: Edit event details` | `pass` |  |
 | `admin-events.feature` | Delete an event | `e2e/specs/admin-events.spec.ts` · `Scenario: Delete an event` | `pass` |  |
-| `admin-events.feature` | Optional accessibility and audience metadata | `e2e/specs/admin-events.spec.ts` · `Scenario: Optional accessibility and audience metadata` | `pass` |  |
+| `admin-events.feature` | Optional accessibility and audience metadata | `e2e/specs/admin-events.spec.ts` · `Scenario: Optional accessibility and audience metadata` | `pass` | Checkbox multi-select via `checkOptionByName` |
+| `admin-events.feature` | Languages multi-select with search | `e2e/specs/admin-events.spec.ts` · `Scenario: Languages multi-select with search` | `pass` | R2 env-skip (partner logo); search keeps selected checked |
+| `admin-events.feature` | Age groups multi-select without search | `e2e/specs/admin-events.spec.ts` · `Scenario: Age groups multi-select without search` | `pass` | R2 env-skip (partner logo) |
+| `admin-events.feature` | Series weekdays use checkbox multi-select | `e2e/specs/admin-events.spec.ts` · `Scenario: Series weekdays use checkbox multi-select` | `pass` | R2 env-skip; also used in date-range builder create |
+| `admin-events.feature` | Add event prefills address and map from partner | `e2e/specs/admin-events.spec.ts` · `Scenario: Add event prefills address and map from partner` | `pass` | Address assert required; live Nominatim map-pin not required in CI |
+| `admin-events.feature` | Edit event keeps existing location when partner changes | `e2e/specs/admin-events.spec.ts` · `Scenario: Edit event keeps existing location when partner changes` | `pass` | R2 env-skip |
+| `admin-events.feature` | Geocode soft-fails leave address filled | `e2e/specs/admin-events.spec.ts` · `Scenario: Geocode soft-fails leave address filled` | `pass` | Address prefill asserted; soft-fail paths unit-tested in `geocode-berlin.test.ts` (live Nominatim not forced) |
 | `admin-events.feature` | Export redemption codes for an event | `e2e/specs/admin-events.spec.ts` · `Scenario: Export redemption codes for an event` | `pass` |  |
 | `admin-events.feature` | Seed demo data (empty environment only) | `e2e/specs/admin-events.spec.ts` · `Scenario: Seed demo data (empty environment only)` | `skip` | hard-skipped in e2e |
 | `admin-events.feature` | Seed demo data is a no-op when data exists | `e2e/specs/admin-events.spec.ts` · `Scenario: Seed demo data is a no-op when data exists` | `pass` |  |
@@ -110,6 +116,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Guest sees featured partners only | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees featured partners only` | `pass` | Needs `DATABASE_URL`; `ensureDemoFeaturedPartnersSplit` |
 | `event-discovery.feature` | Empty featured partners hides Partner venues | — | `skip` | Deferred — owner: featured-partners step 03; clearing all featured partners on shared staging DB risks parallel Discover tests |
 | `event-discovery.feature` | Guest can view public event detail without authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest can view public event detail without authentication` | `pass` |  |
+| `event-discovery.feature` | Large viewport uses two primary rows | `e2e/specs/event-discovery.spec.ts` · `Scenario: Large viewport uses two primary rows` | `pass` | Smoke: identity + checkout CTA + hero + DETAILS (no CSS-grid hashes) |
+| `event-discovery.feature` | Guest sees partner attribution | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees partner attribution` | `pass` | Needs `DATABASE_URL` + R2; partner logo alt = partner name |
 | `event-discovery.feature` | Guest views gallery on event detail | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest views gallery on event detail` | `pass` | Needs `DATABASE_URL` + R2; `ensureDemoEventGallery` |
 | `event-discovery.feature` | No gallery images | `e2e/specs/event-discovery.spec.ts` · `Scenario: No gallery images` | `pass` | Uses seeded konzert (no gallery) |
 | `event-discovery.feature` | Featured demo event includes gallery | `e2e/specs/event-discovery.spec.ts` · `Scenario: Featured demo event includes gallery` | `pass` | Needs `DATABASE_URL` + R2 |

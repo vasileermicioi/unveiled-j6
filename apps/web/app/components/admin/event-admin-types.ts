@@ -33,4 +33,5 @@ export type EventFormDefaults = Partial<{
 export type PartnerOption = {
   id: string;
   name: string;
+  address: string;
 };

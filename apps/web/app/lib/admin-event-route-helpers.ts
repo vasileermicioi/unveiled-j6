@@ -8,10 +8,14 @@ import {
   formatEventTimeInput,
 } from "./admin-event-form";
 
-export type PartnerOption = Pick<Partner, "id" | "name">;
+export type PartnerOption = Pick<Partner, "id" | "name" | "address">;
 
 export function toPartnerOptions(partners: Partner[]): PartnerOption[] {
-  return partners.map((partner) => ({ id: partner.id, name: partner.name }));
+  return partners.map((partner) => ({
+    id: partner.id,
+    name: partner.name,
+    address: partner.address,
+  }));
 }
 
 function resolveImagePublicBaseUrl(): string | null {

@@ -85,6 +85,35 @@ Feature: Admin — Event Management
     When I create or edit an event
     Then I can optionally set barrier-free accessibility, supported languages, and target age groups
 
+  Scenario: Languages multi-select with search
+    When I open create or edit event
+    Then languages are chosen with checkboxes and a search filter that narrows visible options
+    And already-selected values remain available for the form POST even when filtered out of view
+
+  Scenario: Age groups multi-select without search
+    When I open create or edit event
+    Then target age groups are chosen with checkboxes and no search filter control
+
+  Scenario: Series weekdays use checkbox multi-select
+    When I open the series create form with the date-range builder
+    Then builder weekdays are chosen with checkboxes and no search filter control
+    And single-value fields on the form continue to use a native HTML select
+
+  Scenario: Add event prefills address and map from partner
+    When I am on the new-event (or series-create) form and select a partner from the dropdown
+    Then the address field is set to that partner's address
+    And the map pin updates to a geocode of that address when geocoding succeeds
+    # Live Nominatim success is soft-fail — address prefill is required; map pin may stay at default
+
+  Scenario: Edit event keeps existing location when partner changes
+    When I am on the edit-event form and change the partner
+    Then the existing address and map coordinates remain unchanged until I edit them manually
+
+  Scenario: Geocode soft-fails leave address filled
+    When I am on the new-event form and select a partner whose address cannot be geocoded
+    Then the address field is still set to that partner's address
+    And the map location is left unchanged (or at its prior default)
+
   Scenario: Export redemption codes for an event
     Given an event has confirmed bookings with redemption codes
     When I export codes for that event

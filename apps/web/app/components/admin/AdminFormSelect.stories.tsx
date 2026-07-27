@@ -1,5 +1,6 @@
-import { Description, Surface } from "@heroui/react";
+import { Description, Label, Surface } from "@heroui/react";
 import type { Story } from "@ladle/react";
+import CheckboxMultiSelect from "../../islands/CheckboxMultiSelect";
 import { getAdminCopy } from "../../lib/admin-content";
 import { storyLocale } from "../stories/fixtures";
 import { AdminFormSelect } from "./AdminFormSelect";
@@ -19,27 +20,29 @@ export const Single: Story = () => (
       ]}
       placeholder={copy.selectPlaceholder}
     />
-    <Description>Native HTML select with `.admin-native-select`.</Description>
+    <Description>Native HTML select with `.admin-native-select` (single-value only).</Description>
   </Surface>
 );
 Single.storyName = "AdminFormSelect / Single (native)";
 
-export const Multiple: Story = () => (
+/** Multi-value admin fields use CheckboxMultiSelect — not AdminFormSelect. */
+export const MultiValueCheckbox: Story = () => (
   <Surface className="flex max-w-md flex-col gap-2" variant="transparent">
-    <AdminFormSelect
-      defaultSelectedKeys={["de", "en"]}
-      label={copy.languagesLabel}
+    <Label>{copy.languagesLabel}</Label>
+    <CheckboxMultiSelect
+      enableSearch
+      filterPlaceholder={copy.languagesSearchPlaceholder}
       name="languages"
       options={[
-        { id: "de", label: "Deutsch" },
-        { id: "en", label: "English" },
-        { id: "fr", label: "Français" },
+        { value: "de", label: "Deutsch" },
+        { value: "en", label: "English" },
+        { value: "fr", label: "Français" },
       ]}
-      selectionMode="multiple"
+      selected={["de", "en"]}
     />
     <Description>
-      Native HTML select multiple (Ctrl/Cmd-click). Posts repeated field names for SSR parsers.
+      Prefer `CheckboxMultiSelect` for multi-value allowlists. See design-system Form controls.
     </Description>
   </Surface>
 );
-Multiple.storyName = "AdminFormSelect / Multiple (native)";
+MultiValueCheckbox.storyName = "CheckboxMultiSelect / Languages (replaces select multiple)";

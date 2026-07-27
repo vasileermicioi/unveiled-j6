@@ -80,10 +80,10 @@ export const PREFERRED_LANGUAGES = [
   "ZH",
 ] as const;
 
-/** Compact language set for admin event metadata (not the full member catalog). */
-export const EVENT_LANGUAGES = ["DE", "EN"] as const;
+/** Admin event metadata languages — same allowlist as member preferred languages. */
+export const EVENT_LANGUAGES = PREFERRED_LANGUAGES;
 
 export type AgeGroup = (typeof AGE_GROUPS)[number];
 export type EventType = (typeof EVENT_TYPES)[number];
 export type PreferredLanguage = (typeof PREFERRED_LANGUAGES)[number];
-export type EventLanguage = (typeof EVENT_LANGUAGES)[number];
+export type EventLanguage = PreferredLanguage;

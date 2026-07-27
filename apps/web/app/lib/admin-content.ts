@@ -1,10 +1,4 @@
-import {
-  AGE_GROUPS,
-  DISTRICTS,
-  EVENT_LANGUAGES,
-  EVENT_TYPES,
-  INTERESTS,
-} from "@unveiled/auth/constants";
+import { AGE_GROUPS, DISTRICTS, EVENT_TYPES, INTERESTS } from "@unveiled/auth/constants";
 import type { CatalogErrorCode } from "@unveiled/db/catalog/errors";
 
 import type { Locale } from "./locale";
@@ -12,7 +6,7 @@ import {
   getAgeGroupLabel,
   getDistrictLabel,
   getInterestLabel,
-  getPreferredLanguageLabel,
+  getPreferredLanguageOptions,
 } from "./onboarding-content";
 
 export const ADMIN_LIST_PAGE_SIZE = 25;
@@ -320,6 +314,7 @@ export type AdminCopy = {
   optionYes: string;
   optionNo: string;
   languagesLabel: string;
+  languagesSearchPlaceholder: string;
   targetAgeGroupsLabel: string;
   mapLocationLabel: string;
   imageSectionLabel: string;
@@ -686,6 +681,7 @@ const copy: Record<Locale, AdminCopy> = {
     optionYes: "Ja",
     optionNo: "Nein",
     languagesLabel: "Sprachen",
+    languagesSearchPlaceholder: "Sprachen suchen",
     targetAgeGroupsLabel: "Altersgruppen",
     mapLocationLabel: "Standort auf der Karte",
     imageSectionLabel: "Event-Bild",
@@ -1049,6 +1045,7 @@ const copy: Record<Locale, AdminCopy> = {
     optionYes: "Yes",
     optionNo: "No",
     languagesLabel: "Languages",
+    languagesSearchPlaceholder: "Search languages",
     targetAgeGroupsLabel: "Age groups",
     mapLocationLabel: "Map location",
     imageSectionLabel: "Event image",
@@ -1209,9 +1206,10 @@ export type AdminSelectOption = {
 };
 
 export function getEventLanguageOptions(locale: Locale): AdminSelectOption[] {
-  return EVENT_LANGUAGES.map((id) => ({
-    id,
-    label: getPreferredLanguageLabel(locale, id),
+  // Same catalog + DE/EN-first ordering as onboarding preferred languages.
+  return getPreferredLanguageOptions(locale).map((option) => ({
+    id: option.code,
+    label: option.label,
   }));
 }
 

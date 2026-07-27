@@ -38,7 +38,7 @@ Domain helpers for the four-step preference wizard. Paths returned by `getOnboar
 
 **Step order:** age → interests → location → timing → `completeOnboarding`.
 
-**Allowlists:** `AGE_GROUPS`, `INTERESTS`, `MOODS`, `DISTRICTS` (12 Berlin Bezirke), `TIMING_OPTIONS`, `WEEKDAYS`, `PREFERRED_LANGUAGES` (member prefs; expanded language codes, no `Non-Verbal`). Admin event metadata uses the smaller `EVENT_LANGUAGES` set (`DE`, `EN`), not the full member catalog. Location saves clear `max_distance` to `null` (travel radius is not collected).
+**Allowlists:** `AGE_GROUPS`, `INTERESTS`, `MOODS`, `DISTRICTS` (12 Berlin Bezirke), `TIMING_OPTIONS`, `WEEKDAYS`, `PREFERRED_LANGUAGES` (member prefs; expanded language codes, no `Non-Verbal`). Admin event metadata uses the same catalog via `EVENT_LANGUAGES` (alias of `PREFERRED_LANGUAGES`). Location saves clear `max_distance` to `null` (travel radius is not collected).
 
 **Age skip:** POST payload `{ skip: true }` advances to interests without writing `age_group`.
 

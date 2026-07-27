@@ -58,3 +58,16 @@ The design system / app storybook SHALL include Ladle stories for booking confir
 #### Scenario: Membership checkout states are covered
 - **WHEN** an implementer opens the membership page Ladle stories
 - **THEN** they can view guest, start-checkout, already-active, and frozen/payment-stopped shell states (and past-due messaging via the book-gate story when that messaging is not on the membership page)
+
+### Requirement: Multi-value form controls
+For multi-value allowlists (onboarding preferences, admin event languages/age groups, series weekdays), the system SHALL use native checkbox multi-selects (optional client-side search filter). Native HTML `<select multiple>` is not the preferred pattern for new multi-value admin fields. Single-value choice fields SHALL continue to use native HTML `select`. Product design-system docs (`docs/product/ui/design-system.md` Form controls) SHALL state this preference.
+
+#### Scenario: Design-system docs prefer checkbox multi-select for multi-value lists
+- **WHEN** an agent reads the Form controls section of `docs/product/ui/design-system.md`
+- **THEN** it states that multi-value allowlists use native checkbox multi-selects (optional search)
+- **AND** it states that native `<select multiple>` is not the preferred pattern for new multi-value admin fields
+- **AND** single-value choice fields continue to use native HTML `select`
+
+#### Scenario: Admin event multi-value fields follow the preferred pattern
+- **WHEN** an admin uses event create/edit languages, target age groups, or series builder weekdays
+- **THEN** those fields are collected with native checkbox multi-selects rather than `<select multiple>`

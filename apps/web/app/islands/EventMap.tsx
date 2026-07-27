@@ -341,8 +341,6 @@ export default function EventMap({ locale, markers }: EventMapProps) {
         {loading ? <Skeleton className="event-map__skeleton" /> : null}
         <div className="event-map__canvas" ref={containerRef} />
       </Surface>
-
-      <Paragraph className="event-map__attribution">{copy.attribution}</Paragraph>
     </Surface>
   );
 }

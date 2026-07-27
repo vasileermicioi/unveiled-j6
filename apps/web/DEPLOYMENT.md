@@ -22,6 +22,8 @@ Demo seed reads pre-baked variant packs under `public/images/seed/**` (refresh w
 
 **E2E note (Image pipeline step 04):** admin event/partner image specs assert `.webp` URLs and required logo; they self-skip when `E2E_ADMIN_*` or any of the six R2 vars is missing (existing patterns).
 
+**Admin partner location prefill (Event form & detail):** On **add event** / **series create** only, changing the partner control fills the event address from `partners.address` and attempts a browser-side Nominatim geocode (`geocodeBerlinAddress`, Berlin viewbox bias) to update the map pin. Soft-fail leaves the address filled and the map unchanged/default. **No API key or env var** — do not add Nominatim secrets. Edit-event partner changes never overwrite address/map. CI e2e asserts address prefill; live Nominatim success is not required (unit tests cover soft-fail paths in `apps/web/app/lib/geocode-berlin.test.ts`).
+
 Deploy artifacts:
 - `apps/web/wrangler.toml` — Workers config, static assets binding
 - `apps/web/vite.config.ts` — Workers production build (Node/Bun `bun run dev` unchanged for local SSR)

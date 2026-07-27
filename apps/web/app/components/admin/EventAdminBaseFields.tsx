@@ -4,6 +4,7 @@ import { Description, Input, Label, Surface, TextField } from "@heroui/react";
 import type { SecretCodeMode, TicketType, TimingMode } from "@unveiled/db";
 import { useId, useState } from "react";
 
+import CheckboxMultiSelect from "../../islands/CheckboxMultiSelect";
 import {
   getAdminCopy,
   getEventAgeGroupOptions,
@@ -12,6 +13,7 @@ import {
   getEventNeighborhoodOptions,
   getEventTypeOptions,
 } from "../../lib/admin-content";
+import { geocodeBerlinAddress } from "../../lib/geocode-berlin";
 import type { Locale } from "../../lib/locale";
 import { AdminFormNumberField } from "./AdminFormNumberField";
 import { AdminFormSelect } from "./AdminFormSelect";
@@ -61,6 +63,34 @@ export function EventAdminBaseFields({
   const [secretCodeMode, setSecretCodeMode] = useState<SecretCodeMode>(
     defaultSecretCodeMode(defaults),
   );
+  const [addressValue, setAddressValue] = useState(defaults?.address ?? "");
+  const [addressRevision, setAddressRevision] = useState(0);
+  const [externalLat, setExternalLat] = useState<string | null>(null);
+  const [externalLng, setExternalLng] = useState<string | null>(null);
+  const [externalRevision, setExternalRevision] = useState(0);
+
+  async function handlePartnerChange(partnerId: string) {
+    if (isEdit) {
+      return;
+    }
+
+    const partner = partners.find((entry) => entry.id === partnerId);
+    if (!partner) {
+      return;
+    }
+
+    setAddressValue(partner.address);
+    setAddressRevision((current) => current + 1);
+
+    const geocoded = await geocodeBerlinAddress(partner.address);
+    if (!geocoded) {
+      return;
+    }
+
+    setExternalLat(geocoded.lat.toFixed(6));
+    setExternalLng(geocoded.lng.toFixed(6));
+    setExternalRevision((current) => current + 1);
+  }
 
   return (
     <>
@@ -69,6 +99,11 @@ export function EventAdminBaseFields({
         isRequired
         label={copy.partnerLabel}
         name="partner_id"
+        onSelectionChange={(value) => {
+          if (typeof value === "string") {
+            void handlePartnerChange(value);
+          }
+        }}
         options={partners.map((partner) => ({ id: partner.id, label: partner.name }))}
         placeholder={copy.selectPlaceholder}
       />
@@ -78,10 +113,7 @@ export function EventAdminBaseFields({
         <Input />
       </TextField>
 
-      {/*
-        Description uses MDXEditor (non-native exception with image upload / geo picker).
-        SSR POST still submits native name="description". design-system.md sync → step 03.
-      */}
+      {/* Description: MDXEditor exception; SSR POST still submits native name="description". */}
       <Surface className="flex flex-col gap-2" variant="transparent">
         <Label id={descriptionLabelId}>{copy.descriptionLabel}</Label>
         <EventDescriptionEditor
@@ -95,7 +127,13 @@ export function EventAdminBaseFields({
         <Description id={descriptionHintId}>{copy.descriptionMarkdownHint}</Description>
       </Surface>
 
-      <TextField defaultValue={defaults?.address} fullWidth isRequired name="address">
+      <TextField
+        key={`address-${addressRevision}`}
+        defaultValue={addressValue}
+        fullWidth
+        isRequired
+        name="address"
+      >
         <Label>{copy.addressLabel}</Label>
         <Input />
       </TextField>
@@ -249,23 +287,35 @@ export function EventAdminBaseFields({
           ]}
           placeholder={copy.selectPlaceholder}
         />
-        <AdminFormSelect
-          defaultSelectedKeys={defaults?.languages ?? []}
-          label={copy.languagesLabel}
-          name="languages"
-          options={languageOptions}
-          placeholder={copy.selectPlaceholder}
-          selectionMode="multiple"
-        />
-        <AdminFormSelect
-          defaultSelectedKeys={defaults?.targetAgeGroups ?? []}
-          label={copy.targetAgeGroupsLabel}
-          name="target_age_groups"
-          options={ageGroupOptions}
-          placeholder={copy.selectPlaceholder}
-          selectionMode="multiple"
-        />
+        <Surface className="flex w-full flex-col gap-1" variant="transparent">
+          <Label>{copy.languagesLabel}</Label>
+          <CheckboxMultiSelect
+            enableSearch
+            filterPlaceholder={copy.languagesSearchPlaceholder}
+            name="languages"
+            options={languageOptions.map((option) => ({
+              value: option.id,
+              label: option.label,
+            }))}
+            selected={defaults?.languages ?? []}
+          />
+        </Surface>
+        <Surface className="flex w-full flex-col gap-1" variant="transparent">
+          <Label>{copy.targetAgeGroupsLabel}</Label>
+          <CheckboxMultiSelect
+            name="target_age_groups"
+            options={ageGroupOptions.map((option) => ({
+              value: option.id,
+              label: option.label,
+            }))}
+            optionsClassName="checkbox-multi-select__options onboarding-form__options onboarding-form__options--stack"
+            selected={defaults?.targetAgeGroups ?? []}
+          />
+        </Surface>
         <EventGeoPicker
+          externalLat={externalLat}
+          externalLng={externalLng}
+          externalRevision={externalRevision}
           lat={defaults?.lat}
           lng={defaults?.lng}
           locale={locale}

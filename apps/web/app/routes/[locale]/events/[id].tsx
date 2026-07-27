@@ -1,9 +1,11 @@
 import {
+  getPartnerById,
   getPublicEventById,
   isBookingEligibleStatus,
   listEventGalleryImages,
   maxBookableTickets,
 } from "@unveiled/db";
+import { buildVariantUrl } from "@unveiled/images/urls";
 import { createRoute } from "honox/factory";
 
 import {
@@ -106,8 +108,20 @@ export default createRoute(async (c) => {
       : (safeReturnTo ?? localizedPath(locale, "events"));
   const defaultQty = parseQtyParam(url.searchParams.get("qty") ?? undefined, maxQty);
 
-  const galleryRows = await listEventGalleryImages(db, eventId);
+  const [galleryRows, partner] = await Promise.all([
+    listEventGalleryImages(db, eventId),
+    getPartnerById(db, event.partnerId),
+  ]);
   const galleryImages = toPublicEventGalleryImages(galleryRows);
+
+  let partnerLogoUrl: string | undefined;
+  if (partner?.logoImageId) {
+    try {
+      partnerLogoUrl = buildVariantUrl(partner.logoImageId, "medium-640.webp");
+    } catch {
+      partnerLogoUrl = undefined;
+    }
+  }
 
   const meta = eventDetailPageMeta(event);
   const jsonLd = buildEventJsonLd(event);
@@ -121,6 +135,10 @@ export default createRoute(async (c) => {
         galleryImages={galleryImages}
         locale={locale}
         maxQty={maxQty}
+        partnerAttribution={{
+          name: event.partnerName,
+          logoUrl: partnerLogoUrl,
+        }}
         viewer={viewer}
       />
       <script

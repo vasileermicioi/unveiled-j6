@@ -83,6 +83,20 @@ Feature: Event Discovery
     And booking, waitlist, and save mutations remain on authenticated routes
     And the detail page does not create bookings or ledger entries
 
+  Scenario: Large viewport uses two primary rows
+    Given I am not signed in
+    When I open a valid upcoming event detail URL ("/events/:id")
+    Then on large viewports row 1 places title and location beside the checkout/summary card
+    And row 2 places the primary event image beside the Markdown description
+    And DETAILS, LOCATION (when coordinates exist), and gallery remain below those rows
+
+  Scenario: Guest sees partner attribution
+    Given I am not signed in
+    And a seeded partner with a logo hosts an upcoming event
+    When I open that event's public detail URL ("/events/:id")
+    Then I see the partner name and logo in the identity area
+    And the logo is not rendered as a floating sticker on top of the event hero image
+
   Scenario: Guest views gallery on event detail
     Given I am not signed in
     And an event has two or more gallery images

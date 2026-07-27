@@ -14,6 +14,7 @@ import {
 } from "@heroui/react";
 import { useState } from "react";
 
+import CheckboxMultiSelect from "../../islands/CheckboxMultiSelect";
 import { getAdminCopy } from "../../lib/admin-content";
 import {
   BUILDER_TIME_ROWS,
@@ -170,17 +171,17 @@ export function EventSeriesForm({
             />
             <EventAdminDateInput label={copy.builderEndLabel} locale={locale} name="builder_end" />
           </Surface>
-          <AdminFormSelect
-            defaultSelectedKeys={[]}
-            label={copy.builderWeekdaysLabel}
-            name="builder_weekdays"
-            options={WEEKDAY_VALUES.map((value, index) => ({
-              id: value,
-              label: copy.weekdayLabels[index] ?? value,
-            }))}
-            placeholder={copy.selectPlaceholder}
-            selectionMode="multiple"
-          />
+          <Surface className="flex w-full flex-col gap-1" variant="transparent">
+            <Label>{copy.builderWeekdaysLabel}</Label>
+            <CheckboxMultiSelect
+              name="builder_weekdays"
+              options={WEEKDAY_VALUES.map((value, index) => ({
+                value,
+                label: copy.weekdayLabels[index] ?? value,
+              }))}
+              selected={[]}
+            />
+          </Surface>
           <TextField fullWidth name="builder_excluded">
             <Label>{copy.builderExcludedLabel}</Label>
             <Input />

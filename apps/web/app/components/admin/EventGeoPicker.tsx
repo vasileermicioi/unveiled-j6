@@ -14,6 +14,12 @@ type EventGeoPickerProps = {
   lat?: string | null;
   lng?: string | null;
   mapZoom?: number | null;
+  /** External lat from partner geocode (create/series). */
+  externalLat?: string | null;
+  /** External lng from partner geocode (create/series). */
+  externalLng?: string | null;
+  /** Increment when external coords should apply after mount. */
+  externalRevision?: number;
 };
 
 function parseCoordinate(value: string | null | undefined, fallback: number): number {
@@ -25,9 +31,52 @@ function parseCoordinate(value: string | null | undefined, fallback: number): nu
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export function EventGeoPicker({ locale, lat, lng, mapZoom }: EventGeoPickerProps) {
+function applyExternalCoords(
+  map: import("maplibre-gl").Map | null,
+  marker: import("maplibre-gl").Marker | null,
+  nextLat: number,
+  nextLng: number,
+  setCoords: (
+    updater: (current: { lat: string; lng: string; zoom: number }) => {
+      lat: string;
+      lng: string;
+      zoom: number;
+    },
+  ) => void,
+) {
+  if (map && marker) {
+    marker.setLngLat([nextLng, nextLat]);
+    map.easeTo({ center: [nextLng, nextLat] });
+    setCoords((current) => ({
+      ...current,
+      lat: nextLat.toFixed(6),
+      lng: nextLng.toFixed(6),
+      zoom: Math.round(map.getZoom()),
+    }));
+    return;
+  }
+
+  setCoords((current) => ({
+    ...current,
+    lat: nextLat.toFixed(6),
+    lng: nextLng.toFixed(6),
+  }));
+}
+
+export function EventGeoPicker({
+  locale,
+  lat,
+  lng,
+  mapZoom,
+  externalLat,
+  externalLng,
+  externalRevision = 0,
+}: EventGeoPickerProps) {
   const copy = getAdminCopy(locale);
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<import("maplibre-gl").Map | null>(null);
+  const markerRef = useRef<import("maplibre-gl").Marker | null>(null);
+  const pendingExternalRef = useRef<{ lat: number; lng: number } | null>(null);
   const initialLat = parseCoordinate(lat, BERLIN_CENTER.lat);
   const initialLng = parseCoordinate(lng, BERLIN_CENTER.lng);
   const initialZoom = mapZoom ?? DEFAULT_ZOOM;
@@ -39,8 +88,6 @@ export function EventGeoPicker({ locale, lat, lng, mapZoom }: EventGeoPickerProp
 
   useEffect(() => {
     let cancelled = false;
-    let map: import("maplibre-gl").Map | null = null;
-    let marker: import("maplibre-gl").Marker | null = null;
 
     void (async () => {
       const maplibregl = await import("maplibre-gl");
@@ -49,9 +96,13 @@ export function EventGeoPicker({ locale, lat, lng, mapZoom }: EventGeoPickerProp
         return;
       }
 
-      map = new maplibregl.Map({
+      const pending = pendingExternalRef.current;
+      const startLat = pending?.lat ?? initialLat;
+      const startLng = pending?.lng ?? initialLng;
+
+      const map = new maplibregl.Map({
         attributionControl: false,
-        center: [initialLng, initialLat],
+        center: [startLng, startLat],
         container: containerRef.current,
         style: {
           layers: [{ id: "osm", source: "osm", type: "raster" }],
@@ -68,16 +119,24 @@ export function EventGeoPicker({ locale, lat, lng, mapZoom }: EventGeoPickerProp
         zoom: initialZoom,
       });
 
-      marker = new maplibregl.Marker({ draggable: true })
-        .setLngLat([initialLng, initialLat])
+      const marker = new maplibregl.Marker({ draggable: true })
+        .setLngLat([startLng, startLat])
         .addTo(map);
 
-      const syncCoords = () => {
-        const position = marker?.getLngLat();
-        if (!position || !map) {
-          return;
-        }
+      mapRef.current = map;
+      markerRef.current = marker;
 
+      if (pending) {
+        pendingExternalRef.current = null;
+        setCoords((current) => ({
+          ...current,
+          lat: startLat.toFixed(6),
+          lng: startLng.toFixed(6),
+        }));
+      }
+
+      const syncCoords = () => {
+        const position = marker.getLngLat();
         setCoords({
           lat: position.lat.toFixed(6),
           lng: position.lng.toFixed(6),
@@ -87,7 +146,7 @@ export function EventGeoPicker({ locale, lat, lng, mapZoom }: EventGeoPickerProp
 
       marker.on("dragend", syncCoords);
       map.on("click", (event) => {
-        marker?.setLngLat(event.lngLat);
+        marker.setLngLat(event.lngLat);
         syncCoords();
       });
       map.on("moveend", syncCoords);
@@ -96,10 +155,30 @@ export function EventGeoPicker({ locale, lat, lng, mapZoom }: EventGeoPickerProp
 
     return () => {
       cancelled = true;
-      marker?.remove();
-      map?.remove();
+      markerRef.current?.remove();
+      mapRef.current?.remove();
+      markerRef.current = null;
+      mapRef.current = null;
     };
   }, [initialLat, initialLng, initialZoom]);
+
+  useEffect(() => {
+    if (externalRevision < 1) {
+      return;
+    }
+
+    const nextLat = parseCoordinate(externalLat, Number.NaN);
+    const nextLng = parseCoordinate(externalLng, Number.NaN);
+    if (!Number.isFinite(nextLat) || !Number.isFinite(nextLng)) {
+      return;
+    }
+
+    if (!mapRef.current || !markerRef.current) {
+      pendingExternalRef.current = { lat: nextLat, lng: nextLng };
+    }
+
+    applyExternalCoords(mapRef.current, markerRef.current, nextLat, nextLng, setCoords);
+  }, [externalLat, externalLng, externalRevision]);
 
   return (
     <Surface className="flex flex-col gap-2" variant="transparent">

@@ -49,9 +49,15 @@ Full detail: [`design-tokens.md`](./design-tokens.md).
 
 ## Form controls
 
-Prefer **native** HTML controls for choice, numeric, date, and file fields when a native control exists: `select` (single or multi), `input` of type `checkbox|radio|number|date|time|file`, and `textarea`. Do **not** use HeroUI `Select`, `NumberField`, `Checkbox`, `Radio`, or `Switch` for those fields in new work.
+Prefer **native** HTML controls for choice, numeric, date, and file fields when a native control exists.
 
-Keep HeroUI for text fields (`TextField` / `TextArea`), buttons, labels, and layout chrome. Native controls MAY be wrapped in HeroUI `Label` / `Surface` / `Field`. Theme styling belongs in `globals.css` tokens (Discover `.event-feed-filters__select`, onboarding preference cards, admin `.admin-native-select` / `.admin-native-number`) — not ad-hoc per-route colors.
+- **Single-value choice** → native HTML `<select>` (admin via `AdminFormSelect`; Discover filters likewise).
+- **Multi-value allowlists** (onboarding preferences, admin event languages / age groups, series builder weekdays) → native **checkbox multi-select** (`CheckboxMultiSelect` island; optional client-side search filter). Native HTML `<select multiple>` is **not** the preferred pattern for new multi-value admin fields.
+- Other natives: `input` of type `checkbox|radio|number|date|time|file`, and `textarea`.
+
+Do **not** use HeroUI `Select`, `NumberField`, `Checkbox`, `Radio`, or `Switch` for those fields in new work.
+
+Keep HeroUI for text fields (`TextField` / `TextArea`), buttons, labels, and layout chrome. Native controls MAY be wrapped in HeroUI `Label` / `Surface` / `Field`. Theme styling belongs in `globals.css` tokens (Discover `.event-feed-filters__select`, onboarding preference cards, admin `.admin-native-select` / `.admin-native-number`, shared `.checkbox-multi-select*`) — not ad-hoc per-route colors.
 
 **Exceptions (keep non-native):** admin image upload / Pica processing UI; `EventGeoPicker` / map islands; admin event description **MDXEditor** (`EventDescriptionEditor` island — still submits Markdown via SSR form field `description`); `@better-auth-ui/*` auth chrome.
 

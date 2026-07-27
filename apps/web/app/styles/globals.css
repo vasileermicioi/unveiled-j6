@@ -801,8 +801,10 @@
   }
 
   .event-detail--checkout__hero {
+    display: block;
     width: 100%;
     max-width: none;
+    min-width: 0;
   }
 
   .event-detail--checkout__eyebrow {
@@ -816,20 +818,54 @@
 
   .event-detail--checkout__title {
     margin: 0;
-    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
     font-weight: 800;
-    line-height: 0.95;
+    line-height: 1.05;
     letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--color-brand-dark);
+  }
+
+  .event-detail--checkout__partner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+  }
+
+  .event-detail--checkout__partner-logo {
+    display: block;
+    width: 7.5rem;
+    height: 7.5rem;
+    flex-shrink: 0;
+    object-fit: contain;
+    border: none;
+    background-color: transparent;
+  }
+
+  .event-detail--checkout__partner-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--color-brand-dark);
   }
 
   .event-detail--checkout__description {
     margin: 0;
-    max-width: 36rem;
+    max-width: 48rem;
     font-size: 1rem;
     line-height: 1.5;
     color: var(--color-brand-dark);
+  }
+
+  .event-detail--checkout__description-col {
+    width: 100%;
   }
 
   /* Markdown description chrome — native list/table/code under themed scope */
@@ -945,6 +981,7 @@
     max-width: none;
     height: auto;
     object-fit: contain;
+    object-position: center;
     border: 2px solid var(--color-brand-dark);
     background-color: var(--color-brand-cream);
   }
@@ -1823,7 +1860,8 @@
     box-shadow: none;
   }
 
-  .onboarding-form__language-filter {
+  .onboarding-form__language-filter,
+  .checkbox-multi-select__filter {
     width: 100%;
     min-height: 3rem;
     padding: 0.5rem 0.75rem;
@@ -1838,10 +1876,79 @@
     box-shadow: none;
   }
 
-  .onboarding-form__language-filter:focus {
+  .onboarding-form__language-filter:focus,
+  .checkbox-multi-select__filter:focus {
     outline: none;
     border-color: var(--border);
     box-shadow: none;
+  }
+
+  /* Shared checkbox multi-select aliases (admin + onboarding) — same tokens as onboarding preference cards */
+  .checkbox-multi-select__options--grid-three {
+    display: grid;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .checkbox-multi-select__options--grid-three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .checkbox-multi-select__option {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 1rem;
+    min-height: 3rem;
+    padding: 0.875rem 1rem;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--border);
+    background-color: var(--surface);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  @media (hover: hover) {
+    .checkbox-multi-select__option:hover:not(:has(.checkbox-multi-select__native-control:checked)) {
+      background-color: var(--surface-secondary);
+    }
+  }
+
+  .checkbox-multi-select__option:has(.checkbox-multi-select__native-control:checked) {
+    background-color: var(--color-brand-dark);
+    color: var(--color-brand-cream);
+  }
+
+  .checkbox-multi-select__option:has(.checkbox-multi-select__native-control:focus-visible) {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+
+  .checkbox-multi-select__native-control {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: var(--color-brand-yellow);
+    cursor: pointer;
+  }
+
+  .checkbox-multi-select__option:has(.checkbox-multi-select__native-control:checked)
+    .checkbox-multi-select__native-control {
+    accent-color: var(--color-brand-cream);
+  }
+
+  .checkbox-multi-select__option-text {
+    flex: 1;
+    min-width: 0;
   }
 
   .onboarding-form .button.button--primary,
@@ -2534,10 +2641,6 @@
   .event-map__canvas-wrap .maplibregl-popup-close-button:focus-visible {
     outline: var(--border-width) solid var(--border);
     outline-offset: 2px;
-  }
-
-  .event-map__attribution {
-    font-size: 0.75rem;
   }
 
   .admin-table__logo img {

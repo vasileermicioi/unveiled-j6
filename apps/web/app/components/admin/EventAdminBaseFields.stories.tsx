@@ -15,7 +15,7 @@ export const CollapsedPreview: Story = () => (
     }}
     includeDateTime={false}
     locale={storyLocale}
-    partners={[{ id: mockPartner.id, name: mockPartner.name }]}
+    partners={[{ id: mockPartner.id, name: mockPartner.name, address: mockPartner.address }]}
   />
 );
 CollapsedPreview.storyName = "EventAdminBaseFields / Collapsed preview";

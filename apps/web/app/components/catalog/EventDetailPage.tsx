@@ -18,6 +18,12 @@ import MarkdownContent from "../MarkdownContent";
 
 const META_ICON_SIZE = 14;
 
+export type EventDetailPartnerAttribution = {
+  name: string;
+  /** Public logo variant URL; omit or empty → name-only strip (no broken img). */
+  logoUrl?: string;
+};
+
 type EventDetailPageProps = {
   event: Event;
   locale: Locale;
@@ -29,6 +35,8 @@ type EventDetailPageProps = {
   maxQty?: number;
   /** Ordered gallery images; omit or empty → no gallery section. */
   galleryImages?: PublicEventGalleryImage[];
+  /** Hosting partner name + optional logo for identity-column attribution. */
+  partnerAttribution?: EventDetailPartnerAttribution;
 };
 
 export type EventDetailViewer =
@@ -195,6 +203,7 @@ function metadataLabel(key: string, locale: Locale): string {
     type: { de: "Format", en: "Event type" },
     when: { de: "Datum", en: "Date" },
     neighborhood: { de: "Kiez", en: "Neighborhood" },
+    partner: { de: "Partner", en: "Partner" },
   };
 
   return labels[key]?.[locale] ?? key;
@@ -431,6 +440,7 @@ export function EventDetailPage({
   defaultQty = 1,
   maxQty = 3,
   galleryImages = [],
+  partnerAttribution,
 }: EventDetailPageProps) {
   const bookable = isEventBookable(event);
   const isPast = event.dateTime <= new Date();
@@ -438,6 +448,8 @@ export function EventDetailPage({
   const mapMarkers = eventDetailMarkers(event, locale);
   const resolvedCloseHref = closeHref ?? localizedPath(locale, "");
   const galleryCopy = getEventDetailGalleryCopy(locale);
+  const partnerName = partnerAttribution?.name ?? event.partnerName;
+  const partnerLogoUrl = partnerAttribution?.logoUrl?.trim() || undefined;
 
   let heroSrc = "";
   let heroSrcSet = "";
@@ -457,15 +469,13 @@ export function EventDetailPage({
   });
   const showMemberBookingChrome = viewer.kind === "eligible";
 
-  const eyebrow = `${event.category} // ${event.partnerName}`;
-
   return (
     <Surface
       className="event-detail--checkout mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
       variant="transparent"
     >
       <Surface
-        className="event-detail--checkout__layout relative grid gap-8 pt-11 lg:grid-cols-2 lg:items-start lg:gap-10"
+        className="event-detail--checkout__layout relative flex flex-col gap-8 pt-11 lg:gap-10"
         variant="transparent"
       >
         <Link
@@ -477,63 +487,78 @@ export function EventDetailPage({
         </Link>
 
         <Surface
-          className="event-detail--checkout__identity flex min-w-0 flex-col gap-5"
+          className="event-detail--checkout__row-identity grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-10"
           variant="transparent"
         >
-          <Paragraph className="event-detail--checkout__eyebrow">{eyebrow}</Paragraph>
-          <Heading className="event-detail--checkout__title" level={1}>
-            {event.title}
-          </Heading>
-          <MarkdownContent
-            className="event-detail--checkout__description"
-            markdown={event.description}
-          />
-          <Surface className="event-detail--checkout__rule" variant="transparent">
-            <Paragraph className="sr-only">—</Paragraph>
+          <Surface
+            className="event-detail--checkout__identity flex min-w-0 flex-col gap-5"
+            variant="transparent"
+          >
+            <Paragraph className="event-detail--checkout__eyebrow">{event.category}</Paragraph>
+            <Heading className="event-detail--checkout__title" level={1}>
+              {event.title}
+            </Heading>
+            <Surface className="event-detail--checkout__rule" variant="transparent">
+              <Paragraph className="sr-only">—</Paragraph>
+            </Surface>
+            <Surface className="flex flex-col gap-1" variant="transparent">
+              <Paragraph className="event-detail--checkout__location-label">
+                {locationLabel(locale)}
+              </Paragraph>
+              <Paragraph className="event-detail--checkout__location-address">
+                {event.address}
+              </Paragraph>
+            </Surface>
           </Surface>
-          <Surface className="flex flex-col gap-1" variant="transparent">
-            <Paragraph className="event-detail--checkout__location-label">
-              {locationLabel(locale)}
-            </Paragraph>
-            <Paragraph className="event-detail--checkout__location-address">
-              {event.address}
-            </Paragraph>
+
+          <Surface className="event-detail--checkout__checkout min-w-0" variant="transparent">
+            <EventDetailCheckoutCard
+              decreaseAriaLabel={decreaseAriaLabel(locale)}
+              defaultQty={defaultQty}
+              increaseAriaLabel={increaseAriaLabel(locale)}
+              locale={locale}
+              creditPrice={event.creditPrice}
+              maxQty={maxQty}
+              noticeText={checkout.noticeText}
+              policyText={policyText()}
+              primaryAction={checkout.primaryAction}
+              secondaryAction={checkout.secondaryAction}
+              showCreditTotal={showMemberBookingChrome}
+              showTicketControls={checkout.showTicketControls}
+              statusMessage={checkout.statusMessage}
+              ticketsLabel={ticketsLabel(locale)}
+              totalLabel={totalLabel(locale)}
+            />
           </Surface>
         </Surface>
 
-        <Surface className="event-detail--checkout__checkout min-w-0" variant="transparent">
-          <EventDetailCheckoutCard
-            decreaseAriaLabel={decreaseAriaLabel(locale)}
-            defaultQty={defaultQty}
-            increaseAriaLabel={increaseAriaLabel(locale)}
-            locale={locale}
-            creditPrice={event.creditPrice}
-            maxQty={maxQty}
-            noticeText={checkout.noticeText}
-            policyText={policyText()}
-            primaryAction={checkout.primaryAction}
-            secondaryAction={checkout.secondaryAction}
-            showCreditTotal={showMemberBookingChrome}
-            showTicketControls={checkout.showTicketControls}
-            statusMessage={checkout.statusMessage}
-            ticketsLabel={ticketsLabel(locale)}
-            totalLabel={totalLabel(locale)}
-          />
+        <Surface
+          className="event-detail--checkout__row-media flex flex-col gap-8"
+          variant="transparent"
+        >
+          {heroSrc ? (
+            <Surface className="event-detail--checkout__hero min-w-0 w-full" variant="transparent">
+              <img
+                alt={event.title}
+                className="event-detail--checkout__hero-image"
+                decoding="async"
+                sizes="(max-width: 1023px) 100vw, 1280px"
+                src={heroSrc}
+                srcSet={heroSrcSet}
+              />
+            </Surface>
+          ) : null}
+          <Surface
+            className="event-detail--checkout__description-col min-w-0"
+            variant="transparent"
+          >
+            <MarkdownContent
+              className="event-detail--checkout__description"
+              markdown={event.description}
+            />
+          </Surface>
         </Surface>
       </Surface>
-
-      {heroSrc ? (
-        <Surface className="event-detail--checkout__hero mt-10 w-full" variant="transparent">
-          <img
-            alt={event.title}
-            className="event-detail--checkout__hero-image"
-            decoding="async"
-            sizes="(max-width: 1280px) 100vw, 1280px"
-            src={heroSrc}
-            srcSet={heroSrcSet}
-          />
-        </Surface>
-      ) : null}
 
       <Surface
         className="event-detail--checkout__below mt-12 flex flex-col gap-6"
@@ -543,7 +568,27 @@ export function EventDetailPage({
           <Card.Header>
             <Card.Title>{detailsLabel(locale)}</Card.Title>
           </Card.Header>
-          <Card.Content>
+          <Card.Content className="flex flex-col gap-6">
+            {partnerName ? (
+              <Surface className="event-detail--checkout__partner" variant="transparent">
+                {partnerLogoUrl ? (
+                  <img
+                    alt={partnerName}
+                    className="event-detail--checkout__partner-logo"
+                    decoding="async"
+                    src={partnerLogoUrl}
+                  />
+                ) : null}
+                <Surface className="flex min-w-0 flex-col gap-1" variant="transparent">
+                  <Paragraph className="event-detail--checkout__meta-label">
+                    {metadataLabel("partner", locale)}
+                  </Paragraph>
+                  <Paragraph className="event-detail--checkout__partner-name">
+                    {partnerName}
+                  </Paragraph>
+                </Surface>
+              </Surface>
+            ) : null}
             <Surface
               className="event-detail--checkout__meta-grid grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
               variant="transparent"
