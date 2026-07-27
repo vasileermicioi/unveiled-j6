@@ -19,7 +19,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `available` | Verfügbar | Available |
 | `saveThis` | Merken | Save |
 | `savedThis` | Gemerkt | Saved |
-| `bookNow` | Bin dabei | Book Now |
+| `bookNow` | Entdecken | Discover |
 | `waitlist` | Warteliste | Waitlist |
 | `tickets` | Tickets | Tickets |
 | `total` | Gesamt | Total |
@@ -158,7 +158,7 @@ Chrome: eyebrow `Rechtliches` / `Legal`. Section model: `id`, `title`, `body: st
 - Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getDistrictLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants`: 12 official Berlin Bezirke for `DISTRICTS` (same string for key and DE/EN label); `INTERESTS` includes `Other` (DE `Sonstiges`); member `PREFERRED_LANGUAGES` (no `Non-Verbal`; DE/EN pinned first in UI). Timing/days/moods are translated per locale. Section chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`): interests Other free-text labels, language search placeholder, Accessibility needed? / Yes|Ja. Travel radius (`radiusLabel` / `km`) is not collected.
 - "SECURE RSVP // NO REFUNDS" booking policy copy (hardcoded in `BookingModal.tsx`, not in `translations.ts`)
 - Venue check-in inline copy (`BookingsView.tsx`)
-- Event detail checkout-card CTA/notice strings (guest unlock, membership notices, “Secure RSVP // No refunds”, total label) — live in `EventDetailPage.tsx` / locale helpers, not the old `translations.ts` catalog; see `ui/ui-component-map.md` Event detail entry. EventCard primary CTA uses catalog `bookNow` / `waitlist` for all viewer states (guest included).
+- Event detail checkout-card CTA/notice strings (guest unlock, membership notices, “Secure RSVP // No refunds”, total label) — live in `EventDetailPage.tsx` / locale helpers, not the old `translations.ts` catalog; see `ui/ui-component-map.md` Event detail entry. EventCard primary CTA uses Discover / Entdecken (`bookNow` key) or Waitlist / Warteliste for all viewer states (guest included); image and title also link to detail.
 - Event detail gallery section + slider a11y (`apps/web/app/lib/event-detail-gallery-copy.ts`): section title Galerie/Gallery; Previous/Next/Close labels; photo alt “Foto N” / “Photo N”.
 - Admin event gallery manage copy (`apps/web/app/lib/admin-content.ts`): `galleryTitle`, `gallerySubtitle`, `galleryCapacity`, `galleryEmpty`, `galleryAdd*` / `galleryRemove*` / `galleryManageAction` / `galleryPhotoLabel` / `gallerySelectLabel` / `galleryReorderHint` / `gallerySaveOrderAction` / `gallerySelectedFilesLabel`; capacity/duplicate/reorder validation messages via `mapCatalogError`.
 - Admin image upload copy (`apps/web/app/lib/admin-content.ts`): `imageFileLabel`, `imageUploadHint`, `imageUploadHintEdit`, `imageProcessingError`, `imageRequiredError`, `imageUndecodableError`, `imageWebpUnsupportedError`, `imageIncompleteVariantsError`, `imageProcessingSubmitBlocked`, `imageVariantGalleryLabel`, `imageVariantOpenLabel`, `imageVariantPreviousLabel`, `imageVariantNextLabel`, `imageVariantCloseHint`; partner logo: `logoFileLabel`, `logoUploadHint`, `logoUploadHintEdit`, `logoRequiredError`. Hints describe browser-decodable → WebP (no 800×420 / 8 MB language).

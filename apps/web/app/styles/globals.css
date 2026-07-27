@@ -828,19 +828,27 @@
 
   .event-detail--checkout__partner {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
-    gap: 1.25rem;
-    width: 100%;
-    max-width: 100%;
+    gap: 0.35rem;
+    min-width: 0;
     padding: 0;
     border: none;
     background-color: transparent;
   }
 
+  .event-detail--checkout__partner-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
   .event-detail--checkout__partner-logo {
     display: block;
-    width: 7.5rem;
-    height: 7.5rem;
+    width: 5.5rem;
+    height: 5.5rem;
     flex-shrink: 0;
     object-fit: contain;
     border: none;
@@ -849,8 +857,9 @@
 
   .event-detail--checkout__partner-name {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 700;
+    line-height: 1.3;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--color-brand-dark);
@@ -1106,6 +1115,27 @@
     text-transform: uppercase;
     text-align: center;
     color: color-mix(in oklab, var(--color-brand-cream) 55%, transparent);
+  }
+
+  .event-detail--checkout__meta-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem 1.5rem;
+    align-items: start;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .event-detail--checkout__meta-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .event-detail--checkout__meta:not(.event-detail--checkout__meta--with-partner)
+      .event-detail--checkout__meta-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
   .event-detail--checkout__meta-cell {

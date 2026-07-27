@@ -35,7 +35,7 @@ Fields (top → bottom): image (`medium-640` / `small-320` srcset), category bad
 **CTA precedence (guest first):**
 
 1. Sold out → “Waitlist” / “Warteliste” (links to public `/events/:id` — no waitlist POST on the card)
-2. Otherwise (guest, inactive, or `ACTIVE`) → “Book Now” / “Bin dabei” (always links to public `/events/:id` — never `/membership` or `/events/:id/book` from the card)
+2. Otherwise (guest, inactive, or `ACTIVE`) → “Discover” / “Entdecken” (always links to public `/events/:id` — never `/membership` or `/events/:id/book` from the card). Image and title are also links to the same detail URL.
 
 Membership unlock / login messaging lives on the **event detail** checkout card, not as a separate EventCard CTA label. Ladle stories for CTA states live under **`packages/ui`**. Theme Overview story: see `design-system.md`.
 
@@ -46,7 +46,7 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 | Surface | Route | Notes |
 |---|---|---|
 | **Guest marketing home** | `/:locale` | Guests only (signed-in → role home). Headline + phone + plan card + signup CTA + benefits |
-| **Discover** | `/:locale/discover` | `PageSectionHeader` + admin-**featured** EventCards including past featured (not automatic catalog slice; no upcoming-only filter); empty featured state copy; Partner venues logo marquee from admin-curated `featured_partners` (up to 8 by `sort_order`; eyebrow + continuous strip; hidden when empty — not first N of all partners); Book Now / Bin dabei (or Waitlist) → public detail. Booking-eligible USER redirected to `/events`. |
+| **Discover** | `/:locale/discover` | `PageSectionHeader` + admin-**featured** EventCards including past featured (not automatic catalog slice; no upcoming-only filter); empty featured state copy; Partner venues logo marquee from admin-curated `featured_partners` (up to 8 by `sort_order`; eyebrow + continuous strip; hidden when empty — not first N of all partners); Discover / Entdecken (or Waitlist) → public detail. Booking-eligible USER redirected to `/events`. |
 | **Member feed** | `/events` | Booking-eligible USER only (non-active → Discover). `PageSectionHeader`; filters (GET query params), pagination, EventCard grid |
 | **Map** | `/events/map` | Same audience gate as feed. MapLibre + OSM island; cookie-gated; marker popups expose a large close control (~44px hit target, keyboard-accessible) |
 | **Admin Featured events** | `/admin/featured*` | Tab label **Featured events** / **Empfohlene Events**. SSR list / search-add / remove-from-featured (keeps catalog event); see `admin-events.feature` |

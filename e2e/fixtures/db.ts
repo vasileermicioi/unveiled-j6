@@ -8,6 +8,8 @@ import type { Locale } from "./base";
 export async function expectDiscoverHasEvents(page: Page, locale: Locale = "de"): Promise<void> {
   await page.goto(`/${locale}/discover`);
   await expect(page.getByRole("main")).toBeVisible();
-  const eventLinks = page.getByRole("link", { name: /bin dabei|book now/i });
+  const eventLinks = page
+    .getByRole("main")
+    .getByRole("link", { name: /^entdecken$|^discover$/i });
   await expect(eventLinks.first()).toBeVisible({ timeout: 15_000 });
 }

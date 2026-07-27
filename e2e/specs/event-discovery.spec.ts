@@ -102,7 +102,11 @@ test.describe("event-discovery.feature", () => {
     }
     // Prefer Discover → public detail. Fall back to seeded id if preview empty.
     await page.goto(`/${locale}/discover`);
-    const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
+    // Prefer card CTA in main (nav also says Discover / Entdecken).
+    const detailCta = page
+      .getByRole("main")
+      .getByRole("link", { name: /^entdecken$|^discover$/i })
+      .first();
     if ((await detailCta.count()) > 0) {
       await detailCta.click();
     } else {
@@ -558,8 +562,11 @@ test.describe("event-discovery.feature", () => {
       page.getByText(/mitgliedschaft buchbar|bookable with your membership/i).first(),
     ).toBeVisible();
 
-    // Featured preview — guest CTA is Book Now / Bin dabei → detail (not booking POST)
-    const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
+    // Featured preview — guest CTA is Discover / Entdecken → detail (not booking POST)
+    const detailCta = page
+      .getByRole("main")
+      .getByRole("link", { name: /^entdecken$|^discover$/i })
+      .first();
     await expect(detailCta).toBeVisible({ timeout: 15_000 });
     await expect(detailCta).toHaveAttribute("href", new RegExp(`/${locale}/events/[^/?#]+`));
     // Prefer theaterFuture for stable upcoming contrast; past featured still appear on Discover.

@@ -35,7 +35,7 @@ type EventDetailPageProps = {
   maxQty?: number;
   /** Ordered gallery images; omit or empty → no gallery section. */
   galleryImages?: PublicEventGalleryImage[];
-  /** Hosting partner name + optional logo for identity-column attribution. */
+  /** Hosting partner name + optional logo for DETAILS-card attribution. */
   partnerAttribution?: EventDetailPartnerAttribution;
 };
 
@@ -568,62 +568,74 @@ export function EventDetailPage({
           <Card.Header>
             <Card.Title>{detailsLabel(locale)}</Card.Title>
           </Card.Header>
-          <Card.Content className="flex flex-col gap-6">
-            {partnerName ? (
-              <Surface className="event-detail--checkout__partner" variant="transparent">
-                {partnerLogoUrl ? (
-                  <img
-                    alt={partnerName}
-                    className="event-detail--checkout__partner-logo"
-                    decoding="async"
-                    src={partnerLogoUrl}
-                  />
-                ) : null}
-                <Surface className="flex min-w-0 flex-col gap-1" variant="transparent">
-                  <Paragraph className="event-detail--checkout__meta-label">
-                    {metadataLabel("partner", locale)}
-                  </Paragraph>
-                  <Paragraph className="event-detail--checkout__partner-name">
-                    {partnerName}
-                  </Paragraph>
-                </Surface>
-              </Surface>
-            ) : null}
+          <Card.Content>
             <Surface
-              className="event-detail--checkout__meta-grid grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+              className={
+                partnerName
+                  ? "event-detail--checkout__meta event-detail--checkout__meta--with-partner flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-x-8 lg:gap-y-6"
+                  : "event-detail--checkout__meta flex flex-col gap-6"
+              }
               variant="transparent"
             >
-              {showMemberBookingChrome ? (
-                <MetaCell
-                  icon="calendar"
-                  label={metadataLabel("when", locale)}
-                  value={formatEventDateTime(event.dateTime, locale)}
-                />
+              {partnerName ? (
+                <Surface className="event-detail--checkout__partner min-w-0" variant="transparent">
+                  <Paragraph className="event-detail--checkout__meta-label" size="sm">
+                    {metadataLabel("partner", locale)}
+                  </Paragraph>
+                  <Surface
+                    className="event-detail--checkout__partner-body"
+                    variant="transparent"
+                  >
+                    {partnerLogoUrl ? (
+                      <img
+                        alt={partnerName}
+                        className="event-detail--checkout__partner-logo"
+                        decoding="async"
+                        src={partnerLogoUrl}
+                      />
+                    ) : null}
+                    <Paragraph className="event-detail--checkout__partner-name">
+                      {partnerName}
+                    </Paragraph>
+                  </Surface>
+                </Surface>
               ) : null}
-              <MetaCell
-                label={metadataLabel("accessibility", locale)}
-                value={accessibilityValue(event.barrierFree, locale)}
-              />
-              {event.languages && event.languages.length > 0 ? (
+              <Surface
+                className="event-detail--checkout__meta-grid min-w-0"
+                variant="transparent"
+              >
+                {showMemberBookingChrome ? (
+                  <MetaCell
+                    icon="calendar"
+                    label={metadataLabel("when", locale)}
+                    value={formatEventDateTime(event.dateTime, locale)}
+                  />
+                ) : null}
                 <MetaCell
-                  label={metadataLabel("languages", locale)}
-                  value={event.languages.join(", ")}
+                  label={metadataLabel("accessibility", locale)}
+                  value={accessibilityValue(event.barrierFree, locale)}
                 />
-              ) : null}
-              {event.targetAgeGroups && event.targetAgeGroups.length > 0 ? (
-                <MetaCell
-                  label={metadataLabel("ageGroups", locale)}
-                  value={event.targetAgeGroups.join(", ")}
-                />
-              ) : null}
-              <MetaCell label={metadataLabel("type", locale)} value={event.eventType} />
-              {event.neighborhood ? (
-                <MetaCell
-                  icon="mapPin"
-                  label={metadataLabel("neighborhood", locale)}
-                  value={event.neighborhood}
-                />
-              ) : null}
+                {event.languages && event.languages.length > 0 ? (
+                  <MetaCell
+                    label={metadataLabel("languages", locale)}
+                    value={event.languages.join(", ")}
+                  />
+                ) : null}
+                {event.targetAgeGroups && event.targetAgeGroups.length > 0 ? (
+                  <MetaCell
+                    label={metadataLabel("ageGroups", locale)}
+                    value={event.targetAgeGroups.join(", ")}
+                  />
+                ) : null}
+                <MetaCell label={metadataLabel("type", locale)} value={event.eventType} />
+                {event.neighborhood ? (
+                  <MetaCell
+                    icon="mapPin"
+                    label={metadataLabel("neighborhood", locale)}
+                    value={event.neighborhood}
+                  />
+                ) : null}
+              </Surface>
             </Surface>
           </Card.Content>
         </Card>

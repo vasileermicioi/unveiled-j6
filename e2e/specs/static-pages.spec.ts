@@ -94,7 +94,10 @@ test.describe("static-pages.feature", () => {
     await page.context().clearCookies();
     await page.goto(`/${locale}/discover`);
 
-    const detailCta = page.getByRole("link", { name: /bin dabei|book now/i }).first();
+    const detailCta = page
+      .getByRole("main")
+      .getByRole("link", { name: /^entdecken$|^discover$/i })
+      .first();
     await expect(detailCta).toBeVisible({ timeout: 15_000 });
     await detailCta.click();
 

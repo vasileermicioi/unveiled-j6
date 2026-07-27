@@ -23,7 +23,7 @@ Public page without login for guests and non-booking-eligible members. Navbar �
 
 ### 1. Featured event preview grid
 - Section header via shared `PageSectionHeader` (`h1`): eyebrow "Mit deiner Mitgliedschaft buchbar" / "Bookable with your membership", headline "Aktuelle Events in Berlin." / "Current events in Berlin." (full-width rule under the title)
-- Grid of **admin-featured** events (`listFeaturedEvents` without upcoming-only filter — past featured still shown; ordered by `sort_order` then `date_time`), each an `EventCard` with guest CTA **"Book Now" / "Bin dabei"** (or **"Waitlist" / "Warteliste"** when sold out) → public `/events/:id` (not booking modal; not deep-link to `/book`)
+- Grid of **admin-featured** events (`listFeaturedEvents` without upcoming-only filter — past featured still shown; ordered by `sort_order` then `date_time`), each an `EventCard` with guest CTA **"Discover" / "Entdecken"** (or **"Waitlist" / "Warteliste"** when sold out) → public `/events/:id` (not booking modal; not deep-link to `/book`); image and title also link to detail
 - Non-featured catalog events do **not** appear solely for being soon
 - Empty state (dashed border box): "Aktuell keine empfohlenen Events." / "No featured events right now."
 - Guests do **not** get an ungated `/events` list; signup/login + active subscription for the full feed is via auth routes (`/signup`, `/login`) and membership

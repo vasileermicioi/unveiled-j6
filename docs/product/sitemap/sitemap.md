@@ -26,7 +26,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 1. Guest lands on marketing home (`/:locale`) — CTA to `/signup`.
 2. Navbar/footer **Discover** opens `/:locale/discover`.
-3. Featured **EventCard** CTAs link to public `/events/:id` (“Book Now” / “Bin dabei”, or “Waitlist” / “Warteliste” when sold out).
+3. Featured **EventCard** CTAs link to public `/events/:id` (“Discover” / “Entdecken”, or “Waitlist” / “Warteliste” when sold out); image and title are also detail links.
 4. Path to the **full browse** experience: signup/login, complete onboarding, then an **active** (booking-eligible) subscription → member `/events`. Non-active members stay on Discover.
 5. Guests do **not** get a public full upcoming-events list equivalent to `/events`.
 

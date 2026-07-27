@@ -45,8 +45,8 @@ function waitlistCtaLabel(locale: CatalogLocale): string {
   return locale === "de" ? "Warteliste" : "Waitlist";
 }
 
-function bookCtaLabel(locale: CatalogLocale): string {
-  return locale === "de" ? "Bin dabei" : "Book Now";
+function discoverCtaLabel(locale: CatalogLocale): string {
+  return locale === "de" ? "Entdecken" : "Discover";
 }
 
 /** Inventory: saveThis / savedThis — Merken/Gemerkt, Save/Saved */
@@ -65,7 +65,7 @@ export function resolveEventCardCta(
   if (soldOut) {
     return waitlistCtaLabel(locale);
   }
-  return bookCtaLabel(locale);
+  return discoverCtaLabel(locale);
 }
 
 function BookmarkIcon({ saved }: { saved: boolean }) {
@@ -148,29 +148,34 @@ export function EventCard({
   }
 
   const cardClassName = className ? `event-card ${className}` : "event-card";
+  const detailHref = ctaHref ?? "#";
 
   return (
     <Card className={cardClassName}>
       <Card.Header className="event-card__header">
         <Surface className="event-card__image" variant="transparent">
-          {imageSrc ? (
-            <img
-              alt=""
-              className="event-card__image-el"
-              decoding="async"
-              loading="lazy"
-              sizes="(max-width: 640px) 100vw, 640px"
-              src={imageSrc}
-              srcSet={imageSrcSet}
-            />
-          ) : null}
+          <Link className="event-card__media-link" href={detailHref}>
+            {imageSrc ? (
+              <img
+                alt={event.title}
+                className="event-card__image-el"
+                decoding="async"
+                loading="lazy"
+                sizes="(max-width: 640px) 100vw, 640px"
+                src={imageSrc}
+                srcSet={imageSrcSet}
+              />
+            ) : null}
+          </Link>
           <Chip className="event-card__category" size="sm">
             {event.category}
           </Chip>
         </Surface>
       </Card.Header>
       <Card.Content className="event-card__body flex flex-col gap-2">
-        <Card.Title className="event-card__title">{event.title}</Card.Title>
+        <Link className="event-card__title-link" href={detailHref}>
+          <Card.Title className="event-card__title">{event.title}</Card.Title>
+        </Link>
         <Paragraph color="muted" size="sm">
           {event.partnerName}
         </Paragraph>
