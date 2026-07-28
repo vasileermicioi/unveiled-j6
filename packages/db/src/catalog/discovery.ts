@@ -23,6 +23,8 @@ export type MemberFeedFilters = {
   page?: number;
   /** Injected clock for tests; defaults to `new Date()`. */
   now?: Date;
+  // Language filter UI is not shipped yet. When added, use
+  // `eventMatchesLanguageFilter` from `./language-filter` (language-independent ⇒ match all).
 };
 
 export type MemberFeedResult = {

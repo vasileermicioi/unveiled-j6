@@ -20,11 +20,11 @@ export type EventFormDefaults = Partial<{
   promoCode: string | null;
   eventWebsiteUrl: string | null;
   barrierFree: boolean | null;
+  languageIndependent: boolean;
   languages: string[] | null;
   targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
-  mapZoom: number | null;
   currentImageUrl: string | null;
   currentImageId: string | null;
   imagePublicBaseUrl: string | null;

@@ -63,6 +63,7 @@ export function EventImageUpload({
   const processingRef = useRef(false);
   const processedListRef = useRef<ProcessedAdminUpload[]>([]);
   const statusRef = useRef(status);
+  const currentImageIdRef = useRef(currentImageId);
 
   useEffect(() => {
     processedListRef.current = processedList;
@@ -71,6 +72,10 @@ export function EventImageUpload({
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
+
+  useEffect(() => {
+    currentImageIdRef.current = currentImageId;
+  }, [currentImageId]);
 
   useEffect(() => {
     const onSubmit = (event: Event) => {
@@ -85,6 +90,7 @@ export function EventImageUpload({
       const readyList = processedListRef.current.filter(hasCompleteVariants);
       const nativeInput = resolveNativeFileInput(document.getElementById(fileInputId));
       const hasFile = Boolean(nativeInput?.files && nativeInput.files.length > 0);
+      const hasStagedOrExistingImage = Boolean(currentImageIdRef.current);
 
       if (processingRef.current || statusRef.current === "processing") {
         event.preventDefault();
@@ -108,6 +114,10 @@ export function EventImageUpload({
       }
 
       if (!hasFile) {
+        // Create/series with a staged id (error retry) satisfies required image like edit.
+        if (!multiple && (isEdit || hasStagedOrExistingImage)) {
+          return;
+        }
         if (!isEdit && !multiple) {
           event.preventDefault();
           setErrorMessage(copy.imageRequiredError);
@@ -193,9 +203,10 @@ export function EventImageUpload({
   const resolvedSectionLabel = sectionLabel ?? copy.imageSectionLabel;
   const resolvedHint = uploadHint ?? (isEdit ? copy.imageUploadHintEdit : copy.imageUploadHint);
   const singleProcessed = !multiple ? (processedList[0] ?? null) : null;
+  const stagedOrExistingImageId = currentImageId?.trim() || null;
+  // Create/series staged id uses the same gallery path as edit's existing image.
   const showExistingGallery = Boolean(
-    isEdit &&
-      currentImageId &&
+    stagedOrExistingImageId &&
       !singleProcessed &&
       processedList.length === 0 &&
       status !== "processing",
@@ -206,16 +217,20 @@ export function EventImageUpload({
       <Paragraph className="onboarding-form__section-label">{resolvedSectionLabel}</Paragraph>
       <Description>{resolvedHint}</Description>
 
-      {showExistingGallery ? (
-        <AdminImageVariantGallery
-          imageId={currentImageId}
-          imagePublicBaseUrl={imagePublicBaseUrl}
-          locale={locale}
-        />
+      {showExistingGallery && stagedOrExistingImageId ? (
+        <>
+          <AdminImageVariantGallery
+            imageId={stagedOrExistingImageId}
+            imagePublicBaseUrl={imagePublicBaseUrl}
+            locale={locale}
+          />
+          {/* Resubmit without re-upload: bare imageId is parsed as stagedImageId. */}
+          <Input name="imageId" type="hidden" value={stagedOrExistingImageId} />
+        </>
       ) : null}
 
       {/* Fallback single thumb only when gallery cannot resolve (no imageId/base). */}
-      {isEdit && !showExistingGallery && !singleProcessed && currentImageUrl ? (
+      {!showExistingGallery && !singleProcessed && currentImageUrl ? (
         <Surface className="admin-form__image-preview" variant="transparent">
           <img alt="" src={currentImageUrl} />
         </Surface>

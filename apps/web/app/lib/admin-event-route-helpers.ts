@@ -54,11 +54,11 @@ export function eventToFormDefaults(event: Event): EventFormDefaults & { partner
     promoCode: event.promoCode,
     eventWebsiteUrl: event.eventWebsiteUrl,
     barrierFree: event.barrierFree,
+    languageIndependent: event.languageIndependent,
     languages: event.languages,
     targetAgeGroups: event.targetAgeGroups,
     lat: event.lat,
     lng: event.lng,
-    mapZoom: event.mapZoom,
     currentImageUrl,
     currentImageId: event.imageId,
     imagePublicBaseUrl: resolveImagePublicBaseUrl(),
@@ -66,6 +66,8 @@ export function eventToFormDefaults(event: Event): EventFormDefaults & { partner
 }
 
 export function formValuesToDefaults(values: EventFormValues): EventFormDefaults {
+  const currentImageId = values.imagePrebuilt?.imageId ?? values.stagedImageId ?? null;
+
   return {
     partnerId: values.partnerId,
     title: values.title,
@@ -86,13 +88,13 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     promoCode: values.promoCode,
     eventWebsiteUrl: values.eventWebsiteUrl,
     barrierFree: values.barrierFree,
+    languageIndependent: values.languageIndependent,
     languages: values.languages,
     targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,
-    mapZoom: values.mapZoom,
     currentImageUrl: null,
-    currentImageId: null,
+    currentImageId,
     imagePublicBaseUrl: resolveImagePublicBaseUrl(),
   };
 }

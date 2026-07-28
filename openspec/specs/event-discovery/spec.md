@@ -468,9 +468,22 @@ The public event detail page SHALL show an image gallery at the end of the page 
 - **WHEN** an agent reads `docs/product/features/event-discovery.feature` and the Event detail entry in `ui/ui-component-map.md`
 - **THEN** they describe the end-of-page gallery thumbnails and prev/next slider for non-empty galleries
 
+### Requirement: Detail LOCATION shows address and optional map
+The public event detail LOCATION section SHALL show the event address whenever the event has an address. When derived coordinates exist, the section SHALL also show the map with a pin marker (existing pin/popup behavior). When coordinates are missing, the address SHALL still be shown and the map MAY be omitted. The LOCATION section MUST NOT require coordinates in order to present the address.
+
+#### Scenario: Detail LOCATION shows address with map
+- **WHEN** a visitor opens a valid upcoming event detail URL with an address and coordinates
+- **THEN** the LOCATION section shows the address text
+- **AND** the map shows a recognizable pin marker
+
+#### Scenario: Detail LOCATION shows address without coordinates
+- **WHEN** a visitor opens a valid upcoming event detail URL that has an address but no coordinates
+- **THEN** the LOCATION section shows the address text
+- **AND** the page does not require a map to present the location
+
 ### Requirement: Public event detail layout
 
-The public event detail page SHALL present a checkout-focused layout without requiring authentication. On large viewports it SHALL use two primary rows: (1) title and location on the left with the summary/checkout card on the right; (2) the primary event image on the left with the Markdown description on the right. Below those rows, DETAILS metadata, LOCATION map (when coordinates exist), and optional gallery behavior remain available. Booking, waitlist, and save mutations remain on authenticated routes; the detail page SHALL NOT create bookings or ledger entries.
+The public event detail page SHALL present a checkout-focused layout without requiring authentication. On large viewports it SHALL use two primary rows: (1) title and location on the left with the summary/checkout card on the right; (2) the primary event image on the left with the Markdown description on the right. Below those rows, DETAILS metadata, LOCATION (address whenever present, with map when coordinates exist), and optional gallery behavior remain available. Booking, waitlist, and save mutations remain on authenticated routes; the detail page SHALL NOT create bookings or ledger entries.
 
 #### Scenario: Guest can view public event detail without authentication
 
@@ -486,7 +499,7 @@ The public event detail page SHALL present a checkout-focused layout without req
 - **WHEN** a guest or member views public event detail on a large viewport
 - **THEN** row 1 places title and location beside the checkout/summary card
 - **AND** row 2 places the primary event image beside the Markdown description
-- **AND** DETAILS, LOCATION (when coordinates exist), and gallery remain below those rows
+- **AND** DETAILS, LOCATION (address when present; map when coordinates exist), and gallery remain below those rows
 
 ### Requirement: Partner attribution on event detail
 
@@ -642,3 +655,27 @@ Gherkin scenarios for the two-row public detail layout and partner logo/name att
 - **WHEN** a guest or member views public event detail
 - **THEN** product Gherkin describes lg+ row 1 (title/location | checkout) and row 2 (hero | Markdown description)
 - **AND** Playwright covers a proximity smoke for identity, checkout CTA, hero, and description without CSS-module hashes
+
+### Requirement: Language-independent events match any language filter
+When event results are filtered or searched by language, events with `language_independent = true` SHALL be included for every language value (equivalent to matching all languages). Events that are not language-independent SHALL match only when their `languages` list intersects the selected language(s). Absence of a language filter UI does not remove this matching rule from the query/helper layer: the system SHALL expose a reusable predicate or helper that implements this rule and SHALL cover it with a unit or integration test.
+
+#### Scenario: Language filter includes language-independent events
+- **WHEN** a booking-eligible member applies a language filter (if present) or a query/helper filters by language
+- **THEN** language-independent events remain in the result set alongside events that list that language
+
+#### Scenario: Non-independent events require language intersection
+- **WHEN** a language filter selects a language code
+- **AND** an event is not language-independent and does not list that code
+- **THEN** that event is excluded from the filtered result set
+
+### Requirement: Detail shows language-independent clearly
+When a guest or member opens a public event detail page for a language-independent event, the DETAILS metadata SHALL NOT imply a specific spoken language list. The page SHALL indicate the event is language-independent (using the Language-independent / Sprachunabhängig label) or omit the languages row rather than showing an empty language list.
+
+#### Scenario: Detail shows language-independent clearly
+- **WHEN** a guest or member opens a language-independent event detail page
+- **THEN** the details metadata does not imply a specific spoken language list
+- **AND** it indicates the event is language-independent (or omits languages rather than showing an empty list)
+
+#### Scenario: Language-specific detail still lists languages
+- **WHEN** a guest or member opens an event that is not language-independent and has one or more languages
+- **THEN** the details metadata shows those languages as today

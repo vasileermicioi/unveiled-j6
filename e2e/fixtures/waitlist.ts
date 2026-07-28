@@ -71,7 +71,6 @@ export async function getSoldOutWaitlistEventId(): Promise<string> {
       barrierFree: true,
       lat: template.lat,
       lng: template.lng,
-      mapZoom: template.mapZoom,
     })
     .returning();
 

@@ -310,6 +310,8 @@ export type AdminCopy = {
   promoCodeLabel: string;
   eventWebsiteUrlLabel: string;
   barrierFreeLabel: string;
+  languageIndependentLabel: string;
+  languageIndependentHint: string;
   selectPlaceholder: string;
   optionYes: string;
   optionNo: string;
@@ -677,13 +679,16 @@ const copy: Record<Locale, AdminCopy> = {
     promoCodeLabel: "Promo-Code",
     eventWebsiteUrlLabel: "Event-Website",
     barrierFreeLabel: "Barrierefrei",
+    languageIndependentLabel: "Sprachunabhängig",
+    languageIndependentHint:
+      "Für Events ohne gesprochene Sprache (z. B. Kunstausstellungen, Installationen).",
     selectPlaceholder: "Auswählen…",
     optionYes: "Ja",
     optionNo: "Nein",
     languagesLabel: "Sprachen",
     languagesSearchPlaceholder: "Sprachen suchen",
     targetAgeGroupsLabel: "Altersgruppen",
-    mapLocationLabel: "Standort auf der Karte",
+    mapLocationLabel: "Karten-Vorschau",
     imageSectionLabel: "Event-Bild",
     imageFileLabel: "Event-Bild hochladen",
     imageUploadHint:
@@ -1041,13 +1046,16 @@ const copy: Record<Locale, AdminCopy> = {
     promoCodeLabel: "Promo code",
     eventWebsiteUrlLabel: "Event website",
     barrierFreeLabel: "Barrier-free",
+    languageIndependentLabel: "Language-independent",
+    languageIndependentHint:
+      "For events with no spoken-language requirement (e.g. art exhibitions, installations).",
     selectPlaceholder: "Select…",
     optionYes: "Yes",
     optionNo: "No",
     languagesLabel: "Languages",
     languagesSearchPlaceholder: "Search languages",
     targetAgeGroupsLabel: "Age groups",
-    mapLocationLabel: "Map location",
+    mapLocationLabel: "Map preview",
     imageSectionLabel: "Event image",
     imageFileLabel: "Upload event image",
     imageUploadHint:
@@ -1101,6 +1109,7 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   CLIENT_IMAGE_REQUIRED: "image",
   CONFLICTING_IMAGE_SOURCES: "image",
   MISSING_EVENT_IMAGE: "image",
+  IMAGE_NOT_FOUND: "image",
   INVALID_REDEMPTION_CONFIG: "redemption",
   DUPLICATE_SERIES_SLOTS: "series",
   EMPTY_SERIES_SLOTS: "series",
@@ -1138,7 +1147,7 @@ export function mapCatalogErrorCode(
       : "Image variants must be generated in the browser from the uploaded file.";
   }
 
-  if (code === "MISSING_EVENT_IMAGE") {
+  if (code === "MISSING_EVENT_IMAGE" || code === "IMAGE_NOT_FOUND") {
     return adminCopy.fieldErrors.image;
   }
 

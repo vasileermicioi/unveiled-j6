@@ -392,7 +392,7 @@ test.describe("admin-events.feature", () => {
     // Live Nominatim map-pin success is not required in CI (soft-fail leaves map at default).
   });
 
-  test("Scenario: Edit event keeps existing location when partner changes", async ({
+  test("Scenario: Edit event keeps existing address when partner changes", async ({
     page,
     locale,
   }) => {

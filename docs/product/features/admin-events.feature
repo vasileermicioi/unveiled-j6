@@ -38,6 +38,21 @@ Feature: Admin — Event Management
     When I attempt to create or edit an event without uploading an image
     Then the creation/edit is rejected until an image is provided
 
+  Scenario: Failed create keeps event image for retry
+    When I create an event with a processed image and the submit is rejected
+    Then I still see the resized-variant preview for that image on the form
+    And I can retry submit without uploading the image again
+
+  Scenario: Failed series create keeps event image for retry
+    When I create an event series with a processed image and the submit is rejected
+    Then I still see the resized-variant preview for that image on the form
+    And I can retry submit without uploading the image again
+
+  Scenario: Failed edit keeps newly processed replacement image for retry
+    When I edit an event, process a replacement primary image, and the submit is rejected
+    Then the re-rendered form shows the newly processed/staged replacement preview
+    And I can retry submit without choosing the replacement file again
+
   Scenario Outline: Redemption configuration validation on create
     Given I am creating an event with ticket type "<ticketType>" and secret code mode "<mode>"
     When I omit "<requiredField>"
@@ -83,10 +98,23 @@ Feature: Admin — Event Management
 
   Scenario: Optional accessibility and audience metadata
     When I create or edit an event
-    Then I can optionally set barrier-free accessibility, supported languages, and target age groups
+    Then I can optionally set barrier-free accessibility, supported languages, language-independent, and target age groups
+    And supported languages and language-independent are mutually exclusive in the UI
+
+  Scenario: Check language-independent hides languages picker
+    When I open create or edit event (or series create)
+    And I check Language-independent
+    Then the languages multi-select is not shown
+    And saving stores language-independent true with no language list
+
+  Scenario: Uncheck language-independent restores languages picker
+    When I clear Language-independent on edit
+    Then the languages multi-select is shown again
+    And I may select zero or more languages as today
 
   Scenario: Languages multi-select with search
     When I open create or edit event
+    And Language-independent is unchecked
     Then languages are chosen with checkboxes and a search filter that narrows visible options
     And already-selected values remain available for the form POST even when filtered out of view
 
@@ -99,20 +127,29 @@ Feature: Admin — Event Management
     Then builder weekdays are chosen with checkboxes and no search filter control
     And single-value fields on the form continue to use a native HTML select
 
+  # Address is the only admin location input — no lat/lng/zoom fields; map is geocode preview only.
   Scenario: Add event prefills address and map from partner
     When I am on the new-event (or series-create) form and select a partner from the dropdown
     Then the address field is set to that partner's address
-    And the map pin updates to a geocode of that address when geocoding succeeds
-    # Live Nominatim success is soft-fail — address prefill is required; map pin may stay at default
+    And the map preview updates to a geocode of that address when geocoding succeeds
+    # Live Nominatim success is soft-fail — address prefill is required; map preview may stay at default
 
-  Scenario: Edit event keeps existing location when partner changes
+  Scenario: Edit event keeps existing address when partner changes
     When I am on the edit-event form and change the partner
-    Then the existing address and map coordinates remain unchanged until I edit them manually
+    Then the existing address remains unchanged until I edit it manually
+    And the map preview is not silently overwritten from the new partner's address
 
   Scenario: Geocode soft-fails leave address filled
     When I am on the new-event form and select a partner whose address cannot be geocoded
     Then the address field is still set to that partner's address
-    And the map location is left unchanged (or at its prior default)
+    And saving the event with that address succeeds
+    And the map preview may stay unchanged
+    And the saved event does not store invented default-center coordinates for that failed geocode
+
+  Scenario: No admin lat lng or zoom controls
+    When I open create or edit event (or series create)
+    Then no latitude, longitude, or map zoom number fields are shown
+    And the map marker is not offered as a drag-to-set authoring control
 
   Scenario: Export redemption codes for an event
     Given an event has confirmed bookings with redemption codes

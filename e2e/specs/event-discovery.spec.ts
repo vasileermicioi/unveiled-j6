@@ -254,7 +254,7 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByRole("button", { name: /^(foto|photo)\s*2$/i })).toBeVisible();
   });
 
-  test("Scenario: Detail LOCATION map shows a pin marker", async ({ page, locale }) => {
+  test("Scenario: Detail LOCATION shows address with map", async ({ page, locale }) => {
     // Needs DB to resolve seeded event with coordinates; skip if unset
     test.skip(!process.env.DATABASE_URL, "DATABASE_URL required to resolve seeded event id");
 

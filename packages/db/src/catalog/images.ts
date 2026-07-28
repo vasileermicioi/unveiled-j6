@@ -114,6 +114,16 @@ export async function deleteImageRecord(
   await db.delete(images).where(eq(images.id, imageId));
 }
 
+/** Throws when the `images` row is missing (staged/existing primary attach). */
+export async function assertImageExists(db: Db, imageId: string): Promise<void> {
+  const row = await db.query.images.findFirst({
+    where: eq(images.id, imageId),
+  });
+  if (!row) {
+    throw new CatalogValidationError("IMAGE_NOT_FOUND", `Image ${imageId} not found`);
+  }
+}
+
 export async function replacePartnerLogo(
   db: Db,
   _partnerId: string,

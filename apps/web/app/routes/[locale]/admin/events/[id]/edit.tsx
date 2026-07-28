@@ -141,12 +141,18 @@ export const POST = createRoute(async (c) => {
     const existingDefaults = eventToFormDefaults(existing);
     let defaults = existingDefaults;
     try {
+      const formDefaults = formValuesToDefaults(await parseEventFormBodyFromRequest(body));
+      const stagedImageId = formDefaults.currentImageId;
       defaults = {
         ...existingDefaults,
-        ...formValuesToDefaults(await parseEventFormBodyFromRequest(body)),
-        currentImageUrl: existingDefaults.currentImageUrl,
-        currentImageId: existingDefaults.currentImageId,
-        imagePublicBaseUrl: existingDefaults.imagePublicBaseUrl,
+        ...formDefaults,
+        // Prefer newly staged/processed replacement over the previous DB image.
+        currentImageId: stagedImageId ?? existingDefaults.currentImageId,
+        currentImageUrl:
+          stagedImageId && stagedImageId !== existingDefaults.currentImageId
+            ? null
+            : existingDefaults.currentImageUrl,
+        imagePublicBaseUrl: formDefaults.imagePublicBaseUrl ?? existingDefaults.imagePublicBaseUrl,
       };
     } catch {
       // keep existing defaults

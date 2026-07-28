@@ -12,6 +12,7 @@ import {
 } from "../schema/events";
 import { deriveDateTimeFields } from "./datetime";
 import { CatalogValidationError } from "./errors";
+import { resolveEventLanguages } from "./language-filter";
 import { getPartnerById } from "./partners";
 import {
   applyEventDefaults,
@@ -42,6 +43,11 @@ export type CreateEventInput = {
   imageUpload?: Buffer | null;
   imageUrl?: string | null;
   imagePrebuilt?: PrebuiltImageVariantsInput | null;
+  /**
+   * Already-persisted primary image id (error-form retry).
+   * Ignored when `imagePrebuilt` is present (new prebuilt wins).
+   */
+  stagedImageId?: string | null;
   category: string;
   eventType: string;
   tags?: string[];
@@ -55,11 +61,11 @@ export type CreateEventInput = {
   promoCode?: string | null;
   eventWebsiteUrl?: string | null;
   barrierFree?: boolean | null;
+  languageIndependent?: boolean;
   languages?: string[] | null;
   targetAgeGroups?: string[] | null;
   lat?: string | null;
   lng?: string | null;
-  mapZoom?: number | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
 };
@@ -73,6 +79,11 @@ export type UpdateEventInput = {
   imageUpload?: Buffer | null;
   imageUrl?: string | null;
   imagePrebuilt?: PrebuiltImageVariantsInput | null;
+  /**
+   * Already-persisted replacement image id (error-form retry).
+   * Ignored when `imagePrebuilt` is present (new prebuilt wins).
+   */
+  stagedImageId?: string | null;
   category?: string;
   eventType?: string;
   tags?: string[];
@@ -86,11 +97,11 @@ export type UpdateEventInput = {
   promoCode?: string | null;
   eventWebsiteUrl?: string | null;
   barrierFree?: boolean | null;
+  languageIndependent?: boolean;
   languages?: string[] | null;
   targetAgeGroups?: string[] | null;
   lat?: string | null;
   lng?: string | null;
-  mapZoom?: number | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
 };
@@ -212,6 +223,95 @@ async function resolvePartner(db: Db, partnerId: string) {
   return partner;
 }
 
+type CreatePrimaryImageInput = Pick<
+  CreateEventInput,
+  "imageUpload" | "imageUrl" | "imagePrebuilt" | "stagedImageId" | "uploadedBy" | "skipUpload"
+>;
+
+/**
+ * Persist-before-domain: stage a new prebuilt set first, else reuse a staged id.
+ * Complete `imagePrebuilt` always wins over `stagedImageId`.
+ * Does not delete staged images on later domain failure (retry-friendly).
+ */
+async function resolveCreatePrimaryImageId(
+  db: Db,
+  input: CreatePrimaryImageInput,
+): Promise<string> {
+  if (input.imagePrebuilt != null) {
+    validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
+      required: true,
+      prebuilt: input.imagePrebuilt,
+    });
+    const { attachImageToEvent } = await catalogImages();
+    return attachImageToEvent(db, input.imageUpload, input.imageUrl, {
+      uploadedBy: input.uploadedBy,
+      skipUpload: input.skipUpload,
+      prebuilt: input.imagePrebuilt,
+    });
+  }
+
+  const stagedImageId = input.stagedImageId?.trim();
+  if (stagedImageId) {
+    if (
+      (input.imageUpload != null && input.imageUpload.length > 0) ||
+      (input.imageUrl != null && input.imageUrl.trim().length > 0)
+    ) {
+      throw new CatalogValidationError(
+        "CLIENT_IMAGE_REQUIRED",
+        "Image variants must be generated in the browser before submit",
+      );
+    }
+    const { assertImageExists } = await catalogImages();
+    await assertImageExists(db, stagedImageId);
+    return stagedImageId;
+  }
+
+  validateImageSourceExclusive(input.imageUpload, input.imageUrl, { required: true });
+  throw new CatalogValidationError("MISSING_EVENT_IMAGE", "Event image is required");
+}
+
+/**
+ * Prefer new prebuilt persist, else a staged replacement id, else keep current.
+ */
+async function resolveUpdatePrimaryImageId(
+  db: Db,
+  currentImageId: string,
+  input: UpdateEventInput,
+): Promise<string> {
+  if (input.imagePrebuilt != null) {
+    validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
+      prebuilt: input.imagePrebuilt,
+    });
+    const { replaceEventImage } = await catalogImages();
+    return replaceEventImage(db, currentImageId, input.imageUpload, input.imageUrl, {
+      uploadedBy: input.uploadedBy,
+      skipUpload: input.skipUpload,
+      prebuilt: input.imagePrebuilt,
+    });
+  }
+
+  const stagedImageId = input.stagedImageId?.trim();
+  if (stagedImageId && stagedImageId !== currentImageId) {
+    if (
+      (input.imageUpload != null && input.imageUpload.length > 0) ||
+      (input.imageUrl != null && input.imageUrl.trim().length > 0)
+    ) {
+      throw new CatalogValidationError(
+        "CLIENT_IMAGE_REQUIRED",
+        "Image variants must be generated in the browser before submit",
+      );
+    }
+    const { assertImageExists } = await catalogImages();
+    await assertImageExists(db, stagedImageId);
+    return stagedImageId;
+  }
+
+  validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
+    prebuilt: input.imagePrebuilt,
+  });
+  return currentImageId;
+}
+
 async function insertEventRow(
   db: Db,
   input: CreateEventInput,
@@ -255,11 +355,11 @@ async function insertEventRow(
       promoCode: input.promoCode?.trim() || null,
       eventWebsiteUrl: input.eventWebsiteUrl?.trim() || null,
       barrierFree: input.barrierFree ?? null,
-      languages: input.languages ?? null,
+      languageIndependent: input.languageIndependent ?? false,
+      languages: resolveEventLanguages(input.languageIndependent ?? false, input.languages),
       targetAgeGroups: input.targetAgeGroups ?? null,
       lat: input.lat ?? null,
       lng: input.lng ?? null,
-      mapZoom: input.mapZoom ?? null,
     })
     .returning();
 
@@ -272,44 +372,19 @@ async function insertEventRow(
 }
 
 export async function createEvent(db: Db, input: CreateEventInput): Promise<Event> {
-  validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
-    required: true,
-    prebuilt: input.imagePrebuilt,
-  });
+  // Stage image before partner/row writes so validation failures keep a retry handle.
+  const imageId = await resolveCreatePrimaryImageId(db, input);
   const partner = await resolvePartner(db, input.partnerId);
-
-  const { attachImageToEvent, deleteImageRecord } = await catalogImages();
-  const imageId = await attachImageToEvent(db, input.imageUpload, input.imageUrl, {
-    uploadedBy: input.uploadedBy,
-    skipUpload: input.skipUpload,
-    prebuilt: input.imagePrebuilt,
-  });
-
-  try {
-    return await insertEventRow(db, input, partner.name, imageId);
-  } catch (error) {
-    await deleteImageRecord(db, imageId, { skipBucket: input.skipUpload });
-    throw error;
-  }
+  return insertEventRow(db, input, partner.name, imageId);
 }
 
 export async function createEventSeries(
   db: Db,
   input: Omit<CreateEventInput, "dateTime"> & { slots: Date[] },
 ): Promise<Event[]> {
-  validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
-    required: true,
-    prebuilt: input.imagePrebuilt,
-  });
+  const imageId = await resolveCreatePrimaryImageId(db, input);
   const partner = await resolvePartner(db, input.partnerId);
   const slots = validateUniqueSeriesSlots(input.slots);
-
-  const { attachImageToEvent } = await catalogImages();
-  const imageId = await attachImageToEvent(db, input.imageUpload, input.imageUrl, {
-    uploadedBy: input.uploadedBy,
-    skipUpload: input.skipUpload,
-    prebuilt: input.imagePrebuilt,
-  });
 
   const created: Event[] = [];
   for (const slot of slots) {
@@ -338,9 +413,10 @@ export async function updateEvent(
     throw new CatalogValidationError("EVENT_NOT_FOUND", `Event ${eventId} not found`);
   }
 
-  validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
-    prebuilt: input.imagePrebuilt,
-  });
+  // Stage replacement before redemption/row writes so failed updates keep the new image.
+  const previousImageId = existing.imageId;
+  const imageId = await resolveUpdatePrimaryImageId(db, existing.imageId, input);
+  const hasNewImage = imageId !== previousImageId;
 
   const partnerId = input.partnerId ?? existing.partnerId;
   const partner = await resolvePartner(db, partnerId);
@@ -354,20 +430,6 @@ export async function updateEvent(
     promoCode: input.promoCode ?? existing.promoCode,
     eventWebsiteUrl: input.eventWebsiteUrl ?? existing.eventWebsiteUrl,
   });
-
-  let imageId = existing.imageId;
-  const previousImageId = existing.imageId;
-  // New image bytes must arrive as prebuilt variants (file or URL→proxy→Pica).
-  const hasNewImage = input.imagePrebuilt != null;
-
-  if (hasNewImage) {
-    const { replaceEventImage } = await catalogImages();
-    imageId = await replaceEventImage(db, existing.imageId, input.imageUpload, input.imageUrl, {
-      uploadedBy: input.uploadedBy,
-      skipUpload: input.skipUpload,
-      prebuilt: input.imagePrebuilt,
-    });
-  }
 
   const nextDateTime = input.dateTime ?? existing.dateTime;
   const nextTimingMode = input.timingMode ?? existing.timingMode;
@@ -427,12 +489,20 @@ export async function updateEvent(
           ? input.eventWebsiteUrl?.trim() || null
           : existing.eventWebsiteUrl,
       barrierFree: input.barrierFree !== undefined ? input.barrierFree : existing.barrierFree,
-      languages: input.languages !== undefined ? input.languages : existing.languages,
+      languageIndependent:
+        input.languageIndependent !== undefined
+          ? input.languageIndependent
+          : existing.languageIndependent,
+      languages: resolveEventLanguages(
+        input.languageIndependent !== undefined
+          ? input.languageIndependent
+          : existing.languageIndependent,
+        input.languages !== undefined ? input.languages : existing.languages,
+      ),
       targetAgeGroups:
         input.targetAgeGroups !== undefined ? input.targetAgeGroups : existing.targetAgeGroups,
       lat: input.lat !== undefined ? input.lat : existing.lat,
       lng: input.lng !== undefined ? input.lng : existing.lng,
-      mapZoom: input.mapZoom !== undefined ? input.mapZoom : existing.mapZoom,
       updatedAt: new Date(),
     })
     .where(eq(events.id, eventId))

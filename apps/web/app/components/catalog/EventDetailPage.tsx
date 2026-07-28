@@ -199,6 +199,7 @@ function metadataLabel(key: string, locale: Locale): string {
   const labels: Record<string, { de: string; en: string }> = {
     accessibility: { de: "Barrierefreiheit", en: "Accessibility" },
     languages: { de: "Sprachen", en: "Languages" },
+    languageIndependent: { de: "Sprache", en: "Language" },
     ageGroups: { de: "Zielgruppe", en: "Target age groups" },
     type: { de: "Format", en: "Event type" },
     when: { de: "Datum", en: "Date" },
@@ -207,6 +208,10 @@ function metadataLabel(key: string, locale: Locale): string {
   };
 
   return labels[key]?.[locale] ?? key;
+}
+
+function languageIndependentValue(locale: Locale): string {
+  return locale === "de" ? "Sprachunabhängig" : "Language-independent";
 }
 
 function MetaCell({
@@ -582,10 +587,7 @@ export function EventDetailPage({
                   <Paragraph className="event-detail--checkout__meta-label" size="sm">
                     {metadataLabel("partner", locale)}
                   </Paragraph>
-                  <Surface
-                    className="event-detail--checkout__partner-body"
-                    variant="transparent"
-                  >
+                  <Surface className="event-detail--checkout__partner-body" variant="transparent">
                     {partnerLogoUrl ? (
                       <img
                         alt={partnerName}
@@ -600,10 +602,7 @@ export function EventDetailPage({
                   </Surface>
                 </Surface>
               ) : null}
-              <Surface
-                className="event-detail--checkout__meta-grid min-w-0"
-                variant="transparent"
-              >
+              <Surface className="event-detail--checkout__meta-grid min-w-0" variant="transparent">
                 {showMemberBookingChrome ? (
                   <MetaCell
                     icon="calendar"
@@ -615,7 +614,12 @@ export function EventDetailPage({
                   label={metadataLabel("accessibility", locale)}
                   value={accessibilityValue(event.barrierFree, locale)}
                 />
-                {event.languages && event.languages.length > 0 ? (
+                {event.languageIndependent ? (
+                  <MetaCell
+                    label={metadataLabel("languageIndependent", locale)}
+                    value={languageIndependentValue(locale)}
+                  />
+                ) : event.languages && event.languages.length > 0 ? (
                   <MetaCell
                     label={metadataLabel("languages", locale)}
                     value={event.languages.join(", ")}
@@ -640,7 +644,7 @@ export function EventDetailPage({
           </Card.Content>
         </Card>
 
-        {mapMarkers.length > 0 ? (
+        {event.address?.trim() ? (
           <Card>
             <Card.Header>
               <Card.Title>{locationLabel(locale)}</Card.Title>
@@ -649,12 +653,14 @@ export function EventDetailPage({
               <Paragraph className="event-detail--checkout__location-address-block">
                 {event.address}
               </Paragraph>
-              <Surface
-                className="event-detail--checkout__location-map w-full"
-                variant="transparent"
-              >
-                <EventMap locale={locale} markers={mapMarkers} />
-              </Surface>
+              {mapMarkers.length > 0 ? (
+                <Surface
+                  className="event-detail--checkout__location-map w-full"
+                  variant="transparent"
+                >
+                  <EventMap locale={locale} markers={mapMarkers} />
+                </Surface>
+              ) : null}
             </Card.Content>
           </Card>
         ) : null}

@@ -88,7 +88,7 @@ Feature: Event Discovery
     When I open a valid upcoming event detail URL ("/events/:id")
     Then on large viewports row 1 places title and location beside the checkout/summary card
     And row 2 places the primary event image beside the Markdown description
-    And DETAILS, LOCATION (when coordinates exist), and gallery remain below those rows
+    And DETAILS, LOCATION (address when present; map when coordinates exist), and gallery remain below those rows
 
   Scenario: Guest sees partner attribution
     Given I am not signed in
@@ -120,13 +120,20 @@ Feature: Event Discovery
     Then the summary card shows ticket quantity controls and total credits
     And DETAILS includes date/time chrome
 
-  Scenario: Detail LOCATION map shows a pin marker
+  Scenario: Detail LOCATION shows address with map
     Given I am not signed in
     And I have accepted non-essential cookie consent
-    When I open a valid upcoming event detail URL with coordinates ("/events/:id")
-    Then the LOCATION map shows a recognizable pin marker icon (not a black square)
+    When I open a valid upcoming event detail URL with an address and coordinates ("/events/:id")
+    Then the LOCATION section shows the address text
+    And the LOCATION map shows a recognizable pin marker icon (not a black square)
     And selecting the marker opens a popup whose close control has a large enough hit target
     And activating the close control dismisses the popup
+
+  Scenario: Detail LOCATION shows address without coordinates
+    Given I am not signed in
+    When I open a valid upcoming event detail URL that has an address but no coordinates ("/events/:id")
+    Then the LOCATION section shows the address text
+    And the page does not require a map to present the location
 
   Scenario: Guest path to full browse requires signup or login
     Given I am not signed in
@@ -150,6 +157,17 @@ Feature: Event Discovery
     Given I am viewing the events feed as a booking-eligible member
     When I select a category filter
     Then only events matching that category are shown
+
+  Scenario: Language-independent events match any language filter
+    # Forward-compatible: member feed filters today are category/partner/date only.
+    # Query/helper layer treats language_independent = true as matching every language value.
+    When a booking-eligible member applies a language filter (if present) or a query filters by language
+    Then language-independent events remain in the result set alongside events that list that language
+
+  Scenario: Detail shows language-independent clearly
+    When a guest or member opens a language-independent event detail page
+    Then the details metadata does not imply a specific spoken language list
+    And it indicates the event is language-independent (or omits languages rather than showing an empty list)
 
   Scenario: Filter by partner (venue)
     Given I am viewing the events feed as a booking-eligible member

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createDb, events, images, partners } from "@unveiled/db";
 import { eq } from "drizzle-orm";
+import { CatalogValidationError } from "./errors";
 import {
   countEvents,
   createEvent,
@@ -10,6 +11,7 @@ import {
   recalculateRemainingCapacity,
   updateEvent,
 } from "./events";
+import { deleteImageRecord, persistPrebuiltImage } from "./images";
 import {
   countPartners,
   createPartner,
@@ -67,6 +69,126 @@ describe("catalog integration", () => {
       expect(updatedEvent?.partnerName).toBe("Renamed Venue");
     } finally {
       await deleteEvent(db, event.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
+  test("createEvent keeps staged image on redemption failure and accepts stagedImageId retry", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const logo = await createTestImage();
+    const partner = await createPartner(db, {
+      name: "Staged Image Venue",
+      address: "Teststraße 3, Berlin",
+      contactEmail: `staged-image-${crypto.randomUUID()}@example.com`,
+      logoPrebuilt: logo,
+      skipUpload: true,
+    });
+
+    const stagedPrebuilt = createTestImagePrebuilt();
+    const stagedImageId = await persistPrebuiltImage(db, stagedPrebuilt, { skipUpload: true });
+    let createdEventId: string | undefined;
+
+    try {
+      await expect(
+        createEvent(db, {
+          partnerId: partner.id,
+          title: "Staged Image Event",
+          description: "Description",
+          address: "Teststraße 3, Berlin",
+          neighborhood: "Mitte",
+          category: "Theater",
+          eventType: "Performance",
+          dateTime: new Date(Date.now() + 86_400_000),
+          creditPrice: 1,
+          ticketType: "SECRET_CODE",
+          secretCodeMode: "MANUAL",
+          secretCode: "",
+          stagedImageId,
+          skipUpload: true,
+        }),
+      ).rejects.toBeInstanceOf(CatalogValidationError);
+
+      const stillThere = await db.query.images.findFirst({
+        where: eq(images.id, stagedImageId),
+      });
+      expect(stillThere).toBeDefined();
+
+      const created = await createEvent(db, {
+        partnerId: partner.id,
+        title: "Staged Image Event",
+        description: "Description",
+        address: "Teststraße 3, Berlin",
+        neighborhood: "Mitte",
+        category: "Theater",
+        eventType: "Performance",
+        dateTime: new Date(Date.now() + 86_400_000),
+        creditPrice: 1,
+        secretCode: "STAGED1",
+        stagedImageId,
+        skipUpload: true,
+      });
+      createdEventId = created.id;
+      expect(created.imageId).toBe(stagedImageId);
+    } finally {
+      if (createdEventId) {
+        await deleteEvent(db, createdEventId, { skipBucket: true });
+      } else {
+        await deleteImageRecord(db, stagedImageId, { skipBucket: true });
+      }
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
+  test("createEvent does not delete persisted prebuilt image when insert validation fails", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const logo = await createTestImage();
+    const partner = await createPartner(db, {
+      name: "Retain Prebuilt Venue",
+      address: "Teststraße 4, Berlin",
+      contactEmail: `retain-prebuilt-${crypto.randomUUID()}@example.com`,
+      logoPrebuilt: logo,
+      skipUpload: true,
+    });
+
+    const imagePrebuilt = createTestImagePrebuilt();
+    const expectedImageId = imagePrebuilt.imageId;
+
+    try {
+      await expect(
+        createEvent(db, {
+          partnerId: partner.id,
+          title: "Retain Prebuilt Event",
+          description: "Description",
+          address: "Teststraße 4, Berlin",
+          neighborhood: "Mitte",
+          category: "Theater",
+          eventType: "Performance",
+          dateTime: new Date(Date.now() + 86_400_000),
+          creditPrice: 1,
+          ticketType: "SECRET_CODE",
+          secretCodeMode: "MANUAL",
+          secretCode: "",
+          imagePrebuilt,
+          skipUpload: true,
+        }),
+      ).rejects.toBeInstanceOf(CatalogValidationError);
+
+      const stillThere = await db.query.images.findFirst({
+        where: eq(images.id, expectedImageId),
+      });
+      expect(stillThere).toBeDefined();
+    } finally {
+      await deleteImageRecord(db, expectedImageId, { skipBucket: true }).catch(() => undefined);
       await deletePartner(db, partner.id, { skipBucket: true });
     }
   });

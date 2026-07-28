@@ -96,11 +96,11 @@ export const mockEvent: Event = {
   promoCode: null,
   eventWebsiteUrl: null,
   barrierFree: true,
+  languageIndependent: false,
   languages: ["DE", "EN"],
   targetAgeGroups: ["18-25", "26-35"],
   lat: "52.5025",
   lng: "13.3275",
-  mapZoom: 14,
   createdAt: storyNow,
   updatedAt: storyNow,
 };

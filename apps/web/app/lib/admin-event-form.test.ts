@@ -80,6 +80,29 @@ describe("admin-event-form helpers", () => {
     expect(values.imageUpload).toBeNull();
     expect(values.imageUrl).toBeNull();
     expect(values.imagePrebuilt).toBeNull();
+    expect(values.stagedImageId).toBeNull();
+  });
+
+  test("parseEventFormBody treats bare imageId as stagedImageId", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        address: "Main St 1",
+        neighborhood: "Mitte",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        imageId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.imagePrebuilt).toBeNull();
+    expect(values.stagedImageId).toBe("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
   });
 
   test("parseEventFormBody extracts image_url", async () => {
@@ -127,6 +150,7 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(body, asString, asFile);
 
     expect(values.imagePrebuilt?.imageId).toBe("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    expect(values.stagedImageId).toBeNull();
     expect(values.imageUpload).toBeNull();
     expect(values.imageUrl).toBe("https://example.com/poster.jpg");
   });
@@ -157,7 +181,7 @@ describe("admin-event-form helpers", () => {
     expect(values.imageUpload).not.toBeNull();
   });
 
-  test("parseEventFormBody accepts multi-select arrays and map zoom", async () => {
+  test("parseEventFormBody accepts multi-select arrays and derived lat/lng", async () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
@@ -179,17 +203,74 @@ describe("admin-event-form helpers", () => {
         target_age_groups: ["18-25", "26-35"],
         lat: "52.520008",
         lng: "13.404954",
-        map_zoom: "14",
       },
       asString,
       asFile,
     );
 
+    expect(values.languageIndependent).toBe(false);
     expect(values.languages).toEqual(["DE", "EN"]);
     expect(values.targetAgeGroups).toEqual(["18-25", "26-35"]);
     expect(values.lat).toBe("52.520008");
     expect(values.lng).toBe("13.404954");
-    expect(values.mapZoom).toBe(14);
+  });
+
+  test("parseEventFormBody treats empty lat/lng as null (geocode soft-fail)", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        address: "Main St 1",
+        neighborhood: "Mitte",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "2",
+        total_capacity: "15",
+        ticket_type: "SECRET_CODE",
+        secret_code_mode: "MANUAL",
+        secret_code: "JAZZ123",
+        lat: "",
+        lng: "",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.lat).toBeNull();
+    expect(values.lng).toBeNull();
+  });
+
+  test("parseEventFormBody clears languages when language-independent", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Silent Walk",
+        description: "No spoken language",
+        address: "Main St 1",
+        neighborhood: "Mitte",
+        category: "Art",
+        event_type: "Exhibition",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "1",
+        total_capacity: "20",
+        ticket_type: "SECRET_CODE",
+        secret_code_mode: "MANUAL",
+        secret_code: "ART123",
+        language_independent: "on",
+        languages: ["DE", "EN"],
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.languageIndependent).toBe(true);
+    expect(values.languages).toBeNull();
   });
 
   test("parseSeriesSlots expands builder weekdays", () => {

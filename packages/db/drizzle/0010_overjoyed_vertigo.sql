@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "language_independent" boolean DEFAULT false NOT NULL;

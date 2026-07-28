@@ -115,9 +115,11 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | ~~`voucher_template`, `secret_code_rules`~~ | — | **Decided cut:** present in the old type system but referenced by no scenario in any feature file and no current UI/business logic — dropped from the schema rather than carried forward as dead fields |
 | `promo_code`, `event_website_url` | text, nullable | Required together when `ticket_type = VOUCHER` |
 | `barrier_free` | boolean, nullable | |
-| `languages` | text[], nullable | |
+| `language_independent` | boolean, **not nullable**, default `false` | When true, the event has no spoken-language requirement; `languages` MUST be null. Language filters treat these events as matching every language value. |
+| `languages` | text[], nullable | Spoken-language codes when not language-independent; null/empty means unset / none selected for language-specific events |
 | `target_age_groups` | enum[], nullable | |
-| `lat`, `lng` | numeric, nullable | |
+| `lat`, `lng` | numeric, nullable | System-derived from address geocode for map display only — not admin-authored. Null when geocode fails or has not run. |
+| ~~`map_zoom`~~ | — | **Decided cut:** admin zoom authoring removed; maps use a UI default zoom. Column dropped. |
 | `created_at` / `updated_at` | timestamptz | |
 
 ---

@@ -27,14 +27,16 @@ export type EventFormValues = {
   promoCode: string | null;
   eventWebsiteUrl: string | null;
   barrierFree: boolean | null;
+  languageIndependent: boolean;
   languages: string[] | null;
   targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
-  mapZoom: number | null;
   imageUpload: Buffer | null;
   imageUrl: string | null;
   imagePrebuilt: PrebuiltImageVariantsInput | null;
+  /** Persisted primary image id posted without variant Files (error-form retry). */
+  stagedImageId: string | null;
 };
 
 export type SeriesSlotMode = "manual" | "builder";
@@ -174,15 +176,6 @@ function parseInteger(value: string | undefined, fallback: number): number {
 
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function parseOptionalInteger(value: string | undefined): number | null {
-  if (!value?.trim()) {
-    return null;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function parseBodyStringArrayField(
@@ -365,6 +358,8 @@ export async function parseEventFormBody(
 ): Promise<EventFormValues> {
   const timingMode = parseTimingMode(asString(body.timing_mode));
   const imagePrebuilt = await parsePrebuiltImageVariants(body, asString, asFile);
+  // Complete prebuilt wins; bare `imageId` (no variant Files) is a staged retry handle.
+  const stagedImageId = imagePrebuilt ? null : asString(body.imageId)?.trim() || null;
 
   let imageUpload: Buffer | null = null;
   if (!imagePrebuilt) {
@@ -374,7 +369,10 @@ export async function parseEventFormBody(
     }
   }
 
-  const languages = parseBodyStringArrayField(body, "languages", asString);
+  const languageIndependent = asString(body.language_independent) === "on";
+  const languages = languageIndependent
+    ? []
+    : parseBodyStringArrayField(body, "languages", asString);
   const targetAgeGroups = parseBodyStringArrayField(body, "target_age_groups", asString);
   const imageUrl = asString(body.image_url)?.trim() || null;
 
@@ -398,14 +396,15 @@ export async function parseEventFormBody(
     promoCode: asString(body.promo_code)?.trim() || null,
     eventWebsiteUrl: asString(body.event_website_url)?.trim() || null,
     barrierFree: asString(body.barrier_free) === "on" ? true : null,
+    languageIndependent,
     languages: languages.length > 0 ? languages : null,
     targetAgeGroups: targetAgeGroups.length > 0 ? targetAgeGroups : null,
     lat: asString(body.lat)?.trim() || null,
     lng: asString(body.lng)?.trim() || null,
-    mapZoom: parseOptionalInteger(asString(body.map_zoom)),
     imageUpload,
     imageUrl,
     imagePrebuilt,
+    stagedImageId,
   };
 }
 

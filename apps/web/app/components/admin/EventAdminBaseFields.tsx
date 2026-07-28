@@ -15,6 +15,7 @@ import {
 } from "../../lib/admin-content";
 import { geocodeBerlinAddress } from "../../lib/geocode-berlin";
 import type { Locale } from "../../lib/locale";
+import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 import { AdminFormNumberField } from "./AdminFormNumberField";
 import { AdminFormSelect } from "./AdminFormSelect";
 import { EventAdminDateTimeFields } from "./EventAdminDateFields";
@@ -68,6 +69,33 @@ export function EventAdminBaseFields({
   const [externalLat, setExternalLat] = useState<string | null>(null);
   const [externalLng, setExternalLng] = useState<string | null>(null);
   const [externalRevision, setExternalRevision] = useState(0);
+  const [lastResolvedAddress, setLastResolvedAddress] = useState(() =>
+    defaults?.lat && defaults?.lng ? (defaults.address ?? "") : "",
+  );
+  const [languageIndependent, setLanguageIndependent] = useState(
+    defaults?.languageIndependent ?? false,
+  );
+
+  async function applyAddressGeocode(address: string) {
+    const trimmed = address.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const geocoded = await geocodeBerlinAddress(trimmed);
+    if (!geocoded) {
+      setExternalLat(null);
+      setExternalLng(null);
+      setExternalRevision((current) => current + 1);
+      setLastResolvedAddress("");
+      return;
+    }
+
+    setExternalLat(geocoded.lat.toFixed(6));
+    setExternalLng(geocoded.lng.toFixed(6));
+    setExternalRevision((current) => current + 1);
+    setLastResolvedAddress(trimmed);
+  }
 
   async function handlePartnerChange(partnerId: string) {
     if (isEdit) {
@@ -81,15 +109,17 @@ export function EventAdminBaseFields({
 
     setAddressValue(partner.address);
     setAddressRevision((current) => current + 1);
+    await applyAddressGeocode(partner.address);
+  }
 
-    const geocoded = await geocodeBerlinAddress(partner.address);
-    if (!geocoded) {
+  async function handleAddressBlur(address: string) {
+    const trimmed = address.trim();
+    if (!trimmed || trimmed === lastResolvedAddress.trim()) {
       return;
     }
 
-    setExternalLat(geocoded.lat.toFixed(6));
-    setExternalLng(geocoded.lng.toFixed(6));
-    setExternalRevision((current) => current + 1);
+    setAddressValue(trimmed);
+    await applyAddressGeocode(trimmed);
   }
 
   return (
@@ -127,25 +157,42 @@ export function EventAdminBaseFields({
         <Description id={descriptionHintId}>{copy.descriptionMarkdownHint}</Description>
       </Surface>
 
-      <TextField
-        key={`address-${addressRevision}`}
-        defaultValue={addressValue}
-        fullWidth
-        isRequired
-        name="address"
-      >
-        <Label>{copy.addressLabel}</Label>
-        <Input />
-      </TextField>
+      <Surface className="grid gap-4 lg:grid-cols-2 lg:items-start" variant="transparent">
+        <Surface className="flex flex-col gap-4" variant="transparent">
+          <TextField
+            key={`address-${addressRevision}`}
+            defaultValue={addressValue}
+            fullWidth
+            isRequired
+            name="address"
+          >
+            <Label>{copy.addressLabel}</Label>
+            <Input
+              onBlur={(event) => {
+                void handleAddressBlur(event.currentTarget.value);
+              }}
+            />
+          </TextField>
 
-      <AdminFormSelect
-        defaultSelectedKey={defaults?.neighborhood}
-        isRequired
-        label={copy.neighborhoodLabel}
-        name="neighborhood"
-        options={neighborhoodOptions}
-        placeholder={copy.selectPlaceholder}
-      />
+          <AdminFormSelect
+            defaultSelectedKey={defaults?.neighborhood}
+            isRequired
+            label={copy.neighborhoodLabel}
+            name="neighborhood"
+            options={neighborhoodOptions}
+            placeholder={copy.selectPlaceholder}
+          />
+        </Surface>
+
+        <EventGeoPicker
+          externalLat={externalLat}
+          externalLng={externalLng}
+          externalRevision={externalRevision}
+          lat={defaults?.lat}
+          lng={defaults?.lng}
+          locale={locale}
+        />
+      </Surface>
 
       <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
         <AdminFormSelect
@@ -287,19 +334,34 @@ export function EventAdminBaseFields({
           ]}
           placeholder={copy.selectPlaceholder}
         />
-        <Surface className="flex w-full flex-col gap-1" variant="transparent">
-          <Label>{copy.languagesLabel}</Label>
-          <CheckboxMultiSelect
-            enableSearch
-            filterPlaceholder={copy.languagesSearchPlaceholder}
-            name="languages"
-            options={languageOptions.map((option) => ({
-              value: option.id,
-              label: option.label,
-            }))}
-            selected={defaults?.languages ?? []}
-          />
+        <Surface className="flex w-full flex-col gap-2" variant="transparent">
+          <Surface className="onboarding-form__options" variant="transparent">
+            <NativePreferenceOption
+              defaultChecked={languageIndependent}
+              label={copy.languageIndependentLabel}
+              name="language_independent"
+              onChange={(event) => setLanguageIndependent(event.target.checked)}
+              type="checkbox"
+              value="on"
+            />
+          </Surface>
+          <Description>{copy.languageIndependentHint}</Description>
         </Surface>
+        {languageIndependent ? null : (
+          <Surface className="flex w-full flex-col gap-1" variant="transparent">
+            <Label>{copy.languagesLabel}</Label>
+            <CheckboxMultiSelect
+              enableSearch
+              filterPlaceholder={copy.languagesSearchPlaceholder}
+              name="languages"
+              options={languageOptions.map((option) => ({
+                value: option.id,
+                label: option.label,
+              }))}
+              selected={defaults?.languages ?? []}
+            />
+          </Surface>
+        )}
         <Surface className="flex w-full flex-col gap-1" variant="transparent">
           <Label>{copy.targetAgeGroupsLabel}</Label>
           <CheckboxMultiSelect
@@ -312,15 +374,6 @@ export function EventAdminBaseFields({
             selected={defaults?.targetAgeGroups ?? []}
           />
         </Surface>
-        <EventGeoPicker
-          externalLat={externalLat}
-          externalLng={externalLng}
-          externalRevision={externalRevision}
-          lat={defaults?.lat}
-          lng={defaults?.lng}
-          locale={locale}
-          mapZoom={defaults?.mapZoom}
-        />
       </Surface>
 
       <EventImageUpload

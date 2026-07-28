@@ -69,7 +69,8 @@ Client-visible localized errors (undecodable file, WebP encode unsupported, inco
 - On submit with a new image, the POST body includes the five prebuilt WebP fields (`VARIANT_FILENAMES`) + `imageId` + claimed dimensions (+ optional `image_url` metadata for proxy/tooling paths). The handler validates and stores those bytes — **no Worker-side resize**.
 - Demo seed uses pre-baked five-variant packs on disk so Workers seed never needs a WASM encoder. Bun scripts may use `@unveiled/images/offline` (never import that from Workers routes).
 - If validation or bucket write fails, the request re-renders the form with an error (same as other admin forms).
-- **Edge-case/acceptable gap:** if DB attach fails after bucket upload succeeded, the new `images` row may be orphaned — periodic sweep is a future cleanup task, not launch-blocking.
+- **Retain processed primary image across failed submits:** when a complete prebuilt primary set has been accepted for staging/persistence and create/edit/series fails for an unrelated reason (field validation, catalog/row insert), the re-rendered form SHALL keep that image via staged `imageId` + variant gallery preview and SHALL allow resubmit without re-selecting/re-processing the file. Create/series treat a staged `imageId` (posted without the five WebP Files) as satisfying the required primary image. The system SHALL NOT delete a staged primary solely because unrelated event validation or insert failed when the error form will reuse it. Retention uses the server-staged `imageId` as the source of truth across SSR re-render (not client-only blob cache).
+- **Edge-case/acceptable gap:** if DB attach fails after bucket upload succeeded, or an admin abandons the form after staging, the new `images` row may be orphaned — periodic sweep is a future cleanup task, not launch-blocking.
 
 ## 5. Validation
 
