@@ -109,11 +109,12 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `weekday` | integer (0–6) | Same — derived |
 | `credit_price` | integer | |
 | `total_capacity`, `remaining_capacity` | integer | `remaining_capacity` must never go negative — recommend a DB check constraint (`remaining_capacity >= 0`) in addition to app-layer transaction logic |
-| `ticket_type` | enum: `VOUCHER`, `SECRET_CODE` | |
-| `secret_code_mode` | enum: `MANUAL`, `SHARED_GENERATED`, `UNIQUE_PER_BOOKING`, nullable | |
-| `secret_code` | text, nullable | Used for `MANUAL` and lazily-populated `SHARED_GENERATED` |
+| `ticket_type` | enum: `SECRET_CODE`, `VOUCHER_PROMO`, `VOUCHER_PDF` | Replaces legacy `VOUCHER`. No secret-code generation modes. |
+| ~~`secret_code_mode`~~ | — | **Decided cut:** `SHARED_GENERATED` / `UNIQUE_PER_BOOKING` / `MANUAL` modes removed. `SECRET_CODE` is always an admin-configured manual `secret_code`. |
+| `secret_code` | text, nullable | Required when `ticket_type = SECRET_CODE` (shared by all bookings/tickets for that event) |
 | ~~`voucher_template`, `secret_code_rules`~~ | — | **Decided cut:** present in the old type system but referenced by no scenario in any feature file and no current UI/business logic — dropped from the schema rather than carried forward as dead fields |
-| `promo_code`, `event_website_url` | text, nullable | Required together when `ticket_type = VOUCHER` |
+| `promo_code` | text, nullable | **Deprecated for new writes.** Legacy migration may seed at most one `event_voucher_codes` row; voucher redemption source is inventory, not this column. |
+| `event_website_url` | text, nullable | Required when `ticket_type = VOUCHER_PROMO` (partner site link shown with promo codes) |
 | `barrier_free` | boolean, nullable | |
 | `language_independent` | boolean, **not nullable**, default `false` | When true, the event has no spoken-language requirement; `languages` MUST be null. Language filters treat these events as matching every language value. |
 | `languages` | text[], nullable | Spoken-language codes when not language-independent; null/empty means unset / none selected for language-specific events |
@@ -181,6 +182,35 @@ Optional ordered photo gallery per event (separate from required primary `events
 
 ---
 
+### `event_voucher_codes`
+
+Promo-code inventory for `VOUCHER_PROMO` events (one row per redeemable code).
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | uuid, PK | |
+| `event_id` | FK → `events.id` | |
+| `code` | text | Unique per event |
+| `status` | enum: `AVAILABLE`, `ALLOCATED` | |
+| `booking_ticket_id` | FK → `booking_tickets.id`, nullable | Set when allocated |
+| `created_at` / `updated_at` | timestamptz | |
+
+### `event_voucher_pdfs`
+
+PDF voucher inventory for `VOUCHER_PDF` events (one row per downloadable ticket PDF in R2).
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | uuid, PK | |
+| `event_id` | FK → `events.id` | |
+| `object_key` | text | R2 object key; unique per event |
+| `original_filename`, `page_label` | text, nullable | Display / export metadata |
+| `status` | enum: `AVAILABLE`, `ALLOCATED` | |
+| `booking_ticket_id` | FK → `booking_tickets.id`, nullable | Set when allocated |
+| `created_at` / `updated_at` | timestamptz | |
+
+Bookable quantity for voucher types is `min(remaining_capacity, available_inventory)`.
+
 ### `bookings`
 
 | Field | Type | Notes |
@@ -189,16 +219,32 @@ Optional ordered photo gallery per event (separate from required primary `events
 | `user_id` | FK → `users.id` | |
 | `event_id` | FK → `events.id` | |
 | `partner_id` | FK → `partners.id` | **Denormalized** from `events.partner_id` — kept for fast partner-scoped guest-list queries. Worth keeping in Postgres too (or replace with an indexed join — measure query cost first) |
-| `tickets_count` | integer | 1–3 in current UI, not enforced server-side beyond a client-side stepper — recommend enforcing 1–3 (or a configurable max) at the DB/app layer |
+| `tickets_count` | integer | Member max = `min(floor(credits ÷ creditPrice), remainingCapacity)` (and voucher inventory when applicable); not a universal hard max of 3 |
 | `total_credits` | integer | Snapshot of price paid, independent of later price changes |
 | `status` | enum: `CONFIRMED`, `WAITLIST`, `CANCELLED`, `USED` | |
-| `redemption_type` | enum: `VOUCHER`, `SECRET_CODE`, nullable | |
-| `redemption_info`, `redemption_url` | text, nullable | |
+| `redemption_type` | enum: `SECRET_CODE`, `VOUCHER_PROMO`, `VOUCHER_PDF`, nullable | Same enum as `events.ticket_type` |
+| `redemption_info`, `redemption_url` | text, nullable | Booking-level summary (typically ticket ordinal 1) for email/backward-compatible readers; member UI prefers `booking_tickets` |
 | `idempotency_key` | text | See PK note above |
 | `checked_in_at` | timestamptz, nullable | **Post-MVP** active use (door check-in); column may exist for forward compatibility |
 | `cancelled_at` | timestamptz, nullable | Set when an admin cancels a booking; distinct from `checked_in_at` |
 | `cancellation_reason` | text, nullable | New — required whenever `status` is set to `CANCELLED` by an admin |
 | `created_at` / `updated_at` | timestamptz | |
+
+### `booking_tickets`
+
+One redemption artifact per ticket on a booking (`ordinal` 1..N, unique per booking).
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | uuid, PK | |
+| `booking_id` | FK → `bookings.id` | |
+| `ordinal` | integer | 1..N within the booking |
+| `redemption_code` | text, nullable | Secret or promo code text |
+| `redemption_url` | text, nullable | Partner website for promo types |
+| `voucher_pdf_id` | uuid, nullable | Points at `event_voucher_pdfs.id` (no circular FK; inventory row holds `booking_ticket_id`) |
+| `created_at` / `updated_at` | timestamptz | |
+
+Admin cancel of a confirmed booking returns allocated inventory to `AVAILABLE` and clears live redemption payloads on these rows (credits are not auto-refunded).
 
 ---
 

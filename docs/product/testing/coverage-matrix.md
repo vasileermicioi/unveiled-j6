@@ -84,14 +84,17 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `booking.feature` | Booking requires authentication | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires authentication` | `pass` | Needs `DATABASE_URL` for seeded event id |
 | `booking.feature` | Booking requires an active subscription | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires an active subscription` | `pass` |  |
 | `booking.feature` | Successful booking | `e2e/specs/booking.spec.ts` · `Scenario: Successful booking` | `pass` | Seeds ACTIVE via billing fixture |
-| `booking.feature` | Redemption info by ticket type and secret code mode | `e2e/specs/booking.spec.ts` · outline rows | `pass` | SECRET_CODE/MANUAL pass; SHARED/UNIQUE/VOUCHER deferred (no seed) |
+| `booking.feature` | Redemption info by ticket type | `e2e/specs/booking.spec.ts` · outline rows SECRET / VOUCHER_PROMO / VOUCHER_PDF | `pass` | Seed titles; PDF row skips without R2 |
+| `booking.feature` | Booking fails — insufficient voucher inventory | `e2e/specs/booking.spec.ts` · `Scenario: Booking fails — insufficient voucher inventory` | `skip` | Covered by `book-event.integration.test` |
 | `booking.feature` | Sold out — automatic waitlist offer | `e2e/specs/booking.spec.ts` · `Scenario: Sold out — automatic waitlist offer` | `pass` | Seed title `Sold Out: Waitlist Demo Night` |
 | `booking.feature` | Booking fails — insufficient credits | `e2e/specs/booking.spec.ts` · `Scenario: Booking fails — insufficient credits` | `pass` |  |
 | `booking.feature` | Booking fails — subscription frozen (past due) | `e2e/specs/booking.spec.ts` · `Scenario: Booking fails — subscription frozen (past due)` | `pass` |  |
 | `booking.feature` | Idempotent retry | `e2e/specs/booking.spec.ts` · `Scenario: Idempotent retry` | `skip` | Covered by `book-event.integration.test` |
-| `booking.feature` | Post-booking actions | `e2e/specs/booking.spec.ts` · `Scenario: Post-booking actions` | `pass` |  |
+| `booking.feature` | Post-booking actions | `e2e/specs/booking.spec.ts` · `Scenario: Post-booking actions` | `pass` | Mask/reveal + copy + ICS + My Tickets |
+| `booking.feature` | Multi-ticket promo codes are listed separately | `e2e/specs/booking.spec.ts` · `Scenario: Multi-ticket promo codes are listed separately` | `pass` | Needs seeded promo inventory |
+| `booking.feature` | PDF voucher download is ownership-gated | `e2e/specs/booking.spec.ts` · `Scenario: PDF voucher download is ownership-gated` | `pass` | Skips without R2 |
 | `booking.feature` | Booking confirmation email | `e2e/specs/booking.spec.ts` · `Scenario: Booking confirmation email` | `skip` | Staging Resend checklist — no inbox harness |
-| `booking.feature` | Admin cancels a confirmed booking | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels a confirmed booking` | `pass` | Needs `E2E_ADMIN_*`; no credit refund on cancel |
+| `booking.feature` | Admin cancels a confirmed booking | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels a confirmed booking` | `pass` | Needs `E2E_ADMIN_*`; no credit refund on cancel; restock covered in domain tests |
 | `booking.feature` | Cannot cancel a booking that is not confirmed | `e2e/specs/booking.spec.ts` · `Scenario: Cannot cancel a booking that is not confirmed` | `pass` | Re-open cancel URL after first cancel |
 | `booking.feature` | Members cannot self-cancel or self-refund | `e2e/specs/booking.spec.ts` · `Scenario: Members cannot self-cancel or self-refund` | `pass` |  |
 | `credits-subscription.feature` | New signups start inactive with starter credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: New signups start inactive with starter credits` | `pass` |  |

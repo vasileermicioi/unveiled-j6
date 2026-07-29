@@ -1,10 +1,12 @@
 "use client";
 
 import { Description, Input, Label, Surface, TextField } from "@heroui/react";
-import type { SecretCodeMode, TicketType, TimingMode } from "@unveiled/db";
+import type { TicketType, TimingMode } from "@unveiled/db";
 import { useId, useState } from "react";
 
 import CheckboxMultiSelect from "../../islands/CheckboxMultiSelect";
+import PdfVoucherInventoryIsland from "../../islands/PdfVoucherInventoryIsland";
+import PromoCodeInventoryIsland from "../../islands/PromoCodeInventoryIsland";
 import {
   getAdminCopy,
   getEventAgeGroupOptions,
@@ -36,12 +38,12 @@ function defaultTicketType(defaults?: EventFormDefaults): TicketType {
   return defaults?.ticketType ?? "SECRET_CODE";
 }
 
-function defaultSecretCodeMode(defaults?: EventFormDefaults): SecretCodeMode {
-  return defaults?.secretCodeMode ?? "MANUAL";
-}
-
 function defaultTimingMode(defaults?: EventFormDefaults): TimingMode {
   return defaults?.timingMode ?? "TIME_SLOT";
+}
+
+function isTicketType(value: string): value is TicketType {
+  return value === "SECRET_CODE" || value === "VOUCHER_PROMO" || value === "VOUCHER_PDF";
 }
 
 export function EventAdminBaseFields({
@@ -61,9 +63,6 @@ export function EventAdminBaseFields({
   const descriptionLabelId = useId();
   const descriptionHintId = useId();
   const [ticketType, setTicketType] = useState<TicketType>(defaultTicketType(defaults));
-  const [secretCodeMode, setSecretCodeMode] = useState<SecretCodeMode>(
-    defaultSecretCodeMode(defaults),
-  );
   const [addressValue, setAddressValue] = useState(defaults?.address ?? "");
   const [addressRevision, setAddressRevision] = useState(0);
   const [externalLat, setExternalLat] = useState<string | null>(null);
@@ -261,57 +260,27 @@ export function EventAdminBaseFields({
         label={copy.ticketTypeLabel}
         name="ticket_type"
         onSelectionChange={(value) => {
-          if (typeof value === "string" && (value === "SECRET_CODE" || value === "VOUCHER")) {
+          if (typeof value === "string" && isTicketType(value)) {
             setTicketType(value);
           }
         }}
         options={[
           { id: "SECRET_CODE", label: copy.ticketTypeSecretCode },
-          { id: "VOUCHER", label: copy.ticketTypeVoucher },
+          { id: "VOUCHER_PROMO", label: copy.ticketTypeVoucher },
+          { id: "VOUCHER_PDF", label: copy.ticketTypeVoucherPdf },
         ]}
         placeholder={copy.selectPlaceholder}
       />
 
       {ticketType === "SECRET_CODE" ? (
-        <Surface className="flex flex-col gap-4" variant="transparent">
-          <AdminFormSelect
-            defaultSelectedKey={secretCodeMode}
-            label={copy.secretCodeModeLabel}
-            name="secret_code_mode"
-            onSelectionChange={(value) => {
-              if (
-                typeof value === "string" &&
-                (value === "MANUAL" ||
-                  value === "SHARED_GENERATED" ||
-                  value === "UNIQUE_PER_BOOKING")
-              ) {
-                setSecretCodeMode(value);
-              }
-            }}
-            options={[
-              { id: "MANUAL", label: copy.secretCodeModeManual },
-              { id: "SHARED_GENERATED", label: copy.secretCodeModeShared },
-              { id: "UNIQUE_PER_BOOKING", label: copy.secretCodeModeUnique },
-            ]}
-            placeholder={copy.selectPlaceholder}
-          />
-          {secretCodeMode === "MANUAL" ? (
-            <TextField
-              defaultValue={defaults?.secretCode ?? undefined}
-              fullWidth
-              name="secret_code"
-            >
-              <Label>{copy.secretCodeLabel}</Label>
-              <Input />
-            </TextField>
-          ) : null}
-        </Surface>
-      ) : (
-        <Surface className="flex flex-col gap-4" variant="transparent">
-          <TextField defaultValue={defaults?.promoCode ?? undefined} fullWidth name="promo_code">
-            <Label>{copy.promoCodeLabel}</Label>
-            <Input />
-          </TextField>
+        <TextField defaultValue={defaults?.secretCode ?? undefined} fullWidth name="secret_code">
+          <Label>{copy.secretCodeLabel}</Label>
+          <Input />
+        </TextField>
+      ) : null}
+
+      {ticketType === "VOUCHER_PROMO" ? (
+        <>
           <TextField
             defaultValue={defaults?.eventWebsiteUrl ?? undefined}
             fullWidth
@@ -320,8 +289,27 @@ export function EventAdminBaseFields({
             <Label>{copy.eventWebsiteUrlLabel}</Label>
             <Input type="url" />
           </TextField>
-        </Surface>
-      )}
+          <PromoCodeInventoryIsland
+            inventoryCounts={defaults?.inventoryCounts?.promo ?? null}
+            isEdit={isEdit}
+            locale={locale}
+          />
+          {!isEdit ? <Description>{copy.voucherInventorySeriesHint}</Description> : null}
+        </>
+      ) : null}
+
+      {ticketType === "VOUCHER_PDF" ? (
+        <>
+          <PdfVoucherInventoryIsland
+            eventId={defaults?.eventId ?? null}
+            inventoryCounts={defaults?.inventoryCounts?.pdf ?? null}
+            isEdit={isEdit}
+            locale={locale}
+            uploadPath={`/${locale}/admin/uploads/voucher-pdf`}
+          />
+          {!isEdit ? <Description>{copy.voucherInventorySeriesHint}</Description> : null}
+        </>
+      ) : null}
 
       <Surface className="flex flex-col gap-4" variant="transparent">
         <AdminFormSelect

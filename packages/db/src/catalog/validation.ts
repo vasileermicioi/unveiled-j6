@@ -1,6 +1,6 @@
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 
-import type { SecretCodeMode, TicketType, TimingMode } from "../schema/events";
+import type { TicketType, TimingMode } from "../schema/events";
 import { CatalogValidationError } from "./errors";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -79,30 +79,32 @@ export function validateImageSourceExclusive(
 
 export type RedemptionInput = {
   ticketType: TicketType;
-  secretCodeMode?: SecretCodeMode | null;
   secretCode?: string | null;
-  promoCode?: string | null;
   eventWebsiteUrl?: string | null;
 };
 
 export function validateRedemptionConfig(input: RedemptionInput): void {
   if (input.ticketType === "SECRET_CODE") {
-    const mode = input.secretCodeMode ?? "MANUAL";
-    if (mode === "MANUAL" && !input.secretCode?.trim()) {
+    if (!input.secretCode?.trim()) {
       throw new CatalogValidationError(
         "INVALID_REDEMPTION_CONFIG",
-        "secretCode is required for SECRET_CODE tickets with MANUAL mode",
+        "secretCode is required for SECRET_CODE tickets",
       );
     }
     return;
   }
 
-  if (!input.promoCode?.trim() || !input.eventWebsiteUrl?.trim()) {
-    throw new CatalogValidationError(
-      "INVALID_REDEMPTION_CONFIG",
-      "promoCode and eventWebsiteUrl are required for VOUCHER tickets",
-    );
+  if (input.ticketType === "VOUCHER_PROMO") {
+    if (!input.eventWebsiteUrl?.trim()) {
+      throw new CatalogValidationError(
+        "INVALID_REDEMPTION_CONFIG",
+        "eventWebsiteUrl is required for VOUCHER_PROMO tickets",
+      );
+    }
+    return;
   }
+
+  // VOUCHER_PDF: no event-level promo/code/URL requirement this step.
 }
 
 export function validateUniqueSeriesSlots(slots: Date[]): Date[] {
@@ -131,18 +133,15 @@ export function validateUniqueSeriesSlots(slots: Date[]): Date[] {
 export function applyEventDefaults(input: {
   totalCapacity?: number | null;
   ticketType?: TicketType | null;
-  secretCodeMode?: SecretCodeMode | null;
   timingMode?: TimingMode | null;
 }): {
   totalCapacity: number;
   ticketType: TicketType;
-  secretCodeMode: SecretCodeMode;
   timingMode: TimingMode;
 } {
   return {
     totalCapacity: input.totalCapacity ?? 10,
     ticketType: input.ticketType ?? "SECRET_CODE",
-    secretCodeMode: input.secretCodeMode ?? "MANUAL",
     timingMode: input.timingMode ?? "TIME_SLOT",
   };
 }

@@ -28,12 +28,12 @@ describe("featured events integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImage();
+    const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Featured Partner ${suffix}`,
       address: "Featuredstraße 1, Berlin",
       contactEmail: `featured-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
@@ -50,7 +50,7 @@ describe("featured events integration", () => {
       dateTime: new Date("2026-07-10T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `FUP${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -65,7 +65,7 @@ describe("featured events integration", () => {
       dateTime: new Date("2026-07-08T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `FPA${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -80,7 +80,7 @@ describe("featured events integration", () => {
       dateTime: new Date("2026-07-11T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `NF${suffix.slice(0, 6)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -145,12 +145,12 @@ describe("featured events integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImage();
+    const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Featured Cascade ${suffix}`,
       address: "Cascadestraße 1, Berlin",
       contactEmail: `featured-cascade-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
@@ -165,7 +165,7 @@ describe("featured events integration", () => {
       dateTime: new Date("2026-07-15T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `FC${suffix.slice(0, 6)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 

@@ -1,5 +1,5 @@
 import { Link, Paragraph, Surface } from "@heroui/react";
-import type { Booking, Event } from "@unveiled/db";
+import type { Booking, BookingTicket, Event } from "@unveiled/db";
 
 import type { BookConfirmCopy } from "../../lib/booking-content";
 import type { Locale } from "../../lib/locale";
@@ -11,11 +11,19 @@ export type BookConfirmPageProps = {
   locale: Locale;
   event: Event;
   booking: Booking;
+  tickets: BookingTicket[];
   copy: BookConfirmCopy;
   icsHref: string;
 };
 
-export function BookConfirmPage({ locale, event, booking, copy, icsHref }: BookConfirmPageProps) {
+export function BookConfirmPage({
+  locale,
+  event,
+  booking,
+  tickets,
+  copy,
+  icsHref,
+}: BookConfirmPageProps) {
   const eventHref = localizedPath(locale, `events/${event.id}`);
 
   return (
@@ -30,7 +38,7 @@ export function BookConfirmPage({ locale, event, booking, copy, icsHref }: BookC
         {event.partnerName} · {copy.ticketsLabel(booking.ticketsCount)}
       </Paragraph>
 
-      <TicketRedemptionBlock booking={booking} copy={copy} />
+      <TicketRedemptionBlock booking={booking} copy={copy} locale={locale} tickets={tickets} />
 
       <Surface className="flex flex-col gap-3 sm:flex-row" variant="transparent">
         <Link className="button button--primary button--md" href={icsHref}>

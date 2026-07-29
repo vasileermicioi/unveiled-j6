@@ -110,7 +110,7 @@ test.describe("admin-events.feature", () => {
     ).toBeVisible({ timeout: 15_000 });
   });
 
-  test("Scenario Outline: Redemption configuration validation on create — ticketType = SECRET_CODE, mode = MANUAL, requiredField = secretCode", async ({
+  test("Scenario Outline: Redemption configuration validation on create — ticketType = SECRET_CODE, requiredField = secretCode", async ({
     page,
     locale,
   }) => {
@@ -133,32 +133,7 @@ test.describe("admin-events.feature", () => {
     ).toBeVisible({ timeout: 15_000 });
   });
 
-  test("Scenario Outline: Redemption configuration validation on create — ticketType = VOUCHER, mode = (n/a), requiredField = promoCode", async ({
-    page,
-    locale,
-  }) => {
-    test.skip(!r2Configured(), "R2 vars not configured");
-    const partner = await createPartnerViaUI(page, locale);
-    await page.goto(`/${locale}/admin/events/new`);
-    await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await fillTextbox(page, adminLabels.title, `No Promo ${uniqueSuffix()}`);
-    await fillTextbox(page, adminLabels.description, "Missing promo");
-    await fillTextbox(page, adminLabels.address, "Berlin");
-    await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
-    await selectOptionByLabel(page, adminLabels.category, "Theater");
-    await selectOptionByLabel(page, adminLabels.eventType, "Performance");
-    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
-    await selectOptionByLabel(page, adminLabels.ticketType, "Voucher");
-    await fillTextbox(page, adminLabels.eventWebsite, "https://example.com/event");
-    await attachEventImageFile(page);
-    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
-    await expect(
-      page.getByText(/redemption|promo|erforderlich|required|unvollständig|incomplete/i).first(),
-    ).toBeVisible({ timeout: 15_000 });
-  });
-
-  test("Scenario Outline: Redemption configuration validation on create — ticketType = VOUCHER, mode = (n/a), requiredField = eventWebsiteUrl", async ({
+  test("Scenario Outline: Redemption configuration validation on create — ticketType = VOUCHER_PROMO, requiredField = eventWebsiteUrl", async ({
     page,
     locale,
   }) => {
@@ -173,8 +148,7 @@ test.describe("admin-events.feature", () => {
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
-    await selectOptionByLabel(page, adminLabels.ticketType, "Voucher");
-    await fillTextbox(page, adminLabels.promoCode, "PROMO123");
+    await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
@@ -183,12 +157,15 @@ test.describe("admin-events.feature", () => {
     ).toBeVisible({ timeout: 15_000 });
   });
 
-  test("Scenario: Shared generated code is created automatically", async ({ page, locale }) => {
+  test("Scenario: Secret code event is created with admin-configured code", async ({
+    page,
+    locale,
+  }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     const event = await createEventViaUI(page, locale, {
       partnerName: partner.name,
-      secretCodeMode: "SHARED_GENERATED",
+      secretCode: "MANUALCODE",
     });
     await expect(page.getByText(event.title).first()).toBeVisible();
   });

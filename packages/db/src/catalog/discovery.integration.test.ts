@@ -43,12 +43,12 @@ describe("discovery integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImage();
+    const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Discovery Upcoming ${suffix}`,
       address: "Discoverystraße 1, Berlin",
       contactEmail: `discovery-upcoming-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
@@ -67,7 +67,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `TODAYF${suffix.slice(0, 4)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -82,7 +82,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T10:00:00.000Z"),
       creditPrice: 1,
       secretCode: `TODAYP${suffix.slice(0, 4)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -97,7 +97,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-10T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `TOMOR${suffix.slice(0, 4)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -125,12 +125,12 @@ describe("discovery integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImage();
+    const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Discovery Past Range ${suffix}`,
       address: "Paststraße 1, Berlin",
       contactEmail: `discovery-past-range-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
@@ -146,7 +146,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-07T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `PAST${suffix.slice(0, 4)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
     const future = await createEvent(db, {
@@ -160,7 +160,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-12T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `FUTR${suffix.slice(0, 4)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -191,19 +191,18 @@ describe("discovery integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImage();
     const partnerA = await createPartner(db, {
       name: `Discovery A ${suffix}`,
       address: "Filterstraße 1, Berlin",
       contactEmail: `discovery-a-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
     const partnerB = await createPartner(db, {
       name: `Discovery B ${suffix}`,
       address: "Filterstraße 2, Berlin",
       contactEmail: `discovery-b-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -223,7 +222,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-11T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `THA${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -238,7 +237,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-11T20:00:00.000Z"),
       creditPrice: 1,
       secretCode: `MUA${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -253,7 +252,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-11T19:00:00.000Z"),
       creditPrice: 1,
       secretCode: `THB${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -332,12 +331,12 @@ describe("discovery integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImage();
+    const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Discovery Map ${suffix}`,
       address: "Mapstraße 1, Berlin",
       contactEmail: `discovery-map-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
@@ -354,7 +353,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-12T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `MPC${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
       lat: "52.520000",
       lng: "13.405000",
@@ -371,7 +370,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-12T19:00:00.000Z"),
       creditPrice: 1,
       secretCode: `MPN${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -386,7 +385,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T06:00:00.000Z"),
       creditPrice: 1,
       secretCode: `MPP${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
       lat: "52.510000",
       lng: "13.400000",
@@ -431,13 +430,13 @@ describe("discovery integration", () => {
 
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID().slice(0, 8);
-    const image = await createTestImage();
+    const partnerImage = await createTestImage();
     const userId = await insertTestUser(db, suffix);
     const partner = await createPartner(db, {
       name: `Discovery Save ${suffix}`,
       address: "Savestraße 1, Berlin",
       contactEmail: `discovery-save-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
@@ -454,7 +453,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `SVT${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -469,7 +468,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-15T18:00:00.000Z"),
       creditPrice: 1,
       secretCode: `SVL${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 
@@ -484,7 +483,7 @@ describe("discovery integration", () => {
       dateTime: new Date("2026-07-09T10:00:00.000Z"),
       creditPrice: 1,
       secretCode: `SVP${suffix.slice(0, 5)}`,
-      imagePrebuilt: image,
+      imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
 

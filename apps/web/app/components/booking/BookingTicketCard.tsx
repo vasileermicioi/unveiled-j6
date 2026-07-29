@@ -1,5 +1,5 @@
 import { Card, Chip, Heading, Link, Paragraph, Surface } from "@heroui/react";
-import type { Booking, BookingStatus, UserBookingEventSummary } from "@unveiled/db";
+import type { Booking, BookingStatus, BookingTicket, UserBookingEventSummary } from "@unveiled/db";
 
 import type { BookConfirmCopy } from "../../lib/booking-content";
 import type { MyTicketsCopy } from "../../lib/bookings-content";
@@ -11,15 +11,21 @@ export type BookingTicketCardProps = {
   locale: Locale;
   booking: Booking;
   event: UserBookingEventSummary;
+  tickets: BookingTicket[];
   confirmCopy: Pick<
     BookConfirmCopy,
     | "ticketCodeLabel"
     | "voucherLabel"
+    | "pdfVoucherLabel"
     | "secretDesc"
     | "copy"
     | "copied"
+    | "showCode"
+    | "hideCode"
+    | "downloadPdf"
     | "openVoucher"
     | "ticketsLabel"
+    | "ticketOrdinalLabel"
   >;
   listCopy: Pick<
     MyTicketsCopy,
@@ -54,6 +60,7 @@ export function BookingTicketCard({
   locale,
   booking,
   event,
+  tickets,
   confirmCopy,
   listCopy,
 }: BookingTicketCardProps) {
@@ -82,7 +89,12 @@ export function BookingTicketCard({
         <Paragraph size="sm">{confirmCopy.ticketsLabel(booking.ticketsCount)}</Paragraph>
       </Card.Header>
       <Card.Content className="flex flex-col gap-4">
-        <TicketRedemptionBlockCompact booking={booking} copy={confirmCopy} />
+        <TicketRedemptionBlockCompact
+          booking={booking}
+          copy={confirmCopy}
+          locale={locale}
+          tickets={tickets}
+        />
         <Link className="button button--primary button--md" href={confirmHref}>
           {listCopy.viewTicket}
         </Link>

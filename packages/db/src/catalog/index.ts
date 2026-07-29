@@ -13,3 +13,4 @@ export * from "./partners";
 // server routes / scripts / e2e. Do not re-export from the main barrel (breaks client islands).
 export * from "./seed-pagination-data";
 export * from "./validation";
+export * from "./voucher-inventory";

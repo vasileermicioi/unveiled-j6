@@ -2125,6 +2125,32 @@
     box-shadow: none;
   }
 
+  .admin-native-file,
+  .admin-native-textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: var(--border-width) solid var(--border);
+    border-radius: 0;
+    background-color: var(--field-background);
+    color: var(--foreground);
+    font: inherit;
+    font-weight: 600;
+    box-shadow: none;
+  }
+
+  .admin-native-textarea {
+    min-height: 6rem;
+    resize: vertical;
+  }
+
+  .admin-native-file:focus,
+  .admin-native-file:focus-visible,
+  .admin-native-textarea:focus,
+  .admin-native-textarea:focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+
   /* Admin MDXEditor — event description Markdown (event-markdown-02) */
   .admin-event-description-editor {
     position: relative;

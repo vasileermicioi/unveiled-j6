@@ -26,7 +26,10 @@ function resolveImagePublicBaseUrl(): string | null {
   }
 }
 
-export function eventToFormDefaults(event: Event): EventFormDefaults & { partnerId: string } {
+export function eventToFormDefaults(
+  event: Event,
+  inventoryCounts?: EventFormDefaults["inventoryCounts"],
+): EventFormDefaults & { partnerId: string } {
   let currentImageUrl: string | null = null;
   try {
     currentImageUrl = buildVariantUrl(event.imageId, "small-320.webp");
@@ -49,10 +52,10 @@ export function eventToFormDefaults(event: Event): EventFormDefaults & { partner
     creditPrice: event.creditPrice,
     totalCapacity: event.totalCapacity,
     ticketType: event.ticketType,
-    secretCodeMode: event.secretCodeMode ?? undefined,
     secretCode: event.secretCode,
-    promoCode: event.promoCode,
     eventWebsiteUrl: event.eventWebsiteUrl,
+    eventId: event.id,
+    inventoryCounts,
     barrierFree: event.barrierFree,
     languageIndependent: event.languageIndependent,
     languages: event.languages,
@@ -83,9 +86,7 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     creditPrice: values.creditPrice,
     totalCapacity: values.totalCapacity,
     ticketType: values.ticketType,
-    secretCodeMode: values.secretCodeMode,
     secretCode: values.secretCode,
-    promoCode: values.promoCode,
     eventWebsiteUrl: values.eventWebsiteUrl,
     barrierFree: values.barrierFree,
     languageIndependent: values.languageIndependent,

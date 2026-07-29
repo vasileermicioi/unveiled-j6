@@ -98,6 +98,16 @@ Delivery plan: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](../../.dev-plan/IMPLEMEN
 | `Event.voucherTemplate` and `Event.secretCodeRules` cut — unused by any current or planned scenario | `database/schema-overview.md` |
 | `GEMINI_API_KEY` / Google Maps API key | **Decided:** do not carry forward — event map uses **MapLibre GL JS** + **OpenStreetMap** tiles; no map env var | `extras/integrations-and-config.md`, `ui/ui-component-map.md` |
 
+## Ticket redemption (inventory model)
+
+| Decision | Refs |
+|---|---|
+| Secret-code modes `SHARED_GENERATED` / `UNIQUE_PER_BOOKING` (and `secret_code_mode`) removed — `SECRET_CODE` is always a single admin-configured manual code shared by all tickets | `features/booking.feature`, `features/admin-events.feature`, `database/schema-overview.md` |
+| Legacy single event-level `promo_code` is not the voucher source — `VOUCHER_PROMO` uses `event_voucher_codes` inventory (one code per ticket); `VOUCHER_PDF` uses `event_voucher_pdfs` (one PDF per ticket) | `database/schema-overview.md`, ticket-redemption parent guide |
+| Per-ticket redemption lives in `booking_tickets`; booking-level `redemption_*` remains a summary (typically ordinal 1) for email/compat | `features/booking.feature`, `database/schema-overview.md` |
+| Member UI masks secret/promo codes by default (reveal/hide island); PDF vouchers download via auth-gated `/:locale/bookings/:bookingId/tickets/:ticketId/voucher.pdf` — **not** attached to confirmation email in MVP | `features/booking.feature`, `sitemap/sitemap.md`, `ui/ui-component-map.md` |
+| Admin cancel restocks unused allocated promo/PDF inventory to `AVAILABLE`; credits are still never auto-refunded | `features/booking.feature` |
+
 ## Extraction-accuracy correction (this pass)
 
 A second review pass against the actual old-app source (`App.tsx`, `index.css`) found one previous extraction error worth flagging explicitly, since it affects the single most visible brand decision in the whole rewrite:

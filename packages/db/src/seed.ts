@@ -7,6 +7,7 @@
 
 export {
   DEMO_DISCOVERY_TITLES,
+  DEMO_PROMO_CODES,
   partnerNameForSeedTitle,
 } from "./catalog/demo-discovery-titles";
 export {

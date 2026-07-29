@@ -1,5 +1,6 @@
 import {
   DeleteObjectsCommand,
+  GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
@@ -110,4 +111,60 @@ export async function deleteImageObjects(
       },
     }),
   );
+}
+
+export type UploadObjectInput = {
+  objectKey: string;
+  body: Buffer | Uint8Array;
+  contentType: string;
+};
+
+/** Generic PutObject for non-image assets (e.g. voucher PDF inventory). */
+export async function uploadObject(
+  input: UploadObjectInput,
+  client?: S3Client,
+  bucket?: string,
+): Promise<string> {
+  const env = readS3Env();
+  const resolvedClient = client ?? createS3Client(env);
+  const resolvedBucket = bucket ?? env.bucket;
+
+  await resolvedClient.send(
+    new PutObjectCommand({
+      Bucket: resolvedBucket,
+      Key: input.objectKey,
+      Body: input.body,
+      ContentType: input.contentType,
+    }),
+  );
+
+  return input.objectKey;
+}
+
+export type GetObjectInput = {
+  objectKey: string;
+};
+
+/** Generic GetObject for non-image assets (e.g. member voucher PDF download). */
+export async function getObject(
+  input: GetObjectInput,
+  client?: S3Client,
+  bucket?: string,
+): Promise<Uint8Array> {
+  const env = readS3Env();
+  const resolvedClient = client ?? createS3Client(env);
+  const resolvedBucket = bucket ?? env.bucket;
+
+  const result = await resolvedClient.send(
+    new GetObjectCommand({
+      Bucket: resolvedBucket,
+      Key: input.objectKey,
+    }),
+  );
+
+  if (!result.Body) {
+    throw new Error(`Object body missing for key: ${input.objectKey}`);
+  }
+
+  return await result.Body.transformToByteArray();
 }

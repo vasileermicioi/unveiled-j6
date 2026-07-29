@@ -15,11 +15,10 @@ import { images } from "./images";
 import { partners } from "./partners";
 
 export const timingModeEnum = pgEnum("timing_mode", ["TIME_SLOT", "ALL_DAY"]);
-export const ticketTypeEnum = pgEnum("ticket_type", ["VOUCHER", "SECRET_CODE"]);
-export const secretCodeModeEnum = pgEnum("secret_code_mode", [
-  "MANUAL",
-  "SHARED_GENERATED",
-  "UNIQUE_PER_BOOKING",
+export const ticketTypeEnum = pgEnum("ticket_type", [
+  "SECRET_CODE",
+  "VOUCHER_PROMO",
+  "VOUCHER_PDF",
 ]);
 
 export const events = pgTable(
@@ -48,8 +47,8 @@ export const events = pgTable(
     totalCapacity: integer("total_capacity").notNull(),
     remainingCapacity: integer("remaining_capacity").notNull(),
     ticketType: ticketTypeEnum("ticket_type").notNull(),
-    secretCodeMode: secretCodeModeEnum("secret_code_mode"),
     secretCode: text("secret_code"),
+    /** @deprecated Unused for new writes; legacy migration seed only. Prefer event_voucher_codes. */
     promoCode: text("promo_code"),
     eventWebsiteUrl: text("event_website_url"),
     barrierFree: boolean("barrier_free"),
@@ -73,4 +72,3 @@ export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type TimingMode = (typeof timingModeEnum.enumValues)[number];
 export type TicketType = (typeof ticketTypeEnum.enumValues)[number];
-export type SecretCodeMode = (typeof secretCodeModeEnum.enumValues)[number];

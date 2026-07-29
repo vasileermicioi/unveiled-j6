@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 
+import { restockBookingInventory } from "../booking/allocate-redemption-tickets";
 import type { TxDb } from "../index";
 import { type Booking, bookings } from "../schema/bookings";
 import { events } from "../schema/events";
@@ -23,8 +24,8 @@ export type CancelBookingAsAdminResult = {
 };
 
 /**
- * Admin cancel of a CONFIRMED booking: restore capacity, no credit refund,
- * then run waitlist processing for the event.
+ * Admin cancel of a CONFIRMED booking: restock voucher inventory, restore capacity,
+ * no credit refund, then run waitlist processing for the event.
  */
 export async function cancelBookingAsAdmin(
   db: TxDb,
@@ -63,6 +64,8 @@ export async function cancelBookingAsAdmin(
     if (!event) {
       throw new AdminCapacityError("EVENT_NOT_FOUND", "Event not found for booking");
     }
+
+    await restockBookingInventory(tx, booking.id);
 
     const now = new Date();
     const [updated] = await tx

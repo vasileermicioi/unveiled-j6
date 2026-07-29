@@ -61,10 +61,13 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 | Surface | Route | Notes |
 |---|---|---|
 | Book | `/events/:id/book` | Dedicated SSR page (not modal); `PageSectionHeader` + form; full-bleed yellow treatment |
-| Confirm | `/events/:id/book/confirm` | `PageSectionHeader` + redemption + ICS |
+| Confirm | `/events/:id/book/confirm` | `PageSectionHeader` + `TicketRedemptionBlock` (per-ticket rows) + ICS |
+| **TicketRedemptionBlock** (+ compact) | confirm + My Tickets cards | One row per `booking_tickets` ordinal; `SECRET_CODE` / `VOUCHER_PROMO` use **RevealSecretIsland** (masked by default, eye toggle, copy-while-masked); `VOUCHER_PDF` links to ownership-gated voucher.pdf route; promo website link when URL present |
+| **RevealSecretIsland** | `apps/web/app/islands/` | Client-only show/hide for textual codes (UX shoulder-surfing protection; value still in props) |
+| PDF voucher download | `/bookings/:bookingId/tickets/:ticketId/voucher.pdf` | Auth + booking ownership; proxies R2 PDF as attachment |
 | Waitlist | `/events/:id/waitlist` | `PageSectionHeader` + join form (cancel pages same header pattern) |
 | Membership / checkout | `/membership` | Stripe Billing (Phase 6+); **single** bordered marketing card with headline/CTA and **vertical** icon-bullet benefits list inside (not a second benefits card; not three-up perk cards). Checkout/guest views omit muted subtitle/guarantee marketing filler. |
-| My Tickets | `/bookings` | `PageSectionHeader` + list + empty state |
+| My Tickets | `/bookings` | `PageSectionHeader` + list + empty state; compact redemption block per card |
 | Profile | `/profile`, `/profile/details`, `/profile/billing`, `/profile/preferences`, GDPR pages | `ProfileLayout`: `ProfileTabNav` (`.admin-tabs*`) **above** `PageSectionHeader`, then tab panel; tablist + header + content share admin-width `max-w-7xl` shell (tabs wrap). `/profile` = membership manage card (portal CTA / inactive checkout) — not credit wallet. No stacked Account link card; no muted subtitle under the title |
 
 ---
@@ -81,7 +84,7 @@ Four SSR steps: `/onboarding/age` → `interests` → `location` → `timing`. N
 |---|---|---|
 | **AdminPageShell** | `/admin/*` (authenticated admin pages) | Shared page chrome: breadcrumbs (optional) → `PageSectionHeader` (eyebrow Admin/Verwaltung + title + rule) → optional muted subtitle below rule → optional actions → card/overview children. Admin tab nav stays **above** the shell title (same order as member profile tabs). |
 | Dashboard | `/admin` | Ops overview + demo seed control if present |
-| Events | `/admin/events/*` | SSR CRUD, series, codes export; primary image upload (`EventImageUpload` + `AdminImageVariantGallery` — five WebP tiles; client errors block submit); description field = **MDXEditor** island (`EventDescriptionEditor`) submitting Markdown via form POST `description`; **gallery manage** at `/admin/events/:id/gallery*` (grid + DnD reorder with Save order + checkbox select → SSR remove confirm; multi-add via Pica → five WebP; max 12; entry from **Featured** list only — not Events list or event edit) |
+| Events | `/admin/events/*` | SSR CRUD, series, codes export; primary image upload (`EventImageUpload` + `AdminImageVariantGallery` — five WebP tiles; client errors block submit); description field = **MDXEditor** island (`EventDescriptionEditor`) submitting Markdown via form POST `description`; ticket type `SECRET_CODE` \| `VOUCHER_PROMO` \| `VOUCHER_PDF` — **PromoCodeInventoryFields** (TXT/CSV/paste preview island) and **PdfVoucherInventoryFields** (master PDF split/preview island + staged upload); inventory persists only via SSR form POST; **gallery manage** at `/admin/events/:id/gallery*` (grid + DnD reorder with Save order + checkbox select → SSR remove confirm; multi-add via Pica → five WebP; max 12; entry from **Featured** list only — not Events list or event edit) |
 | Partners (venues) | `/admin/partners/*` | Venue CRUD with **required** logo upload (`PartnerLogoUpload` + `AdminImageVariantGallery`); **no** portal-access / venue-QR pages in MVP |
 | Users | `/admin/users/*` | Support actions as dedicated pages |
 | Waitlist / bookings | `/admin/waitlist/*`, cancel, export | |

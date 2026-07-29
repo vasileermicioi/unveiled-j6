@@ -65,7 +65,7 @@ async function sendConfirmationSafe(options: {
     ticketsCount: number;
     redemptionInfo: string | null;
     redemptionUrl: string | null;
-    redemptionType: "VOUCHER" | "SECRET_CODE" | null;
+    redemptionType: "VOUCHER_PROMO" | "VOUCHER_PDF" | "SECRET_CODE" | null;
   };
   userId: string;
 }): Promise<void> {

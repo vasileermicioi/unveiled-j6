@@ -13,7 +13,7 @@ export type BookingConfirmationBooking = {
   ticketsCount: number;
   redemptionInfo: string | null;
   redemptionUrl: string | null;
-  redemptionType: "VOUCHER" | "SECRET_CODE" | null;
+  redemptionType: "VOUCHER_PROMO" | "VOUCHER_PDF" | "SECRET_CODE" | null;
 };
 
 export type BuildBookingConfirmationInput = {

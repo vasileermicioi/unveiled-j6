@@ -184,6 +184,8 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 
 The image pipeline stores **five WebP** variants per upload under `images/{uuid}/{variant}.webp` in the bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.webp` (and sibling variant filenames — see `docs/product/extras/image-uploads.md`). Demo seed (`bun run seed:demo`) uses `@unveiled/images` prebuilt persist and writes `.webp` keys.
 
+Admin voucher PDF inventory (ticket redemption) stages sliced ticket PDFs under the same R2 bucket with keys `vouchers/staging/{adminUserId}/{uuid}.pdf` (create) or `vouchers/{eventId}/{uuid}.pdf` (edit). No extra env vars — reuses `S3_*` / `IMAGE_PUBLIC_BASE_URL`.
+
 If the bucket still has objects from the legacy JPEG pipeline (`*.jpg`), run `bun scripts/migrate-r2-jpeg-to-webp.ts` (or re-seed / re-upload) so public/admin pages resolve `.webp` variants — see the Host section migration note above.
 
 **1. Create bucket** — Cloudflare Dashboard → **R2** → create bucket (e.g. `unveiled-j6`).
@@ -480,7 +482,7 @@ Public catalog surfaces (`@unveiled/ui` EventCard, locale-home Discover live gri
 
 ### Demo seed images (Wikimedia Commons)
 
-`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **prebuilt five-WebP variant packs** under `public/images/seed/{partners,events}/`, then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`, and attaches **≥2 gallery images** to the featured theater demo (`DEMO_DISCOVERY_TITLES.theaterFuture`) for public detail slider demos. Refresh fixture + images with `bun run seed:fetch-abundo` then `bun scripts/bake-seed-image-variants.ts`. Seed uploads the five WebP variants to R2 via `persistPrebuiltImage` (no Worker resize). Existing catalogs seeded before Featured Discover / Featured Event Gallery need `seed:demo -- --reset` (or manual Featured tab + gallery uploads) to populate Discover and the demo gallery.
+`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **prebuilt five-WebP variant packs** under `public/images/seed/{partners,events}/`, then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`, and attaches **≥2 gallery images** to the featured theater demo (`DEMO_DISCOVERY_TITLES.theaterFuture`) for public detail slider demos. It also stocks additive ticket-redemption demos: **`Demo: Promo Code Inventory Night`** (`VOUCHER_PROMO`, six `DEMO-PROMO-0N` codes) and **`Demo: PDF Voucher Inventory Night`** (`VOUCHER_PDF`, six minimal PDFs under `vouchers/seed/…`). Abundo catalog events remain `SECRET_CODE` (e.g. theater / TARTUFFE). Refresh fixture + images with `bun run seed:fetch-abundo` then `bun scripts/bake-seed-image-variants.ts`. Seed uploads the five WebP variants to R2 via `persistPrebuiltImage` (no Worker resize); PDF objects upload unless `--skip-upload`. Existing catalogs seeded before Featured Discover / Featured Event Gallery / ticket-redemption inventory need `seed:demo -- --reset` (or manual Featured tab + gallery/inventory uploads) to populate Discover and the demo gallery.
 
 ```bash
 # Fresh catalog on empty DB
@@ -735,7 +737,8 @@ Handler: `packages/billing/src/webhooks.ts` via `POST /api/webhooks/stripe`.
 3. Open a seeded upcoming event → **Tickets buchen** → confirm booking.
 4. Confirm page shows redemption code + copy + `.ics` download; `/bookings` lists the ticket.
 5. In Resend dashboard, confirm booking email with `.ics` attachment (when `RESEND_*` set).
-6. **Stop** — do not start Phase 7 (waitlist / profile billing) in this release.
+6. **Ticket redemption (after `seed:demo -- --reset`):** book a `SECRET_CODE` seed event → codes masked on confirm / My Tickets → reveal/hide works; book **Demo: Promo Code Inventory Night** ×2 → two masked promo rows; book **Demo: PDF Voucher Inventory Night** ×2 → two PDF downloads succeed while logged in (guest denied). Or create one admin event per type and stock inventory manually.
+7. **Stop** — do not start Phase 7 (waitlist / profile billing) in this release. Email PDF attachments remain out of scope (in-app download only).
 
 ### Playwright (Phase 6)
 

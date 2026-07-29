@@ -62,17 +62,24 @@ Feature: Event Booking
     And a negative-amount ledger entry of type "BOOKING" is recorded
     And I receive redemption info appropriate to the event's ticket type
 
-  Scenario Outline: Redemption info by ticket type and secret code mode
-    Given the event's ticket type is "<ticketType>" with secret code mode "<mode>"
+  Scenario Outline: Redemption info by ticket type
+    Given the event's ticket type is "<ticketType>"
     When my booking is confirmed
     Then I receive "<redemption>"
+    And one booking_tickets row exists per ticket with that redemption payload
 
     Examples:
-      | ticketType  | mode               | redemption                                            |
-      | SECRET_CODE | MANUAL             | the event's admin-configured secret code              |
-      | SECRET_CODE | SHARED_GENERATED   | one shared generated code, created on first booking and reused for all bookings of that event |
-      | SECRET_CODE | UNIQUE_PER_BOOKING | a freshly generated code unique to this booking       |
-      | VOUCHER     | (n/a)              | the event's promo code plus a link to the partner's event website |
+      | ticketType    | redemption                                                                 |
+      | SECRET_CODE   | the event's admin-configured secret code on every ticket                   |
+      | VOUCHER_PROMO | one unique inventory promo code per ticket plus the partner website link   |
+      | VOUCHER_PDF   | one allocated PDF voucher per ticket available for in-app download         |
+
+  Scenario: Booking fails — insufficient voucher inventory
+    Given the event's ticket type is "VOUCHER_PROMO" or "VOUCHER_PDF"
+    And available voucher inventory is less than my requested ticket count
+    When I attempt to confirm the booking
+    Then the booking is rejected with an "insufficient voucher inventory" error
+    And no credits, capacity, inventory, or ledger changes occur
 
   Scenario: Sold out — automatic waitlist offer
     Given the event's remaining capacity is less than my requested ticket count
@@ -98,14 +105,29 @@ Feature: Event Booking
 
   Scenario: Post-booking actions
     Given I have a confirmed booking
-    Then I can copy my redemption code
+    Then I see one redemption row per ticket on confirm and My Tickets
+    And secret codes and promo codes are masked by default with a control to reveal or hide each code
+    And I can copy a textual redemption code even while it remains masked
+    And for VOUCHER_PDF tickets I can download each allocated PDF via an auth-gated app route
     And I can download an .ics calendar file for the event
     And I can see a support email for help
+
+  Scenario: Multi-ticket promo codes are listed separately
+    Given I have a confirmed VOUCHER_PROMO booking with tickets_count greater than 1
+    When I view booking confirm or My Tickets
+    Then each ticket's promo code appears as its own masked row with its own reveal control
+
+  Scenario: PDF voucher download is ownership-gated
+    Given I have a confirmed VOUCHER_PDF booking
+    When I download a ticket PDF from My Tickets or confirm
+    Then I receive that ticket's PDF as an attachment
+    And a guest or another user cannot download that PDF
 
   Scenario: Booking confirmation email
     Given my booking is confirmed (normal booking, comp ticket, or waitlist promotion alike)
     Then I receive a confirmation email with my redemption info and an .ics calendar attachment
     And this is the same email regardless of which of the three paths created the booking
+    # In-app PDF download is enough for MVP; confirmation email does not attach per-ticket PDFs
 
   Scenario: Admin cancels a confirmed booking
     Given I am signed in as "ADMIN"
@@ -114,6 +136,7 @@ Feature: Event Booking
     Then the booking's status becomes "CANCELLED"
     And the event's remaining capacity is increased by the booking's ticket count
     And no credits are refunded to the member as part of cancellation itself
+    And any allocated VOUCHER_PROMO codes or VOUCHER_PDF inventory for that booking return to AVAILABLE
     And waitlist processing is triggered for that event (see waitlist.feature)
 
   Scenario: Cannot cancel a booking that is not confirmed

@@ -18,6 +18,11 @@ import {
   parseEventFormBodyFromRequest,
   parseSeriesSlotsFromBody,
 } from "../../../../../lib/admin-route";
+import {
+  applyVoucherInventoryForEvents,
+  assertVoucherInventoryForForm,
+  voucherPayloadFromFormValues,
+} from "../../../../../lib/admin-voucher-inventory";
 import { getAuthOptions } from "../../../../../lib/auth";
 
 function renderSeriesPage(
@@ -84,7 +89,21 @@ export const POST = createRoute(async (c) => {
 
     if (action === "confirm") {
       const slots = parseSeriesSlotsFromBody(body);
-      await createEventSeries(db, toSeriesCreateInput(values, slots, guard.session.user.id));
+      const payload = voucherPayloadFromFormValues(values);
+      await assertVoucherInventoryForForm(db, {
+        ticketType: values.ticketType,
+        payload,
+        mode: "create",
+      });
+      const created = await createEventSeries(
+        db,
+        toSeriesCreateInput(values, slots, guard.session.user.id),
+      );
+      await applyVoucherInventoryForEvents(db, {
+        eventIds: created.map((event) => event.id),
+        ticketType: values.ticketType,
+        payload,
+      });
       return c.redirect(eventListPath(guard.locale), 302);
     }
 

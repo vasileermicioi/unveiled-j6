@@ -1,11 +1,20 @@
-import { desc, eq } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 
 import type { Db } from "../index";
+import { type BookingTicket, bookingTickets } from "../schema/booking-tickets";
 import { type Booking, bookings } from "../schema/bookings";
 import { type CreditLedgerEntry, creditLedger } from "../schema/credit-ledger";
 import { type User, type UserProfile, users } from "../schema/users";
 
 import { GdprError } from "./errors";
+
+export type UserDataExportBookingTicket = {
+  id: string;
+  ordinal: number;
+  redemptionCode: string | null;
+  redemptionUrl: string | null;
+  voucherPdfId: string | null;
+};
 
 export type UserDataExportBooking = {
   id: string;
@@ -17,6 +26,7 @@ export type UserDataExportBooking = {
   redemptionType: Booking["redemptionType"];
   redemptionInfo: string | null;
   redemptionUrl: string | null;
+  tickets: UserDataExportBookingTicket[];
   createdAt: string;
   cancelledAt: string | null;
   cancellationReason: string | null;
@@ -52,8 +62,18 @@ function toIso(value: Date | null | undefined): string | null {
   return value.toISOString();
 }
 
+function mapTicket(row: BookingTicket): UserDataExportBookingTicket {
+  return {
+    id: row.id,
+    ordinal: row.ordinal,
+    redemptionCode: row.redemptionCode,
+    redemptionUrl: row.redemptionUrl,
+    voucherPdfId: row.voucherPdfId,
+  };
+}
+
 /**
- * Synchronous GDPR data export: profile + bookings + credit ledger.
+ * Synchronous GDPR data export: profile + bookings (with booking_tickets) + credit ledger.
  * Rejects missing and already-deleted users (typed errors).
  */
 export async function buildUserDataExport(db: Db, userId: string): Promise<UserDataExport> {
@@ -77,6 +97,23 @@ export async function buildUserDataExport(db: Db, userId: string): Promise<UserD
       .orderBy(desc(creditLedger.timestamp)),
   ]);
 
+  const bookingIds = bookingRows.map((row) => row.id);
+  const ticketRows =
+    bookingIds.length === 0
+      ? []
+      : await db
+          .select()
+          .from(bookingTickets)
+          .where(inArray(bookingTickets.bookingId, bookingIds))
+          .orderBy(asc(bookingTickets.bookingId), asc(bookingTickets.ordinal));
+
+  const ticketsByBookingId = new Map<string, UserDataExportBookingTicket[]>();
+  for (const ticket of ticketRows) {
+    const list = ticketsByBookingId.get(ticket.bookingId) ?? [];
+    list.push(mapTicket(ticket));
+    ticketsByBookingId.set(ticket.bookingId, list);
+  }
+
   return {
     exportedAt: new Date().toISOString(),
     user: {
@@ -98,6 +135,7 @@ export async function buildUserDataExport(db: Db, userId: string): Promise<UserD
       redemptionType: row.redemptionType,
       redemptionInfo: row.redemptionInfo,
       redemptionUrl: row.redemptionUrl,
+      tickets: ticketsByBookingId.get(row.id) ?? [],
       createdAt: row.createdAt.toISOString(),
       cancelledAt: toIso(row.cancelledAt),
       cancellationReason: row.cancellationReason,

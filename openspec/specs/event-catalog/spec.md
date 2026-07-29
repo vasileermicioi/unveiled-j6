@@ -6,7 +6,7 @@ Phase 4 catalog persistence and image processing for partner venue records and e
 
 ### Requirement: Catalog persistence tables
 
-The `@unveiled/db` package SHALL define Drizzle schema and migrations for `public.images`, `public.partners`, and `public.events` matching `docs/product/database/schema-overview.md`, including FK from `events.image_id` → `images.id` (required), `partners.logo_image_id` → `images.id` (optional), and `events.partner_id` → `partners.id`. The schema SHALL include enums for image source, ticket type, secret code mode, and timing mode; a check constraint `remaining_capacity >= 0` on `events`; and indexes on `events(date_time)`, `(date_time, partner_id)`, and `(date_time, category)`.
+The `@unveiled/db` package SHALL define Drizzle schema and migrations for `public.images`, `public.partners`, and `public.events` matching the project schema docs (as updated for ticket redemption), including FK from `events.image_id` → `images.id` (required), `partners.logo_image_id` → `images.id` (optional), and `events.partner_id` → `partners.id`. The schema SHALL include enums for image source, ticket type (`SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF`), and timing mode; SHALL NOT include a `secret_code_mode` enum/column; a check constraint `remaining_capacity >= 0` on `events`; and indexes on `events(date_time)`, `(date_time, partner_id)`, and `(date_time, category)`. Voucher inventory and `booking_tickets` tables SHALL also be defined as part of the ticket-redemption schema work.
 
 #### Scenario: Migration applies on empty catalog
 
@@ -22,6 +22,11 @@ The `@unveiled/db` package SHALL define Drizzle schema and migrations for `publi
 
 - **WHEN** an `events` row is inserted without `image_id`
 - **THEN** the database rejects the insert
+
+#### Scenario: Secret code mode column absent
+
+- **WHEN** the ticket-redemption schema migration has been applied
+- **THEN** `events` has no `secret_code_mode` column and `ticket_type` accepts `SECRET_CODE`, `VOUCHER_PROMO`, and `VOUCHER_PDF` only
 
 ### Requirement: Six-variant JPEG image pipeline
 
@@ -87,7 +92,7 @@ The catalog domain layer in `@unveiled/db` SHALL enforce partner validation and 
 
 ### Requirement: Event catalog domain rules
 
-The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature`, including required image (upload buffer or remote URL path, exactly one source); redemption configuration rules; default capacity 10, ticket type `SECRET_CODE`, secret code mode `MANUAL`, timing mode `TIME_SLOT`; computed `start_time_minutes` and `weekday` from `date_time` in Europe/Berlin; series slot uniqueness; capacity recalculation when total capacity changes; and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8.
+The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature` (as aligned with ticket redemption), including required image (upload buffer or remote URL path, exactly one source); redemption configuration rules (`SECRET_CODE` requires `secretCode`; `VOUCHER_PROMO` requires `eventWebsiteUrl` and does not require event-level `promoCode`; `VOUCHER_PDF` does not require event-level promo/code fields); default capacity 10, ticket type `SECRET_CODE`, timing mode `TIME_SLOT` (no secret-code mode default); computed `start_time_minutes` and `weekday` from `date_time` in Europe/Berlin; series slot uniqueness; capacity recalculation when total capacity changes; and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8.
 
 #### Scenario: Missing event image rejected
 
@@ -118,6 +123,16 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 
 - **WHEN** an event is created or its `date_time` is updated
 - **THEN** `start_time_minutes` and `weekday` are computed from `date_time` using Europe/Berlin local time
+
+#### Scenario: Secret code required without mode
+
+- **WHEN** `createEvent` or `updateEvent` is called with `ticketType = SECRET_CODE` and no `secretCode`
+- **THEN** the operation fails validation
+
+#### Scenario: Voucher promo requires website not promo code
+
+- **WHEN** `createEvent` or `updateEvent` is called with `ticketType = VOUCHER_PROMO` and no `eventWebsiteUrl`
+- **THEN** the operation fails validation even if a legacy `promoCode` is supplied
 
 ### Requirement: Admin image upload on the application host
 
@@ -378,7 +393,7 @@ The `/:locale/admin` dashboard SHALL display quick links to admin sections and a
 
 ### Requirement: Admin event SSR CRUD
 
-The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` for list, single create, series create, edit, delete, and redemption code export, using dedicated form POST pages without client-side modals, matching `docs/product/sitemap/sitemap.md` and `docs/product/features/admin-events.feature`. Admin event management SHALL NOT be scoped to a single partner — admins select the partner per event from admin-managed partner records. Create and edit forms SHALL accept multipart **file upload** for images (required on create; optional replace on edit) and delegate validation, image processing, and storage to the catalog domain layer and `@unveiled/images`. Admin event forms SHALL NOT accept remote image URL paste.
+The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` for list, single create, series create, edit, delete, and redemption code export, using dedicated form POST pages without client-side modals, matching `docs/product/sitemap/sitemap.md` and `docs/product/features/admin-events.feature`. Admin event management SHALL NOT be scoped to a single partner — admins select the partner per event from admin-managed partner records. Create and edit forms SHALL accept multipart **file upload** for images (required on create; optional replace on edit) and delegate validation, image processing, and storage to the catalog domain layer and `@unveiled/images`. Admin event forms SHALL NOT accept remote image URL paste. Admin parsers and forms SHALL NOT accept or persist `secret_code_mode`. Ticket type options SHALL use `SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF` (full inventory upload UI MAY land in a later step).
 
 #### Scenario: Admin creates event with required image upload
 
@@ -407,12 +422,12 @@ The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` f
 
 #### Scenario: Redemption validation on create
 
-- **WHEN** an ADMIN creates a VOUCHER event omitting `promo_code` or `event_website_url`
-- **THEN** creation is rejected until both are provided
+- **WHEN** an ADMIN creates a `VOUCHER_PROMO` event omitting `event_website_url`
+- **THEN** creation is rejected until the website URL is provided
 
-#### Scenario: Secret code required for manual mode
+#### Scenario: Secret code required for secret-code tickets
 
-- **WHEN** an ADMIN creates a SECRET_CODE event with secret code mode MANUAL and no secret code
+- **WHEN** an ADMIN creates a `SECRET_CODE` event with no secret code
 - **THEN** creation is rejected until a secret code is provided
 
 #### Scenario: Edit replaces event image

@@ -5,9 +5,9 @@ import { creditLedger } from "../schema/credit-ledger";
 import { events } from "../schema/events";
 import { users } from "../schema/users";
 
+import { lockRedemptionAllocation, writeRedemptionTickets } from "./allocate-redemption-tickets";
 import { assertBookingEligible, assertValidTicketCount } from "./eligibility";
 import { BookingError } from "./errors";
-import { resolveRedemption } from "./redemption";
 
 export type BookEventInput = {
   userId: string;
@@ -28,7 +28,7 @@ function bookingLedgerKey(userId: string, idempotencyKey: string): string {
 }
 
 /**
- * Atomic purchase booking: subscription → capacity → credits → redemption → booking + ledger.
+ * Atomic purchase booking: subscription → capacity → credits → redemption allocation → booking + ledger.
  * Only the Booking domain should write purchase bookings / BOOKING ledger rows.
  */
 export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEventResult> {
@@ -83,29 +83,18 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
       throw new BookingError("INSUFFICIENT_CREDITS", "Insufficient credits for this booking");
     }
 
-    const redemption = resolveRedemption(event);
+    const allocation = await lockRedemptionAllocation(tx, event, input.ticketsCount);
     const now = new Date();
     const nextCapacity = event.remainingCapacity - input.ticketsCount;
     const nextCredits = skipCharge ? user.credits : user.credits - totalCredits;
 
-    if (redemption.persistEventSecretCode) {
-      await tx
-        .update(events)
-        .set({
-          remainingCapacity: nextCapacity,
-          secretCode: redemption.persistEventSecretCode,
-          updatedAt: now,
-        })
-        .where(eq(events.id, event.id));
-    } else {
-      await tx
-        .update(events)
-        .set({
-          remainingCapacity: nextCapacity,
-          updatedAt: now,
-        })
-        .where(eq(events.id, event.id));
-    }
+    await tx
+      .update(events)
+      .set({
+        remainingCapacity: nextCapacity,
+        updatedAt: now,
+      })
+      .where(eq(events.id, event.id));
 
     if (!skipCharge) {
       await tx
@@ -126,9 +115,9 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
         ticketsCount: input.ticketsCount,
         totalCredits: skipCharge ? 0 : totalCredits,
         status: "CONFIRMED",
-        redemptionType: redemption.redemptionType,
-        redemptionInfo: redemption.redemptionInfo,
-        redemptionUrl: redemption.redemptionUrl,
+        redemptionType: allocation.summary.redemptionType,
+        redemptionInfo: allocation.summary.redemptionInfo,
+        redemptionUrl: allocation.summary.redemptionUrl,
         idempotencyKey,
         createdAt: now,
         updatedAt: now,
@@ -138,6 +127,13 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
     if (!booking) {
       throw new BookingError("EVENT_NOT_FOUND", "Failed to insert booking");
     }
+
+    await writeRedemptionTickets(tx, {
+      bookingId: booking.id,
+      event,
+      ticketsCount: input.ticketsCount,
+      allocation,
+    });
 
     if (!skipCharge) {
       await tx.insert(creditLedger).values({

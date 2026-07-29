@@ -27,13 +27,18 @@ export type BookConfirmCopy = {
   subtitle: string;
   ticketCodeLabel: string;
   voucherLabel: string;
+  pdfVoucherLabel: string;
   secretDesc: string;
   copy: string;
   copied: string;
+  showCode: string;
+  hideCode: string;
+  downloadPdf: string;
   downloadIcs: string;
   supportLabel: string;
   supportEmail: string;
   ticketsLabel: (count: number) => string;
+  ticketOrdinalLabel: (ordinal: number) => string;
   backToEvent: string;
   openVoucher: string;
 };
@@ -89,13 +94,18 @@ const confirmCopy: Record<Locale, BookConfirmCopy> = {
     subtitle: "Dein Ticket ist bereit.",
     ticketCodeLabel: "DEIN TICKET-CODE",
     voucherLabel: "GUTSCHEIN / RABATTCODE",
+    pdfVoucherLabel: "PDF-GUTSCHEIN",
     secretDesc: "Sag diesen Code einfach an der Abendkasse oder beim Einlass.",
     copy: "Code kopieren",
     copied: "Kopiert",
+    showCode: "Code anzeigen",
+    hideCode: "Code verbergen",
+    downloadPdf: "PDF herunterladen",
     downloadIcs: "Kalender (.ics) herunterladen",
     supportLabel: "Hilfe",
     supportEmail: "support@unveiled.berlin",
     ticketsLabel: (count) => `${count} Ticket${count === 1 ? "" : "s"}`,
+    ticketOrdinalLabel: (ordinal) => `Ticket ${ordinal}`,
     backToEvent: "Zurück zum Event",
     openVoucher: "Zur Partner-Website",
   },
@@ -105,13 +115,18 @@ const confirmCopy: Record<Locale, BookConfirmCopy> = {
     subtitle: "Your ticket is ready.",
     ticketCodeLabel: "YOUR TICKET CODE",
     voucherLabel: "VOUCHER / PROMO CODE",
+    pdfVoucherLabel: "PDF VOUCHER",
     secretDesc: "Just mention this code at the box office or entry.",
     copy: "Copy code",
     copied: "Copied",
+    showCode: "Show code",
+    hideCode: "Hide code",
+    downloadPdf: "Download PDF",
     downloadIcs: "Download calendar (.ics)",
     supportLabel: "Support",
     supportEmail: "support@unveiled.berlin",
     ticketsLabel: (count) => `${count} ticket${count === 1 ? "" : "s"}`,
+    ticketOrdinalLabel: (ordinal) => `Ticket ${ordinal}`,
     backToEvent: "Back to event",
     openVoucher: "Open partner website",
   },

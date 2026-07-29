@@ -54,24 +54,32 @@ Feature: Admin — Event Management
     And I can retry submit without choosing the replacement file again
 
   Scenario Outline: Redemption configuration validation on create
-    Given I am creating an event with ticket type "<ticketType>" and secret code mode "<mode>"
+    Given I am creating an event with ticket type "<ticketType>"
     When I omit "<requiredField>"
     Then the creation is rejected until I provide it
 
     Examples:
-      | ticketType  | mode   | requiredField      |
-      | SECRET_CODE | MANUAL | secretCode         |
-      | VOUCHER     | (n/a)  | promoCode          |
-      | VOUCHER     | (n/a)  | eventWebsiteUrl    |
+      | ticketType    | requiredField        |
+      | SECRET_CODE   | secretCode           |
+      | VOUCHER_PROMO | promo inventory      |
+      | VOUCHER_PROMO | eventWebsiteUrl      |
+      | VOUCHER_PDF   | PDF ticket inventory |
 
-  Scenario: Shared generated code is created automatically
-    Given I create an event with ticket type "SECRET_CODE" and mode "SHARED_GENERATED"
-    And I do not supply a code
-    Then the system will generate one shared code the first time it's needed
+  Scenario: Admin uploads promo codes with preview
+    Given I am creating or editing a VOUCHER_PROMO event
+    When I select a text or CSV file (or paste codes)
+    Then the UI previews one non-empty code per line
+    And inventory rows are written only after a successful SSR form POST
+
+  Scenario: Admin uploads a master PDF and previews tickets
+    Given I am creating or editing a VOUCHER_PDF event
+    When I upload a PDF and set pages to skip and pages per ticket
+    Then the UI previews each derived ticket
+    And confirming the form stores one AVAILABLE PDF inventory row per previewed ticket
 
   Scenario: Default values on creation
-    Given I create an event without specifying capacity, ticket type, secret code mode, or timing mode
-    Then it defaults to totalCapacity 10, ticketType "SECRET_CODE", secretCodeMode "MANUAL", timingMode "TIME_SLOT"
+    Given I create an event without specifying capacity, ticket type, or timing mode
+    Then it defaults to totalCapacity 10, ticketType "SECRET_CODE", timingMode "TIME_SLOT"
 
   Scenario: Create an event series with manual slots
     When I create an event series by manually specifying a list of unique, non-empty date/time slots

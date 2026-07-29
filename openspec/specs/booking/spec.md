@@ -27,7 +27,7 @@ The system SHALL provide a Drizzle-capable database client that supports multi-s
 - **THEN** it MAY continue to use the existing `createDb` neon-http factory
 
 ### Requirement: Atomic booking transaction
-The system SHALL create purchase bookings only through a single Postgres transaction that locks the event row, verifies subscription eligibility and capacity and credits, decrements capacity and credits, writes a `CONFIRMED` booking, and writes a negative `BOOKING` ledger entry (unless `skipCreditCharge`). The Booking domain SHALL be the only writer of purchase bookings and `BOOKING` ledger rows. Ticket count shape validation SHALL require an integer ≥ 1 and SHALL NOT impose a hard upper bound of 3; remaining capacity and credit balance remain authoritative rejection reasons.
+The system SHALL create purchase bookings only through a single Postgres transaction that locks the event row, verifies subscription eligibility and capacity and credits, allocates per-ticket redemption artifacts (`booking_tickets` plus voucher inventory when applicable), decrements capacity and credits, writes a `CONFIRMED` booking, and writes a negative `BOOKING` ledger entry (unless `skipCreditCharge`). The Booking domain SHALL be the only writer of purchase bookings and `BOOKING` ledger rows. Ticket count shape validation SHALL require an integer ≥ 1 and SHALL NOT impose a hard upper bound of 3; remaining capacity, credit balance, and (for voucher types) available inventory remain authoritative rejection reasons. Idempotent retry of the same `(user_id, idempotency_key)` SHALL return the original booking without re-allocating inventory or mutating credits/capacity.
 
 #### Scenario: Successful booking
 - **WHEN** an eligible member confirms a booking with sufficient capacity and credits
@@ -40,6 +40,7 @@ The system SHALL create purchase bookings only through a single Postgres transac
 #### Scenario: Idempotent retry
 - **WHEN** the same `(user_id, idempotency_key)` is submitted again after success
 - **THEN** no duplicate booking or credit/capacity change occurs and the original redemption info is returned
+- **AND** voucher inventory is not allocated a second time
 
 #### Scenario: Ticket quantity shape invalid
 - **WHEN** a booking is requested with a non-integer ticket count or a count less than 1
@@ -50,7 +51,7 @@ The system SHALL create purchase bookings only through a single Postgres transac
 - **THEN** a confirmed booking is created and credits and capacity decrease accordingly
 
 ### Requirement: Ticket count selection bounds
-For guests viewing the public event detail checkout affordance, the system SHALL allow selecting a ticket count from 1 through 3 (preview only; booking remains auth-gated). For signed-in members on detail and book surfaces, the maximum selectable ticket count SHALL be the minimum of (a) floor(available credits ÷ event creditPrice) and (b) the event’s remaining capacity (with creditPrice ≤ 0 treated as capacity-only). The booking transaction SHALL accept any integer ticket count ≥ 1 that passes capacity and credit checks and SHALL NOT reject solely because the count is greater than 3.
+For guests viewing the public event detail checkout affordance, the system SHALL allow selecting a ticket count from 1 through 3 (preview only; booking remains auth-gated). For signed-in members on detail and book surfaces, the maximum selectable ticket count SHALL be the minimum of (a) floor(available credits ÷ event creditPrice), (b) the event’s remaining capacity, and (c) when provided for voucher-type events, available voucher inventory count (with creditPrice ≤ 0 treated as capacity/inventory-only). The booking transaction SHALL accept any integer ticket count ≥ 1 that passes capacity, credit, and inventory checks and SHALL NOT reject solely because the count is greater than 3.
 
 #### Scenario: Guest preview capped at three
 - **WHEN** a guest views a bookable event detail page
@@ -59,6 +60,10 @@ For guests viewing the public event detail checkout affordance, the system SHALL
 #### Scenario: Member max follows credits and capacity
 - **WHEN** a signed-in member with 17 credits views a bookable event priced at 2 credits with remaining capacity 10
 - **THEN** the maximum selectable ticket count is 8
+
+#### Scenario: Member max also respects voucher inventory
+- **WHEN** a signed-in member views a `VOUCHER_PROMO` event with remaining capacity 10, enough credits for 8 tickets, and only 3 `AVAILABLE` promo codes
+- **THEN** the maximum selectable ticket count is 3
 
 #### Scenario: Booking succeeds above former hard cap
 - **WHEN** an eligible member confirms a booking for 4 tickets and capacity and credits are sufficient
@@ -88,30 +93,29 @@ The system SHALL allow booking only for `ACTIVE` and `CANCELLED_PENDING` subscri
 - **THEN** a confirmed booking is created as for an `ACTIVE` member
 
 ### Requirement: Redemption info by ticket type
-The system SHALL attach redemption info to each confirmed booking according to the event's ticket type and secret-code mode.
+The system SHALL attach redemption info to each confirmed booking according to the event's ticket type. For `SECRET_CODE`, each `booking_tickets` row and the booking-level redemption summary SHALL use the event's admin-configured `secret_code` (no secret-code modes; codes are never auto-generated). For `VOUCHER_PROMO` and `VOUCHER_PDF`, the booking domain SHALL allocate one inventory asset per ticket inside the booking transaction, write `booking_tickets`, and denormalize ticket ordinal 1 onto booking-level `redemption_*` fields for backward-compatible readers. The domain MUST NOT invent redemption from a shared event-level `promo_code`. Insufficient inventory SHALL reject the booking without mutations.
 
 #### Scenario: Manual secret code
-- **WHEN** a booking is confirmed for `SECRET_CODE` / `MANUAL`
+- **WHEN** a booking is confirmed for `SECRET_CODE`
 - **THEN** the booking stores the event's admin-configured secret code as redemption info
+- **AND** each booking ticket stores that same secret code
 
-#### Scenario: Shared generated secret code
-- **WHEN** a booking is confirmed for `SECRET_CODE` / `SHARED_GENERATED`
-- **THEN** the booking stores one shared generated code, created on first booking of that event and reused for later bookings
+#### Scenario: Voucher promo booking allocates inventory
+- **WHEN** a booking is confirmed for `VOUCHER_PROMO` with sufficient `AVAILABLE` codes
+- **THEN** booking tickets and allocated inventory rows are written in the same transaction
+- **AND** booking-level redemption summary reflects ticket ordinal 1
 
-#### Scenario: Unique per-booking secret code
-- **WHEN** a booking is confirmed for `SECRET_CODE` / `UNIQUE_PER_BOOKING`
-- **THEN** the booking stores a freshly generated code unique to that booking
-
-#### Scenario: Voucher redemption
-- **WHEN** a booking is confirmed for `VOUCHER`
-- **THEN** the booking stores the event's promo code and partner event website URL
+#### Scenario: Voucher booking rejected when inventory is insufficient
+- **WHEN** a booking is attempted for `VOUCHER_PROMO` or `VOUCHER_PDF` with fewer `AVAILABLE` inventory rows than the ticket count
+- **THEN** the booking is rejected with a typed booking error and no credits, capacity, inventory, or ledger changes occur
 
 ### Requirement: Booking confirmation surfaces and email
-The system SHALL expose SSR pages at `/:locale/events/:id/book` (GET form + POST mutation) and `/:locale/events/:id/book/confirm`, communicate the “SECURE RSVP // NO REFUNDS” policy at booking, and SHALL send a Resend confirmation email with redemption info and an `.ics` attachment after a successful booking commit. Email send failure SHALL NOT roll back the booking.
+The system SHALL expose SSR pages at `/:locale/events/:id/book` (GET form + POST mutation) and `/:locale/events/:id/book/confirm`, communicate the “SECURE RSVP // NO REFUNDS” policy at booking, and SHALL send a Resend confirmation email with redemption info and an `.ics` attachment after a successful booking commit. Email send failure SHALL NOT roll back the booking. After booking, the confirm page SHALL present per-ticket redemptions from `booking_tickets`: members can copy textual redemption codes when present, reveal/hide those codes (masked by default), download PDF vouchers when applicable, download an `.ics` calendar file, and see support contact.
 
 #### Scenario: Post-booking actions
 - **WHEN** a booking is confirmed
-- **THEN** the member can view/copy redemption info, download an ICS calendar file, and see support contact on the confirm page
+- **THEN** the member can copy redemption codes (when textual), reveal/hide those codes, download PDF vouchers when applicable, download an ICS calendar file, and see support contact on the confirm page
+- **AND** each `booking_tickets` row is listed (not only booking-level `redemption_*`)
 
 #### Scenario: Booking confirmation email
 - **WHEN** a booking is confirmed
@@ -133,11 +137,11 @@ The Phase 6 requirement that sold-out bookings reject without a waitlist offer i
 - **THEN** no booking or credit ledger mutation occurs for that attempt
 
 ### Requirement: My Tickets list
-The system SHALL provide an authenticated, paginated SSR `/bookings` list of the member’s bookings ordered by most recent, with empty state and redemption-oriented ticket presentation. Page size SHALL be 20. Pagination SHALL use GET `?page=` with SSR links and SHALL work without client-only fetching. The list SHALL NOT offer member self-cancel or refund actions.
+The system SHALL provide an authenticated, paginated SSR `/bookings` list of the member’s bookings ordered by most recent, with empty state and redemption-oriented ticket presentation that lists per-ticket redemptions from `booking_tickets` (masked codes with reveal, PDF download when applicable). Page size SHALL be 20. Pagination SHALL use GET `?page=` with SSR links and SHALL work without client-only fetching. The list SHALL NOT offer member self-cancel or refund actions. Bookings pages SHALL remain `robots: noindex`.
 
 #### Scenario: Member views tickets
 - **WHEN** a signed-in member with at least one booking visits `/bookings`
-- **THEN** they see their tickets with redemption information affordances and can paginate via `?page=` without client-only fetching
+- **THEN** they see their tickets with per-ticket redemption affordances (masked codes and/or PDF download) and can paginate via `?page=` without client-only fetching
 
 #### Scenario: Empty tickets list
 - **WHEN** a signed-in member has no bookings
@@ -155,15 +159,34 @@ The system SHALL expose a signed-in member navigation link labeled per locale in
 - **THEN** a My Tickets link is available and navigates to their bookings list
 
 ### Requirement: Admin booking cancellation domain
-The system SHALL allow an admin to cancel a `CONFIRMED` booking with a reason, set status `CANCELLED`, increase event remaining capacity by the ticket count, trigger waitlist processing for that event, and MUST NOT refund credits as part of cancellation.
+The system SHALL allow an admin to cancel a `CONFIRMED` booking with a reason, set status `CANCELLED`, increase event remaining capacity by the ticket count, return any allocated voucher promo/PDF inventory for that booking to `AVAILABLE` (clearing allocation links), trigger waitlist processing for that event, and MUST NOT refund credits as part of cancellation.
 
 #### Scenario: Cancel confirmed booking
 - **WHEN** an admin cancels a confirmed booking
 - **THEN** the booking is `CANCELLED`, capacity increases by the booking's ticket count, waitlist processing runs for that event, and credits are unchanged by the cancel itself
 
+#### Scenario: Cancel restocks voucher inventory
+- **WHEN** an admin cancels a confirmed booking that held allocated voucher inventory
+- **THEN** those inventory rows become `AVAILABLE` again and are no longer linked to the booking’s tickets
+
 #### Scenario: Reject non-confirmed cancel
 - **WHEN** an admin attempts to cancel a booking that is not `CONFIRMED`
-- **THEN** the operation is rejected and capacity, credits, and booking status are unchanged
+- **THEN** the operation is rejected and capacity, credits, inventory, and booking status are unchanged
+
+### Requirement: Booking ticket redemption readers
+The booking domain SHALL expose read helpers so list and by-id booking queries can include the related `booking_tickets` rows for a booking (ordered by ordinal). `listUserBookings` SHALL attach per-booking ticket redemptions for items on the current page. Member My Tickets and booking confirm call sites SHALL consume those ticket rows for redemption UI (not ignore them in favor of booking-level summary alone). Confirm loaders SHALL load `booking_tickets` for the owned booking (via `listBookingTickets` or equivalent).
+
+#### Scenario: List includes ticket redemptions
+- **WHEN** `listUserBookings` returns a page that includes a multi-ticket booking
+- **THEN** each list item includes that booking’s `booking_tickets` rows ordered by ordinal
+
+#### Scenario: Load tickets by booking id
+- **WHEN** a caller requests tickets for a known booking id via the exported helper
+- **THEN** the helper returns the booking’s ticket rows ordered by ordinal (empty if none)
+
+#### Scenario: Confirm loads ticket redemptions
+- **WHEN** a member opens booking confirm for an owned booking
+- **THEN** the page is rendered with that booking’s `booking_tickets` rows ordered by ordinal
 
 ### Requirement: Admin cancel booking page
 The system SHALL provide `/:locale/admin/bookings/:id/cancel` as an SSR confirm + POST page for ADMIN users (`robots: noindex`) that cancels a `CONFIRMED` booking with a required reason, restores capacity, triggers waitlist processing, and MUST NOT refund credits as part of cancellation. The page MUST NOT use client-only mutation modals. Membership HQ member detail SHALL expose links to cancel confirmed bookings for that member.
@@ -239,3 +262,18 @@ Book and waitlist ticket-quantity fields SHALL use a native HTML `<select>` (or 
 #### Scenario: Waitlist join quantity matches book pattern
 - **WHEN** a member opens the waitlist join form that collects ticket quantity
 - **THEN** the quantity control uses the same native select/input pattern as the book form
+
+### Requirement: Product Gherkin redemption matches inventory model
+
+`docs/product/features/booking.feature` SHALL document redemption for `SECRET_CODE` (admin-configured manual code only), `VOUCHER_PROMO` (one inventory code per ticket plus partner website when present), and `VOUCHER_PDF` (one inventory PDF per ticket with in-app download). It SHALL NOT document `secret_code_mode`, `SHARED_GENERATED`, `UNIQUE_PER_BOOKING`, or a single shared event-level `promo_code` as the voucher source. Scenarios SHALL cover insufficient voucher inventory rejection, admin cancel restock (credits not refunded), and member post-booking actions including mask/reveal and PDF download.
+
+#### Scenario: Booking feature file has no generated modes
+
+- **WHEN** an implementer reads `booking.feature` after this change
+- **THEN** redemption examples list only the three shipped ticket types
+- **AND** no Scenario requires `SHARED_GENERATED` or `UNIQUE_PER_BOOKING`
+
+#### Scenario: Member redemption UI scenarios are specified
+
+- **WHEN** an implementer reads post-booking / My Tickets scenarios in `booking.feature`
+- **THEN** they describe masked codes with reveal/hide, per-ticket rows for multi-ticket bookings, and PDF download for `VOUCHER_PDF`

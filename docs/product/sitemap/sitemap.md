@@ -87,7 +87,8 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 | `/events/:id/waitlist` | ✅ | USER | Join waitlist when sold out |
 | `/waitlist/:id/cancel` | ✅ | USER | Cancel own waitlist entry |
 | `/saved` | ✅ | USER | Saved events |
-| `/bookings?page=` | ✅ | USER | My Tickets |
+| `/bookings?page=` | ✅ | USER | My Tickets (masked codes + reveal; PDF download links) |
+| `/bookings/:bookingId/tickets/:ticketId/voucher.pdf` | ✅ | USER (owner) | Auth-gated PDF voucher download (`Content-Disposition: attachment`); `noindex`; guests → login; non-owners → 404 |
 | `/profile` | ✅ | USER | Account home (membership manage; Stripe portal CTA) |
 | `/profile/details` | ✅ | USER | Personal details tab (identity form POST) |
 | `/profile/billing` | ✅ | USER | Billing tab; cancel sub, Stripe portal |

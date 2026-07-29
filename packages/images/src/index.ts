@@ -32,10 +32,14 @@ export {
 export {
   createS3Client,
   deleteImageObjects,
+  type GetObjectInput,
+  getObject,
   imageObjectsExist,
   readS3Env,
   type S3Env,
+  type UploadObjectInput,
   uploadImageVariants,
+  uploadObject,
 } from "./s3";
 export type { ImageSource, ProcessedImageMetadata, ProcessedImageResult } from "./types";
 export { buildVariantUrl, readImagePublicBaseUrl } from "./urls";

@@ -51,7 +51,7 @@ export function MyTicketsPage({
         </Card>
       ) : (
         <Surface className="flex flex-col gap-6" variant="transparent">
-          {items.map(({ booking, event }) => (
+          {items.map(({ booking, event, tickets }) => (
             <BookingTicketCard
               booking={booking}
               confirmCopy={confirmCopy}
@@ -59,6 +59,7 @@ export function MyTicketsPage({
               key={booking.id}
               listCopy={listCopy}
               locale={locale}
+              tickets={tickets}
             />
           ))}
         </Surface>

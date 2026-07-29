@@ -1,4 +1,4 @@
-import { bookings, createDb, eq, getPublicEventById } from "@unveiled/db";
+import { bookings, createDb, eq, getPublicEventById, listBookingTickets } from "@unveiled/db";
 import { buildEventIcs } from "@unveiled/email";
 import { createRoute } from "honox/factory";
 
@@ -94,6 +94,7 @@ export default createRoute(async (c) => {
   }
 
   const icsHref = `${confirmPath}?booking=${encodeURIComponent(booking.id)}&download=ics`;
+  const tickets = await listBookingTickets(db, booking.id);
 
   return c.render(
     <BookConfirmPage
@@ -102,6 +103,7 @@ export default createRoute(async (c) => {
       event={event}
       icsHref={icsHref}
       locale={locale}
+      tickets={tickets}
     />,
     {
       locale,

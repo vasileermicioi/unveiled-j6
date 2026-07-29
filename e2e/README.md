@@ -197,9 +197,10 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | Activating via real Stripe Checkout | `credits-subscription.spec.ts` | Skips unless `E2E_STRIPE_CHECKOUT=1`; staging smoke is SoT |
 | Monthly renewal resets credits | `credits-subscription.spec.ts` | Billing package / webhook tests; no e2e renewal clock |
 | Deep Stripe Customer Portal hosted UI | `profile.spec.ts` / credits | Fake `cus_*` asserts CTA/error; staging for real portal; optional future `E2E_STRIPE_PORTAL=1` |
-| Redemption outline (SHARED / UNIQUE / VOUCHER) | `booking.spec.ts` | Seed lacks those modes; MANUAL / SHARED_GENERATED covered where seeded |
+| Insufficient voucher inventory | `booking.spec.ts` | Covered by `book-event.integration.test` |
 | Idempotent retry | `booking.spec.ts` | Covered by `book-event.integration.test` |
 | Booking confirmation email | `booking.spec.ts` | No inbox harness; staging Resend checklist |
+| PDF download (no R2) | `booking.spec.ts` | Named skip when `S3_*` / `IMAGE_PUBLIC_BASE_URL` unset |
 | Promotion queue / partial capacity | `waitlist.spec.ts` | Covered by `waitlist.integration.test` |
 | Onboarding auto-`returnTo` after finish | (product polish) | Finish still → `/membership`; named deferral post-MVP — see coverage matrix |
 

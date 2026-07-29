@@ -3,13 +3,7 @@ import { and, asc, count, desc, eq, gt, gte, ilike, or, type SQL, sql } from "dr
 
 import type { Db } from "../index";
 import { eventGalleryImages } from "../schema/event-gallery-images";
-import {
-  type Event,
-  events,
-  type SecretCodeMode,
-  type TicketType,
-  type TimingMode,
-} from "../schema/events";
+import { type Event, events, type TicketType, type TimingMode } from "../schema/events";
 import { deriveDateTimeFields } from "./datetime";
 import { CatalogValidationError } from "./errors";
 import { resolveEventLanguages } from "./language-filter";
@@ -56,9 +50,7 @@ export type CreateEventInput = {
   creditPrice: number;
   totalCapacity?: number | null;
   ticketType?: TicketType | null;
-  secretCodeMode?: SecretCodeMode | null;
   secretCode?: string | null;
-  promoCode?: string | null;
   eventWebsiteUrl?: string | null;
   barrierFree?: boolean | null;
   languageIndependent?: boolean;
@@ -92,9 +84,7 @@ export type UpdateEventInput = {
   creditPrice?: number;
   totalCapacity?: number;
   ticketType?: TicketType | null;
-  secretCodeMode?: SecretCodeMode | null;
   secretCode?: string | null;
-  promoCode?: string | null;
   eventWebsiteUrl?: string | null;
   barrierFree?: boolean | null;
   languageIndependent?: boolean;
@@ -321,9 +311,7 @@ async function insertEventRow(
   const defaults = applyEventDefaults(input);
   validateRedemptionConfig({
     ticketType: defaults.ticketType,
-    secretCodeMode: defaults.secretCodeMode,
     secretCode: input.secretCode,
-    promoCode: input.promoCode,
     eventWebsiteUrl: input.eventWebsiteUrl,
   });
 
@@ -350,9 +338,8 @@ async function insertEventRow(
       totalCapacity: defaults.totalCapacity,
       remainingCapacity: defaults.totalCapacity,
       ticketType: defaults.ticketType,
-      secretCodeMode: defaults.secretCodeMode,
       secretCode: input.secretCode?.trim() || null,
-      promoCode: input.promoCode?.trim() || null,
+      promoCode: null,
       eventWebsiteUrl: input.eventWebsiteUrl?.trim() || null,
       barrierFree: input.barrierFree ?? null,
       languageIndependent: input.languageIndependent ?? false,
@@ -422,12 +409,9 @@ export async function updateEvent(
   const partner = await resolvePartner(db, partnerId);
 
   const ticketType = input.ticketType ?? existing.ticketType;
-  const secretCodeMode = input.secretCodeMode ?? existing.secretCodeMode;
   validateRedemptionConfig({
     ticketType,
-    secretCodeMode,
     secretCode: input.secretCode ?? existing.secretCode,
-    promoCode: input.promoCode ?? existing.promoCode,
     eventWebsiteUrl: input.eventWebsiteUrl ?? existing.eventWebsiteUrl,
   });
 
@@ -479,11 +463,9 @@ export async function updateEvent(
       totalCapacity: nextTotalCapacity,
       remainingCapacity: nextRemainingCapacity,
       ticketType,
-      secretCodeMode,
       secretCode:
         input.secretCode !== undefined ? input.secretCode?.trim() || null : existing.secretCode,
-      promoCode:
-        input.promoCode !== undefined ? input.promoCode?.trim() || null : existing.promoCode,
+      promoCode: null,
       eventWebsiteUrl:
         input.eventWebsiteUrl !== undefined
           ? input.eventWebsiteUrl?.trim() || null

@@ -7,7 +7,7 @@ import {
 } from "./eligibility";
 import { BookingError } from "./errors";
 import { maxBookableTickets } from "./max-bookable-tickets";
-import { generateSecretCode, resolveRedemption } from "./redemption";
+import { resolveRedemption } from "./redemption";
 
 function baseEvent(overrides: Partial<Event> = {}): Event {
   return {
@@ -30,7 +30,6 @@ function baseEvent(overrides: Partial<Event> = {}): Event {
     totalCapacity: 10,
     remainingCapacity: 10,
     ticketType: "SECRET_CODE",
-    secretCodeMode: "MANUAL",
     secretCode: "ABC123",
     promoCode: null,
     eventWebsiteUrl: null,
@@ -63,18 +62,18 @@ describe("booking eligibility", () => {
 });
 
 describe("maxBookableTickets", () => {
-  test("guest preview is capped at 3", () => {
+  test("guest preview capped at 3", () => {
     expect(
       maxBookableTickets({
         viewerKind: "guest",
-        credits: 17,
-        creditPrice: 2,
-        remainingCapacity: 10,
+        credits: 100,
+        creditPrice: 1,
+        remainingCapacity: 50,
       }),
     ).toBe(3);
   });
 
-  test("signed-in max follows credits and capacity", () => {
+  test("signed-in follows credits and capacity", () => {
     expect(
       maxBookableTickets({
         viewerKind: "signed-in",
@@ -85,18 +84,19 @@ describe("maxBookableTickets", () => {
     ).toBe(8);
   });
 
-  test("signed-in capacity binds below affordable", () => {
+  test("signed-in respects available inventory when provided", () => {
     expect(
       maxBookableTickets({
         viewerKind: "signed-in",
         credits: 17,
         creditPrice: 2,
-        remainingCapacity: 5,
+        remainingCapacity: 10,
+        availableInventory: 3,
       }),
-    ).toBe(5);
+    ).toBe(3);
   });
 
-  test("signed-in zero credits yields zero", () => {
+  test("signed-in zero credits yields 0", () => {
     expect(
       maxBookableTickets({
         viewerKind: "signed-in",
@@ -117,44 +117,52 @@ describe("maxBookableTickets", () => {
       }),
     ).toBe(6);
   });
+
+  test("signed-in creditPrice <= 0 still respects inventory", () => {
+    expect(
+      maxBookableTickets({
+        viewerKind: "signed-in",
+        credits: 17,
+        creditPrice: 0,
+        remainingCapacity: 6,
+        availableInventory: 2,
+      }),
+    ).toBe(2);
+  });
 });
 
 describe("resolveRedemption", () => {
-  test("manual secret code", () => {
+  test("secret code from event", () => {
     const result = resolveRedemption(baseEvent());
+    expect(result.redemptionType).toBe("SECRET_CODE");
     expect(result.redemptionInfo).toBe("ABC123");
-    expect(result.persistEventSecretCode).toBeUndefined();
+    expect(result.redemptionUrl).toBeNull();
   });
 
-  test("shared generated creates once", () => {
-    const result = resolveRedemption(
-      baseEvent({ secretCodeMode: "SHARED_GENERATED", secretCode: null }),
-    );
-    expect(result.redemptionInfo.length).toBeGreaterThanOrEqual(8);
-    expect(result.persistEventSecretCode).toBe(result.redemptionInfo);
+  test("rejects missing secret code", () => {
+    expect(() => resolveRedemption(baseEvent({ secretCode: null }))).toThrow(BookingError);
   });
 
-  test("unique per booking", () => {
-    const a = resolveRedemption(baseEvent({ secretCodeMode: "UNIQUE_PER_BOOKING" }));
-    const b = resolveRedemption(baseEvent({ secretCodeMode: "UNIQUE_PER_BOOKING" }));
-    expect(a.redemptionInfo).not.toBe(b.redemptionInfo);
+  test("rejects voucher promo (use inventory allocation)", () => {
+    expect(() =>
+      resolveRedemption(
+        baseEvent({
+          ticketType: "VOUCHER_PROMO",
+          secretCode: null,
+          eventWebsiteUrl: "https://example.com/event",
+        }),
+      ),
+    ).toThrow(BookingError);
   });
 
-  test("voucher", () => {
-    const result = resolveRedemption(
-      baseEvent({
-        ticketType: "VOUCHER",
-        secretCodeMode: null,
-        secretCode: null,
-        promoCode: "PROMO10",
-        eventWebsiteUrl: "https://example.com/event",
-      }),
-    );
-    expect(result.redemptionInfo).toBe("PROMO10");
-    expect(result.redemptionUrl).toBe("https://example.com/event");
-  });
-
-  test("generateSecretCode length", () => {
-    expect(generateSecretCode(10)).toHaveLength(10);
+  test("rejects voucher pdf (use inventory allocation)", () => {
+    expect(() =>
+      resolveRedemption(
+        baseEvent({
+          ticketType: "VOUCHER_PDF",
+          secretCode: null,
+        }),
+      ),
+    ).toThrow(BookingError);
   });
 });

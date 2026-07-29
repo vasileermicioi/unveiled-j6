@@ -15,9 +15,11 @@ import {
   deleteEvent,
   deletePartner,
   events,
+  eventVoucherCodes,
   joinWaitlist,
   listAdminWaitlistEntries,
   promoteWaitlistEntryAsAdmin,
+  purgeBookingTicketsForBookings,
   subscriptions,
   users,
   waitlistEntries,
@@ -42,13 +44,15 @@ describe("admin capacity ops (integration)", () => {
     const adminId = `cap-admin-${suffix}`;
     const memberId = `cap-member-${suffix}`;
     const waiterId = `cap-waiter-${suffix}`;
-    const image = await createTestImage();
+    const partnerImage = await createTestImage();
+    const eventImage = await createTestImage();
+    const compImage = await createTestImage();
 
     const partner = await createPartner(httpDb, {
       name: `Capacity Ops Venue ${suffix.slice(0, 8)}`,
       address: "Teststraße 11, Berlin",
       contactEmail: `cap-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
@@ -64,7 +68,7 @@ describe("admin capacity ops (integration)", () => {
       creditPrice: 2,
       totalCapacity: 1,
       secretCode: "CAPTEST",
-      imagePrebuilt: image,
+      imagePrebuilt: eventImage,
       skipUpload: true,
     });
 
@@ -230,7 +234,7 @@ describe("admin capacity ops (integration)", () => {
         creditPrice: 3,
         totalCapacity: 2,
         secretCode: "COMPTEST",
-        imagePrebuilt: image,
+        imagePrebuilt: compImage,
         skipUpload: true,
       });
 
@@ -283,11 +287,25 @@ describe("admin capacity ops (integration)", () => {
           }),
         ).rejects.toMatchObject({ code: "SOLD_OUT" });
       } finally {
+        const compBookingIds = (
+          await httpDb
+            .select({ id: bookings.id })
+            .from(bookings)
+            .where(eq(bookings.eventId, compEvent.id))
+        ).map((row) => row.id);
+        await purgeBookingTicketsForBookings(httpDb, compBookingIds);
         await httpDb.delete(bookings).where(eq(bookings.eventId, compEvent.id));
-        await deleteEvent(httpDb, compEvent.id, { skipStorage: true });
+        await deleteEvent(httpDb, compEvent.id, { skipBucket: true });
       }
     } finally {
       await httpDb.delete(waitlistEntries).where(eq(waitlistEntries.eventId, event.id));
+      const eventBookingIds = (
+        await httpDb
+          .select({ id: bookings.id })
+          .from(bookings)
+          .where(eq(bookings.eventId, event.id))
+      ).map((row) => row.id);
+      await purgeBookingTicketsForBookings(httpDb, eventBookingIds);
       await httpDb.delete(bookings).where(eq(bookings.eventId, event.id));
       await httpDb.delete(creditLedger).where(eq(creditLedger.userId, memberId));
       await httpDb.delete(creditLedger).where(eq(creditLedger.userId, waiterId));
@@ -299,8 +317,132 @@ describe("admin capacity ops (integration)", () => {
       await httpDb.delete(users).where(eq(users.id, waiterId));
       await httpDb.delete(users).where(eq(users.id, `cap-manual-${suffix}`));
       await httpDb.delete(users).where(eq(users.id, adminId));
-      await deleteEvent(httpDb, event.id, { skipStorage: true });
-      await deletePartner(httpDb, partner.id, { skipStorage: true });
+      await deleteEvent(httpDb, event.id, { skipBucket: true });
+      await deletePartner(httpDb, partner.id, { skipBucket: true });
+      await txDb.pool.end();
+    }
+  }, 30_000);
+
+  test("cancel restocks promo inventory", async () => {
+    if (!databaseUrl) {
+      console.warn("Skipping cancel restock integration test (DATABASE_URL unset)");
+      return;
+    }
+
+    const httpDb = createDb(databaseUrl);
+    const txDb = createTxDb(databaseUrl);
+    const suffix = crypto.randomUUID();
+    const adminId = `restock-admin-${suffix}`;
+    const memberId = `restock-member-${suffix}`;
+    const partnerImage = await createTestImage();
+    const eventImage = await createTestImage();
+
+    const partner = await createPartner(httpDb, {
+      name: `Restock Venue ${suffix.slice(0, 8)}`,
+      address: "Teststraße 11, Berlin",
+      contactEmail: `restock-${suffix}@example.com`,
+      logoPrebuilt: partnerImage,
+      skipUpload: true,
+    });
+
+    const event = await createEvent(httpDb, {
+      partnerId: partner.id,
+      title: `Restock Event ${suffix.slice(0, 8)}`,
+      description: "Description",
+      address: "Teststraße 11, Berlin",
+      neighborhood: "Mitte",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date(Date.now() + 86_400_000),
+      creditPrice: 1,
+      totalCapacity: 5,
+      ticketType: "VOUCHER_PROMO",
+      eventWebsiteUrl: "https://example.com/restock",
+      imagePrebuilt: eventImage,
+      skipUpload: true,
+    });
+
+    await httpDb.insert(eventVoucherCodes).values([
+      { eventId: event.id, code: `R1-${suffix.slice(0, 8)}`, status: "AVAILABLE" },
+      { eventId: event.id, code: `R2-${suffix.slice(0, 8)}`, status: "AVAILABLE" },
+    ]);
+
+    try {
+      await httpDb.insert(users).values([
+        {
+          id: adminId,
+          email: `${adminId}@example.com`,
+          emailVerified: true,
+          credits: 0,
+          role: "ADMIN",
+        },
+        {
+          id: memberId,
+          email: `${memberId}@example.com`,
+          emailVerified: true,
+          credits: 10,
+          role: "USER",
+        },
+      ]);
+      await httpDb.insert(subscriptions).values({
+        userId: memberId,
+        status: "ACTIVE",
+        plan: "Basic Berlin",
+      });
+
+      const booked = await bookEvent(txDb, {
+        userId: memberId,
+        eventId: event.id,
+        ticketsCount: 2,
+        idempotencyKey: `restock-book-${suffix}`,
+      });
+
+      const beforeCancel = await httpDb
+        .select()
+        .from(eventVoucherCodes)
+        .where(eq(eventVoucherCodes.eventId, event.id));
+      expect(beforeCancel.every((row) => row.status === "ALLOCATED")).toBe(true);
+
+      const cancelled = await cancelBookingAsAdmin(txDb, {
+        bookingId: booked.booking.id,
+        reason: "Restock inventory after member cancel request",
+        adminUserId: adminId,
+      });
+      expect(cancelled.booking.status).toBe("CANCELLED");
+
+      const afterCancel = await httpDb
+        .select()
+        .from(eventVoucherCodes)
+        .where(eq(eventVoucherCodes.eventId, event.id));
+      expect(afterCancel).toHaveLength(2);
+      expect(afterCancel.every((row) => row.status === "AVAILABLE")).toBe(true);
+      expect(afterCancel.every((row) => row.bookingTicketId == null)).toBe(true);
+
+      const eventAfter = await httpDb.query.events.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, event.id),
+      });
+      expect(eventAfter?.remainingCapacity).toBe(5);
+
+      const memberAfter = await httpDb.query.users.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, memberId),
+      });
+      expect(memberAfter?.credits).toBe(8);
+    } finally {
+      const bookingIds = (
+        await httpDb
+          .select({ id: bookings.id })
+          .from(bookings)
+          .where(eq(bookings.eventId, event.id))
+      ).map((row) => row.id);
+      await purgeBookingTicketsForBookings(httpDb, bookingIds);
+      await httpDb.delete(bookings).where(eq(bookings.eventId, event.id));
+      await httpDb.delete(eventVoucherCodes).where(eq(eventVoucherCodes.eventId, event.id));
+      await httpDb.delete(creditLedger).where(eq(creditLedger.userId, memberId));
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, memberId));
+      await httpDb.delete(users).where(eq(users.id, memberId));
+      await httpDb.delete(users).where(eq(users.id, adminId));
+      await deleteEvent(httpDb, event.id, { skipBucket: true });
+      await deletePartner(httpDb, partner.id, { skipBucket: true });
       await txDb.pool.end();
     }
   }, 30_000);

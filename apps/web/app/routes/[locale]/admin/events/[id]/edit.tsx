@@ -1,4 +1,4 @@
-import { getEventById, listPartners, updateEvent } from "@unveiled/db";
+import { getEventById, getVoucherInventoryCounts, listPartners, updateEvent } from "@unveiled/db";
 import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
@@ -20,6 +20,11 @@ import {
   mapCatalogError,
   parseEventFormBodyFromRequest,
 } from "../../../../../lib/admin-route";
+import {
+  applyVoucherInventoryForEvents,
+  assertVoucherInventoryForForm,
+  voucherPayloadFromFormValues,
+} from "../../../../../lib/admin-voucher-inventory";
 import { getAuthOptions } from "../../../../../lib/auth";
 import type { Locale } from "../../../../../lib/locale";
 import { resolveEnvVarFromContext } from "../../../../../lib/runtime-env";
@@ -101,12 +106,24 @@ export const POST = createRoute(async (c) => {
 
   try {
     const values = await parseEventFormBodyFromRequest(body);
+    const payload = voucherPayloadFromFormValues(values);
+    await assertVoucherInventoryForForm(db, {
+      eventId,
+      ticketType: values.ticketType,
+      payload,
+      mode: "edit",
+    });
     const previousRemaining = existing.remainingCapacity;
     const updated = await updateEvent(
       db,
       eventId,
       toUpdateEventInput(values, guard.session.user.id),
     );
+    await applyVoucherInventoryForEvents(db, {
+      eventIds: [eventId],
+      ticketType: values.ticketType,
+      payload,
+    });
 
     // Phase 7 demo trigger: capacity increase → processWaitlistForEvent + promotion email.
     // Phase 8 admin booking-cancel must call the same processor after capacity frees.
@@ -138,7 +155,8 @@ export const POST = createRoute(async (c) => {
     return c.redirect(eventListPath(guard.locale), 302);
   } catch (error) {
     await ensureImageVariantsUploaded(db, existing.imageId);
-    const existingDefaults = eventToFormDefaults(existing);
+    const inventoryCounts = await getVoucherInventoryCounts(db, eventId);
+    const existingDefaults = eventToFormDefaults(existing, inventoryCounts);
     let defaults = existingDefaults;
     try {
       const formDefaults = formValuesToDefaults(await parseEventFormBodyFromRequest(body));
@@ -146,6 +164,8 @@ export const POST = createRoute(async (c) => {
       defaults = {
         ...existingDefaults,
         ...formDefaults,
+        eventId,
+        inventoryCounts,
         // Prefer newly staged/processed replacement over the previous DB image.
         currentImageId: stagedImageId ?? existingDefaults.currentImageId,
         currentImageUrl:
@@ -198,11 +218,12 @@ export default createRoute(async (c) => {
   await ensureImageVariantsUploaded(db, event.imageId);
 
   const partners = await listPartners(db, { limit: 1000 });
+  const inventoryCounts = await getVoucherInventoryCounts(db, eventId);
 
   return renderEditPage(c, {
     locale: guard.locale,
     eventId,
     partners: toPartnerOptions(partners),
-    defaults: eventToFormDefaults(event),
+    defaults: eventToFormDefaults(event, inventoryCounts),
   });
 });

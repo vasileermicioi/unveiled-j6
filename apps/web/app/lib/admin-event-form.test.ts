@@ -8,7 +8,9 @@ import {
   parseBuilderTimes,
   parseEventFormBody,
   parseIsoSlotDates,
+  parsePromoCodesJson,
   parseSeriesSlots,
+  parseVoucherPdfsJson,
 } from "./admin-event-form";
 
 function asString(value: string | File | (string | File)[] | undefined): string | undefined {
@@ -64,7 +66,6 @@ describe("admin-event-form helpers", () => {
         credit_price: "2",
         total_capacity: "15",
         ticket_type: "SECRET_CODE",
-        secret_code_mode: "MANUAL",
         secret_code: "JAZZ123",
       },
       asString,
@@ -77,10 +78,45 @@ describe("admin-event-form helpers", () => {
     expect(values.creditPrice).toBe(2);
     expect(values.totalCapacity).toBe(15);
     expect(values.secretCode).toBe("JAZZ123");
+    expect(values.promoCodes).toEqual([]);
+    expect(values.voucherPdfs).toEqual([]);
+    expect(values.replaceUnusedInventory).toBe(false);
     expect(values.imageUpload).toBeNull();
     expect(values.imageUrl).toBeNull();
     expect(values.imagePrebuilt).toBeNull();
     expect(values.stagedImageId).toBeNull();
+  });
+
+  test("parseEventFormBody extracts promo and pdf inventory payloads", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Promo Night",
+        description: "Codes",
+        address: "Main St 1",
+        neighborhood: "Mitte",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        ticket_type: "VOUCHER_PROMO",
+        event_website_url: "https://example.com/event",
+        promo_codes_json: JSON.stringify(["AAA", "BBB"]),
+        voucher_pdfs_json: JSON.stringify([
+          { objectKey: "vouchers/staging/u/1.pdf", pageLabel: "p.1" },
+        ]),
+        replace_unused_inventory: "on",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.ticketType).toBe("VOUCHER_PROMO");
+    expect(values.promoCodes).toEqual(["AAA", "BBB"]);
+    expect(values.voucherPdfs).toEqual([
+      { objectKey: "vouchers/staging/u/1.pdf", originalFilename: null, pageLabel: "p.1" },
+    ]);
+    expect(values.replaceUnusedInventory).toBe(true);
   });
 
   test("parseEventFormBody treats bare imageId as stagedImageId", async () => {
@@ -197,7 +233,6 @@ describe("admin-event-form helpers", () => {
         credit_price: "2",
         total_capacity: "15",
         ticket_type: "SECRET_CODE",
-        secret_code_mode: "MANUAL",
         secret_code: "JAZZ123",
         languages: ["DE", "EN"],
         target_age_groups: ["18-25", "26-35"],
@@ -231,7 +266,6 @@ describe("admin-event-form helpers", () => {
         credit_price: "2",
         total_capacity: "15",
         ticket_type: "SECRET_CODE",
-        secret_code_mode: "MANUAL",
         secret_code: "JAZZ123",
         lat: "",
         lng: "",
@@ -260,7 +294,6 @@ describe("admin-event-form helpers", () => {
         credit_price: "1",
         total_capacity: "20",
         ticket_type: "SECRET_CODE",
-        secret_code_mode: "MANUAL",
         secret_code: "ART123",
         language_independent: "on",
         languages: ["DE", "EN"],
@@ -305,6 +338,15 @@ describe("admin-event-form helpers", () => {
   test("parseIsoSlotDates parses ISO strings", () => {
     const slots = parseIsoSlotDates(["2026-07-06T17:30:00.000Z", "2026-07-08T17:30:00.000Z"]);
     expect(slots).toHaveLength(2);
+  });
+
+  test("parsePromoCodesJson and parseVoucherPdfsJson ignore invalid payloads", () => {
+    expect(parsePromoCodesJson(undefined)).toEqual([]);
+    expect(parsePromoCodesJson('["A", " B ", 1]')).toEqual(["A", "B"]);
+    expect(parseVoucherPdfsJson("not-json")).toEqual([]);
+    expect(
+      parseVoucherPdfsJson(JSON.stringify([{ objectKey: "vouchers/x.pdf", pageLabel: "p.1" }])),
+    ).toEqual([{ objectKey: "vouchers/x.pdf", originalFilename: null, pageLabel: "p.1" }]);
   });
 
   test("expandSeriesSlotsFromBuilder respects excluded dates", () => {

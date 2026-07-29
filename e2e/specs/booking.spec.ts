@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 
-import { settleAdminSession } from "../fixtures/admin";
+import { r2Configured, settleAdminSession } from "../fixtures/admin";
 import {
   hasAdminCredentials,
   loginAdminForMembershipHq,
@@ -23,8 +23,11 @@ import {
   SOLD_OUT_WAITLIST_TITLE,
 } from "../fixtures/waitlist";
 
-/** Stable demo seed — SECRET_CODE / MANUAL, creditPrice 2, future date. */
+/** Stable demo seed — SECRET_CODE, creditPrice 2, future date. */
 const BOOKABLE_TITLE = DEMO_DISCOVERY_TITLES.theaterFuture;
+const SECRET_CODE = "ICHWILLABE26";
+const PROMO_TITLE = DEMO_DISCOVERY_TITLES.voucherPromo;
+const PDF_TITLE = DEMO_DISCOVERY_TITLES.voucherPdf;
 
 async function onboardFreshMember(page: Page, locale: Locale) {
   let lastError: unknown;
@@ -43,9 +46,40 @@ async function onboardFreshMember(page: Page, locale: Locale) {
   throw lastError;
 }
 
-async function bookableEventPath(locale: Locale): Promise<string> {
-  const eventId = await ensureEventHasCapacity(BOOKABLE_TITLE, 5);
+async function bookableEventPath(locale: Locale, title = BOOKABLE_TITLE): Promise<string> {
+  const eventId = await ensureEventHasCapacity(title, 5);
   return `/${locale}/events/${eventId}`;
+}
+
+async function confirmBooking(page: Page, locale: Locale, title: string, tickets = 1) {
+  const eventPath = await bookableEventPath(locale, title);
+  // Prefer qty query (SSR default) — island hydration can reset a client-side selectOption.
+  const bookUrl = tickets > 1 ? `${eventPath}/book?qty=${tickets}` : `${eventPath}/book`;
+  await page.goto(bookUrl);
+  await expect(page).toHaveURL(new RegExp(`/${locale}/events/.+/book`));
+  await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
+  await expect(page).toHaveURL(/\/book\/confirm/);
+}
+
+async function expectMaskedCode(page: Page, code: string) {
+  const codeInput = page.locator(`input[type="password"][value="${code}"]`).first();
+  await expect(codeInput).toBeVisible();
+  await expect(page.getByText(code, { exact: true })).toHaveCount(0);
+}
+
+async function revealAndHideCode(page: Page, code: string) {
+  const codeInput = page.locator(`input[value="${code}"]`).first();
+  await expect(codeInput).toHaveAttribute("type", "password");
+  await expect(page.getByText(code, { exact: true })).toHaveCount(0);
+
+  // Reveal control is the eye button adjacent to this code field.
+  const reveal = codeInput.locator("xpath=following-sibling::button[1]");
+  await reveal.click();
+  await expect(codeInput).toHaveAttribute("type", "text");
+
+  const hide = codeInput.locator("xpath=following-sibling::button[1]");
+  await hide.click();
+  await expect(codeInput).toHaveAttribute("type", "password");
 }
 
 test.describe("booking.feature", () => {
@@ -105,12 +139,11 @@ test.describe("booking.feature", () => {
     await expect(
       page.getByRole("heading", { name: /buchung bestätigt|booking confirmed/i }),
     ).toBeVisible();
-    await expect(
-      page.getByText(/TARTUFFE|DEIN TICKET-CODE|YOUR TICKET CODE/i).first(),
-    ).toBeVisible();
+    await expect(page.getByText(/DEIN TICKET-CODE|YOUR TICKET CODE/i).first()).toBeVisible();
+    await expectMaskedCode(page, SECRET_CODE);
   });
 
-  test("Scenario Outline: Redemption info by ticket type and secret code mode — ticketType = SECRET_CODE, mode = MANUAL", async ({
+  test("Scenario Outline: Redemption info by ticket type — ticketType = SECRET_CODE", async ({
     page,
     locale,
   }) => {
@@ -119,32 +152,64 @@ test.describe("booking.feature", () => {
     const user = await onboardFreshMember(page, locale);
     await activateMemberForBooking(user.email);
 
-    const eventPath = await bookableEventPath(locale);
-    await page.goto(`${eventPath}/book`);
-    await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
-    await expect(page).toHaveURL(/\/book\/confirm/);
-    await expect(page.getByText("TARTUFFE", { exact: true })).toBeVisible();
+    await confirmBooking(page, locale, BOOKABLE_TITLE);
+    await expectMaskedCode(page, SECRET_CODE);
+    await revealAndHideCode(page, SECRET_CODE);
     await expect(page.getByText(/abendkasse|box office|einlass|entry/i).first()).toBeVisible();
   });
 
-  test("Scenario Outline: Redemption info by ticket type and secret code mode — ticketType = SECRET_CODE, mode = SHARED_GENERATED", async () => {
-    test.skip(
-      true,
-      "Deferred — demo seed has no SHARED_GENERATED event; Phase 6 covers MANUAL via seed",
-    );
+  test("Scenario Outline: Redemption info by ticket type — ticketType = VOUCHER_PROMO", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    await ensureEventHasCapacity(PROMO_TITLE, 4);
+
+    await confirmBooking(page, locale, PROMO_TITLE, 2);
+    await expect(page.getByText(/Ticket 1/i)).toBeVisible();
+    await expect(page.getByText(/Ticket 2/i)).toBeVisible();
+    const allocatedCode = await page.locator('input[type="password"]').first().inputValue();
+    expect(allocatedCode.length).toBeGreaterThan(0);
+    await revealAndHideCode(page, allocatedCode);
+    await expect(
+      page.getByRole("link", { name: /zur partner-website|open partner website/i }).first(),
+    ).toBeVisible();
   });
 
-  test("Scenario Outline: Redemption info by ticket type and secret code mode — ticketType = SECRET_CODE, mode = UNIQUE_PER_BOOKING", async () => {
-    test.skip(
-      true,
-      "Deferred — demo seed has no UNIQUE_PER_BOOKING event; Phase 6 covers MANUAL via seed",
-    );
+  test("Scenario Outline: Redemption info by ticket type — ticketType = VOUCHER_PDF", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!r2Configured(), "R2 vars required for seeded PDF voucher download");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    await ensureEventHasCapacity(PDF_TITLE, 4);
+
+    await confirmBooking(page, locale, PDF_TITLE, 2);
+    await expect(page.getByText(/Ticket 1/i)).toBeVisible();
+    await expect(page.getByText(/Ticket 2/i)).toBeVisible();
+    const downloadLinks = page.getByRole("link", { name: /pdf herunterladen|download pdf/i });
+    await expect(downloadLinks).toHaveCount(2);
+
+    const href = await downloadLinks.first().getAttribute("href");
+    expect(href).toMatch(/\/bookings\/.+\/tickets\/.+\/voucher\.pdf$/);
+    if (!href) {
+      throw new Error("Expected PDF download href");
+    }
+    const response = await page.request.get(new URL(href, page.url()).toString());
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"] ?? "").toMatch(/application\/pdf/i);
   });
 
-  test("Scenario Outline: Redemption info by ticket type and secret code mode — ticketType = VOUCHER, mode = (n/a)", async () => {
+  test("Scenario: Booking fails — insufficient voucher inventory", async () => {
     test.skip(
       true,
-      "Deferred — demo seed has no VOUCHER event; Phase 6 covers SECRET_CODE MANUAL via seed",
+      "Covered by packages/db book-event.integration.test (INSUFFICIENT_VOUCHER_INVENTORY)",
     );
   });
 
@@ -208,11 +273,9 @@ test.describe("booking.feature", () => {
     const user = await onboardFreshMember(page, locale);
     await activateMemberForBooking(user.email);
 
-    const eventPath = await bookableEventPath(locale);
-    await page.goto(`${eventPath}/book`);
-    await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
-    await expect(page).toHaveURL(/\/book\/confirm/);
-
+    await confirmBooking(page, locale, BOOKABLE_TITLE);
+    await expectMaskedCode(page, SECRET_CODE);
+    await expect(page.getByRole("button", { name: /code anzeigen|show code/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /code kopieren|copy code/i })).toBeVisible();
     await expect(
       page.getByRole("link", { name: /kalender \(\.ics\)|download calendar/i }),
@@ -220,6 +283,57 @@ test.describe("booking.feature", () => {
     await expect(
       page.getByRole("main").getByRole("link", { name: /support@unveiled\.berlin/i }),
     ).toBeVisible();
+
+    await page.goto(`/${locale}/bookings`);
+    await expect(page.getByRole("heading", { name: /meine tickets|my tickets/i })).toBeVisible();
+    await expectMaskedCode(page, SECRET_CODE);
+  });
+
+  test("Scenario: Multi-ticket promo codes are listed separately", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    await ensureEventHasCapacity(PROMO_TITLE, 4);
+
+    await confirmBooking(page, locale, PROMO_TITLE, 2);
+    await expect(page.getByText(/Ticket 1/i)).toBeVisible();
+    await expect(page.getByText(/Ticket 2/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /code anzeigen|show code/i })).toHaveCount(2);
+
+    await page.goto(`/${locale}/bookings`);
+    await expect(page.getByText(/Ticket 1/i)).toBeVisible();
+    await expect(page.getByText(/Ticket 2/i)).toBeVisible();
+  });
+
+  test("Scenario: PDF voucher download is ownership-gated", async ({ page, locale, browser }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!r2Configured(), "R2 vars required for seeded PDF voucher download");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    await ensureEventHasCapacity(PDF_TITLE, 3);
+
+    await confirmBooking(page, locale, PDF_TITLE, 1);
+    const downloadLink = page
+      .getByRole("link", { name: /pdf herunterladen|download pdf/i })
+      .first();
+    await expect(downloadLink).toBeVisible();
+    const href = await downloadLink.getAttribute("href");
+    if (!href) {
+      throw new Error("Expected PDF download href");
+    }
+    const pdfUrl = new URL(href, page.url()).toString();
+
+    const owned = await page.request.get(pdfUrl);
+    expect(owned.status()).toBe(200);
+    expect(owned.headers()["content-type"] ?? "").toMatch(/application\/pdf/i);
+
+    const guestContext = await browser.newContext();
+    const guestResponse = await guestContext.request.get(pdfUrl, { maxRedirects: 0 });
+    expect([301, 302, 303, 307, 308, 401, 403, 404]).toContain(guestResponse.status());
+    expect(guestResponse.headers()["content-type"] ?? "").not.toMatch(/application\/pdf/i);
+    await guestContext.close();
   });
 
   test("Scenario: Booking confirmation email", async () => {

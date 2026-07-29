@@ -302,13 +302,31 @@ export type AdminCopy = {
   ticketTypeLabel: string;
   ticketTypeSecretCode: string;
   ticketTypeVoucher: string;
-  secretCodeModeLabel: string;
-  secretCodeModeManual: string;
-  secretCodeModeShared: string;
-  secretCodeModeUnique: string;
+  ticketTypeVoucherPdf: string;
   secretCodeLabel: string;
-  promoCodeLabel: string;
   eventWebsiteUrlLabel: string;
+  promoCodesFileLabel: string;
+  promoCodesFileHint: string;
+  promoCodesPasteLabel: string;
+  promoCodesPasteHint: string;
+  promoCodesPreviewCount: (count: number) => string;
+  promoCodesPreviewMore: (count: number) => string;
+  promoCodesPreviewEmpty: string;
+  voucherPdfFileLabel: string;
+  voucherPdfFileHint: string;
+  voucherPdfSkipLabel: string;
+  voucherPdfPagesPerTicketLabel: string;
+  voucherPdfPageCount: (count: number) => string;
+  voucherPdfPreviewCount: (count: number) => string;
+  voucherPdfZeroTickets: string;
+  voucherPdfLoadError: string;
+  voucherPdfUploadError: string;
+  voucherPdfRequired: string;
+  voucherPdfBusy: string;
+  voucherInventorySummary: (available: number, allocated: number) => string;
+  voucherInventorySeriesHint: string;
+  replaceUnusedInventoryLabel: string;
+  replaceUnusedInventoryHint: string;
   barrierFreeLabel: string;
   languageIndependentLabel: string;
   languageIndependentHint: string;
@@ -670,14 +688,36 @@ const copy: Record<Locale, AdminCopy> = {
     capacityLabel: "Kapazität",
     ticketTypeLabel: "Ticket-Typ",
     ticketTypeSecretCode: "Secret Code",
-    ticketTypeVoucher: "Voucher",
-    secretCodeModeLabel: "Code-Modus",
-    secretCodeModeManual: "Manuell",
-    secretCodeModeShared: "Geteilt (generiert)",
-    secretCodeModeUnique: "Pro Buchung",
+    ticketTypeVoucher: "Voucher (Promo)",
+    ticketTypeVoucherPdf: "Voucher (PDF)",
     secretCodeLabel: "Secret Code",
-    promoCodeLabel: "Promo-Code",
     eventWebsiteUrlLabel: "Event-Website",
+    promoCodesFileLabel: "Promo-Codes (TXT/CSV)",
+    promoCodesFileHint: "Eine Code pro nicht-leerer Zeile. Kommas gehören zum Code.",
+    promoCodesPasteLabel: "Oder Codes einfügen",
+    promoCodesPasteHint: "Eine Code pro Zeile. Vorschau vor dem Speichern.",
+    promoCodesPreviewCount: (count) => `${count} Codes bereit zum Speichern`,
+    promoCodesPreviewMore: (count) => `… und ${count} weitere`,
+    promoCodesPreviewEmpty: "Noch keine Codes — Datei wählen oder einfügen.",
+    voucherPdfFileLabel: "Master-PDF",
+    voucherPdfFileHint:
+      "Ein PDF wird clientseitig in Einzeltickets geschnitten und nach R2 hochgeladen.",
+    voucherPdfSkipLabel: "Seiten überspringen",
+    voucherPdfPagesPerTicketLabel: "Seiten pro Ticket",
+    voucherPdfPageCount: (count) => `${count} Seiten im PDF`,
+    voucherPdfPreviewCount: (count) => `${count} Tickets aus der Aufteilung`,
+    voucherPdfZeroTickets: "Mit dieser Aufteilung entstehen keine Tickets.",
+    voucherPdfLoadError: "PDF konnte nicht geladen werden.",
+    voucherPdfUploadError: "PDF-Upload fehlgeschlagen.",
+    voucherPdfRequired: "Bitte ein PDF auswählen.",
+    voucherPdfBusy: "PDF wird vorbereitet…",
+    voucherInventorySummary: (available, allocated) =>
+      `Inventar: ${available} verfügbar, ${allocated} zugewiesen`,
+    voucherInventorySeriesHint:
+      "Bei Serien wird dasselbe Inventar auf jeden erzeugten Termin kopiert.",
+    replaceUnusedInventoryLabel: "Ungenutztes Inventar ersetzen",
+    replaceUnusedInventoryHint:
+      "Löscht nur AVAILABLE-Einträge und speichert die neue Liste. Zugewiesene bleiben.",
     barrierFreeLabel: "Barrierefrei",
     languageIndependentLabel: "Sprachunabhängig",
     languageIndependentHint:
@@ -1037,14 +1077,35 @@ const copy: Record<Locale, AdminCopy> = {
     capacityLabel: "Capacity",
     ticketTypeLabel: "Ticket type",
     ticketTypeSecretCode: "Secret code",
-    ticketTypeVoucher: "Voucher",
-    secretCodeModeLabel: "Code mode",
-    secretCodeModeManual: "Manual",
-    secretCodeModeShared: "Shared generated",
-    secretCodeModeUnique: "Unique per booking",
+    ticketTypeVoucher: "Voucher (promo)",
+    ticketTypeVoucherPdf: "Voucher (PDF)",
     secretCodeLabel: "Secret code",
-    promoCodeLabel: "Promo code",
     eventWebsiteUrlLabel: "Event website",
+    promoCodesFileLabel: "Promo codes (TXT/CSV)",
+    promoCodesFileHint: "One code per non-empty line. Commas are part of the code.",
+    promoCodesPasteLabel: "Or paste codes",
+    promoCodesPasteHint: "One code per line. Preview before save.",
+    promoCodesPreviewCount: (count) => `${count} codes ready to save`,
+    promoCodesPreviewMore: (count) => `… and ${count} more`,
+    promoCodesPreviewEmpty: "No codes yet — choose a file or paste.",
+    voucherPdfFileLabel: "Master PDF",
+    voucherPdfFileHint:
+      "One PDF is sliced into per-ticket files in the browser, then uploaded to R2.",
+    voucherPdfSkipLabel: "Pages to skip",
+    voucherPdfPagesPerTicketLabel: "Pages per ticket",
+    voucherPdfPageCount: (count) => `${count} pages in PDF`,
+    voucherPdfPreviewCount: (count) => `${count} tickets from this split`,
+    voucherPdfZeroTickets: "This split produces zero tickets.",
+    voucherPdfLoadError: "Could not load the PDF.",
+    voucherPdfUploadError: "PDF upload failed.",
+    voucherPdfRequired: "Please choose a PDF.",
+    voucherPdfBusy: "Preparing PDF…",
+    voucherInventorySummary: (available, allocated) =>
+      `Inventory: ${available} available, ${allocated} allocated`,
+    voucherInventorySeriesHint: "For series, the same inventory is copied to every generated slot.",
+    replaceUnusedInventoryLabel: "Replace unused inventory",
+    replaceUnusedInventoryHint:
+      "Deletes only AVAILABLE rows, then saves the new list. Allocated rows stay.",
     barrierFreeLabel: "Barrier-free",
     languageIndependentLabel: "Language-independent",
     languageIndependentHint:
@@ -1111,6 +1172,8 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   MISSING_EVENT_IMAGE: "image",
   IMAGE_NOT_FOUND: "image",
   INVALID_REDEMPTION_CONFIG: "redemption",
+  EMPTY_VOUCHER_INVENTORY: "redemption",
+  DUPLICATE_VOUCHER_CODE: "redemption",
   DUPLICATE_SERIES_SLOTS: "series",
   EMPTY_SERIES_SLOTS: "series",
   EVENT_NOT_FOUND: "title",
@@ -1151,7 +1214,21 @@ export function mapCatalogErrorCode(
     return adminCopy.fieldErrors.image;
   }
 
-  if (code === "INVALID_REDEMPTION_CONFIG") {
+  if (
+    code === "INVALID_REDEMPTION_CONFIG" ||
+    code === "EMPTY_VOUCHER_INVENTORY" ||
+    code === "DUPLICATE_VOUCHER_CODE"
+  ) {
+    if (code === "EMPTY_VOUCHER_INVENTORY") {
+      return locale === "de"
+        ? "Voucher-Inventar fehlt. Codes oder PDF-Tickets hochladen."
+        : "Voucher inventory is missing. Upload codes or PDF tickets.";
+    }
+    if (code === "DUPLICATE_VOUCHER_CODE") {
+      return locale === "de"
+        ? "Doppelter Promo-Code oder PDF-Schlüssel im Upload."
+        : "Duplicate promo code or PDF key in the upload.";
+    }
     return adminCopy.fieldErrors.redemption;
   }
 

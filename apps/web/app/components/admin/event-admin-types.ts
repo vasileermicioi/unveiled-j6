@@ -1,4 +1,4 @@
-import type { SecretCodeMode, TicketType, TimingMode } from "@unveiled/db";
+import type { TicketType, TimingMode, VoucherInventoryCounts } from "@unveiled/db";
 
 export type EventFormDefaults = Partial<{
   partnerId: string;
@@ -15,10 +15,10 @@ export type EventFormDefaults = Partial<{
   creditPrice: number;
   totalCapacity: number;
   ticketType: TicketType;
-  secretCodeMode: SecretCodeMode;
   secretCode: string | null;
-  promoCode: string | null;
   eventWebsiteUrl: string | null;
+  eventId: string;
+  inventoryCounts: VoucherInventoryCounts;
   barrierFree: boolean | null;
   languageIndependent: boolean;
   languages: string[] | null;

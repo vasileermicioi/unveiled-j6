@@ -5,6 +5,7 @@ import { createTestImagePrebuilt } from "../catalog/test-image";
 import {
   anonymizeUserAccount,
   bookings,
+  bookingTickets,
   buildUserDataExport,
   createDb,
   createEvent,
@@ -15,6 +16,7 @@ import {
   deleteEvent,
   deletePartner,
   isGdprError,
+  purgeBookingTicketsForBookings,
   savedEvents,
   subscriptions,
   users,
@@ -39,13 +41,14 @@ describe("gdpr domain (integration)", () => {
     const suffix = crypto.randomUUID();
     const userId = `gdpr-${suffix}`;
     const adminId = `gdpr-admin-${suffix}`;
-    const image = await createTestImage();
+    const partnerImage = await createTestImage();
+    const eventImage = await createTestImage();
 
     const partner = await createPartner(httpDb, {
       name: `GDPR Venue ${suffix.slice(0, 8)}`,
       address: "Teststraße 9, Berlin",
       contactEmail: `gdpr-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
@@ -61,7 +64,7 @@ describe("gdpr domain (integration)", () => {
       creditPrice: 2,
       totalCapacity: 5,
       secretCode: "GDPRTEST",
-      imagePrebuilt: image,
+      imagePrebuilt: eventImage,
       skipUpload: true,
     });
 
@@ -108,16 +111,29 @@ describe("gdpr domain (integration)", () => {
         type: "SUBSCRIPTION_REFILL",
         description: "Starter",
       });
-      await httpDb.insert(bookings).values({
-        userId,
-        eventId: event.id,
-        partnerId: partner.id,
-        ticketsCount: 1,
-        totalCredits: 2,
-        status: "CONFIRMED",
-        redemptionType: "SECRET_CODE",
-        redemptionInfo: "GDPRTEST",
-        idempotencyKey: `gdpr-book-${suffix}`,
+      const [booking] = await httpDb
+        .insert(bookings)
+        .values({
+          userId,
+          eventId: event.id,
+          partnerId: partner.id,
+          ticketsCount: 1,
+          totalCredits: 2,
+          status: "CONFIRMED",
+          redemptionType: "SECRET_CODE",
+          redemptionInfo: "GDPRTEST",
+          idempotencyKey: `gdpr-book-${suffix}`,
+        })
+        .returning();
+      if (!booking) {
+        throw new Error("Failed to insert GDPR test booking");
+      }
+      await httpDb.insert(bookingTickets).values({
+        bookingId: booking.id,
+        ordinal: 1,
+        redemptionCode: "GDPRTEST",
+        redemptionUrl: null,
+        voucherPdfId: null,
       });
       await httpDb.insert(savedEvents).values({
         userId,
@@ -135,6 +151,9 @@ describe("gdpr domain (integration)", () => {
       expect(exported.user.profile.first_name).toBe("Ada");
       expect(exported.bookings).toHaveLength(1);
       expect(exported.bookings[0]?.redemptionInfo).toBe("GDPRTEST");
+      expect(exported.bookings[0]?.tickets).toHaveLength(1);
+      expect(exported.bookings[0]?.tickets[0]?.ordinal).toBe(1);
+      expect(exported.bookings[0]?.tickets[0]?.redemptionCode).toBe("GDPRTEST");
       expect(exported.creditLedger).toHaveLength(1);
       expect(exported.creditLedger[0]?.type).toBe("SUBSCRIPTION_REFILL");
       expect(typeof exported.exportedAt).toBe("string");
@@ -259,6 +278,10 @@ describe("gdpr domain (integration)", () => {
     } finally {
       await httpDb.delete(waitlistEntries).where(eq(waitlistEntries.userId, userId));
       await httpDb.delete(savedEvents).where(eq(savedEvents.userId, userId));
+      const userBookingIds = (
+        await httpDb.select({ id: bookings.id }).from(bookings).where(eq(bookings.userId, userId))
+      ).map((row) => row.id);
+      await purgeBookingTicketsForBookings(httpDb, userBookingIds);
       await httpDb.delete(bookings).where(eq(bookings.userId, userId));
       await httpDb.delete(creditLedger).where(eq(creditLedger.userId, userId));
       await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));

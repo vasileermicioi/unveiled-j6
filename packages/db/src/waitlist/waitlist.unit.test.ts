@@ -29,8 +29,8 @@ describe("waitlist helpers", () => {
       joinWaitlist(fakeDb, {
         userId: "u1",
         eventId: "00000000-0000-0000-0000-000000000001",
-        requestedQty: 4,
+        requestedQty: 1.5,
       }),
-    ).rejects.toBeInstanceOf(WaitlistError);
+    ).rejects.toMatchObject({ code: "INVALID_QTY" });
   });
 });

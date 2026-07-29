@@ -1,4 +1,4 @@
-import type { SecretCodeMode, TicketType, TimingMode } from "@unveiled/db";
+import type { TicketType, TimingMode } from "@unveiled/db";
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 
 import { parsePrebuiltImageVariants } from "./admin-prebuilt-image";
@@ -6,6 +6,12 @@ import { parsePrebuiltImageVariants } from "./admin-prebuilt-image";
 export const MAX_SERIES_SLOTS = 52;
 export const MANUAL_SLOT_ROWS = 5;
 export const BUILDER_TIME_ROWS = 3;
+
+export type VoucherPdfFormItem = {
+  objectKey: string;
+  originalFilename?: string | null;
+  pageLabel?: string | null;
+};
 
 export type EventFormValues = {
   partnerId: string;
@@ -22,10 +28,11 @@ export type EventFormValues = {
   creditPrice: number;
   totalCapacity: number;
   ticketType: TicketType;
-  secretCodeMode: SecretCodeMode;
   secretCode: string | null;
-  promoCode: string | null;
   eventWebsiteUrl: string | null;
+  promoCodes: string[];
+  voucherPdfs: VoucherPdfFormItem[];
+  replaceUnusedInventory: boolean;
   barrierFree: boolean | null;
   languageIndependent: boolean;
   languages: string[] | null;
@@ -198,15 +205,64 @@ function parseTimingMode(value: string | undefined): TimingMode {
 }
 
 function parseTicketType(value: string | undefined): TicketType {
-  return value === "VOUCHER" ? "VOUCHER" : "SECRET_CODE";
-}
-
-function parseSecretCodeMode(value: string | undefined): SecretCodeMode {
-  if (value === "SHARED_GENERATED" || value === "UNIQUE_PER_BOOKING") {
-    return value;
+  if (value === "VOUCHER_PROMO" || value === "VOUCHER" || value === "VOUCHER_PDF") {
+    // Legacy form posts "VOUCHER"; map to VOUCHER_PROMO.
+    return value === "VOUCHER_PDF" ? "VOUCHER_PDF" : "VOUCHER_PROMO";
   }
 
-  return "MANUAL";
+  return "SECRET_CODE";
+}
+
+export function parsePromoCodesJson(raw: string | undefined): string[] {
+  if (!raw?.trim()) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export function parseVoucherPdfsJson(raw: string | undefined): VoucherPdfFormItem[] {
+  if (!raw?.trim()) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    const items: VoucherPdfFormItem[] = [];
+    for (const item of parsed) {
+      if (!item || typeof item !== "object") {
+        continue;
+      }
+      const record = item as Record<string, unknown>;
+      const objectKey = typeof record.objectKey === "string" ? record.objectKey.trim() : "";
+      if (!objectKey) {
+        continue;
+      }
+      items.push({
+        objectKey,
+        originalFilename:
+          typeof record.originalFilename === "string" ? record.originalFilename : null,
+        pageLabel: typeof record.pageLabel === "string" ? record.pageLabel : null,
+      });
+    }
+    return items;
+  } catch {
+    return [];
+  }
 }
 
 export function parseIsoSlotDates(values: string[]): Date[] {
@@ -391,10 +447,11 @@ export async function parseEventFormBody(
     creditPrice: parseInteger(asString(body.credit_price), 1),
     totalCapacity: parseInteger(asString(body.total_capacity), 10),
     ticketType: parseTicketType(asString(body.ticket_type)),
-    secretCodeMode: parseSecretCodeMode(asString(body.secret_code_mode)),
     secretCode: asString(body.secret_code)?.trim() || null,
-    promoCode: asString(body.promo_code)?.trim() || null,
     eventWebsiteUrl: asString(body.event_website_url)?.trim() || null,
+    promoCodes: parsePromoCodesJson(asString(body.promo_codes_json)),
+    voucherPdfs: parseVoucherPdfsJson(asString(body.voucher_pdfs_json)),
+    replaceUnusedInventory: asString(body.replace_unused_inventory) === "on",
     barrierFree: asString(body.barrier_free) === "on" ? true : null,
     languageIndependent,
     languages: languages.length > 0 ? languages : null,

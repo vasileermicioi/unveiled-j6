@@ -3,6 +3,7 @@ import {
   addFeaturedPartner,
   CatalogValidationError,
   createDb,
+  ensureVoucherInventoryAvailable,
   eq,
   events,
   listEventGalleryImages,
@@ -190,5 +191,10 @@ export async function ensureEventHasCapacity(title: string, minRemaining = 5): P
       })
       .where(eq(events.id, row.id));
   }
+
+  if (row.ticketType === "VOUCHER_PROMO" || row.ticketType === "VOUCHER_PDF") {
+    await ensureVoucherInventoryAvailable(db, row.id, row.ticketType, minRemaining);
+  }
+
   return row.id;
 }

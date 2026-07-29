@@ -268,10 +268,8 @@ export type CreateEventOverrides = {
   eventTime?: string;
   creditPrice?: string;
   totalCapacity?: string;
-  ticketType?: "SECRET_CODE" | "VOUCHER";
-  secretCodeMode?: "MANUAL" | "SHARED_GENERATED" | "UNIQUE_PER_BOOKING";
+  ticketType?: "SECRET_CODE" | "VOUCHER_PROMO" | "VOUCHER_PDF";
   secretCode?: string;
-  promoCode?: string;
   eventWebsiteUrl?: string;
   imagePath?: string;
   skipImage?: boolean;
@@ -319,30 +317,18 @@ export async function createEventViaUI(
     await fillNumberByLabel(page, adminLabels.capacity, overrides.totalCapacity);
   }
 
-  if (overrides.ticketType === "VOUCHER") {
-    await selectOptionByLabel(page, adminLabels.ticketType, "Voucher");
-    if (overrides.promoCode) {
-      await fillTextbox(page, adminLabels.promoCode, overrides.promoCode);
-    }
+  if (overrides.ticketType === "VOUCHER_PROMO") {
+    await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);
     if (overrides.eventWebsiteUrl) {
       await fillTextbox(page, adminLabels.eventWebsite, overrides.eventWebsiteUrl);
     }
+  } else if (overrides.ticketType === "VOUCHER_PDF") {
+    await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(pdf\)/i);
   } else {
-    if (overrides.secretCodeMode && overrides.secretCodeMode !== "MANUAL") {
-      await selectOptionByLabel(
-        page,
-        adminLabels.codeMode,
-        overrides.secretCodeMode === "SHARED_GENERATED"
-          ? /geteilt|shared/i
-          : /pro buchung|per booking|unique/i,
-      );
-    }
-    if (overrides.secretCodeMode !== "SHARED_GENERATED") {
-      const code = overrides.secretCode ?? `E2E${suffix.slice(0, 8).toUpperCase()}`;
-      const secretField = page.getByRole("textbox", { name: adminLabels.secretCode, exact: true });
-      if ((await secretField.count()) > 0) {
-        await secretField.fill(code);
-      }
+    const code = overrides.secretCode ?? `E2E${suffix.slice(0, 8).toUpperCase()}`;
+    const secretField = page.getByRole("textbox", { name: adminLabels.secretCode, exact: true });
+    if ((await secretField.count()) > 0) {
+      await secretField.fill(code);
     }
   }
 

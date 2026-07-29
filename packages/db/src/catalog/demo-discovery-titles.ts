@@ -26,7 +26,20 @@ export const DEMO_DISCOVERY_TITLES = {
   ausstellung: titleForRole("ausstellung", "Abundo Ausstellung Demo"),
   konzert: titleForRole("konzert", "Abundo Konzert Demo"),
   soldOutWaitlist: titleForRole("soldOutWaitlist", "Sold Out: Waitlist Demo Night"),
+  /** Additive seed titles for ticket-redemption demos (not in Abundo fixture roles). */
+  voucherPromo: "Demo: Promo Code Inventory Night",
+  voucherPdf: "Demo: PDF Voucher Inventory Night",
 } as const;
+
+/** Stable promo codes stocked on the demo VOUCHER_PROMO event (≥4 for multi-ticket books). */
+export const DEMO_PROMO_CODES = [
+  "DEMO-PROMO-01",
+  "DEMO-PROMO-02",
+  "DEMO-PROMO-03",
+  "DEMO-PROMO-04",
+  "DEMO-PROMO-05",
+  "DEMO-PROMO-06",
+] as const;
 
 /** Partner display name for a seeded event title (JSON only — no image buffers). */
 export function partnerNameForSeedTitle(title: string): string {

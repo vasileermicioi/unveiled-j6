@@ -76,24 +76,39 @@ describe("validateImageSourceExclusive", () => {
 });
 
 describe("validateRedemptionConfig", () => {
-  test("requires secret code for manual secret-code tickets", () => {
+  test("requires secret code for secret-code tickets", () => {
     expect(() =>
       validateRedemptionConfig({
         ticketType: "SECRET_CODE",
-        secretCodeMode: "MANUAL",
         secretCode: "",
       }),
     ).toThrow(CatalogValidationError);
   });
 
-  test("requires promo and website for voucher tickets", () => {
+  test("requires website for voucher promo tickets", () => {
     expect(() =>
       validateRedemptionConfig({
-        ticketType: "VOUCHER",
-        promoCode: "SAVE10",
+        ticketType: "VOUCHER_PROMO",
         eventWebsiteUrl: "",
       }),
     ).toThrow(CatalogValidationError);
+  });
+
+  test("accepts voucher promo with website only (inventory checked separately)", () => {
+    expect(() =>
+      validateRedemptionConfig({
+        ticketType: "VOUCHER_PROMO",
+        eventWebsiteUrl: "https://example.com/event",
+      }),
+    ).not.toThrow();
+  });
+
+  test("accepts voucher pdf without event-level fields (inventory checked separately)", () => {
+    expect(() =>
+      validateRedemptionConfig({
+        ticketType: "VOUCHER_PDF",
+      }),
+    ).not.toThrow();
   });
 });
 
@@ -113,7 +128,6 @@ describe("applyEventDefaults", () => {
     expect(applyEventDefaults({})).toEqual({
       totalCapacity: 10,
       ticketType: "SECRET_CODE",
-      secretCodeMode: "MANUAL",
       timingMode: "TIME_SLOT",
     });
   });

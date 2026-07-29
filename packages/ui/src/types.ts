@@ -1,6 +1,6 @@
 export type CatalogLocale = "de" | "en";
 
-export type EventCardTicketType = "SECRET_CODE" | "VOUCHER";
+export type EventCardTicketType = "SECRET_CODE" | "VOUCHER_PROMO" | "VOUCHER_PDF";
 
 export type EventCardItem = {
   id: string;

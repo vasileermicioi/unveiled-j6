@@ -65,7 +65,6 @@ export async function getSoldOutWaitlistEventId(): Promise<string> {
       totalCapacity: 20,
       remainingCapacity: 0,
       ticketType: "SECRET_CODE",
-      secretCodeMode: "MANUAL",
       secretCode: "WAITLIST26",
       languages: ["de", "en"],
       barrierFree: true,

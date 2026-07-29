@@ -1,6 +1,7 @@
 import type { AppSession } from "@unveiled/auth";
 import type {
   Booking,
+  BookingTicket,
   Event,
   MemberDetail,
   MemberListItem,
@@ -91,7 +92,6 @@ export const mockEvent: Event = {
   totalCapacity: 40,
   remainingCapacity: 12,
   ticketType: "SECRET_CODE",
-  secretCodeMode: "MANUAL",
   secretCode: null,
   promoCode: null,
   eventWebsiteUrl: null,
@@ -246,10 +246,87 @@ export const mockBooking: Booking = {
 export const mockVoucherBooking: Booking = {
   ...mockBooking,
   id: "00000000-0000-4000-8000-000000000011",
-  redemptionType: "VOUCHER",
+  redemptionType: "VOUCHER_PROMO",
   redemptionInfo: "PARTNER10",
   redemptionUrl: "https://example.com/voucher",
 };
+
+export const mockPdfBooking: Booking = {
+  ...mockBooking,
+  id: "00000000-0000-4000-8000-000000000012",
+  redemptionType: "VOUCHER_PDF",
+  redemptionInfo: null,
+  redemptionUrl: null,
+};
+
+export const mockSecretTickets: BookingTicket[] = [
+  {
+    id: "00000000-0000-4000-8000-000000000021",
+    bookingId: mockBookingId,
+    ordinal: 1,
+    redemptionCode: "UV-DEMO42",
+    redemptionUrl: null,
+    voucherPdfId: null,
+    createdAt: storyNow,
+    updatedAt: storyNow,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000022",
+    bookingId: mockBookingId,
+    ordinal: 2,
+    redemptionCode: "UV-DEMO42",
+    redemptionUrl: null,
+    voucherPdfId: null,
+    createdAt: storyNow,
+    updatedAt: storyNow,
+  },
+];
+
+export const mockPromoTickets: BookingTicket[] = [
+  {
+    id: "00000000-0000-4000-8000-000000000023",
+    bookingId: mockVoucherBooking.id,
+    ordinal: 1,
+    redemptionCode: "PARTNER10",
+    redemptionUrl: "https://example.com/voucher",
+    voucherPdfId: null,
+    createdAt: storyNow,
+    updatedAt: storyNow,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000024",
+    bookingId: mockVoucherBooking.id,
+    ordinal: 2,
+    redemptionCode: "PARTNER11",
+    redemptionUrl: "https://example.com/voucher",
+    voucherPdfId: null,
+    createdAt: storyNow,
+    updatedAt: storyNow,
+  },
+];
+
+export const mockPdfTickets: BookingTicket[] = [
+  {
+    id: "00000000-0000-4000-8000-000000000025",
+    bookingId: mockPdfBooking.id,
+    ordinal: 1,
+    redemptionCode: null,
+    redemptionUrl: null,
+    voucherPdfId: "00000000-0000-4000-8000-000000000031",
+    createdAt: storyNow,
+    updatedAt: storyNow,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000026",
+    bookingId: mockPdfBooking.id,
+    ordinal: 2,
+    redemptionCode: null,
+    redemptionUrl: null,
+    voucherPdfId: "00000000-0000-4000-8000-000000000032",
+    createdAt: storyNow,
+    updatedAt: storyNow,
+  },
+];
 
 export const mockWaitlistEntryId = "00000000-0000-4000-8000-000000000030";
 

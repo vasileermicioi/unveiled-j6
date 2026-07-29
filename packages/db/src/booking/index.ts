@@ -1,3 +1,11 @@
+export {
+  type AllocateRedemptionTicketsResult,
+  allocateRedemptionTickets,
+  type LockedRedemptionAllocation,
+  lockRedemptionAllocation,
+  restockBookingInventory,
+  writeRedemptionTickets,
+} from "./allocate-redemption-tickets";
 export { type BookEventInput, type BookEventResult, bookEvent } from "./book-event";
 export {
   assertBookingEligible,
@@ -8,9 +16,15 @@ export {
 } from "./eligibility";
 export { BookingError, type BookingErrorCode, isBookingError } from "./errors";
 export {
+  type GetOwnedBookingTicketPdfInput,
+  getOwnedBookingTicketPdf,
+  type OwnedBookingTicketPdf,
+} from "./get-owned-booking-ticket-pdf";
+export {
   BOOKINGS_PAGE_SIZE,
   type ListUserBookingsInput,
   type ListUserBookingsResult,
+  listBookingTickets,
   listUserBookings,
   type UserBookingEventSummary,
   type UserBookingListItem,
@@ -21,7 +35,7 @@ export {
   maxBookableTickets,
 } from "./max-bookable-tickets";
 export {
-  generateSecretCode,
-  type RedemptionResult,
-  resolveRedemption,
-} from "./redemption";
+  purgeAllBookingTicketGraph,
+  purgeBookingTicketsForBookings,
+} from "./purge-booking-tickets";
+export { type RedemptionResult, resolveRedemption } from "./redemption";

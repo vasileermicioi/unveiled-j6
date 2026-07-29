@@ -17,6 +17,7 @@ import {
   listUserWaitlistEntries,
   processWaitlistForEvent,
   promoteWaitlistEntry,
+  purgeBookingTicketsForBookings,
   subscriptions,
   users,
   WaitlistError,
@@ -39,13 +40,14 @@ describe("waitlist domain", () => {
     const httpDb = createDb(databaseUrl);
     const txDb = createTxDb(databaseUrl);
     const suffix = crypto.randomUUID();
-    const image = await createTestImage();
+    const partnerImage = await createTestImage();
+    const eventImage = await createTestImage();
 
     const partner = await createPartner(httpDb, {
       name: `Waitlist Venue ${suffix.slice(0, 8)}`,
       address: "Teststraße 9, Berlin",
       contactEmail: `wait-${suffix}@example.com`,
-      logoPrebuilt: image,
+      logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
@@ -61,7 +63,7 @@ describe("waitlist domain", () => {
       creditPrice: 2,
       totalCapacity: 2,
       secretCode: "WAITTEST",
-      imagePrebuilt: image,
+      imagePrebuilt: eventImage,
       skipUpload: true,
     });
 
@@ -240,6 +242,13 @@ describe("waitlist domain", () => {
       expect(afterE?.status).toBe("PROMOTED");
     } finally {
       const allUsers = [userA, userB, userC, userSkip, `wait-d-${suffix}`, `wait-e-${suffix}`];
+      const eventBookingIds = (
+        await httpDb
+          .select({ id: bookings.id })
+          .from(bookings)
+          .where(eq(bookings.eventId, event.id))
+      ).map((row) => row.id);
+      await purgeBookingTicketsForBookings(httpDb, eventBookingIds);
       await httpDb.delete(bookings).where(eq(bookings.eventId, event.id));
       await httpDb.delete(waitlistEntries).where(eq(waitlistEntries.eventId, event.id));
       for (const userId of allUsers) {

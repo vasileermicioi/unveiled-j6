@@ -14,6 +14,11 @@ import {
   mapCatalogError,
   parseEventFormBodyFromRequest,
 } from "../../../../lib/admin-route";
+import {
+  applyVoucherInventoryForEvents,
+  assertVoucherInventoryForForm,
+  voucherPayloadFromFormValues,
+} from "../../../../lib/admin-voucher-inventory";
 import { getAuthOptions } from "../../../../lib/auth";
 
 export const POST = createRoute(async (c) => {
@@ -33,7 +38,18 @@ export const POST = createRoute(async (c) => {
 
   try {
     const values = await parseEventFormBodyFromRequest(body);
-    await createEvent(db, toCreateEventInput(values, guard.session.user.id));
+    const payload = voucherPayloadFromFormValues(values);
+    await assertVoucherInventoryForForm(db, {
+      ticketType: values.ticketType,
+      payload,
+      mode: "create",
+    });
+    const event = await createEvent(db, toCreateEventInput(values, guard.session.user.id));
+    await applyVoucherInventoryForEvents(db, {
+      eventIds: [event.id],
+      ticketType: values.ticketType,
+      payload,
+    });
     return c.redirect(eventListPath(guard.locale), 302);
   } catch (error) {
     let defaults: EventFormDefaults | undefined;
