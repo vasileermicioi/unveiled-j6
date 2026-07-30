@@ -18,14 +18,17 @@ const copy = {
 
 function emptyProcessed(): ProcessedAdminUpload {
   const variants = {} as ProcessedAdminUpload["variants"];
+  const variantsBase64 = {} as ProcessedAdminUpload["variantsBase64"];
   for (const filename of VARIANT_FILENAMES) {
     variants[filename] = new Blob(["x"], { type: "image/webp" });
+    variantsBase64[filename] = "eA==";
   }
   return {
     imageId: "img-1",
     claimedWidth: 100,
     claimedHeight: 50,
     variants,
+    variantsBase64,
     sourceFileName: "a.png",
   };
 }

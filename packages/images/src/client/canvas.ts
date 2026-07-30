@@ -1,15 +1,17 @@
 export type ClientCanvas = OffscreenCanvas | HTMLCanvasElement;
 
 export function createClientCanvas(width: number, height: number): ClientCanvas {
-  if (typeof OffscreenCanvas !== "undefined") {
-    return new OffscreenCanvas(width, height);
-  }
-
+  // Prefer HTMLCanvasElement in the browser — WebP encode via toBlob is more reliable
+  // than OffscreenCanvas.convertToBlob on some platforms (false "image/webp" PNG fallbacks).
   if (typeof document !== "undefined") {
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     return canvas;
+  }
+
+  if (typeof OffscreenCanvas !== "undefined") {
+    return new OffscreenCanvas(width, height);
   }
 
   throw new Error("No canvas implementation available for client image resize");

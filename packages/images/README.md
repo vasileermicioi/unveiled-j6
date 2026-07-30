@@ -60,6 +60,7 @@ DB insert helper: `persistPrebuiltImage` from `@unveiled/db/catalog/images`.
 |---|---|---|
 | `imageId` | text | UUID (client-generated) |
 | `hero-1920.webp` … `og-1200x630.webp` | file | **Field name = exact `VariantFilename`** |
+| `hero-1920.webp__b64` … (same for each variant) | string | Base64 WebP backup when file inputs are stripped |
 | `claimedWidth` / `claimedHeight` | text | Required positive integers (decoded source size) |
 | `image_url` | text (optional) | Metadata / remote origin when variants came from the URL→proxy path |
 

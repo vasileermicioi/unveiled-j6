@@ -52,8 +52,12 @@ function asFile(value: string | File | (string | File)[] | undefined): File | Bl
   }
 
   if (Array.isArray(value)) {
-    const first = value[0];
-    return isUploadBlob(first) ? first : undefined;
+    for (const item of value) {
+      if (isUploadBlob(item) && item.size > 0) {
+        return item;
+      }
+    }
+    return undefined;
   }
 
   return isUploadBlob(value) ? value : undefined;

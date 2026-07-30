@@ -3,6 +3,7 @@ import {
   type ClientProcessedImageResult,
   generateImageVariantsClient,
   ImageValidationError,
+  isWebpBuffer,
   VARIANT_FILENAMES,
   type VariantFilename,
 } from "@unveiled/images/client";
@@ -12,8 +13,20 @@ export type ProcessedAdminUpload = {
   claimedWidth: number;
   claimedHeight: number;
   variants: Record<VariantFilename, Blob>;
+  /** Base64 WebP bytes for reliable SSR multipart when file inputs drop programmatic blobs. */
+  variantsBase64: Record<VariantFilename, string>;
   sourceFileName: string;
 };
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
 
 export type ClientImageErrorKind = "undecodable" | "webp_unsupported" | "incomplete" | "generic";
 
@@ -24,15 +37,20 @@ export type AdminImageErrorCopy = {
   imageProcessingError: string;
 };
 
-function toProcessedUpload(
+async function toProcessedUpload(
   generated: ClientProcessedImageResult,
   sourceFileName: string,
-): ProcessedAdminUpload {
+): Promise<ProcessedAdminUpload> {
+  const variantsBase64 = {} as Record<VariantFilename, string>;
+  for (const filename of VARIANT_FILENAMES) {
+    variantsBase64[filename] = await blobToBase64(generated.variants[filename]);
+  }
   return {
     imageId: generated.imageId,
     claimedWidth: generated.metadata.width,
     claimedHeight: generated.metadata.height,
     variants: generated.variants,
+    variantsBase64,
     sourceFileName,
   };
 }
@@ -41,6 +59,21 @@ function toProcessedUpload(
  * Process one or more source files into product variant sets.
  * When `multiple` is false, only the first file is used (primary event image).
  */
+async function assertVariantsAreWebp(variants: Record<VariantFilename, Blob>): Promise<void> {
+  for (const filename of VARIANT_FILENAMES) {
+    const blob = variants[filename];
+    if (!(blob instanceof Blob) || blob.size <= 0) {
+      throw new ImageValidationError(`Missing required variant: ${filename}`);
+    }
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    if (!isWebpBuffer(bytes)) {
+      throw new ImageValidationError(
+        "WebP encoding is not supported in this browser (canvas.toBlob image/webp failed)",
+      );
+    }
+  }
+}
+
 export async function processAdminImageFiles(
   files: File[],
   options: { multiple?: boolean } = {},
@@ -52,7 +85,8 @@ export async function processAdminImageFiles(
     const generated: ClientProcessedImageResult = await generateImageVariantsClient(file, {
       source: "UPLOAD",
     });
-    results.push(toProcessedUpload(generated, file.name));
+    await assertVariantsAreWebp(generated.variants);
+    results.push(await toProcessedUpload(generated, file.name));
   }
 
   return results;
@@ -68,7 +102,8 @@ export async function processAdminImageBlob(
     sourceUrl: options.sourceUrl,
     imageId: options.imageId,
   });
-  return toProcessedUpload(generated, options.sourceFileName ?? "remote-image");
+  await assertVariantsAreWebp(generated.variants);
+  return await toProcessedUpload(generated, options.sourceFileName ?? "remote-image");
 }
 
 export function assignBlobToFileInput(input: HTMLInputElement, filename: string, blob: Blob): void {

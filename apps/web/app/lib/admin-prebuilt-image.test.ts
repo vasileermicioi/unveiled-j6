@@ -82,6 +82,21 @@ describe("parsePrebuiltImageVariants", () => {
     const parsed = await parsePrebuiltImageVariants(body, asString, asFile);
     expect(parsed).toBeNull();
   });
+
+  test("prefers base64 backup when file bytes are not WebP", async () => {
+    const riff = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x01,
+    ]);
+    const body = completePrebuiltBody();
+    for (const filename of VARIANT_FILENAMES) {
+      body[filename] = new File([new Uint8Array(8)], filename, { type: "image/png" });
+      body[`${filename}__b64`] = Buffer.from(riff).toString("base64");
+    }
+    const parsed = await parsePrebuiltImageVariants(body, asString, asFile);
+    expect(parsed).not.toBeNull();
+    expect(parsed?.variants["hero-1920.webp"]?.[0]).toBe(0x52);
+    expect(parsed?.variants["hero-1920.webp"]?.[8]).toBe(0x57);
+  });
 });
 
 describe("parsePrebuiltImageVariantSets", () => {

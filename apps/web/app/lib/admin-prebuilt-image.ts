@@ -24,6 +24,51 @@ function galleryFieldKey(index: number, suffix: string): string {
   return `gallery[${index}].${suffix}`;
 }
 
+function looksLikeWebp(buffer: Buffer): boolean {
+  return (
+    buffer.length >= 12 &&
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46 &&
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x45 &&
+    buffer[10] === 0x42 &&
+    buffer[11] === 0x50
+  );
+}
+
+async function readVariantBuffer(
+  body: ParsedBody,
+  asString: AsString,
+  asFile: AsFile,
+  fieldPrefix: string,
+  filename: VariantFilename,
+): Promise<Buffer | null> {
+  const file = asFile(body[`${fieldPrefix}${filename}`]);
+  let fileBuffer: Buffer | null = null;
+  if (file && file.size > 0) {
+    fileBuffer = Buffer.from(await file.arrayBuffer());
+    if (looksLikeWebp(fileBuffer)) {
+      return fileBuffer;
+    }
+  }
+
+  const b64 = asString(body[`${fieldPrefix}${filename}__b64`])?.trim();
+  if (b64) {
+    try {
+      const fromB64 = Buffer.from(b64, "base64");
+      if (fromB64.length > 0) {
+        return fromB64;
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  return fileBuffer && fileBuffer.length > 0 ? fileBuffer : null;
+}
+
 async function parsePrebuiltSetFromFields(
   body: ParsedBody,
   asString: AsString,
@@ -38,11 +83,11 @@ async function parsePrebuiltSetFromFields(
   const variants = {} as Record<VariantFilename, Buffer>;
 
   for (const filename of VARIANT_FILENAMES) {
-    const file = asFile(body[`${fieldPrefix}${filename}`]);
-    if (!file || file.size <= 0) {
+    const buffer = await readVariantBuffer(body, asString, asFile, fieldPrefix, filename);
+    if (!buffer || buffer.length <= 0) {
       return null;
     }
-    variants[filename] = Buffer.from(await file.arrayBuffer());
+    variants[filename] = buffer;
   }
 
   const claimedWidth = parseOptionalPositiveInt(asString(body[`${fieldPrefix}claimedWidth`]));

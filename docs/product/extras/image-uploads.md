@@ -50,7 +50,7 @@ There is **no** product min-dimension gate (former 800×420 removed) and **no** 
 
 ## 3. Admin supply path (file → client Pica → prebuilt persist)
 
-Admin event and partner forms use a **file picker** on the SSR multipart form. The admin island (`EventImageUpload` / `PartnerLogoUpload`) runs Pica before submit and posts five WebP variant files + `imageId` + `claimedWidth` / `claimedHeight`.
+Admin event and partner forms use a **file picker** on the SSR multipart form. The admin island (`EventImageUpload` / `PartnerLogoUpload`) runs Pica before submit and posts five WebP variant files + `imageId` + `claimedWidth` / `claimedHeight`, plus `*{filename}__b64` hidden fields (base64 WebP) as a backup when a browser strips programmatic `input[type=file]` values.
 
 An authenticated admin bytes proxy (`POST /:locale/admin/image-proxy`) still exists for tooling/seed/remote-fetch helpers that need server-side byte fetch; it is **not** exposed as a paste-URL field on event/partner admin forms. When used, the same client Pica → prebuilt persist path applies. The proxy abuse ceiling (`REMOTE_FETCH_MAX_BYTES` = 32 MB + timeout) is a DoS guard only — not a product upload limit.
 

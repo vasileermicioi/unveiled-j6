@@ -16,6 +16,7 @@ import {
   type VariantFilename,
 } from "../constants";
 import { ImageValidationError } from "../errors";
+import { isWebpBuffer } from "../webp-dimensions";
 import { type ClientCanvas, createClientCanvas, get2dContext } from "./canvas";
 import { type DecodedSource, decodeImageSource } from "./decode";
 import { validateClientBlob, validateClientDimensions } from "./validate";
@@ -85,9 +86,15 @@ async function encodeWebp(canvas: ClientCanvas, qualityPercent: number): Promise
     );
   }
 
-  return blob.type === "image/webp"
-    ? blob
-    : new Blob([await blob.arrayBuffer()], { type: "image/webp" });
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  // Browsers / pica may fall back to PNG/JPEG while still labeling the blob as image/webp.
+  if (!isWebpBuffer(bytes)) {
+    throw new ImageValidationError(
+      "WebP encoding is not supported in this browser (canvas.toBlob image/webp failed)",
+    );
+  }
+
+  return new Blob([bytes], { type: "image/webp" });
 }
 
 async function resizeLadderVariant(

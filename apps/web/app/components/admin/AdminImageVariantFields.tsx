@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@heroui/react";
+import { Input, Surface } from "@heroui/react";
 import { useEffect, useId } from "react";
 
 import {
@@ -9,6 +9,11 @@ import {
   VARIANT_FILENAMES,
   type VariantFilename,
 } from "./admin-image-variants";
+
+/** Multipart companion field: base64 WebP bytes when programmatic file inputs are stripped. */
+export function variantBase64FieldName(fieldPrefix: string, filename: VariantFilename): string {
+  return `${fieldPrefix}${filename}__b64`;
+}
 
 type VariantFileFieldProps = {
   filename: VariantFilename;
@@ -20,19 +25,16 @@ function VariantFileField({ filename, blob, fieldName }: VariantFileFieldProps) 
   const inputId = useId();
 
   useEffect(() => {
-    const host = document.getElementById(inputId);
-    const input =
-      host instanceof HTMLInputElement
-        ? host
-        : host?.querySelector<HTMLInputElement>('input[type="file"]');
-    if (!input) {
+    const input = document.getElementById(inputId);
+    if (!(input instanceof HTMLInputElement)) {
       return;
     }
     assignBlobToFileInput(input, filename, blob);
   }, [blob, filename, inputId]);
 
+  // Native file input (AGENTS §14) — HeroUI Input + DataTransfer is unreliable on some platforms.
   return (
-    <Input
+    <input
       accept="image/webp"
       aria-hidden
       className="sr-only"
@@ -56,7 +58,7 @@ export function AdminImageVariantFields({
   fieldPrefix = "",
 }: AdminImageVariantFieldsProps) {
   return (
-    <>
+    <Surface className="contents" variant="transparent">
       <Input name={`${fieldPrefix}imageId`} type="hidden" value={processed.imageId} />
       <Input
         name={`${fieldPrefix}claimedWidth`}
@@ -69,14 +71,20 @@ export function AdminImageVariantFields({
         value={String(processed.claimedHeight)}
       />
       {VARIANT_FILENAMES.map((filename) => (
-        <VariantFileField
-          blob={processed.variants[filename]}
-          fieldName={`${fieldPrefix}${filename}`}
-          filename={filename}
-          key={filename}
-        />
+        <Surface className="contents" key={filename} variant="transparent">
+          <VariantFileField
+            blob={processed.variants[filename]}
+            fieldName={`${fieldPrefix}${filename}`}
+            filename={filename}
+          />
+          <Input
+            name={variantBase64FieldName(fieldPrefix, filename)}
+            type="hidden"
+            value={processed.variantsBase64[filename]}
+          />
+        </Surface>
       ))}
-    </>
+    </Surface>
   );
 }
 
