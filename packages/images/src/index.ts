@@ -35,6 +35,7 @@ export {
   type GetObjectInput,
   getObject,
   imageObjectsExist,
+  normalizeS3Endpoint,
   readS3Env,
   type S3Env,
   type UploadObjectInput,

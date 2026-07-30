@@ -204,6 +204,8 @@ Split it for env vars:
 | Path segment | `S3_BUCKET` | `unveiled-j6` |
 | (fixed for R2) | `S3_REGION` | `auto` |
 
+**Common failure:** if `S3_ENDPOINT` still includes `/unveiled-july` (or any bucket path), uploads create keys like `unveiled-july/images/{id}/hero-1920.webp` while the app serves `{IMAGE_PUBLIC_BASE_URL}/images/{id}/…` → **404**. `@unveiled/images` strips a path from `S3_ENDPOINT` automatically, but set the host-only value in env/secrets anyway. Objects already stored under the nested prefix need a one-time move/re-upload.
+
 **3. API credentials** — **R2 → Manage R2 API Tokens → Create API token** with **Object Read & Write** on the bucket. Copy **Access Key ID** → `S3_ACCESS_KEY_ID`, **Secret Access Key** → `S3_SECRET_ACCESS_KEY` (shown once).
 
 **4. Public access** — Bucket → **Settings** → enable **Public access** / R2.dev subdomain. Copy the public URL (e.g. `https://pub-xxxxxxxx.r2.dev`) → `IMAGE_PUBLIC_BASE_URL` with no trailing slash.

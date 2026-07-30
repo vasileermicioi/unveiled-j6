@@ -18,20 +18,54 @@ export type S3Env = {
   secretAccessKey: string;
 };
 
+/**
+ * Cloudflare's R2 UI copies endpoints as `https://<account>.r2.cloudflarestorage.com/<bucket>`.
+ * With path-style addressing, that bucket path is treated as a key prefix, so objects land at
+ * `<bucket>/images/...` while public URLs expect `images/...` → browser 404.
+ * Keep only the origin (scheme + host [+ port]).
+ */
+export function normalizeS3Endpoint(endpoint: string): string {
+  const trimmed = endpoint.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    throw new Error(
+      "S3_ENDPOINT must be an absolute URL (e.g. https://<account-id>.r2.cloudflarestorage.com)",
+    );
+  }
+
+  if (url.username || url.password) {
+    throw new Error("S3_ENDPOINT must not include credentials");
+  }
+
+  return url.origin;
+}
+
 export function readS3Env(env: NodeJS.ProcessEnv = resolveRuntimeEnv()): S3Env {
-  const endpoint = env.S3_ENDPOINT;
+  const endpointRaw = env.S3_ENDPOINT;
   const region = env.S3_REGION;
   const bucket = env.S3_BUCKET;
   const accessKeyId = env.S3_ACCESS_KEY_ID;
   const secretAccessKey = env.S3_SECRET_ACCESS_KEY;
 
-  if (!endpoint || !region || !bucket || !accessKeyId || !secretAccessKey) {
+  if (!endpointRaw || !region || !bucket || !accessKeyId || !secretAccessKey) {
     throw new Error(
       "S3_ENDPOINT, S3_REGION, S3_BUCKET, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY are required",
     );
   }
 
-  return { endpoint, region, bucket, accessKeyId, secretAccessKey };
+  return {
+    endpoint: normalizeS3Endpoint(endpointRaw),
+    region,
+    bucket,
+    accessKeyId,
+    secretAccessKey,
+  };
 }
 
 export function createS3Client(config: S3Env): S3Client {
