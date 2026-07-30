@@ -209,7 +209,7 @@ PDF voucher inventory for `VOUCHER_PDF` events (one row per downloadable ticket 
 | `booking_ticket_id` | FK → `booking_tickets.id`, nullable | Set when allocated |
 | `created_at` / `updated_at` | timestamptz | |
 
-Bookable quantity for voucher types is `min(remaining_capacity, available_inventory)`.
+For `VOUCHER_PROMO` / `VOUCHER_PDF`, admin does not set capacity separately — `total_capacity` is derived from inventory size (codes or PDF tickets). Bookable quantity remains `min(remaining_capacity, available_inventory)` as a safety bound.
 
 ### `bookings`
 

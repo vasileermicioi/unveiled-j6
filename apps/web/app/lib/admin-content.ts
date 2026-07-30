@@ -299,6 +299,7 @@ export type AdminCopy = {
   timingModeAllDay: string;
   creditPriceLabel: string;
   capacityLabel: string;
+  capacityFromInventoryHint: string;
   ticketTypeLabel: string;
   ticketTypeSecretCode: string;
   ticketTypeVoucher: string;
@@ -312,9 +313,20 @@ export type AdminCopy = {
   promoCodesPreviewCount: (count: number) => string;
   promoCodesPreviewMore: (count: number) => string;
   promoCodesPreviewEmpty: string;
+  voucherPdfModeLabel: string;
+  voucherPdfModeSplit: string;
+  voucherPdfModeFiles: string;
+  voucherPdfModeSplitHint: string;
+  voucherPdfModeFilesHint: string;
   voucherPdfFileLabel: string;
   voucherPdfFileHint: string;
+  voucherPdfFilesLabel: string;
+  voucherPdfFilesHint: string;
+  voucherPdfFilesPreviewCount: (count: number) => string;
   voucherPdfSkipLabel: string;
+  voucherPdfSkipHint: string;
+  voucherPdfSkipPlaceholder: string;
+  voucherPdfSkipInvalid: string;
   voucherPdfPagesPerTicketLabel: string;
   voucherPdfPageCount: (count: number) => string;
   voucherPdfPreviewCount: (count: number) => string;
@@ -686,6 +698,8 @@ const copy: Record<Locale, AdminCopy> = {
     timingModeAllDay: "Ganztägig",
     creditPriceLabel: "Credits",
     capacityLabel: "Kapazität",
+    capacityFromInventoryHint:
+      "Die Kapazität kommt aus dem Inventar (Promo-Codes bzw. PDF-Tickets) — kein separates Kapazitätsfeld.",
     ticketTypeLabel: "Ticket-Typ",
     ticketTypeSecretCode: "Secret Code",
     ticketTypeVoucher: "Voucher (Promo)",
@@ -699,10 +713,22 @@ const copy: Record<Locale, AdminCopy> = {
     promoCodesPreviewCount: (count) => `${count} Codes bereit zum Speichern`,
     promoCodesPreviewMore: (count) => `… und ${count} weitere`,
     promoCodesPreviewEmpty: "Noch keine Codes — Datei wählen oder einfügen.",
+    voucherPdfModeLabel: "PDF-Import",
+    voucherPdfModeSplit: "Eine Datei aufteilen",
+    voucherPdfModeFiles: "Mehrere Dateien (ein Ticket pro Datei)",
+    voucherPdfModeSplitHint:
+      "Ein Master-PDF wird clientseitig in Einzeltickets geschnitten und nach R2 hochgeladen.",
+    voucherPdfModeFilesHint: "Jede ausgewählte PDF-Datei wird als eigenes Ticket gespeichert.",
     voucherPdfFileLabel: "Master-PDF",
     voucherPdfFileHint:
       "Ein PDF wird clientseitig in Einzeltickets geschnitten und nach R2 hochgeladen.",
+    voucherPdfFilesLabel: "Ticket-PDFs",
+    voucherPdfFilesHint: "Mehrere PDFs auswählen — jede Datei ist ein Ticket.",
+    voucherPdfFilesPreviewCount: (count) => `${count} Tickets aus Dateien`,
     voucherPdfSkipLabel: "Seiten überspringen",
+    voucherPdfSkipHint: "Kommagetrennt und mit Bereichen, z. B. 1-3,7,9-10.",
+    voucherPdfSkipPlaceholder: "z. B. 1-3,7,9-10",
+    voucherPdfSkipInvalid: "Ungültige Seitenangabe. Nutze z. B. 1-3,7,9-10.",
     voucherPdfPagesPerTicketLabel: "Seiten pro Ticket",
     voucherPdfPageCount: (count) => `${count} Seiten im PDF`,
     voucherPdfPreviewCount: (count) => `${count} Tickets aus der Aufteilung`,
@@ -1075,6 +1101,8 @@ const copy: Record<Locale, AdminCopy> = {
     timingModeAllDay: "All day",
     creditPriceLabel: "Credits",
     capacityLabel: "Capacity",
+    capacityFromInventoryHint:
+      "Capacity comes from inventory (promo codes or PDF tickets) — there is no separate capacity field.",
     ticketTypeLabel: "Ticket type",
     ticketTypeSecretCode: "Secret code",
     ticketTypeVoucher: "Voucher (promo)",
@@ -1088,10 +1116,22 @@ const copy: Record<Locale, AdminCopy> = {
     promoCodesPreviewCount: (count) => `${count} codes ready to save`,
     promoCodesPreviewMore: (count) => `… and ${count} more`,
     promoCodesPreviewEmpty: "No codes yet — choose a file or paste.",
+    voucherPdfModeLabel: "PDF import",
+    voucherPdfModeSplit: "Split one file",
+    voucherPdfModeFiles: "Multiple files (one ticket each)",
+    voucherPdfModeSplitHint:
+      "One master PDF is sliced into per-ticket files in the browser, then uploaded to R2.",
+    voucherPdfModeFilesHint: "Each selected PDF file is stored as its own ticket.",
     voucherPdfFileLabel: "Master PDF",
     voucherPdfFileHint:
       "One PDF is sliced into per-ticket files in the browser, then uploaded to R2.",
+    voucherPdfFilesLabel: "Ticket PDFs",
+    voucherPdfFilesHint: "Select multiple PDFs — each file is one ticket.",
+    voucherPdfFilesPreviewCount: (count) => `${count} tickets from files`,
     voucherPdfSkipLabel: "Pages to skip",
+    voucherPdfSkipHint: "Comma-separated pages and ranges, e.g. 1-3,7,9-10.",
+    voucherPdfSkipPlaceholder: "e.g. 1-3,7,9-10",
+    voucherPdfSkipInvalid: "Invalid pages to skip. Use e.g. 1-3,7,9-10.",
     voucherPdfPagesPerTicketLabel: "Pages per ticket",
     voucherPdfPageCount: (count) => `${count} pages in PDF`,
     voucherPdfPreviewCount: (count) => `${count} tickets from this split`,

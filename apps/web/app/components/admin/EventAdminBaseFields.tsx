@@ -246,13 +246,15 @@ export function EventAdminBaseFields({
           minValue={1}
           name="credit_price"
         />
-        <AdminFormNumberField
-          defaultValue={defaults?.totalCapacity ?? 10}
-          isRequired
-          label={copy.capacityLabel}
-          minValue={1}
-          name="total_capacity"
-        />
+        {ticketType === "SECRET_CODE" ? (
+          <AdminFormNumberField
+            defaultValue={defaults?.totalCapacity ?? 10}
+            isRequired
+            label={copy.capacityLabel}
+            minValue={1}
+            name="total_capacity"
+          />
+        ) : null}
       </Surface>
 
       <AdminFormSelect
@@ -271,6 +273,10 @@ export function EventAdminBaseFields({
         ]}
         placeholder={copy.selectPlaceholder}
       />
+
+      {ticketType === "VOUCHER_PROMO" || ticketType === "VOUCHER_PDF" ? (
+        <Description>{copy.capacityFromInventoryHint}</Description>
+      ) : null}
 
       {ticketType === "SECRET_CODE" ? (
         <TextField defaultValue={defaults?.secretCode ?? undefined} fullWidth name="secret_code">

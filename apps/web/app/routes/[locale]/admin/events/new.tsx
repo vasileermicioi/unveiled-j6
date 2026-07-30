@@ -18,6 +18,7 @@ import {
   applyVoucherInventoryForEvents,
   assertVoucherInventoryForForm,
   voucherPayloadFromFormValues,
+  withVoucherCapacityFromInventory,
 } from "../../../../lib/admin-voucher-inventory";
 import { getAuthOptions } from "../../../../lib/auth";
 
@@ -37,7 +38,7 @@ export const POST = createRoute(async (c) => {
   >;
 
   try {
-    const values = await parseEventFormBodyFromRequest(body);
+    const values = withVoucherCapacityFromInventory(await parseEventFormBodyFromRequest(body));
     const payload = voucherPayloadFromFormValues(values);
     await assertVoucherInventoryForForm(db, {
       ticketType: values.ticketType,

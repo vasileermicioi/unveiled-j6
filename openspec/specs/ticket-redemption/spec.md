@@ -116,7 +116,7 @@ Admins SHALL upload promo codes for `VOUCHER_PROMO` events from a text or CSV fi
 
 ### Requirement: Admin PDF voucher split with preview
 
-Admins SHALL upload one master PDF for `VOUCHER_PDF` events, configure pages to skip and pages per ticket (native number inputs; defaults skip = 0, pages-per-ticket = 1), preview every derived ticket, then persist one PDF inventory item per ticket via SSR. Client-side slicing SHALL produce one downloadable PDF object per previewed ticket stored in R2; the SSR create/edit path SHALL insert corresponding `AVAILABLE` `event_voucher_pdfs` rows. Preview islands SHALL NOT write inventory alone.
+Admins SHALL stock `VOUCHER_PDF` inventory either by (1) uploading one master PDF, configuring pages to skip as comma-separated pages/ranges (e.g. `1-3,7,9-10`) and pages per ticket (default 1), and seeing only the resulting ticket count; or (2) uploading multiple PDF files where each file is one ticket. Client-side split/upload SHALL produce one downloadable PDF object per ticket stored in R2; the SSR create/edit path SHALL insert corresponding `AVAILABLE` `event_voucher_pdfs` rows. Preview islands SHALL NOT write inventory alone.
 
 #### Scenario: Configure split and preview tickets
 

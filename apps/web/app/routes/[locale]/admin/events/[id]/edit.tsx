@@ -24,6 +24,7 @@ import {
   applyVoucherInventoryForEvents,
   assertVoucherInventoryForForm,
   voucherPayloadFromFormValues,
+  withVoucherCapacityFromInventory,
 } from "../../../../../lib/admin-voucher-inventory";
 import { getAuthOptions } from "../../../../../lib/auth";
 import type { Locale } from "../../../../../lib/locale";
@@ -105,7 +106,11 @@ export const POST = createRoute(async (c) => {
   >;
 
   try {
-    const values = await parseEventFormBodyFromRequest(body);
+    const inventoryCounts = await getVoucherInventoryCounts(db, eventId);
+    const values = withVoucherCapacityFromInventory(
+      await parseEventFormBodyFromRequest(body),
+      inventoryCounts,
+    );
     const payload = voucherPayloadFromFormValues(values);
     await assertVoucherInventoryForForm(db, {
       eventId,

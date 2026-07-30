@@ -22,6 +22,7 @@ import {
   applyVoucherInventoryForEvents,
   assertVoucherInventoryForForm,
   voucherPayloadFromFormValues,
+  withVoucherCapacityFromInventory,
 } from "../../../../../lib/admin-voucher-inventory";
 import { getAuthOptions } from "../../../../../lib/auth";
 
@@ -82,7 +83,7 @@ export const POST = createRoute(async (c) => {
   const action = typeof body.action === "string" ? body.action : "preview";
 
   try {
-    const values = await parseEventFormBodyFromRequest(body);
+    const values = withVoucherCapacityFromInventory(await parseEventFormBodyFromRequest(body));
     const defaults = formValuesToDefaults(values);
     const slotMode =
       typeof body.slot_mode === "string" && body.slot_mode === "builder" ? "builder" : "manual";

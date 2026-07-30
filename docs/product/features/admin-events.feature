@@ -69,13 +69,22 @@ Feature: Admin — Event Management
     Given I am creating or editing a VOUCHER_PROMO event
     When I select a text or CSV file (or paste codes)
     Then the UI previews one non-empty code per line
+    And there is no separate capacity field — total capacity equals the inventory code count
     And inventory rows are written only after a successful SSR form POST
 
   Scenario: Admin uploads a master PDF and previews tickets
     Given I am creating or editing a VOUCHER_PDF event
-    When I upload a PDF and set pages to skip and pages per ticket
-    Then the UI previews each derived ticket
-    And confirming the form stores one AVAILABLE PDF inventory row per previewed ticket
+    When I choose split-one-file import, upload a PDF, and set pages to skip (comma/ranges) and pages per ticket
+    Then the UI shows how many tickets the split produces (not a page-by-page list)
+    And there is no separate capacity field — total capacity equals the ticket count from the split
+    And confirming the form stores one AVAILABLE PDF inventory row per ticket
+
+  Scenario: Admin uploads multiple PDF files as tickets
+    Given I am creating or editing a VOUCHER_PDF event
+    When I choose multiple-files import and select several PDF files
+    Then the UI shows the ticket count equal to the number of files
+    And there is no separate capacity field — total capacity equals the number of files
+    And confirming the form stores one AVAILABLE PDF inventory row per file
 
   Scenario: Default values on creation
     Given I create an event without specifying capacity, ticket type, or timing mode
