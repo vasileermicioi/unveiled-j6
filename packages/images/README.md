@@ -10,7 +10,7 @@ Image helpers for Unveiled Berlin: validate and store the five fixed WebP varian
 | `@unveiled/images/client` | Browser: `generateImageVariantsClient` (Pica + OG cover-crop → WebP) — **do not** import from Workers routes |
 | `@unveiled/images/offline` | Bun/scripts/tests only: solid JPEG/WebP + buffer→prebuilt via canvas shim — **never** import from Workers routes |
 
-There is no `sharp` and no `@standardagents/sip`. Variant filenames and Content-Types are WebP (`*.webp` / `image/webp`). No `original` / source-master object is stored.
+There is no `sharp` and no `@standardagents/sip`. Variant filenames and Content-Types are WebP (`*.webp` / `image/webp`). No `original` / source-master object is stored. Client resize uses **Pica**; WebP encode uses **`@jsquash/webp`** (libwebp WASM) so Safari/WebKit work — do not use `canvas.toBlob('image/webp')`.
 
 ## Environment variables
 

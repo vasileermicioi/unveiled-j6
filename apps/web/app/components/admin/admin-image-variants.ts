@@ -67,9 +67,7 @@ async function assertVariantsAreWebp(variants: Record<VariantFilename, Blob>): P
     }
     const bytes = new Uint8Array(await blob.arrayBuffer());
     if (!isWebpBuffer(bytes)) {
-      throw new ImageValidationError(
-        "WebP encoding is not supported in this browser (canvas.toBlob image/webp failed)",
-      );
+      throw new ImageValidationError("WebP WASM encoder produced non-WebP output");
     }
   }
 }
@@ -126,6 +124,8 @@ export function classifyClientImageError(error: unknown): ClientImageErrorKind {
 
   if (
     lower.includes("webp encoding is not supported") ||
+    lower.includes("webp encoding failed") ||
+    lower.includes("wasm encoder") ||
     lower.includes("canvas.toblob image/webp")
   ) {
     return "webp_unsupported";

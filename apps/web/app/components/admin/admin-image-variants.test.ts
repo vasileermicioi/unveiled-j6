@@ -36,7 +36,7 @@ function emptyProcessed(): ProcessedAdminUpload {
 describe("classifyClientImageError / mapClientImageError", () => {
   test("maps WebP unsupported", () => {
     const error = new ImageValidationError(
-      "WebP encoding is not supported in this browser (canvas.toBlob image/webp failed)",
+      "WebP encoding failed (WASM encoder unavailable or errored)",
     );
     expect(classifyClientImageError(error)).toBe("webp_unsupported");
     expect(mapClientImageError(error, copy)).toBe("webp");

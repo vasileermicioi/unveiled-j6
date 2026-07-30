@@ -672,7 +672,7 @@ const copy: Record<Locale, AdminCopy> = {
     imageUndecodableError:
       "Diese Datei konnte nicht als Bild gelesen werden. Bitte eine andere Datei wählen.",
     imageWebpUnsupportedError:
-      "Dieser Browser unterstützt keine WebP-Kodierung. Bitte einen aktuellen Browser verwenden.",
+      "WebP-Kodierung konnte in diesem Browser nicht geladen werden. Seite neu laden oder anderen Browser versuchen.",
     imageIncompleteVariantsError:
       "Bildvarianten sind unvollständig. Bitte die Datei erneut wählen und verarbeiten.",
     imageProcessingSubmitBlocked: "Bitte warten, bis die Bildverarbeitung abgeschlossen ist.",
@@ -1076,7 +1076,7 @@ const copy: Record<Locale, AdminCopy> = {
     imageUndecodableError:
       "This file could not be read as an image. Please choose a different file.",
     imageWebpUnsupportedError:
-      "This browser does not support WebP encoding. Please use a current browser.",
+      "WebP encoding failed to load in this browser. Reload the page or try another browser.",
     imageIncompleteVariantsError:
       "Image variants are incomplete. Please re-select the file and process again.",
     imageProcessingSubmitBlocked: "Please wait until image processing finishes.",

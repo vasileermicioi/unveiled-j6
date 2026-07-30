@@ -1,8 +1,7 @@
 export type ClientCanvas = OffscreenCanvas | HTMLCanvasElement;
 
 export function createClientCanvas(width: number, height: number): ClientCanvas {
-  // Prefer HTMLCanvasElement in the browser — WebP encode via toBlob is more reliable
-  // than OffscreenCanvas.convertToBlob on some platforms (false "image/webp" PNG fallbacks).
+  // Prefer HTMLCanvasElement in the browser (Pica + getImageData for WASM WebP encode).
   if (typeof document !== "undefined") {
     const canvas = document.createElement("canvas");
     canvas.width = width;

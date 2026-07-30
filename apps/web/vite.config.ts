@@ -147,6 +147,8 @@ export default defineConfig(({ command, mode }) => {
         "@better-auth-ui/core",
         "@tanstack/react-query",
       ],
+      // jSquash WASM codecs break under Vite pre-bundling (Invalid URL / wasm failed).
+      exclude: ["@jsquash/webp"],
     },
     ssr: {
       external: ["react", "react-dom", "@heroui/react"],

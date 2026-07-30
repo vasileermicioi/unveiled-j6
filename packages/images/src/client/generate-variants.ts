@@ -1,3 +1,4 @@
+import encodeWebpWasm from "@jsquash/webp/encode";
 import picaFactory, { type Pica } from "pica";
 
 import {
@@ -68,33 +69,32 @@ function fitMaxWidth(srcWidth: number, srcHeight: number, maxWidth: number): Siz
   return { width, height };
 }
 
-function webpQuality(qualityPercent: number): number {
-  return Math.min(1, Math.max(0, qualityPercent / 100));
+function clampWebpQuality(qualityPercent: number): number {
+  return Math.min(100, Math.max(0, Math.round(qualityPercent)));
 }
 
+/**
+ * Encode via libwebp WASM (@jsquash/webp) — not canvas.toBlob('image/webp'),
+ * which Safari/WebKit silently falls back to PNG.
+ */
 async function encodeWebp(canvas: ClientCanvas, qualityPercent: number): Promise<Blob> {
-  let blob: Blob | null = null;
   try {
-    blob = await getResizer().toBlob(canvas, "image/webp", webpQuality(qualityPercent));
-  } catch {
-    blob = null;
+    const ctx = get2dContext(canvas);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const buffer = await encodeWebpWasm(imageData, {
+      quality: clampWebpQuality(qualityPercent),
+    });
+    const bytes = new Uint8Array(buffer);
+    if (bytes.byteLength === 0 || !isWebpBuffer(bytes)) {
+      throw new ImageValidationError("WebP WASM encoder produced non-WebP output");
+    }
+    return new Blob([bytes], { type: "image/webp" });
+  } catch (error) {
+    if (error instanceof ImageValidationError) {
+      throw error;
+    }
+    throw new ImageValidationError("WebP encoding failed (WASM encoder unavailable or errored)");
   }
-
-  if (!blob || blob.size === 0) {
-    throw new ImageValidationError(
-      "WebP encoding is not supported in this browser (canvas.toBlob image/webp failed)",
-    );
-  }
-
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  // Browsers / pica may fall back to PNG/JPEG while still labeling the blob as image/webp.
-  if (!isWebpBuffer(bytes)) {
-    throw new ImageValidationError(
-      "WebP encoding is not supported in this browser (canvas.toBlob image/webp failed)",
-    );
-  }
-
-  return new Blob([bytes], { type: "image/webp" });
 }
 
 async function resizeLadderVariant(
