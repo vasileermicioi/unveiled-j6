@@ -6,9 +6,9 @@ import { mockAdminSession, mockUserSession, storyLocale, storyPathname } from ".
 /**
  * Slim header IA (Featured Discover browse split):
  * - Guest: logo · Discover → /discover · FAQ · DE|EN · Log in
- * - Inactive USER: Discover → /discover; logo → /discover
- * - Active USER: Browse events → /events; logo → /events
- * - ADMIN: no Discover/FAQ; admin dashboard + logout; logo → /admin
+ * - Inactive USER: Discover → /discover; Tickets/Saved text tools · DE|EN · Account menu
+ * - Active USER: Browse events → /events; Tickets/Saved · DE|EN · Account menu (email + credits)
+ * - ADMIN: no Discover/FAQ; DE|EN · Account menu (Admin + Log out); logo → /admin
  */
 export const Guest: Story = () => (
   <AppNavbar locale={storyLocale} pathname={storyPathname} session={null} />

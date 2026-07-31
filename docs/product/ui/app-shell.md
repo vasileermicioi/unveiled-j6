@@ -20,13 +20,11 @@ Role-aware header variants (guest, member, admin) composed from shared pieces �
    - **Admin:** no Discover / FAQ in header or mobile drawer — dashboard-focused chrome only (Admin + Log out; logo → `/admin`). Discover/FAQ remain reachable by direct URL for QA.
    - **Not in header or footer nav:** How it works, Membership (pages remain at `/how-it-works` and `/membership`; reachable via direct URL / in-flow CTAs).
 
-3. **Language toggle** — DE | EN; navigates to the same path under the other locale prefix.
+3. **Member tools (`USER`, desktop `lg+`)** — My Tickets / Saved as text+icon links (not secondary CTA boxes); Saved shows a badge when count > 0. Separated from the account cluster by a thin vertical rule.
 
-4. **Credits badge** — `USER` only (coin + balance).
+4. **Language toggle** — DE | EN; navigates to the same path under the other locale prefix.
 
-5. **Profile** — `USER` → `/profile`.
-
-6. **Logout** — any signed-in role.
+5. **Account menu** — signed-in roles; trigger “Account” / “Konto”. Identity header: muted session email + credits (`USER`, not in the bar). Menu items: `USER` → “Your account” / “Dein Konto” (`/profile`) + Log out; `ADMIN` → Admin dashboard + Log out.
 
 7. **Guest auth** — “Log in” only. Sign up is **not** in the header; guests create accounts via auth routes (`/signup`, etc.) and in-flow membership CTAs.
 

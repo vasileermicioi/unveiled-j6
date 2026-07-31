@@ -43,7 +43,7 @@ export type ShellCopy = {
   mySaves: string;
   /** Inventory `myBookings` — USER navbar My Tickets link */
   myBookings: string;
-  /** App-shell Profile link — USER → /profile */
+  /** App-shell Profile link in Account menu / drawer — USER → /profile */
   profile: string;
   formatCredits: (credits: number) => string;
   homeCta: string;
@@ -68,7 +68,7 @@ const copy: Record<Locale, ShellCopy> = {
     logout: "Abmelden",
     mySaves: "Gemerkt",
     myBookings: "Meine Tickets",
-    profile: "Konto",
+    profile: "Dein Konto",
     formatCredits: (credits) => `${credits} Credits`,
     homeCta: "Entdecken",
     notFoundTitle: "Seite nicht gefunden",
@@ -112,7 +112,7 @@ const copy: Record<Locale, ShellCopy> = {
     logout: "Log out",
     mySaves: "Saved",
     myBookings: "My Tickets",
-    profile: "Account",
+    profile: "Your account",
     formatCredits: (credits) => `${credits} credits`,
     homeCta: "Discover",
     notFoundTitle: "Page not found",
