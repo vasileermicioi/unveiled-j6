@@ -56,7 +56,9 @@ describe("admin-event-form helpers", () => {
         title: "Jazz Night",
         description: "Live set",
         address: "Main St 1",
-        neighborhood: "Mitte",
+        zip_code: "10115",
+        country: "DE",
+        city: "berlin",
         category: "Music",
         event_type: "Concert",
         tags: "jazz, live",
@@ -74,6 +76,9 @@ describe("admin-event-form helpers", () => {
 
     expect(values.partnerId).toBe("partner-1");
     expect(values.title).toBe("Jazz Night");
+    expect(values.zipCode).toBe("10115");
+    expect(values.country).toBe("DE");
+    expect(values.city).toBe("berlin");
     expect(values.tags).toEqual(["jazz", "live"]);
     expect(values.creditPrice).toBe(2);
     expect(values.totalCapacity).toBe(15);
@@ -94,7 +99,7 @@ describe("admin-event-form helpers", () => {
         title: "Promo Night",
         description: "Codes",
         address: "Main St 1",
-        neighborhood: "Mitte",
+        zip_code: "10115",
         category: "Music",
         event_type: "Concert",
         event_date: "2026-08-01",
@@ -126,7 +131,7 @@ describe("admin-event-form helpers", () => {
         title: "Jazz Night",
         description: "Live set",
         address: "Main St 1",
-        neighborhood: "Mitte",
+        zip_code: "10115",
         category: "Music",
         event_type: "Concert",
         event_date: "2026-08-01",
@@ -148,7 +153,7 @@ describe("admin-event-form helpers", () => {
         title: "Jazz Night",
         description: "Live set",
         address: "Main St 1",
-        neighborhood: "Mitte",
+        zip_code: "10115",
         category: "Music",
         event_type: "Concert",
         event_date: "2026-08-01",
@@ -170,7 +175,7 @@ describe("admin-event-form helpers", () => {
       title: "Jazz Night",
       description: "Live set",
       address: "Main St 1",
-      neighborhood: "Mitte",
+      zip_code: "10115",
       category: "Music",
       event_type: "Concert",
       event_date: "2026-08-01",
@@ -198,7 +203,7 @@ describe("admin-event-form helpers", () => {
         title: "Jazz Night",
         description: "Live set",
         address: "Main St 1",
-        neighborhood: "Mitte",
+        zip_code: "10115",
         category: "Music",
         event_type: "Concert",
         event_date: "2026-08-01",
@@ -224,7 +229,7 @@ describe("admin-event-form helpers", () => {
         title: "Jazz Night",
         description: "Live set",
         address: "Main St 1",
-        neighborhood: "Mitte",
+        zip_code: "10115",
         category: "Music",
         event_type: "Concert",
         event_date: "2026-08-01",
@@ -257,7 +262,7 @@ describe("admin-event-form helpers", () => {
         title: "Jazz Night",
         description: "Live set",
         address: "Main St 1",
-        neighborhood: "Mitte",
+        zip_code: "10115",
         category: "Music",
         event_type: "Concert",
         event_date: "2026-08-01",
@@ -285,7 +290,7 @@ describe("admin-event-form helpers", () => {
         title: "Silent Walk",
         description: "No spoken language",
         address: "Main St 1",
-        neighborhood: "Mitte",
+        zip_code: "10115",
         category: "Art",
         event_type: "Exhibition",
         event_date: "2026-08-01",

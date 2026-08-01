@@ -38,16 +38,78 @@ The system SHALL provide an authenticated membership home surface at `/:locale/p
 - **WHEN** an unauthenticated visitor requests `/:locale/profile/details`
 - **THEN** they are redirected to sign in
 
+### Requirement: Location preference storage
+
+Member profile location preference SHALL store `country`, `city`, and `zip_code` on `users.profile`. For this release, saves SHALL default or require `country = DE` and `city = berlin` with a valid Berlin `zip_code` validated via shared `validatePostalCode({ country, city, zipCode })`. The system SHALL NOT collect or persist `districts` arrays for active preference saves. Legacy `districts` keys SHALL be cleared or ignored on write. Unsupported country/city pairs and invalid postal codes SHALL be rejected with a typed validation error.
+
+#### Scenario: Preference save stores zip under Germany/Berlin
+
+- **WHEN** a member preference save includes a valid Berlin zip (country/city defaulted or explicit)
+- **THEN** `profile.country`, `profile.city`, and `profile.zip_code` are stored and `districts` is not required
+
+#### Scenario: Preference save clears legacy districts
+
+- **WHEN** a member preference save successfully stores a location trio
+- **THEN** `profile.districts` is cleared (null or absent) on the persisted profile
+
+#### Scenario: Invalid zip rejected on preference save
+
+- **WHEN** a preference save includes a malformed or non-Berlin zip under `(DE, berlin)`
+- **THEN** the update fails validation without mutating location preference fields
+
+#### Scenario: Unsupported city rejected on preference save
+
+- **WHEN** a preference save includes a country/city pair that is not in the postal registry
+- **THEN** the update fails validation without mutating location preference fields
+
+### Requirement: Travel distance persistence
+
+The system SHALL persist `users.profile.max_distance` as a positive integer kilometers within the configured bounds (inclusive **1–50** unless constants are updated in one place) when onboarding location or profile preferences are saved with a travel distance. Preference saves SHALL NOT clear `max_distance` to null as a blanket policy. Invalid, non-integer, missing (on location-touching saves), or out-of-range values SHALL be rejected with a typed validation error without mutating preference fields. Legacy `districts` SHALL still be cleared on location writes. GDPR anonymization SHALL continue to remove preference fields including `max_distance` (full profile wipe remains acceptable).
+
+#### Scenario: Preference save keeps max_distance
+
+- **WHEN** a member saves preferences including zip_code and max_distance = 10
+- **THEN** profile.max_distance is 10 after save
+
+#### Scenario: Out-of-range distance rejected
+
+- **WHEN** a save includes max_distance outside the allowed bounds
+- **THEN** the save is rejected with a validation error
+
+#### Scenario: Non-integer distance rejected
+
+- **WHEN** a save includes max_distance that is not a finite integer (for example 10.5 or a non-numeric string)
+- **THEN** the save is rejected with a validation error
+
+#### Scenario: Location save with zip and distance round-trips
+
+- **WHEN** a preference or onboarding location save includes a valid Berlin zip_code and max_distance within bounds
+- **THEN** the persisted profile contains both zip_code and max_distance
+- **AND** districts is cleared (null or absent)
+
 ### Requirement: Cultural preferences editor
 
-The system SHALL provide `/:locale/profile/preferences` where signed-in members can edit interests (including Other + free text), moods, districts, timing, preferred days, preferred languages, and accessibility needs via SSR form POST. Allowed values SHALL reuse the onboarding preference allowlists (including the 12 Berlin Bezirke for districts). Travel radius (`max_distance`) SHALL NOT be collected or required. Persistence SHALL merge into `users.profile`, set `max_distance` to `null`, set `behavior.preferences_updated_at` (Europe/Berlin semantics), and MUST NOT mutate `behavior.onboarding_step` or `profile.onboarding_complete`.
+The system SHALL provide `/:locale/profile/preferences` where signed-in members can edit interests (including Other + free text), moods, location (`country` / `city` / `zip_code` under Germany/Berlin defaults for this release), travel distance (`max_distance` in kilometers), timing, preferred days, preferred languages, and accessibility needs via SSR form POST. Allowed values SHALL reuse the onboarding preference allowlists for non-location fields; location SHALL use the shared postal registry (Berlin PLZ under `DE` / `berlin`) rather than the 12 Berlin Bezirke `districts` multi-select. The Vibes location editor SHALL show country and city as prefilled, non-editable Germany/Berlin display (submitted as `DE` / `berlin`) plus a native zip input and a native number input for travel distance, with locale labels (Country / Land, City / Stadt, PLZ / Zip code, travel-distance label + km unit) and a short hint that Unveiled currently serves Berlin. Travel distance SHALL be required when saving location fields. Persistence SHALL merge into `users.profile`, store the location trio, clear legacy `districts`, persist validated `max_distance` (integer km within configured bounds), set `behavior.preferences_updated_at` (Europe/Berlin semantics), and MUST NOT mutate `behavior.onboarding_step` or `profile.onboarding_complete`. Preference saves SHALL NOT clear `max_distance` to null as a blanket policy. Invalid or non-Berlin zip or invalid/missing `max_distance` SHALL be rejected with a user-visible / typed validation error without mutating preference fields.
 
 #### Scenario: Edit cultural preferences ("Vibes")
 
-- **WHEN** a signed-in member updates interests (including Other + free text), moods, districts (12 Bezirke), timing, preferred days, languages (searchable list), or accessibility needs and saves on `/profile/preferences`
-- **THEN** the preferences are persisted on their profile
-- **AND** `max_distance` is cleared to `null`
-- **AND** travel radius is not part of the Vibes form
+- **WHEN** a signed-in member updates interests (including Other + free text), moods, location zip under Germany/Berlin, max_distance within bounds, timing, preferred days, languages (searchable list), or accessibility needs and saves on `/profile/preferences`
+- **THEN** the preferences are persisted on their profile including `country`, `city`, `zip_code`, and `max_distance`
+- **AND** `max_distance` is not cleared to `null` by policy
+
+#### Scenario: Edit cultural preferences includes radius
+
+- **WHEN** I update zip and travel distance on `/profile/preferences`
+- **THEN** both values are saved on my profile
+- **AND** country and city remain Germany / Berlin (not a free picker)
+- **AND** I cannot multi-select hangout districts
+
+#### Scenario: Edit cultural preferences zip
+
+- **WHEN** I update my zip code (and other Vibes fields) on profile preferences
+- **THEN** my profile preferences are saved including `country`, `city`, and `zip_code`
+- **AND** country and city remain Germany / Berlin (not a free picker)
+- **AND** I cannot multi-select hangout districts
 
 #### Scenario: Preference save preserves onboarding state
 
@@ -57,7 +119,7 @@ The system SHALL provide `/:locale/profile/preferences` where signed-in members 
 
 #### Scenario: Invalid preference values rejected
 
-- **WHEN** a preference payload contains a value outside the onboarding allowlists
+- **WHEN** a preference payload contains a value outside the onboarding allowlists, an invalid location trio, or an invalid max_distance
 - **THEN** the update fails validation without mutating preference fields
 
 ### Requirement: Password change entry
@@ -208,14 +270,14 @@ The system SHALL provide Ladle stories for member GDPR compositions `DataExportP
 - **THEN** DataExport, DeleteAccount confirm/error, and AdminDeleteAccount confirm/error stories load
 
 ### Requirement: Profile preferences use native localized controls
-The cultural preferences editor at `/:locale/profile/preferences` SHALL use the same native HTML form controls and DE/EN option-label contract as onboarding preference steps. Persistence, allowlists, and SSR form POST behavior remain unchanged except that travel radius is not collected, preferred languages use the searchable multi-select pattern, and interests may include Other with free text (`interests_other`).
+The cultural preferences editor at `/:locale/profile/preferences` SHALL use the same native HTML form controls and DE/EN option-label contract as onboarding preference steps. Persistence, allowlists, and SSR form POST behavior remain unchanged except that travel distance (`max_distance`) is collected via a native number input beside zip, preferred languages use the searchable multi-select pattern, and interests may include Other with free text (`interests_other`).
 
 #### Scenario: Profile vibes editor shows native checkboxes
 - **WHEN** a signed-in member opens `/profile/preferences`
 - **THEN** multi-value preference fields (other than the languages searchable control) render as native checkboxes with visible labels
 - **AND** preferred languages use native checkboxes inside a searchable client-side filter control (not HeroUI Select)
 - **AND** when Other is selected under interests, a native text input or textarea captures `interests_other`
-- **AND** travel radius is NOT shown
+- **AND** travel distance is shown as a native number input with locale label and km unit
 - **AND** accessibility uses a native checkbox with a short option label under a section title
 
 #### Scenario: Profile preference options follow locale
@@ -251,18 +313,6 @@ The cultural preferences editor at `/:locale/profile/preferences` SHALL use the 
 - **AND** typing in the filter narrows the visible options client-side
 - **AND** Non-Verbal is not offered
 
-### Requirement: Profile hangout labels share onboarding district maps
-The cultural preferences editor at `/:locale/profile/preferences` SHALL render hangout (district) option labels via the same `getDistrictLabel` locale maps as onboarding. Stored values SHALL be the 12 official Berlin Bezirk names from `@unveiled/auth/constants` `DISTRICTS`. DE and EN labels SHALL use those proper Bezirk names (no informal shorthand such as `X-Berg`).
-
-#### Scenario: Profile preferences offer Berlin Bezirke
-- **WHEN** a member views `/profile/preferences`
-- **THEN** hangout options are the 12 official Bezirke (e.g. Friedrichshain-Kreuzberg, Neukölln)
-- **AND** there is no travel-distance control
-
-#### Scenario: Profile hangout labels match onboarding in both locales
-- **WHEN** a member views `/en/profile/preferences` or `/de/profile/preferences`
-- **THEN** hangout option labels are the official Bezirk names, not informal shorthand or EN-only expansions like `Kreuzberg`
-
 ### Requirement: Account page chrome order and width
 
 Member account pages under `/:locale/profile*` SHALL render the profile tablist **above** the shared `PageSectionHeader` (eyebrow + headline + rule), matching admin tab-above-title order. The tablist, page header (including the header rule), and primary content card SHALL share the same admin-width content shell (`max-w-7xl`) so the header is not wider than the card. Member account pages SHALL use the shared `PageSectionHeader` pattern used by other member surfaces such as Saved and My Tickets, instead of a standalone heading plus muted subtitle-only intro. Page-level muted subtitles under the title SHALL NOT be shown; essential instructional copy for destructive or GDPR flows MAY remain in card body content below the header.
@@ -290,16 +340,20 @@ Member account pages under `/:locale/profile*` SHALL render the profile tablist 
 
 ### Requirement: Product docs and Playwright match Vibes preference options
 
-`docs/product/features/profile.feature` Scenario “Edit cultural preferences ("Vibes")” and `e2e/specs/profile.spec.ts` SHALL describe / exercise the shipped Vibes editor: interests (including Other + free text), moods, 12 Bezirke districts, timing, preferred days, searchable languages, and accessibility needs — and SHALL NOT require or show travel radius. Coverage-matrix rows for that Scenario SHALL match the updated title/assertions.
+`docs/product/features/profile.feature` Scenario “Edit cultural preferences ("Vibes")” and `e2e/specs/profile.spec.ts` SHALL describe / exercise the shipped Vibes editor: interests (including Other + free text), moods, location as `country` / `city` / `zip_code` under Germany/Berlin defaults, **travel distance (`max_distance` in kilometers)**, timing, preferred days, searchable languages, and accessibility needs — and SHALL NOT require or show Bezirk hangout multi-select. Coverage-matrix rows for that Scenario SHALL match the updated title/assertions and MUST NOT claim “no travel radius”.
 
-#### Scenario: Profile feature file Vibes has no travel radius
+#### Scenario: Profile feature file Vibes has zip and travel distance
 
 - **WHEN** an implementer reads the Vibes scenario in `docs/product/features/profile.feature`
-- **THEN** it mentions updating interests (including Other + free text), districts (12 Bezirke), languages (searchable list), or accessibility needs as implemented
-- **AND** travel radius is not part of the Vibes form
+- **THEN** it mentions updating interests (including Other + free text), location zip under Germany/Berlin, travel distance (`max_distance`), languages (searchable list), or accessibility needs as implemented
+- **AND** travel distance is part of the Vibes form (required when saving location fields)
+- **AND** 12 Bezirke / hangout districts multi-select is not required
+- **AND** the scenario does not state “travel radius is not part of the Vibes form”
 
-#### Scenario: Profile e2e Vibes asserts no travel radius
+#### Scenario: Profile e2e Vibes asserts zip and travel distance
 
 - **WHEN** `e2e/specs/profile.spec.ts` runs Scenario Edit cultural preferences ("Vibes")
-- **THEN** the preferences form has no travel-distance control
-- **AND** saving preferences still succeeds
+- **THEN** the preferences form shows zip under Germany/Berlin (not Bezirk checkboxes)
+- **AND** the preferences form shows a travel-distance control (native number / labeled how-far copy)
+- **AND** the test does not assert that travel distance / radius is absent
+- **AND** saving preferences with a valid zip and distance still succeeds

@@ -1,6 +1,5 @@
 import {
   AGE_GROUPS,
-  DISTRICTS,
   INTERESTS,
   MOODS,
   PREFERRED_LANGUAGES,
@@ -21,8 +20,15 @@ type OnboardingCopy = {
   interestsOtherLabel: string;
   interestsOtherPlaceholder: string;
   moodLabel: string;
-  districtLabel: string;
-  districtSubtitle: string;
+  locationLabel: string;
+  countryLabel: string;
+  countryDisplay: string;
+  cityLabel: string;
+  cityDisplay: string;
+  zipCodeLabel: string;
+  zipCodeHint: string;
+  radiusLabel: string;
+  km: string;
   timingLabel: string;
   daysLabel: string;
   languagePrefLabel: string;
@@ -33,6 +39,7 @@ type OnboardingCopy = {
   skip: string;
   finish: string;
   validationError: string;
+  invalidMaxDistance: string;
   stepOf: (current: number, total: number) => string;
 };
 
@@ -46,8 +53,15 @@ const copy: Record<Locale, OnboardingCopy> = {
     interestsOtherLabel: "Beschreibe dein Interesse",
     interestsOtherPlaceholder: "z. B. Spoken Word",
     moodLabel: "WELCHE VIBES SUCHST DU?",
-    districtLabel: "WO BIST DU UNTERWEGS?",
-    districtSubtitle: "Wähle einen oder mehrere Berliner Bezirke.",
+    locationLabel: "DEIN STANDORT",
+    countryLabel: "Land",
+    countryDisplay: "Deutschland",
+    cityLabel: "Stadt",
+    cityDisplay: "Berlin",
+    zipCodeLabel: "PLZ",
+    zipCodeHint: "Unveiled ist aktuell in Berlin verfügbar. Gib eine Berliner PLZ ein.",
+    radiusLabel: "Wie weit bist du bereit zu fahren?",
+    km: "km",
     timingLabel: "WANN HAST DU ZEIT?",
     daysLabel: "WELCHE TAGE?",
     languagePrefLabel: "SPRACHEN?",
@@ -58,6 +72,7 @@ const copy: Record<Locale, OnboardingCopy> = {
     skip: "ÜBERSPRINGEN",
     finish: "FERTIG",
     validationError: "Bitte prüfe deine Auswahl und versuche es erneut.",
+    invalidMaxDistance: "Bitte gib eine Reiseweite zwischen 1 und 50 km an.",
     stepOf: (current, total) => `Schritt ${current} von ${total}`,
   },
   en: {
@@ -69,8 +84,15 @@ const copy: Record<Locale, OnboardingCopy> = {
     interestsOtherLabel: "Describe your interest",
     interestsOtherPlaceholder: "e.g. Spoken word",
     moodLabel: "WHAT VIBES ARE YOU AFTER?",
-    districtLabel: "WHERE DO YOU HANG OUT?",
-    districtSubtitle: "Pick one or more Berlin districts.",
+    locationLabel: "YOUR LOCATION",
+    countryLabel: "Country",
+    countryDisplay: "Germany",
+    cityLabel: "City",
+    cityDisplay: "Berlin",
+    zipCodeLabel: "Zip code",
+    zipCodeHint: "Unveiled currently serves Berlin. Enter a Berlin zip code.",
+    radiusLabel: "How far will you travel?",
+    km: "km",
     timingLabel: "WHEN DO YOU HAVE TIME?",
     daysLabel: "WHICH DAYS?",
     languagePrefLabel: "LANGUAGES?",
@@ -81,6 +103,7 @@ const copy: Record<Locale, OnboardingCopy> = {
     skip: "SKIP",
     finish: "FINISH",
     validationError: "Please check your selections and try again.",
+    invalidMaxDistance: "Enter a travel distance between 1 and 50 km.",
     stepOf: (current, total) => `Step ${current} of ${total}`,
   },
 };
@@ -248,37 +271,6 @@ const moodLabels: Record<Locale, Record<(typeof MOODS)[number], string>> = {
   },
 };
 
-const districtLabels: Record<Locale, Record<(typeof DISTRICTS)[number], string>> = {
-  de: {
-    Mitte: "Mitte",
-    "Friedrichshain-Kreuzberg": "Friedrichshain-Kreuzberg",
-    Pankow: "Pankow",
-    "Charlottenburg-Wilmersdorf": "Charlottenburg-Wilmersdorf",
-    Spandau: "Spandau",
-    "Steglitz-Zehlendorf": "Steglitz-Zehlendorf",
-    "Tempelhof-Schöneberg": "Tempelhof-Schöneberg",
-    Neukölln: "Neukölln",
-    "Treptow-Köpenick": "Treptow-Köpenick",
-    "Marzahn-Hellersdorf": "Marzahn-Hellersdorf",
-    Lichtenberg: "Lichtenberg",
-    Reinickendorf: "Reinickendorf",
-  },
-  en: {
-    Mitte: "Mitte",
-    "Friedrichshain-Kreuzberg": "Friedrichshain-Kreuzberg",
-    Pankow: "Pankow",
-    "Charlottenburg-Wilmersdorf": "Charlottenburg-Wilmersdorf",
-    Spandau: "Spandau",
-    "Steglitz-Zehlendorf": "Steglitz-Zehlendorf",
-    "Tempelhof-Schöneberg": "Tempelhof-Schöneberg",
-    Neukölln: "Neukölln",
-    "Treptow-Köpenick": "Treptow-Köpenick",
-    "Marzahn-Hellersdorf": "Marzahn-Hellersdorf",
-    Lichtenberg: "Lichtenberg",
-    Reinickendorf: "Reinickendorf",
-  },
-};
-
 const ageGroupLabels: Record<Locale, Record<(typeof AGE_GROUPS)[number], string>> = {
   de: {
     "18-25": "18-25",
@@ -311,8 +303,8 @@ export function getOnboardingStepMeta(locale: Locale, step: OnboardingStepKey) {
       };
     case "location":
       return {
-        heading: shared.districtLabel,
-        description: shared.districtSubtitle,
+        heading: shared.locationLabel,
+        description: shared.zipCodeHint,
         stepNumber: 3 as const,
       };
     case "timing":
@@ -336,10 +328,6 @@ export function getMoodLabel(locale: Locale, value: (typeof MOODS)[number]): str
   return moodLabels[locale][value];
 }
 
-export function getDistrictLabel(locale: Locale, value: (typeof DISTRICTS)[number]): string {
-  return districtLabels[locale][value];
-}
-
 export function getTimingLabel(locale: Locale, value: (typeof TIMING_OPTIONS)[number]): string {
   return timingLabels[locale][value];
 }
@@ -355,4 +343,4 @@ export function getPreferredLanguageLabel(
   return languageLabels[locale][value];
 }
 
-export { AGE_GROUPS, DISTRICTS, INTERESTS, MOODS, PREFERRED_LANGUAGES, TIMING_OPTIONS, WEEKDAYS };
+export { AGE_GROUPS, INTERESTS, MOODS, PREFERRED_LANGUAGES, TIMING_OPTIONS, WEEKDAYS };

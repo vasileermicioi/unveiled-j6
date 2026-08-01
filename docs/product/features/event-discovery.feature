@@ -129,6 +129,17 @@ Feature: Event Discovery
     And selecting the marker opens a popup whose close control has a large enough hit target
     And activating the close control dismisses the popup
 
+  Scenario: Guest sees zip on event detail
+    Given I am not signed in
+    When I open a valid upcoming event detail URL ("/events/:id")
+    Then location metadata shows the event zip code (not neighborhood / Kiez)
+
+  Scenario: Event card shows zip
+    Given I am viewing Discover or the member events feed
+    When I see an event card
+    Then the card shows the event zip code
+    And the card does not show a neighborhood / Kiez label
+
   Scenario: Detail LOCATION shows address without coordinates
     Given I am not signed in
     When I open a valid upcoming event detail URL that has an address but no coordinates ("/events/:id")

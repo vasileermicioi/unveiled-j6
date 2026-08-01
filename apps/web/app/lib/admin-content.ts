@@ -1,10 +1,9 @@
-import { AGE_GROUPS, DISTRICTS, EVENT_TYPES, INTERESTS } from "@unveiled/auth/constants";
+import { AGE_GROUPS, EVENT_TYPES, INTERESTS } from "@unveiled/auth/constants";
 import type { CatalogErrorCode } from "@unveiled/db/catalog/errors";
 
 import type { Locale } from "./locale";
 import {
   getAgeGroupLabel,
-  getDistrictLabel,
   getInterestLabel,
   getPreferredLanguageOptions,
 } from "./onboarding-content";
@@ -45,7 +44,6 @@ export type AdminCopy = {
   eventsTitle: string;
   eventsSubtitle: string;
   newEvent: string;
-  newEventSeries: string;
   searchPlaceholder: string;
   searchSubmit: string;
   tableLogo: string;
@@ -58,6 +56,7 @@ export type AdminCopy = {
   tableCapacity: string;
   tableActions: string;
   editAction: string;
+  cloneAction: string;
   deleteAction: string;
   exportCodesAction: string;
   emptyPartners: string;
@@ -87,7 +86,7 @@ export type AdminCopy = {
   usersPrefInterests: string;
   usersPrefInterestsOther: string;
   usersPrefMoods: string;
-  usersPrefDistricts: string;
+  usersPrefLocation: string;
   usersPrefTiming: string;
   usersPrefDays: string;
   usersPrefLanguages: string;
@@ -255,17 +254,19 @@ export type AdminCopy = {
   deletePartnerBody: (name: string) => string;
   newEventTitle: string;
   editEventTitle: string;
-  newEventSeriesTitle: string;
+  cloneEventTitle: string;
+  cloneEventSubtitle: string;
+  cloneSubmit: string;
+  cloneDateTimeHint: string;
+  cloneInventoryHint: string;
+  cloneSourceLabel: string;
+  cloneSourceImageAlt: string;
   deleteEventTitle: string;
   deleteEventBody: (title: string, date: string) => string;
   deleteConfirm: string;
   cancel: string;
   save: string;
   create: string;
-  previewSeries: string;
-  confirmSeries: (count: number) => string;
-  seriesPreviewTitle: string;
-  seriesConfirmImageHint: string;
   nameLabel: string;
   emailLabel: string;
   addressLabel: string;
@@ -287,7 +288,12 @@ export type AdminCopy = {
   titleLabel: string;
   descriptionLabel: string;
   descriptionMarkdownHint: string;
-  neighborhoodLabel: string;
+  zipCodeLabel: string;
+  zipCodeHint: string;
+  countryLabel: string;
+  countryDisplay: string;
+  cityLabel: string;
+  cityDisplay: string;
   categoryLabel: string;
   eventTypeLabel: string;
   tagsLabel: string;
@@ -336,7 +342,6 @@ export type AdminCopy = {
   voucherPdfRequired: string;
   voucherPdfBusy: string;
   voucherInventorySummary: (available: number, allocated: number) => string;
-  voucherInventorySeriesHint: string;
   replaceUnusedInventoryLabel: string;
   replaceUnusedInventoryHint: string;
   barrierFreeLabel: string;
@@ -381,7 +386,7 @@ export type AdminCopy = {
     partnerId: string;
     title: string;
     description: string;
-    neighborhood: string;
+    zipCode: string;
     category: string;
     eventType: string;
     eventDate: string;
@@ -423,7 +428,6 @@ const copy: Record<Locale, AdminCopy> = {
     eventsTitle: "Events",
     eventsSubtitle: "Katalog-Events erstellen und verwalten.",
     newEvent: "Neues Event",
-    newEventSeries: "Event-Serie",
     searchPlaceholder: "Titel oder Partner suchen",
     searchSubmit: "Suchen",
     tableLogo: "Bild",
@@ -436,6 +440,7 @@ const copy: Record<Locale, AdminCopy> = {
     tableCapacity: "Kapazität",
     tableActions: "Aktionen",
     editAction: "Bearbeiten",
+    cloneAction: "Klonen",
     deleteAction: "Löschen",
     exportCodesAction: "Codes",
     emptyPartners: "Noch keine Partner vorhanden.",
@@ -465,12 +470,12 @@ const copy: Record<Locale, AdminCopy> = {
     usersPrefInterests: "Interessen",
     usersPrefInterestsOther: "Sonstiges Interesse",
     usersPrefMoods: "Stimmungen",
-    usersPrefDistricts: "Bezirke",
+    usersPrefLocation: "Standort",
     usersPrefTiming: "Tageszeit",
     usersPrefDays: "Wochentage",
     usersPrefLanguages: "Sprachen",
     usersPrefAgeGroup: "Altersgruppe",
-    usersPrefRadius: "Radius",
+    usersPrefRadius: "Reiseweite",
     usersPrefAccessibility: "Barrierefreiheit",
     usersHistoryBookings: "Buchungen",
     usersHistoryWaitlist: "Warteliste",
@@ -647,18 +652,21 @@ const copy: Record<Locale, AdminCopy> = {
     deletePartnerBody: (name) => `Partner „${name}" endgültig löschen?`,
     newEventTitle: "Event anlegen",
     editEventTitle: "Event bearbeiten",
-    newEventSeriesTitle: "Event-Serie anlegen",
+    cloneEventTitle: "Event klonen",
+    cloneEventSubtitle:
+      "Metadaten und Bild werden übernommen. Neues Datum/Uhrzeit wählen; bei Voucher-Events neues Inventar hochladen.",
+    cloneSubmit: "Klonen",
+    cloneDateTimeHint: "Datum und Uhrzeit für den neuen Termin (Europe/Berlin).",
+    cloneInventoryHint:
+      "Voucher-Inventar wird nicht kopiert. Bitte neues Inventar für den Klon bereitstellen.",
+    cloneSourceLabel: "Quell-Event",
+    cloneSourceImageAlt: "Bild des Quell-Events",
     deleteEventTitle: "Event löschen",
     deleteEventBody: (title, date) => `Event „${title}" (${date}) endgültig löschen?`,
     deleteConfirm: "Löschen",
     cancel: "Abbrechen",
     save: "Speichern",
     create: "Anlegen",
-    previewSeries: "Slots anzeigen",
-    confirmSeries: (count) => `${count} Events anlegen`,
-    seriesPreviewTitle: "Vorschau der Slots",
-    seriesConfirmImageHint:
-      "Bitte das Event-Bild erneut auswählen — Dateien bleiben nach der Vorschau nicht erhalten.",
     nameLabel: "Name",
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
@@ -686,7 +694,12 @@ const copy: Record<Locale, AdminCopy> = {
     descriptionLabel: "Beschreibung",
     descriptionMarkdownHint:
       "Markdown wird unterstützt (Überschriften, Listen, Links, Hervorhebung).",
-    neighborhoodLabel: "Kiez",
+    zipCodeLabel: "PLZ",
+    zipCodeHint: "Muss eine Berliner PLZ sein.",
+    countryLabel: "Land",
+    countryDisplay: "Deutschland",
+    cityLabel: "Stadt",
+    cityDisplay: "Berlin",
     categoryLabel: "Kategorie",
     eventTypeLabel: "Event-Typ",
     tagsLabel: "Tags",
@@ -739,8 +752,6 @@ const copy: Record<Locale, AdminCopy> = {
     voucherPdfBusy: "PDF wird vorbereitet…",
     voucherInventorySummary: (available, allocated) =>
       `Inventar: ${available} verfügbar, ${allocated} zugewiesen`,
-    voucherInventorySeriesHint:
-      "Bei Serien wird dasselbe Inventar auf jeden erzeugten Termin kopiert.",
     replaceUnusedInventoryLabel: "Ungenutztes Inventar ersetzen",
     replaceUnusedInventoryHint:
       "Löscht nur AVAILABLE-Einträge und speichert die neue Liste. Zugewiesene bleiben.",
@@ -791,7 +802,7 @@ const copy: Record<Locale, AdminCopy> = {
       partnerId: "Partner ist erforderlich.",
       title: "Titel ist erforderlich.",
       description: "Beschreibung ist erforderlich.",
-      neighborhood: "Kiez ist erforderlich.",
+      zipCode: "Gültige Berliner PLZ ist erforderlich.",
       category: "Kategorie ist erforderlich.",
       eventType: "Event-Typ ist erforderlich.",
       eventDate: "Datum ist erforderlich.",
@@ -831,7 +842,6 @@ const copy: Record<Locale, AdminCopy> = {
     eventsTitle: "Events",
     eventsSubtitle: "Create and manage catalog events.",
     newEvent: "New event",
-    newEventSeries: "Event series",
     searchPlaceholder: "Search title or partner",
     searchSubmit: "Search",
     tableLogo: "Image",
@@ -844,6 +854,7 @@ const copy: Record<Locale, AdminCopy> = {
     tableCapacity: "Capacity",
     tableActions: "Actions",
     editAction: "Edit",
+    cloneAction: "Clone",
     deleteAction: "Delete",
     exportCodesAction: "Codes",
     emptyPartners: "No partners yet.",
@@ -873,12 +884,12 @@ const copy: Record<Locale, AdminCopy> = {
     usersPrefInterests: "Interests",
     usersPrefInterestsOther: "Other interest",
     usersPrefMoods: "Moods",
-    usersPrefDistricts: "Districts",
+    usersPrefLocation: "Location",
     usersPrefTiming: "Timing",
     usersPrefDays: "Days",
     usersPrefLanguages: "Languages",
     usersPrefAgeGroup: "Age group",
-    usersPrefRadius: "Radius",
+    usersPrefRadius: "Travel distance",
     usersPrefAccessibility: "Accessibility",
     usersHistoryBookings: "Bookings",
     usersHistoryWaitlist: "Waitlist",
@@ -1051,18 +1062,20 @@ const copy: Record<Locale, AdminCopy> = {
     deletePartnerBody: (name) => `Permanently delete partner “${name}”?`,
     newEventTitle: "Create event",
     editEventTitle: "Edit event",
-    newEventSeriesTitle: "Create event series",
+    cloneEventTitle: "Clone event",
+    cloneEventSubtitle:
+      "Metadata and image are copied. Set a new date/time; for voucher events upload new inventory.",
+    cloneSubmit: "Clone",
+    cloneDateTimeHint: "Date and time for the new occurrence (Europe/Berlin).",
+    cloneInventoryHint: "Voucher inventory is not copied. Provide new inventory for the clone.",
+    cloneSourceLabel: "Source event",
+    cloneSourceImageAlt: "Source event image",
     deleteEventTitle: "Delete event",
     deleteEventBody: (title, date) => `Permanently delete event “${title}” (${date})?`,
     deleteConfirm: "Delete",
     cancel: "Cancel",
     save: "Save",
     create: "Create",
-    previewSeries: "Preview slots",
-    confirmSeries: (count) => `Create ${count} events`,
-    seriesPreviewTitle: "Slot preview",
-    seriesConfirmImageHint:
-      "Please select the event image again — file uploads do not survive the preview step.",
     nameLabel: "Name",
     emailLabel: "Contact email",
     addressLabel: "Address",
@@ -1089,7 +1102,12 @@ const copy: Record<Locale, AdminCopy> = {
     titleLabel: "Title",
     descriptionLabel: "Description",
     descriptionMarkdownHint: "Markdown is supported (headings, lists, links, emphasis).",
-    neighborhoodLabel: "Neighborhood",
+    zipCodeLabel: "Zip code",
+    zipCodeHint: "Must be a Berlin zip code.",
+    countryLabel: "Country",
+    countryDisplay: "Germany",
+    cityLabel: "City",
+    cityDisplay: "Berlin",
     categoryLabel: "Category",
     eventTypeLabel: "Event type",
     tagsLabel: "Tags",
@@ -1142,7 +1160,6 @@ const copy: Record<Locale, AdminCopy> = {
     voucherPdfBusy: "Preparing PDF…",
     voucherInventorySummary: (available, allocated) =>
       `Inventory: ${available} available, ${allocated} allocated`,
-    voucherInventorySeriesHint: "For series, the same inventory is copied to every generated slot.",
     replaceUnusedInventoryLabel: "Replace unused inventory",
     replaceUnusedInventoryHint:
       "Deletes only AVAILABLE rows, then saves the new list. Allocated rows stay.",
@@ -1190,7 +1207,7 @@ const copy: Record<Locale, AdminCopy> = {
       partnerId: "Partner is required.",
       title: "Title is required.",
       description: "Description is required.",
-      neighborhood: "Neighborhood is required.",
+      zipCode: "A valid Berlin zip code is required.",
       category: "Category is required.",
       eventType: "Event type is required.",
       eventDate: "Date is required.",
@@ -1351,22 +1368,6 @@ export function getEventCategoryOptions(locale: Locale): AdminSelectOption[] {
     id,
     label: getInterestLabel(locale, id),
   }));
-}
-
-/** Same district allowlist as member onboarding / profile preferences. */
-export function getEventNeighborhoodOptions(
-  locale: Locale,
-  currentValue?: string | null,
-): AdminSelectOption[] {
-  const options: AdminSelectOption[] = DISTRICTS.map((id) => ({
-    id,
-    label: getDistrictLabel(locale, id),
-  }));
-  const trimmed = currentValue?.trim();
-  if (trimmed && !DISTRICTS.includes(trimmed as (typeof DISTRICTS)[number])) {
-    options.push({ id: trimmed, label: trimmed });
-  }
-  return options;
 }
 
 const eventTypeLabels: Record<Locale, Record<(typeof EVENT_TYPES)[number], string>> = {

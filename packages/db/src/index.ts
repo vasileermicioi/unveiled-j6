@@ -28,6 +28,7 @@ export * from "./admin";
 export * from "./booking";
 export * from "./catalog";
 export * from "./gdpr";
+export * from "./location";
 export * from "./schema";
 export * from "./waitlist";
 /** Re-export for packages that write against `@unveiled/db` schema without a second drizzle-orm copy. */

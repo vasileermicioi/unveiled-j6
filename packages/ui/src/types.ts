@@ -7,7 +7,7 @@ export type EventCardItem = {
   title: string;
   partnerName: string;
   dateTime: Date;
-  neighborhood: string;
+  zipCode: string;
   creditPrice: number;
   remainingCapacity: number;
   ticketType: EventCardTicketType;

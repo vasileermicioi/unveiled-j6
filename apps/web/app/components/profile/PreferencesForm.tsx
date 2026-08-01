@@ -1,15 +1,17 @@
 "use client";
 
-import { Button, Form, Label, Surface } from "@heroui/react";
-import { INTERESTS_OTHER_MAX_LENGTH } from "@unveiled/auth/constants";
+import { Button, Description, Form, Label, Surface } from "@heroui/react";
+import {
+  INTERESTS_OTHER_MAX_LENGTH,
+  MAX_DISTANCE_MAX,
+  MAX_DISTANCE_MIN,
+} from "@unveiled/auth/constants";
 import type { UserProfile } from "@unveiled/db";
 import { useState } from "react";
 
 import LanguageMultiSelect from "../../islands/LanguageMultiSelect";
 import type { Locale } from "../../lib/locale";
 import {
-  DISTRICTS,
-  getDistrictLabel,
   getInterestLabel,
   getMoodLabel,
   getOnboardingCopy,
@@ -35,7 +37,6 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
   const onboarding = getOnboardingCopy(locale);
   const selectedInterests = profile.interests ?? [];
   const selectedMoods = profile.moods ?? [];
-  const selectedDistricts = profile.districts ?? [];
   const selectedTiming = profile.timing ?? [];
   const selectedDays = profile.preferred_days ?? [];
   const selectedLanguages = profile.preferred_languages ?? [];
@@ -102,22 +103,73 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">
-        <Label className="onboarding-form__section-label">{onboarding.districtLabel}</Label>
-        <Surface
-          className="onboarding-form__options onboarding-form__options--grid"
-          variant="transparent"
-        >
-          {DISTRICTS.map((value) => (
-            <NativePreferenceOption
-              defaultChecked={selectedDistricts.includes(value)}
-              key={value}
-              label={getDistrictLabel(locale, value)}
-              name="districts"
-              type="checkbox"
-              value={value}
+        <Label className="onboarding-form__section-label">{onboarding.locationLabel}</Label>
+        <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
+          <Surface className="flex flex-col gap-2" variant="transparent">
+            <Label className="onboarding-form__section-label" htmlFor="preferences-country-display">
+              {onboarding.countryLabel}
+            </Label>
+            <input
+              className="onboarding-form__language-filter"
+              defaultValue={onboarding.countryDisplay}
+              id="preferences-country-display"
+              readOnly
+              tabIndex={-1}
+              type="text"
             />
-          ))}
+          </Surface>
+          <Surface className="flex flex-col gap-2" variant="transparent">
+            <Label className="onboarding-form__section-label" htmlFor="preferences-city-display">
+              {onboarding.cityLabel}
+            </Label>
+            <input
+              className="onboarding-form__language-filter"
+              defaultValue={onboarding.cityDisplay}
+              id="preferences-city-display"
+              readOnly
+              tabIndex={-1}
+              type="text"
+            />
+          </Surface>
         </Surface>
+        <Surface className="flex flex-col gap-2" variant="transparent">
+          <Label className="onboarding-form__section-label" htmlFor="zip_code">
+            {onboarding.zipCodeLabel}
+          </Label>
+          <input
+            className="onboarding-form__language-filter"
+            defaultValue={profile.zip_code ?? ""}
+            id="zip_code"
+            inputMode="numeric"
+            maxLength={5}
+            name="zip_code"
+            placeholder="10115"
+            required
+            type="text"
+          />
+          <Description>{onboarding.zipCodeHint}</Description>
+        </Surface>
+        <Surface className="flex flex-col gap-2" variant="transparent">
+          <Label className="onboarding-form__section-label" htmlFor="max_distance">
+            {onboarding.radiusLabel}
+          </Label>
+          <Surface className="flex items-center gap-3" variant="transparent">
+            <input
+              className="onboarding-form__language-filter admin-native-number"
+              defaultValue={profile.max_distance ?? ""}
+              id="max_distance"
+              max={MAX_DISTANCE_MAX}
+              min={MAX_DISTANCE_MIN}
+              name="max_distance"
+              required
+              step={1}
+              type="number"
+            />
+            <Description>{onboarding.km}</Description>
+          </Surface>
+        </Surface>
+        <input name="country" type="hidden" value="DE" />
+        <input name="city" type="hidden" value="berlin" />
       </Surface>
 
       <Surface className="flex flex-col gap-4" variant="transparent">

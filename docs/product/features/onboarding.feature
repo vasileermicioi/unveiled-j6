@@ -44,10 +44,12 @@ Feature: Onboarding
     And when I select Other I can enter free-text interest text
     And I can multi-select moods via native checkbox from: Leicht, Experimentell, Klassisch, Politisch, Fam
 
-  Scenario: Step 3 — hangout districts
+  Scenario: Step 3 — zip under Germany/Berlin
     Given I am on onboarding step 3
-    Then I can multi-select districts via native checkbox from the 12 official Berlin Bezirke: Mitte, Friedrichshain-Kreuzberg, Pankow, Charlottenburg-Wilmersdorf, Spandau, Steglitz-Zehlendorf, Tempelhof-Schöneberg, Neukölln, Treptow-Köpenick, Marzahn-Hellersdorf, Lichtenberg, Reinickendorf
-    And I cannot set a travel distance / radius
+    Then country shows Germany and city shows Berlin (prefilled, not a free picker)
+    And I can enter a Berlin PLZ via a native text input
+    And I cannot multi-select hangout districts
+    And I must set a travel distance in km via a native number input (required, 1–50)
 
   Scenario: Step 4 — timing, days, languages, accessibility
     Given I am on onboarding step 4

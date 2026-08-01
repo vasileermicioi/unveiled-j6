@@ -118,7 +118,7 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin` | ✅ | ADMIN | Dashboard |
 | `/admin/events?q=&page=` | ✅ | ADMIN | Event list |
 | `/admin/events/new` | ✅ | ADMIN | Create event |
-| `/admin/events/series/new` | ✅ | ADMIN | Event series |
+| `/admin/events/:id/clone` | ✅ | ADMIN | Clone event (new date/time; voucher inventory not copied) |
 | `/admin/events/:id/edit` | ✅ | ADMIN | Edit event |
 | `/admin/events/:id/gallery` | ✅ | ADMIN | Event gallery list |
 | `/admin/events/:id/gallery/add` | ✅ | ADMIN | Multi-upload gallery photos |

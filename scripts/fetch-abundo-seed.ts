@@ -199,7 +199,9 @@ type FixtureEvent = {
   title: string;
   description: string;
   address: string;
+  /** @deprecated Prefer zipCode — kept for older fixture consumers. */
   neighborhood: string;
+  zipCode: string;
   category: string;
   eventType: string;
   tags: string[];
@@ -249,9 +251,13 @@ function stripMarkdown(md: string): string {
     .trim();
 }
 
+function zipCodeFromAddress(address: string): string | null {
+  const m = address.match(/\b(1[0-4]\d{3})\b/);
+  return m?.[1] ?? null;
+}
+
 function neighborhoodFromAddress(address: string): string {
-  const m = address.match(/\b(1\d{4})\b/);
-  const plz = m?.[1] ?? "";
+  const plz = zipCodeFromAddress(address) ?? "";
   const prefix = plz.slice(0, 3);
   if (["101", "105"].includes(prefix)) return "Mitte";
   if (["102"].includes(prefix)) return "Friedrichshain-Kreuzberg";
@@ -742,6 +748,7 @@ async function main() {
       description,
       address,
       neighborhood: neighborhoodFromAddress(address),
+      zipCode: zipCodeFromAddress(address) ?? "10115",
       category,
       eventType,
       tags: mapTags(detail.event_tag_ids, tagsById),
@@ -834,6 +841,7 @@ async function main() {
     soldOut.partnerKey = tonight.partnerKey;
     soldOut.address = tonight.address;
     soldOut.neighborhood = tonight.neighborhood;
+    soldOut.zipCode = tonight.zipCode;
     soldOut.lat = tonight.lat;
     soldOut.lng = tonight.lng;
     soldOut.imagePath = tonight.imagePath;

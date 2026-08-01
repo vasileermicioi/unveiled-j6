@@ -203,7 +203,7 @@ function metadataLabel(key: string, locale: Locale): string {
     ageGroups: { de: "Zielgruppe", en: "Target age groups" },
     type: { de: "Format", en: "Event type" },
     when: { de: "Datum", en: "Date" },
-    neighborhood: { de: "Kiez", en: "Neighborhood" },
+    zipCode: { de: "PLZ", en: "Zip code" },
     partner: { de: "Partner", en: "Partner" },
   };
 
@@ -632,11 +632,11 @@ export function EventDetailPage({
                   />
                 ) : null}
                 <MetaCell label={metadataLabel("type", locale)} value={event.eventType} />
-                {event.neighborhood ? (
+                {event.zipCode ? (
                   <MetaCell
                     icon="mapPin"
-                    label={metadataLabel("neighborhood", locale)}
-                    value={event.neighborhood}
+                    label={metadataLabel("zipCode", locale)}
+                    value={event.zipCode}
                   />
                 ) : null}
               </Surface>

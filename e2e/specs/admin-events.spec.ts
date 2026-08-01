@@ -26,25 +26,45 @@ import { loginAsAdmin } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
 import { hasAdminCredentials } from "../fixtures/waitlist";
 
-async function fillEventBaseFields(page: Page, partnerName: string, title: string): Promise<void> {
-  await expect(page.getByRole("heading", { name: /serie|series|event/i })).toBeVisible({
-    timeout: 15_000,
-  });
-  await page.waitForLoadState("networkidle");
-  const suffix = uniqueSuffix();
-  await selectOptionByLabel(page, adminLabels.partner, partnerName);
-  await fillTextbox(page, adminLabels.title, title);
-  await fillTextbox(page, adminLabels.description, `Series desc ${suffix}`);
-  await fillTextbox(page, adminLabels.address, `Series venue ${suffix}, Berlin`);
-  await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
-  await selectOptionByLabel(page, adminLabels.category, "Theater");
-  await selectOptionByLabel(page, adminLabels.eventType, "Performance");
-  await fillTextbox(page, adminLabels.secretCode, `SER${suffix.slice(0, 6).toUpperCase()}`);
-}
-
 async function attachEventImageFile(page: Page): Promise<void> {
   // BDD exception: file-input
   await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+}
+
+async function createVoucherPromoViaUI(
+  page: Page,
+  locale: "de" | "en",
+  partnerName: string,
+): Promise<{ title: string; eventId: string }> {
+  const suffix = uniqueSuffix();
+  const title = `E2E Voucher Clone Src ${suffix}`;
+  await page.goto(`/${locale}/admin/events/new`);
+  await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.waitForLoadState("networkidle");
+  await selectOptionByLabel(page, adminLabels.partner, partnerName);
+  await fillTextbox(page, adminLabels.title, title);
+  await fillTextbox(page, adminLabels.description, `Voucher clone source ${suffix}`);
+  await fillTextbox(page, adminLabels.address, `Voucher venue ${suffix}, Berlin`);
+  await fillTextbox(page, adminLabels.zipCode, "10115");
+  await selectOptionByLabel(page, adminLabels.category, "Theater");
+  await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+  await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(16));
+  await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);
+  await fillTextbox(page, adminLabels.eventWebsite, "https://example.com/e2e-voucher");
+  await page.getByLabel(/codes einfügen|paste codes/i).fill(`CODE-A-${suffix}\nCODE-B-${suffix}`);
+  await attachEventImageFile(page);
+  await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+  const row = page.getByRole("row").filter({ hasText: title });
+  await expect(row).toBeVisible({ timeout: 15_000 });
+  const editHref = await row.getByRole("link", { name: /bearbeiten|edit/i }).getAttribute("href");
+  const eventId = editHref?.match(/\/events\/([^/]+)\/edit/)?.[1];
+  if (!eventId) {
+    throw new Error(`Could not parse event id from edit href: ${editHref}`);
+  }
+  return { title, eventId };
 }
 
 test.describe("admin-events.feature", () => {
@@ -63,6 +83,7 @@ test.describe("admin-events.feature", () => {
     const event = await createEventViaUI(page, locale, {
       partnerName: partner.name,
       totalCapacity: "12",
+      zipCode: "10115",
     });
 
     const row = page.getByRole("row").filter({ hasText: event.title });
@@ -70,6 +91,33 @@ test.describe("admin-events.feature", () => {
 
     await expectEventOnDiscover(page, locale, event.title, partner.name);
     await expectPublicEventDetail(page, locale, event);
+    await expect(page.getByText(/10115/)).toBeVisible();
+  });
+
+  test("Scenario: Admin sets Berlin zip on create", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      zipCode: "10969",
+    });
+    await expectPublicEventDetail(page, locale, event);
+    await expect(page.getByText(/10969/)).toBeVisible();
+    await expect(page.getByText(/kiez|neighborhood|bezirk/i)).toHaveCount(0);
+  });
+
+  test("Scenario: Country and city are fixed on the form", async ({ page, locale }) => {
+    await page.goto(`/${locale}/admin/events/new`);
+    await expect(page.getByRole("heading", { name: /event/i }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByDisplayValue(locale === "de" ? "Deutschland" : "Germany")).toBeVisible();
+    await expect(page.getByDisplayValue("Berlin")).toBeVisible();
+    await expect(page.getByLabel(/plz|zip code/i)).toBeVisible();
+    await expect(page.getByLabel(/plz|zip code/i)).toBeEditable();
+    await expect(page.locator("#event-country-display")).toHaveAttribute("readonly", "");
+    await expect(page.locator("#event-city-display")).toHaveAttribute("readonly", "");
+    await expect(page.getByLabel(/kiez|neighborhood|bezirk/i)).toHaveCount(0);
   });
 
   test("Scenario: Supply the event image as a direct upload", async ({ page, locale }) => {
@@ -98,7 +146,7 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.title, `No Image ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing image");
     await fillTextbox(page, adminLabels.address, "Berlin");
-    await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
+    await fillTextbox(page, adminLabels.zipCode, "10115");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
@@ -121,7 +169,7 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.title, `No Secret ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing secret");
     await fillTextbox(page, adminLabels.address, "Berlin");
-    await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
+    await fillTextbox(page, adminLabels.zipCode, "10115");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
@@ -144,7 +192,7 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.title, `No Website ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing website");
     await fillTextbox(page, adminLabels.address, "Berlin");
-    await selectOptionByLabel(page, adminLabels.neighborhood, "Mitte");
+    await fillTextbox(page, adminLabels.zipCode, "10115");
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
@@ -178,57 +226,74 @@ test.describe("admin-events.feature", () => {
     await expect(row.getByText(/10\/10/)).toBeVisible();
   });
 
-  test("Scenario: Create an event series with manual slots", async ({ page, locale }) => {
+  test("Scenario: Clone event from catalog list", async ({ page, locale }) => {
     test.setTimeout(120_000);
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
-    const title = `Series Manual ${uniqueSuffix()}`;
-
-    await page.goto(`/${locale}/admin/events/series/new`);
-    await fillEventBaseFields(page, partner.name, title);
-    await fillLabeledDateOrTime(page, adminLabels.slotDate, futureDateISO(20), { nth: 0 });
-    await fillLabeledDateOrTime(page, adminLabels.slotTime, "19:00", { nth: 0 });
-    await fillLabeledDateOrTime(page, adminLabels.slotDate, futureDateISO(21), { nth: 1 });
-    await fillLabeledDateOrTime(page, adminLabels.slotTime, "20:00", { nth: 1 });
-    await attachEventImageFile(page);
-    await page.getByRole("button", { name: /slots anzeigen|show slots|preview/i }).click();
-
-    await expect(page.getByRole("heading", { name: /vorschau|preview/i })).toBeVisible({
-      timeout: 30_000,
+    const source = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      eventDate: futureDateISO(18),
+      eventTime: "19:00",
     });
-    // File inputs clear on remount between preview and confirm — re-attach before submit.
-    await attachEventImageFile(page);
-    await page.getByRole("button", { name: /events anlegen|create .*events/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 60_000 });
-    await expect(page.getByText(title).first()).toBeVisible();
+    const cloneDate = futureDateISO(25);
+
+    await page.goto(`/${locale}/admin/events`);
+    const row = page.getByRole("row").filter({ hasText: source.title });
+    await row.getByRole("link", { name: /^klonen$|^clone$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/${source.eventId}/clone`));
+    await expect(page.getByRole("heading", { name: /event klonen|clone event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, cloneDate);
+    await fillLabeledDateOrTime(page, adminLabels.eventTime, "20:30");
+    await page.getByRole("button", { name: /^klonen$|^clone$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/.+/edit`), {
+      timeout: 60_000,
+    });
+    await expect(page.getByDisplayValue(source.title)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByDisplayValue(cloneDate)).toBeVisible();
+
+    await page.goto(`/${locale}/admin/events`);
+    await expect(page.getByRole("row").filter({ hasText: source.title })).toHaveCount(2);
   });
 
-  test("Scenario: Create an event series with a date-range builder", async ({ page, locale }) => {
+  test("Scenario: Clone voucher event requires inventory", async ({ page, locale }) => {
     test.setTimeout(120_000);
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
-    const title = `Series Builder ${uniqueSuffix()}`;
-    const start = futureDateISO(30);
-    const end = futureDateISO(36);
+    const source = await createVoucherPromoViaUI(page, locale, partner.name);
 
-    await page.goto(`/${locale}/admin/events/series/new`);
-    await fillEventBaseFields(page, partner.name, title);
-    await selectOptionByLabel(page, adminLabels.slotMode, /datumsbereich|date range/i);
-    await fillLabeledDateOrTime(page, adminLabels.builderStart, start);
-    await fillLabeledDateOrTime(page, adminLabels.builderEnd, end);
-    await expect(page.getByText(adminLabels.weekdays).first()).toBeVisible();
-    await checkOptionByName(page, /^Mo$/);
-    await fillLabeledDateOrTime(page, adminLabels.builderTime1, "19:30");
-    await attachEventImageFile(page);
-    await page.getByRole("button", { name: /slots anzeigen|show slots|preview/i }).click();
-
-    await expect(page.getByRole("heading", { name: /vorschau|preview/i })).toBeVisible({
+    await page.goto(`/${locale}/admin/events/${source.eventId}/clone`);
+    await expect(page.getByRole("heading", { name: /event klonen|clone event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      page.getByText(/inventory is not copied|inventar wird nicht kopiert/i).first(),
+    ).toBeVisible();
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(28));
+    await page.getByRole("button", { name: /^klonen$|^clone$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/${source.eventId}/clone`), {
       timeout: 30_000,
     });
-    await attachEventImageFile(page);
-    await page.getByRole("button", { name: /events anlegen|create .*events/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 60_000 });
-    await expect(page.getByText(title).first()).toBeVisible();
+    await expect(
+      page.getByText(/inventory|inventar|erforderlich|required|voucher|promo/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("Scenario: Clone entry points visible", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const source = await createEventViaUI(page, locale, { partnerName: partner.name });
+
+    await page.goto(`/${locale}/admin/events`);
+    await expect(page.getByRole("link", { name: /event.?serie|series/i })).toHaveCount(0);
+    const listRow = page.getByRole("row").filter({ hasText: source.title });
+    await expect(listRow.getByRole("link", { name: /^klonen$|^clone$/i })).toBeVisible();
+
+    await listRow.getByRole("link", { name: /bearbeiten|edit/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/${source.eventId}/edit`));
+    await expect(page.getByRole("link", { name: /^klonen$|^clone$/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /event.?serie|series/i })).toHaveCount(0);
   });
 
   test("Scenario: Update an event's capacity", async ({ page, locale }) => {
@@ -334,23 +399,6 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("checkbox", { name: "18-25" })).toBeVisible();
     await checkOptionByName(page, "18-25");
     await expect(page.getByRole("checkbox", { name: "18-25" })).toBeChecked();
-  });
-
-  test("Scenario: Series weekdays use checkbox multi-select", async ({ page, locale }) => {
-    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
-    const partner = await createPartnerViaUI(page, locale);
-    await page.goto(`/${locale}/admin/events/series/new`);
-    await expect(page.getByRole("heading", { name: /serie|series/i })).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.waitForLoadState("networkidle");
-    await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await selectOptionByLabel(page, adminLabels.slotMode, /datumsbereich|date range/i);
-    await expect(page.getByText(adminLabels.weekdays).first()).toBeVisible();
-    await expect(page.getByRole("checkbox", { name: /^Mo$/ })).toBeVisible();
-    await checkOptionByName(page, /^Mo$/);
-    await expect(page.getByRole("button", { name: adminLabels.weekdays })).toHaveCount(0);
-    await expect(page.getByLabel(adminLabels.partner, { exact: true })).toBeVisible();
   });
 
   test("Scenario: Add event prefills address and map from partner", async ({ page, locale }) => {

@@ -1,5 +1,5 @@
 import type { AppSession } from "@unveiled/auth";
-import { CatalogValidationError } from "@unveiled/db";
+import { CatalogValidationError, PostalValidationError } from "@unveiled/db";
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { ImageValidationError } from "@unveiled/images/errors";
 import type { Context } from "hono";
@@ -150,6 +150,10 @@ function isImageStorageConfigError(error: Error): boolean {
 }
 
 export function mapCatalogError(error: unknown, locale: Locale): string {
+  if (error instanceof PostalValidationError) {
+    return getAdminCopy(locale).fieldErrors.zipCode;
+  }
+
   if (error instanceof CatalogValidationError) {
     if (
       error.code === "MISSING_EVENT_IMAGE" &&

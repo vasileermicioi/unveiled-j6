@@ -28,6 +28,7 @@ export type ProfileCopy = {
   securitySubtitle: string;
   backToProfile: string;
   validationError: string;
+  invalidMaxDistance: string;
   successIdentity: string;
   successPreferences: string;
 };
@@ -61,6 +62,7 @@ const copy: Record<Locale, ProfileCopy> = {
     securitySubtitle: "Passwort über Neon Auth / Better Auth ändern.",
     backToProfile: "Zurück zum Konto",
     validationError: "Bitte prüfe deine Angaben und versuche es erneut.",
+    invalidMaxDistance: "Bitte gib eine Reiseweite zwischen 1 und 50 km an.",
     successIdentity: "Profil aktualisiert.",
     successPreferences: "Präferenzen gespeichert.",
   },
@@ -92,6 +94,7 @@ const copy: Record<Locale, ProfileCopy> = {
     securitySubtitle: "Change your password via Neon Auth / Better Auth.",
     backToProfile: "Back to account",
     validationError: "Please check your details and try again.",
+    invalidMaxDistance: "Enter a travel distance between 1 and 50 km.",
     successIdentity: "Profile updated.",
     successPreferences: "Preferences saved.",
   },

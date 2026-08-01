@@ -42,13 +42,38 @@ type FixturePartner = {
   lng: string;
 };
 
+const NEIGHBORHOOD_TO_ZIP: Record<string, string> = {
+  Mitte: "10115",
+  Wedding: "13347",
+  "X-Berg": "10961",
+  "F-Hain": "10243",
+  Kreuzberg: "10961",
+  Charlottenburg: "10585",
+  Neukölln: "12043",
+  Pankow: "10405",
+};
+
+function zipFromFixtureEvent(event: {
+  zipCode?: string;
+  neighborhood?: string;
+  address?: string;
+}): string {
+  if (event.zipCode?.trim()) return event.zipCode.trim();
+  const fromAddress = event.address?.match(/\b(1[0-4]\d{3})\b/)?.[1];
+  if (fromAddress) return fromAddress;
+  const key = event.neighborhood?.trim() ?? "";
+  return NEIGHBORHOOD_TO_ZIP[key] ?? "10115";
+}
+
 type FixtureEvent = {
   slug: string;
   partnerKey: string;
   title: string;
   description: string;
   address: string;
-  neighborhood: string;
+  /** Legacy abundo field; mapped to zipCode when seeding. */
+  neighborhood?: string;
+  zipCode?: string;
   category: string;
   eventType: string;
   tags: string[];
@@ -260,7 +285,9 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
           title: event.title,
           description: event.description,
           address: event.address,
-          neighborhood: event.neighborhood,
+          country: "DE",
+          city: "berlin",
+          zipCode: zipFromFixtureEvent(event),
           category: event.category,
           eventType: event.eventType,
           tags: event.tags,

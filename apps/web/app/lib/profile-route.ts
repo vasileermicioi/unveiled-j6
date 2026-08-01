@@ -46,6 +46,15 @@ function parseBooleanField(value: string | File | (string | File)[] | undefined)
   return normalized === "true" || normalized === "on" || normalized === "1";
 }
 
+/** Parse form `max_distance` / `maxDistance`; missing → NaN so domain validation fails closed. */
+function parseMaxDistanceField(body: ParsedBody): number {
+  const raw = asString(body.max_distance) || asString(body.maxDistance);
+  if (raw.trim() === "") {
+    return Number.NaN;
+  }
+  return Number(raw);
+}
+
 export function parseIdentityPayload(body: ParsedBody): ProfileIdentityPayload {
   return {
     first_name: asString(body.first_name),
@@ -59,7 +68,10 @@ export function parsePreferencesPayload(body: ParsedBody): CulturalPreferencesPa
     interests: asStringArray(body.interests),
     moods: asStringArray(body.moods),
     interests_other: asString(body.interests_other),
-    districts: asStringArray(body.districts),
+    zipCode: asString(body.zip_code) ?? "",
+    country: asString(body.country) || undefined,
+    city: asString(body.city) || undefined,
+    maxDistance: parseMaxDistanceField(body),
     timing: asStringArray(body.timing),
     preferred_days: asStringArray(body.preferred_days),
     preferred_languages: asStringArray(body.preferred_languages),
@@ -208,7 +220,8 @@ export async function handleProfilePreferencesPost(
       return {
         kind: "validation-error",
         locale,
-        message: copy.validationError,
+        message:
+          error.code === "invalid_max_distance" ? copy.invalidMaxDistance : copy.validationError,
       };
     }
     throw error;

@@ -36,8 +36,14 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `interestsOtherLabel` | Beschreibe dein Interesse | Describe your interest |
 | `interestsOtherPlaceholder` | z. B. Spoken Word | e.g. Spoken word |
 | `moodLabel` | WELCHE VIBES SUCHST DU? | WHAT VIBES ARE YOU AFTER? |
-| `districtLabel` | WO BIST DU UNTERWEGS? | WHERE DO YOU HANG OUT? |
-| `districtSubtitle` | Wähle einen oder mehrere Berliner Bezirke. | Pick one or more Berlin districts. |
+| `locationLabel` | DEIN STANDORT | YOUR LOCATION |
+| `countryLabel` | Land | Country |
+| `countryDisplay` | Deutschland | Germany |
+| `cityLabel` | Stadt | City |
+| `cityDisplay` | Berlin | Berlin |
+| `zipCodeLabel` | PLZ | Zip code |
+| `zipCodeHint` | Unveiled ist aktuell in Berlin verfügbar. Gib eine Berliner PLZ ein. | Unveiled currently serves Berlin. Enter a Berlin zip code. |
+| ~~`districtLabel`~~ / ~~`districtSubtitle`~~ | _(removed — location is zip under Germany/Berlin)_ | _(removed — location is zip under Germany/Berlin)_ |
 | `timingLabel` | WANN HAST DU ZEIT? | WHEN DO YOU HAVE TIME? |
 | `daysLabel` | WELCHE TAGE? | WHICH DAYS? |
 | `languagePrefLabel` | SPRACHEN? | LANGUAGES? |
@@ -47,8 +53,8 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `finish` | FERTIG | FINISH |
 | `next` | WEITER | NEXT |
 | `skip` | ÜBERSPRINGEN | SKIP |
-| ~~`radiusLabel`~~ | _(unused — travel radius not collected)_ | _(unused — travel radius not collected)_ |
-| ~~`km`~~ | _(unused — travel radius not collected)_ | _(unused — travel radius not collected)_ |
+| `radiusLabel` | Wie weit bist du bereit zu fahren? | How far will you travel? |
+| `km` | km | km |
 | `eventList` | Events | Events |
 | `createEvent` | Event erstellen | Create Event |
 | `nav.discover` (shell) | Entdecken | Discover |
@@ -155,14 +161,14 @@ Chrome: eyebrow `Rechtliches` / `Legal`. Section model: `id`, `title`, `body: st
 - Discover/marketing page copy (`apps/web/app/lib/content/discover.ts` — featured empty state: "Aktuell keine empfohlenen Events." / "No featured events right now."; Partner venues eyebrow "Partnerorte" / "Partner venues")
 - App shell nav Discover / Browse events strings (`apps/web/app/lib/copy.ts` — `nav.discover`, `browseEvents`)
 - Admin Featured events + Featured partners chrome (`apps/web/app/lib/admin-content.ts`): `tabFeatured` Empfohlene Events / Featured events; `tabFeaturedPartners` Empfohlene Partner / Featured partners; `featured*` + `featuredPartners*` list/add/remove titles, empty states, confirm copy (remove keeps catalog partner/event); Featured partners grid: `featuredPartnersReorderHint`, `featuredPartnersSaveOrderAction`, `featuredPartnersRemoveBulkAction`, `featuredPartnersSelectLabel`
-- Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getDistrictLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants`: 12 official Berlin Bezirke for `DISTRICTS` (same string for key and DE/EN label); `INTERESTS` includes `Other` (DE `Sonstiges`); member `PREFERRED_LANGUAGES` (no `Non-Verbal`; DE/EN pinned first in UI). Timing/days/moods are translated per locale. Section chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`): interests Other free-text labels, language search placeholder, Accessibility needed? / Yes|Ja. Travel radius (`radiusLabel` / `km`) is not collected.
+- Onboarding / profile preference option labels — locale maps in `apps/web/app/lib/onboarding-content.ts` (`getInterestLabel`, `getMoodLabel`, `getTimingLabel`, `getWeekdayLabel`, `getPreferredLanguageLabel`, `getAgeGroupLabel`). Stored allowlist keys remain in `@unveiled/auth/constants`: `INTERESTS` includes `Other` (DE `Sonstiges`); member `PREFERRED_LANGUAGES` (no `Non-Verbal`; DE/EN pinned first in UI). Timing/days/moods are translated per locale. Location chrome also lives in `onboarding-content.ts` (`getOnboardingCopy`): `locationLabel`, `countryLabel` / `countryDisplay`, `cityLabel` / `cityDisplay`, `zipCodeLabel`, `zipCodeHint` (Germany/Berlin prefilled; Berlin PLZ), plus travel distance `radiusLabel` / `km` (required native number input, 1–50 km). Interests Other free-text labels, language search placeholder, Accessibility needed? / Yes|Ja.
 - "SECURE RSVP // NO REFUNDS" booking policy copy (hardcoded in `BookingModal.tsx`, not in `translations.ts`)
 - Venue check-in inline copy (`BookingsView.tsx`)
 - Event detail checkout-card CTA/notice strings (guest unlock, membership notices, “Secure RSVP // No refunds”, total label) — live in `EventDetailPage.tsx` / locale helpers, not the old `translations.ts` catalog; see `ui/ui-component-map.md` Event detail entry. EventCard primary CTA uses Discover / Entdecken (`bookNow` key) or Waitlist / Warteliste for all viewer states (guest included); image and title also link to detail.
 - Event detail gallery section + slider a11y (`apps/web/app/lib/event-detail-gallery-copy.ts`): section title Galerie/Gallery; Previous/Next/Close labels; photo alt “Foto N” / “Photo N”.
 - Admin event gallery manage copy (`apps/web/app/lib/admin-content.ts`): `galleryTitle`, `gallerySubtitle`, `galleryCapacity`, `galleryEmpty`, `galleryAdd*` / `galleryRemove*` / `galleryManageAction` / `galleryPhotoLabel` / `gallerySelectLabel` / `galleryReorderHint` / `gallerySaveOrderAction` / `gallerySelectedFilesLabel`; capacity/duplicate/reorder validation messages via `mapCatalogError`.
 - Admin image upload copy (`apps/web/app/lib/admin-content.ts`): `imageFileLabel`, `imageUploadHint`, `imageUploadHintEdit`, `imageProcessingError`, `imageRequiredError`, `imageUndecodableError`, `imageWebpUnsupportedError`, `imageIncompleteVariantsError`, `imageProcessingSubmitBlocked`, `imageVariantGalleryLabel`, `imageVariantOpenLabel`, `imageVariantPreviousLabel`, `imageVariantNextLabel`, `imageVariantCloseHint`; partner logo: `logoFileLabel`, `logoUploadHint`, `logoUploadHintEdit`, `logoRequiredError`. Hints describe browser-decodable → WebP (no 800×420 / 8 MB language).
-- Admin event multi-value fields (`apps/web/app/lib/admin-content.ts`): `languagesLabel` Sprachen/Languages; `languagesSearchPlaceholder` Sprachen suchen/Search languages; `languageIndependentLabel` Sprachunabhängig/Language-independent; `languageIndependentHint` short helper for exhibitions/installations; `targetAgeGroupsLabel` Altersgruppen/Age groups; series `builderWeekdaysLabel` Wochentage/Weekdays (+ `weekdayLabels`). Partner attribution on public detail uses denormalized `event.partnerName` + logo image alt (no separate copy keys). Public detail language-independent value uses the same Language-independent / Sprachunabhängig wording.
+- Admin event multi-value fields (`apps/web/app/lib/admin-content.ts`): `languagesLabel` Sprachen/Languages; `languagesSearchPlaceholder` Sprachen suchen/Search languages; `languageIndependentLabel` Sprachunabhängig/Language-independent; `languageIndependentHint` short helper for exhibitions/installations; `targetAgeGroupsLabel` Altersgruppen/Age groups. Clone flow keys: `cloneAction` Klonen/Clone; `cloneEventTitle` Event klonen/Clone event; `cloneSubmit` Klonen/Clone; inventory/date hints on the clone form. Series builder weekday labels removed with series create. Partner attribution on public detail uses denormalized `event.partnerName` + logo image alt (no separate copy keys). Public detail language-independent value uses the same Language-independent / Sprachunabhängig wording.
 - Admin shared page eyebrow (`apps/web/app/lib/admin-content.ts` `pageEyebrow`): "Admin" / "Verwaltung" — used by every `AdminPageShell` `PageSectionHeader`.
 - Member profile account chrome + membership home (`apps/web/app/lib/profile-content.ts`): `eyebrow` Account/Konto; `title` Your account/Dein Konto; tab labels Membership/Mitgliedschaft, Personal details/Persönliche Daten, Vibes / Preferences, Billing/Abrechnung, Change password/Passwort ändern, Export data/Daten exportieren, Delete account/Konto löschen; `membershipTitle` / `membershipSubtitle`; `manageSubscriptionCta` Manage subscription/Abo verwalten; `startMembershipCta` Start membership/Mitgliedschaft starten.
 

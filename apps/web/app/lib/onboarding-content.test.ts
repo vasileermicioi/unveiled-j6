@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
   AGE_GROUPS,
-  DISTRICTS,
   INTERESTS,
   MOODS,
   PREFERRED_LANGUAGES,
@@ -11,7 +10,6 @@ import {
 import type { Locale } from "./locale";
 import {
   getAgeGroupLabel,
-  getDistrictLabel,
   getInterestLabel,
   getMoodLabel,
   getOnboardingCopy,
@@ -72,9 +70,6 @@ describe("onboarding-content i18n", () => {
       for (const value of MOODS) {
         expect(getMoodLabel(locale, value).length).toBeGreaterThan(0);
       }
-      for (const value of DISTRICTS) {
-        expect(getDistrictLabel(locale, value).length).toBeGreaterThan(0);
-      }
       for (const value of TIMING_OPTIONS) {
         expect(getTimingLabel(locale, value).length).toBeGreaterThan(0);
       }
@@ -94,7 +89,6 @@ describe("onboarding-content i18n", () => {
     expect(getInterestLabel("de", "Other")).toBe("Sonstiges");
     expect(getMoodLabel("en", "Leicht")).toBe("Light");
     expect(getMoodLabel("en", "Fam")).toBe("Family-friendly");
-    expect(getDistrictLabel("en", "Friedrichshain-Kreuzberg")).toBe("Friedrichshain-Kreuzberg");
     expect(getTimingLabel("en", "Day")).toBe("Daytime");
     expect(getWeekdayLabel("en", "Monday")).toBe("Monday");
     expect(getWeekdayLabel("de", "Monday")).toBe("Montag");
@@ -108,11 +102,26 @@ describe("onboarding-content i18n", () => {
     expect(getTimingLabel("de", "Day")).toBe("Tagsüber");
   });
 
-  test("district labels use official Bezirk names in both locales", () => {
-    expect(getDistrictLabel("de", "Friedrichshain-Kreuzberg")).toBe("Friedrichshain-Kreuzberg");
-    expect(getDistrictLabel("de", "Neukölln")).toBe("Neukölln");
-    expect(getDistrictLabel("en", "Tempelhof-Schöneberg")).toBe("Tempelhof-Schöneberg");
-    expect(getOnboardingCopy("de").districtSubtitle).toContain("Bezirke");
-    expect(getOnboardingCopy("en").districtSubtitle).toContain("districts");
+  test("location copy uses Germany/Berlin zip labels", () => {
+    expect(getOnboardingCopy("de").locationLabel).toBe("DEIN STANDORT");
+    expect(getOnboardingCopy("de").countryLabel).toBe("Land");
+    expect(getOnboardingCopy("de").countryDisplay).toBe("Deutschland");
+    expect(getOnboardingCopy("de").cityLabel).toBe("Stadt");
+    expect(getOnboardingCopy("de").cityDisplay).toBe("Berlin");
+    expect(getOnboardingCopy("de").zipCodeLabel).toBe("PLZ");
+    expect(getOnboardingCopy("de").zipCodeHint).toContain("Berlin");
+    expect(getOnboardingCopy("de").radiusLabel).toBe("Wie weit bist du bereit zu fahren?");
+    expect(getOnboardingCopy("de").km).toBe("km");
+    expect(getOnboardingCopy("de").invalidMaxDistance).toContain("1");
+    expect(getOnboardingCopy("en").locationLabel).toBe("YOUR LOCATION");
+    expect(getOnboardingCopy("en").countryLabel).toBe("Country");
+    expect(getOnboardingCopy("en").countryDisplay).toBe("Germany");
+    expect(getOnboardingCopy("en").cityLabel).toBe("City");
+    expect(getOnboardingCopy("en").cityDisplay).toBe("Berlin");
+    expect(getOnboardingCopy("en").zipCodeLabel).toBe("Zip code");
+    expect(getOnboardingCopy("en").zipCodeHint).toContain("Berlin");
+    expect(getOnboardingCopy("en").radiusLabel).toBe("How far will you travel?");
+    expect(getOnboardingCopy("en").km).toBe("km");
+    expect(getOnboardingCopy("en").invalidMaxDistance).toContain("50");
   });
 });

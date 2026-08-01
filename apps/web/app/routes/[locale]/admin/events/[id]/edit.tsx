@@ -1,3 +1,4 @@
+import { Link } from "@heroui/react";
 import { getEventById, getVoucherInventoryCounts, listPartners, updateEvent } from "@unveiled/db";
 import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
 import type { Context } from "hono";
@@ -28,6 +29,7 @@ import {
 } from "../../../../../lib/admin-voucher-inventory";
 import { getAuthOptions } from "../../../../../lib/auth";
 import type { Locale } from "../../../../../lib/locale";
+import { localizedPath } from "../../../../../lib/locale";
 import { resolveEnvVarFromContext } from "../../../../../lib/runtime-env";
 import { maybeProcessWaitlistAfterCapacityIncrease } from "../../../../../lib/waitlist-capacity-hook";
 
@@ -47,6 +49,14 @@ function renderEditPage(
     c,
     <AdminPageShell
       eyebrow={copy.pageEyebrow}
+      actions={
+        <Link
+          className="button button--secondary button--md"
+          href={localizedPath(options.locale, `admin/events/${options.eventId}/clone`)}
+        >
+          {copy.cloneAction}
+        </Link>
+      }
       breadcrumbs={[
         { label: copy.eventsTitle, href: adminEventsPath(options.locale) },
         { label: copy.editEventTitle },

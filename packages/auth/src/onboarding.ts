@@ -1,19 +1,22 @@
 import {
   type Db,
   type OnboardingStepKey,
+  PostalValidationError,
   type User,
   type UserBehavior,
   type UserProfile,
   users,
+  validatePostalCode,
 } from "@unveiled/db";
 import { eq } from "drizzle-orm";
 
 import {
   AGE_GROUPS,
   type AgeGroup,
-  DISTRICTS,
   INTERESTS,
   INTERESTS_OTHER_MAX_LENGTH,
+  MAX_DISTANCE_MAX,
+  MAX_DISTANCE_MIN,
   MOODS,
   PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
@@ -23,9 +26,10 @@ import {
 export {
   AGE_GROUPS,
   type AgeGroup,
-  DISTRICTS,
   INTERESTS,
   INTERESTS_OTHER_MAX_LENGTH,
+  MAX_DISTANCE_MAX,
+  MAX_DISTANCE_MIN,
   MOODS,
   PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
@@ -43,7 +47,11 @@ export type InterestsStepPayload = {
 };
 
 export type LocationStepPayload = {
-  districts: string[];
+  zipCode: string;
+  country?: string;
+  city?: string;
+  /** Integer km within `MAX_DISTANCE_MIN`–`MAX_DISTANCE_MAX`; required on location saves. */
+  maxDistance: number;
 };
 
 export type TimingStepPayload = {
@@ -67,6 +75,36 @@ export class OnboardingValidationError extends Error {
     this.name = "OnboardingValidationError";
     this.code = code;
   }
+}
+
+/**
+ * Validates travel distance (km) for profile preference / onboarding location saves.
+ * Requires a finite integer in `[MAX_DISTANCE_MIN, MAX_DISTANCE_MAX]`.
+ */
+export function validateMaxDistance(value: unknown): number {
+  if (value === undefined || value === null || value === "") {
+    throw new OnboardingValidationError("invalid_max_distance", "max_distance is required");
+  }
+
+  const numeric =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value.trim())
+        : Number.NaN;
+
+  if (!Number.isFinite(numeric) || !Number.isInteger(numeric)) {
+    throw new OnboardingValidationError("invalid_max_distance", "max_distance must be an integer");
+  }
+
+  if (numeric < MAX_DISTANCE_MIN || numeric > MAX_DISTANCE_MAX) {
+    throw new OnboardingValidationError(
+      "invalid_max_distance",
+      `max_distance must be between ${MAX_DISTANCE_MIN} and ${MAX_DISTANCE_MAX}`,
+    );
+  }
+
+  return numeric;
 }
 
 const STEP_PATHS: Record<OnboardingStep, string> = {
@@ -161,6 +199,7 @@ function isAgeStepDone(profile: UserProfile): boolean {
   return (
     profile.interests != null ||
     profile.moods != null ||
+    profile.zip_code != null ||
     profile.districts != null ||
     profile.max_distance != null ||
     profile.timing != null ||
@@ -175,7 +214,7 @@ function isInterestsStepDone(profile: UserProfile): boolean {
 }
 
 function isLocationStepDone(profile: UserProfile): boolean {
-  return profile.districts != null;
+  return typeof profile.zip_code === "string" && profile.zip_code.trim().length > 0;
 }
 
 function inferOnboardingStep(profile: UserProfile): OnboardingStep {
@@ -249,9 +288,23 @@ export function validateOnboardingStepPayload(
     }
 
     case "location": {
-      const { districts } = payload as LocationStepPayload;
-      assertAllowlist(districts, DISTRICTS, "invalid_district");
-      return { districts, max_distance: null };
+      const { zipCode, country, city, maxDistance } = payload as LocationStepPayload;
+      const max_distance = validateMaxDistance(maxDistance);
+      try {
+        const location = validatePostalCode({ country, city, zipCode });
+        return {
+          country: location.country,
+          city: location.city,
+          zip_code: location.zipCode,
+          districts: null,
+          max_distance,
+        };
+      } catch (error) {
+        if (error instanceof PostalValidationError) {
+          throw new OnboardingValidationError(error.code.toLowerCase(), error.message);
+        }
+        throw error;
+      }
     }
 
     case "timing": {

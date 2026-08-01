@@ -7,6 +7,7 @@ import {
   getOnboardingStepPath,
   OnboardingValidationError,
   saveOnboardingStep,
+  validateMaxDistance,
   validateOnboardingStepPayload,
 } from "./onboarding";
 
@@ -35,7 +36,16 @@ describe("getOnboardingStepPath", () => {
 
   test("progress resumes at timing after location", () => {
     expect(
-      getOnboardingStepPath({ interests: ["Kino"], moods: ["Leicht"], districts: ["Mitte"] }, {}),
+      getOnboardingStepPath(
+        {
+          interests: ["Kino"],
+          moods: ["Leicht"],
+          zip_code: "10115",
+          country: "DE",
+          city: "berlin",
+        },
+        {},
+      ),
     ).toBe("/onboarding/timing");
   });
 
@@ -104,23 +114,46 @@ describe("validateOnboardingStepPayload", () => {
     ).toThrow(OnboardingValidationError);
   });
 
-  test("rejects invalid district", () => {
+  test("rejects invalid postal code", () => {
     expect(() =>
       validateOnboardingStepPayload("location", {
-        districts: ["X-Berg"],
+        zipCode: "80331",
+        maxDistance: 10,
       }),
     ).toThrow(OnboardingValidationError);
   });
 
-  test("location payload clears max_distance", () => {
+  test("location payload stores zip trio, max_distance, and clears districts", () => {
     expect(
       validateOnboardingStepPayload("location", {
-        districts: ["Mitte", "Pankow"],
+        zipCode: "10115",
+        maxDistance: 10,
       }),
     ).toEqual({
-      districts: ["Mitte", "Pankow"],
-      max_distance: null,
+      country: "DE",
+      city: "berlin",
+      zip_code: "10115",
+      districts: null,
+      max_distance: 10,
     });
+  });
+
+  test("rejects out-of-range max_distance on location step", () => {
+    expect(() =>
+      validateOnboardingStepPayload("location", {
+        zipCode: "10115",
+        maxDistance: 51,
+      }),
+    ).toThrow(OnboardingValidationError);
+  });
+
+  test("rejects missing max_distance on location step", () => {
+    expect(() =>
+      validateOnboardingStepPayload("location", {
+        zipCode: "10115",
+        maxDistance: undefined as unknown as number,
+      }),
+    ).toThrow(OnboardingValidationError);
   });
 
   test("age skip returns empty profile update", () => {
@@ -247,7 +280,8 @@ describe("saveOnboardingStep and completeOnboarding", () => {
         moods: ["Leicht", "Klassisch"],
       });
       await saveOnboardingStep(db, userId, "location", {
-        districts: ["Mitte", "Pankow"],
+        zipCode: "10115",
+        maxDistance: 15,
       });
       await saveOnboardingStep(db, userId, "timing", {
         timing: ["Weekend", "After Work"],
@@ -262,8 +296,11 @@ describe("saveOnboardingStep and completeOnboarding", () => {
       expect(completed.profile.age_group).toBe("26-35");
       expect(completed.profile.interests).toEqual(["Kino", "Theater"]);
       expect(completed.profile.moods).toEqual(["Leicht", "Klassisch"]);
-      expect(completed.profile.districts).toEqual(["Mitte", "Pankow"]);
-      expect(completed.profile.max_distance).toBeNull();
+      expect(completed.profile.zip_code).toBe("10115");
+      expect(completed.profile.country).toBe("DE");
+      expect(completed.profile.city).toBe("berlin");
+      expect(completed.profile.districts).toBeNull();
+      expect(completed.profile.max_distance).toBe(15);
       expect(completed.profile.timing).toEqual(["Weekend", "After Work"]);
       expect(completed.profile.preferred_days).toEqual(["Friday", "Saturday"]);
       expect(completed.profile.preferred_languages).toEqual(["DE", "EN"]);
@@ -310,6 +347,25 @@ describe("saveOnboardingStep and completeOnboarding", () => {
       await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
       await db.delete(users).where(eq(users.id, userId));
     }
+  });
+});
+
+describe("validateMaxDistance", () => {
+  test("accepts bounds and mid values", () => {
+    expect(validateMaxDistance(1)).toBe(1);
+    expect(validateMaxDistance(10)).toBe(10);
+    expect(validateMaxDistance(50)).toBe(50);
+    expect(validateMaxDistance("10")).toBe(10);
+  });
+
+  test("rejects out of range, non-integer, NaN, and missing", () => {
+    expect(() => validateMaxDistance(0)).toThrow(OnboardingValidationError);
+    expect(() => validateMaxDistance(51)).toThrow(OnboardingValidationError);
+    expect(() => validateMaxDistance(10.5)).toThrow(OnboardingValidationError);
+    expect(() => validateMaxDistance(Number.NaN)).toThrow(OnboardingValidationError);
+    expect(() => validateMaxDistance(undefined)).toThrow(OnboardingValidationError);
+    expect(() => validateMaxDistance(null)).toThrow(OnboardingValidationError);
+    expect(() => validateMaxDistance("")).toThrow(OnboardingValidationError);
   });
 });
 

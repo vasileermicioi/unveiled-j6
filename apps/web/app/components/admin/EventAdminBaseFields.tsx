@@ -12,7 +12,6 @@ import {
   getEventAgeGroupOptions,
   getEventCategoryOptions,
   getEventLanguageOptions,
-  getEventNeighborhoodOptions,
   getEventTypeOptions,
 } from "../../lib/admin-content";
 import { geocodeBerlinAddress } from "../../lib/geocode-berlin";
@@ -58,7 +57,6 @@ export function EventAdminBaseFields({
   const ageGroupOptions = getEventAgeGroupOptions(locale);
   const categoryOptions = getEventCategoryOptions(locale);
   const eventTypeOptions = getEventTypeOptions(locale);
-  const neighborhoodOptions = getEventNeighborhoodOptions(locale, defaults?.neighborhood);
   const descriptionFieldId = useId();
   const descriptionLabelId = useId();
   const descriptionHintId = useId();
@@ -173,14 +171,48 @@ export function EventAdminBaseFields({
             />
           </TextField>
 
-          <AdminFormSelect
-            defaultSelectedKey={defaults?.neighborhood}
-            isRequired
-            label={copy.neighborhoodLabel}
-            name="neighborhood"
-            options={neighborhoodOptions}
-            placeholder={copy.selectPlaceholder}
-          />
+          <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
+            <Surface className="flex w-full flex-col gap-1" variant="transparent">
+              <Label htmlFor="event-country-display">{copy.countryLabel}</Label>
+              <input
+                className="admin-native-text"
+                defaultValue={copy.countryDisplay}
+                id="event-country-display"
+                readOnly
+                tabIndex={-1}
+                type="text"
+              />
+            </Surface>
+            <Surface className="flex w-full flex-col gap-1" variant="transparent">
+              <Label htmlFor="event-city-display">{copy.cityLabel}</Label>
+              <input
+                className="admin-native-text"
+                defaultValue={copy.cityDisplay}
+                id="event-city-display"
+                readOnly
+                tabIndex={-1}
+                type="text"
+              />
+            </Surface>
+          </Surface>
+
+          <Surface className="flex w-full flex-col gap-1" variant="transparent">
+            <Label htmlFor="event-zip-code">{copy.zipCodeLabel}</Label>
+            <input
+              className="admin-native-text"
+              defaultValue={defaults?.zipCode ?? ""}
+              id="event-zip-code"
+              inputMode="numeric"
+              maxLength={5}
+              name="zip_code"
+              required
+              type="text"
+            />
+            <Description>{copy.zipCodeHint}</Description>
+          </Surface>
+
+          <input name="country" type="hidden" value={defaults?.country ?? "DE"} />
+          <input name="city" type="hidden" value={defaults?.city ?? "berlin"} />
         </Surface>
 
         <EventGeoPicker
@@ -300,21 +332,17 @@ export function EventAdminBaseFields({
             isEdit={isEdit}
             locale={locale}
           />
-          {!isEdit ? <Description>{copy.voucherInventorySeriesHint}</Description> : null}
         </>
       ) : null}
 
       {ticketType === "VOUCHER_PDF" ? (
-        <>
-          <PdfVoucherInventoryIsland
-            eventId={defaults?.eventId ?? null}
-            inventoryCounts={defaults?.inventoryCounts?.pdf ?? null}
-            isEdit={isEdit}
-            locale={locale}
-            uploadPath={`/${locale}/admin/uploads/voucher-pdf`}
-          />
-          {!isEdit ? <Description>{copy.voucherInventorySeriesHint}</Description> : null}
-        </>
+        <PdfVoucherInventoryIsland
+          eventId={defaults?.eventId ?? null}
+          inventoryCounts={defaults?.inventoryCounts?.pdf ?? null}
+          isEdit={isEdit}
+          locale={locale}
+          uploadPath={`/${locale}/admin/uploads/voucher-pdf`}
+        />
       ) : null}
 
       <Surface className="flex flex-col gap-4" variant="transparent">

@@ -29,7 +29,9 @@ Feature: Admin — Member Management ("Membership HQ")
 
   Scenario: Expand a member's detail / "intel" panel
     When I expand a member's row
-    Then I see their preferences (interests, moods, districts, timing, days, languages, age group, radius, accessibility)
+    Then I see their preferences (interests, moods, location as country/city/zip, timing, days, languages, age group, accessibility)
+    And when max_distance is set I see travel distance in km
+    And when max_distance is null I do not see travel distance / radius as an active preference row
     And I see their history (bookings, waitlist entries, saved events, session count)
     And I see behavior analytics (event opens, filter applies, saves/unsaves, last view, last seen, last booked/waitlisted event, recently viewed events)
 

@@ -72,6 +72,11 @@ export function AdminEventsTable({ locale, events, imageUrls }: AdminEventsTable
                         icon: "edit",
                       },
                       {
+                        href: localizedPath(locale, `admin/events/${event.id}/clone`),
+                        label: copy.cloneAction,
+                        icon: "clone",
+                      },
+                      {
                         href: localizedPath(locale, `admin/events/${event.id}/delete`),
                         label: copy.deleteAction,
                         icon: "delete",

@@ -23,7 +23,11 @@ export type UserProfile = {
   /** Free-text interest when `interests` includes `Other`; null when Other is unchecked. */
   interests_other?: string | null;
   moods?: string[] | null;
+  /** @deprecated Legacy Bezirk multi-select; cleared on location preference writes. */
   districts?: string[] | null;
+  country?: string | null;
+  city?: string | null;
+  zip_code?: string | null;
   timing?: string[] | null;
   preferred_days?: string[] | null;
   preferred_languages?: string[] | null;

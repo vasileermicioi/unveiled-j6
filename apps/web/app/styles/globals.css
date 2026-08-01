@@ -2247,7 +2247,8 @@
     background-image: none;
   }
 
-  .admin-native-number {
+  .admin-native-number,
+  .admin-native-text {
     width: 100%;
     min-height: 2.75rem;
     padding: 0.5rem 0.75rem;
@@ -2258,6 +2259,11 @@
     font: inherit;
     font-weight: 600;
     box-shadow: none;
+  }
+
+  .admin-native-text:read-only {
+    color: var(--muted);
+    cursor: default;
   }
 
   .admin-native-file,
@@ -2378,13 +2384,15 @@
     border: 0;
   }
 
-  .admin-native-number:focus {
+  .admin-native-number:focus,
+  .admin-native-text:focus {
     outline: none;
     border-color: var(--border);
     box-shadow: none;
   }
 
-  .admin-native-number:focus-visible {
+  .admin-native-number:focus-visible,
+  .admin-native-text:focus-visible {
     outline: 2px solid var(--foreground);
     outline-offset: 2px;
   }

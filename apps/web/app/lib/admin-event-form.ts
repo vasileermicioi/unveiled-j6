@@ -18,7 +18,9 @@ export type EventFormValues = {
   title: string;
   description: string;
   address: string;
-  neighborhood: string;
+  zipCode: string;
+  country?: string;
+  city?: string;
   category: string;
   eventType: string;
   tags: string[];
@@ -437,7 +439,9 @@ export async function parseEventFormBody(
     title: asString(body.title)?.trim() ?? "",
     description: asString(body.description)?.trim() ?? "",
     address: asString(body.address)?.trim() ?? "",
-    neighborhood: asString(body.neighborhood)?.trim() ?? "",
+    zipCode: asString(body.zip_code)?.trim() ?? "",
+    country: asString(body.country)?.trim() || undefined,
+    city: asString(body.city)?.trim() || undefined,
     category: asString(body.category)?.trim() ?? "",
     eventType: asString(body.event_type)?.trim() ?? "",
     tags: parseCommaSeparated(asString(body.tags)),

@@ -195,7 +195,7 @@ export function EventCard({
         <Surface className="event-card__meta" variant="transparent">
           <MapPin aria-hidden className="event-card__meta-icon" size={ICON_SIZE} strokeWidth={2} />
           <Paragraph color="muted" size="sm">
-            {event.neighborhood}
+            {event.zipCode}
           </Paragraph>
         </Surface>
       </Card.Content>

@@ -27,9 +27,13 @@ Tables: `users`, `subscriptions` (1:1), `saved_events`, `featured_events`, `feat
 |---|---|
 | `first_name`, `last_name` | text, nullable — set to `NULL`/anonymized placeholder on account deletion (see "Account deletion" below) |
 | `age_group` | enum: `18-25`, `26-35`, `36-50`, `50+`, nullable |
-| `interests`, `moods`, `districts`, `timing`, `preferred_days`, `preferred_languages` | text[] (Postgres native arrays are fine here — low cardinality, not relational) |
+| `interests`, `moods`, `timing`, `preferred_days`, `preferred_languages` | text[] (Postgres native arrays are fine here — low cardinality, not relational) |
+| `country` | text, ISO 3166-1 alpha-2 — location preference; this release defaults / prefills `DE` |
+| `city` | text, canonical city key — this release defaults / prefills `berlin` |
+| `zip_code` | text — postal code validated via shared `validatePostalCode({ country, city, zipCode })` (Berlin PLZ under `(DE, berlin)`) |
 | `interests_other` | text, nullable — free-text interest when `interests` includes `Other`; null when Other is not selected |
-| `max_distance` | integer (km), **legacy/unused** — not collected in onboarding or Vibes; preference saves clear it to `null` (no SQL migration to drop the JSON key) |
+| ~~`districts`~~ | **Replaced** by `country` / `city` / `zip_code`. Legacy key is cleared on preference / onboarding location writes (not an active preference array) |
+| `max_distance` | integer (km) — active preference collected in onboarding step 3 and profile Vibes; inclusive bounds **1–50** via `MAX_DISTANCE_MIN` / `MAX_DISTANCE_MAX`; preference saves do **not** clear it to `null` by policy (capture-for-later / admin intel — not used to rank the member feed) |
 | `accessibility` | boolean |
 | `language` | enum: `DE`, `EN` |
 | `onboarding_complete` | boolean |
@@ -99,7 +103,10 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `id` | text/uuid, PK | |
 | `partner_id` | text/uuid, FK → `partners.id` | |
 | `partner_name` | text | **Denormalized** from `partners.name` — kept in sync on partner rename in the old app. Recommend either (a) keeping the denormalization with an app-layer sync step, or (b) dropping it and always joining `partners` — Postgres makes the join cheap, so (b) is likely simpler now |
-| `title`, `description`, `address`, `neighborhood` | text | `description` is **Markdown at rest** (GFM on public detail via `MarkdownContent`; authored in admin via MDXEditor). Plain text remains valid Markdown. No separate HTML column. |
+| `title`, `description`, `address` | text | `description` is **Markdown at rest** (GFM on public detail via `MarkdownContent`; authored in admin via MDXEditor). Plain text remains valid Markdown. No separate HTML column. |
+| `country` | text, not null, default `DE` | ISO 3166-1 alpha-2. This release supports `DE` only (postal registry). |
+| `city` | text, not null, default `berlin` | Canonical city key (lowercase slug). This release supports `berlin` only. |
+| `zip_code` | text, not null | Postal code; for `(DE, berlin)` must be a valid Berlin PLZ (5-digit + membership ranges **10115–14199**). Replaces legacy `neighborhood`. |
 | `image_id` | uuid, FK → `images.id`, **not nullable** | **Was `image_url` (text)** — replaced by a real image with generated size variants; see `extras/image-uploads.md`. Stays required, matching today's `image` field being non-optional on event create/edit (`features/admin-events.feature`) |
 | `category`, `event_type` | text | Free-form strings today — consider enum/lookup table if the category list is meant to be fixed |
 | `tags` | text[] | |

@@ -15,7 +15,8 @@ const validPreferences = {
   interests: ["Kino"],
   moods: ["Leicht"],
   interests_other: null as string | null,
-  districts: ["Mitte"],
+  zipCode: "10115",
+  maxDistance: 10,
   timing: ["Weekend"],
   preferred_days: ["Saturday"],
   preferred_languages: ["DE"],
@@ -32,27 +33,39 @@ describe("validateCulturalPreferencesPayload", () => {
     ).toThrow(ProfileValidationError);
   });
 
-  test("rejects invalid district", () => {
+  test("rejects invalid postal code", () => {
     expect(() =>
       validateCulturalPreferencesPayload({
         ...validPreferences,
-        districts: ["X-Berg"],
+        zipCode: "80331",
       }),
     ).toThrow(ProfileValidationError);
   });
 
-  test("accepts valid preference payload and clears max_distance", () => {
+  test("accepts valid preference payload and persists max_distance", () => {
     expect(validateCulturalPreferencesPayload(validPreferences)).toEqual({
       interests: ["Kino"],
       moods: ["Leicht"],
       interests_other: null,
-      districts: ["Mitte"],
-      max_distance: null,
+      country: "DE",
+      city: "berlin",
+      zip_code: "10115",
+      districts: null,
+      max_distance: 10,
       timing: ["Weekend"],
       preferred_days: ["Saturday"],
       preferred_languages: ["DE"],
       accessibility: false,
     });
+  });
+
+  test("rejects out-of-range max_distance on preference save", () => {
+    expect(() =>
+      validateCulturalPreferencesPayload({
+        ...validPreferences,
+        maxDistance: 0,
+      }),
+    ).toThrow(ProfileValidationError);
   });
 
   test("accepts Other interest with free text on profile preferences", () => {
@@ -124,8 +137,11 @@ describe("updateCulturalPreferences", () => {
       expect(updated.profile.onboarding_complete).toBe(true);
       expect(updated.profile.interests).toEqual(["Kino"]);
       expect(updated.profile.moods).toEqual(["Leicht"]);
-      expect(updated.profile.districts).toEqual(["Mitte"]);
-      expect(updated.profile.max_distance).toBeNull();
+      expect(updated.profile.zip_code).toBe("10115");
+      expect(updated.profile.country).toBe("DE");
+      expect(updated.profile.city).toBe("berlin");
+      expect(updated.profile.districts).toBeNull();
+      expect(updated.profile.max_distance).toBe(10);
       expect(updated.behavior.onboarding_step).toBeNull();
       expect(updated.behavior.onboarding_completed_at).toBe("2026-01-01T12:00:00+01:00");
       expect(updated.behavior.preferences_updated_at).toBeTruthy();

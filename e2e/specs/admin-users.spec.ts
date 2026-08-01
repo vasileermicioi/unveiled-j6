@@ -107,6 +107,11 @@ test.describe("admin-users.feature", () => {
     await expect(page.getByRole("heading", { name: /verlauf|history/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: /verhalten|behavior/i })).toBeVisible();
     await expect(page.getByText(user.email)).toBeVisible();
+    // Location intel: zip + travel distance from onboarding fixture (10115 / 10 km)
+    await expect(page.getByText(/standort|location/i).first()).toBeVisible();
+    await expect(page.getByText(/10115/)).toBeVisible();
+    await expect(page.getByText(/10\s*km/i)).toBeVisible();
+    await expect(page.getByText(/bezirke|districts/i)).toHaveCount(0);
   });
 
   test("Scenario: Adjust a member's credits from their detail panel", async ({ page, locale }) => {

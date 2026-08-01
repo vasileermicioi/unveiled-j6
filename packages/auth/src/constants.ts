@@ -23,20 +23,6 @@ export const EVENT_TYPES = [
   "Other",
 ] as const;
 export const MOODS = ["Leicht", "Experimentell", "Klassisch", "Politisch", "Fam"] as const;
-export const DISTRICTS = [
-  "Mitte",
-  "Friedrichshain-Kreuzberg",
-  "Pankow",
-  "Charlottenburg-Wilmersdorf",
-  "Spandau",
-  "Steglitz-Zehlendorf",
-  "Tempelhof-Schöneberg",
-  "Neukölln",
-  "Treptow-Köpenick",
-  "Marzahn-Hellersdorf",
-  "Lichtenberg",
-  "Reinickendorf",
-] as const;
 export const TIMING_OPTIONS = ["After Work", "Weekend", "Day"] as const;
 export const WEEKDAYS = [
   "Monday",
@@ -82,6 +68,10 @@ export const PREFERRED_LANGUAGES = [
 
 /** Admin event metadata languages — same allowlist as member preferred languages. */
 export const EVENT_LANGUAGES = PREFERRED_LANGUAGES;
+
+/** Inclusive km bounds for `users.profile.max_distance` (active preference again). */
+export const MAX_DISTANCE_MIN = 1;
+export const MAX_DISTANCE_MAX = 50;
 
 export type AgeGroup = (typeof AGE_GROUPS)[number];
 export type EventType = (typeof EVENT_TYPES)[number];

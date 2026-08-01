@@ -679,3 +679,31 @@ When a guest or member opens a public event detail page for a language-independe
 #### Scenario: Language-specific detail still lists languages
 - **WHEN** a guest or member opens an event that is not language-independent and has one or more languages
 - **THEN** the details metadata shows those languages as today
+
+### Requirement: Public event location display
+Event cards and public detail SHALL present the event's zip code in place of neighborhood/Kiez. Address and map rules are unchanged. Country/city MAY appear on detail for clarity but MUST NOT dominate cards while the product is Berlin-only. Public surfaces MUST NOT reintroduce Bezirk/neighborhood labels for event location metadata.
+
+#### Scenario: Guest sees zip on event detail
+- **WHEN** a guest opens a public event detail page
+- **THEN** location metadata shows the event zip code (not neighborhood)
+
+#### Scenario: Event card shows zip
+- **WHEN** a guest or member views an event card in the feed or listing
+- **THEN** the card shows the event zip code
+- **AND** the card does not show a neighborhood/Kiez label
+
+### Requirement: Product docs and BDD match public zip location display
+`docs/product/features/event-discovery.feature`, `docs/product/ui/ui-component-map.md` (EventCard / Event detail), and Playwright coverage SHALL describe event cards and public detail presenting the event zip code instead of neighborhood/Kiez. Country/city MAY appear on detail for clarity but MUST NOT be required to dominate cards while the product is Berlin-only. Coverage-matrix rows SHALL match Scenario titles (pass or named deferral). Selectors SHALL remain proximity/layout only.
+
+#### Scenario: Event discovery feature file describes zip display
+- **WHEN** an implementer reads `docs/product/features/event-discovery.feature` after this step
+- **THEN** public card and/or detail scenarios mention zip code location metadata
+- **AND** neighborhood/Kiez labels are not required as current location chrome
+
+#### Scenario: UI component map EventCard uses zip
+- **WHEN** an implementer reads the EventCard entry in `docs/product/ui/ui-component-map.md`
+- **THEN** it lists zip (+ MapPin) instead of neighborhood
+
+#### Scenario: Playwright or matrix covers zip on public surfaces
+- **WHEN** this feature is marked released
+- **THEN** `docs/product/testing/coverage-matrix.md` includes rows for zip-on-card and/or zip-on-detail scenarios (pass or explicit deferral with owner)

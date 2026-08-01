@@ -174,9 +174,18 @@ test.describe("profile.feature", () => {
     await expect(
       page.getByRole("heading", { name: /vibes|präferenzen|preferences/i }),
     ).toBeVisible();
-    await expect(page.getByText(/wie weit|how far|travel radius|max distance/i)).toHaveCount(0);
-    await expect(page.getByRole("spinbutton")).toHaveCount(0);
-    await expect(page.getByRole("checkbox", { name: "Mitte" })).toBeVisible();
+    await expect(page.locator("#preferences-country-display")).toHaveValue(
+      locale === "de" ? "Deutschland" : "Germany",
+    );
+    await expect(page.locator("#preferences-city-display")).toHaveValue("Berlin");
+    await expect(page.locator("#zip_code")).toHaveValue("10115");
+    await expect(
+      page.getByRole("spinbutton", {
+        name: /wie weit bist du bereit zu fahren\?|how far will you travel\?/i,
+      }),
+    ).toBeVisible();
+    await expect(page.locator("#max_distance")).toHaveValue("10");
+    await expect(page.getByRole("checkbox", { name: "Mitte" })).toHaveCount(0);
     await expect(
       page.getByRole("checkbox", { name: locale === "de" ? "Sonstiges" : "Other" }),
     ).toBeVisible();
@@ -186,7 +195,16 @@ test.describe("profile.feature", () => {
     await expect(
       page.getByText(/barrierefreiheit benötigt\?|accessibility needed\?/i),
     ).toBeVisible();
-    await page.getByRole("button", { name: /präferenzen speichern|save preferences/i }).click();
+    // Set distance + submit together — sequential Playwright fills remount the island.
+    await page.locator("#max_distance").evaluate(() => {
+      const distance = document.querySelector<HTMLInputElement>("#max_distance");
+      const form = distance?.form;
+      if (!distance || !form) {
+        throw new Error("preferences distance field missing");
+      }
+      distance.value = "12";
+      form.requestSubmit();
+    });
     await expect(page.getByText(/präferenzen gespeichert|preferences saved/i)).toBeVisible();
   });
 

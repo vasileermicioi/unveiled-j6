@@ -17,21 +17,23 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 
 | Feature file | Scenario title | Playwright | Status | Notes |
 |---|---|---|---|---|
-| `admin-events.feature` | Create a single event | `e2e/specs/admin-events.spec.ts` · `Scenario: Create a single event` | `pass` |  |
+| `admin-events.feature` | Create a single event | `e2e/specs/admin-events.spec.ts` · `Scenario: Create a single event` | `pass` | Fills Berlin PLZ `10115`; asserts zip on public detail |
+| `admin-events.feature` | Admin sets Berlin zip on create | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin sets Berlin zip on create` | `pass` | R2 env-skip; asserts saved zip on public detail |
+| `admin-events.feature` | Country and city are fixed on the form | `e2e/specs/admin-events.spec.ts` · `Scenario: Country and city are fixed on the form` | `pass` | Germany/Berlin readonly; zip editable; no neighborhood |
 | `admin-events.feature` | Supply the event image as a direct upload | `e2e/specs/admin-events.spec.ts` · `Scenario: Supply the event image as a direct upload` | `pass` | R2 env-skip; asserts `.webp` hero/srcset |
 | `admin-events.feature` | Event image is required | `e2e/specs/admin-events.spec.ts` · `Scenario: Event image is required` | `pass` | R2 env-skip (create partner needs logo); client required-image block |
 | `admin-events.feature` | Redemption configuration validation on create | `e2e/specs/admin-events.spec.ts` (create flows) | `pass` | Covered alongside event create |
 | `admin-events.feature` | Shared generated code is created automatically | `e2e/specs/admin-events.spec.ts` · `Scenario: Shared generated code is created automatically` | `pass` |  |
 | `admin-events.feature` | Default values on creation | `e2e/specs/admin-events.spec.ts` · `Scenario: Default values on creation` | `pass` |  |
-| `admin-events.feature` | Create an event series with manual slots | `e2e/specs/admin-events.spec.ts` · `Scenario: Create an event series with manual slots` | `pass` |  |
-| `admin-events.feature` | Create an event series with a date-range builder | `e2e/specs/admin-events.spec.ts` · `Scenario: Create an event series with a date-range builder` | `pass` |  |
+| `admin-events.feature` | Clone event from catalog list | `e2e/specs/admin-events.spec.ts` · `Scenario: Clone event from catalog list` | `pass` | R2 env-skip (create source needs image); SECRET_CODE happy path |
+| `admin-events.feature` | Clone voucher event requires inventory | `e2e/specs/admin-events.spec.ts` · `Scenario: Clone voucher event requires inventory` | `pass` | R2 env-skip; creates VOUCHER_PROMO source then clones without inventory |
+| `admin-events.feature` | Clone entry points visible | `e2e/specs/admin-events.spec.ts` · `Scenario: Clone entry points visible` | `pass` | R2 env-skip; asserts Clone/Klonen on list + edit; no series CTA |
 | `admin-events.feature` | Update an event's capacity | `e2e/specs/admin-events.spec.ts` · `Scenario: Update an event's capacity` | `pass` |  |
 | `admin-events.feature` | Edit event details | `e2e/specs/admin-events.spec.ts` · `Scenario: Edit event details` | `pass` |  |
 | `admin-events.feature` | Delete an event | `e2e/specs/admin-events.spec.ts` · `Scenario: Delete an event` | `pass` |  |
 | `admin-events.feature` | Optional accessibility and audience metadata | `e2e/specs/admin-events.spec.ts` · `Scenario: Optional accessibility and audience metadata` | `pass` | Checkbox multi-select via `checkOptionByName` |
 | `admin-events.feature` | Languages multi-select with search | `e2e/specs/admin-events.spec.ts` · `Scenario: Languages multi-select with search` | `pass` | R2 env-skip (partner logo); search keeps selected checked |
 | `admin-events.feature` | Age groups multi-select without search | `e2e/specs/admin-events.spec.ts` · `Scenario: Age groups multi-select without search` | `pass` | R2 env-skip (partner logo) |
-| `admin-events.feature` | Series weekdays use checkbox multi-select | `e2e/specs/admin-events.spec.ts` · `Scenario: Series weekdays use checkbox multi-select` | `pass` | R2 env-skip; also used in date-range builder create |
 | `admin-events.feature` | Add event prefills address and map from partner | `e2e/specs/admin-events.spec.ts` · `Scenario: Add event prefills address and map from partner` | `pass` | Address assert required; live Nominatim map-pin not required in CI |
 | `admin-events.feature` | Edit event keeps existing location when partner changes | `e2e/specs/admin-events.spec.ts` · `Scenario: Edit event keeps existing location when partner changes` | `pass` | R2 env-skip |
 | `admin-events.feature` | Geocode soft-fails leave address filled | `e2e/specs/admin-events.spec.ts` · `Scenario: Geocode soft-fails leave address filled` | `pass` | Address prefill asserted; soft-fail paths unit-tested in `geocode-berlin.test.ts` (live Nominatim not forced) |
@@ -60,7 +62,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-users.feature` | List all members | `e2e/specs/admin-users.spec.ts` · `Scenario: List all members` | `pass` | Needs `DATABASE_URL` + `E2E_ADMIN_*` |
 | `admin-users.feature` | Search members | `e2e/specs/admin-users.spec.ts` · `Scenario: Search members` | `pass` |  |
 | `admin-users.feature` | View a member's collapsed summary | `e2e/specs/admin-users.spec.ts` · `Scenario: View a member's collapsed summary` | `pass` | List row columns (role, subscription, credits, …) |
-| `admin-users.feature` | Expand a member's detail / "intel" panel | `e2e/specs/admin-users.spec.ts` · `Scenario: Expand a member's detail / "intel" panel` | `pass` | Maps to `/admin/users/:id` (not in-list expand) |
+| `admin-users.feature` | Expand a member's detail / "intel" panel | `e2e/specs/admin-users.spec.ts` · `Scenario: Expand a member's detail / "intel" panel` | `pass` | Maps to `/admin/users/:id`; asserts zip + travel distance intel when set (not districts) |
 | `admin-users.feature` | Adjust a member's credits from their detail panel | `e2e/specs/admin-users.spec.ts` · `Scenario: Adjust a member's credits from their detail panel` | `pass` | SSR adjust-credits page |
 | `admin-users.feature` | Freeze or unfreeze a member from their detail panel | `e2e/specs/admin-users.spec.ts` · `Scenario: Freeze or unfreeze a member from their detail panel` | `pass` | SSR freeze page |
 | `admin-users.feature` | Issue a complimentary ticket to a member | `e2e/specs/admin-users.spec.ts` · `Scenario: Issue a complimentary ticket to a member` | `pass` | SSR comp-ticket page |
@@ -121,6 +123,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Guest can view public event detail without authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest can view public event detail without authentication` | `pass` |  |
 | `event-discovery.feature` | Large viewport uses two primary rows | `e2e/specs/event-discovery.spec.ts` · `Scenario: Large viewport uses two primary rows` | `pass` | Smoke: identity + checkout CTA + hero + DETAILS (no CSS-grid hashes) |
 | `event-discovery.feature` | Guest sees partner attribution | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees partner attribution` | `pass` | Needs `DATABASE_URL` + R2; partner logo alt = partner name |
+| `event-discovery.feature` | Guest sees zip on event detail | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees zip on event detail` | `pass` | Needs `DATABASE_URL`; PLZ / Zip code metadata (not neighborhood) |
+| `event-discovery.feature` | Event card shows zip | `e2e/specs/event-discovery.spec.ts` · `Scenario: Event card shows zip` | `pass` | Discover card shows Berlin PLZ |
 | `event-discovery.feature` | Guest views gallery on event detail | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest views gallery on event detail` | `pass` | Needs `DATABASE_URL` + R2; `ensureDemoEventGallery` |
 | `event-discovery.feature` | No gallery images | `e2e/specs/event-discovery.spec.ts` · `Scenario: No gallery images` | `pass` | Uses seeded konzert (no gallery) |
 | `event-discovery.feature` | Featured demo event includes gallery | `e2e/specs/event-discovery.spec.ts` · `Scenario: Featured demo event includes gallery` | `pass` | Needs `DATABASE_URL` + R2 |
@@ -141,7 +145,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `onboarding.feature` | Already-onboarded users skip onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Already-onboarded users skip onboarding` | `pass` | Redirect may be `/events` or `/discover` by booking eligibility |
 | `onboarding.feature` | Step 1 — age group (skippable) | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 1 — age group (skippable)` | `pass` |  |
 | `onboarding.feature` | Step 2 — interests and moods | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 2 — interests and moods` | `pass` | Asserts Other / Sonstiges visibility; Other+text submit covered by auth unit tests |
-| `onboarding.feature` | Step 3 — hangout districts | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 3 — hangout districts` | `pass` | 12 Bezirke; no travel radius |
+| `onboarding.feature` | Step 3 — zip under Germany/Berlin | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 3 — zip under Germany/Berlin` | `pass` | Germany/Berlin prefilled; Berlin PLZ; travel distance (km, 1–50) |
 | `onboarding.feature` | Step 4 — timing, days, languages, accessibility | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 4 — timing, days, languages, accessibility` | `pass` | Searchable languages; Accessibility needed? Yes/Ja |
 | `onboarding.feature` | Completing onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Completing onboarding` | `pass` |  |
 | `profile.feature` | View and edit identity | `e2e/specs/profile.spec.ts` · `Scenario: View and edit identity` | `pass` |  |
@@ -150,7 +154,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `profile.feature` | Update billing information | `e2e/specs/profile.spec.ts` · `Scenario: Update billing information` | `pass` | Portal CTA + error path with fake `cus_*`; deep Portal = staging |
 | `profile.feature` | Cancel subscription | `e2e/specs/profile.spec.ts` · `Scenario: Cancel subscription` | `pass` | Confirm page + seeded `CANCELLED_PENDING` |
 | `profile.feature` | Access account deletion and data export | `e2e/specs/profile.spec.ts` · `Scenario: Access account deletion and data export` | `pass` | Entry links + page headings; full mechanics in `auth.spec.ts` |
-| `profile.feature` | Edit cultural preferences ("Vibes") | `e2e/specs/profile.spec.ts` · `Scenario: Edit cultural preferences ("Vibes")` | `pass` | No travel radius; Bezirke / languages / accessibility / Other surfaces |
+| `profile.feature` | Edit cultural preferences ("Vibes") | `e2e/specs/profile.spec.ts` · `Scenario: Edit cultural preferences ("Vibes")` | `pass` | Zip under Germany/Berlin; travel distance (km); languages / accessibility / Other surfaces |
 | `profile.feature` | View membership home | `e2e/specs/profile.spec.ts` · `Scenario: View membership home` | `pass` | Membership panel + manage CTA; tablist above account heading; skip if no `DATABASE_URL` |
 | `profile.feature` | Inactive member starts membership from profile home | `e2e/specs/profile.spec.ts` · `Scenario: Inactive member starts membership from profile home` | `pass` | Checkout CTA → `/membership`; skip if no `DATABASE_URL` |
 | `static-pages.feature` | Guest marketing home is the locale home page | `e2e/specs/static-pages.spec.ts` · `Scenario: Guest marketing home is the locale home page` | `pass` |  |

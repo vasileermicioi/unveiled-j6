@@ -92,6 +92,13 @@
       "when": 1785324211025,
       "tag": "0012_ticket_redemption_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785350000000,
+      "tag": "0013_berlin_zip_location",
+      "breakpoints": true
     }
   ]
 }

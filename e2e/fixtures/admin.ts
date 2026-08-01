@@ -25,16 +25,11 @@ export const adminLabels = {
   partner: "Partner*",
   title: "Titel*",
   description: "Beschreibung*",
-  neighborhood: "Kiez*",
+  zipCode: "PLZ*",
   category: "Kategorie*",
   eventType: "Event-Typ*",
   eventDate: "Datum*",
   eventTime: "Uhrzeit",
-  slotDate: "Datum",
-  slotTime: "Uhrzeit",
-  builderStart: "Startdatum",
-  builderEnd: "Enddatum",
-  builderTime1: "Uhrzeit 1",
   credits: "Credits*",
   capacity: "Kapazität*",
   secretCode: "Secret Code",
@@ -45,8 +40,6 @@ export const adminLabels = {
   barrierFree: "Barrierefrei",
   languages: "Sprachen",
   ageGroups: "Altersgruppen",
-  slotMode: "Datum/Uhrzeit pro Slot",
-  weekdays: "Wochentage",
 } as const;
 
 /** Fill a native date/time field by accessible name (gap G7). */
@@ -261,7 +254,7 @@ export type CreateEventOverrides = {
   partnerName: string;
   description?: string;
   address?: string;
-  neighborhood?: string;
+  zipCode?: string;
   category?: string | RegExp;
   eventType?: string | RegExp;
   eventDate?: string;
@@ -300,7 +293,7 @@ export async function createEventViaUI(
     overrides.description ?? `E2E description ${suffix}`,
   );
   await fillTextbox(page, adminLabels.address, overrides.address ?? `E2E Venue ${suffix}, Berlin`);
-  await selectOptionByLabel(page, adminLabels.neighborhood, overrides.neighborhood ?? "Mitte");
+  await fillTextbox(page, adminLabels.zipCode, overrides.zipCode ?? "10115");
   await selectOptionByLabel(page, adminLabels.category, overrides.category ?? "Theater");
   await selectOptionByLabel(page, adminLabels.eventType, overrides.eventType ?? "Performance");
 

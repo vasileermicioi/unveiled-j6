@@ -68,6 +68,15 @@ function parseBooleanField(value: string | File | (string | File)[] | undefined)
   return normalized === "true" || normalized === "on" || normalized === "1";
 }
 
+/** Parse form `max_distance` / `maxDistance`; missing → NaN so domain validation fails closed. */
+function parseMaxDistanceField(body: ParsedBody): number {
+  const raw = asString(body.max_distance) ?? asString(body.maxDistance);
+  if (raw === undefined || raw.trim() === "") {
+    return Number.NaN;
+  }
+  return Number(raw);
+}
+
 export function parseAgePayload(body: ParsedBody): AgeStepPayload {
   if (asString(body.action) === "skip") {
     return { skip: true };
@@ -91,7 +100,10 @@ export function parseInterestsPayload(body: ParsedBody): InterestsStepPayload {
 
 export function parseLocationPayload(body: ParsedBody): LocationStepPayload {
   return {
-    districts: asStringArray(body.districts),
+    zipCode: asString(body.zip_code) ?? "",
+    country: asString(body.country) || undefined,
+    city: asString(body.city) || undefined,
+    maxDistance: parseMaxDistanceField(body),
   };
 }
 
@@ -188,11 +200,13 @@ export async function handleOnboardingPost(
     return { kind: "redirect", location: `/${locale}${nextPath}` };
   } catch (error) {
     if (error instanceof OnboardingValidationError) {
+      const copy = getOnboardingCopy(locale);
       return {
         kind: "validation-error",
         locale,
         profile: session.user.profile,
-        message: getOnboardingCopy(locale).validationError,
+        message:
+          error.code === "invalid_max_distance" ? copy.invalidMaxDistance : copy.validationError,
       };
     }
 

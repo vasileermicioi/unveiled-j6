@@ -47,9 +47,11 @@ Feature: Member Profile
     Then I can request a data export or request full account deletion (full mechanics in auth.feature)
 
   Scenario: Edit cultural preferences ("Vibes")
-    When I update my interests (including Other + free text), moods, districts (12 Bezirke), timing, preferred days, languages (searchable list), or accessibility needs
-    Then my profile preferences are saved
-    And travel radius is not part of the Vibes form
+    When I update my interests (including Other + free text), moods, location zip under Germany/Berlin, travel distance (km), timing, preferred days, languages (searchable list), or accessibility needs
+    Then my profile preferences are saved including country, city, zip_code, and max_distance
+    And country and city remain Germany / Berlin (not a free picker)
+    And I cannot multi-select hangout districts
+    And travel distance is part of the Vibes form (required when saving location fields; native number input, 1–50 km)
 
   Scenario: View membership home
     When I view my profile with a portal-eligible subscription

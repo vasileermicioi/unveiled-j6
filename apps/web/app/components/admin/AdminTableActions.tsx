@@ -1,6 +1,6 @@
 import { Link, Surface } from "@heroui/react";
 
-export type AdminTableActionIcon = "edit" | "delete" | "download" | "gallery";
+export type AdminTableActionIcon = "edit" | "clone" | "delete" | "download" | "gallery";
 
 export type AdminTableAction = {
   href: string;
@@ -10,6 +10,7 @@ export type AdminTableAction = {
 
 const ICON_SRC: Record<AdminTableActionIcon, string> = {
   edit: "/icons/admin-edit.svg",
+  clone: "/icons/admin-clone.svg",
   delete: "/icons/admin-delete.svg",
   download: "/icons/admin-download.svg",
   gallery: "/icons/admin-gallery.svg",

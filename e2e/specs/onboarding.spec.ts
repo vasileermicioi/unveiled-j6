@@ -71,16 +71,23 @@ test.describe("onboarding.feature", () => {
     await completeInterestsStep(page, locale);
   });
 
-  test("Scenario: Step 3 — hangout districts", async ({ page, locale }) => {
+  test("Scenario: Step 3 — zip under Germany/Berlin", async ({ page, locale }) => {
     await signupFreshUser(page, locale);
     await completeAgeStep(page, locale);
     await completeInterestsStep(page, locale);
-    await expect(page.getByText(/wo bist du unterwegs|where do you hang out/i)).toBeVisible();
-    await expect(page.getByRole("checkbox", { name: "Mitte" })).toBeVisible();
-    await expect(page.getByRole("checkbox", { name: "Neukölln" })).toBeVisible();
-    await expect(page.getByRole("checkbox", { name: "Friedrichshain-Kreuzberg" })).toBeVisible();
-    await expect(page.getByText(/wie weit|how far|travel/i)).toHaveCount(0);
-    await expect(page.getByRole("spinbutton")).toHaveCount(0);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding/location`));
+    await expect(page.locator("#onboarding-country-display")).toHaveValue(
+      locale === "de" ? "Deutschland" : "Germany",
+    );
+    await expect(page.locator("#onboarding-city-display")).toHaveValue("Berlin");
+    await expect(page.locator("#zip_code")).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: "Mitte" })).toHaveCount(0);
+    await expect(page.getByRole("checkbox", { name: "Neukölln" })).toHaveCount(0);
+    await expect(
+      page.getByRole("spinbutton", {
+        name: /wie weit bist du bereit zu fahren\?|how far will you travel\?/i,
+      }),
+    ).toBeVisible();
     await completeLocationStep(page, locale);
   });
 

@@ -58,7 +58,10 @@ export function validateCulturalPreferencesPayload(
       interests_other: payload.interests_other,
     });
     const locationUpdate = validateOnboardingStepPayload("location", {
-      districts: payload.districts,
+      zipCode: payload.zipCode,
+      country: payload.country,
+      city: payload.city,
+      maxDistance: payload.maxDistance,
     });
     const timingUpdate = validateOnboardingStepPayload("timing", {
       timing: payload.timing,

@@ -180,7 +180,8 @@
       "hour": 22,
       "minute": 0,
       "sourceUrl": "https://abundolive.de/event/berlin/der_enkeltrick_kriminalkomödie_von_frank_piotraschke",
-      "seedRole": "tonight"
+      "seedRole": "tonight",
+      "zipCode": "10243"
     },
     {
       "slug": "kreuzberg_contemporary_art_tour",
@@ -204,7 +205,8 @@
       "hour": 18,
       "minute": 0,
       "sourceUrl": "https://abundolive.de/event/berlin/kreuzberg_contemporary_art_tour",
-      "seedRole": "ausstellung"
+      "seedRole": "ausstellung",
+      "zipCode": "10969"
     },
     {
       "slug": "yami_safdie",
@@ -228,7 +230,8 @@
       "hour": 20,
       "minute": 30,
       "sourceUrl": "https://abundolive.de/event/berlin/yami_safdie",
-      "seedRole": "konzert"
+      "seedRole": "konzert",
+      "zipCode": "10963"
     },
     {
       "slug": "comedyshorts_berlin_2",
@@ -251,7 +254,8 @@
       "daysFromToday": 10,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/comedyshorts_berlin_2"
+      "sourceUrl": "https://abundolive.de/event/berlin/comedyshorts_berlin_2",
+      "zipCode": "13357"
     },
     {
       "slug": "oliver_zahn_great_acceleration",
@@ -274,7 +278,8 @@
       "daysFromToday": 11,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/oliver_zahn_great_acceleration"
+      "sourceUrl": "https://abundolive.de/event/berlin/oliver_zahn_great_acceleration",
+      "zipCode": "10115"
     },
     {
       "slug": "team_poetry_slam_meisterschaft",
@@ -297,7 +302,8 @@
       "daysFromToday": 12,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/team_poetry_slam_meisterschaft"
+      "sourceUrl": "https://abundolive.de/event/berlin/team_poetry_slam_meisterschaft",
+      "zipCode": "10119"
     },
     {
       "slug": "thomas_schwebel_spielt_fehlfarben",
@@ -320,7 +326,8 @@
       "daysFromToday": 14,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/thomas_schwebel_spielt_fehlfarben"
+      "sourceUrl": "https://abundolive.de/event/berlin/thomas_schwebel_spielt_fehlfarben",
+      "zipCode": "10997"
     },
     {
       "slug": "open_air_lilo_stitch",
@@ -343,7 +350,8 @@
       "daysFromToday": 15,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/open_air_lilo_stitch"
+      "sourceUrl": "https://abundolive.de/event/berlin/open_air_lilo_stitch",
+      "zipCode": "10967"
     },
     {
       "slug": "Noche_Flamenca_2026",
@@ -366,7 +374,8 @@
       "daysFromToday": 17,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/Noche_Flamenca_2026"
+      "sourceUrl": "https://abundolive.de/event/berlin/Noche_Flamenca_2026",
+      "zipCode": "12101"
     },
     {
       "slug": "khirki",
@@ -389,7 +398,8 @@
       "daysFromToday": 18,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/khirki"
+      "sourceUrl": "https://abundolive.de/event/berlin/khirki",
+      "zipCode": "10245"
     },
     {
       "slug": "princess",
@@ -413,7 +423,8 @@
       "hour": 20,
       "minute": 0,
       "sourceUrl": "https://abundolive.de/event/berlin/princess",
-      "seedRole": "pastHidden"
+      "seedRole": "pastHidden",
+      "zipCode": "10557"
     },
     {
       "slug": "rian_es_wunschkonzert",
@@ -436,7 +447,8 @@
       "daysFromToday": 23,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/rian_es_wunschkonzert"
+      "sourceUrl": "https://abundolive.de/event/berlin/rian_es_wunschkonzert",
+      "zipCode": "13409"
     },
     {
       "slug": "ende",
@@ -459,7 +471,8 @@
       "daysFromToday": 25,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/ende"
+      "sourceUrl": "https://abundolive.de/event/berlin/ende",
+      "zipCode": "10179"
     },
     {
       "slug": "waitlist_demo_night",
@@ -485,7 +498,8 @@
       "sourceUrl": "https://abundolive.de/event/berlin/waitlist_demo_night",
       "seedRole": "soldOutWaitlist",
       "totalCapacity": 20,
-      "soldOut": true
+      "soldOut": true,
+      "zipCode": "10243"
     },
     {
       "slug": "taiwan_panorama",
@@ -508,7 +522,8 @@
       "daysFromToday": 32,
       "hour": 19,
       "minute": 30,
-      "sourceUrl": "https://abundolive.de/event/berlin/taiwan_panorama"
+      "sourceUrl": "https://abundolive.de/event/berlin/taiwan_panorama",
+      "zipCode": "10785"
     },
     {
       "slug": "ich_will_aber_gerade_vom_leben_singen",
@@ -532,7 +547,8 @@
       "hour": 19,
       "minute": 30,
       "sourceUrl": "https://abundolive.de/event/berlin/ich_will_aber_gerade_vom_leben_singen",
-      "seedRole": "theaterFuture"
+      "seedRole": "theaterFuture",
+      "zipCode": "10243"
     }
   ]
 }

@@ -1,13 +1,14 @@
 export {
   AGE_GROUPS,
   type AgeGroup,
-  DISTRICTS,
   EVENT_LANGUAGES,
   EVENT_TYPES,
   type EventLanguage,
   type EventType,
   INTERESTS,
   INTERESTS_OTHER_MAX_LENGTH,
+  MAX_DISTANCE_MAX,
+  MAX_DISTANCE_MIN,
   MOODS,
   PREFERRED_LANGUAGES,
   type PreferredLanguage,
@@ -30,6 +31,7 @@ export {
   getOnboardingStepPath,
   OnboardingValidationError,
   saveOnboardingStep,
+  validateMaxDistance,
   validateOnboardingStepPayload,
 } from "./onboarding";
 export type {

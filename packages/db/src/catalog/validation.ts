@@ -107,29 +107,6 @@ export function validateRedemptionConfig(input: RedemptionInput): void {
   // VOUCHER_PDF: no event-level promo/code/URL requirement this step.
 }
 
-export function validateUniqueSeriesSlots(slots: Date[]): Date[] {
-  if (slots.length === 0) {
-    throw new CatalogValidationError(
-      "EMPTY_SERIES_SLOTS",
-      "At least one date/time slot is required",
-    );
-  }
-
-  const seen = new Set<string>();
-  const unique: Date[] = [];
-
-  for (const slot of slots) {
-    const key = slot.toISOString();
-    if (seen.has(key)) {
-      throw new CatalogValidationError("DUPLICATE_SERIES_SLOTS", "Series slots must be unique");
-    }
-    seen.add(key);
-    unique.push(slot);
-  }
-
-  return unique;
-}
-
 export function applyEventDefaults(input: {
   totalCapacity?: number | null;
   ticketType?: TicketType | null;

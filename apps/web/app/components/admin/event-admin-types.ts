@@ -5,7 +5,9 @@ export type EventFormDefaults = Partial<{
   title: string;
   description: string;
   address: string;
-  neighborhood: string;
+  zipCode: string;
+  country?: string;
+  city?: string;
   category: string;
   eventType: string;
   tags: string[];

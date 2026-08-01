@@ -6,7 +6,7 @@ Phase 4 catalog persistence and image processing for partner venue records and e
 
 ### Requirement: Catalog persistence tables
 
-The `@unveiled/db` package SHALL define Drizzle schema and migrations for `public.images`, `public.partners`, and `public.events` matching the project schema docs (as updated for ticket redemption), including FK from `events.image_id` → `images.id` (required), `partners.logo_image_id` → `images.id` (optional), and `events.partner_id` → `partners.id`. The schema SHALL include enums for image source, ticket type (`SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF`), and timing mode; SHALL NOT include a `secret_code_mode` enum/column; a check constraint `remaining_capacity >= 0` on `events`; and indexes on `events(date_time)`, `(date_time, partner_id)`, and `(date_time, category)`. Voucher inventory and `booking_tickets` tables SHALL also be defined as part of the ticket-redemption schema work.
+The `@unveiled/db` package SHALL define Drizzle schema and migrations for `public.images`, `public.partners`, and `public.events` matching the project schema docs (as updated for ticket redemption and the extensible location model), including FK from `events.image_id` → `images.id` (required), `partners.logo_image_id` → `images.id` (optional), and `events.partner_id` → `partners.id`. The schema SHALL include enums for image source, ticket type (`SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF`), and timing mode; SHALL NOT include a `secret_code_mode` enum/column; SHALL include required event location columns `country`, `city`, and `zip_code` and SHALL NOT include `events.neighborhood`; a check constraint `remaining_capacity >= 0` on `events`; and indexes on `events(date_time)`, `(date_time, partner_id)`, and `(date_time, category)`. Voucher inventory and `booking_tickets` tables SHALL also be defined as part of the ticket-redemption schema work.
 
 #### Scenario: Migration applies on empty catalog
 
@@ -27,6 +27,53 @@ The `@unveiled/db` package SHALL define Drizzle schema and migrations for `publi
 
 - **WHEN** the ticket-redemption schema migration has been applied
 - **THEN** `events` has no `secret_code_mode` column and `ticket_type` accepts `SECRET_CODE`, `VOUCHER_PROMO`, and `VOUCHER_PDF` only
+
+#### Scenario: Neighborhood column absent after location migration
+
+- **WHEN** the berlin-zip-code location migration has been applied
+- **THEN** `events` has required `country`, `city`, and `zip_code` columns and has no `neighborhood` column
+
+### Requirement: Event location fields
+
+Each event SHALL store required location fields `country` (ISO 3166-1 alpha-2), `city` (canonical city key), and `zip_code` (postal string). The system SHALL NOT store `events.neighborhood`. For the current product release, supported values are `country = DE` and `city = berlin`; catalog create/update SHALL default omitted country/city to those values. Catalog create/update SHALL reject missing, malformed, or non-Berlin zip codes for `(DE, berlin)`, and SHALL reject unsupported country/city pairs. Address + optional geocoded lat/lng remain unchanged. Postal validation SHALL use a shared registry-shaped helper `validatePostalCode({ country, city, zipCode })` (not a bare Berlin-only function without country/city parameters).
+
+#### Scenario: Create event requires Berlin zip under Germany/Berlin
+
+- **WHEN** `createEvent` is called without a valid Berlin `zipCode` (with defaults or explicit `DE` / `berlin`)
+- **THEN** the create is rejected with a validation error
+
+#### Scenario: Non-Berlin zip rejected for Berlin
+
+- **WHEN** `createEvent` receives `country=DE`, `city=berlin`, and a well-formed 5-digit code that is not a Berlin PLZ
+- **THEN** the create is rejected
+
+#### Scenario: Unsupported city rejected
+
+- **WHEN** `createEvent` receives a country/city pair that is not in the postal registry
+- **THEN** the create is rejected
+
+#### Scenario: Omitted country and city default to Germany and Berlin
+
+- **WHEN** `createEvent` is called with a valid Berlin `zipCode` and without `country` / `city`
+- **THEN** the event is persisted with `country = DE`, `city = berlin`, and the given `zip_code`
+
+### Requirement: Product schema overview documents location columns
+`docs/product/database/schema-overview.md` SHALL document `events.country`, `events.city`, and `events.zip_code` as required location fields (supported defaults/values for this release: `DE` / `berlin` + Berlin PLZ via the postal registry). It SHALL NOT list `events.neighborhood` as a current field. Matching `users.profile` keys `country`, `city`, and `zip_code` SHALL be documented; active `districts` preference arrays SHALL NOT be listed as current fields (legacy `districts` MAY be noted as cleared on write). `users.profile.max_distance` SHALL be documented as an **active** integer kilometers preference collected in onboarding and Vibes (inclusive bounds 1–50 via domain constants), not as legacy/unused, and preference saves SHALL NOT be documented as clearing it to `null` by policy.
+
+#### Scenario: Schema overview events table has country city zip
+- **WHEN** an implementer reads the `events` table section in `docs/product/database/schema-overview.md`
+- **THEN** `country`, `city`, and `zip_code` are listed
+- **AND** `neighborhood` is not listed as a current column
+
+#### Scenario: Schema overview profile keys use location trio
+- **WHEN** an implementer reads the `users.profile` field table in `docs/product/database/schema-overview.md`
+- **THEN** `country`, `city`, and `zip_code` are listed as location preference keys
+- **AND** `districts` is not listed as an active preference array
+
+#### Scenario: Schema overview documents active max_distance
+- **WHEN** an implementer reads the `users.profile` field table in `docs/product/database/schema-overview.md`
+- **THEN** `max_distance` is listed as integer km collected in onboarding and Vibes
+- **AND** the overview does not label `max_distance` as legacy/unused or claim preference saves clear it by policy
 
 ### Requirement: Six-variant JPEG image pipeline
 
@@ -92,7 +139,7 @@ The catalog domain layer in `@unveiled/db` SHALL enforce partner validation and 
 
 ### Requirement: Event catalog domain rules
 
-The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature` (as aligned with ticket redemption), including required image (upload buffer or remote URL path, exactly one source); redemption configuration rules (`SECRET_CODE` requires `secretCode`; `VOUCHER_PROMO` requires `eventWebsiteUrl` and does not require event-level `promoCode`; `VOUCHER_PDF` does not require event-level promo/code fields); default capacity 10, ticket type `SECRET_CODE`, timing mode `TIME_SLOT` (no secret-code mode default); computed `start_time_minutes` and `weekday` from `date_time` in Europe/Berlin; series slot uniqueness; capacity recalculation when total capacity changes; and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8.
+The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature` (as aligned with ticket redemption and the extensible location model), including required image (upload buffer or remote URL path, exactly one source); required location via `country` / `city` / `zip_code` with defaults `DE` / `berlin` and postal validation through `validatePostalCode` (no `neighborhood`); redemption configuration rules (`SECRET_CODE` requires `secretCode`; `VOUCHER_PROMO` requires `eventWebsiteUrl` and does not require event-level `promoCode`; `VOUCHER_PDF` does not require event-level promo/code fields); default capacity 10, ticket type `SECRET_CODE`, timing mode `TIME_SLOT` (no secret-code mode default); computed `start_time_minutes` and `weekday` from `date_time` in Europe/Berlin; capacity recalculation when total capacity changes; and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8. Multi-slot series create (`createEventSeries` / series slot uniqueness) is not part of the catalog domain; reuse of catalog metadata for another occurrence SHALL use clone (see Requirement: Clone event). `createEvent` remains for blank creates.
 
 #### Scenario: Missing event image rejected
 
@@ -103,16 +150,6 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 
 - **WHEN** `createEvent` or `updateEvent` receives both an upload buffer and a remote URL
 - **THEN** the operation fails validation without writing rows or bucket objects
-
-#### Scenario: Event series creates one row per slot
-
-- **WHEN** `createEventSeries` receives multiple unique date/time slots
-- **THEN** one event row is created per slot sharing base details
-
-#### Scenario: Duplicate series slots rejected
-
-- **WHEN** `createEventSeries` receives duplicate date/time slots
-- **THEN** the operation fails validation before inserting any rows
 
 #### Scenario: Capacity update recalculates remaining
 
@@ -133,6 +170,52 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 
 - **WHEN** `createEvent` or `updateEvent` is called with `ticketType = VOUCHER_PROMO` and no `eventWebsiteUrl`
 - **THEN** the operation fails validation even if a legacy `promoCode` is supplied
+
+#### Scenario: Voucher promo accepts website without event-level promo code
+
+- **WHEN** `createEvent` or `updateEvent` is called with `ticketType = VOUCHER_PROMO` and a valid `eventWebsiteUrl` without event-level `promoCode`
+- **THEN** the operation succeeds at the event-row layer (inventory is validated separately)
+
+#### Scenario: Create event persists zip under Germany/Berlin defaults
+
+- **WHEN** `createEvent` is called with a valid Berlin zip and omitted country/city
+- **THEN** the event row stores `country = DE`, `city = berlin`, and that `zip_code`
+
+#### Scenario: Series create API removed
+
+- **WHEN** catalog package exports and series helpers are inspected after this change
+- **THEN** `createEventSeries` and `validateUniqueSeriesSlots` are not exported or callable
+- **AND** blank single-event create via `createEvent` still works
+
+### Requirement: Clone event
+
+The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, ticket type, secret code when `SECRET_CODE`, website URL, accessibility/language/age metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The caller SHALL supply a `dateTime` (and any create-required redemption inventory for voucher types). The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.
+
+#### Scenario: Clone creates a distinct event
+
+- **WHEN** `cloneEvent` is called with a valid source id and new dateTime
+- **THEN** a new event id exists with copied title/partner and the new dateTime
+- **AND** remaining_capacity equals total_capacity
+
+#### Scenario: Clone does not copy featured membership
+
+- **WHEN** the source event is featured
+- **THEN** the cloned event is not automatically inserted into featured_events
+
+#### Scenario: Voucher clone requires inventory
+
+- **WHEN** cloning a `VOUCHER_PROMO` or `VOUCHER_PDF` event without a new inventory payload
+- **THEN** the clone is rejected
+
+#### Scenario: Clone copies gallery associations
+
+- **WHEN** the source event has gallery image join rows
+- **THEN** the cloned event has join rows pointing at the same image ids with the new event id
+
+#### Scenario: Missing source rejected
+
+- **WHEN** `cloneEvent` is called with an unknown source event id
+- **THEN** the operation fails with a not-found validation error and no new event row is created
 
 ### Requirement: Admin image upload on the application host
 
@@ -207,7 +290,7 @@ Admin event create and edit forms SHALL NOT expose a remote image URL text field
 
 ### Requirement: Admin event form select controls
 
-Admin event create/edit and series forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, barrier-free, languages, and target age groups. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`).
+Admin event create/edit and clone forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, barrier-free, languages, and target age groups where those fields appear. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`). Series create forms SHALL NOT be documented or offered.
 
 #### Scenario: Partner field is a native select
 
@@ -393,7 +476,7 @@ The `/:locale/admin` dashboard SHALL display quick links to admin sections and a
 
 ### Requirement: Admin event SSR CRUD
 
-The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` for list, single create, series create, edit, delete, and redemption code export, using dedicated form POST pages without client-side modals, matching `docs/product/sitemap/sitemap.md` and `docs/product/features/admin-events.feature`. Admin event management SHALL NOT be scoped to a single partner — admins select the partner per event from admin-managed partner records. Create and edit forms SHALL accept multipart **file upload** for images (required on create; optional replace on edit) and delegate validation, image processing, and storage to the catalog domain layer and `@unveiled/images`. Admin event forms SHALL NOT accept remote image URL paste. Admin parsers and forms SHALL NOT accept or persist `secret_code_mode`. Ticket type options SHALL use `SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF` (full inventory upload UI MAY land in a later step).
+The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` for list, single create, edit, delete, redemption code export, gallery management, and clone (`/:locale/admin/events/:id/clone`), using dedicated form POST pages without client-side modals, matching `docs/product/sitemap/sitemap.md` and `docs/product/features/admin-events.feature`. Series create (`/:locale/admin/events/series/new`) SHALL NOT be offered. Admin event management SHALL NOT be scoped to a single partner — admins select the partner per event from admin-managed partner records on create/edit. Create and edit forms SHALL accept multipart **file upload** for images (required on create; optional replace on edit) and delegate validation, image processing, and storage to the catalog domain layer and `@unveiled/images`. Clone SHALL reuse the source event primary image id and SHALL NOT require a new image upload. Admin event forms SHALL NOT accept remote image URL paste. Admin parsers and forms SHALL NOT accept or persist `secret_code_mode`. Ticket type options SHALL use `SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF`.
 
 #### Scenario: Admin creates event with required image upload
 
@@ -410,15 +493,16 @@ The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` f
 - **WHEN** an ADMIN submits a create or edit form with both a file upload and a remote URL
 - **THEN** the form re-renders with a validation error and no partial write occurs
 
-#### Scenario: Event series creates multiple catalog rows
+#### Scenario: Admin clones event with new dateTime
 
-- **WHEN** an ADMIN confirms an event series with two valid unique slots
-- **THEN** two events exist sharing base metadata and distinct `date_time` values, each with its own image if supplied per series rules
+- **WHEN** an ADMIN opens clone for an existing event, submits a date/time, and confirms
+- **THEN** a distinct event row exists with copied catalog metadata and the submitted date/time
+- **AND** the admin is redirected to an admin events surface for the new event or list
 
-#### Scenario: Series preview before confirm
+#### Scenario: Series create route not offered
 
-- **WHEN** an ADMIN submits a series form in preview mode with valid base fields and slot inputs
-- **THEN** the server renders a preview list of generated slots before the confirm POST creates rows
+- **WHEN** an ADMIN uses the admin Events UI
+- **THEN** no series create CTA or `/admin/events/series/new` authoring surface is offered
 
 #### Scenario: Redemption validation on create
 
@@ -445,30 +529,14 @@ The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` f
 - **WHEN** a USER or unauthenticated visitor requests `/admin/events`
 - **THEN** access is denied via login redirect or home redirect consistent with auth phase patterns
 
-### Requirement: Admin event series confirm survives preview remount
+#### Scenario: Product docs match clone SSR routes
 
-When an ADMIN creates an event series via `/admin/events/series/new`, the confirm POST after preview SHALL include the partner id, redemption configuration, and event image required by `createEventSeries`, even if the client remounts the form tree between preview and confirm. Required select values SHALL be carried by named native form controls (or equivalent named inputs), not by ephemeral display-only widget state. Playwright scenarios for manual-slot and date-range series creation SHALL assert successful create (redirect to the admin events list and visible event titles), not the preview step alone.
-
-#### Scenario: Manual series confirm creates events
-
-- **WHEN** an ADMIN configures a series with manual slots, previews, re-attaches a required image if needed, and confirms
-- **THEN** one event is created per slot
-- **AND** the events appear on `/admin/events`
-
-#### Scenario: Date-range series confirm creates events
-
-- **WHEN** an ADMIN configures a series with the date-range builder, previews, re-attaches a required image if needed, and confirms
-- **THEN** events for the generated slots are created
-- **AND** the events appear on `/admin/events`
-
-#### Scenario: Confirm does not drop partner_id after remount
-
-- **WHEN** the series form remounts between preview and confirm with a previously chosen partner
-- **THEN** the confirm POST still includes a non-empty `partner_id` matching that partner
+- **WHEN** an implementer reads `docs/product/sitemap/sitemap.md` and `docs/product/features/admin-events.feature` after this change
+- **THEN** they document `/admin/events/:id/clone` and do not require series create as current MVP behavior
 
 ### Requirement: Admin event list discovery aids
 
-The admin events list at `/:locale/admin/events` SHALL support GET search and pagination (`?q=&page=`, page size 25) per `docs/product/extras/pagination-and-search.md`, searching event title and denormalized partner name. List results SHALL be ordered by `created_at` descending, then `id` descending. The list SHALL display a `small-320` thumbnail for each event's image when present, plus title, partner, date/time (Europe/Berlin), capacity, and row actions for edit, delete, and codes export.
+The admin events list at `/:locale/admin/events` SHALL support GET search and pagination (`?q=&page=`, page size 25) per `docs/product/extras/pagination-and-search.md`, searching event title and denormalized partner name. List results SHALL be ordered by `created_at` descending, then `id` descending. The list SHALL display a `small-320` thumbnail for each event's image when present, plus title, partner, date/time (Europe/Berlin), capacity, and row actions for edit, delete, codes export, and clone. The list SHALL NOT include a series create CTA.
 
 #### Scenario: Paginated admin event list
 
@@ -494,6 +562,11 @@ The admin events list at `/:locale/admin/events` SHALL support GET search and pa
 
 - **WHEN** an ADMIN views `/admin/events` and an event has an image
 - **THEN** the list displays a thumbnail using the `small-320` variant URL
+
+#### Scenario: List offers clone action
+
+- **WHEN** an ADMIN views the events list with at least one event
+- **THEN** each row includes a Clone action to `/:locale/admin/events/:id/clone`
 
 ### Requirement: Admin redemption codes CSV export
 
@@ -743,7 +816,7 @@ The public event detail page SHALL present below-the-fold DETAILS metadata in a 
 
 ### Requirement: Automated browser coverage for admin catalog management
 
-Each Gherkin scenario in `docs/product/features/admin-events.feature` and `docs/product/features/admin-partners.feature` SHALL have a Playwright test with a title matching the scenario line (or Scenario Outline plus example row). Partner scenarios SHALL live in `e2e/specs/admin-partners.spec.ts` and event scenarios in `e2e/specs/admin-events.spec.ts`. Tests SHALL sign in as ADMIN via `loginAsAdmin` / `E2E_ADMIN_*`, use proximity selectors only, and use unique timestamp suffixes for created partner/event names and portal emails. Image upload/URL processing tests SHALL call `test.skip` with reason `R2 vars not configured` when any required R2 env var (`S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL`) is missing. Image specs SHALL NOT skip solely because the target host is Cloudflare Workers; `e2e/README.md` SHALL allow running image uploads against `bun run dev` and, when configured, against a Workers preview or staging base URL.
+Each Gherkin scenario in `docs/product/features/admin-events.feature` and `docs/product/features/admin-partners.feature` SHALL have a Playwright test with a title matching the scenario line (or Scenario Outline plus example row). Partner scenarios SHALL live in `e2e/specs/admin-partners.spec.ts` and event scenarios in `e2e/specs/admin-events.spec.ts`. Tests SHALL sign in as ADMIN via `loginAsAdmin` / `E2E_ADMIN_*`, use proximity selectors only, and use unique timestamp suffixes for created partner/event names and portal emails. Image upload/URL processing tests SHALL call `test.skip` with reason `R2 vars not configured` when any required R2 env var (`S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL`) is missing. Image specs SHALL NOT skip solely because the target host is Cloudflare Workers; `e2e/README.md` SHALL allow running image uploads against `bun run dev` and, when configured, against a Workers preview or staging base URL. Series create scenarios SHALL NOT remain in the suite; clone scenarios SHALL be covered (or named env-deferred).
 
 #### Scenario: Admin partner CRUD is E2E-verified
 
@@ -753,7 +826,8 @@ Each Gherkin scenario in `docs/product/features/admin-events.feature` and `docs/
 #### Scenario: Admin event CRUD is E2E-verified
 
 - **WHEN** an ADMIN runs `e2e/specs/admin-events.spec.ts`
-- **THEN** single and series event creation, image required/upload/URL, redemption validation, capacity recalculation, edit, delete, optional metadata, export (or explicit skip with reason), and seed-demo behaviors are asserted
+- **THEN** single event creation, clone (happy path; voucher inventory reject when practical), image required/upload/URL, redemption validation, capacity recalculation, edit, delete, optional metadata, export (or explicit skip with reason), and seed-demo behaviors are asserted
+- **AND** series create builders are not exercised as current MVP UI
 
 #### Scenario: Published events surface on public pages
 

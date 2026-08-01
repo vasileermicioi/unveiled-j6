@@ -45,12 +45,6 @@ export function AdminEventsListPage({
           >
             {copy.newEvent}
           </Link>
-          <Link
-            className="button button--secondary button--md"
-            href={localizedPath(locale, "admin/events/series/new")}
-          >
-            {copy.newEventSeries}
-          </Link>
         </Surface>
       }
       subtitle={copy.eventsSubtitle}

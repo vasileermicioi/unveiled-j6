@@ -6,7 +6,7 @@ Four-step SSR onboarding wizard for incomplete USERs, gate/skip behavior for oth
 
 ### Requirement: Automated browser coverage for onboarding wizard
 
-Each Gherkin scenario in `docs/product/features/onboarding.feature` SHALL have a Playwright test in `e2e/specs/onboarding.spec.ts` tracing the four-step SSR wizard (`age`, `interests`, `location`, `timing`), including: 12 Bezirke without travel radius; interests Other + free text; searchable languages with DE/EN first; accessibility “needed?” yes checkbox. Tests that mutate onboarding state SHALL use a fresh USER (prefer new signup) for isolation.
+Each Gherkin scenario in `docs/product/features/onboarding.feature` SHALL have a Playwright test in `e2e/specs/onboarding.spec.ts` tracing the four-step SSR wizard (`age`, `interests`, `location`, `timing`), including: step 3 zip under prefilled Germany/Berlin **plus** required travel distance (km); interests Other + free text; searchable languages with DE/EN first; accessibility “needed?” yes checkbox. Tests that mutate onboarding state SHALL use a fresh USER (prefer new signup) for isolation. Scenario titles SHALL match Gherkin `Scenario:` lines verbatim (including the step 3 zip title).
 
 #### Scenario: Onboarding gate and completion are E2E-verified
 
@@ -18,9 +18,10 @@ Each Gherkin scenario in `docs/product/features/onboarding.feature` SHALL have a
 
 - **WHEN** onboarding specs need to drive multi-step forms
 - **THEN** helpers live in `e2e/fixtures/onboarding.ts` (or extended auth fixtures) and use proximity selectors only
+- **AND** `completeLocationStep` fills a valid Berlin PLZ under Germany/Berlin and a valid travel distance within bounds (not Bezirk checkboxes; not omitting `max_distance`)
 
 ### Requirement: Preference controls are native and localized
-Onboarding preference forms SHALL use native HTML form controls (`checkbox`, `radio`, `input`, `select`, `textarea` as applicable) for preference capture — not HeroUI Checkbox/Radio/Switch/NumberField/Select custom chrome. All preference section labels and option values SHALL be available in German and English according to the active URL locale. Stored allowlist keys MAY remain locale-invariant; user-visible labels MUST come from locale copy maps.
+Onboarding preference forms SHALL use native HTML form controls (`checkbox`, `radio`, `input`, `select`, `textarea` as applicable) for preference capture — not HeroUI Checkbox/Radio/Switch/NumberField/Select custom chrome. All preference section labels and option values SHALL be available in German and English according to the active URL locale. Stored allowlist keys MAY remain locale-invariant; user-visible labels MUST come from locale copy maps. Location on step 3 SHALL use a native zip text input (plus non-editable country/city display) and a native number input for travel distance (`max_distance`) in kilometers, not a multi-select checkbox group and not HeroUI NumberField/Select.
 
 #### Scenario: Accessibility preference is a visible native checkbox
 - **WHEN** a user reaches the onboarding timing/preferences step
@@ -33,12 +34,21 @@ Onboarding preference forms SHALL use native HTML form controls (`checkbox`, `ra
 - **AND** under `/en/...` the same options are English
 
 #### Scenario: Multi-value preferences use native checkboxes
-- **WHEN** a user completes interests, location, or timing onboarding steps
-- **THEN** multi-value fields (interests, moods, districts, timing, preferred days) are native checkboxes
+- **WHEN** a user completes interests or timing onboarding steps
+- **THEN** multi-value fields (interests, moods, timing, preferred days) are native checkboxes
 - **AND** preferred languages use native checkboxes inside a searchable client-side filter control (not HeroUI Select)
 - **AND** when Other is selected under interests, a native text input or textarea captures `interests_other`
 - **AND** age group is a native radio (or native select) group
-- **AND** travel radius is NOT collected
+
+#### Scenario: Location zip uses a native text input
+- **WHEN** a user completes onboarding step 3 (location)
+- **THEN** zip code is a native text input
+- **AND** country and city are shown as non-editable prefilled values (not HeroUI Select pickers)
+
+#### Scenario: Travel distance uses a native number input
+- **WHEN** a user completes onboarding step 3 (location)
+- **THEN** travel distance is a native `input type="number"` (not HeroUI NumberField or Select)
+- **AND** the control is labeled in the active locale with a kilometers unit
 
 ### Requirement: Interests may include Other with free text
 The system SHALL offer an `Other` interest option on onboarding step 2. When `Other` is selected, the member SHALL provide a free-text interest stored as `profile.interests_other`. When `Other` is not selected, `interests_other` SHALL be null. The interests array SHALL include the allowlist key `Other` when that checkbox is checked. `Other` SHALL be a normal member of `@unveiled/auth/constants` `INTERESTS` (appended after the existing eight keys). Locale labels SHALL be EN `Other` and DE `Sonstiges`. Free text SHALL be trimmed; when `Other` is selected it MUST be non-empty and MUST NOT exceed the configured max length (100 characters).
@@ -80,24 +90,66 @@ The system SHALL let members multi-select preferred languages from an expanded a
 - **WHEN** a timing step payload includes a preferred language outside `PREFERRED_LANGUAGES` (including `Non-Verbal`)
 - **THEN** validation rejects the payload without completing the step
 
-### Requirement: Localized hangout / district option labels
-The system SHALL render onboarding hangout (district) option labels from the active URL locale via `getDistrictLabel`. Stored preference values SHALL be the 12 official Berlin Bezirk names from `@unveiled/auth/constants` `DISTRICTS`. DE and EN labels SHALL use those proper Bezirk names (no informal shorthand keys such as `X-Berg`).
+### Requirement: Location step stores travel distance
 
-#### Scenario: Location step offers all Berlin Bezirke
-- **WHEN** a member views onboarding step 3 (location)
-- **THEN** they can multi-select from: Mitte, Friedrichshain-Kreuzberg, Pankow, Charlottenburg-Wilmersdorf, Spandau, Steglitz-Zehlendorf, Tempelhof-Schöneberg, Neukölln, Treptow-Köpenick, Marzahn-Hellersdorf, Lichtenberg, Reinickendorf
-- **AND** there is no travel-distance / “how far would you travel” control
+Onboarding location step persistence SHALL store `max_distance` together with `country`, `city`, and `zip_code` when the step is submitted with valid values. `max_distance` SHALL be a positive integer kilometers within the configured bounds (inclusive **1–50** unless constants are updated in one place). Invalid, missing, or out-of-range `max_distance` SHALL reject the step without completing it. The step SHALL continue to clear legacy `districts` on successful write. The onboarding location form SHALL collect travel distance via a native control so members can submit a valid `max_distance` with the location trio.
 
-#### Scenario: District labels use proper Bezirk names in both locales
-- **WHEN** a member views onboarding step 3 under `/en` or `/de`
-- **THEN** hangout option labels are the official Bezirk names (e.g. Friedrichshain-Kreuzberg), not informal shorthand (`X-Berg`) or EN-only expansions (`Kreuzberg`)
+#### Scenario: Location step persists zip and max_distance
+
+- **WHEN** onboarding location step is submitted with a valid Berlin zip and max_distance within bounds
+- **THEN** the profile stores country, city, zip_code, and max_distance
+- **AND** districts is cleared (null or absent)
+
+#### Scenario: Location step rejects out-of-range max_distance
+
+- **WHEN** onboarding location step is submitted with max_distance outside the allowed bounds
+- **THEN** the step is rejected with a validation error
+- **AND** the location preference is not advanced as saved with that invalid distance
+
+### Requirement: Step 3 location preferences
+
+Onboarding step 3 SHALL collect a postal code (`zip_code`) via a native text input and a travel distance in kilometers (`max_distance`) via a native number input, with country and city prefilled to Germany (`DE`) and Berlin (`berlin`) and not user-selectable in this release. Country and city SHALL be visibly shown as fixed (disabled/readonly or equivalent non-editable display) with submitted values `DE` / `berlin`. The system SHALL NOT offer the 12 Berlin Bezirke multi-select. Locale copy SHALL label Country / Land, City / Stadt, PLZ / Zip code, and travel distance (e.g. EN “How far will you travel?”, DE “Wie weit bist du bereit zu fahren?”) with a kilometers unit, and MAY include a short hint that Unveiled currently serves Berlin without claiming the data model can never expand. Travel distance SHALL be required on step 3. Submitting valid values SHALL store `country`, `city`, `zip_code`, and `max_distance`. Invalid or non-Berlin zip under `(DE, berlin)`, or invalid/missing `max_distance`, SHALL be rejected with a user-visible / typed validation error without completing the step.
+
+#### Scenario: Step 3 — hangout location and travel distance
+
+- **WHEN** I am on onboarding step 3
+- **THEN** country shows Germany and city shows Berlin (prefilled)
+- **AND** I can enter a Berlin PLZ
+- **AND** I can set how far I am willing to travel in km
+- **AND** I cannot multi-select hangout districts
+- **AND** submitting valid values stores country, city, zip_code, and max_distance
+
+#### Scenario: Step 3 — invalid zip rejected
+
+- **WHEN** I submit onboarding step 3 with a malformed or non-Berlin zip
+- **THEN** the step is rejected with a user-visible error
+- **AND** the location preference is not advanced as saved with that invalid zip
+
+#### Scenario: Step 3 — invalid travel distance rejected
+
+- **WHEN** I submit onboarding step 3 with an invalid or out-of-range travel distance
+- **THEN** the step is rejected with a user-visible error
+- **AND** the location preference is not advanced as saved with that invalid distance
 
 ### Requirement: Product docs match onboarding preference options
 
-`docs/product/features/onboarding.feature`, `extras/content-i18n-inventory.md`, `database/schema-overview.md`, and `testing/coverage-matrix.md` SHALL describe the shipped preference UX: interests include Other + free text (`interests_other`); location offers the 12 official Berlin Bezirke and does not collect travel radius; timing offers searchable preferred languages (DE/EN first; no Non-Verbal) and Accessibility needed? with a Yes/Ja checkbox. `max_distance` SHALL be documented as legacy/unused (not collected). Coverage-matrix Scenario titles SHALL match the updated Gherkin.
+`docs/product/features/onboarding.feature`, `extras/content-i18n-inventory.md`, `database/schema-overview.md`, and `testing/coverage-matrix.md` SHALL describe the shipped preference UX: interests include Other + free text (`interests_other`); location on step 3 collects `zip_code` with country/city prefilled to Germany/Berlin (`DE` / `berlin`), does not offer Bezirk multi-select, and **collects required travel distance** (`max_distance` integer km, inclusive bounds 1–50); timing offers searchable preferred languages (DE/EN first; no Non-Verbal) and Accessibility needed? with a Yes/Ja checkbox. Docs MAY note that more cities/countries can be added later via the postal registry without changing the field trio. `max_distance` SHALL be documented as an **active** preference (collected in onboarding and Vibes; preference saves do not clear it by policy). i18n inventory SHALL list `radiusLabel` / `km` with EN “How far will you travel?” / DE “Wie weit bist du bereit zu fahren?” (+ `km`). Coverage-matrix Scenario titles SHALL match the updated Gherkin; notes SHALL not claim “no travel radius”.
 
 #### Scenario: Onboarding feature file matches shipped steps 2–4
 
 - **WHEN** an implementer reads `docs/product/features/onboarding.feature` after this step
-- **THEN** step 2 mentions Other + free text, step 3 lists the 12 Bezirke without travel radius, and step 4 describes searchable languages and Accessibility needed?
-- **AND** stale informal district keys, travel-radius controls, Non-Verbal language options, and Required/Erforderlich accessibility labels are absent from those scenarios
+- **THEN** step 2 mentions Other + free text, step 3 describes zip under Germany/Berlin **and** travel distance (km), without Bezirk multi-select, and step 4 describes searchable languages and Accessibility needed?
+- **AND** scenarios that forbid travel distance / radius (“I cannot set a travel distance / radius”) are absent
+- **AND** stale hangout-district / 12-Bezirke scenarios, Non-Verbal language options, and Required/Erforderlich accessibility labels remain absent from those scenarios
+
+#### Scenario: Coverage matrix tracks zip and travel distance on step 3
+
+- **WHEN** an implementer reads `docs/product/testing/coverage-matrix.md` onboarding rows
+- **THEN** the step 3 row uses the zip Scenario title and notes Germany/Berlin defaults **plus** travel distance (km)
+- **AND** the notes do not claim travel radius is unavailable
+
+#### Scenario: Onboarding e2e asserts travel distance control
+
+- **WHEN** `e2e/specs/onboarding.spec.ts` runs Scenario Step 3 — zip under Germany/Berlin
+- **THEN** the location form shows a travel-distance control (native number / labeled how-far copy) beside zip
+- **AND** the test does not assert that travel distance / radius is absent

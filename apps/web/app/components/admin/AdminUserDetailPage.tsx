@@ -133,12 +133,17 @@ export function AdminUserDetailPage({
       value: profile.interests_other?.trim() ? profile.interests_other.trim() : null,
     },
     { label: copy.usersPrefMoods, value: formatList(profile.moods) },
-    { label: copy.usersPrefDistricts, value: formatList(profile.districts) },
+    {
+      label: copy.usersPrefLocation,
+      value: profile.zip_code?.trim()
+        ? [copy.countryDisplay, copy.cityDisplay, profile.zip_code.trim()].join(" · ")
+        : null,
+    },
     { label: copy.usersPrefTiming, value: formatList(profile.timing) },
     { label: copy.usersPrefDays, value: formatList(profile.preferred_days) },
     { label: copy.usersPrefLanguages, value: formatList(profile.preferred_languages) },
     { label: copy.usersPrefAgeGroup, value: profile.age_group ?? null },
-    // Travel radius is not collected; only show legacy non-null values for intel.
+    // Show travel distance only when set; omit when null (legacy / unset) — do not invent a value.
     ...(profile.max_distance == null
       ? []
       : [{ label: copy.usersPrefRadius, value: `${profile.max_distance} km` }]),

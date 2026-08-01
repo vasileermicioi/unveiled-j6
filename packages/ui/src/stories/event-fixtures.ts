@@ -10,7 +10,7 @@ export const sampleEventAvailable: EventCardItem = {
   title: "Poetry & Jazz Night",
   partnerName: "Literaturhaus Berlin",
   dateTime: baseDate,
-  neighborhood: "Charlottenburg",
+  zipCode: "10585",
   creditPrice: 2,
   remainingCapacity: 12,
   ticketType: "SECRET_CODE",

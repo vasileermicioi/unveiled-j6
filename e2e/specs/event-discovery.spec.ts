@@ -254,6 +254,32 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByRole("button", { name: /^(foto|photo)\s*2$/i })).toBeVisible();
   });
 
+  test("Scenario: Guest sees zip on event detail", async ({ page, locale }) => {
+    test.skip(!process.env.DATABASE_URL, "DATABASE_URL required to resolve seeded event id");
+
+    await page.context().clearCookies();
+    const eventId = await getEventIdByTitle(TITLES.tonight);
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/^plz$|^zip code$/i).first()).toBeVisible();
+    await expect(page.getByText(/\b1[0-4]\d{3}\b/).first()).toBeVisible();
+    await expect(page.getByText(/kiez|neighborhood/i)).toHaveCount(0);
+  });
+
+  test("Scenario: Event card shows zip", async ({ page, locale }) => {
+    await page.context().clearCookies();
+    if (hasDatabaseUrl()) {
+      await ensureDemoFeaturedSplit();
+    }
+    await page.goto(`/${locale}/discover`);
+    const main = page.getByRole("main");
+    await expect(main.getByRole("link", { name: /^entdecken$|^discover$/i }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    // EventCard shows zip beside MapPin (5-digit Berlin PLZ from seed)
+    await expect(main.getByText(/\b1[0-4]\d{3}\b/).first()).toBeVisible();
+  });
+
   test("Scenario: Detail LOCATION shows address with map", async ({ page, locale }) => {
     // Needs DB to resolve seeded event with coordinates; skip if unset
     test.skip(!process.env.DATABASE_URL, "DATABASE_URL required to resolve seeded event id");

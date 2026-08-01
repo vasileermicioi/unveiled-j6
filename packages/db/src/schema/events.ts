@@ -32,7 +32,9 @@ export const events = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     address: text("address").notNull(),
-    neighborhood: text("neighborhood").notNull(),
+    country: text("country").notNull().default("DE"),
+    city: text("city").notNull().default("berlin"),
+    zipCode: text("zip_code").notNull(),
     imageId: uuid("image_id")
       .notNull()
       .references(() => images.id, { onDelete: "restrict" }),

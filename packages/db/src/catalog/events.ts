@@ -2,6 +2,7 @@ import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { and, asc, count, desc, eq, gt, gte, ilike, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
+import { validatePostalCode } from "../location";
 import { eventGalleryImages } from "../schema/event-gallery-images";
 import { type Event, events, type TicketType, type TimingMode } from "../schema/events";
 import { deriveDateTimeFields } from "./datetime";
@@ -13,12 +14,21 @@ import {
   requireNonEmpty,
   validateImageSourceExclusive,
   validateRedemptionConfig,
-  validateUniqueSeriesSlots,
 } from "./validation";
+import {
+  applyVoucherInventory,
+  assertVoucherInventoryPresent,
+  type VoucherInventoryPayload,
+} from "./voucher-inventory";
 
 /** Lazy — keeps `@unveiled/images` / sip out of client graphs that import `@unveiled/db`. */
 function catalogImages() {
   return import("./images");
+}
+
+/** Lazy — avoids cycle with `event-gallery-images` (imports `getEventById`). */
+function catalogGallery() {
+  return import("./event-gallery-images");
 }
 
 export type ListEventsOptions = {
@@ -33,7 +43,9 @@ export type CreateEventInput = {
   title: string;
   description: string;
   address: string;
-  neighborhood: string;
+  zipCode: string;
+  country?: string | null;
+  city?: string | null;
   imageUpload?: Buffer | null;
   imageUrl?: string | null;
   imagePrebuilt?: PrebuiltImageVariantsInput | null;
@@ -67,7 +79,9 @@ export type UpdateEventInput = {
   title?: string;
   description?: string;
   address?: string;
-  neighborhood?: string;
+  zipCode?: string;
+  country?: string | null;
+  city?: string | null;
   imageUpload?: Buffer | null;
   imageUrl?: string | null;
   imagePrebuilt?: PrebuiltImageVariantsInput | null;
@@ -94,6 +108,15 @@ export type UpdateEventInput = {
   lng?: string | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
+};
+
+/**
+ * Clone an existing catalog event into a new row.
+ * Caller supplies `dateTime`; voucher types require create-mode inventory (not copied from source).
+ */
+export type CloneEventInput = {
+  dateTime: Date;
+  voucherInventory?: VoucherInventoryPayload;
 };
 
 export function recalculateRemainingCapacity(
@@ -315,6 +338,12 @@ async function insertEventRow(
     eventWebsiteUrl: input.eventWebsiteUrl,
   });
 
+  const location = validatePostalCode({
+    country: input.country,
+    city: input.city,
+    zipCode: input.zipCode,
+  });
+
   const derived = deriveDateTimeFields(input.dateTime, defaults.timingMode);
 
   const inserted = await db
@@ -325,7 +354,9 @@ async function insertEventRow(
       title: requireNonEmpty(input.title, "title"),
       description: requireNonEmpty(input.description, "description"),
       address: requireNonEmpty(input.address, "address"),
-      neighborhood: requireNonEmpty(input.neighborhood, "neighborhood"),
+      country: location.country,
+      city: location.city,
+      zipCode: location.zipCode,
       imageId,
       category: requireNonEmpty(input.category, "category"),
       eventType: requireNonEmpty(input.eventType, "eventType"),
@@ -365,29 +396,65 @@ export async function createEvent(db: Db, input: CreateEventInput): Promise<Even
   return insertEventRow(db, input, partner.name, imageId);
 }
 
-export async function createEventSeries(
+/**
+ * Create a distinct event from a source catalog row.
+ * Copies metadata + primary image id + gallery joins; resets capacity; never copies
+ * bookings, waitlist, featured membership, or voucher inventory rows.
+ */
+export async function cloneEvent(
   db: Db,
-  input: Omit<CreateEventInput, "dateTime"> & { slots: Date[] },
-): Promise<Event[]> {
-  const imageId = await resolveCreatePrimaryImageId(db, input);
-  const partner = await resolvePartner(db, input.partnerId);
-  const slots = validateUniqueSeriesSlots(input.slots);
-
-  const created: Event[] = [];
-  for (const slot of slots) {
-    const event = await insertEventRow(
-      db,
-      {
-        ...input,
-        dateTime: slot,
-      },
-      partner.name,
-      imageId,
-    );
-    created.push(event);
+  sourceEventId: string,
+  input: CloneEventInput,
+): Promise<Event> {
+  const source = await getEventById(db, sourceEventId);
+  if (!source) {
+    throw new CatalogValidationError("EVENT_NOT_FOUND", `Event ${sourceEventId} not found`);
   }
 
-  return created;
+  const voucherInventory: VoucherInventoryPayload = input.voucherInventory ?? {
+    promoCodes: [],
+    pdfItems: [],
+  };
+  assertVoucherInventoryPresent(source.ticketType, voucherInventory, { mode: "create" });
+
+  const partner = await resolvePartner(db, source.partnerId);
+  const createInput: CreateEventInput = {
+    partnerId: source.partnerId,
+    title: source.title,
+    description: source.description,
+    address: source.address,
+    zipCode: source.zipCode,
+    country: source.country,
+    city: source.city,
+    category: source.category,
+    eventType: source.eventType,
+    tags: source.tags ?? [],
+    dateTime: input.dateTime,
+    timingMode: source.timingMode,
+    creditPrice: source.creditPrice,
+    totalCapacity: source.totalCapacity,
+    ticketType: source.ticketType,
+    secretCode: source.secretCode,
+    eventWebsiteUrl: source.eventWebsiteUrl,
+    barrierFree: source.barrierFree,
+    languageIndependent: source.languageIndependent,
+    languages: source.languages,
+    targetAgeGroups: source.targetAgeGroups,
+    lat: source.lat,
+    lng: source.lng,
+  };
+
+  const cloned = await insertEventRow(db, createInput, partner.name, source.imageId);
+
+  await applyVoucherInventory(db, cloned.id, source.ticketType, voucherInventory);
+
+  const { listEventGalleryImageIds, addEventGalleryImages } = await catalogGallery();
+  const galleryIds = await listEventGalleryImageIds(db, sourceEventId);
+  if (galleryIds.length > 0) {
+    await addEventGalleryImages(db, cloned.id, galleryIds);
+  }
+
+  return cloned;
 }
 
 export async function updateEvent(
@@ -429,6 +496,20 @@ export async function updateEvent(
         )
       : existing.remainingCapacity;
 
+  const locationTouched =
+    input.zipCode !== undefined || input.country !== undefined || input.city !== undefined;
+  const location = locationTouched
+    ? validatePostalCode({
+        country: input.country !== undefined ? input.country : existing.country,
+        city: input.city !== undefined ? input.city : existing.city,
+        zipCode: input.zipCode !== undefined ? input.zipCode : existing.zipCode,
+      })
+    : {
+        country: existing.country,
+        city: existing.city,
+        zipCode: existing.zipCode,
+      };
+
   const updated = await db
     .update(events)
     .set({
@@ -441,10 +522,9 @@ export async function updateEvent(
           : existing.description,
       address:
         input.address !== undefined ? requireNonEmpty(input.address, "address") : existing.address,
-      neighborhood:
-        input.neighborhood !== undefined
-          ? requireNonEmpty(input.neighborhood, "neighborhood")
-          : existing.neighborhood,
+      country: location.country,
+      city: location.city,
+      zipCode: location.zipCode,
       imageId,
       category:
         input.category !== undefined
@@ -523,6 +603,9 @@ export async function deleteEvent(
 
   await db.delete(events).where(eq(events.id, eventId));
 
+  // Gap (clone-event / step 03): unlike gallery remove, deleteEvent does not
+  // reference-count shared primary/gallery image ids. Clones reuse image ids —
+  // deleting one event can remove images still referenced by another.
   const { deleteImageRecord } = await catalogImages();
   for (const imageId of imageIdsToDelete) {
     await deleteImageRecord(db, imageId, { skipBucket: options?.skipBucket });

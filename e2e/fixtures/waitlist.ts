@@ -52,7 +52,9 @@ export async function getSoldOutWaitlistEventId(): Promise<string> {
       description:
         "Seed sold-out event for waitlist demos — join waitlist, then raise capacity in admin edit to auto-promote.",
       address: partner.address || "Berlin",
-      neighborhood: template.neighborhood || "Mitte",
+      country: "DE",
+      city: "berlin",
+      zipCode: template.zipCode || "10115",
       imageId: template.imageId,
       category: template.category || "Theater",
       eventType: template.eventType || "Performance",

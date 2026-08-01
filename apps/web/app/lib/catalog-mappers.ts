@@ -8,7 +8,7 @@ export function toEventCardItem(event: Event): EventCardItem {
     title: event.title,
     partnerName: event.partnerName,
     dateTime: event.dateTime,
-    neighborhood: event.neighborhood,
+    zipCode: event.zipCode,
     creditPrice: event.creditPrice,
     remainingCapacity: event.remainingCapacity,
     ticketType: event.ticketType,

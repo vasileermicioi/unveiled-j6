@@ -13,20 +13,27 @@ Feature: Admin — Event Management
     Given I am signed in as "ADMIN"
 
   Scenario: Create a single event
-    When I create a new event with a title, partner, credit price, capacity, description, image, and dateTime
+    When I create a new event with a title, partner, credit price, capacity, description, image, Berlin zip code, and dateTime
     Then the event is added to the catalog
     And its remaining capacity defaults to its total capacity
     And its startTimeMinutes and weekday are computed from its dateTime
     # description is Markdown source (MDXEditor-assisted); other required fields unchanged
 
+  Scenario: Admin sets Berlin zip on create
+    When I create a new event with a valid Berlin PLZ and other required fields
+    Then the event is saved with country DE, city berlin, and that zip_code
+    And no neighborhood / Kiez field is shown
+
+  Scenario: Country and city are fixed on the form
+    When I open create, edit, or clone event
+    Then country and city are shown prefilled as Germany and Berlin
+    And I cannot change country or city via the form
+    And no neighborhood / Kiez select is shown
+
   Scenario: Admin authors Markdown description
     When I create or edit an event and enter Markdown in the description editor
     Then the event is saved with that Markdown source
     And guests see rendered Markdown on the public event detail page
-
-  Scenario: Series create uses the same Markdown description editor
-    When I open the series create form
-    Then the shared base fields include the same MDXEditor-based description control
 
   Scenario: Supply the event image as a direct upload
     When I create or edit an event and upload an image file
@@ -40,11 +47,6 @@ Feature: Admin — Event Management
 
   Scenario: Failed create keeps event image for retry
     When I create an event with a processed image and the submit is rejected
-    Then I still see the resized-variant preview for that image on the form
-    And I can retry submit without uploading the image again
-
-  Scenario: Failed series create keeps event image for retry
-    When I create an event series with a processed image and the submit is rejected
     Then I still see the resized-variant preview for that image on the form
     And I can retry submit without uploading the image again
 
@@ -90,14 +92,18 @@ Feature: Admin — Event Management
     Given I create an event without specifying capacity, ticket type, or timing mode
     Then it defaults to totalCapacity 10, ticketType "SECRET_CODE", timingMode "TIME_SLOT"
 
-  Scenario: Create an event series with manual slots
-    When I create an event series by manually specifying a list of unique, non-empty date/time slots
-    Then one event is created per slot, sharing the same base details
+  Scenario: Clone event from catalog list
+    When I open clone for an existing event, set a new date/time, and confirm
+    Then a new event appears in the catalog with the copied title and new date/time
 
-  Scenario: Create an event series with a date-range builder
-    When I create an event series by specifying a date range, selected weekdays, and daily time(s), with optional excluded dates
-    Then one event is created for each matching weekday/time combination in the range, excluding the specified dates
-    And I can preview the generated slots before confirming
+  Scenario: Clone voucher event requires inventory
+    When I clone a VOUCHER_PROMO or VOUCHER_PDF event without providing new inventory
+    Then the clone is rejected until inventory is provided
+
+  Scenario: Clone entry points visible
+    When I view the Events list or an event edit page
+    Then a Clone action linking to "/:locale/admin/events/:id/clone" is available
+    And no Event series create CTA is shown
 
   Scenario: Update an event's capacity
     Given an event has some tickets already sold (remaining capacity less than total capacity)
@@ -119,7 +125,7 @@ Feature: Admin — Event Management
     And supported languages and language-independent are mutually exclusive in the UI
 
   Scenario: Check language-independent hides languages picker
-    When I open create or edit event (or series create)
+    When I open create or edit event
     And I check Language-independent
     Then the languages multi-select is not shown
     And saving stores language-independent true with no language list
@@ -139,14 +145,9 @@ Feature: Admin — Event Management
     When I open create or edit event
     Then target age groups are chosen with checkboxes and no search filter control
 
-  Scenario: Series weekdays use checkbox multi-select
-    When I open the series create form with the date-range builder
-    Then builder weekdays are chosen with checkboxes and no search filter control
-    And single-value fields on the form continue to use a native HTML select
-
   # Address is the only admin location input — no lat/lng/zoom fields; map is geocode preview only.
   Scenario: Add event prefills address and map from partner
-    When I am on the new-event (or series-create) form and select a partner from the dropdown
+    When I am on the new-event form and select a partner from the dropdown
     Then the address field is set to that partner's address
     And the map preview updates to a geocode of that address when geocoding succeeds
     # Live Nominatim success is soft-fail — address prefill is required; map preview may stay at default
@@ -164,7 +165,7 @@ Feature: Admin — Event Management
     And the saved event does not store invented default-center coordinates for that failed geocode
 
   Scenario: No admin lat lng or zoom controls
-    When I open create or edit event (or series create)
+    When I open create or edit event
     Then no latitude, longitude, or map zoom number fields are shown
     And the map marker is not offered as a drag-to-set authoring control
 

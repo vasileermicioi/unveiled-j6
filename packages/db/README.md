@@ -65,7 +65,7 @@ Business logic for admin catalog operations lives in `packages/db/src/catalog/` 
 
 **Partners:** `createPartner`, `updatePartner`, `deletePartner`, `listPartners`, `getPartnerById`, `regenerateVenueCheckInToken`, `renamePartnerSyncEvents`
 
-**Events:** `createEvent`, `createEventSeries`, `updateEvent`, `deleteEvent`, `listEvents`, `getEventById`, `recalculateRemainingCapacity`, `exportRedemptionCodesCsv`
+**Events:** `createEvent`, `cloneEvent`, `updateEvent`, `deleteEvent`, `listEvents`, `getEventById`, `recalculateRemainingCapacity`, `exportRedemptionCodesCsv`
 
 **Discovery:** `listMemberFeedEvents`, `listMemberFeedMapEvents`, `MEMBER_FEED_PAGE_SIZE`, `MEMBER_FEED_MAP_MAX`, `saveEvent`, `unsaveEvent`, `isEventSaved`, `listSavedEventIds`, `listSavedUpcomingEvents`, `berlinTodayRange`, `berlinInclusiveDateRange`, `getBerlinCalendarDate`
 

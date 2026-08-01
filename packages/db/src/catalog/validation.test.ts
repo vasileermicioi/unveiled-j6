@@ -6,7 +6,6 @@ import {
   validateEmail,
   validateImageSourceExclusive,
   validateRedemptionConfig,
-  validateUniqueSeriesSlots,
 } from "./validation";
 
 describe("validateEmail", () => {
@@ -109,17 +108,6 @@ describe("validateRedemptionConfig", () => {
         ticketType: "VOUCHER_PDF",
       }),
     ).not.toThrow();
-  });
-});
-
-describe("validateUniqueSeriesSlots", () => {
-  test("rejects duplicate slots", () => {
-    const slot = new Date("2026-08-01T18:00:00.000Z");
-    expect(() => validateUniqueSeriesSlots([slot, slot])).toThrow(CatalogValidationError);
-  });
-
-  test("rejects empty slot list", () => {
-    expect(() => validateUniqueSeriesSlots([])).toThrow(CatalogValidationError);
   });
 });
 

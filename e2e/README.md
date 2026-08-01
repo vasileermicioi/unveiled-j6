@@ -214,4 +214,4 @@ Cookie consent storage key: `unveiled:cookie-consent` (localStorage).
 - Required GitHub secrets and Phase 4½ operator docs: `apps/web/DEPLOYMENT.md` § Phase 4½ — Testing foundation.
 - Google OAuth scenarios may require `test.skip` with an explicit reason when Neon test credentials are unavailable.
 - Admin image-upload scenarios need R2 env vars; default CI/local target is `bun run dev`. Pointing Playwright at Workers preview/staging is supported when secrets and `SITE_URL` are set.
-- Event **series** create: after preview the form remounts and the browser clears the file input — tests (and admins) must re-select the image on the confirm step before submitting.
+- Event **clone:** admins duplicate via `/:locale/admin/events/:id/clone` (list/edit Clone entry). Series create is removed — do not navigate to `/admin/events/series/new`. Voucher clones require new inventory (not copied from source).
