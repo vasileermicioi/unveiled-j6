@@ -173,11 +173,11 @@ export type AdminCopy = {
   featuredPartnersRemoveConfirm: string;
   galleryTitle: string;
   gallerySubtitle: (eventTitle: string) => string;
-  galleryCapacity: (count: number, max: number) => string;
+  galleryCapacity: (count: number) => string;
   galleryEmpty: string;
   galleryAddAction: string;
   galleryAddTitle: string;
-  galleryAddSubtitle: (remaining: number) => string;
+  galleryAddSubtitle: string;
   galleryAddSubmit: string;
   galleryAddRequired: string;
   galleryManageAction: string;
@@ -565,12 +565,11 @@ const copy: Record<Locale, AdminCopy> = {
     featuredPartnersRemoveConfirm: "Aus Featured entfernen",
     galleryTitle: "Event-Galerie",
     gallerySubtitle: (eventTitle) => `Galerie-Fotos für „${eventTitle}"`,
-    galleryCapacity: (count, max) => `${count} / ${max} Fotos`,
+    galleryCapacity: (count) => (count === 1 ? "1 Foto" : `${count} Fotos`),
     galleryEmpty: "Noch keine Galerie-Fotos. Lade mehrere Bilder auf einmal hoch.",
     galleryAddAction: "Fotos hinzufügen",
     galleryAddTitle: "Galerie-Fotos hinzufügen",
-    galleryAddSubtitle: (remaining) =>
-      `Mehrere Dateien auswählen (Pica im Browser). Noch ${remaining} Plätze frei (max. 12).`,
+    galleryAddSubtitle: "Mehrere Dateien auswählen (Pica im Browser).",
     galleryAddSubmit: "Fotos speichern",
     galleryAddRequired: "Mindestens ein Bild mit fertigen Varianten ist erforderlich.",
     galleryManageAction: "Galerie-Fotos verwalten",
@@ -977,12 +976,11 @@ const copy: Record<Locale, AdminCopy> = {
     featuredPartnersRemoveConfirm: "Remove from featured",
     galleryTitle: "Event gallery",
     gallerySubtitle: (eventTitle) => `Gallery photos for “${eventTitle}”`,
-    galleryCapacity: (count, max) => `${count} / ${max} photos`,
+    galleryCapacity: (count) => (count === 1 ? "1 photo" : `${count} photos`),
     galleryEmpty: "No gallery photos yet. Upload multiple images at once.",
     galleryAddAction: "Add photos",
     galleryAddTitle: "Add gallery photos",
-    galleryAddSubtitle: (remaining) =>
-      `Select multiple files (Pica in the browser). ${remaining} slot(s) remaining (max 12).`,
+    galleryAddSubtitle: "Select multiple files (Pica in the browser).",
     galleryAddSubmit: "Save photos",
     galleryAddRequired: "At least one image with ready variants is required.",
     galleryManageAction: "Manage gallery photos",
@@ -1299,12 +1297,6 @@ export function mapCatalogErrorCode(
 
   if (code === "ALREADY_FEATURED") {
     return locale === "de" ? "Bereits in der Featured-Liste." : "Already on the featured list.";
-  }
-
-  if (code === "GALLERY_LIMIT_EXCEEDED") {
-    return locale === "de"
-      ? "Die Event-Galerie darf höchstens 12 Fotos haben."
-      : "The event gallery cannot exceed 12 photos.";
   }
 
   if (code === "GALLERY_DUPLICATE_IMAGE") {

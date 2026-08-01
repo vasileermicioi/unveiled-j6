@@ -1,6 +1,5 @@
 import { Link, Paragraph, Surface } from "@heroui/react";
 import type { EventGalleryImageRow } from "@unveiled/db";
-import { MAX_EVENT_GALLERY_IMAGES } from "@unveiled/db";
 
 import AdminEventGalleryManager from "../../islands/AdminEventGalleryManager";
 import { getAdminCopy } from "../../lib/admin-content";
@@ -64,7 +63,7 @@ export function AdminEventGalleryListPage({
       title={copy.galleryTitle}
     >
       {error ? <AdminFormError message={error} /> : null}
-      <Paragraph>{copy.galleryCapacity(images.length, MAX_EVENT_GALLERY_IMAGES)}</Paragraph>
+      <Paragraph>{copy.galleryCapacity(images.length)}</Paragraph>
 
       {images.length === 0 ? (
         <Paragraph>{copy.galleryEmpty}</Paragraph>

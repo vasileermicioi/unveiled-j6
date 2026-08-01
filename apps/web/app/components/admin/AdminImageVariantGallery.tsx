@@ -25,6 +25,11 @@ export type AdminImageVariantGalleryProps = {
   imagePublicBaseUrl?: string | null;
   /** Optional heading override. */
   label?: string;
+  /**
+   * When true, show a single representative thumb in the grid; the lightbox still
+   * pages through all size variants. Used for multi-file gallery upload previews.
+   */
+  compact?: boolean;
 };
 
 type GalleryTile = {
@@ -49,12 +54,15 @@ function resolvePublicUrl(
   }
 }
 
+const COMPACT_PREVIEW_FILENAME: VariantFilename = "medium-640.webp";
+
 export function AdminImageVariantGallery({
   locale,
   processed = null,
   imageId = null,
   imagePublicBaseUrl = null,
   label,
+  compact = false,
 }: AdminImageVariantGalleryProps) {
   const copy = getAdminCopy(locale);
   const modalState = useOverlayState();
@@ -114,9 +122,23 @@ export function AdminImageVariantGallery({
     return mapped.filter((tile): tile is GalleryTile => Boolean(tile.src));
   }, [blobUrls, imageId, imagePublicBaseUrl, processed]);
 
+  const gridTiles = useMemo((): GalleryTile[] => {
+    if (!compact || tiles.length === 0) {
+      return tiles;
+    }
+    const preferred =
+      tiles.find((tile) => tile.filename === COMPACT_PREVIEW_FILENAME) ?? tiles[0] ?? null;
+    return preferred ? [preferred] : [];
+  }, [compact, tiles]);
+
   const openAt = (nextIndex: number) => {
     setIndex(nextIndex);
     modalState.open();
+  };
+
+  const openCompact = () => {
+    const preferredIndex = tiles.findIndex((tile) => tile.filename === COMPACT_PREVIEW_FILENAME);
+    openAt(preferredIndex >= 0 ? preferredIndex : 0);
   };
 
   useEffect(() => {
@@ -140,12 +162,12 @@ export function AdminImageVariantGallery({
 
   useEffect(() => {
     if (wasOpenRef.current && !modalState.isOpen) {
-      triggerRefs.current[index]?.focus();
+      triggerRefs.current[compact ? 0 : index]?.focus();
     }
     wasOpenRef.current = modalState.isOpen;
-  }, [modalState.isOpen, index]);
+  }, [modalState.isOpen, index, compact]);
 
-  if (tiles.length === 0) {
+  if (tiles.length === 0 || gridTiles.length === 0) {
     return null;
   }
 
@@ -159,18 +181,31 @@ export function AdminImageVariantGallery({
 
   return (
     <Surface className="admin-image-variant-gallery flex flex-col gap-3" variant="transparent">
-      <Paragraph className="admin-image-variant-gallery__heading">{heading}</Paragraph>
-      <Surface className="admin-image-variant-gallery__grid" variant="transparent">
-        {tiles.map((tile, tileIndex) => (
+      {compact ? null : (
+        <Paragraph className="admin-image-variant-gallery__heading">{heading}</Paragraph>
+      )}
+      <Surface
+        className={
+          compact
+            ? "admin-image-variant-gallery__grid admin-image-variant-gallery__grid--compact"
+            : "admin-image-variant-gallery__grid"
+        }
+        variant="transparent"
+      >
+        {gridTiles.map((tile, tileIndex) => (
           <Surface
             className="admin-image-variant-gallery__tile"
             key={tile.filename}
             variant="transparent"
           >
             <Button
-              aria-label={copy.imageVariantOpenLabel(tile.label)}
+              aria-label={
+                compact
+                  ? copy.imageVariantOpenLabel(heading)
+                  : copy.imageVariantOpenLabel(tile.label)
+              }
               className="admin-image-variant-gallery__thumb-button"
-              onPress={() => openAt(tileIndex)}
+              onPress={() => (compact ? openCompact() : openAt(tileIndex))}
               ref={(node) => {
                 triggerRefs.current[tileIndex] = node;
               }}
@@ -178,7 +213,9 @@ export function AdminImageVariantGallery({
             >
               <img alt="" className="admin-image-variant-gallery__img" src={tile.src} />
             </Button>
-            <Description className="admin-image-variant-gallery__label">{tile.label}</Description>
+            <Description className="admin-image-variant-gallery__label">
+              {compact ? heading : tile.label}
+            </Description>
           </Surface>
         ))}
       </Surface>
@@ -244,7 +281,7 @@ export function AdminImageVariantGallery({
   );
 }
 
-/** Compact multi-file summary: first item’s five tiles + count. */
+/** Multi-file summary: one preview thumb per photo; single file keeps the size ladder. */
 export function AdminImageVariantGallerySummary({
   locale,
   processedList,
@@ -253,17 +290,32 @@ export function AdminImageVariantGallerySummary({
   processedList: ProcessedAdminUpload[];
 }) {
   const copy = getAdminCopy(locale);
-  const first = processedList[0] ?? null;
-  if (!first) {
+  if (processedList.length === 0) {
     return null;
   }
 
+  if (processedList.length === 1) {
+    const only = processedList[0];
+    if (!only) {
+      return null;
+    }
+    return <AdminImageVariantGallery locale={locale} processed={only} />;
+  }
+
   return (
-    <Surface className="flex flex-col gap-2" variant="transparent">
-      {processedList.length > 1 ? (
-        <Description>{copy.gallerySelectedFilesLabel(processedList.length)}</Description>
-      ) : null}
-      <AdminImageVariantGallery locale={locale} processed={first} />
+    <Surface className="flex flex-col gap-3" variant="transparent">
+      <Description>{copy.gallerySelectedFilesLabel(processedList.length)}</Description>
+      <Surface className="admin-gallery-multi-preview__grid" variant="transparent">
+        {processedList.map((item, index) => (
+          <AdminImageVariantGallery
+            compact
+            key={item.imageId}
+            label={copy.galleryPhotoLabel(index + 1)}
+            locale={locale}
+            processed={item}
+          />
+        ))}
+      </Surface>
     </Surface>
   );
 }

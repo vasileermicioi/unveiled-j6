@@ -2888,10 +2888,27 @@
     }
   }
 
+  .admin-gallery-multi-preview__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .admin-gallery-multi-preview__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .admin-gallery-multi-preview__grid .admin-image-variant-gallery__grid--compact {
+    display: block;
+  }
+
   .admin-image-variant-gallery__tile {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-width: 0;
     overflow: hidden;
     border: 2px solid var(--border);
     border-radius: 0;
@@ -2903,6 +2920,7 @@
   .admin-image-variant-gallery__thumb-button {
     display: block;
     width: 100%;
+    max-width: 100%;
     height: auto;
     padding: 0;
     overflow: hidden;
@@ -2931,6 +2949,8 @@
   .admin-image-variant-gallery__img {
     display: block;
     width: 100%;
+    max-width: 100%;
+    height: auto;
     aspect-ratio: 16 / 10;
     object-fit: contain;
     background: var(--color-brand-cream);

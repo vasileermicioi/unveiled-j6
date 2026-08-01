@@ -185,7 +185,7 @@ Optional ordered photo gallery per event (separate from required primary `events
 | `sort_order` | integer | Append on add; list ordered by `sort_order` then `image_id` |
 | `created_at` | timestamptz | |
 
-**Max 12** gallery images per event (enforced in `@unveiled/db` catalog). Gallery membership MUST NOT replace the primary hero. Index `(event_id, sort_order)` for list queries. Admin UI / public slider are separate feature steps.
+No hard count cap — admins may attach any number of gallery images per event. Gallery membership MUST NOT replace the primary hero. Index `(event_id, sort_order)` for list queries. Admin UI / public slider are separate feature steps.
 
 ---
 

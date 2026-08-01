@@ -483,7 +483,10 @@ test.describe("admin-events.feature", () => {
     expect(body).toMatch(/booking_id|redemption_code/i);
   });
 
-  test("Scenario: Gallery manage is available from the featured list", async ({ page, locale }) => {
+  test("Scenario: Gallery manage is available from the Events catalog", async ({
+    page,
+    locale,
+  }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     const event = await createEventViaUI(page, locale, { partnerName: partner.name });
@@ -491,25 +494,11 @@ test.describe("admin-events.feature", () => {
     await page.goto(`/${locale}/admin/events`);
     const eventsRow = page.getByRole("row").filter({ hasText: event.title });
     await expect(eventsRow).toBeVisible({ timeout: 15_000 });
-    await expect(
-      eventsRow.getByRole("link", { name: /galerie-fotos verwalten|manage gallery photos/i }),
-    ).toHaveCount(0);
-
-    await navigateAdminTab(page, locale, "featured");
-    await page.getByRole("link", { name: /event hinzufügen|add event/i }).click();
-    await page.goto(`/${locale}/admin/featured/add?q=${encodeURIComponent(event.title)}`);
-    const addRow = page.getByRole("row").filter({ hasText: event.title });
-    await expect(addRow).toBeVisible({ timeout: 15_000 });
-    await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), { timeout: 30_000 });
-
-    const featuredRow = page.getByRole("row").filter({ hasText: event.title });
-    await expect(
-      featuredRow.getByRole("link", { name: /galerie-fotos verwalten|manage gallery photos/i }),
-    ).toBeVisible({ timeout: 15_000 });
-    await featuredRow
-      .getByRole("link", { name: /galerie-fotos verwalten|manage gallery photos/i })
-      .click();
+    const galleryLink = eventsRow.getByRole("link", {
+      name: /galerie-fotos verwalten|manage gallery photos/i,
+    });
+    await expect(galleryLink).toBeVisible({ timeout: 15_000 });
+    await galleryLink.click();
     await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery`));
     await expect(page.getByRole("heading", { name: /event-galerie|event gallery/i })).toBeVisible();
   });
@@ -628,13 +617,6 @@ test.describe("admin-events.feature", () => {
       .locator("img")
       .getAttribute("src");
     expect(firstSrcAfter).toBe(secondSrcBefore);
-  });
-
-  test("Scenario: Gallery capacity is enforced", async () => {
-    test.skip(
-      true,
-      "Driving 12× Pica multi-upload in Playwright is slow/brittle — covered by @unveiled/db gallery unit/integration tests; manual smoke via admin add when at cap",
-    );
   });
 
   test("Scenario: List featured events", async ({ page, locale }) => {

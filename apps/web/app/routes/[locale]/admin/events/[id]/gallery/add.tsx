@@ -1,9 +1,4 @@
-import {
-  addEventGalleryImages,
-  countEventGalleryImages,
-  getEventById,
-  MAX_EVENT_GALLERY_IMAGES,
-} from "@unveiled/db";
+import { addEventGalleryImages, getEventById } from "@unveiled/db";
 import { deleteImageRecord, persistPrebuiltImage } from "@unveiled/db/catalog/images";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
@@ -56,7 +51,6 @@ async function renderAddPage(
     locale: Locale;
     eventId: string;
     eventTitle: string;
-    remainingSlots: number;
     error?: string | null;
   },
 ) {
@@ -69,7 +63,6 @@ async function renderAddPage(
       eventId={options.eventId}
       eventTitle={options.eventTitle}
       locale={options.locale}
-      remainingSlots={options.remainingSlots}
     />,
     {
       locale: options.locale,
@@ -107,8 +100,6 @@ export const POST = createRoute(async (c) => {
     });
   }
 
-  const currentCount = await countEventGalleryImages(db, eventId);
-  const remainingSlots = Math.max(0, MAX_EVENT_GALLERY_IMAGES - currentCount);
   const copy = getAdminCopy(guard.locale);
 
   const body = (await c.req.parseBody({ all: true })) as ParsedBody;
@@ -119,7 +110,6 @@ export const POST = createRoute(async (c) => {
       locale: guard.locale,
       eventId,
       eventTitle: event.title,
-      remainingSlots,
       error: copy.galleryAddRequired,
     });
   }
@@ -148,7 +138,6 @@ export const POST = createRoute(async (c) => {
       locale: guard.locale,
       eventId,
       eventTitle: event.title,
-      remainingSlots,
       error: mapCatalogError(error, guard.locale),
     });
   }
@@ -181,13 +170,9 @@ export default createRoute(async (c) => {
     });
   }
 
-  const currentCount = await countEventGalleryImages(db, eventId);
-  const remainingSlots = Math.max(0, MAX_EVENT_GALLERY_IMAGES - currentCount);
-
   return renderAddPage(c, {
     locale: guard.locale,
     eventId,
     eventTitle: event.title,
-    remainingSlots,
   });
 });

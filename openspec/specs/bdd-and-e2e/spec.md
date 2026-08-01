@@ -117,9 +117,15 @@ The system SHALL cover `auth.feature` GDPR scenarios (export, deletion, admin-as
 - **WHEN** `e2e/specs/auth.spec.ts` GDPR tests are reviewed after this change
 - **THEN** no scenario skips solely with “Phase 9 — … not built” or equivalent “UI not built” wording
 
-### Requirement: Featured Event Gallery Playwright coverage
+### Requirement: Event Gallery Playwright coverage
 
-The system SHALL cover Featured Event Gallery happy paths in Playwright with verbatim Gherkin `Scenario:` titles from `docs/product/features/admin-events.feature` and `docs/product/features/event-discovery.feature`, using proximity/layout selectors per `docs/product/testing/bdd-and-e2e.md`. Coverage SHALL include (1) ADMIN multi-upload add and SSR remove confirm for gallery photos when R2 + admin credentials allow, and (2) public guest view of gallery + slider navigation on a seeded or fixture-backed event with ≥2 gallery images. Scenarios that cannot run SHALL be `test.skip`ped with an explicit env/harness reason (never “UI not built”) and documented in `docs/product/testing/coverage-matrix.md` and/or `apps/web/DEPLOYMENT.md` with a manual demo script that still exercises admin add/remove and public slider.
+The system SHALL cover Event Gallery happy paths in Playwright with verbatim Gherkin `Scenario:` titles from `docs/product/features/admin-events.feature` and `docs/product/features/event-discovery.feature`, using proximity/layout selectors per `docs/product/testing/bdd-and-e2e.md`. Coverage SHALL include (1) ADMIN manage entry from the Events list and/or event edit page (not Featured-only), plus multi-upload add and SSR remove confirm for gallery photos when R2 + admin credentials allow, and (2) public guest view of gallery + slider navigation on a seeded or fixture-backed event with ≥2 gallery images (seed host MAY remain featured). Scenarios that cannot run SHALL be `test.skip`ped with an explicit env/harness reason (never “UI not built”) and documented in `docs/product/testing/coverage-matrix.md` and/or `apps/web/DEPLOYMENT.md` with a manual demo script that still exercises admin add/remove and public slider.
+
+#### Scenario: Admin gallery manage entry is from Events
+
+- **WHEN** admin gallery entry e2e coverage is evaluated
+- **THEN** Playwright asserts a path from Events list or edit to gallery manage for a catalog event that need not be featured
+- **AND** it does not require Featured membership as the sole entry
 
 #### Scenario: Admin gallery happy path is executable or named-skipped
 
@@ -134,7 +140,8 @@ The system SHALL cover Featured Event Gallery happy paths in Playwright with ver
 #### Scenario: Coverage matrix lists gallery scenarios
 
 - **WHEN** an implementer opens `docs/product/testing/coverage-matrix.md` after this change
-- **THEN** new gallery scenarios from admin-events and event-discovery map to Playwright titles (or named skips) instead of remaining undocumented
+- **THEN** gallery scenarios from admin-events and event-discovery map to Playwright titles (or named skips) instead of remaining undocumented
+- **AND** admin gallery entry rows reflect Events/edit entry, not Featured-exclusive manage
 
 ### Requirement: MVP feature coverage audit
 The system SHALL map every top-level `docs/product/features/*.feature` file (excluding `features/post-mvp/`) to Playwright coverage that either passes or is explicitly named-deferred with reason. Phase 8 release MUST NOT leave silent skips for MVP scenarios. The coverage matrix at `docs/product/testing/coverage-matrix.md` and `e2e/README.md` skip inventory SHALL agree on pass vs named deferral for each MVP feature file.

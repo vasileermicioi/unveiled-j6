@@ -208,17 +208,12 @@ Feature: Admin — Event Management
     And I save the order ("Save order" / "Reihenfolge speichern")
     Then the new order is saved (sort_order) and shown after reload
 
-  Scenario: Gallery manage is available from the featured list
-    Given an event is on the featured list
-    When I open the Featured events tab ("/:locale/admin/featured")
+  Scenario: Gallery manage is available from the Events catalog
+    Given an existing catalog event that is not on the featured list
+    When I open the Events list ("/:locale/admin/events") or that event's edit page
     Then I see a path to manage that event's gallery photos
-    And gallery manage is not shown on the Events list or create/edit event forms
-
-  Scenario: Gallery capacity is enforced
-    Given an event already has 12 gallery photos
-    When I attempt to add more gallery photos
-    Then the add is rejected with an admin-visible error
-    And the primary hero image is unchanged
+    And the Featured list MAY also offer a convenience gallery shortcut
+    And gallery manage is not required on the create-event form
 
   Scenario: List featured events
     When I open the Featured events tab ("/:locale/admin/featured")

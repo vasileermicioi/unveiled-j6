@@ -7,7 +7,6 @@ import { CatalogValidationError } from "./errors";
 import {
   addEventGalleryImages,
   listEventGalleryImages,
-  MAX_EVENT_GALLERY_IMAGES,
   removeEventGalleryImages,
   reorderEventGalleryImages,
 } from "./event-gallery-images";
@@ -23,7 +22,7 @@ async function persistGalleryImage(db: ReturnType<typeof createDb>) {
 }
 
 describe("event gallery images integration", () => {
-  test("add order, hero unchanged, cap rejection, remove cleans images", async () => {
+  test("add order, hero unchanged, remove cleans images", async () => {
     if (!databaseUrl) {
       console.warn("DATABASE_URL not set — skipping integration test");
       return;
@@ -59,7 +58,6 @@ describe("event gallery images integration", () => {
     const heroImageId = event.imageId;
     const galleryIdA = await persistGalleryImage(db);
     const galleryIdB = await persistGalleryImage(db);
-    let overflowId: string | undefined;
 
     try {
       const listed = await addEventGalleryImages(db, event.id, [galleryIdA, galleryIdB]);
@@ -71,22 +69,6 @@ describe("event gallery images integration", () => {
 
       const ordered = await listEventGalleryImages(db, event.id);
       expect(ordered.map((row) => row.imageId)).toEqual([galleryIdA, galleryIdB]);
-
-      const fillerIds: string[] = [];
-      for (let i = 0; i < MAX_EVENT_GALLERY_IMAGES - 2; i += 1) {
-        fillerIds.push(await persistGalleryImage(db));
-      }
-      await addEventGalleryImages(db, event.id, fillerIds);
-
-      overflowId = await persistGalleryImage(db);
-      let capError: unknown;
-      try {
-        await addEventGalleryImages(db, event.id, [overflowId]);
-      } catch (error) {
-        capError = error;
-      }
-      expect(capError).toBeInstanceOf(CatalogValidationError);
-      expect((capError as CatalogValidationError).code).toBe("GALLERY_LIMIT_EXCEEDED");
 
       await removeEventGalleryImages(db, event.id, [galleryIdA, galleryIdB], { skipBucket: true });
 
@@ -106,9 +88,6 @@ describe("event gallery images integration", () => {
     } finally {
       await deleteEvent(db, event.id, { skipBucket: true });
       await deletePartner(db, partner.id, { skipBucket: true });
-      if (overflowId) {
-        await db.delete(images).where(eq(images.id, overflowId));
-      }
     }
   });
 

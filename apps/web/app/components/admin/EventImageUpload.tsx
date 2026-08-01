@@ -188,6 +188,7 @@ export function EventImageUpload({
       }
       setProcessedList(complete);
       setStatus("ready");
+      setErrorMessage(null);
       if (multiple) {
         setSelectedLabel(copy.gallerySelectedFilesLabel(complete.length));
       }
@@ -257,7 +258,7 @@ export function EventImageUpload({
           <Description>{copy.imageProcessingInProgress}</Description>
         ) : null}
         {status === "ready" && selectedLabel ? <Description>{selectedLabel}</Description> : null}
-        {errorMessage ? <Description>{errorMessage}</Description> : null}
+        {errorMessage && status !== "ready" ? <Description>{errorMessage}</Description> : null}
       </Surface>
 
       {multiple && processedList.length > 0 ? (

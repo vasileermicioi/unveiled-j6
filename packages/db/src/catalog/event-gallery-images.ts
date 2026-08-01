@@ -8,7 +8,8 @@ import { partners } from "../schema/partners";
 import { CatalogValidationError } from "./errors";
 import { getEventById } from "./events";
 
-export const MAX_EVENT_GALLERY_IMAGES = 12;
+/** Temporary sort_order offset while rewriting 0..n-1 order (avoids mid-update collisions). */
+const GALLERY_REORDER_TEMP_SORT_BASE = 1_000_000;
 
 export type EventGalleryImageRow = {
   eventId: string;
@@ -114,13 +115,6 @@ export async function addEventGalleryImages(
     }
   }
 
-  if (existing.length + uniqueIncoming.length > MAX_EVENT_GALLERY_IMAGES) {
-    throw new CatalogValidationError(
-      "GALLERY_LIMIT_EXCEEDED",
-      `Event gallery cannot exceed ${MAX_EVENT_GALLERY_IMAGES} images`,
-    );
-  }
-
   const imageRows = await db
     .select({ id: images.id })
     .from(images)
@@ -191,9 +185,9 @@ export async function reorderEventGalleryImages(
     }
   }
 
-  // Temporary high offsets avoid unique (event_id, sort_order) collisions mid-update
-  // when a unique index is present; sequential writes are fine for neon-http.
-  const tempBase = MAX_EVENT_GALLERY_IMAGES + 100;
+  // Temporary high offsets avoid (event_id, sort_order) collisions mid-update;
+  // sequential writes are fine for neon-http.
+  const tempBase = GALLERY_REORDER_TEMP_SORT_BASE;
   for (let i = 0; i < uniqueOrdered.length; i += 1) {
     const imageId = uniqueOrdered[i];
     if (!imageId) {

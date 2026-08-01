@@ -43,8 +43,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-events.feature` | Admin multi-upload gallery photos | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin multi-upload gallery photos` | `pass` | R2 env-skip when vars missing |
 | `admin-events.feature` | Admin removes selected gallery photos | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin removes selected gallery photos` | `pass` | R2 env-skip when vars missing |
 | `admin-events.feature` | Admin reorders gallery photos by drag and drop | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin reorders gallery photos by drag and drop` | `pass` | R2 env-skip; HTML5 DnD via Playwright |
-| `admin-events.feature` | Gallery manage is available from the featured list | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery manage is available from the featured list` | `pass` | R2 env-skip when vars missing |
-| `admin-events.feature` | Gallery capacity is enforced | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery capacity is enforced` | `skip` | Named skip — 12× Pica upload brittle; covered by `@unveiled/db` gallery tests |
+| `admin-events.feature` | Gallery manage is available from the Events catalog | `e2e/specs/admin-events.spec.ts` · `Scenario: Gallery manage is available from the Events catalog` | `pass` | R2 env-skip when vars missing; non-featured catalog event OK |
 | `admin-partners.feature` | Create a partner | `e2e/specs/admin-partners.spec.ts` · `Scenario: Create a partner` | `pass` | R2 env-skip; logo required (five WebP) |
 | `admin-partners.feature` | Supply the partner logo as a direct upload | `e2e/specs/admin-partners.spec.ts` · `Scenario: Supply the partner logo as a direct upload` | `pass` | R2 env-skip when vars missing; asserts `small-320.webp` |
 | `admin-partners.feature` | Partner logo is required | `e2e/specs/admin-partners.spec.ts` · `Scenario: Partner logo is required` | `pass` | Client block; no R2 required |

@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import { CatalogValidationError } from "./errors";
-import { MAX_EVENT_GALLERY_IMAGES } from "./event-gallery-images";
 
 /**
  * Pure permutation checks mirror reorderEventGalleryImages guards so CI can
@@ -44,9 +43,5 @@ describe("gallery reorder permutation guards", () => {
 
   test("rejects unknown ids", () => {
     expect(() => assertReorderPermutation(["a", "b"], ["a", "x"])).toThrow(CatalogValidationError);
-  });
-
-  test("temp offset stays above gallery cap", () => {
-    expect(MAX_EVENT_GALLERY_IMAGES + 100).toBeGreaterThan(MAX_EVENT_GALLERY_IMAGES);
   });
 });

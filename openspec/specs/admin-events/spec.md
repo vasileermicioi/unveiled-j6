@@ -6,7 +6,7 @@ ADMIN catalog management for events, including the Featured curation tab used by
 
 ### Requirement: Admin manages event gallery photos
 
-Admins SHALL be able to add multiple gallery photos to an existing event in one submission and remove individual or multiple gallery photos through SSR confirmation pages with form POST. Gallery management SHALL be ADMIN-only under locale-prefixed routes such as `/:locale/admin/events/:id/gallery` (list), `.../gallery/add` (multi-upload), and `.../gallery/remove` (confirm remove). Mutations SHALL NOT use client-only modals. Selection for bulk remove SHALL NOT use checkbox or radio inputs; the system SHALL use native multi-select and/or discrete per-photo remove links. Each uploaded file SHALL be processed into five WebP variants client-side and persisted as gallery images (separate from the required primary `events.image_id`). Removal SHALL call the catalog remove path so associations disappear from the gallery list and unreferenced image objects are cleaned up per image-upload rules. The gallery SHALL respect the configured maximum (12) enforced by the domain layer. Product Gherkin in `docs/product/features/admin-events.feature` SHALL include scenarios that match these routes and SSR confirm behavior (proximity/layout selectors only) and SHALL describe five WebP variants (not six JPEG). Admin-visible empty-state, capacity, and validation error copy SHALL be present for the manage surfaces.
+Admins SHALL be able to add, reorder, and remove gallery photos for any existing catalog event through ADMIN-only SSR routes under `/:locale/admin/events/:id/gallery*` (list), `.../gallery/add` (multi-upload), and `.../gallery/remove` (confirm remove). Gallery management entry SHALL be available from the admin Events list and/or the event edit page. Featured Discover membership SHALL NOT be required to manage an event's gallery; the Featured list MAY retain a convenience gallery shortcut but SHALL NOT be the sole entry. Create-event forms SHALL NOT require gallery manage. Mutations SHALL use dedicated pages with form POST (no client-only modals). Selection for bulk remove SHALL NOT use checkbox or radio inputs; the system SHALL use native multi-select and/or discrete per-photo remove links. Each uploaded file SHALL be processed into five WebP variants client-side and persisted as gallery images (separate from the required primary `events.image_id`). Removal SHALL call the catalog remove path so associations disappear from the gallery list and unreferenced image objects are cleaned up per image-upload rules. There is **no hard count cap** on gallery photos; primary `events.image_id` remains separate. Product Gherkin in `docs/product/features/admin-events.feature` SHALL include scenarios that match these routes and SSR confirm behavior (proximity/layout selectors only), SHALL describe five WebP variants (not six JPEG), and SHALL document Events list/edit gallery entry (not Featured-exclusive). Admin-visible empty-state and validation error copy SHALL be present for the manage surfaces.
 
 #### Scenario: Admin multi-upload gallery photos
 
@@ -31,23 +31,45 @@ Admins SHALL be able to add multiple gallery photos to an existing event in one 
 - **WHEN** a USER or unauthenticated visitor requests `/:locale/admin/events/:id/gallery`
 - **THEN** access is denied per existing admin route guards (redirect or forbidden consistent with other `/admin/*` routes)
 
-#### Scenario: Gallery manage is available for existing events
+#### Scenario: Gallery manage is available from the Events catalog
 
-- **WHEN** an admin opens the edit page for an existing event
-- **THEN** they have a path to manage that event’s gallery photos
+- **WHEN** an admin opens the Events list or an event edit page for an existing catalog event
+- **THEN** they see a path to manage that event's gallery photos
+- **AND** the event need not be on the Featured list
 - **AND** gallery manage is not required on the create-event form
 
-#### Scenario: Gallery capacity is enforced
+#### Scenario: Non-featured event can have a gallery managed
 
-- **WHEN** an admin attempts to add gallery photos that would exceed the maximum of 12 images for the event
-- **THEN** the add is rejected with an admin-visible error
-- **AND** the primary hero image is unchanged
+- **WHEN** an admin opens gallery manage for an event that is not in `featured_events`
+- **THEN** add/remove/reorder gallery flows work the same as for featured events
 
 #### Scenario: Product feature file documents gallery manage routes
 
 - **WHEN** an agent reads `docs/product/features/admin-events.feature`
-- **THEN** it includes scenarios for multi-upload add, SSR remove confirm (single and/or multi), and capacity enforcement aligned to `/admin/events/:id/gallery*`
+- **THEN** it includes scenarios for multi-upload add, SSR remove confirm (single and/or multi), and Events list/edit gallery entry aligned to `/admin/events/:id/gallery*`
 - **AND** image-processing steps describe five WebP variants (not six JPEG)
+- **AND** it does not require Featured membership as the sole gallery manage entry
+- **AND** it does not require a hard gallery photo count cap
+
+### Requirement: Gallery manage product docs and e2e
+
+Product Gherkin, UI component map, image-uploads §8a, DEPLOYMENT demo script, and Playwright SHALL state that gallery manage is available for any existing catalog event from the admin Events list and/or event edit page. Featured-list gallery entry, if present, is optional convenience. Coverage matrix rows SHALL use the updated scenario titles.
+
+#### Scenario: Product docs describe per-event gallery admin entry
+
+- **WHEN** a reader opens `admin-events.feature` and `ui-component-map.md`
+- **THEN** gallery manage is documented on Events/edit, not as Featured-exclusive
+
+#### Scenario: Playwright covers gallery manage from Events
+
+- **WHEN** admin gallery e2e runs with required env
+- **THEN** it asserts a path from Events list or edit to gallery manage (proximity/layout selectors only)
+
+#### Scenario: Coverage matrix lists updated gallery entry scenario
+
+- **WHEN** an implementer opens `docs/product/testing/coverage-matrix.md` after this change
+- **THEN** the gallery manage entry scenario maps to the updated Playwright title with `pass` or named env `skip`
+- **AND** no matrix row claims Featured-exclusive gallery manage as current MVP behavior
 
 ### Requirement: Admin event image Gherkin and e2e match WebP pipeline
 Product Gherkin in `docs/product/features/admin-events.feature` and Playwright coverage in `e2e/specs/admin-events.spec.ts` (plus coverage-matrix rows) SHALL describe required primary event image supply via the five-WebP client Pica pipeline, including WebP variant URL/field assertions where image specs run. Selectors SHALL remain proximity/layout only per `docs/product/testing/bdd-and-e2e.md`. Image scenarios MAY continue to env-skip when R2 vars are missing using the existing documented skip pattern.

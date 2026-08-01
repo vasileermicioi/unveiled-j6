@@ -9,6 +9,7 @@ import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
 import { AdminTableActions } from "./AdminTableActions";
+import { adminEventGalleryPath } from "./admin-tabs";
 
 type AdminEventsTableProps = {
   locale: Locale;
@@ -70,6 +71,11 @@ export function AdminEventsTable({ locale, events, imageUrls }: AdminEventsTable
                         href: localizedPath(locale, `admin/events/${event.id}/edit`),
                         label: copy.editAction,
                         icon: "edit",
+                      },
+                      {
+                        href: adminEventGalleryPath(locale, event.id),
+                        label: copy.galleryManageAction,
+                        icon: "gallery",
                       },
                       {
                         href: localizedPath(locale, `admin/events/${event.id}/clone`),

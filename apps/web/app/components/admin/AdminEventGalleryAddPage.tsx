@@ -15,7 +15,6 @@ type AdminEventGalleryAddPageProps = {
   locale: Locale;
   eventId: string;
   eventTitle: string;
-  remainingSlots: number;
   error?: string | null;
 };
 
@@ -23,7 +22,6 @@ export function AdminEventGalleryAddPage({
   locale,
   eventId,
   eventTitle,
-  remainingSlots,
   error,
 }: AdminEventGalleryAddPageProps) {
   const copy = getAdminCopy(locale);
@@ -52,7 +50,7 @@ export function AdminEventGalleryAddPage({
           locale={locale}
           multiple
           sectionLabel={copy.galleryAddTitle}
-          uploadHint={copy.galleryAddSubtitle(remainingSlots)}
+          uploadHint={copy.galleryAddSubtitle}
         />
         <Surface className="flex flex-col gap-3 sm:flex-row sm:items-center" variant="transparent">
           <Button className="button button--primary button--md" type="submit">

@@ -160,6 +160,7 @@ export function PartnerLogoUpload({
       }
       setProcessed(first);
       setStatus("ready");
+      setErrorMessage(null);
     } catch (error) {
       setProcessed(null);
       setStatus("error");
@@ -209,7 +210,7 @@ export function PartnerLogoUpload({
       />
       {status === "processing" ? <Description>{copy.imageProcessingInProgress}</Description> : null}
       {status === "ready" && selectedLabel ? <Description>{selectedLabel}</Description> : null}
-      {errorMessage ? <Description>{errorMessage}</Description> : null}
+      {errorMessage && status !== "ready" ? <Description>{errorMessage}</Description> : null}
 
       {processed ? (
         <>
