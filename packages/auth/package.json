@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@unveiled/db": "workspace:*",
-    "drizzle-orm": "^0.40.0",
-    "hono": "^4.7.0"
+    "drizzle-orm": "^0.40.1",
+    "hono": "^4.12.33"
   },
   "devDependencies": {
     "@unveiled/config": "workspace:*",
-    "typescript": "^5.8.0"
+    "typescript": "^5.9.3"
   }
 }

@@ -31,11 +31,11 @@
     "@unveiled/db": "workspace:*"
   },
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.758.0",
-    "@biomejs/biome": "^2.0.0",
-    "@playwright/test": "^1.49.1",
+    "@aws-sdk/client-s3": "^3.1101.0",
+    "@biomejs/biome": "^2.5.6",
+    "@playwright/test": "^1.62.1",
     "@unveiled/config": "workspace:*",
-    "playwright": "^1.49.1",
-    "wrangler": "^4.14.0"
+    "playwright": "^1.62.1",
+    "wrangler": "^4.118.0"
   }
 }

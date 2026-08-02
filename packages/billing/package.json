@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "@unveiled/db": "workspace:*",
-    "stripe": "^18.0.0"
+    "stripe": "^18.5.0"
   },
   "devDependencies": {
     "@unveiled/config": "workspace:*",
-    "typescript": "^5.8.0"
+    "typescript": "^5.9.3"
   }
 }
