@@ -22,7 +22,7 @@ Demo seed reads pre-baked variant packs under `public/images/seed/**` (refresh w
 
 **E2E note (Image pipeline step 04):** admin event/partner image specs assert `.webp` URLs and required logo; they self-skip when `E2E_ADMIN_*` or any of the six R2 vars is missing (existing patterns).
 
-**Admin partner location prefill (Event form & detail):** On **add event** only, changing the partner control fills the event address from `partners.address` and attempts a browser-side Nominatim geocode (`geocodeBerlinAddress`, Berlin viewbox bias) to update the map pin. Soft-fail leaves the address filled and the map unchanged/default. **No API key or env var** — do not add Nominatim secrets. Edit-event partner changes never overwrite address/map. CI e2e asserts address prefill; live Nominatim success is not required (unit tests cover soft-fail paths in `apps/web/app/lib/geocode-berlin.test.ts`).
+**Admin partner location prefill (Event form):** On **add event** only, changing the partner control prefills the event **structured** location fields (`street`, `house_number`, optional `address_line2`, `zip_code`) field-by-field from the partner row and attempts a browser-side **structured** Nominatim geocode (`geocodeBerlinAddress` with `street` + `house_number` + `zip_code`; `address_line2` excluded; Berlin viewbox bias) to update the map pin. Soft-fail leaves structured fields filled and the map unchanged/default — **no invented default-center coordinates**. **No API key or env var** — do not add Nominatim secrets. Edit-event partner changes never overwrite structured location or map. CI e2e asserts street/house/zip prefill and save; live Nominatim pin success is optional (unit tests cover soft-fail in `apps/web/app/lib/geocode-berlin.test.ts`). **Migration note:** legacy free-text addresses were backfilled heuristically; messy rows may need admin correction in partner/event edit forms.
 
 **Admin clone event:** Duplicate an existing catalog event via `/:locale/admin/events/:id/clone` (list/edit **Clone** / **Klonen** entry). Set a new date/time; primary image and gallery image ids are reused; bookings, waitlist, featured membership, and voucher inventory are **not** copied. `VOUCHER_PROMO` / `VOUCHER_PDF` clones require new inventory on the clone form. Series create (`/admin/events/series/new`) is removed — do not document or restore multi-slot builders.
 
@@ -336,7 +336,7 @@ Verify: signed-in logout from `/en/admin` should return 200 (not 403). Without c
 
 Phase 3 is complete when staging supports the full four-step onboarding wizard, skip-age flow, onboarding guards, and membership redirect without console errors on `/de` and `/en`. **Required env vars remain the same as Phase 2:** `DATABASE_URL`, `AUTH_URL`, `SITE_URL` — no new application secrets for Phase 3.
 
-**Client demo line:** *"After signup, we capture vibes, zip + travel distance, and timing — same as the product vision."*
+**Client demo line:** *"After signup, we capture vibes, zip, and timing — same as the product vision."*
 
 ### Prerequisites
 
@@ -352,11 +352,11 @@ Use a **new signup** or reset an existing test user (see [Repeat demo reset](#re
 2. After signup, confirm redirect to `/de/onboarding/age` (or current resumed step).
 3. **Step 1 — Age:** select an age group (e.g. `26-35`) and continue, **or** skip without selecting.
 4. **Step 2 — Interests:** select at least one interest and mood (optional: Other + free text); submit → `/de/onboarding/location`.
-5. **Step 3 — Location:** confirm Germany/Berlin prefilled; enter a Berlin PLZ (e.g. `10115`) and travel distance in km (e.g. `10`, required 1–50); submit → `/de/onboarding/timing`.
+5. **Step 3 — Location:** confirm Germany/Berlin prefilled; enter a Berlin PLZ (e.g. `10115`); submit → `/de/onboarding/timing`.
 6. **Step 4 — Timing:** select timing, preferred days, searchable languages (DE/EN first), and Accessibility needed? (Yes/Ja); submit → `/de/membership`.
 7. In Neon Postgres, inspect `public.users.profile` for the test user:
    - `onboarding_complete = true`
-   - Captured arrays (`interests`, `moods`, `timing`, `preferred_days`, `preferred_languages`), location trio (`country` / `city` / `zip_code`), `max_distance` (integer km), optional `interests_other`, and flags (`accessibility`, optional `age_group`) populated
+   - Captured arrays (`interests`, `moods`, `timing`, `preferred_days`, `preferred_languages`), location trio (`country` / `city` / `zip_code`), optional `interests_other`, and flags (`accessibility`, optional `age_group`) populated — `max_distance` is not written by onboarding
    - `behavior.onboarding_completed_at` set (Europe/Berlin ISO timestamp)
 8. Repeat steps 1–7 on `/en/onboarding/*` to confirm EN locale parity.
 

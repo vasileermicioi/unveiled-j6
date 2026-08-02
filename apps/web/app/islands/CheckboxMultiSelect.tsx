@@ -1,4 +1,4 @@
-import { Label, Surface } from "@heroui/react";
+import { Description, Label, Surface } from "@heroui/react";
 import { useMemo, useState } from "react";
 
 export type CheckboxMultiSelectOption = {
@@ -13,6 +13,13 @@ export type CheckboxMultiSelectProps = {
   /** When true, shows a search input that filters visible options. */
   enableSearch?: boolean;
   filterPlaceholder?: string;
+  /** Hint under the search field (e.g. that more options require searching). */
+  searchHint?: string;
+  /**
+   * When search is enabled and the filter is empty, only show this many options
+   * (plus any already-selected values). Full allowlist remains searchable.
+   */
+  initialVisibleCount?: number;
   /** Optional layout class for the options grid (defaults to three-column onboarding grid). */
   optionsClassName?: string;
 };
@@ -42,6 +49,8 @@ export default function CheckboxMultiSelect({
   selected = [],
   enableSearch = false,
   filterPlaceholder = "",
+  searchHint,
+  initialVisibleCount,
   optionsClassName = "checkbox-multi-select__options checkbox-multi-select__options--grid-three onboarding-form__options onboarding-form__options--grid-three",
 }: CheckboxMultiSelectProps) {
   const [filter, setFilter] = useState("");
@@ -53,10 +62,28 @@ export default function CheckboxMultiSelect({
   const selectedSet = useMemo(() => new Set(selectedValues), [selectedValues]);
   const selectedOptions = options.filter((option) => selectedSet.has(option.value));
   const filterActive = enableSearch && filter.trim().length > 0;
+  const collapseUnfiltered =
+    enableSearch &&
+    !filterActive &&
+    typeof initialVisibleCount === "number" &&
+    initialVisibleCount >= 0;
 
-  const visibleOptions = filterActive
-    ? options.filter((option) => matchesFilter(option, filter) && !selectedSet.has(option.value))
-    : options;
+  const visibleOptions = useMemo(() => {
+    if (filterActive) {
+      return options.filter(
+        (option) => matchesFilter(option, filter) && !selectedSet.has(option.value),
+      );
+    }
+    if (collapseUnfiltered) {
+      const defaultValues = new Set(
+        options.slice(0, initialVisibleCount).map((option) => option.value),
+      );
+      return options.filter(
+        (option) => defaultValues.has(option.value) || selectedSet.has(option.value),
+      );
+    }
+    return options;
+  }, [collapseUnfiltered, filter, filterActive, initialVisibleCount, options, selectedSet]);
 
   function toggle(value: string, checked: boolean) {
     setSelectedValues((current) => {
@@ -76,14 +103,17 @@ export default function CheckboxMultiSelect({
       variant="transparent"
     >
       {enableSearch ? (
-        <input
-          aria-label={filterPlaceholder}
-          className="checkbox-multi-select__filter onboarding-form__language-filter"
-          onChange={(event) => setFilter(event.target.value)}
-          placeholder={filterPlaceholder}
-          type="search"
-          value={filter}
-        />
+        <Surface className="flex flex-col gap-1" variant="transparent">
+          <input
+            aria-label={filterPlaceholder}
+            className="checkbox-multi-select__filter onboarding-form__language-filter"
+            onChange={(event) => setFilter(event.target.value)}
+            placeholder={filterPlaceholder}
+            type="search"
+            value={filter}
+          />
+          {searchHint ? <Description>{searchHint}</Description> : null}
+        </Surface>
       ) : null}
 
       {filterActive && selectedOptions.length > 0 ? (

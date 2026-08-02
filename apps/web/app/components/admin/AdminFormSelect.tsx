@@ -14,6 +14,8 @@ export type AdminFormSelectProps = {
   options: AdminFormSelectOption[];
   isRequired?: boolean;
   placeholder?: string;
+  /** When > 1, renders a native list box (`size`) instead of a dropdown. */
+  listSize?: number;
   /** Single-value only — multi-value fields use `CheckboxMultiSelect`. */
   selectionMode?: "single";
   defaultSelectedKey?: string;
@@ -31,11 +33,13 @@ export function AdminFormSelect({
   defaultSelectedKey,
   isRequired = false,
   placeholder,
+  listSize,
   onSelectionChange,
 }: AdminFormSelectProps) {
   const id = selectIdForName(name);
   const defaultValue = defaultSelectedKey ?? "";
   const showPlaceholder = Boolean(placeholder) && !options.some((option) => option.id === "");
+  const useListBox = typeof listSize === "number" && listSize > 1;
 
   const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
     onSelectionChange?.(event.target.value);
@@ -45,12 +49,16 @@ export function AdminFormSelect({
     <Surface className="flex w-full flex-col gap-1" variant="transparent">
       <Label htmlFor={id}>{label}</Label>
       <select
-        className="admin-native-select"
+        className={
+          useListBox ? "admin-native-select admin-native-select--multiple" : "admin-native-select"
+        }
+        data-option-count={options.length}
         defaultValue={defaultValue}
         id={id}
         name={name}
         onChange={handleChange}
         required={isRequired}
+        size={useListBox ? listSize : undefined}
       >
         {showPlaceholder ? (
           <option disabled={isRequired} value="">

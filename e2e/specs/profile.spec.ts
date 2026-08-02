@@ -183,8 +183,8 @@ test.describe("profile.feature", () => {
       page.getByRole("spinbutton", {
         name: /wie weit bist du bereit zu fahren\?|how far will you travel\?/i,
       }),
-    ).toBeVisible();
-    await expect(page.locator("#max_distance")).toHaveValue("10");
+    ).toHaveCount(0);
+    await expect(page.locator("#max_distance")).toHaveCount(0);
     await expect(page.getByRole("checkbox", { name: "Mitte" })).toHaveCount(0);
     await expect(
       page.getByRole("checkbox", { name: locale === "de" ? "Sonstiges" : "Other" }),
@@ -195,16 +195,7 @@ test.describe("profile.feature", () => {
     await expect(
       page.getByText(/barrierefreiheit benötigt\?|accessibility needed\?/i),
     ).toBeVisible();
-    // Set distance + submit together — sequential Playwright fills remount the island.
-    await page.locator("#max_distance").evaluate(() => {
-      const distance = document.querySelector<HTMLInputElement>("#max_distance");
-      const form = distance?.form;
-      if (!distance || !form) {
-        throw new Error("preferences distance field missing");
-      }
-      distance.value = "12";
-      form.requestSubmit();
-    });
+    await page.getByRole("button", { name: /präferenzen speichern|save preferences/i }).click();
     await expect(page.getByText(/präferenzen gespeichert|preferences saved/i)).toBeVisible();
   });
 

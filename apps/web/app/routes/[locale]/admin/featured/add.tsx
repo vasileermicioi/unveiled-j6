@@ -5,6 +5,7 @@ import { createRoute } from "honox/factory";
 import { AdminFeaturedAddPage } from "../../../../components/admin/AdminFeaturedAddPage";
 import { adminFeaturedAddPath, adminFeaturedPath } from "../../../../components/admin/admin-tabs";
 import { getAdminCopy } from "../../../../lib/admin-content";
+import { buildEventImageUrls } from "../../../../lib/admin-event-image-urls";
 import { renderAdminPage } from "../../../../lib/admin-render";
 import { guardAdminRoute, mapCatalogError } from "../../../../lib/admin-route";
 import { getAuthOptions } from "../../../../lib/auth";
@@ -23,6 +24,7 @@ async function renderAddPage(
     q: options.query || undefined,
     limit: 25,
   });
+  const imageUrls = buildEventImageUrls(events);
   const copy = getAdminCopy(options.locale);
 
   return renderAdminPage(
@@ -30,6 +32,7 @@ async function renderAddPage(
     <AdminFeaturedAddPage
       error={options.error}
       events={events}
+      imageUrls={imageUrls}
       locale={options.locale}
       query={options.query}
     />,

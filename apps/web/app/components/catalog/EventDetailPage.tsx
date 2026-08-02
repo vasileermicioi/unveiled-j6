@@ -200,6 +200,7 @@ function metadataLabel(key: string, locale: Locale): string {
     accessibility: { de: "Barrierefreiheit", en: "Accessibility" },
     languages: { de: "Sprachen", en: "Languages" },
     languageIndependent: { de: "Sprache", en: "Language" },
+    subtitles: { de: "Untertitel", en: "Subtitles" },
     ageGroups: { de: "Zielgruppe", en: "Target age groups" },
     type: { de: "Format", en: "Event type" },
     when: { de: "Datum", en: "Date" },
@@ -623,6 +624,12 @@ export function EventDetailPage({
                   <MetaCell
                     label={metadataLabel("languages", locale)}
                     value={event.languages.join(", ")}
+                  />
+                ) : null}
+                {event.hasSubtitles && event.subtitleLanguage ? (
+                  <MetaCell
+                    label={metadataLabel("subtitles", locale)}
+                    value={event.subtitleLanguage}
                   />
                 ) : null}
                 {event.targetAgeGroups && event.targetAgeGroups.length > 0 ? (

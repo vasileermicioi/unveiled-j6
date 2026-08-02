@@ -1,11 +1,7 @@
 "use client";
 
 import { Button, Description, Form, Label, Surface } from "@heroui/react";
-import {
-  INTERESTS_OTHER_MAX_LENGTH,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
-} from "@unveiled/auth/constants";
+import { INTERESTS_OTHER_MAX_LENGTH } from "@unveiled/auth/constants";
 import type { UserProfile } from "@unveiled/db";
 import { useState } from "react";
 
@@ -149,25 +145,6 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
           />
           <Description>{onboarding.zipCodeHint}</Description>
         </Surface>
-        <Surface className="flex flex-col gap-2" variant="transparent">
-          <Label className="onboarding-form__section-label" htmlFor="max_distance">
-            {onboarding.radiusLabel}
-          </Label>
-          <Surface className="flex items-center gap-3" variant="transparent">
-            <input
-              className="onboarding-form__language-filter admin-native-number"
-              defaultValue={profile.max_distance ?? ""}
-              id="max_distance"
-              max={MAX_DISTANCE_MAX}
-              min={MAX_DISTANCE_MIN}
-              name="max_distance"
-              required
-              step={1}
-              type="number"
-            />
-            <Description>{onboarding.km}</Description>
-          </Surface>
-        </Surface>
         <input name="country" type="hidden" value="DE" />
         <input name="city" type="hidden" value="berlin" />
       </Surface>
@@ -216,6 +193,7 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
           filterPlaceholder={onboarding.languageSearchPlaceholder}
           name="preferred_languages"
           options={getPreferredLanguageOptions(locale)}
+          searchHint={onboarding.languageSearchHint}
           selected={selectedLanguages}
         />
       </Surface>

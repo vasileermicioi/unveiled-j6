@@ -149,7 +149,7 @@ test.describe("event-discovery.feature", () => {
       page.getByRole("link", { name: /einloggen zum freischalten|log in to unlock/i }).first(),
     ).toBeVisible();
     await expect(page.getByRole("img", { name: TITLES.tonight })).toBeVisible();
-    // Full-width contain hero, then description / DETAILS below (smoke — not CSS-grid hashes)
+    // Full-width hero band (centered, non-stretch), then description / DETAILS (smoke — not CSS hashes)
     await expect(page.getByText(/^details$/i).first()).toBeVisible();
   });
 
@@ -169,6 +169,33 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByText(partnerName, { exact: true })).toBeVisible();
     await expect(page.getByRole("img", { name: partnerName })).toBeVisible();
     await expect(page.getByRole("img", { name: TITLES.tonight })).toBeVisible();
+  });
+
+  test("Scenario: Detail shows subtitles when present", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded promo event");
+    await page.context().clearCookies();
+    const eventId = await getEventIdByTitle(TITLES.voucherPromo);
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1, name: TITLES.voucherPromo })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(/^details$/i).first()).toBeVisible();
+    await expect(page.getByText(/^untertitel$|^subtitles$/i).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByText(/^EN$/).first()).toBeVisible();
+  });
+
+  test("Scenario: Detail omits subtitles when absent", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event");
+    await page.context().clearCookies();
+    const eventId = await getEventIdByTitle(TITLES.tonight);
+    await page.goto(`/${locale}/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1, name: TITLES.tonight })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(/^details$/i).first()).toBeVisible();
+    await expect(page.getByText(/^untertitel$|^subtitles$/i)).toHaveCount(0);
   });
 
   test("Scenario: Booking-eligible member sees tickets, credits and date on event detail", async ({

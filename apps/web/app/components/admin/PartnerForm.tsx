@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Form, Input, Label, Link, Surface, TextArea, TextField } from "@heroui/react";
+import { Button, Description, Form, Input, Label, Link, Surface, TextField } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
@@ -12,7 +12,12 @@ import { PartnerLogoUpload } from "./PartnerLogoUpload";
 export type PartnerFormDefaults = {
   name?: string;
   contactEmail?: string;
-  address?: string;
+  street?: string;
+  houseNumber?: string;
+  addressLine2?: string | null;
+  zipCode?: string;
+  country?: string;
+  city?: string;
   currentLogoUrl?: string | null;
   currentLogoImageId?: string | null;
   imagePublicBaseUrl?: string | null;
@@ -58,10 +63,63 @@ export function PartnerForm({
         <Input type="email" />
       </TextField>
 
-      <TextField defaultValue={defaults?.address} fullWidth isRequired name="address">
-        <Label>{copy.addressLabel}</Label>
-        <TextArea rows={3} />
+      <TextField defaultValue={defaults?.street} fullWidth isRequired name="street">
+        <Label>{copy.streetLabel}</Label>
+        <Input />
       </TextField>
+
+      <TextField defaultValue={defaults?.houseNumber} fullWidth isRequired name="house_number">
+        <Label>{copy.houseNumberLabel}</Label>
+        <Input />
+      </TextField>
+
+      <TextField defaultValue={defaults?.addressLine2 ?? undefined} fullWidth name="address_line2">
+        <Label>{copy.addressLine2Label}</Label>
+        <Input />
+      </TextField>
+
+      <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
+        <Surface className="flex w-full flex-col gap-1" variant="transparent">
+          <Label htmlFor="partner-country-display">{copy.countryLabel}</Label>
+          <input
+            className="admin-native-text"
+            defaultValue={copy.countryDisplay}
+            id="partner-country-display"
+            readOnly
+            tabIndex={-1}
+            type="text"
+          />
+        </Surface>
+        <Surface className="flex w-full flex-col gap-1" variant="transparent">
+          <Label htmlFor="partner-city-display">{copy.cityLabel}</Label>
+          <input
+            className="admin-native-text"
+            defaultValue={copy.cityDisplay}
+            id="partner-city-display"
+            readOnly
+            tabIndex={-1}
+            type="text"
+          />
+        </Surface>
+      </Surface>
+
+      <Surface className="flex w-full flex-col gap-1" variant="transparent">
+        <Label htmlFor="partner-zip-code">{copy.zipCodeLabel}</Label>
+        <input
+          className="admin-native-text"
+          defaultValue={defaults?.zipCode ?? ""}
+          id="partner-zip-code"
+          inputMode="numeric"
+          maxLength={5}
+          name="zip_code"
+          required
+          type="text"
+        />
+        <Description>{copy.zipCodeHint}</Description>
+      </Surface>
+
+      <input name="country" type="hidden" value={defaults?.country ?? "DE"} />
+      <input name="city" type="hidden" value={defaults?.city ?? "berlin"} />
 
       <PartnerLogoUpload
         currentLogoImageId={defaults?.currentLogoImageId}

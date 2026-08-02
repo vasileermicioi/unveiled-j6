@@ -1,10 +1,10 @@
 import { countEvents, listEvents } from "@unveiled/db";
 import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
-import { buildVariantUrl } from "@unveiled/images/urls";
 import { createRoute } from "honox/factory";
 
 import { AdminEventsListPage } from "../../../../components/admin/AdminEventsListPage";
 import { getAdminCopy } from "../../../../lib/admin-content";
+import { buildEventImageUrls } from "../../../../lib/admin-event-image-urls";
 import { renderAdminPage } from "../../../../lib/admin-render";
 import {
   adminListPageRedirectPath,
@@ -13,22 +13,6 @@ import {
   parseAdminListQuery,
 } from "../../../../lib/admin-route";
 import { getAuthOptions } from "../../../../lib/auth";
-
-function buildEventImageUrls(
-  events: Awaited<ReturnType<typeof listEvents>>,
-): Record<string, string | undefined> {
-  const imageUrls: Record<string, string | undefined> = {};
-
-  for (const event of events) {
-    try {
-      imageUrls[event.id] = buildVariantUrl(event.imageId, "small-320.webp");
-    } catch {
-      imageUrls[event.id] = undefined;
-    }
-  }
-
-  return imageUrls;
-}
 
 async function ensureEventImages(
   db: Parameters<typeof ensureImageVariantsUploaded>[0],

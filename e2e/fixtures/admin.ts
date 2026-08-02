@@ -21,7 +21,9 @@ const R2_ENV_KEYS = [
 export const adminLabels = {
   name: "Name*",
   email: "Kontakt-E-Mail*",
-  address: "Adresse*",
+  street: "Straße*",
+  houseNumber: "Hausnummer*",
+  addressLine2: "Adresszusatz (optional)",
   partner: "Partner*",
   title: "Titel*",
   description: "Beschreibung*",
@@ -38,8 +40,10 @@ export const adminLabels = {
   ticketType: "Ticket-Typ",
   codeMode: "Code-Modus",
   barrierFree: "Barrierefrei",
-  languages: "Sprachen",
+  languages: /sprachen|languages/i,
   ageGroups: "Altersgruppen",
+  hasSubtitles: /untertitel|subtitles/i,
+  subtitleLanguage: /untertitelsprache|subtitle language/i,
 } as const;
 
 /** Fill a native date/time field by accessible name (gap G7). */
@@ -57,6 +61,42 @@ export async function fillLabeledDateOrTime(
 
 export function uniqueSuffix(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+/** Compose display address the same way catalog writes (Berlin release). */
+export function composeDisplayAddress(fields: {
+  street: string;
+  houseNumber: string;
+  addressLine2?: string;
+  zipCode: string;
+}): string {
+  const streetLine = `${fields.street.trim()} ${fields.houseNumber.trim()}`;
+  const parts = [streetLine];
+  const line2 = fields.addressLine2?.trim();
+  if (line2) {
+    parts.push(line2);
+  }
+  parts.push(`${fields.zipCode.trim()} Berlin`);
+  return parts.join(", ");
+}
+
+export async function fillStructuredLocation(
+  page: Page,
+  fields: {
+    street: string;
+    houseNumber: string;
+    addressLine2?: string;
+    zipCode?: string;
+  },
+): Promise<void> {
+  await fillTextbox(page, adminLabels.street, fields.street);
+  await fillTextbox(page, adminLabels.houseNumber, fields.houseNumber);
+  if (fields.addressLine2 !== undefined) {
+    await fillTextbox(page, adminLabels.addressLine2, fields.addressLine2);
+  }
+  if (fields.zipCode !== undefined) {
+    await fillTextbox(page, adminLabels.zipCode, fields.zipCode);
+  }
 }
 
 /** True when all six R2 / image env vars are non-empty. */
@@ -181,10 +221,15 @@ export async function fillTextbox(
 export type CreatedPartner = {
   name: string;
   contactEmail: string;
-  address: string;
+  street: string;
+  houseNumber: string;
+  addressLine2?: string;
+  zipCode: string;
+  /** Composed display address persisted on the partner row. */
+  composedAddress: string;
 };
 
-export type CreatePartnerOverrides = Partial<CreatedPartner> & {
+export type CreatePartnerOverrides = Partial<Omit<CreatedPartner, "composedAddress">> & {
   logoPath?: string;
   /** When true, do not attach a logo (for required-logo rejection tests). */
   skipLogo?: boolean;
@@ -196,10 +241,22 @@ export async function createPartnerViaUI(
   overrides: CreatePartnerOverrides = {},
 ): Promise<CreatedPartner> {
   const suffix = uniqueSuffix();
+  const street = overrides.street ?? `E2E Straße ${suffix}`;
+  const houseNumber = overrides.houseNumber ?? "42";
+  const zipCode = overrides.zipCode ?? "10115";
   const partner: CreatedPartner = {
     name: overrides.name ?? `E2E Partner ${suffix}`,
     contactEmail: overrides.contactEmail ?? `partner-e2e-${suffix}@example.com`,
-    address: overrides.address ?? `E2E Street ${suffix}, 10115 Berlin`,
+    street,
+    houseNumber,
+    addressLine2: overrides.addressLine2,
+    zipCode,
+    composedAddress: composeDisplayAddress({
+      street,
+      houseNumber,
+      addressLine2: overrides.addressLine2,
+      zipCode,
+    }),
   };
   const logoPath = overrides.skipLogo ? undefined : (overrides.logoPath ?? SAMPLE_EVENT_IMAGE);
 
@@ -210,11 +267,21 @@ export async function createPartnerViaUI(
   await page.waitForLoadState("networkidle");
   await fillTextbox(page, adminLabels.name, partner.name);
   await fillTextbox(page, adminLabels.email, partner.contactEmail);
-  await fillTextbox(page, adminLabels.address, partner.address);
+  await fillStructuredLocation(page, {
+    street: partner.street,
+    houseNumber: partner.houseNumber,
+    addressLine2: partner.addressLine2 ?? "",
+    zipCode: partner.zipCode,
+  });
   // Hydration can wipe the first TextField after later fills — re-apply before submit.
   await fillTextbox(page, adminLabels.name, partner.name);
   await fillTextbox(page, adminLabels.email, partner.contactEmail);
-  await fillTextbox(page, adminLabels.address, partner.address);
+  await fillStructuredLocation(page, {
+    street: partner.street,
+    houseNumber: partner.houseNumber,
+    addressLine2: partner.addressLine2 ?? "",
+    zipCode: partner.zipCode,
+  });
 
   if (logoPath) {
     // BDD exception: file-input
@@ -253,7 +320,9 @@ export type CreateEventOverrides = {
   title?: string;
   partnerName: string;
   description?: string;
-  address?: string;
+  street?: string;
+  houseNumber?: string;
+  addressLine2?: string;
   zipCode?: string;
   category?: string | RegExp;
   eventType?: string | RegExp;
@@ -269,6 +338,9 @@ export type CreateEventOverrides = {
   barrierFree?: "Ja" | "Nein" | "Yes" | "No";
   language?: string | RegExp;
   ageGroup?: string | RegExp;
+  hasSubtitles?: boolean;
+  /** Native select value (allowlisted code, e.g. `EN`). Defaults to `EN` when hasSubtitles. */
+  subtitleLanguage?: string;
 };
 
 export async function createEventViaUI(
@@ -292,8 +364,14 @@ export async function createEventViaUI(
     adminLabels.description,
     overrides.description ?? `E2E description ${suffix}`,
   );
-  await fillTextbox(page, adminLabels.address, overrides.address ?? `E2E Venue ${suffix}, Berlin`);
-  await fillTextbox(page, adminLabels.zipCode, overrides.zipCode ?? "10115");
+  const street = overrides.street ?? `E2E Straße ${suffix}`;
+  const houseNumber = overrides.houseNumber ?? "1";
+  await fillStructuredLocation(page, {
+    street,
+    houseNumber,
+    addressLine2: overrides.addressLine2 ?? "",
+    zipCode: overrides.zipCode ?? "10115",
+  });
   await selectOptionByLabel(page, adminLabels.category, overrides.category ?? "Theater");
   await selectOptionByLabel(page, adminLabels.eventType, overrides.eventType ?? "Performance");
 
@@ -333,6 +411,15 @@ export async function createEventViaUI(
   }
   if (overrides.ageGroup) {
     await checkOptionByName(page, overrides.ageGroup);
+  }
+  if (overrides.hasSubtitles) {
+    await page.getByRole("checkbox", { name: adminLabels.hasSubtitles }).check();
+    const subtitleCode = overrides.subtitleLanguage ?? "EN";
+    await selectOptionByLabel(
+      page,
+      adminLabels.subtitleLanguage,
+      subtitleCode === "EN" ? /englisch|english/i : new RegExp(subtitleCode, "i"),
+    );
   }
 
   if (imagePath) {

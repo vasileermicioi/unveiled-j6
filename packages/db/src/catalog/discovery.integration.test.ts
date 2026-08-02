@@ -15,6 +15,7 @@ import {
 import { createEvent, deleteEvent } from "./events";
 import { createPartner, deletePartner } from "./partners";
 import { createTestImagePrebuilt } from "./test-image";
+import { structuredLocationFromAddress } from "./test-location";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -46,7 +47,7 @@ describe("discovery integration", () => {
     const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Discovery Upcoming ${suffix}`,
-      address: "Discoverystraße 1, Berlin",
+      ...structuredLocationFromAddress("Discoverystraße 1, Berlin"),
       contactEmail: `discovery-upcoming-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -60,7 +61,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Today Future ${suffix}`,
       description: "Description",
-      address: "Discoverystraße 1, Berlin",
+      ...structuredLocationFromAddress("Discoverystraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -77,7 +78,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Today Past ${suffix}`,
       description: "Description",
-      address: "Discoverystraße 1, Berlin",
+      ...structuredLocationFromAddress("Discoverystraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -94,7 +95,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Tomorrow ${suffix}`,
       description: "Description",
-      address: "Discoverystraße 1, Berlin",
+      ...structuredLocationFromAddress("Discoverystraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -134,7 +135,7 @@ describe("discovery integration", () => {
     const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Discovery Past Range ${suffix}`,
-      address: "Paststraße 1, Berlin",
+      ...structuredLocationFromAddress("Paststraße 1, Berlin"),
       contactEmail: `discovery-past-range-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -145,7 +146,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Past In Range ${suffix}`,
       description: "Description",
-      address: "Paststraße 1, Berlin",
+      ...structuredLocationFromAddress("Paststraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -161,7 +162,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Future Outside Range ${suffix}`,
       description: "Description",
-      address: "Paststraße 1, Berlin",
+      ...structuredLocationFromAddress("Paststraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -203,14 +204,14 @@ describe("discovery integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const partnerA = await createPartner(db, {
       name: `Discovery A ${suffix}`,
-      address: "Filterstraße 1, Berlin",
+      ...structuredLocationFromAddress("Filterstraße 1, Berlin"),
       contactEmail: `discovery-a-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
     const partnerB = await createPartner(db, {
       name: `Discovery B ${suffix}`,
-      address: "Filterstraße 2, Berlin",
+      ...structuredLocationFromAddress("Filterstraße 2, Berlin"),
       contactEmail: `discovery-b-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -225,7 +226,7 @@ describe("discovery integration", () => {
       partnerId: partnerA.id,
       title: `Theater A ${suffix}`,
       description: "Description",
-      address: "Filterstraße 1, Berlin",
+      ...structuredLocationFromAddress("Filterstraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -242,7 +243,7 @@ describe("discovery integration", () => {
       partnerId: partnerA.id,
       title: `Music A ${suffix}`,
       description: "Description",
-      address: "Filterstraße 1, Berlin",
+      ...structuredLocationFromAddress("Filterstraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -259,7 +260,7 @@ describe("discovery integration", () => {
       partnerId: partnerB.id,
       title: `Theater B ${suffix}`,
       description: "Description",
-      address: "Filterstraße 2, Berlin",
+      ...structuredLocationFromAddress("Filterstraße 2, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10961",
@@ -350,7 +351,7 @@ describe("discovery integration", () => {
     const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Discovery Map ${suffix}`,
-      address: "Mapstraße 1, Berlin",
+      ...structuredLocationFromAddress("Mapstraße 1, Berlin"),
       contactEmail: `discovery-map-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -362,7 +363,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Map Coords ${suffix}`,
       description: "Description",
-      address: "Mapstraße 1, Berlin",
+      ...structuredLocationFromAddress("Mapstraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -381,7 +382,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Map NoCoords ${suffix}`,
       description: "Description",
-      address: "Mapstraße 2, Berlin",
+      ...structuredLocationFromAddress("Mapstraße 2, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -398,7 +399,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Map Past ${suffix}`,
       description: "Description",
-      address: "Mapstraße 3, Berlin",
+      ...structuredLocationFromAddress("Mapstraße 3, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -456,7 +457,7 @@ describe("discovery integration", () => {
     const userId = await insertTestUser(db, suffix);
     const partner = await createPartner(db, {
       name: `Discovery Save ${suffix}`,
-      address: "Savestraße 1, Berlin",
+      ...structuredLocationFromAddress("Savestraße 1, Berlin"),
       contactEmail: `discovery-save-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -468,7 +469,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Saved Today ${suffix}`,
       description: "Description",
-      address: "Savestraße 1, Berlin",
+      ...structuredLocationFromAddress("Savestraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -485,7 +486,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Saved Later ${suffix}`,
       description: "Description",
-      address: "Savestraße 1, Berlin",
+      ...structuredLocationFromAddress("Savestraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -502,7 +503,7 @@ describe("discovery integration", () => {
       partnerId: partner.id,
       title: `Saved Past ${suffix}`,
       description: "Description",
-      address: "Savestraße 1, Berlin",
+      ...structuredLocationFromAddress("Savestraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

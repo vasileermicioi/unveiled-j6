@@ -167,7 +167,8 @@ async function seedDemoVoucherRedemptionEvents(
     partnerId,
     title: DEMO_DISCOVERY_TITLES.voucherPromo,
     description: "Demo event with unique promo-code inventory for ticket-redemption walkthroughs.",
-    address: "Demo Straße 1, 10115 Berlin",
+    street: "Demo Straße",
+    houseNumber: "1",
     country: "DE",
     city: "berlin",
     zipCode: "10115",
@@ -182,6 +183,8 @@ async function seedDemoVoucherRedemptionEvents(
     stagedImageId: sharedImageId,
     languages: ["de", "en"],
     barrierFree: false,
+    hasSubtitles: true,
+    subtitleLanguage: "EN",
     skipUpload: options.skipBucket,
   });
   await appendPromoCodes(db, promoEvent.id, [...DEMO_PROMO_CODES]);
@@ -191,7 +194,8 @@ async function seedDemoVoucherRedemptionEvents(
     partnerId,
     title: DEMO_DISCOVERY_TITLES.voucherPdf,
     description: "Demo event with per-ticket PDF voucher inventory for download demos.",
-    address: "Demo Straße 2, 10115 Berlin",
+    street: "Demo Straße",
+    houseNumber: "2",
     country: "DE",
     city: "berlin",
     zipCode: "10115",

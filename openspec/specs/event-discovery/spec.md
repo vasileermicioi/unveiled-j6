@@ -469,15 +469,18 @@ The public event detail page SHALL show an image gallery at the end of the page 
 - **THEN** they describe the end-of-page gallery thumbnails and prev/next slider for non-empty galleries
 
 ### Requirement: Detail LOCATION shows address and optional map
-The public event detail LOCATION section SHALL show the event address whenever the event has an address. When derived coordinates exist, the section SHALL also show the map with a pin marker (existing pin/popup behavior). When coordinates are missing, the address SHALL still be shown and the map MAY be omitted. The LOCATION section MUST NOT require coordinates in order to present the address.
+
+The public event detail LOCATION section SHALL show the event's composed display `address` whenever the event has an address. When derived coordinates exist, the section SHALL also show the map with a pin marker (existing pin/popup behavior). When coordinates are missing, the composed address SHALL still be shown and the map MAY be omitted. The LOCATION section MUST NOT require coordinates in order to present the address. Public surfaces SHALL NOT require reading structured street/house columns separately when composed `address` is present.
 
 #### Scenario: Detail LOCATION shows address with map
-- **WHEN** a visitor opens a valid upcoming event detail URL with an address and coordinates
+
+- **WHEN** a visitor opens a valid upcoming event detail URL with a composed address and coordinates
 - **THEN** the LOCATION section shows the address text
 - **AND** the map shows a recognizable pin marker
 
 #### Scenario: Detail LOCATION shows address without coordinates
-- **WHEN** a visitor opens a valid upcoming event detail URL that has an address but no coordinates
+
+- **WHEN** a visitor opens a valid upcoming event detail URL that has a composed address but no coordinates
 - **THEN** the LOCATION section shows the address text
 - **AND** the page does not require a map to present the location
 
@@ -681,16 +684,24 @@ When a guest or member opens a public event detail page for a language-independe
 - **THEN** the details metadata shows those languages as today
 
 ### Requirement: Public event location display
-Event cards and public detail SHALL present the event's zip code in place of neighborhood/Kiez. Address and map rules are unchanged. Country/city MAY appear on detail for clarity but MUST NOT dominate cards while the product is Berlin-only. Public surfaces MUST NOT reintroduce Bezirk/neighborhood labels for event location metadata.
+
+Event cards and public detail SHALL present the event's zip code in place of neighborhood/Kiez. Public detail LOCATION SHALL show the composed display `address` whenever present; map rules remain gated on lat/lng. Country/city MAY appear on detail for clarity but MUST NOT dominate cards while the product is Berlin-only. Public surfaces MUST NOT reintroduce Bezirk/neighborhood labels for event location metadata.
 
 #### Scenario: Guest sees zip on event detail
+
 - **WHEN** a guest opens a public event detail page
 - **THEN** location metadata shows the event zip code (not neighborhood)
 
 #### Scenario: Event card shows zip
+
 - **WHEN** a guest or member views an event card in the feed or listing
 - **THEN** the card shows the event zip code
 - **AND** the card does not show a neighborhood/Kiez label
+
+#### Scenario: Detail LOCATION uses composed address
+
+- **WHEN** a guest opens a public event detail page for an event with a composed address
+- **THEN** the LOCATION section shows that composed address text
 
 ### Requirement: Product docs and BDD match public zip location display
 `docs/product/features/event-discovery.feature`, `docs/product/ui/ui-component-map.md` (EventCard / Event detail), and Playwright coverage SHALL describe event cards and public detail presenting the event zip code instead of neighborhood/Kiez. Country/city MAY appear on detail for clarity but MUST NOT be required to dominate cards while the product is Berlin-only. Coverage-matrix rows SHALL match Scenario titles (pass or named deferral). Selectors SHALL remain proximity/layout only.
@@ -707,3 +718,34 @@ Event cards and public detail SHALL present the event's zip code in place of nei
 #### Scenario: Playwright or matrix covers zip on public surfaces
 - **WHEN** this feature is marked released
 - **THEN** `docs/product/testing/coverage-matrix.md` includes rows for zip-on-card and/or zip-on-detail scenarios (pass or explicit deferral with owner)
+
+### Requirement: Event detail primary hero framing
+
+Public event detail SHALL present the primary image in a full-width rectangular hero frame, horizontally centered, not stretched to fill the frame. `max-width: 100%` downscale to avoid overflow is allowed. The primary hero remains `events.image_id` (gallery images MUST NOT replace it). Product UI docs (`docs/product/ui/ui-component-map.md` Event detail entry) SHALL describe this framing contract.
+
+#### Scenario: Primary hero is centered without stretch-to-fill
+
+- **WHEN** a guest or member opens a public event detail page that has a primary image
+- **THEN** the primary image appears inside a full-width rectangular hero band
+- **AND** the image is horizontally centered and not stretched to fill the band
+- **AND** wide images may downscale with `max-width: 100%` (or equivalent) so they do not overflow
+
+#### Scenario: UI component map documents hero framing
+
+- **WHEN** an agent reads the Event detail entry in `docs/product/ui/ui-component-map.md`
+- **THEN** it states that the primary hero uses a full-width frame with a centered, non-stretch-to-fill image (`max-width: 100%` downscale allowed)
+
+### Requirement: Public detail shows subtitles metadata
+
+When `has_subtitles` is true, the public event detail DETAILS metadata SHALL show subtitles availability and the subtitle language label (allowlisted code or equivalent display consistent with spoken-language codes on the same page). When `has_subtitles` is false, the page SHALL omit subtitles chrome (no “no subtitles” row). Subtitles display SHALL NOT replace or alter the spoken-languages / language-independent DETAILS row.
+
+#### Scenario: Subtitled event shows language on detail
+
+- **WHEN** a guest or member opens a public event detail page for an event with `has_subtitles = true` and an ISO 639-1 `subtitle_language`
+- **THEN** the DETAILS metadata includes a subtitles row that indicates subtitles are available
+- **AND** the subtitle language is shown
+
+#### Scenario: Non-subtitled event omits subtitles chrome
+
+- **WHEN** a guest or member opens a public event detail page for an event with `has_subtitles = false`
+- **THEN** the DETAILS metadata does not include a subtitles row

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { createTestImagePrebuilt } from "../catalog/test-image";
+import { structuredLocationFromAddress } from "../catalog/test-location";
 
 import {
   bookings,
@@ -45,7 +46,7 @@ describe("waitlist domain", () => {
 
     const partner = await createPartner(httpDb, {
       name: `Waitlist Venue ${suffix.slice(0, 8)}`,
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       contactEmail: `wait-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -55,7 +56,7 @@ describe("waitlist domain", () => {
       partnerId: partner.id,
       title: `Waitlist Event ${suffix.slice(0, 8)}`,
       description: "Description",
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

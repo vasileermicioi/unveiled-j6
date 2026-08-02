@@ -74,6 +74,7 @@ export function TimingStepForm({ locale, profile }: TimingStepFormProps) {
           filterPlaceholder={copy.languageSearchPlaceholder}
           name="preferred_languages"
           options={getPreferredLanguageOptions(locale)}
+          searchHint={copy.languageSearchHint}
           selected={selectedLanguages}
         />
       </Surface>

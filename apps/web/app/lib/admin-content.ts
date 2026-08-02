@@ -1,4 +1,5 @@
 import { AGE_GROUPS, EVENT_TYPES, INTERESTS } from "@unveiled/auth/constants";
+import { listIso6391LanguageCodes } from "@unveiled/db";
 import type { CatalogErrorCode } from "@unveiled/db/catalog/errors";
 
 import type { Locale } from "./locale";
@@ -270,6 +271,9 @@ export type AdminCopy = {
   nameLabel: string;
   emailLabel: string;
   addressLabel: string;
+  streetLabel: string;
+  houseNumberLabel: string;
+  addressLine2Label: string;
   logoFileLabel: string;
   logoUploadHint: string;
   logoUploadHintEdit: string;
@@ -347,11 +351,15 @@ export type AdminCopy = {
   barrierFreeLabel: string;
   languageIndependentLabel: string;
   languageIndependentHint: string;
+  hasSubtitlesLabel: string;
+  hasSubtitlesHint: string;
+  subtitleLanguageLabel: string;
   selectPlaceholder: string;
   optionYes: string;
   optionNo: string;
   languagesLabel: string;
   languagesSearchPlaceholder: string;
+  languagesSearchHint: string;
   targetAgeGroupsLabel: string;
   mapLocationLabel: string;
   imageSectionLabel: string;
@@ -381,6 +389,8 @@ export type AdminCopy = {
     name: string;
     contactEmail: string;
     address: string;
+    street: string;
+    houseNumber: string;
     logo: string;
     image: string;
     partnerId: string;
@@ -392,6 +402,7 @@ export type AdminCopy = {
     eventDate: string;
     redemption: string;
     series: string;
+    subtitleLanguage: string;
   };
 };
 
@@ -669,6 +680,9 @@ const copy: Record<Locale, AdminCopy> = {
     nameLabel: "Name",
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
+    streetLabel: "Straße",
+    houseNumberLabel: "Hausnummer",
+    addressLine2Label: "Adresszusatz (optional)",
     logoFileLabel: "Logo hochladen",
     logoUploadHint:
       "Erforderlich: beliebiges browser-lesbares Bild (inkl. SVG) — wird zu WebP-Varianten verarbeitet.",
@@ -758,11 +772,17 @@ const copy: Record<Locale, AdminCopy> = {
     languageIndependentLabel: "Sprachunabhängig",
     languageIndependentHint:
       "Für Events ohne gesprochene Sprache (z. B. Kunstausstellungen, Installationen).",
+    hasSubtitlesLabel: "Untertitel",
+    hasSubtitlesHint:
+      "Unabhängig von gesprochenen Sprachen. Eine Sprache aus der vollständigen Liste wählen.",
+    subtitleLanguageLabel: "Untertitelsprache",
     selectPlaceholder: "Auswählen…",
     optionYes: "Ja",
     optionNo: "Nein",
     languagesLabel: "Sprachen",
     languagesSearchPlaceholder: "Sprachen suchen",
+    languagesSearchHint:
+      "Nur häufige Sprachen sind angezeigt. Nutze die Suche, um weitere zu finden und auszuwählen.",
     targetAgeGroupsLabel: "Altersgruppen",
     mapLocationLabel: "Karten-Vorschau",
     imageSectionLabel: "Event-Bild",
@@ -796,6 +816,8 @@ const copy: Record<Locale, AdminCopy> = {
       name: "Name ist erforderlich.",
       contactEmail: "Gültige E-Mail-Adresse erforderlich.",
       address: "Adresse ist erforderlich.",
+      street: "Straße ist erforderlich.",
+      houseNumber: "Hausnummer ist erforderlich.",
       logo: "Partner-Logo ist erforderlich. Bitte ein Bild hochladen.",
       image: "Event-Bild ist erforderlich. Bitte ein Bild hochladen.",
       partnerId: "Partner ist erforderlich.",
@@ -807,6 +829,8 @@ const copy: Record<Locale, AdminCopy> = {
       eventDate: "Datum ist erforderlich.",
       redemption: "Redemption-Konfiguration unvollständig.",
       series: "Mindestens ein gültiger Slot erforderlich.",
+      subtitleLanguage:
+        "Untertitelsprache ist erforderlich und muss ein gültiger ISO-639-1-Sprachcode sein.",
     },
   },
   en: {
@@ -1077,6 +1101,9 @@ const copy: Record<Locale, AdminCopy> = {
     nameLabel: "Name",
     emailLabel: "Contact email",
     addressLabel: "Address",
+    streetLabel: "Street",
+    houseNumberLabel: "House number",
+    addressLine2Label: "Address line 2 (optional)",
     logoFileLabel: "Upload logo",
     logoUploadHint:
       "Required: any browser-decodable image (including SVG) — processed into WebP variants.",
@@ -1165,11 +1192,15 @@ const copy: Record<Locale, AdminCopy> = {
     languageIndependentLabel: "Language-independent",
     languageIndependentHint:
       "For events with no spoken-language requirement (e.g. art exhibitions, installations).",
+    hasSubtitlesLabel: "Subtitles",
+    hasSubtitlesHint: "Independent of spoken languages. Choose one language from the full list.",
+    subtitleLanguageLabel: "Subtitle language",
     selectPlaceholder: "Select…",
     optionYes: "Yes",
     optionNo: "No",
     languagesLabel: "Languages",
     languagesSearchPlaceholder: "Search languages",
+    languagesSearchHint: "Only common languages are shown. Use search to find and select others.",
     targetAgeGroupsLabel: "Age groups",
     mapLocationLabel: "Map preview",
     imageSectionLabel: "Event image",
@@ -1200,6 +1231,8 @@ const copy: Record<Locale, AdminCopy> = {
       name: "Name is required.",
       contactEmail: "A valid email address is required.",
       address: "Address is required.",
+      street: "Street is required.",
+      houseNumber: "House number is required.",
       logo: "Partner logo is required. Please upload an image.",
       image: "Event image is required. Please upload an image.",
       partnerId: "Partner is required.",
@@ -1211,6 +1244,8 @@ const copy: Record<Locale, AdminCopy> = {
       eventDate: "Date is required.",
       redemption: "Redemption configuration is incomplete.",
       series: "At least one valid slot is required.",
+      subtitleLanguage:
+        "Subtitle language is required and must be a valid ISO 639-1 language code.",
     },
   },
 };
@@ -1231,6 +1266,7 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   DUPLICATE_VOUCHER_CODE: "redemption",
   DUPLICATE_SERIES_SLOTS: "series",
   EMPTY_SERIES_SLOTS: "series",
+  INVALID_SUBTITLE_LANGUAGE: "subtitleLanguage",
   EVENT_NOT_FOUND: "title",
   PARTNER_HAS_EVENTS: "name",
   PARTNER_NOT_FOUND: "partnerId",
@@ -1291,6 +1327,10 @@ export function mapCatalogErrorCode(
     return adminCopy.fieldErrors.series;
   }
 
+  if (code === "INVALID_SUBTITLE_LANGUAGE") {
+    return adminCopy.fieldErrors.subtitleLanguage;
+  }
+
   if (code === "EVENT_NOT_FOUND") {
     return locale === "de" ? "Event nicht gefunden." : "Event not found.";
   }
@@ -1341,11 +1381,37 @@ export type AdminSelectOption = {
 };
 
 export function getEventLanguageOptions(locale: Locale): AdminSelectOption[] {
-  // Same catalog + DE/EN-first ordering as onboarding preferred languages.
+  // Featured-first ordering for searchable spoken-languages checkbox multi-select.
   return getPreferredLanguageOptions(locale).map((option) => ({
     id: option.code,
     label: option.label,
   }));
+}
+
+/**
+ * Full ISO 639-1 language list for subtitle-language native `<select>`.
+ * DE + EN first; remaining codes A–Z by locale display label (not the spoken-event 29).
+ * Collapses any remaining same-label pairs to a single option.
+ */
+export function getEventSubtitleLanguageOptions(locale: Locale): AdminSelectOption[] {
+  const intlLocale = locale === "de" ? "de" : "en";
+  const display = new Intl.DisplayNames([intlLocale], { type: "language" });
+  const seenLabels = new Set<string>();
+  const options: AdminSelectOption[] = [];
+  for (const code of listIso6391LanguageCodes()) {
+    const label = display.of(code.toLowerCase()) ?? code;
+    const labelKey = label.toLocaleLowerCase(intlLocale);
+    if (seenLabels.has(labelKey)) {
+      continue;
+    }
+    seenLabels.add(labelKey);
+    options.push({ id: code, label });
+  }
+  const pinned = options.filter((option) => option.id === "DE" || option.id === "EN");
+  const rest = options
+    .filter((option) => option.id !== "DE" && option.id !== "EN")
+    .sort((a, b) => a.label.localeCompare(b.label, intlLocale, { sensitivity: "base" }));
+  return [...pinned, ...rest];
 }
 
 export function getEventAgeGroupOptions(locale: Locale): AdminSelectOption[] {

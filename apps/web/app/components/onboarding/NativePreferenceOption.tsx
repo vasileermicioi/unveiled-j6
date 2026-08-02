@@ -5,7 +5,10 @@ type NativePreferenceOptionProps = {
   type: "checkbox" | "radio";
   name: string;
   value: string;
+  /** Visible option text (e.g. Yes). */
   label: string;
+  /** Accessible name when the visible label is generic (e.g. field title). */
+  inputLabel?: string;
   defaultChecked?: boolean;
   onChange?: ChangeEventHandler<HTMLInputElement>;
 };
@@ -20,6 +23,7 @@ export function NativePreferenceOption({
   name,
   value,
   label,
+  inputLabel,
   defaultChecked = false,
   onChange,
 }: NativePreferenceOptionProps) {
@@ -28,6 +32,7 @@ export function NativePreferenceOption({
   return (
     <Label className="onboarding-form__option" htmlFor={id}>
       <input
+        aria-label={inputLabel}
         className="onboarding-form__native-control"
         defaultChecked={defaultChecked}
         id={id}

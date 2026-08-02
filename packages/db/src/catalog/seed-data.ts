@@ -7,10 +7,12 @@ import {
   type VariantFilename,
 } from "@unveiled/images";
 
+import { parseLegacyAddress } from "../location";
 import { berlinInclusiveDateRange, getBerlinCalendarDate } from "./datetime";
 import type { CreateEventInput } from "./events";
 import fixtureJson from "./fixtures/abundo-berlin-demo.json";
 import type { CreatePartnerInput } from "./partners";
+import { structuredLocationFromAddress } from "./test-location";
 
 /**
  * Demo catalog seed — Berlin events from Abundo + local images.
@@ -256,9 +258,10 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
     if (partnerEvents.length === 0) continue;
 
     const logoPath = partner.logoPath;
+    const partnerLocation = structuredLocationFromAddress(partner.address);
     const partnerInput: CreatePartnerInput = {
       name: partner.name,
-      address: partner.address,
+      ...partnerLocation,
       contactEmail: partner.contactEmail,
     };
 
@@ -281,13 +284,18 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
     catalog.push({
       partner: partnerInput,
       events: partnerEvents.map((event) => {
+        const eventZip = zipFromFixtureEvent(event);
+        // Prefer fixture zip when present; keep parsed street/house from free-text address.
+        const parsed = parseLegacyAddress(event.address);
         const base: Omit<CreateEventInput, "partnerId"> = {
           title: event.title,
           description: event.description,
-          address: event.address,
+          street: parsed.street,
+          houseNumber: parsed.houseNumber,
+          addressLine2: parsed.addressLine2,
           country: "DE",
           city: "berlin",
-          zipCode: zipFromFixtureEvent(event),
+          zipCode: eventZip,
           category: event.category,
           eventType: event.eventType,
           tags: event.tags,

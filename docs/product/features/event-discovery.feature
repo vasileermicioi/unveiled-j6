@@ -88,7 +88,7 @@ Feature: Event Discovery
     When I open a valid upcoming event detail URL ("/events/:id")
     Then on large viewports row 1 places title and location beside the checkout/summary card
     And row 2 places the primary event image beside the Markdown description
-    And DETAILS, LOCATION (address when present; map when coordinates exist), and gallery remain below those rows
+    And DETAILS, LOCATION (composed address when present; map when lat/lng exist), and gallery remain below those rows
 
   Scenario: Guest sees partner attribution
     Given I am not signed in
@@ -120,11 +120,11 @@ Feature: Event Discovery
     Then the summary card shows ticket quantity controls and total credits
     And DETAILS includes date/time chrome
 
-  Scenario: Detail LOCATION shows address with map
+  Scenario: Detail LOCATION shows composed address with map
     Given I am not signed in
     And I have accepted non-essential cookie consent
-    When I open a valid upcoming event detail URL with an address and coordinates ("/events/:id")
-    Then the LOCATION section shows the address text
+    When I open a valid upcoming event detail URL with a composed address and coordinates ("/events/:id")
+    Then the LOCATION section shows the composed address text
     And the LOCATION map shows a recognizable pin marker icon (not a black square)
     And selecting the marker opens a popup whose close control has a large enough hit target
     And activating the close control dismisses the popup
@@ -140,10 +140,10 @@ Feature: Event Discovery
     Then the card shows the event zip code
     And the card does not show a neighborhood / Kiez label
 
-  Scenario: Detail LOCATION shows address without coordinates
+  Scenario: Detail LOCATION shows composed address without coordinates
     Given I am not signed in
-    When I open a valid upcoming event detail URL that has an address but no coordinates ("/events/:id")
-    Then the LOCATION section shows the address text
+    When I open a valid upcoming event detail URL that has a composed address but no lat/lng ("/events/:id")
+    Then the LOCATION section shows the composed address text
     And the page does not require a map to present the location
 
   Scenario: Guest path to full browse requires signup or login
@@ -179,6 +179,15 @@ Feature: Event Discovery
     When a guest or member opens a language-independent event detail page
     Then the details metadata does not imply a specific spoken language list
     And it indicates the event is language-independent (or omits languages rather than showing an empty list)
+
+  Scenario: Detail shows subtitles when present
+    When a guest or member opens an event detail page with has_subtitles true and a subtitle language
+    Then the DETAILS metadata includes a subtitles row that indicates subtitles are available
+    And the subtitle language is shown
+
+  Scenario: Detail omits subtitles when absent
+    When a guest or member opens an event detail page with has_subtitles false
+    Then the DETAILS metadata does not include a subtitles row
 
   Scenario: Filter by partner (venue)
     Given I am viewing the events feed as a booking-eligible member

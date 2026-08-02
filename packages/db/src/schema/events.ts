@@ -32,6 +32,9 @@ export const events = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     address: text("address").notNull(),
+    street: text("street").notNull(),
+    houseNumber: text("house_number").notNull(),
+    addressLine2: text("address_line2"),
     country: text("country").notNull().default("DE"),
     city: text("city").notNull().default("berlin"),
     zipCode: text("zip_code").notNull(),
@@ -56,6 +59,10 @@ export const events = pgTable(
     barrierFree: boolean("barrier_free"),
     languageIndependent: boolean("language_independent").notNull().default(false),
     languages: text("languages").array(),
+    /** When true, `subtitle_language` MUST be an allowlisted code; when false, language is null. */
+    hasSubtitles: boolean("has_subtitles").notNull().default(false),
+    /** Single subtitle language code (same allowlist as spoken event languages); null when off. */
+    subtitleLanguage: text("subtitle_language"),
     targetAgeGroups: text("target_age_groups").array(),
     lat: numeric("lat"),
     lng: numeric("lng"),

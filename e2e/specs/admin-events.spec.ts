@@ -13,6 +13,7 @@ import {
   expectPublicEventDetail,
   fillLabeledDateOrTime,
   fillNumberByLabel,
+  fillStructuredLocation,
   fillTextbox,
   futureDateISO,
   navigateAdminTab,
@@ -46,8 +47,11 @@ async function createVoucherPromoViaUI(
   await selectOptionByLabel(page, adminLabels.partner, partnerName);
   await fillTextbox(page, adminLabels.title, title);
   await fillTextbox(page, adminLabels.description, `Voucher clone source ${suffix}`);
-  await fillTextbox(page, adminLabels.address, `Voucher venue ${suffix}, Berlin`);
-  await fillTextbox(page, adminLabels.zipCode, "10115");
+  await fillStructuredLocation(page, {
+    street: `Voucher Straße ${suffix}`,
+    houseNumber: "7",
+    zipCode: "10115",
+  });
   await selectOptionByLabel(page, adminLabels.category, "Theater");
   await selectOptionByLabel(page, adminLabels.eventType, "Performance");
   await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(16));
@@ -145,8 +149,11 @@ test.describe("admin-events.feature", () => {
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
     await fillTextbox(page, adminLabels.title, `No Image ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing image");
-    await fillTextbox(page, adminLabels.address, "Berlin");
-    await fillTextbox(page, adminLabels.zipCode, "10115");
+    await fillStructuredLocation(page, {
+      street: "Teststraße",
+      houseNumber: "1",
+      zipCode: "10115",
+    });
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
@@ -168,8 +175,11 @@ test.describe("admin-events.feature", () => {
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
     await fillTextbox(page, adminLabels.title, `No Secret ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing secret");
-    await fillTextbox(page, adminLabels.address, "Berlin");
-    await fillTextbox(page, adminLabels.zipCode, "10115");
+    await fillStructuredLocation(page, {
+      street: "Teststraße",
+      houseNumber: "1",
+      zipCode: "10115",
+    });
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
@@ -191,8 +201,11 @@ test.describe("admin-events.feature", () => {
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
     await fillTextbox(page, adminLabels.title, `No Website ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.description, "Missing website");
-    await fillTextbox(page, adminLabels.address, "Berlin");
-    await fillTextbox(page, adminLabels.zipCode, "10115");
+    await fillStructuredLocation(page, {
+      street: "Teststraße",
+      houseNumber: "1",
+      zipCode: "10115",
+    });
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
@@ -363,6 +376,65 @@ test.describe("admin-events.feature", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
+  test("Scenario: Check Subtitles reveals language select", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    await page.goto(`/${locale}/admin/events/new`);
+    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
+    await selectOptionByLabel(page, adminLabels.partner, partner.name);
+    await expect(page.getByRole("checkbox", { name: adminLabels.hasSubtitles })).toBeVisible();
+    await expect(page.getByLabel(adminLabels.subtitleLanguage)).toHaveCount(0);
+    await page.getByRole("checkbox", { name: adminLabels.hasSubtitles }).check();
+    const subtitleSelect = page.getByLabel(adminLabels.subtitleLanguage);
+    await expect(subtitleSelect).toBeVisible();
+    // Full ISO 639-1 list (far broader than the spoken-event 29).
+    const optionCount = await subtitleSelect.locator("option").count();
+    expect(optionCount).toBeGreaterThan(100);
+    await expect(subtitleSelect.locator("option", { hasText: /swahili/i })).toHaveCount(1);
+    await expect(
+      subtitleSelect.locator("option", { hasText: /isländisch|icelandic/i }),
+    ).toHaveCount(1);
+  });
+
+  test("Scenario: Save event with Subtitles and language", async ({ page, locale }) => {
+    test.setTimeout(90_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      hasSubtitles: true,
+      subtitleLanguage: "EN",
+    });
+    await page.goto(event.detailPath);
+    await expect(page.getByRole("heading", { name: event.title })).toBeVisible();
+    await expect(page.getByText(/^details$/i).first()).toBeVisible();
+    await expect(page.getByText(/^untertitel$|^subtitles$/i).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByText(/^EN$/).first()).toBeVisible();
+  });
+
+  test("Scenario: Subtitles controls available when language-independent", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    await page.goto(`/${locale}/admin/events/new`);
+    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
+    await selectOptionByLabel(page, adminLabels.partner, partner.name);
+    await page.getByRole("checkbox", { name: /sprachunabhängig|language-independent/i }).check();
+    await expect(page.getByRole("checkbox", { name: adminLabels.hasSubtitles })).toBeVisible();
+    await page.getByRole("checkbox", { name: adminLabels.hasSubtitles }).check();
+    await expect(page.getByLabel(adminLabels.subtitleLanguage)).toBeVisible();
+  });
+
   test("Scenario: Languages multi-select with search", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
     const partner = await createPartnerViaUI(page, locale);
@@ -372,16 +444,19 @@ test.describe("admin-events.feature", () => {
     });
     await page.waitForLoadState("networkidle");
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await expect(page.getByText(adminLabels.languages).first()).toBeVisible();
-    const languageSearch = page.getByPlaceholder(/sprachen suchen|search languages/i);
-    await expect(languageSearch).toBeVisible();
+    const search = page.getByPlaceholder(/sprachen suchen|search languages/i);
+    await expect(search).toBeVisible();
+    await expect(
+      page.getByText(/nur häufige sprachen|only common languages|suche|search/i).first(),
+    ).toBeVisible();
+    // Featured Berlin-common defaults (DE/EN/TR…); a non-featured allowlisted language needs search.
     await expect(page.getByRole("checkbox", { name: /deutsch|german/i })).toBeVisible();
-    await checkOptionByName(page, /deutsch|german/i);
-    // Filter hides unmatched unselected options; already-selected stay mounted for POST.
-    await languageSearch.fill("zzzz-no-match");
-    await expect(page.getByRole("checkbox", { name: /deutsch|german/i })).toBeChecked();
-    await languageSearch.fill("");
-    await expect(page.getByRole("checkbox", { name: /deutsch|german/i })).toBeChecked();
+    await expect(page.getByRole("checkbox", { name: /türkisch|turkish/i })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /vietnamesisch|vietnamese/i })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /chinesisch|chinese/i })).toHaveCount(0);
+    await search.fill("ZH");
+    await checkOptionByName(page, /chinesisch|chinese/i);
+    await expect(page.getByRole("checkbox", { name: /chinesisch|chinese/i })).toBeChecked();
   });
 
   test("Scenario: Age groups multi-select without search", async ({ page, locale }) => {
@@ -394,45 +469,61 @@ test.describe("admin-events.feature", () => {
     await page.waitForLoadState("networkidle");
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
     await expect(page.getByText(adminLabels.ageGroups).first()).toBeVisible();
-    // Only languages expose a search filter — age groups do not add a second one.
-    await expect(page.getByPlaceholder(/sprachen suchen|search languages/i)).toHaveCount(1);
+    // Language search exists separately; age groups have no search control of their own.
     await expect(page.getByRole("checkbox", { name: "18-25" })).toBeVisible();
     await checkOptionByName(page, "18-25");
     await expect(page.getByRole("checkbox", { name: "18-25" })).toBeChecked();
   });
 
-  test("Scenario: Add event prefills address and map from partner", async ({ page, locale }) => {
+  test("Scenario: Add event prefills structured location and map from partner", async ({
+    page,
+    locale,
+  }) => {
     test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
     const partner = await createPartnerViaUI(page, locale, {
-      address: `Prefill Str. ${uniqueSuffix()}, 10115 Berlin`,
+      street: `Prefill Straße ${uniqueSuffix()}`,
+      houseNumber: "12",
+      zipCode: "10115",
     });
     await page.goto(`/${locale}/admin/events/new`);
     await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
       timeout: 15_000,
     });
     await page.waitForLoadState("networkidle");
-    const addressField = page.getByRole("textbox", { name: adminLabels.address, exact: true });
+    const streetField = page.getByRole("textbox", { name: adminLabels.street, exact: true });
+    const houseField = page.getByRole("textbox", { name: adminLabels.houseNumber, exact: true });
+    const zipField = page.getByLabel(/plz|zip code/i);
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await expect(addressField).toHaveValue(partner.address, { timeout: 10_000 });
+    await expect(streetField).toHaveValue(partner.street, { timeout: 10_000 });
+    await expect(houseField).toHaveValue(partner.houseNumber);
+    await expect(zipField).toHaveValue(partner.zipCode);
     // Live Nominatim map-pin success is not required in CI (soft-fail leaves map at default).
   });
 
-  test("Scenario: Edit event keeps existing address when partner changes", async ({
+  test("Scenario: Edit event keeps existing location when partner changes", async ({
     page,
     locale,
   }) => {
     test.setTimeout(90_000);
     test.skip(!r2Configured(), "R2 vars not configured");
     const partnerA = await createPartnerViaUI(page, locale, {
-      address: `Keep-A ${uniqueSuffix()}, 10115 Berlin`,
+      street: `Keep-A ${uniqueSuffix()}`,
+      houseNumber: "1",
+      zipCode: "10115",
     });
     const partnerB = await createPartnerViaUI(page, locale, {
-      address: `Keep-B ${uniqueSuffix()}, 10435 Berlin`,
+      street: `Keep-B ${uniqueSuffix()}`,
+      houseNumber: "2",
+      zipCode: "10435",
     });
-    const customAddress = `Custom kept ${uniqueSuffix()}, Berlin`;
+    const customStreet = `Custom kept ${uniqueSuffix()}`;
+    const customHouse = "99";
+    const customZip = "10969";
     const event = await createEventViaUI(page, locale, {
       partnerName: partnerA.name,
-      address: customAddress,
+      street: customStreet,
+      houseNumber: customHouse,
+      zipCode: customZip,
     });
 
     const row = page.getByRole("row").filter({ hasText: event.title });
@@ -441,26 +532,41 @@ test.describe("admin-events.feature", () => {
       timeout: 15_000,
     });
     await page.waitForLoadState("networkidle");
-    const addressField = page.getByRole("textbox", { name: adminLabels.address, exact: true });
-    await expect(addressField).toHaveValue(customAddress);
+    const streetField = page.getByRole("textbox", { name: adminLabels.street, exact: true });
+    const houseField = page.getByRole("textbox", { name: adminLabels.houseNumber, exact: true });
+    const zipField = page.getByLabel(/plz|zip code/i);
+    await expect(streetField).toHaveValue(customStreet);
+    await expect(houseField).toHaveValue(customHouse);
+    await expect(zipField).toHaveValue(customZip);
     await selectOptionByLabel(page, adminLabels.partner, partnerB.name);
-    await expect(addressField).toHaveValue(customAddress);
+    await expect(streetField).toHaveValue(customStreet);
+    await expect(houseField).toHaveValue(customHouse);
+    await expect(zipField).toHaveValue(customZip);
   });
 
-  test("Scenario: Geocode soft-fails leave address filled", async ({ page, locale }) => {
+  test("Scenario: Geocode soft-fails leave structured location filled", async ({
+    page,
+    locale,
+  }) => {
     test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
-    // Address prefill is covered above; soft-fail geocode paths are unit-tested in
+    // Structured prefill is covered above; soft-fail geocode paths are unit-tested in
     // apps/web/app/lib/geocode-berlin.test.ts. Live Nominatim failure is not forced in CI.
     const partner = await createPartnerViaUI(page, locale, {
-      address: `Softfail Str. ${uniqueSuffix()}, 10115 Berlin`,
+      street: `Softfail Straße ${uniqueSuffix()}`,
+      houseNumber: "3",
+      zipCode: "10115",
     });
     await page.goto(`/${locale}/admin/events/new`);
     await page.waitForLoadState("networkidle");
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await expect(page.getByRole("textbox", { name: adminLabels.address, exact: true })).toHaveValue(
-      partner.address,
+    await expect(page.getByRole("textbox", { name: adminLabels.street, exact: true })).toHaveValue(
+      partner.street,
       { timeout: 10_000 },
     );
+    await expect(
+      page.getByRole("textbox", { name: adminLabels.houseNumber, exact: true }),
+    ).toHaveValue(partner.houseNumber);
+    await expect(page.getByLabel(/plz|zip code/i)).toHaveValue(partner.zipCode);
   });
 
   test("Scenario: Export redemption codes for an event", async ({ page, locale }) => {
@@ -643,11 +749,18 @@ test.describe("admin-events.feature", () => {
     await page.goto(`/${locale}/admin/featured/add?q=${encodeURIComponent(event.title)}`);
     const addRow = page.getByRole("row").filter({ hasText: event.title });
     await expect(addRow).toBeVisible({ timeout: 15_000 });
+    // Decorative thumb <img alt=""> — assert DOM presence near the result title (proximity).
+    const addThumb = addRow.locator("img").first();
+    await expect(addThumb).toBeVisible({ timeout: 15_000 });
+    await expect(addThumb).toHaveAttribute("src", /small-320\.webp(?:\?|$)/);
     await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), { timeout: 30_000 });
     await expect(page.getByText(event.title)).toBeVisible();
 
     const featuredRow = page.getByRole("row").filter({ hasText: event.title });
+    const featuredThumb = featuredRow.locator("img").first();
+    await expect(featuredThumb).toBeVisible({ timeout: 15_000 });
+    await expect(featuredThumb).toHaveAttribute("src", /small-320\.webp(?:\?|$)/);
     await featuredRow.getByRole("link", { name: /entfernen|remove/i }).click();
     await expect(page).toHaveURL(/\/admin\/featured\/.+\/remove/);
     await page

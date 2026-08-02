@@ -12,9 +12,14 @@ import { adminFeaturedAddPath } from "./admin-tabs";
 type AdminFeaturedAddResultsProps = {
   locale: Locale;
   events: Event[];
+  imageUrls: Record<string, string | undefined>;
 };
 
-export function AdminFeaturedAddResults({ locale, events }: AdminFeaturedAddResultsProps) {
+export function AdminFeaturedAddResults({
+  locale,
+  events,
+  imageUrls,
+}: AdminFeaturedAddResultsProps) {
   const copy = getAdminCopy(locale);
   const action = adminFeaturedAddPath(locale);
 
@@ -27,6 +32,7 @@ export function AdminFeaturedAddResults({ locale, events }: AdminFeaturedAddResu
       <Table.ScrollContainer>
         <Table.Content>
           <Table.Header>
+            <Table.Column isRowHeader>{copy.tableLogo}</Table.Column>
             <Table.Column isRowHeader>{copy.tableTitle}</Table.Column>
             <Table.Column isRowHeader>{copy.tablePartner}</Table.Column>
             <Table.Column isRowHeader>{copy.tableDate}</Table.Column>
@@ -37,6 +43,23 @@ export function AdminFeaturedAddResults({ locale, events }: AdminFeaturedAddResu
           <Table.Body>
             {events.map((event) => (
               <Table.Row key={event.id}>
+                <Table.Cell>
+                  {imageUrls[event.id] ? (
+                    <Surface className="admin-table__logo" variant="transparent">
+                      <img alt="" src={imageUrls[event.id]} />
+                    </Surface>
+                  ) : (
+                    <Surface
+                      aria-hidden
+                      className="admin-table__logo admin-table__logo--placeholder"
+                      variant="transparent"
+                    >
+                      <Paragraph color="muted" size="sm">
+                        {copy.imagePlaceholderLabel}
+                      </Paragraph>
+                    </Surface>
+                  )}
+                </Table.Cell>
                 <Table.Cell>{event.title}</Table.Cell>
                 <Table.Cell>{event.partnerName}</Table.Cell>
                 <Table.Cell>{formatEventDateTime(event.dateTime, locale)}</Table.Cell>

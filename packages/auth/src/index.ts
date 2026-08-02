@@ -5,10 +5,10 @@ export {
   EVENT_TYPES,
   type EventLanguage,
   type EventType,
+  FEATURED_PREFERRED_LANGUAGES,
+  type FeaturedPreferredLanguage,
   INTERESTS,
   INTERESTS_OTHER_MAX_LENGTH,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
   MOODS,
   PREFERRED_LANGUAGES,
   type PreferredLanguage,
@@ -31,7 +31,6 @@ export {
   getOnboardingStepPath,
   OnboardingValidationError,
   saveOnboardingStep,
-  validateMaxDistance,
   validateOnboardingStepPayload,
 } from "./onboarding";
 export type {

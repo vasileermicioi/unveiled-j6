@@ -38,7 +38,7 @@ Domain helpers for the four-step preference wizard. Paths returned by `getOnboar
 
 **Step order:** age → interests → location → timing → `completeOnboarding`.
 
-**Allowlists:** `AGE_GROUPS`, `INTERESTS`, `MOODS`, `TIMING_OPTIONS`, `WEEKDAYS`, `PREFERRED_LANGUAGES` (member prefs; expanded language codes, no `Non-Verbal`). Admin event metadata uses the same catalog via `EVENT_LANGUAGES` (alias of `PREFERRED_LANGUAGES`). Location uses `country` / `city` / `zip_code` (Germany/Berlin + Berlin PLZ via `validatePostalCode`); legacy `districts` is cleared on write. Location / preference saves require and persist `max_distance` as an integer km in `MAX_DISTANCE_MIN`–`MAX_DISTANCE_MAX` (via `validateMaxDistance`); they do not clear it to `null` by policy.
+**Allowlists:** `AGE_GROUPS`, `INTERESTS`, `MOODS`, `TIMING_OPTIONS`, `WEEKDAYS`, `PREFERRED_LANGUAGES` (member prefs; expanded language codes, no `Non-Verbal`). Admin event metadata uses the same catalog via `EVENT_LANGUAGES` (alias of `PREFERRED_LANGUAGES`). Location uses `country` / `city` / `zip_code` (Germany/Berlin + Berlin PLZ via `validatePostalCode`); legacy `districts` is cleared on write. Location / preference saves do **not** require or write `max_distance` (legacy JSONB left untouched).
 
 **Age skip:** POST payload `{ skip: true }` advances to interests without writing `age_group`.
 

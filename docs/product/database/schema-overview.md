@@ -33,7 +33,7 @@ Tables: `users`, `subscriptions` (1:1), `saved_events`, `featured_events`, `feat
 | `zip_code` | text — postal code validated via shared `validatePostalCode({ country, city, zipCode })` (Berlin PLZ under `(DE, berlin)`) |
 | `interests_other` | text, nullable — free-text interest when `interests` includes `Other`; null when Other is not selected |
 | ~~`districts`~~ | **Replaced** by `country` / `city` / `zip_code`. Legacy key is cleared on preference / onboarding location writes (not an active preference array) |
-| `max_distance` | integer (km) — active preference collected in onboarding step 3 and profile Vibes; inclusive bounds **1–50** via `MAX_DISTANCE_MIN` / `MAX_DISTANCE_MAX`; preference saves do **not** clear it to `null` by policy (capture-for-later / admin intel — not used to rank the member feed) |
+| `max_distance` | integer (km), optional **legacy** JSONB — not collected in onboarding or Vibes; location/preference saves leave the key untouched (neither required nor cleared by policy). Admin Membership HQ may show km when non-null. Not used to rank the member feed |
 | `accessibility` | boolean |
 | `language` | enum: `DE`, `EN` |
 | `onboarding_complete` | boolean |
@@ -67,7 +67,13 @@ Counters (`session_count`, `event_open_count`, `booking_count`, `waitlist_count`
 |---|---|---|
 | `id` | text/uuid, PK | |
 | `name` | text | |
-| `address` | text | |
+| `street` | text, not null | Required structured street name |
+| `house_number` | text, not null | Required house number (may include suffix, e.g. `12a`) |
+| `address_line2` | text, nullable | Optional unit/floor/entrance; excluded from geocode queries |
+| `country` | text, not null, default `DE` | ISO 3166-1 alpha-2. This release supports `DE` only. |
+| `city` | text, not null, default `berlin` | Canonical city key (lowercase slug). This release supports `berlin` only. |
+| `zip_code` | text, not null | Berlin PLZ via `validatePostalCode({ country, city, zipCode })` — zip parity with events |
+| `address` | text, not null | **Composed on write** from structured fields (`street`, `house_number`, optional `address_line2`, `zip_code`, city display label) — display/legacy read surface, not admin-authored free text |
 | `contact_email` | text | |
 | `logo_image_id` | uuid, FK → `images.id`, NOT NULL | **Was `logo_url` (text)** — replaced by a real image with generated size variants; see `extras/image-uploads.md`. **Required** on partner create (same five-WebP pipeline as event images); edit may replace but MUST NOT clear to NULL |
 | `venue_check_in_token` | text, unique, nullable | **Post-MVP** — QR self-check-in |
@@ -103,10 +109,14 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `id` | text/uuid, PK | |
 | `partner_id` | text/uuid, FK → `partners.id` | |
 | `partner_name` | text | **Denormalized** from `partners.name` — kept in sync on partner rename in the old app. Recommend either (a) keeping the denormalization with an app-layer sync step, or (b) dropping it and always joining `partners` — Postgres makes the join cheap, so (b) is likely simpler now |
-| `title`, `description`, `address` | text | `description` is **Markdown at rest** (GFM on public detail via `MarkdownContent`; authored in admin via MDXEditor). Plain text remains valid Markdown. No separate HTML column. |
+| `title`, `description` | text | `description` is **Markdown at rest** (GFM on public detail via `MarkdownContent`; authored in admin via MDXEditor). Plain text remains valid Markdown. No separate HTML column. |
+| `street` | text, not null | Required structured street name |
+| `house_number` | text, not null | Required house number |
+| `address_line2` | text, nullable | Optional unit/floor/entrance; excluded from structured geocode |
 | `country` | text, not null, default `DE` | ISO 3166-1 alpha-2. This release supports `DE` only (postal registry). |
 | `city` | text, not null, default `berlin` | Canonical city key (lowercase slug). This release supports `berlin` only. |
 | `zip_code` | text, not null | Postal code; for `(DE, berlin)` must be a valid Berlin PLZ (5-digit + membership ranges **10115–14199**). Replaces legacy `neighborhood`. |
+| `address` | text, not null | **Composed on write** from structured fields — public LOCATION and list displays use this string; admins author structured fields, not free-text `address` |
 | `image_id` | uuid, FK → `images.id`, **not nullable** | **Was `image_url` (text)** — replaced by a real image with generated size variants; see `extras/image-uploads.md`. Stays required, matching today's `image` field being non-optional on event create/edit (`features/admin-events.feature`) |
 | `category`, `event_type` | text | Free-form strings today — consider enum/lookup table if the category list is meant to be fixed |
 | `tags` | text[] | |
@@ -125,8 +135,10 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `barrier_free` | boolean, nullable | |
 | `language_independent` | boolean, **not nullable**, default `false` | When true, the event has no spoken-language requirement; `languages` MUST be null. Language filters treat these events as matching every language value. |
 | `languages` | text[], nullable | Spoken-language codes when not language-independent; null/empty means unset / none selected for language-specific events |
+| `has_subtitles` | boolean, **not nullable**, default `false` | When true, the event has subtitles; independent of spoken `languages` / `language_independent`. |
+| `subtitle_language` | text, nullable | Single ISO 639-1 language code (uppercase alpha-2, e.g. `DE`, `EN`, `SW`) when `has_subtitles` is true — broader than spoken-event `EVENT_LANGUAGES`; MUST be null when `has_subtitles` is false. |
 | `target_age_groups` | enum[], nullable | |
-| `lat`, `lng` | numeric, nullable | System-derived from address geocode for map display only — not admin-authored. Null when geocode fails or has not run. |
+| `lat`, `lng` | numeric, nullable | System-derived from **structured** geocode (`street` + `house_number` + `zip_code`; `address_line2` excluded) for map display only — not admin-authored. Null when geocode soft-fails; MUST NOT store invented default-center coordinates |
 | ~~`map_zoom`~~ | — | **Decided cut:** admin zoom authoring removed; maps use a UI default zoom. Column dropped. |
 | `created_at` / `updated_at` | timestamptz | |
 

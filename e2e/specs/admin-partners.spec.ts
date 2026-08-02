@@ -1,10 +1,12 @@
 import {
   adminLabels,
   adminTabLabels,
+  composeDisplayAddress,
   createEventViaUI,
   createPartnerViaUI,
   deletePartnerViaUI,
   expectEventOnDiscover,
+  fillStructuredLocation,
   fillTextbox,
   navigateAdminTab,
   r2Configured,
@@ -63,7 +65,11 @@ test.describe("admin-partners.feature", () => {
     await page.waitForLoadState("networkidle");
     await fillTextbox(page, adminLabels.name, `No Logo ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.email, `nologo-${uniqueSuffix()}@example.com`);
-    await fillTextbox(page, adminLabels.address, "Berlin");
+    await fillStructuredLocation(page, {
+      street: "Teststraße",
+      houseNumber: "1",
+      zipCode: "10115",
+    });
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/new`));
     await expect(
@@ -74,7 +80,11 @@ test.describe("admin-partners.feature", () => {
   test('Scenario Outline: Partner creation validation — name = ""', async ({ page, locale }) => {
     await page.goto(`/${locale}/admin/partners/new`);
     await fillTextbox(page, adminLabels.email, "valid@example.com");
-    await fillTextbox(page, adminLabels.address, "Somewhere, Berlin");
+    await fillStructuredLocation(page, {
+      street: "Teststraße",
+      houseNumber: "1",
+      zipCode: "10115",
+    });
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/new`));
     const nameField = page.getByRole("textbox", { name: adminLabels.name, exact: true });
@@ -92,7 +102,11 @@ test.describe("admin-partners.feature", () => {
     await page.goto(`/${locale}/admin/partners/new`);
     await fillTextbox(page, adminLabels.name, `E2E Invalid Email ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.email, "not-an-email");
-    await fillTextbox(page, adminLabels.address, "Somewhere, Berlin");
+    await fillStructuredLocation(page, {
+      street: "Teststraße",
+      houseNumber: "1",
+      zipCode: "10115",
+    });
     // BDD exception: file-input — attach logo so submit reaches field validation
     await page.locator('input[name="logo"]').setInputFiles(SAMPLE_EVENT_IMAGE);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
@@ -109,15 +123,17 @@ test.describe("admin-partners.feature", () => {
     ).toBeTruthy();
   });
 
-  test('Scenario Outline: Partner creation validation — address = ""', async ({ page, locale }) => {
+  test('Scenario Outline: Partner creation validation — street = ""', async ({ page, locale }) => {
     await page.goto(`/${locale}/admin/partners/new`);
-    await fillTextbox(page, adminLabels.name, `E2E No Address ${uniqueSuffix()}`);
+    await fillTextbox(page, adminLabels.name, `E2E No Street ${uniqueSuffix()}`);
     await fillTextbox(page, adminLabels.email, "valid@example.com");
+    await fillTextbox(page, adminLabels.houseNumber, "1");
+    await fillTextbox(page, adminLabels.zipCode, "10115");
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/new`));
-    const addressField = page.getByRole("textbox", { name: adminLabels.address, exact: true });
-    const invalid = await addressField.evaluate(
-      (el) => (el as HTMLTextAreaElement).validity?.valueMissing,
+    const streetField = page.getByRole("textbox", { name: adminLabels.street, exact: true });
+    const invalid = await streetField.evaluate(
+      (el) => (el as HTMLInputElement).validity?.valueMissing,
     );
     expect(invalid || page.url().includes("/partners/new")).toBeTruthy();
   });
@@ -129,11 +145,22 @@ test.describe("admin-partners.feature", () => {
     await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
     await expect(page).toHaveURL(/\/admin\/partners\/.+\/edit/);
 
-    const updatedAddress = `Updated ${uniqueSuffix()}, Berlin`;
-    await fillTextbox(page, adminLabels.address, updatedAddress);
+    const updatedStreet = `Updated ${uniqueSuffix()}`;
+    const updatedHouse = "77";
+    const updatedZip = "10437";
+    await fillStructuredLocation(page, {
+      street: updatedStreet,
+      houseNumber: updatedHouse,
+      zipCode: updatedZip,
+    });
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`));
-    await expect(page.getByText(updatedAddress).first()).toBeVisible();
+    const composed = composeDisplayAddress({
+      street: updatedStreet,
+      houseNumber: updatedHouse,
+      zipCode: updatedZip,
+    });
+    await expect(page.getByText(composed).first()).toBeVisible();
   });
 
   test("Scenario: Renaming a partner propagates to its events", async ({ page, locale }) => {

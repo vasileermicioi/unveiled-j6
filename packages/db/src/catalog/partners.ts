@@ -2,6 +2,7 @@ import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { count, desc, eq, ilike } from "drizzle-orm";
 
 import type { Db } from "../index";
+import { composeDisplayAddress, validatePostalCode } from "../location";
 import { events } from "../schema/events";
 import { type Partner, partners } from "../schema/partners";
 import { CatalogValidationError } from "./errors";
@@ -20,7 +21,12 @@ export type ListPartnersOptions = {
 
 export type CreatePartnerInput = {
   name: string;
-  address: string;
+  street: string;
+  houseNumber: string;
+  addressLine2?: string | null;
+  zipCode: string;
+  country?: string | null;
+  city?: string | null;
   contactEmail: string;
   venueCheckInToken?: string | null;
   logoUpload?: Buffer | null;
@@ -32,7 +38,12 @@ export type CreatePartnerInput = {
 
 export type UpdatePartnerInput = {
   name?: string;
-  address?: string;
+  street?: string;
+  houseNumber?: string;
+  addressLine2?: string | null;
+  zipCode?: string;
+  country?: string | null;
+  city?: string | null;
   contactEmail?: string;
   logoUpload?: Buffer | null;
   logoUrl?: string | null;
@@ -76,7 +87,21 @@ export async function listPartners(db: Db, options: ListPartnersOptions = {}): P
 
 export async function createPartner(db: Db, input: CreatePartnerInput): Promise<Partner> {
   const name = requireNonEmpty(input.name, "name");
-  const address = requireNonEmpty(input.address, "address");
+  const street = requireNonEmpty(input.street, "street");
+  const houseNumber = requireNonEmpty(input.houseNumber, "houseNumber");
+  const addressLine2 = input.addressLine2?.trim() || null;
+  const location = validatePostalCode({
+    country: input.country,
+    city: input.city,
+    zipCode: input.zipCode,
+  });
+  const address = composeDisplayAddress({
+    street,
+    houseNumber,
+    addressLine2,
+    zipCode: location.zipCode,
+    city: location.city,
+  });
   const contactEmail = validateEmail(input.contactEmail);
 
   const { attachImageToPartner, deleteImageRecord } = await catalogImages();
@@ -94,6 +119,12 @@ export async function createPartner(db: Db, input: CreatePartnerInput): Promise<
       .values({
         name,
         address,
+        street,
+        houseNumber,
+        addressLine2,
+        country: location.country,
+        city: location.city,
+        zipCode: location.zipCode,
         contactEmail,
         logoImageId,
         venueCheckInToken,
@@ -141,10 +172,44 @@ export async function updatePartner(
   });
 
   const nextName = input.name !== undefined ? requireNonEmpty(input.name, "name") : existing.name;
-  const nextAddress =
-    input.address !== undefined ? requireNonEmpty(input.address, "address") : existing.address;
   const nextEmail =
     input.contactEmail !== undefined ? validateEmail(input.contactEmail) : existing.contactEmail;
+
+  const locationTouched =
+    input.zipCode !== undefined ||
+    input.country !== undefined ||
+    input.city !== undefined ||
+    input.street !== undefined ||
+    input.houseNumber !== undefined ||
+    input.addressLine2 !== undefined;
+  const location = locationTouched
+    ? validatePostalCode({
+        country: input.country !== undefined ? input.country : existing.country,
+        city: input.city !== undefined ? input.city : existing.city,
+        zipCode: input.zipCode !== undefined ? input.zipCode : existing.zipCode,
+      })
+    : {
+        country: existing.country,
+        city: existing.city,
+        zipCode: existing.zipCode,
+      };
+  const nextStreet =
+    input.street !== undefined ? requireNonEmpty(input.street, "street") : existing.street;
+  const nextHouseNumber =
+    input.houseNumber !== undefined
+      ? requireNonEmpty(input.houseNumber, "houseNumber")
+      : existing.houseNumber;
+  const nextAddressLine2 =
+    input.addressLine2 !== undefined ? input.addressLine2?.trim() || null : existing.addressLine2;
+  const nextAddress = locationTouched
+    ? composeDisplayAddress({
+        street: nextStreet,
+        houseNumber: nextHouseNumber,
+        addressLine2: nextAddressLine2,
+        zipCode: location.zipCode,
+        city: location.city,
+      })
+    : existing.address;
 
   const { replacePartnerLogo, deleteImageRecord } = await catalogImages();
   const previousLogoImageId = existing.logoImageId;
@@ -166,6 +231,12 @@ export async function updatePartner(
     .set({
       name: nextName,
       address: nextAddress,
+      street: nextStreet,
+      houseNumber: nextHouseNumber,
+      addressLine2: nextAddressLine2,
+      country: location.country,
+      city: location.city,
+      zipCode: location.zipCode,
       contactEmail: nextEmail,
       logoImageId: nextLogoImageId,
       updatedAt: new Date(),

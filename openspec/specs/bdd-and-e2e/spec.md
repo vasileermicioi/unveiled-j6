@@ -195,3 +195,32 @@ Playwright in `e2e/specs/admin-events.spec.ts` SHALL cover the clone-event happy
 #### Scenario: Coverage matrix lists clone scenarios
 - **WHEN** an implementer opens `docs/product/testing/coverage-matrix.md` after this change
 - **THEN** clone scenarios from `admin-events.feature` map to Playwright titles with `pass` or named env `skip`
+
+### Requirement: Admin location e2e covers structured fields
+
+Playwright in `e2e/specs/admin-events.spec.ts` (and partner coverage where applicable) SHALL assert structured street/house/zip prefill and save using proximity/layout selectors per `docs/product/testing/bdd-and-e2e.md`, with `test()` titles matching Gherkin `Scenario:` titles from `docs/product/features/admin-events.feature` (and `admin-partners.feature` when partner structured location is covered). Live Nominatim map-pin success SHALL remain optional in CI; soft-fail paths MAY be covered by unit tests (`geocode-berlin.test.ts` or equivalent). Coverage-matrix rows SHALL reflect pass or named env deferral — never "UI not built."
+
+#### Scenario: Admin events e2e asserts structured prefill
+
+- **WHEN** an admin on the new-event form selects a partner with structured location
+- **THEN** Playwright asserts street, house number, and zip fields are filled from that partner
+- **AND** live Nominatim pin success is not required for the scenario to pass
+
+#### Scenario: Coverage matrix documents structured location e2e
+
+- **WHEN** this change is marked released
+- **THEN** `docs/product/testing/coverage-matrix.md` includes rows for structured location prefill/save scenarios (pass or named deferral)
+
+### Requirement: Subtitles scenarios covered by Playwright
+
+Admin Subtitles checkbox/select behavior and public detail subtitles display SHALL have Playwright coverage using proximity/layout selectors per `docs/product/testing/bdd-and-e2e.md`, with `test()` titles matching Gherkin `Scenario:` titles from `docs/product/features/admin-events.feature` and/or `event-discovery.feature`, **or** a named coverage-matrix deferral (never “UI not built”). Catalog domain validation for the subtitle invariant SHALL be covered by unit tests in `@unveiled/db` (or equivalent package tests).
+
+#### Scenario: Admin e2e covers subtitles checkbox and language
+
+- **WHEN** this change is marked released
+- **THEN** `e2e/specs/admin-events.spec.ts` (or a named deferral in `docs/product/testing/coverage-matrix.md`) covers saving an event with Subtitles checked and a language selected
+
+#### Scenario: Public e2e or deferral for subtitles display
+
+- **WHEN** this change is marked released
+- **THEN** Playwright asserts public detail shows the subtitles row for a subtitled event (proximity selectors), or `coverage-matrix.md` records a named deferral for that scenario

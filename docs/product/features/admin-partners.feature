@@ -16,9 +16,10 @@ Feature: Admin — Partner Management
     Given I am signed in as "ADMIN"
 
   Scenario: Create a partner
-    When I create a partner with a name, contact email, address, and a logo image
+    When I create a partner with a name, contact email, structured location (street, house number, Berlin zip), and a logo image
     Then the partner is added to the catalog as a venue record
     And the partner has a non-null logo image
+    And the partner stores a composed display address from those structured fields
 
   Scenario: Supply the partner logo as a direct upload
     When I create or edit a partner and upload a logo image file
@@ -37,11 +38,19 @@ Feature: Admin — Partner Management
       | field        | value          |
       | name         |                |
       | contactEmail | not-an-email   |
-      | address      |                |
+      | street       |                |
+      | houseNumber  |                |
+      | zipCode      |                |
+
+  Scenario: Country and city are fixed on the partner form
+    When I open create or edit partner
+    Then country and city are shown prefilled as Germany and Berlin
+    And I cannot change country or city via the form
 
   Scenario: Edit a partner
-    When I update a partner's details
+    When I update a partner's structured location or other details
     Then the changes are saved
+    And the composed display address is updated on write
 
   Scenario: Renaming a partner propagates to its events
     Given a partner has existing events

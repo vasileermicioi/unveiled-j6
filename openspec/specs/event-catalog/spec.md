@@ -35,7 +35,7 @@ The `@unveiled/db` package SHALL define Drizzle schema and migrations for `publi
 
 ### Requirement: Event location fields
 
-Each event SHALL store required location fields `country` (ISO 3166-1 alpha-2), `city` (canonical city key), and `zip_code` (postal string). The system SHALL NOT store `events.neighborhood`. For the current product release, supported values are `country = DE` and `city = berlin`; catalog create/update SHALL default omitted country/city to those values. Catalog create/update SHALL reject missing, malformed, or non-Berlin zip codes for `(DE, berlin)`, and SHALL reject unsupported country/city pairs. Address + optional geocoded lat/lng remain unchanged. Postal validation SHALL use a shared registry-shaped helper `validatePostalCode({ country, city, zipCode })` (not a bare Berlin-only function without country/city parameters).
+Each event SHALL store required location fields `country` (ISO 3166-1 alpha-2), `city` (canonical city key), `zip_code` (postal string), `street`, and `house_number`, plus optional `address_line2`. The system SHALL NOT store `events.neighborhood`. For the current product release, supported values are `country = DE` and `city = berlin`; catalog create/update SHALL default omitted country/city to those values. Catalog create/update SHALL reject missing, malformed, or non-Berlin zip codes for `(DE, berlin)`, and SHALL reject unsupported country/city pairs. Display `address` SHALL be composed on write from structured fields; optional geocoded lat/lng remain structured-geocode-derived. Postal validation SHALL use a shared registry-shaped helper `validatePostalCode({ country, city, zipCode })` (not a bare Berlin-only function without country/city parameters).
 
 #### Scenario: Create event requires Berlin zip under Germany/Berlin
 
@@ -57,23 +57,55 @@ Each event SHALL store required location fields `country` (ISO 3166-1 alpha-2), 
 - **WHEN** `createEvent` is called with a valid Berlin `zipCode` and without `country` / `city`
 - **THEN** the event is persisted with `country = DE`, `city = berlin`, and the given `zip_code`
 
-### Requirement: Product schema overview documents location columns
-`docs/product/database/schema-overview.md` SHALL document `events.country`, `events.city`, and `events.zip_code` as required location fields (supported defaults/values for this release: `DE` / `berlin` + Berlin PLZ via the postal registry). It SHALL NOT list `events.neighborhood` as a current field. Matching `users.profile` keys `country`, `city`, and `zip_code` SHALL be documented; active `districts` preference arrays SHALL NOT be listed as current fields (legacy `districts` MAY be noted as cleared on write). `users.profile.max_distance` SHALL be documented as an **active** integer kilometers preference collected in onboarding and Vibes (inclusive bounds 1–50 via domain constants), not as legacy/unused, and preference saves SHALL NOT be documented as clearing it to `null` by policy.
+### Requirement: Structured location fields on events
 
-#### Scenario: Schema overview events table has country city zip
+Events SHALL store required `street` and `house_number`, optional `address_line2`, plus existing `country` / `city` / `zip_code`. Catalog create/update/clone/seed writes SHALL compose display `address` from those structured fields (including `address_line2` when present) and SHALL persist that composed string on the event row. Derived `lat` / `lng` SHALL remain optional and SHALL be produced only by structured geocode success (or preserved on edit); soft-fail MAY leave them null. The system MUST NOT invent default-center coordinates when geocode fails.
+
+#### Scenario: Create event requires street and house number
+
+- **WHEN** `createEvent` is called without a non-empty `street` or `houseNumber`
+- **THEN** the create is rejected with a validation error
+
+#### Scenario: Create composes display address
+
+- **WHEN** `createEvent` succeeds with street, house number, optional line2, and Berlin zip
+- **THEN** the event row stores those structured fields
+- **AND** `address` equals the composed display string from the domain helper
+
+#### Scenario: Soft-fail geocode leaves coordinates null
+
+- **WHEN** an event is saved with valid structured location fields but geocode does not resolve
+- **THEN** the composed `address` is stored
+- **AND** `lat` and `lng` remain null (or unset)
+- **AND** no invented default-center coordinates are written
+
+### Requirement: Product schema overview documents location columns
+
+`docs/product/database/schema-overview.md` SHALL document `events.country`, `events.city`, `events.zip_code`, `events.street`, `events.house_number`, optional `events.address_line2`, and composed display `events.address` as current location fields (supported defaults/values for this release: `DE` / `berlin` + Berlin PLZ via the postal registry). It SHALL document matching structured fields (and zip parity) on `partners`. It SHALL NOT list `events.neighborhood` as a current field. Matching `users.profile` keys `country`, `city`, and `zip_code` SHALL be documented; active `districts` preference arrays SHALL NOT be listed as current fields (legacy `districts` MAY be noted as cleared on write). `users.profile.max_distance` SHALL be documented as optional **legacy** JSONB (integer km when present), not as an active onboarding/Vibes preference; preference/location saves SHALL be documented as leaving it untouched (neither required nor cleared by policy).
+
+#### Scenario: Schema overview events table has country city zip and structured street fields
+
 - **WHEN** an implementer reads the `events` table section in `docs/product/database/schema-overview.md`
-- **THEN** `country`, `city`, and `zip_code` are listed
+- **THEN** `country`, `city`, `zip_code`, `street`, `house_number`, and composed `address` are listed
+- **AND** optional `address_line2` is documented
 - **AND** `neighborhood` is not listed as a current column
 
+#### Scenario: Schema overview partners have zip parity and structured street fields
+
+- **WHEN** an implementer reads the `partners` table section in `docs/product/database/schema-overview.md`
+- **THEN** partner structured location fields and `country` / `city` / `zip_code` are listed
+
 #### Scenario: Schema overview profile keys use location trio
+
 - **WHEN** an implementer reads the `users.profile` field table in `docs/product/database/schema-overview.md`
 - **THEN** `country`, `city`, and `zip_code` are listed as location preference keys
 - **AND** `districts` is not listed as an active preference array
 
-#### Scenario: Schema overview documents active max_distance
+#### Scenario: Schema overview documents max_distance as legacy remnant
+
 - **WHEN** an implementer reads the `users.profile` field table in `docs/product/database/schema-overview.md`
-- **THEN** `max_distance` is listed as integer km collected in onboarding and Vibes
-- **AND** the overview does not label `max_distance` as legacy/unused or claim preference saves clear it by policy
+- **THEN** `max_distance` is listed as optional legacy JSONB (not collected in onboarding/Vibes)
+- **AND** the overview does not claim `max_distance` is an active preference required on location saves
 
 ### Requirement: Six-variant JPEG image pipeline
 
@@ -120,7 +152,7 @@ The `@unveiled/images` package SHALL generate the six JPEG variants using `@stan
 
 ### Requirement: Partner catalog domain rules
 
-The catalog domain layer in `@unveiled/db` SHALL enforce partner validation and lifecycle rules from `docs/product/features/admin-partners.feature`, including required name, contact email, and address; optional logo (upload or remote URL, not both); automatic `venue_check_in_token` generation when omitted on create; propagating partner display name changes to all related events' denormalized `partner_name`; and synchronous deletion of associated logo `images` row and bucket objects when a partner is deleted.
+The catalog domain layer in `@unveiled/db` SHALL enforce partner validation and lifecycle rules from `docs/product/features/admin-partners.feature`, including required name, contact email, structured location (`street`, `house_number`, optional `address_line2`, `country` / `city` / `zip_code` with Berlin postal validation and compose-on-write display `address`); logo rules as currently specified; automatic `venue_check_in_token` generation when omitted on create; propagating partner display name changes to all related events' denormalized `partner_name`; and synchronous deletion of associated logo `images` row and bucket objects when a partner is deleted.
 
 #### Scenario: Invalid partner email rejected
 
@@ -137,9 +169,14 @@ The catalog domain layer in `@unveiled/db` SHALL enforce partner validation and 
 - **WHEN** `createPartner` is called without a `venue_check_in_token`
 - **THEN** a unique token is generated and stored on the new partner row
 
+#### Scenario: Partner create requires structured location and composes address
+
+- **WHEN** `createPartner` is called with street, house number, optional line2, and a valid Berlin zip
+- **THEN** the partner row stores those structured fields and a composed display `address`
+
 ### Requirement: Event catalog domain rules
 
-The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature` (as aligned with ticket redemption and the extensible location model), including required image (upload buffer or remote URL path, exactly one source); required location via `country` / `city` / `zip_code` with defaults `DE` / `berlin` and postal validation through `validatePostalCode` (no `neighborhood`); redemption configuration rules (`SECRET_CODE` requires `secretCode`; `VOUCHER_PROMO` requires `eventWebsiteUrl` and does not require event-level `promoCode`; `VOUCHER_PDF` does not require event-level promo/code fields); default capacity 10, ticket type `SECRET_CODE`, timing mode `TIME_SLOT` (no secret-code mode default); computed `start_time_minutes` and `weekday` from `date_time` in Europe/Berlin; capacity recalculation when total capacity changes; and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8. Multi-slot series create (`createEventSeries` / series slot uniqueness) is not part of the catalog domain; reuse of catalog metadata for another occurrence SHALL use clone (see Requirement: Clone event). `createEvent` remains for blank creates.
+The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature` (as aligned with ticket redemption and the extensible location model), including required image (upload buffer or remote URL path, exactly one source); required location via `street` / `house_number` / optional `address_line2` / `country` / `city` / `zip_code` with defaults `DE` / `berlin`, postal validation through `validatePostalCode`, and compose-on-write display `address` (no `neighborhood`); redemption configuration rules (`SECRET_CODE` requires `secretCode`; `VOUCHER_PROMO` requires `eventWebsiteUrl` and does not require event-level `promoCode`; `VOUCHER_PDF` does not require event-level promo/code fields); default capacity 10, ticket type `SECRET_CODE`, timing mode `TIME_SLOT` (no secret-code mode default); computed `start_time_minutes` and `weekday` from `date_time` in Europe/Berlin; capacity recalculation when total capacity changes; and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8. Multi-slot series create (`createEventSeries` / series slot uniqueness) is not part of the catalog domain; reuse of catalog metadata for another occurrence SHALL use clone (see Requirement: Clone event). `createEvent` remains for blank creates.
 
 #### Scenario: Missing event image rejected
 
@@ -189,7 +226,7 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 
 ### Requirement: Clone event
 
-The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, ticket type, secret code when `SECRET_CODE`, website URL, accessibility/language/age metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The caller SHALL supply a `dateTime` (and any create-required redemption inventory for voucher types). The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.
+The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, structured location fields including composed address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, ticket type, secret code when `SECRET_CODE`, website URL, accessibility/language/age metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The caller SHALL supply a `dateTime` (and any create-required redemption inventory for voucher types). The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.
 
 #### Scenario: Clone creates a distinct event
 
@@ -197,25 +234,10 @@ The catalog domain SHALL provide an ADMIN-facing clone operation that creates a 
 - **THEN** a new event id exists with copied title/partner and the new dateTime
 - **AND** remaining_capacity equals total_capacity
 
-#### Scenario: Clone does not copy featured membership
+#### Scenario: Clone copies structured location fields
 
-- **WHEN** the source event is featured
-- **THEN** the cloned event is not automatically inserted into featured_events
-
-#### Scenario: Voucher clone requires inventory
-
-- **WHEN** cloning a `VOUCHER_PROMO` or `VOUCHER_PDF` event without a new inventory payload
-- **THEN** the clone is rejected
-
-#### Scenario: Clone copies gallery associations
-
-- **WHEN** the source event has gallery image join rows
-- **THEN** the cloned event has join rows pointing at the same image ids with the new event id
-
-#### Scenario: Missing source rejected
-
-- **WHEN** `cloneEvent` is called with an unknown source event id
-- **THEN** the operation fails with a not-found validation error and no new event row is created
+- **WHEN** `cloneEvent` is called for a source with street, house number, optional line2, zip, and composed address
+- **THEN** the new event has the same structured location fields and composed `address`
 
 ### Requirement: Admin image upload on the application host
 
@@ -290,7 +312,7 @@ Admin event create and edit forms SHALL NOT expose a remote image URL text field
 
 ### Requirement: Admin event form select controls
 
-Admin event create/edit and clone forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, barrier-free, languages, and target age groups where those fields appear. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`). Series create forms SHALL NOT be documented or offered.
+Admin event create/edit and clone forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, barrier-free, languages, subtitle language, and target age groups where those fields appear. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`). Series create forms SHALL NOT be documented or offered.
 
 #### Scenario: Partner field is a native select
 
@@ -329,7 +351,7 @@ Admin event create/edit forms SHALL use native HTML `<input type="number">` for 
 
 ### Requirement: Admin event languages and age groups multi-select
 
-The admin event form SHALL capture `languages` and `target_age_groups` as multi-value fields with predefined options, not comma-separated free text. Controls SHALL be native HTML (`<select multiple>` or a native checkbox group) posting the same array field names (`languages`, `target_age_groups`) accepted by admin parsers. Submitted values SHALL persist to the existing `text[]` and enum-array columns respectively. HeroUI `Select` / `ListBox` SHALL NOT be required for these fields.
+The admin event form SHALL capture `languages` and `target_age_groups` as multi-value fields with predefined options, not comma-separated free text. Both SHALL use native checkbox multi-selects posting the existing array field names (`languages`, `target_age_groups`). Submitted values SHALL persist to the existing `text[]` and enum-array columns respectively.
 
 #### Scenario: Admin selects multiple languages
 
@@ -348,11 +370,11 @@ The admin event form SHALL capture `languages` and `target_age_groups` as multi-
 
 ### Requirement: Admin event map geolocation with zoom
 
-The admin event form SHALL provide a MapLibre GL JS + OpenStreetMap map **preview** of the event address geocode instead of free-text latitude, longitude, or map zoom fields. Address SHALL be the only admin-authored location input. When geocoding succeeds (partner prefill and/or address re-geocode), the system SHALL persist derived `lat` and `lng` on the event record for detail and member map display. The system SHALL NOT persist `map_zoom`. Geocode failure SHALL NOT block saving a valid address and MUST NOT invent default-center coordinates.
+The admin event form SHALL provide a MapLibre GL JS + OpenStreetMap map **preview** of a **structured** event address geocode instead of free-text latitude, longitude, or map zoom fields. Structured street location (`street`, `house_number`, optional `address_line2` for display only) plus postal fields SHALL be the admin-authored location inputs. When geocoding succeeds (partner prefill and/or structured re-geocode), the system SHALL persist derived `lat` and `lng` on the event record for detail and member map display. The system SHALL NOT persist `map_zoom`. Geocode failure SHALL NOT block saving a valid structured location and MUST NOT invent default-center coordinates. Geocode queries SHALL exclude `address_line2`.
 
-#### Scenario: Admin location via address geocode preview
+#### Scenario: Admin location via structured geocode preview
 
-- **WHEN** an ADMIN enters or prefills an address that geocodes successfully and submits a valid form
+- **WHEN** an ADMIN enters or prefills structured location fields that geocode successfully and submits a valid form
 - **THEN** the event row stores the geocoded coordinates in `lat` and `lng`
 - **AND** the form does not require admin-authored map zoom
 
@@ -362,10 +384,10 @@ The admin event form SHALL provide a MapLibre GL JS + OpenStreetMap map **previe
 - **THEN** the map preview initializes centered at those coordinates using a default zoom
 - **AND** the marker is not offered as a drag-to-set authoring control
 
-#### Scenario: Geocode failure saves address without invented coordinates
+#### Scenario: Geocode failure saves composed address without invented coordinates
 
-- **WHEN** an ADMIN saves a valid address that cannot be geocoded and no prior resolved coordinates apply
-- **THEN** the event row stores the address
+- **WHEN** an ADMIN saves a valid structured location that cannot be geocoded and no prior resolved coordinates apply
+- **THEN** the event row stores the composed `address`
 - **AND** `lat` and `lng` remain null (or unset)
 - **AND** no `map_zoom` value is written
 
@@ -900,3 +922,27 @@ The system SHALL allow zero or more gallery images per event, stored separately 
 - **WHEN** a catalog event with gallery images is deleted
 - **THEN** `event_gallery_images` rows for that event are removed via FK cascade
 - **AND** the former gallery `images` rows and bucket objects are deleted in the same delete flow (respecting `skipBucket` in tests)
+
+### Requirement: Event subtitles metadata
+
+Events SHALL support `has_subtitles` (boolean, **not nullable**, default `false`) and nullable `subtitle_language` (single ISO 639-1 alpha-2 code, or null). Catalog create/update SHALL require a valid ISO 639-1 `subtitle_language` when `has_subtitles` is true, and SHALL persist `subtitle_language = null` when `has_subtitles` is false (coercing any submitted language away). Subtitle language is **not** limited to the spoken-event `EVENT_LANGUAGES` allowlist. Subtitle fields SHALL be independent of spoken `languages` / `language_independent` — any combination is valid. `cloneEvent` SHALL copy `has_subtitles` and `subtitle_language` from the source event. The product schema overview SHALL document both columns.
+
+#### Scenario: Create with subtitles requires allowlisted language
+
+- **WHEN** `createEvent` is called with `hasSubtitles = true` and a missing or non-allowlisted `subtitleLanguage`
+- **THEN** the create is rejected with a validation error
+
+#### Scenario: Create without subtitles clears language
+
+- **WHEN** `createEvent` is called with `hasSubtitles = false` and a non-null `subtitleLanguage`
+- **THEN** the persisted event has `has_subtitles = false` and `subtitle_language = null`
+
+#### Scenario: Subtitles independent of language-independent
+
+- **WHEN** `createEvent` succeeds with `languageIndependent = true`, `hasSubtitles = true`, and an allowlisted `subtitleLanguage`
+- **THEN** the event is persisted with `languages = null`, `has_subtitles = true`, and the given `subtitle_language`
+
+#### Scenario: Clone copies subtitle metadata
+
+- **WHEN** `cloneEvent` is called for a source event with `has_subtitles = true` and a subtitle language
+- **THEN** the cloned event has the same `has_subtitles` and `subtitle_language` values

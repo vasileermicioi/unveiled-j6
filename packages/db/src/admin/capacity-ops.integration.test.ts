@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { createTestImagePrebuilt } from "../catalog/test-image";
+import { structuredLocationFromAddress } from "../catalog/test-location";
 
 import {
   bookEvent,
@@ -50,7 +51,7 @@ describe("admin capacity ops (integration)", () => {
 
     const partner = await createPartner(httpDb, {
       name: `Capacity Ops Venue ${suffix.slice(0, 8)}`,
-      address: "Teststraße 11, Berlin",
+      ...structuredLocationFromAddress("Teststraße 11, Berlin"),
       contactEmail: `cap-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -60,7 +61,7 @@ describe("admin capacity ops (integration)", () => {
       partnerId: partner.id,
       title: `Capacity Ops Event ${suffix.slice(0, 8)}`,
       description: "Description",
-      address: "Teststraße 11, Berlin",
+      ...structuredLocationFromAddress("Teststraße 11, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -228,7 +229,7 @@ describe("admin capacity ops (integration)", () => {
         partnerId: partner.id,
         title: `Comp Event ${suffix.slice(0, 8)}`,
         description: "Comp",
-        address: "Teststraße 11, Berlin",
+        ...structuredLocationFromAddress("Teststraße 11, Berlin"),
         country: "DE",
         city: "berlin",
         zipCode: "10115",
@@ -343,7 +344,7 @@ describe("admin capacity ops (integration)", () => {
 
     const partner = await createPartner(httpDb, {
       name: `Restock Venue ${suffix.slice(0, 8)}`,
-      address: "Teststraße 11, Berlin",
+      ...structuredLocationFromAddress("Teststraße 11, Berlin"),
       contactEmail: `restock-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -353,7 +354,7 @@ describe("admin capacity ops (integration)", () => {
       partnerId: partner.id,
       title: `Restock Event ${suffix.slice(0, 8)}`,
       description: "Description",
-      address: "Teststraße 11, Berlin",
+      ...structuredLocationFromAddress("Teststraße 11, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

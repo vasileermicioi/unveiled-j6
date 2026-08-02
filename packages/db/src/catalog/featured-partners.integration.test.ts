@@ -13,6 +13,7 @@ import {
 } from "./featured-partners";
 import { createPartner, deletePartner, getPartnerById } from "./partners";
 import { createTestImagePrebuilt } from "./test-image";
+import { structuredLocationFromAddress } from "./test-location";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -32,7 +33,7 @@ describe("featured partners integration", () => {
 
     const first = await createPartner(db, {
       name: `Featured Partner A ${suffix}`,
-      address: "Featuredstraße 1, Berlin",
+      ...structuredLocationFromAddress("Featuredstraße 1, Berlin"),
       contactEmail: `featured-a-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -40,7 +41,7 @@ describe("featured partners integration", () => {
 
     const second = await createPartner(db, {
       name: `Featured Partner B ${suffix}`,
-      address: "Featuredstraße 2, Berlin",
+      ...structuredLocationFromAddress("Featuredstraße 2, Berlin"),
       contactEmail: `featured-b-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -48,7 +49,7 @@ describe("featured partners integration", () => {
 
     const notFeatured = await createPartner(db, {
       name: `Not Featured Partner ${suffix}`,
-      address: "Featuredstraße 3, Berlin",
+      ...structuredLocationFromAddress("Featuredstraße 3, Berlin"),
       contactEmail: `not-featured-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -115,21 +116,21 @@ describe("featured partners integration", () => {
 
     const first = await createPartner(db, {
       name: `Reorder Partner A ${suffix}`,
-      address: "Reorderstraße 1, Berlin",
+      ...structuredLocationFromAddress("Reorderstraße 1, Berlin"),
       contactEmail: `reorder-a-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
     const second = await createPartner(db, {
       name: `Reorder Partner B ${suffix}`,
-      address: "Reorderstraße 2, Berlin",
+      ...structuredLocationFromAddress("Reorderstraße 2, Berlin"),
       contactEmail: `reorder-b-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
     const third = await createPartner(db, {
       name: `Reorder Partner C ${suffix}`,
-      address: "Reorderstraße 3, Berlin",
+      ...structuredLocationFromAddress("Reorderstraße 3, Berlin"),
       contactEmail: `reorder-c-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -187,7 +188,7 @@ describe("featured partners integration", () => {
     const image = await createTestImage();
     const partner = await createPartner(db, {
       name: `Featured Cascade Partner ${suffix}`,
-      address: "Cascadestraße 1, Berlin",
+      ...structuredLocationFromAddress("Cascadestraße 1, Berlin"),
       contactEmail: `featured-cascade-${suffix}@example.com`,
       logoPrebuilt: image,
       skipUpload: true,

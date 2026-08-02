@@ -12,6 +12,7 @@ import { addFeaturedEvent } from "./featured-events";
 import { deleteImageRecord, persistPrebuiltImage } from "./images";
 import { createPartner, deletePartner } from "./partners";
 import { createTestImagePrebuilt } from "./test-image";
+import { structuredLocationFromAddress } from "./test-location";
 import { appendPromoCodes, getVoucherInventoryCounts } from "./voucher-inventory";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -51,7 +52,7 @@ describe("cloneEvent integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const partner = await createPartner(db, {
       name: `Clone Partner ${suffix}`,
-      address: "Clonestraße 1, Berlin",
+      ...structuredLocationFromAddress("Clonestraße 1, Berlin"),
       contactEmail: `clone-${suffix}@example.com`,
       logoPrebuilt: createTestImagePrebuilt(),
       skipUpload: true,
@@ -61,7 +62,7 @@ describe("cloneEvent integration", () => {
       partnerId: partner.id,
       title: `Clone Source ${suffix}`,
       description: "Source description",
-      address: "Clonestraße 1, Berlin",
+      ...structuredLocationFromAddress("Clonestraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -71,6 +72,9 @@ describe("cloneEvent integration", () => {
       creditPrice: 2,
       totalCapacity: 8,
       secretCode: `SRC${suffix.slice(0, 5)}`,
+      languageIndependent: true,
+      hasSubtitles: true,
+      subtitleLanguage: "EN",
       imagePrebuilt: createTestImagePrebuilt(),
       skipUpload: true,
     });
@@ -99,6 +103,10 @@ describe("cloneEvent integration", () => {
       expect(cloned.dateTime.getTime()).toBe(cloneDate.getTime());
       expect(cloned.totalCapacity).toBe(8);
       expect(cloned.remainingCapacity).toBe(8);
+      expect(cloned.languageIndependent).toBe(true);
+      expect(cloned.languages).toBeNull();
+      expect(cloned.hasSubtitles).toBe(true);
+      expect(cloned.subtitleLanguage).toBe("EN");
 
       const galleryIds = await listEventGalleryImageIds(db, cloned.id);
       expect(galleryIds).toEqual([galleryId]);
@@ -124,7 +132,7 @@ describe("cloneEvent integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const partner = await createPartner(db, {
       name: `Clone Voucher Partner ${suffix}`,
-      address: "Clonestraße 2, Berlin",
+      ...structuredLocationFromAddress("Clonestraße 2, Berlin"),
       contactEmail: `clone-v-${suffix}@example.com`,
       logoPrebuilt: createTestImagePrebuilt(),
       skipUpload: true,
@@ -134,7 +142,7 @@ describe("cloneEvent integration", () => {
       partnerId: partner.id,
       title: `Clone Voucher Source ${suffix}`,
       description: "Voucher source",
-      address: "Clonestraße 2, Berlin",
+      ...structuredLocationFromAddress("Clonestraße 2, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

@@ -10,6 +10,7 @@ import {
 import type { Locale } from "./locale";
 import {
   getAgeGroupLabel,
+  getAllPreferredLanguageOptions,
   getInterestLabel,
   getMoodLabel,
   getOnboardingCopy,
@@ -39,23 +40,48 @@ describe("onboarding-content i18n", () => {
   test("language search placeholder is localized", () => {
     expect(getOnboardingCopy("en").languageSearchPlaceholder).toBe("Search languages");
     expect(getOnboardingCopy("de").languageSearchPlaceholder).toBe("Sprachen suchen");
+    expect(getOnboardingCopy("en").languageSearchHint).toMatch(/search/i);
+    expect(getOnboardingCopy("de").languageSearchHint).toMatch(/suche/i);
   });
 
-  test("preferred language options pin DE and EN then sort by locale label", () => {
-    const en = getPreferredLanguageOptions("en");
+  test("all preferred language options include the full allowlist for native selects", () => {
+    const en = getAllPreferredLanguageOptions("en");
+    expect(en).toHaveLength(PREFERRED_LANGUAGES.length);
     expect(en[0]?.code).toBe("DE");
     expect(en[1]?.code).toBe("EN");
+    expect(new Set(en.map((option) => option.code)).size).toBe(PREFERRED_LANGUAGES.length);
+    const restLabels = en.slice(2).map((option) => option.label);
+    expect(restLabels).toEqual([...restLabels].sort((a, b) => a.localeCompare(b, "en")));
+  });
+
+  test("preferred language options pin Berlin-common featured then sort remainder by label", () => {
+    const en = getPreferredLanguageOptions("en");
+    expect(en.slice(0, 12).map((option) => option.code)).toEqual([
+      "DE",
+      "EN",
+      "TR",
+      "RU",
+      "PL",
+      "AR",
+      "FR",
+      "ES",
+      "IT",
+      "UK",
+      "VI",
+      "PT",
+    ]);
     expect(en[0]?.label).toBe("German");
     expect(en[1]?.label).toBe("English");
     expect(en.some((option) => option.code === "Non-Verbal")).toBe(false);
 
-    const restLabels = en.slice(2).map((option) => option.label);
+    const restLabels = en.slice(12).map((option) => option.label);
     expect(restLabels).toEqual([...restLabels].sort((a, b) => a.localeCompare(b, "en")));
 
     const de = getPreferredLanguageOptions("de");
     expect(de[0]?.label).toBe("Deutsch");
     expect(de[1]?.label).toBe("Englisch");
-    const deRest = de.slice(2).map((option) => option.label);
+    expect(de[2]?.code).toBe("TR");
+    const deRest = de.slice(12).map((option) => option.label);
     expect(deRest).toEqual([...deRest].sort((a, b) => a.localeCompare(b, "de")));
   });
 
@@ -110,9 +136,6 @@ describe("onboarding-content i18n", () => {
     expect(getOnboardingCopy("de").cityDisplay).toBe("Berlin");
     expect(getOnboardingCopy("de").zipCodeLabel).toBe("PLZ");
     expect(getOnboardingCopy("de").zipCodeHint).toContain("Berlin");
-    expect(getOnboardingCopy("de").radiusLabel).toBe("Wie weit bist du bereit zu fahren?");
-    expect(getOnboardingCopy("de").km).toBe("km");
-    expect(getOnboardingCopy("de").invalidMaxDistance).toContain("1");
     expect(getOnboardingCopy("en").locationLabel).toBe("YOUR LOCATION");
     expect(getOnboardingCopy("en").countryLabel).toBe("Country");
     expect(getOnboardingCopy("en").countryDisplay).toBe("Germany");
@@ -120,8 +143,5 @@ describe("onboarding-content i18n", () => {
     expect(getOnboardingCopy("en").cityDisplay).toBe("Berlin");
     expect(getOnboardingCopy("en").zipCodeLabel).toBe("Zip code");
     expect(getOnboardingCopy("en").zipCodeHint).toContain("Berlin");
-    expect(getOnboardingCopy("en").radiusLabel).toBe("How far will you travel?");
-    expect(getOnboardingCopy("en").km).toBe("km");
-    expect(getOnboardingCopy("en").invalidMaxDistance).toContain("50");
   });
 });

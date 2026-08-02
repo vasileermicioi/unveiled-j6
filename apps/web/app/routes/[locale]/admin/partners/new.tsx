@@ -30,7 +30,12 @@ export const POST = createRoute(async (c) => {
 
     await createPartner(db, {
       name: values.name,
-      address: values.address,
+      street: values.street,
+      houseNumber: values.houseNumber,
+      addressLine2: values.addressLine2,
+      zipCode: values.zipCode,
+      country: values.country,
+      city: values.city,
       contactEmail: values.contactEmail,
       logoUpload: values.logoUpload,
       logoPrebuilt: values.logoPrebuilt,
@@ -57,7 +62,12 @@ export const POST = createRoute(async (c) => {
               ? {
                   name: values.name,
                   contactEmail: values.contactEmail,
-                  address: values.address,
+                  street: values.street,
+                  houseNumber: values.houseNumber,
+                  addressLine2: values.addressLine2,
+                  zipCode: values.zipCode,
+                  country: values.country,
+                  city: values.city,
                 }
               : undefined
           }

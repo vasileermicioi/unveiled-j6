@@ -33,7 +33,7 @@ export const WEEKDAYS = [
   "Saturday",
   "Sunday",
 ] as const;
-/** Member onboarding / profile preferred languages (DE/EN first; UI sorts the rest by label). */
+/** Member onboarding / profile preferred languages (full allowlist). */
 export const PREFERRED_LANGUAGES = [
   "DE",
   "EN",
@@ -66,14 +66,30 @@ export const PREFERRED_LANGUAGES = [
   "ZH",
 ] as const;
 
+/**
+ * Default-visible languages in searchable multi-selects (Berlin-oriented).
+ * Full `PREFERRED_LANGUAGES` remain available via search; UI pins these first.
+ */
+export const FEATURED_PREFERRED_LANGUAGES = [
+  "DE",
+  "EN",
+  "TR",
+  "RU",
+  "PL",
+  "AR",
+  "FR",
+  "ES",
+  "IT",
+  "UK",
+  "VI",
+  "PT",
+] as const satisfies ReadonlyArray<(typeof PREFERRED_LANGUAGES)[number]>;
+
 /** Admin event metadata languages — same allowlist as member preferred languages. */
 export const EVENT_LANGUAGES = PREFERRED_LANGUAGES;
-
-/** Inclusive km bounds for `users.profile.max_distance` (active preference again). */
-export const MAX_DISTANCE_MIN = 1;
-export const MAX_DISTANCE_MAX = 50;
 
 export type AgeGroup = (typeof AGE_GROUPS)[number];
 export type EventType = (typeof EVENT_TYPES)[number];
 export type PreferredLanguage = (typeof PREFERRED_LANGUAGES)[number];
+export type FeaturedPreferredLanguage = (typeof FEATURED_PREFERRED_LANGUAGES)[number];
 export type EventLanguage = PreferredLanguage;

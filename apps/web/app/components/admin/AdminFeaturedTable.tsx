@@ -1,6 +1,6 @@
 "use client";
 
-import { Paragraph, Table } from "@heroui/react";
+import { Paragraph, Surface, Table } from "@heroui/react";
 import type { FeaturedEventRow } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
@@ -13,9 +13,10 @@ import { adminEventGalleryPath, adminFeaturedRemovePath } from "./admin-tabs";
 type AdminFeaturedTableProps = {
   locale: Locale;
   events: FeaturedEventRow[];
+  imageUrls: Record<string, string | undefined>;
 };
 
-export function AdminFeaturedTable({ locale, events }: AdminFeaturedTableProps) {
+export function AdminFeaturedTable({ locale, events, imageUrls }: AdminFeaturedTableProps) {
   const copy = getAdminCopy(locale);
 
   if (events.length === 0) {
@@ -27,6 +28,7 @@ export function AdminFeaturedTable({ locale, events }: AdminFeaturedTableProps) 
       <Table.ScrollContainer>
         <Table.Content>
           <Table.Header>
+            <Table.Column isRowHeader>{copy.tableLogo}</Table.Column>
             <Table.Column isRowHeader>{copy.tableTitle}</Table.Column>
             <Table.Column isRowHeader>{copy.tablePartner}</Table.Column>
             <Table.Column isRowHeader>{copy.tableDate}</Table.Column>
@@ -37,6 +39,23 @@ export function AdminFeaturedTable({ locale, events }: AdminFeaturedTableProps) 
           <Table.Body>
             {events.map((event) => (
               <Table.Row key={event.id}>
+                <Table.Cell>
+                  {imageUrls[event.id] ? (
+                    <Surface className="admin-table__logo" variant="transparent">
+                      <img alt="" src={imageUrls[event.id]} />
+                    </Surface>
+                  ) : (
+                    <Surface
+                      aria-hidden
+                      className="admin-table__logo admin-table__logo--placeholder"
+                      variant="transparent"
+                    >
+                      <Paragraph color="muted" size="sm">
+                        {copy.imagePlaceholderLabel}
+                      </Paragraph>
+                    </Surface>
+                  )}
+                </Table.Cell>
                 <Table.Cell>{event.title}</Table.Cell>
                 <Table.Cell>{event.partnerName}</Table.Cell>
                 <Table.Cell>{formatEventDateTime(event.dateTime, locale)}</Table.Cell>

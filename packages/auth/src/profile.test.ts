@@ -16,7 +16,6 @@ const validPreferences = {
   moods: ["Leicht"],
   interests_other: null as string | null,
   zipCode: "10115",
-  maxDistance: 10,
   timing: ["Weekend"],
   preferred_days: ["Saturday"],
   preferred_languages: ["DE"],
@@ -42,7 +41,7 @@ describe("validateCulturalPreferencesPayload", () => {
     ).toThrow(ProfileValidationError);
   });
 
-  test("accepts valid preference payload and persists max_distance", () => {
+  test("accepts valid preference payload without writing max_distance", () => {
     expect(validateCulturalPreferencesPayload(validPreferences)).toEqual({
       interests: ["Kino"],
       moods: ["Leicht"],
@@ -51,21 +50,11 @@ describe("validateCulturalPreferencesPayload", () => {
       city: "berlin",
       zip_code: "10115",
       districts: null,
-      max_distance: 10,
       timing: ["Weekend"],
       preferred_days: ["Saturday"],
       preferred_languages: ["DE"],
       accessibility: false,
     });
-  });
-
-  test("rejects out-of-range max_distance on preference save", () => {
-    expect(() =>
-      validateCulturalPreferencesPayload({
-        ...validPreferences,
-        maxDistance: 0,
-      }),
-    ).toThrow(ProfileValidationError);
   });
 
   test("accepts Other interest with free text on profile preferences", () => {
@@ -123,6 +112,7 @@ describe("updateCulturalPreferences", () => {
           age_group: "26-35",
           interests: ["Theater"],
           moods: ["Leicht"],
+          max_distance: 10,
         },
         behavior: {
           onboarding_step: null,

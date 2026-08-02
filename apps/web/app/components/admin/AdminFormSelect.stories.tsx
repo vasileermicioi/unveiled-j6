@@ -32,12 +32,14 @@ export const MultiValueCheckbox: Story = () => (
     <CheckboxMultiSelect
       enableSearch
       filterPlaceholder={copy.languagesSearchPlaceholder}
+      initialVisibleCount={2}
       name="languages"
       options={[
         { value: "de", label: "Deutsch" },
         { value: "en", label: "English" },
         { value: "fr", label: "Français" },
       ]}
+      searchHint={copy.languagesSearchHint}
       selected={["de", "en"]}
     />
     <Description>

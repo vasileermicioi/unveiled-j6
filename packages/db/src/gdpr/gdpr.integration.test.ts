@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { createTestImagePrebuilt } from "../catalog/test-image";
+import { structuredLocationFromAddress } from "../catalog/test-location";
 
 import {
   anonymizeUserAccount,
@@ -46,7 +47,7 @@ describe("gdpr domain (integration)", () => {
 
     const partner = await createPartner(httpDb, {
       name: `GDPR Venue ${suffix.slice(0, 8)}`,
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       contactEmail: `gdpr-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -56,7 +57,7 @@ describe("gdpr domain (integration)", () => {
       partnerId: partner.id,
       title: `GDPR Event ${suffix.slice(0, 8)}`,
       description: "Description",
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

@@ -14,6 +14,7 @@ import { createEvent, deleteEvent, getEventById } from "./events";
 import { persistPrebuiltImage } from "./images";
 import { createPartner, deletePartner } from "./partners";
 import { createTestImagePrebuilt } from "./test-image";
+import { structuredLocationFromAddress } from "./test-location";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -32,7 +33,7 @@ describe("event gallery images integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const partner = await createPartner(db, {
       name: `Gallery Partner ${suffix}`,
-      address: "Gallerystraße 1, Berlin",
+      ...structuredLocationFromAddress("Gallerystraße 1, Berlin"),
       contactEmail: `gallery-${suffix}@example.com`,
       logoPrebuilt: createTestImagePrebuilt(),
       skipUpload: true,
@@ -42,7 +43,7 @@ describe("event gallery images integration", () => {
       partnerId: partner.id,
       title: `Gallery Event ${suffix}`,
       description: "Description",
-      address: "Gallerystraße 1, Berlin",
+      ...structuredLocationFromAddress("Gallerystraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -101,7 +102,7 @@ describe("event gallery images integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const partner = await createPartner(db, {
       name: `Gallery Reorder ${suffix}`,
-      address: "Reorderstraße 1, Berlin",
+      ...structuredLocationFromAddress("Reorderstraße 1, Berlin"),
       contactEmail: `gallery-reorder-${suffix}@example.com`,
       logoPrebuilt: createTestImagePrebuilt(),
       skipUpload: true,
@@ -111,7 +112,7 @@ describe("event gallery images integration", () => {
       partnerId: partner.id,
       title: `Reorder Gallery ${suffix}`,
       description: "Description",
-      address: "Reorderstraße 1, Berlin",
+      ...structuredLocationFromAddress("Reorderstraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -163,7 +164,7 @@ describe("event gallery images integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const partner = await createPartner(db, {
       name: `Gallery Cascade ${suffix}`,
-      address: "Cascadestraße 2, Berlin",
+      ...structuredLocationFromAddress("Cascadestraße 2, Berlin"),
       contactEmail: `gallery-cascade-${suffix}@example.com`,
       logoPrebuilt: createTestImagePrebuilt(),
       skipUpload: true,
@@ -173,7 +174,7 @@ describe("event gallery images integration", () => {
       partnerId: partner.id,
       title: `Cascade Gallery ${suffix}`,
       description: "Description",
-      address: "Cascadestraße 2, Berlin",
+      ...structuredLocationFromAddress("Cascadestraße 2, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

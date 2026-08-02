@@ -21,6 +21,7 @@ import {
 } from "./partners";
 import { runDemoSeed, shouldRunDemoSeed } from "./seed";
 import { createTestImagePrebuilt } from "./test-image";
+import { structuredLocationFromAddress } from "./test-location";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -40,7 +41,7 @@ describe("catalog integration", () => {
     const image = await createTestImage();
     const partner = await createPartner(db, {
       name: "Rename Test Venue",
-      address: "Teststraße 1, Berlin",
+      ...structuredLocationFromAddress("Teststraße 1, Berlin"),
       contactEmail: `rename-${crypto.randomUUID()}@example.com`,
       logoPrebuilt: logo,
       skipUpload: true,
@@ -50,7 +51,7 @@ describe("catalog integration", () => {
       partnerId: partner.id,
       title: "Rename Test Event",
       description: "Description",
-      address: "Teststraße 1, Berlin",
+      ...structuredLocationFromAddress("Teststraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -85,7 +86,7 @@ describe("catalog integration", () => {
     const logo = await createTestImage();
     const partner = await createPartner(db, {
       name: "Staged Image Venue",
-      address: "Teststraße 3, Berlin",
+      ...structuredLocationFromAddress("Teststraße 3, Berlin"),
       contactEmail: `staged-image-${crypto.randomUUID()}@example.com`,
       logoPrebuilt: logo,
       skipUpload: true,
@@ -101,7 +102,7 @@ describe("catalog integration", () => {
           partnerId: partner.id,
           title: "Staged Image Event",
           description: "Description",
-          address: "Teststraße 3, Berlin",
+          ...structuredLocationFromAddress("Teststraße 3, Berlin"),
           country: "DE",
           city: "berlin",
           zipCode: "10115",
@@ -125,7 +126,7 @@ describe("catalog integration", () => {
         partnerId: partner.id,
         title: "Staged Image Event",
         description: "Description",
-        address: "Teststraße 3, Berlin",
+        ...structuredLocationFromAddress("Teststraße 3, Berlin"),
         country: "DE",
         city: "berlin",
         zipCode: "10115",
@@ -159,7 +160,7 @@ describe("catalog integration", () => {
     const logo = await createTestImage();
     const partner = await createPartner(db, {
       name: "Retain Prebuilt Venue",
-      address: "Teststraße 4, Berlin",
+      ...structuredLocationFromAddress("Teststraße 4, Berlin"),
       contactEmail: `retain-prebuilt-${crypto.randomUUID()}@example.com`,
       logoPrebuilt: logo,
       skipUpload: true,
@@ -174,7 +175,7 @@ describe("catalog integration", () => {
           partnerId: partner.id,
           title: "Retain Prebuilt Event",
           description: "Description",
-          address: "Teststraße 4, Berlin",
+          ...structuredLocationFromAddress("Teststraße 4, Berlin"),
           country: "DE",
           city: "berlin",
           zipCode: "10115",
@@ -210,7 +211,7 @@ describe("catalog integration", () => {
     const originalImage = await createTestImage();
     const partner = await createPartner(db, {
       name: "Image Replace Venue",
-      address: "Teststraße 2, Berlin",
+      ...structuredLocationFromAddress("Teststraße 2, Berlin"),
       contactEmail: `image-replace-${crypto.randomUUID()}@example.com`,
       logoPrebuilt: logo,
       skipUpload: true,
@@ -220,7 +221,7 @@ describe("catalog integration", () => {
       partnerId: partner.id,
       title: "Image Replace Event",
       description: "Description",
-      address: "Teststraße 2, Berlin",
+      ...structuredLocationFromAddress("Teststraße 2, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -269,7 +270,7 @@ describe("catalog integration", () => {
     const db = createDb(databaseUrl);
     const partner = await createPartner(db, {
       name: "Seed Guard Venue",
-      address: "Seedstraße 1, Berlin",
+      ...structuredLocationFromAddress("Seedstraße 1, Berlin"),
       contactEmail: `seed-guard-${crypto.randomUUID()}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -293,14 +294,14 @@ describe("catalog integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const older = await createPartner(db, {
       name: `Older Partner ${suffix}`,
-      address: "Olderstraße 1, Berlin",
+      ...structuredLocationFromAddress("Olderstraße 1, Berlin"),
       contactEmail: `older-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
     });
     const newer = await createPartner(db, {
       name: `Newer Partner ${suffix}`,
-      address: "Newerstraße 1, Berlin",
+      ...structuredLocationFromAddress("Newerstraße 1, Berlin"),
       contactEmail: `newer-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -334,7 +335,7 @@ describe("catalog integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const partner = await createPartner(db, {
       name: `Searchable Venue ${suffix}`,
-      address: "Searchstraße 1, Berlin",
+      ...structuredLocationFromAddress("Searchstraße 1, Berlin"),
       contactEmail: `unique-email-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -363,7 +364,7 @@ describe("catalog integration", () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const partner = await createPartner(db, {
       name: `Event Search Partner ${suffix}`,
-      address: "Eventstraße 1, Berlin",
+      ...structuredLocationFromAddress("Eventstraße 1, Berlin"),
       contactEmail: `event-search-${suffix}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -373,7 +374,7 @@ describe("catalog integration", () => {
       partnerId: partner.id,
       title: `Older Event ${suffix}`,
       description: "Description",
-      address: "Eventstraße 1, Berlin",
+      ...structuredLocationFromAddress("Eventstraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -389,7 +390,7 @@ describe("catalog integration", () => {
       partnerId: partner.id,
       title: `Newer Event ${suffix}`,
       description: "Description",
-      address: "Eventstraße 1, Berlin",
+      ...structuredLocationFromAddress("Eventstraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -436,7 +437,7 @@ describe("catalog integration", () => {
       [1, 2, 3].map((index) =>
         createPartner(db, {
           name: `Paged Partner ${suffix}-${index}`,
-          address: `Pagestraße ${index}, Berlin`,
+          ...structuredLocationFromAddress(`Pagestraße ${index}, Berlin`),
           contactEmail: `paged-${suffix}-${index}@example.com`,
           logoPrebuilt: createTestImagePrebuilt(),
           skipUpload: true,
@@ -471,7 +472,7 @@ describe("catalog integration", () => {
     const image = await createTestImage();
     const partner = await createPartner(db, {
       name: "Upcoming Test Venue",
-      address: "Teststraße 2, Berlin",
+      ...structuredLocationFromAddress("Teststraße 2, Berlin"),
       contactEmail: `upcoming-${crypto.randomUUID()}@example.com`,
       logoPrebuilt: await createTestImage(),
       skipUpload: true,
@@ -485,7 +486,7 @@ describe("catalog integration", () => {
       partnerId: partner.id,
       title: "Later Upcoming Event",
       description: "Description",
-      address: "Teststraße 2, Berlin",
+      ...structuredLocationFromAddress("Teststraße 2, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -502,7 +503,7 @@ describe("catalog integration", () => {
       partnerId: partner.id,
       title: "Sooner Upcoming Event",
       description: "Description",
-      address: "Teststraße 2, Berlin",
+      ...structuredLocationFromAddress("Teststraße 2, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -519,7 +520,7 @@ describe("catalog integration", () => {
       partnerId: partner.id,
       title: "Past Event",
       description: "Description",
-      address: "Teststraße 2, Berlin",
+      ...structuredLocationFromAddress("Teststraße 2, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

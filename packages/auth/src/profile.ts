@@ -61,7 +61,6 @@ export function validateCulturalPreferencesPayload(
       zipCode: payload.zipCode,
       country: payload.country,
       city: payload.city,
-      maxDistance: payload.maxDistance,
     });
     const timingUpdate = validateOnboardingStepPayload("timing", {
       timing: payload.timing,

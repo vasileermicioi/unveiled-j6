@@ -143,7 +143,7 @@ export function AdminUserDetailPage({
     { label: copy.usersPrefDays, value: formatList(profile.preferred_days) },
     { label: copy.usersPrefLanguages, value: formatList(profile.preferred_languages) },
     { label: copy.usersPrefAgeGroup, value: profile.age_group ?? null },
-    // Show travel distance only when set; omit when null (legacy / unset) — do not invent a value.
+    // Legacy remnant: show travel distance only when non-null — do not invent a value.
     ...(profile.max_distance == null
       ? []
       : [{ label: copy.usersPrefRadius, value: `${profile.max_distance} km` }]),

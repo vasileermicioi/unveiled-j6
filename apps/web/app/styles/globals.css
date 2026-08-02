@@ -906,14 +906,6 @@
 
   /* EventCard theme rules live in packages/ui brand-theme.css */
 
-  .event-detail__hero-image {
-    display: block;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    border: 2px solid var(--border);
-  }
-
   .event-detail__cta-card {
     border: 2px solid var(--border);
   }
@@ -936,10 +928,14 @@
   }
 
   .event-detail--checkout__hero {
-    display: block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
     max-width: none;
     min-width: 0;
+    border: 2px solid var(--color-brand-dark);
+    background-color: transparent;
   }
 
   .event-detail--checkout__eyebrow {
@@ -1121,13 +1117,13 @@
 
   .event-detail--checkout__hero-image {
     display: block;
-    width: 100%;
-    max-width: none;
+    width: auto;
+    max-width: 100%;
     height: auto;
     object-fit: contain;
     object-position: center;
-    border: 2px solid var(--color-brand-dark);
-    background-color: var(--color-brand-cream);
+    border: none;
+    background-color: transparent;
   }
 
   .event-detail--checkout__card {

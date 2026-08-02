@@ -3,22 +3,46 @@ export type GeocodeResult = {
   lng: number;
 };
 
+/** Structured Berlin location for Nominatim (address_line2 intentionally omitted). */
+export type StructuredBerlinLocation = {
+  street: string;
+  houseNumber: string;
+  zipCode: string;
+  /** Canonical city key; defaults to berlin. */
+  city?: string | null;
+  country?: string | null;
+};
+
 const BERLIN_VIEWBOX = "13.0883,52.3383,13.7611,52.6755";
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const REQUEST_TIMEOUT_MS = 5_000;
 
+function cityDisplayLabel(city: string | null | undefined): string {
+  const key = (city ?? "berlin").trim().toLowerCase() || "berlin";
+  return key === "berlin" ? "Berlin" : key;
+}
+
 /**
- * Soft-fail Berlin-biased Nominatim geocode for admin partner address prefill.
- * Returns null on empty address, network/CORS/timeout, or empty results.
+ * Soft-fail Berlin-biased Nominatim **structured** geocode for admin location preview.
+ * Does not accept or send address_line2. Returns null on empty required fields,
+ * network/CORS/timeout, or empty results. Never invents default-center coordinates.
  */
-export async function geocodeBerlinAddress(address: string): Promise<GeocodeResult | null> {
-  const query = address.trim();
-  if (!query) {
+export async function geocodeBerlinAddress(
+  location: StructuredBerlinLocation,
+): Promise<GeocodeResult | null> {
+  const street = location.street.trim();
+  const houseNumber = location.houseNumber.trim();
+  const zipCode = location.zipCode.trim();
+  if (!street || !houseNumber || !zipCode) {
     return null;
   }
 
   const url = new URL(NOMINATIM_URL);
-  url.searchParams.set("q", query);
+  // Nominatim structured search: street = "<housenumber> <street>"
+  url.searchParams.set("street", `${houseNumber} ${street}`);
+  url.searchParams.set("city", cityDisplayLabel(location.city));
+  url.searchParams.set("postalcode", zipCode);
+  url.searchParams.set("country", "Germany");
   url.searchParams.set("format", "json");
   url.searchParams.set("limit", "1");
   url.searchParams.set("countrycodes", "de");

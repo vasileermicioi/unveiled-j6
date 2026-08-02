@@ -12,6 +12,7 @@ import {
 } from "./featured-events";
 import { createPartner, deletePartner } from "./partners";
 import { createTestImagePrebuilt } from "./test-image";
+import { structuredLocationFromAddress } from "./test-location";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -31,7 +32,7 @@ describe("featured events integration", () => {
     const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Featured Partner ${suffix}`,
-      address: "Featuredstraße 1, Berlin",
+      ...structuredLocationFromAddress("Featuredstraße 1, Berlin"),
       contactEmail: `featured-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -43,7 +44,7 @@ describe("featured events integration", () => {
       partnerId: partner.id,
       title: `Featured Upcoming ${suffix}`,
       description: "Description",
-      address: "Featuredstraße 1, Berlin",
+      ...structuredLocationFromAddress("Featuredstraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -60,7 +61,7 @@ describe("featured events integration", () => {
       partnerId: partner.id,
       title: `Featured Past ${suffix}`,
       description: "Description",
-      address: "Featuredstraße 1, Berlin",
+      ...structuredLocationFromAddress("Featuredstraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -77,7 +78,7 @@ describe("featured events integration", () => {
       partnerId: partner.id,
       title: `Not Featured ${suffix}`,
       description: "Description",
-      address: "Featuredstraße 1, Berlin",
+      ...structuredLocationFromAddress("Featuredstraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -154,7 +155,7 @@ describe("featured events integration", () => {
     const partnerImage = await createTestImage();
     const partner = await createPartner(db, {
       name: `Featured Cascade ${suffix}`,
-      address: "Cascadestraße 1, Berlin",
+      ...structuredLocationFromAddress("Cascadestraße 1, Berlin"),
       contactEmail: `featured-cascade-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -164,7 +165,7 @@ describe("featured events integration", () => {
       partnerId: partner.id,
       title: `Cascade Featured ${suffix}`,
       description: "Description",
-      address: "Cascadestraße 1, Berlin",
+      ...structuredLocationFromAddress("Cascadestraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

@@ -2,6 +2,7 @@ import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 
 import type { CreateEventInput } from "./events";
 import type { CreatePartnerInput } from "./partners";
+import { structuredLocationFromAddress } from "./test-location";
 
 /** Matches `ADMIN_LIST_PAGE_SIZE` in apps/web/app/lib/admin-content.ts */
 export const ADMIN_LIST_PAGE_SIZE = 25;
@@ -28,7 +29,7 @@ export function buildPaginationPartnerInput(
   const label = formatPaginationPartnerName(index);
   return {
     name: label,
-    address: `Paginationstraße ${index}, 10115 Berlin`,
+    ...structuredLocationFromAddress(`Paginationstraße ${index}, 10115 Berlin`),
     contactEmail: `pagination-partner-${String(index).padStart(2, "0")}@example.test`,
     logoPrebuilt,
     skipUpload,
@@ -52,10 +53,7 @@ export function buildPaginationEventInput(
     partnerId,
     title: formatPaginationEventTitle(index),
     description: `Synthetic catalog row ${index} for admin list pagination testing.`,
-    address: `Paginationstraße ${index}, 10115 Berlin`,
-    country: "DE",
-    city: "berlin",
-    zipCode: "10115",
+    ...structuredLocationFromAddress(`Paginationstraße ${index}, 10115 Berlin`),
     category: "Theater",
     eventType: "Performance",
     tags: ["pagination-seed"],

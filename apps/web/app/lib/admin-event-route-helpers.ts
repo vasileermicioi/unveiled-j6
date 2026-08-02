@@ -8,13 +8,19 @@ import {
   formatEventTimeInput,
 } from "./admin-event-form";
 
-export type PartnerOption = Pick<Partner, "id" | "name" | "address">;
+export type PartnerOption = Pick<
+  Partner,
+  "id" | "name" | "street" | "houseNumber" | "addressLine2" | "zipCode"
+>;
 
 export function toPartnerOptions(partners: Partner[]): PartnerOption[] {
   return partners.map((partner) => ({
     id: partner.id,
     name: partner.name,
-    address: partner.address,
+    street: partner.street,
+    houseNumber: partner.houseNumber,
+    addressLine2: partner.addressLine2,
+    zipCode: partner.zipCode,
   }));
 }
 
@@ -41,7 +47,9 @@ export function eventToFormDefaults(
     partnerId: event.partnerId,
     title: event.title,
     description: event.description,
-    address: event.address,
+    street: event.street,
+    houseNumber: event.houseNumber,
+    addressLine2: event.addressLine2,
     zipCode: event.zipCode,
     country: event.country,
     city: event.city,
@@ -61,6 +69,8 @@ export function eventToFormDefaults(
     barrierFree: event.barrierFree,
     languageIndependent: event.languageIndependent,
     languages: event.languages,
+    hasSubtitles: event.hasSubtitles,
+    subtitleLanguage: event.subtitleLanguage,
     targetAgeGroups: event.targetAgeGroups,
     lat: event.lat,
     lng: event.lng,
@@ -77,7 +87,9 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     partnerId: values.partnerId,
     title: values.title,
     description: values.description,
-    address: values.address,
+    street: values.street,
+    houseNumber: values.houseNumber,
+    addressLine2: values.addressLine2,
     zipCode: values.zipCode,
     country: values.country,
     city: values.city,
@@ -95,6 +107,8 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     barrierFree: values.barrierFree,
     languageIndependent: values.languageIndependent,
     languages: values.languages,
+    hasSubtitles: values.hasSubtitles,
+    subtitleLanguage: values.subtitleLanguage,
     targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,

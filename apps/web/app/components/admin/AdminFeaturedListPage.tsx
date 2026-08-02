@@ -11,9 +11,10 @@ import { adminFeaturedAddPath } from "./admin-tabs";
 type AdminFeaturedListPageProps = {
   locale: Locale;
   events: FeaturedEventRow[];
+  imageUrls: Record<string, string | undefined>;
 };
 
-export function AdminFeaturedListPage({ locale, events }: AdminFeaturedListPageProps) {
+export function AdminFeaturedListPage({ locale, events, imageUrls }: AdminFeaturedListPageProps) {
   const copy = getAdminCopy(locale);
 
   return (
@@ -29,7 +30,7 @@ export function AdminFeaturedListPage({ locale, events }: AdminFeaturedListPageP
       subtitle={copy.featuredSubtitle}
       title={copy.featuredTitle}
     >
-      <AdminFeaturedTable events={events} locale={locale} />
+      <AdminFeaturedTable events={events} imageUrls={imageUrls} locale={locale} />
     </AdminPageShell>
   );
 }

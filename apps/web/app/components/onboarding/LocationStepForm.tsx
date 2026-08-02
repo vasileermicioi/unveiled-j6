@@ -1,7 +1,6 @@
 "use client";
 
 import { Description, Form, Label, Surface } from "@heroui/react";
-import { MAX_DISTANCE_MAX, MAX_DISTANCE_MIN } from "@unveiled/auth/constants";
 import type { UserProfile } from "@unveiled/db";
 
 import type { Locale } from "../../lib/locale";
@@ -64,26 +63,6 @@ export function LocationStepForm({ locale, profile }: LocationStepFormProps) {
           type="text"
         />
         <Description>{copy.zipCodeHint}</Description>
-      </Surface>
-
-      <Surface className="flex flex-col gap-2" variant="transparent">
-        <Label className="onboarding-form__section-label" htmlFor="max_distance">
-          {copy.radiusLabel}
-        </Label>
-        <Surface className="flex items-center gap-3" variant="transparent">
-          <input
-            className="onboarding-form__language-filter admin-native-number"
-            defaultValue={profile.max_distance ?? ""}
-            id="max_distance"
-            max={MAX_DISTANCE_MAX}
-            min={MAX_DISTANCE_MIN}
-            name="max_distance"
-            required
-            step={1}
-            type="number"
-          />
-          <Description>{copy.km}</Description>
-        </Surface>
       </Surface>
 
       <input name="country" type="hidden" value="DE" />

@@ -48,18 +48,15 @@ export async function completeInterestsStep(page: Page, locale: Locale = "de"): 
 
 export async function completeLocationStep(page: Page, locale: Locale = "de"): Promise<void> {
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding/location`));
-  // Playwright fill on one uncontrolled field remounts the HonoX island and wipes siblings.
-  // Fill zip, then set distance + submit in one browser turn so both values POST.
-  await page.locator("#zip_code").fill("10115");
+  // Playwright fill on uncontrolled fields remounts the HonoX island and can wipe values.
+  // Set zip + submit in one browser turn so the POST includes the PLZ.
   await page.locator("#zip_code").evaluate(() => {
     const zip = document.querySelector<HTMLInputElement>("#zip_code");
-    const distance = document.querySelector<HTMLInputElement>("#max_distance");
     const form = document.querySelector<HTMLFormElement>("form.onboarding-form");
-    if (!zip || !distance || !form) {
+    if (!zip || !form) {
       throw new Error("location form fields missing");
     }
     zip.value = "10115";
-    distance.value = "10";
     form.requestSubmit();
   });
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding/timing`), { timeout: 15_000 });

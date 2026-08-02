@@ -70,7 +70,12 @@ export type AdminGuardResult =
 export type PartnerFormValues = {
   name: string;
   contactEmail: string;
-  address: string;
+  street: string;
+  houseNumber: string;
+  addressLine2: string | null;
+  zipCode: string;
+  country?: string;
+  city?: string;
   logoUpload: Buffer | null;
   logoPrebuilt: PrebuiltImageVariantsInput | null;
 };
@@ -118,7 +123,12 @@ export async function guardAdminRoute(c: Context): Promise<AdminGuardResult> {
 export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFormValues> {
   const name = asString(body.name)?.trim() ?? "";
   const contactEmail = asString(body.contact_email)?.trim() ?? "";
-  const address = asString(body.address)?.trim() ?? "";
+  const street = asString(body.street)?.trim() ?? "";
+  const houseNumber = asString(body.house_number)?.trim() ?? "";
+  const addressLine2 = asString(body.address_line2)?.trim() || null;
+  const zipCode = asString(body.zip_code)?.trim() ?? "";
+  const country = asString(body.country)?.trim() || undefined;
+  const city = asString(body.city)?.trim() || undefined;
   const logoPrebuilt = await parsePrebuiltImageVariants(body, asString, asFile);
 
   let logoUpload: Buffer | null = null;
@@ -132,7 +142,12 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
   return {
     name,
     contactEmail,
-    address,
+    street,
+    houseNumber,
+    addressLine2,
+    zipCode,
+    country,
+    city,
     logoUpload,
     logoPrebuilt,
   };

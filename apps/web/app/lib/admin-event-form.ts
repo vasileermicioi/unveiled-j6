@@ -17,7 +17,9 @@ export type EventFormValues = {
   partnerId: string;
   title: string;
   description: string;
-  address: string;
+  street: string;
+  houseNumber: string;
+  addressLine2: string | null;
   zipCode: string;
   country?: string;
   city?: string;
@@ -38,6 +40,8 @@ export type EventFormValues = {
   barrierFree: boolean | null;
   languageIndependent: boolean;
   languages: string[] | null;
+  hasSubtitles: boolean;
+  subtitleLanguage: string | null;
   targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
@@ -431,6 +435,9 @@ export async function parseEventFormBody(
   const languages = languageIndependent
     ? []
     : parseBodyStringArrayField(body, "languages", asString);
+  const hasSubtitles = asString(body.has_subtitles) === "on";
+  const subtitleLanguageRaw = asString(body.subtitle_language)?.trim() || null;
+  const subtitleLanguage = hasSubtitles ? subtitleLanguageRaw : null;
   const targetAgeGroups = parseBodyStringArrayField(body, "target_age_groups", asString);
   const imageUrl = asString(body.image_url)?.trim() || null;
 
@@ -438,7 +445,9 @@ export async function parseEventFormBody(
     partnerId: asString(body.partner_id)?.trim() ?? "",
     title: asString(body.title)?.trim() ?? "",
     description: asString(body.description)?.trim() ?? "",
-    address: asString(body.address)?.trim() ?? "",
+    street: asString(body.street)?.trim() ?? "",
+    houseNumber: asString(body.house_number)?.trim() ?? "",
+    addressLine2: asString(body.address_line2)?.trim() || null,
     zipCode: asString(body.zip_code)?.trim() ?? "",
     country: asString(body.country)?.trim() || undefined,
     city: asString(body.city)?.trim() || undefined,
@@ -459,6 +468,8 @@ export async function parseEventFormBody(
     barrierFree: asString(body.barrier_free) === "on" ? true : null,
     languageIndependent,
     languages: languages.length > 0 ? languages : null,
+    hasSubtitles,
+    subtitleLanguage,
     targetAgeGroups: targetAgeGroups.length > 0 ? targetAgeGroups : null,
     lat: asString(body.lat)?.trim() || null,
     lng: asString(body.lng)?.trim() || null,

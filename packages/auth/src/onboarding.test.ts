@@ -7,7 +7,6 @@ import {
   getOnboardingStepPath,
   OnboardingValidationError,
   saveOnboardingStep,
-  validateMaxDistance,
   validateOnboardingStepPayload,
 } from "./onboarding";
 
@@ -118,42 +117,21 @@ describe("validateOnboardingStepPayload", () => {
     expect(() =>
       validateOnboardingStepPayload("location", {
         zipCode: "80331",
-        maxDistance: 10,
       }),
     ).toThrow(OnboardingValidationError);
   });
 
-  test("location payload stores zip trio, max_distance, and clears districts", () => {
+  test("location payload stores zip trio, clears districts, and omits max_distance", () => {
     expect(
       validateOnboardingStepPayload("location", {
         zipCode: "10115",
-        maxDistance: 10,
       }),
     ).toEqual({
       country: "DE",
       city: "berlin",
       zip_code: "10115",
       districts: null,
-      max_distance: 10,
     });
-  });
-
-  test("rejects out-of-range max_distance on location step", () => {
-    expect(() =>
-      validateOnboardingStepPayload("location", {
-        zipCode: "10115",
-        maxDistance: 51,
-      }),
-    ).toThrow(OnboardingValidationError);
-  });
-
-  test("rejects missing max_distance on location step", () => {
-    expect(() =>
-      validateOnboardingStepPayload("location", {
-        zipCode: "10115",
-        maxDistance: undefined as unknown as number,
-      }),
-    ).toThrow(OnboardingValidationError);
   });
 
   test("age skip returns empty profile update", () => {
@@ -281,7 +259,6 @@ describe("saveOnboardingStep and completeOnboarding", () => {
       });
       await saveOnboardingStep(db, userId, "location", {
         zipCode: "10115",
-        maxDistance: 15,
       });
       await saveOnboardingStep(db, userId, "timing", {
         timing: ["Weekend", "After Work"],
@@ -300,7 +277,7 @@ describe("saveOnboardingStep and completeOnboarding", () => {
       expect(completed.profile.country).toBe("DE");
       expect(completed.profile.city).toBe("berlin");
       expect(completed.profile.districts).toBeNull();
-      expect(completed.profile.max_distance).toBe(15);
+      expect(completed.profile.max_distance).toBeUndefined();
       expect(completed.profile.timing).toEqual(["Weekend", "After Work"]);
       expect(completed.profile.preferred_days).toEqual(["Friday", "Saturday"]);
       expect(completed.profile.preferred_languages).toEqual(["DE", "EN"]);
@@ -350,22 +327,42 @@ describe("saveOnboardingStep and completeOnboarding", () => {
   });
 });
 
-describe("validateMaxDistance", () => {
-  test("accepts bounds and mid values", () => {
-    expect(validateMaxDistance(1)).toBe(1);
-    expect(validateMaxDistance(10)).toBe(10);
-    expect(validateMaxDistance(50)).toBe(50);
-    expect(validateMaxDistance("10")).toBe(10);
-  });
+describe("location save leaves legacy max_distance untouched", () => {
+  test("pre-existing max_distance survives a zip-only location save", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
 
-  test("rejects out of range, non-integer, NaN, and missing", () => {
-    expect(() => validateMaxDistance(0)).toThrow(OnboardingValidationError);
-    expect(() => validateMaxDistance(51)).toThrow(OnboardingValidationError);
-    expect(() => validateMaxDistance(10.5)).toThrow(OnboardingValidationError);
-    expect(() => validateMaxDistance(Number.NaN)).toThrow(OnboardingValidationError);
-    expect(() => validateMaxDistance(undefined)).toThrow(OnboardingValidationError);
-    expect(() => validateMaxDistance(null)).toThrow(OnboardingValidationError);
-    expect(() => validateMaxDistance("")).toThrow(OnboardingValidationError);
+    const db = createDb(databaseUrl);
+    const userId = `test-onboarding-legacy-distance-${crypto.randomUUID()}`;
+    const email = `${userId}@example.com`;
+
+    try {
+      await db.insert(users).values({
+        id: userId,
+        email,
+        profile: {
+          onboarding_complete: false,
+          max_distance: 25,
+          zip_code: "10115",
+          country: "DE",
+          city: "berlin",
+        },
+        behavior: { onboarding_step: "location" },
+      });
+
+      const updated = await saveOnboardingStep(db, userId, "location", {
+        zipCode: "10435",
+      });
+
+      expect(updated.profile.zip_code).toBe("10435");
+      expect(updated.profile.max_distance).toBe(25);
+      expect(updated.profile.districts).toBeNull();
+    } finally {
+      await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await db.delete(users).where(eq(users.id, userId));
+    }
   });
 });
 

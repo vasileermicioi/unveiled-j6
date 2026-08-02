@@ -10,7 +10,10 @@ import {
 } from "../stories/fixtures";
 import { EventDetailPage } from "./EventDetailPage";
 
-/** Wide frame so lg two-row identity/checkout + image/description alignment is reviewable. */
+/**
+ * Wide frame so lg identity/checkout alignment is reviewable.
+ * Primary hero uses theme classes only (full-width band, centered, non-stretch).
+ */
 const wideMeta = { width: 1280 as const };
 
 const storyPartnerAttribution = {
@@ -159,3 +162,17 @@ export const WithGallery: Story = () => (
 );
 WithGallery.storyName = "EventDetailPage / With gallery";
 WithGallery.meta = wideMeta;
+
+/** Subtitles row in DETAILS when hasSubtitles is true. */
+export const WithSubtitles: Story = () => (
+  <EventDetailPage
+    closeHref={`/${storyLocale}`}
+    event={{ ...mockEvent, hasSubtitles: true, subtitleLanguage: "EN" }}
+    locale={storyLocale}
+    maxQty={3}
+    partnerAttribution={storyPartnerAttribution}
+    viewer={{ kind: "guest" }}
+  />
+);
+WithSubtitles.storyName = "EventDetailPage / With subtitles";
+WithSubtitles.meta = wideMeta;

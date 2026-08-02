@@ -4,7 +4,9 @@ export type EventFormDefaults = Partial<{
   partnerId: string;
   title: string;
   description: string;
-  address: string;
+  street: string;
+  houseNumber: string;
+  addressLine2: string | null;
   zipCode: string;
   country?: string;
   city?: string;
@@ -24,6 +26,8 @@ export type EventFormDefaults = Partial<{
   barrierFree: boolean | null;
   languageIndependent: boolean;
   languages: string[] | null;
+  hasSubtitles: boolean;
+  subtitleLanguage: string | null;
   targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
@@ -35,5 +39,8 @@ export type EventFormDefaults = Partial<{
 export type PartnerOption = {
   id: string;
   name: string;
-  address: string;
+  street: string;
+  houseNumber: string;
+  addressLine2: string | null;
+  zipCode: string;
 };

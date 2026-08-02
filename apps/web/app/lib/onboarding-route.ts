@@ -68,15 +68,6 @@ function parseBooleanField(value: string | File | (string | File)[] | undefined)
   return normalized === "true" || normalized === "on" || normalized === "1";
 }
 
-/** Parse form `max_distance` / `maxDistance`; missing → NaN so domain validation fails closed. */
-function parseMaxDistanceField(body: ParsedBody): number {
-  const raw = asString(body.max_distance) ?? asString(body.maxDistance);
-  if (raw === undefined || raw.trim() === "") {
-    return Number.NaN;
-  }
-  return Number(raw);
-}
-
 export function parseAgePayload(body: ParsedBody): AgeStepPayload {
   if (asString(body.action) === "skip") {
     return { skip: true };
@@ -103,7 +94,6 @@ export function parseLocationPayload(body: ParsedBody): LocationStepPayload {
     zipCode: asString(body.zip_code) ?? "",
     country: asString(body.country) || undefined,
     city: asString(body.city) || undefined,
-    maxDistance: parseMaxDistanceField(body),
   };
 }
 
@@ -205,8 +195,7 @@ export async function handleOnboardingPost(
         kind: "validation-error",
         locale,
         profile: session.user.profile,
-        message:
-          error.code === "invalid_max_distance" ? copy.invalidMaxDistance : copy.validationError,
+        message: copy.validationError,
       };
     }
 

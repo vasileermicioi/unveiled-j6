@@ -43,7 +43,12 @@ function renderEditPage(
     defaults?: {
       name: string;
       contactEmail: string;
-      address: string;
+      street: string;
+      houseNumber: string;
+      addressLine2: string | null;
+      zipCode: string;
+      country?: string;
+      city?: string;
       currentLogoUrl?: string | null;
       currentLogoImageId?: string | null;
       imagePublicBaseUrl?: string | null;
@@ -114,7 +119,12 @@ export const POST = createRoute(async (c) => {
 
     await updatePartner(db, partnerId, {
       name: values.name,
-      address: values.address,
+      street: values.street,
+      houseNumber: values.houseNumber,
+      addressLine2: values.addressLine2,
+      zipCode: values.zipCode,
+      country: values.country,
+      city: values.city,
       contactEmail: values.contactEmail,
       logoUpload: values.logoUpload,
       logoPrebuilt: values.logoPrebuilt,
@@ -132,7 +142,12 @@ export const POST = createRoute(async (c) => {
       defaults: {
         name: values?.name ?? existing.name,
         contactEmail: values?.contactEmail ?? existing.contactEmail,
-        address: values?.address ?? existing.address,
+        street: values?.street ?? existing.street,
+        houseNumber: values?.houseNumber ?? existing.houseNumber,
+        addressLine2: values?.addressLine2 ?? existing.addressLine2,
+        zipCode: values?.zipCode ?? existing.zipCode,
+        country: values?.country ?? existing.country,
+        city: values?.city ?? existing.city,
         currentLogoUrl: buildPartnerLogoUrl(existing.logoImageId),
         currentLogoImageId: existing.logoImageId,
         imagePublicBaseUrl: resolveImagePublicBaseUrl(),
@@ -176,7 +191,12 @@ export default createRoute(async (c) => {
     defaults: {
       name: partner.name,
       contactEmail: partner.contactEmail,
-      address: partner.address,
+      street: partner.street,
+      houseNumber: partner.houseNumber,
+      addressLine2: partner.addressLine2,
+      zipCode: partner.zipCode,
+      country: partner.country,
+      city: partner.city,
       currentLogoUrl: buildPartnerLogoUrl(partner.logoImageId),
       currentLogoImageId: partner.logoImageId,
       imagePublicBaseUrl: resolveImagePublicBaseUrl(),

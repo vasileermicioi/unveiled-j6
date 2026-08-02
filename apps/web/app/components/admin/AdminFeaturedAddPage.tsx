@@ -12,11 +12,18 @@ import { adminFeaturedAddPath } from "./admin-tabs";
 type AdminFeaturedAddPageProps = {
   locale: Locale;
   events: Event[];
+  imageUrls: Record<string, string | undefined>;
   query: string;
   error?: string | null;
 };
 
-export function AdminFeaturedAddPage({ locale, events, query, error }: AdminFeaturedAddPageProps) {
+export function AdminFeaturedAddPage({
+  locale,
+  events,
+  imageUrls,
+  query,
+  error,
+}: AdminFeaturedAddPageProps) {
   const copy = getAdminCopy(locale);
   const listHref = adminFeaturedPath(locale);
   const addPath = adminFeaturedAddPath(locale);
@@ -33,7 +40,7 @@ export function AdminFeaturedAddPage({ locale, events, query, error }: AdminFeat
     >
       {error ? <AdminFormError message={error} /> : null}
       <AdminSearchForm action={addPath} defaultQuery={query} locale={locale} />
-      <AdminFeaturedAddResults events={events} locale={locale} />
+      <AdminFeaturedAddResults events={events} imageUrls={imageUrls} locale={locale} />
     </AdminPageShell>
   );
 }

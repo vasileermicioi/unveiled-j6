@@ -6,6 +6,12 @@ export const partners = pgTable("partners", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   address: text("address").notNull(),
+  street: text("street").notNull(),
+  houseNumber: text("house_number").notNull(),
+  addressLine2: text("address_line2"),
+  country: text("country").notNull().default("DE"),
+  city: text("city").notNull().default("berlin"),
+  zipCode: text("zip_code").notNull(),
   contactEmail: text("contact_email").notNull(),
   logoImageId: uuid("logo_image_id")
     .notNull()

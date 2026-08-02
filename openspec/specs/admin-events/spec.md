@@ -161,19 +161,22 @@ The system SHALL allow ADMIN to mark an event as language-independent on create 
 - **THEN** the persisted event has `language_independent = true` and `languages = null`
 
 ### Requirement: Multi-value event metadata uses checkbox multi-selects
-The admin event create/edit form SHALL collect supported languages via a searchable native-checkbox multi-select (same interaction model as onboarding preferred languages) and target age groups via a native-checkbox multi-select without a search filter, except that when Language-independent is checked the languages multi-select SHALL NOT be shown or required. Single-value choice fields SHALL continue to use a native HTML `select`. Supported languages and language-independent are mutually exclusive in the UI: language-independent checked means languages are not collected.
+The admin event create/edit form SHALL collect supported languages via a searchable native-checkbox multi-select (same interaction model as onboarding preferred languages) and target age groups via a native-checkbox multi-select without a search filter, except that when Language-independent is checked the languages multi-select SHALL NOT be shown or required. Other single-value choice fields (partner, category, etc.) SHALL continue to use a native HTML `select` unless a documented exception applies. Supported languages and language-independent are mutually exclusive in the UI: language-independent checked means languages are not collected.
 
 #### Scenario: Languages multi-select with search
 - **WHEN** an admin opens create or edit event
 - **AND** Language-independent is unchecked
-- **THEN** languages are chosen with checkboxes and a search filter that narrows visible options without dropping already-selected values from the POST payload
+- **THEN** languages are chosen with a searchable checkbox multi-select
+- **AND** only a short default list is shown until search is used
+- **AND** a hint explains that search is needed to find other languages
+- **AND** already-selected values remain available for the form POST even when filtered out of the visible list
 
 #### Scenario: Age groups multi-select without search
 - **WHEN** an admin opens create or edit event
 - **THEN** target age groups are chosen with checkboxes and no search filter control
 
 ### Requirement: Admin event location authoring
-Admin create/edit SHALL collect a postal code (`zip_code` / form field `zipCode`) instead of neighborhood/Kiez, with country and city prefilled to Germany (`DE`) and Berlin (`berlin`) and not user-selectable in this release. Country and city SHALL be visibly shown as fixed (disabled/readonly or equivalent non-editable display) with submitted values `DE` / `berlin`. The zip control SHALL be a native text input validated via the shared postal registry for `(DE, berlin)`. Address + geocode preview behavior is unchanged. The form SHALL NOT ship a city/country picker.
+Admin create/edit SHALL collect a postal code (`zip_code` / form field `zipCode`) instead of neighborhood/Kiez, with country and city prefilled to Germany (`DE`) and Berlin (`berlin`) and not user-selectable in this release. Country and city SHALL be visibly shown as fixed (disabled/readonly or equivalent non-editable display) with submitted values `DE` / `berlin`. The zip control SHALL be a native text input validated via the shared postal registry for `(DE, berlin)`. Street location SHALL be collected as structured native fields (`street`, `house_number`, optional `address_line2`) with structured geocode preview (line2 excluded). The form SHALL NOT ship a city/country picker.
 
 #### Scenario: Admin sets Berlin zip on create
 - **WHEN** an admin creates an event with a valid Berlin PLZ and other required fields
@@ -190,22 +193,22 @@ Admin create/edit SHALL collect a postal code (`zip_code` / form field `zipCode`
 - **AND** no neighborhood/Kiez select is shown
 
 ### Requirement: Address is the only admin location input
-Admin event create and edit forms SHALL collect street location via the address field (not via latitude, longitude, or map zoom). Postal location SHALL be collected separately as country/city/zip under the admin event location authoring rules. The system SHALL NOT present latitude, longitude, or map zoom as admin-editable fields. A map MAY be shown to preview a geocode of the address (including partner-prefill geocode on create). The map preview marker SHALL NOT be draggable and SHALL NOT treat map click or zoom as the source of truth for coordinates. Geocode failure SHALL NOT block saving a valid address; the map preview MAY remain at a prior or default view. Derived `lat`/`lng` MAY be posted from the geocode preview as hidden fields when a geocode (or preserved existing coordinates on edit) is resolved; the system MUST NOT persist default map-center coordinates as if they were a successful geocode.
+Admin event create and edit forms SHALL collect street location via structured native fields — required street, required house number, optional address line 2 — not via latitude, longitude, map zoom, or a free-text address authoring field. Postal location SHALL be collected separately as country/city/zip under the admin event location authoring rules. The system SHALL NOT present latitude, longitude, or map zoom as admin-editable fields. A map MAY be shown to preview a **structured** geocode of street + house number + postal fields (including partner-prefill geocode on create); `address_line2` SHALL be excluded from the geocode query. The map preview marker SHALL NOT be draggable and SHALL NOT treat map click or zoom as the source of truth for coordinates. Geocode failure SHALL NOT block saving a valid structured location; the map preview MAY remain at a prior or default view. Derived `lat`/`lng` MAY be posted from the geocode preview as hidden fields when a geocode (or preserved existing coordinates on edit) is resolved; the system MUST NOT persist default map-center coordinates as if they were a successful geocode. Display `address` SHALL be composed server-side on write.
 
-#### Scenario: Add event prefills address and map from partner
+#### Scenario: Add event prefills structured location and map from partner
 - **WHEN** an admin is on the new-event form and selects a partner
-- **THEN** the address field is set to that partner's address
-- **AND** the map preview updates to a geocode of that address when geocoding succeeds
+- **THEN** the street, house number, optional line2, and zip fields are set from that partner
+- **AND** the map preview updates to a structured geocode when geocoding succeeds
 
-#### Scenario: Edit event keeps existing address when partner changes
+#### Scenario: Edit event keeps existing location when partner changes
 - **WHEN** an admin is on the edit-event form and changes the partner
-- **THEN** the existing address remains unchanged until edited manually
-- **AND** the map preview follows the current address geocode rules (not a silent partner overwrite)
+- **THEN** the existing structured location fields remain unchanged until edited manually
+- **AND** the map preview follows the current structured geocode rules (not a silent partner overwrite)
 
-#### Scenario: Geocode soft-fails leave address filled
-- **WHEN** an admin selects a partner whose address cannot be geocoded
-- **THEN** the address field is still set
-- **AND** saving the event with that address succeeds
+#### Scenario: Geocode soft-fails leave structured location filled
+- **WHEN** an admin selects a partner whose location cannot be geocoded
+- **THEN** the structured location fields are still set
+- **AND** saving the event with that location succeeds
 - **AND** the map preview may stay unchanged
 - **AND** the saved event MUST NOT store invented default-center coordinates for that failed geocode
 
@@ -213,28 +216,29 @@ Admin event create and edit forms SHALL collect street location via the address 
 - **WHEN** an admin opens create or edit event
 - **THEN** no latitude, longitude, or map zoom number fields are shown
 - **AND** the map marker is not offered as a drag-to-set authoring control
+- **AND** no free-text address authoring field is shown as the street-location source of truth
 
 ### Requirement: Partner location prefill on add only
-When creating a single event, changing the partner control SHALL prefill the event address from that partner's stored address and SHALL attempt to update the map **preview** from a geocode of that address. When editing an existing event, changing the partner control SHALL NOT overwrite the event address. Map coordinates on edit SHALL follow address-geocode rules and MUST NOT be silently replaced from the newly selected partner's address.
+When creating a single event, changing the partner control SHALL prefill the event structured location fields (`street`, `house_number`, optional `address_line2`, `zip_code`) from that partner's stored structured fields and SHALL attempt to update the map **preview** from a structured geocode (line2 excluded). When editing an existing event, changing the partner control SHALL NOT overwrite the event structured location fields. Map coordinates on edit SHALL follow structured-geocode rules and MUST NOT be silently replaced from the newly selected partner's location.
 
-#### Scenario: Add event prefills address and map from partner
+#### Scenario: Add event prefills structured location and map from partner
 - **WHEN** an admin on the new-event form selects a partner from the dropdown
-- **THEN** the address field is set to that partner's address
-- **AND** the map preview updates to a geocode of that address when geocoding succeeds
+- **THEN** street, house number, optional line2, and zip are set from that partner
+- **AND** the map preview updates to a structured geocode when geocoding succeeds
 
 #### Scenario: Edit event keeps existing location when partner changes
 - **WHEN** an admin on the edit-event form changes the partner
-- **THEN** the existing address remains unchanged until the admin edits it manually
-- **AND** the map preview is not silently overwritten from the new partner's address
+- **THEN** the existing structured location fields remain unchanged until the admin edits them manually
+- **AND** the map preview is not silently overwritten from the new partner's location
 
-#### Scenario: Geocode soft-fails leave address filled
-- **WHEN** an admin on the new-event form selects a partner whose address cannot be geocoded
-- **THEN** the address field is still set to that partner's address
+#### Scenario: Geocode soft-fails leave structured location filled
+- **WHEN** an admin on the new-event form selects a partner whose location cannot be geocoded
+- **THEN** the structured location fields are still set from that partner
 - **AND** the map preview is left unchanged (or at its prior default)
-- **AND** saving the event with that address succeeds
+- **AND** saving the event with that location succeeds
 
 ### Requirement: BDD coverage for form control and prefill UX
-Gherkin scenarios for checkbox multi-select languages/age groups and add-only partner address/map prefill SHALL have matching Playwright tests using proximity-only selectors, or a named deferral recorded in the coverage matrix with owner and target phase. Address prefill on add (and non-overwrite on edit) MUST be covered; live Nominatim map-pin success MAY be deferred when CI cannot reach Nominatim reliably.
+Gherkin scenarios for checkbox multi-select languages/age groups and add-only partner structured-location/map prefill SHALL have matching Playwright tests using proximity-only selectors, or a named deferral recorded in the coverage matrix with owner and target phase. Structured street/house/zip prefill on add (and non-overwrite on edit) MUST be covered; live Nominatim map-pin success MAY be deferred when CI cannot reach Nominatim reliably.
 
 #### Scenario: Coverage matrix lists new admin form scenarios
 - **WHEN** this feature is marked released
@@ -245,14 +249,14 @@ Gherkin scenarios for checkbox multi-select languages/age groups and add-only pa
 - **THEN** Playwright can assert languages and target age groups are chosen with checkboxes (languages expose a search filter; age groups do not)
 - **AND** selectors remain proximity/layout only per `docs/product/testing/bdd-and-e2e.md`
 
-#### Scenario: Add event prefills partner address
-- **WHEN** an admin on the new-event form selects a partner that has a stored address
-- **THEN** Playwright asserts the address field is set to that partner's address
+#### Scenario: Add event prefills partner structured location
+- **WHEN** an admin on the new-event form selects a partner that has stored structured location fields
+- **THEN** Playwright asserts street, house number, and zip fields are set from that partner
 - **AND** live map-pin geocode success is not required for the scenario to pass (soft-fail leaves map unchanged)
 
 #### Scenario: Edit event does not overwrite location when partner changes
 - **WHEN** an admin on the edit-event form changes the partner
-- **THEN** Playwright asserts the existing address remains unchanged
+- **THEN** Playwright asserts the existing structured location fields remain unchanged
 
 ### Requirement: Admin event form ticket types and voucher inventory islands
 
@@ -349,3 +353,22 @@ Admins SHALL clone an existing event via a dedicated SSR page `/:locale/admin/ev
 - **WHEN** a reader opens the Events row in `docs/product/ui/ui-component-map.md`
 - **THEN** admin events document SSR CRUD and clone
 - **AND** they do not describe series create as a current surface
+
+### Requirement: Admin subtitles checkbox and language
+
+Admin create and edit event forms SHALL offer a native Subtitles checkbox (`has_subtitles`) and, when that checkbox is checked, a required native language `<select>` (`subtitle_language`) whose options are the full ISO 639-1 language list (not limited to spoken-event `EVENT_LANGUAGES`). The subtitle controls SHALL remain available regardless of the Language-independent checkbox / spoken-languages multi-select state. When Subtitles is unchecked, the language select SHALL be hidden or non-required and the submitted state MUST persist `subtitle_language = null`. Forms MUST NOT use HeroUI `Select`, `Checkbox`, or `Switch` for these fields (native checkbox + native select / existing admin native wrappers only). DE+EN admin copy SHALL label the controls clearly (Subtitles / Untertitel or equivalent).
+
+#### Scenario: Checking subtitles reveals required language select
+
+- **WHEN** an ADMIN checks Subtitles on create or edit
+- **THEN** a native language select with the full ISO 639-1 list is shown and required
+
+#### Scenario: Unchecking subtitles omits language requirement
+
+- **WHEN** an ADMIN leaves Subtitles unchecked and submits a valid event form
+- **THEN** the saved event has `has_subtitles = false` and `subtitle_language = null`
+
+#### Scenario: Subtitles controls available when language-independent
+
+- **WHEN** an ADMIN checks Language-independent on the event form
+- **THEN** the Subtitles checkbox (and language select when Subtitles is checked) remain available

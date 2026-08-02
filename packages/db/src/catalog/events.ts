@@ -2,11 +2,12 @@ import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { and, asc, count, desc, eq, gt, gte, ilike, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
-import { validatePostalCode } from "../location";
+import { composeDisplayAddress, validatePostalCode } from "../location";
 import { eventGalleryImages } from "../schema/event-gallery-images";
 import { type Event, events, type TicketType, type TimingMode } from "../schema/events";
 import { deriveDateTimeFields } from "./datetime";
 import { CatalogValidationError } from "./errors";
+import { resolveEventSubtitles } from "./event-subtitles";
 import { resolveEventLanguages } from "./language-filter";
 import { getPartnerById } from "./partners";
 import {
@@ -42,7 +43,9 @@ export type CreateEventInput = {
   partnerId: string;
   title: string;
   description: string;
-  address: string;
+  street: string;
+  houseNumber: string;
+  addressLine2?: string | null;
   zipCode: string;
   country?: string | null;
   city?: string | null;
@@ -67,6 +70,8 @@ export type CreateEventInput = {
   barrierFree?: boolean | null;
   languageIndependent?: boolean;
   languages?: string[] | null;
+  hasSubtitles?: boolean;
+  subtitleLanguage?: string | null;
   targetAgeGroups?: string[] | null;
   lat?: string | null;
   lng?: string | null;
@@ -78,7 +83,9 @@ export type UpdateEventInput = {
   partnerId?: string;
   title?: string;
   description?: string;
-  address?: string;
+  street?: string;
+  houseNumber?: string;
+  addressLine2?: string | null;
   zipCode?: string;
   country?: string | null;
   city?: string | null;
@@ -103,6 +110,8 @@ export type UpdateEventInput = {
   barrierFree?: boolean | null;
   languageIndependent?: boolean;
   languages?: string[] | null;
+  hasSubtitles?: boolean;
+  subtitleLanguage?: string | null;
   targetAgeGroups?: string[] | null;
   lat?: string | null;
   lng?: string | null;
@@ -343,8 +352,19 @@ async function insertEventRow(
     city: input.city,
     zipCode: input.zipCode,
   });
+  const street = requireNonEmpty(input.street, "street");
+  const houseNumber = requireNonEmpty(input.houseNumber, "houseNumber");
+  const addressLine2 = input.addressLine2?.trim() || null;
+  const address = composeDisplayAddress({
+    street,
+    houseNumber,
+    addressLine2,
+    zipCode: location.zipCode,
+    city: location.city,
+  });
 
   const derived = deriveDateTimeFields(input.dateTime, defaults.timingMode);
+  const subtitles = resolveEventSubtitles(input.hasSubtitles ?? false, input.subtitleLanguage);
 
   const inserted = await db
     .insert(events)
@@ -353,7 +373,10 @@ async function insertEventRow(
       partnerName,
       title: requireNonEmpty(input.title, "title"),
       description: requireNonEmpty(input.description, "description"),
-      address: requireNonEmpty(input.address, "address"),
+      address,
+      street,
+      houseNumber,
+      addressLine2,
       country: location.country,
       city: location.city,
       zipCode: location.zipCode,
@@ -375,6 +398,8 @@ async function insertEventRow(
       barrierFree: input.barrierFree ?? null,
       languageIndependent: input.languageIndependent ?? false,
       languages: resolveEventLanguages(input.languageIndependent ?? false, input.languages),
+      hasSubtitles: subtitles.hasSubtitles,
+      subtitleLanguage: subtitles.subtitleLanguage,
       targetAgeGroups: input.targetAgeGroups ?? null,
       lat: input.lat ?? null,
       lng: input.lng ?? null,
@@ -422,7 +447,9 @@ export async function cloneEvent(
     partnerId: source.partnerId,
     title: source.title,
     description: source.description,
-    address: source.address,
+    street: source.street,
+    houseNumber: source.houseNumber,
+    addressLine2: source.addressLine2,
     zipCode: source.zipCode,
     country: source.country,
     city: source.city,
@@ -439,6 +466,8 @@ export async function cloneEvent(
     barrierFree: source.barrierFree,
     languageIndependent: source.languageIndependent,
     languages: source.languages,
+    hasSubtitles: source.hasSubtitles,
+    subtitleLanguage: source.subtitleLanguage,
     targetAgeGroups: source.targetAgeGroups,
     lat: source.lat,
     lng: source.lng,
@@ -497,7 +526,12 @@ export async function updateEvent(
       : existing.remainingCapacity;
 
   const locationTouched =
-    input.zipCode !== undefined || input.country !== undefined || input.city !== undefined;
+    input.zipCode !== undefined ||
+    input.country !== undefined ||
+    input.city !== undefined ||
+    input.street !== undefined ||
+    input.houseNumber !== undefined ||
+    input.addressLine2 !== undefined;
   const location = locationTouched
     ? validatePostalCode({
         country: input.country !== undefined ? input.country : existing.country,
@@ -510,6 +544,30 @@ export async function updateEvent(
         zipCode: existing.zipCode,
       };
 
+  const nextStreet =
+    input.street !== undefined ? requireNonEmpty(input.street, "street") : existing.street;
+  const nextHouseNumber =
+    input.houseNumber !== undefined
+      ? requireNonEmpty(input.houseNumber, "houseNumber")
+      : existing.houseNumber;
+  const nextAddressLine2 =
+    input.addressLine2 !== undefined ? input.addressLine2?.trim() || null : existing.addressLine2;
+  const nextAddress = locationTouched
+    ? composeDisplayAddress({
+        street: nextStreet,
+        houseNumber: nextHouseNumber,
+        addressLine2: nextAddressLine2,
+        zipCode: location.zipCode,
+        city: location.city,
+      })
+    : existing.address;
+
+  const nextHasSubtitles =
+    input.hasSubtitles !== undefined ? input.hasSubtitles : existing.hasSubtitles;
+  const nextSubtitleLanguage =
+    input.subtitleLanguage !== undefined ? input.subtitleLanguage : existing.subtitleLanguage;
+  const subtitles = resolveEventSubtitles(nextHasSubtitles, nextSubtitleLanguage);
+
   const updated = await db
     .update(events)
     .set({
@@ -520,8 +578,10 @@ export async function updateEvent(
         input.description !== undefined
           ? requireNonEmpty(input.description, "description")
           : existing.description,
-      address:
-        input.address !== undefined ? requireNonEmpty(input.address, "address") : existing.address,
+      address: nextAddress,
+      street: nextStreet,
+      houseNumber: nextHouseNumber,
+      addressLine2: nextAddressLine2,
       country: location.country,
       city: location.city,
       zipCode: location.zipCode,
@@ -561,6 +621,8 @@ export async function updateEvent(
           : existing.languageIndependent,
         input.languages !== undefined ? input.languages : existing.languages,
       ),
+      hasSubtitles: subtitles.hasSubtitles,
+      subtitleLanguage: subtitles.subtitleLanguage,
       targetAgeGroups:
         input.targetAgeGroups !== undefined ? input.targetAgeGroups : existing.targetAgeGroups,
       lat: input.lat !== undefined ? input.lat : existing.lat,

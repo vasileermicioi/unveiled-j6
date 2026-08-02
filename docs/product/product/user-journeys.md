@@ -31,7 +31,7 @@ Each step names the feature file it belongs to. Align routes with [`../sitemap/s
 1. **Discover** — Guest lands on locale home `/:locale` (Discover: marketing + curated upcoming preview). May browse `/how-it-works`, `/faq`, `/membership`. Legacy `/:locale/discover` 301s to home. *(Content → `static-pages.feature`)*
 2. **Public detail** — Preview cards link to public `/events/:id` (no auth). Guest can read details and share; book/save CTAs require auth. *(Discovery → `event-discovery.feature`)*
 3. **Sign up** — Guest signs up (email/password or Google). Account = `USER`, 17 credits, subscription `INACTIVE`, onboarding incomplete. *(Identity → `auth.feature`)*
-4. **Onboarding** — 4-step preference wizard (age → interests/moods → zip + travel distance under Germany/Berlin → timing/days/languages/accessibility). *(→ `onboarding.feature`)*
+4. **Onboarding** — 4-step preference wizard (age → interests/moods → zip under Germany/Berlin → timing/days/languages/accessibility). *(→ `onboarding.feature`)*
 5. **Checkout** — Routed to `/membership`, completes real Stripe Checkout (Basic Berlin). Subscription → `ACTIVE`, ledger `+17 SUBSCRIPTION_REFILL`. *(→ `credits-subscription.feature`)*
 6. **Browse & filter** — Lands on member `/events` (filters, pagination, map, saved). Guests never get a public full feed. *(→ `event-discovery.feature`)*
 7. **Book** — Opens `/events/:id/book`, books tickets. Atomic transaction: subscription + capacity + credits; `CONFIRMED` booking + redemption info. *(→ `booking.feature`)*

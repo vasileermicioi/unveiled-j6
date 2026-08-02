@@ -6,6 +6,7 @@ import { CatalogValidationError } from "./errors";
 import { createEvent, deleteEvent } from "./events";
 import { createPartner, deletePartner } from "./partners";
 import { createTestImagePrebuilt } from "./test-image";
+import { structuredLocationFromAddress } from "./test-location";
 import {
   appendPromoCodes,
   getVoucherInventoryCounts,
@@ -28,7 +29,7 @@ describe("voucher inventory catalog (integration)", () => {
 
     const partner = await createPartner(db, {
       name: `Inv Venue ${suffix}`,
-      address: "Teststraße 1, Berlin",
+      ...structuredLocationFromAddress("Teststraße 1, Berlin"),
       contactEmail: `inv-${suffix}@example.com`,
       logoPrebuilt: logo,
       skipUpload: true,
@@ -38,7 +39,7 @@ describe("voucher inventory catalog (integration)", () => {
       partnerId: partner.id,
       title: `Inv Event ${suffix}`,
       description: "Description",
-      address: "Teststraße 1, Berlin",
+      ...structuredLocationFromAddress("Teststraße 1, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

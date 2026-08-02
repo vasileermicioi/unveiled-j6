@@ -1,5 +1,6 @@
 import {
   AGE_GROUPS,
+  FEATURED_PREFERRED_LANGUAGES,
   INTERESTS,
   MOODS,
   PREFERRED_LANGUAGES,
@@ -27,19 +28,17 @@ type OnboardingCopy = {
   cityDisplay: string;
   zipCodeLabel: string;
   zipCodeHint: string;
-  radiusLabel: string;
-  km: string;
   timingLabel: string;
   daysLabel: string;
   languagePrefLabel: string;
   languageSearchPlaceholder: string;
+  languageSearchHint: string;
   accessibilitySectionLabel: string;
   accessibilityOptionLabel: string;
   next: string;
   skip: string;
   finish: string;
   validationError: string;
-  invalidMaxDistance: string;
   stepOf: (current: number, total: number) => string;
 };
 
@@ -60,19 +59,18 @@ const copy: Record<Locale, OnboardingCopy> = {
     cityDisplay: "Berlin",
     zipCodeLabel: "PLZ",
     zipCodeHint: "Unveiled ist aktuell in Berlin verfügbar. Gib eine Berliner PLZ ein.",
-    radiusLabel: "Wie weit bist du bereit zu fahren?",
-    km: "km",
     timingLabel: "WANN HAST DU ZEIT?",
     daysLabel: "WELCHE TAGE?",
     languagePrefLabel: "SPRACHEN?",
     languageSearchPlaceholder: "Sprachen suchen",
+    languageSearchHint:
+      "Nur häufige Sprachen sind angezeigt. Nutze die Suche, um weitere zu finden und auszuwählen.",
     accessibilitySectionLabel: "Barrierefreiheit benötigt?",
     accessibilityOptionLabel: "Ja",
     next: "WEITER",
     skip: "ÜBERSPRINGEN",
     finish: "FERTIG",
     validationError: "Bitte prüfe deine Auswahl und versuche es erneut.",
-    invalidMaxDistance: "Bitte gib eine Reiseweite zwischen 1 und 50 km an.",
     stepOf: (current, total) => `Schritt ${current} von ${total}`,
   },
   en: {
@@ -91,19 +89,17 @@ const copy: Record<Locale, OnboardingCopy> = {
     cityDisplay: "Berlin",
     zipCodeLabel: "Zip code",
     zipCodeHint: "Unveiled currently serves Berlin. Enter a Berlin zip code.",
-    radiusLabel: "How far will you travel?",
-    km: "km",
     timingLabel: "WHEN DO YOU HAVE TIME?",
     daysLabel: "WHICH DAYS?",
     languagePrefLabel: "LANGUAGES?",
     languageSearchPlaceholder: "Search languages",
+    languageSearchHint: "Only common languages are shown. Use search to find and select others.",
     accessibilitySectionLabel: "Accessibility needed?",
     accessibilityOptionLabel: "Yes",
     next: "NEXT",
     skip: "SKIP",
     finish: "FINISH",
     validationError: "Please check your selections and try again.",
-    invalidMaxDistance: "Enter a travel distance between 1 and 50 km.",
     stepOf: (current, total) => `Step ${current} of ${total}`,
   },
 };
@@ -212,8 +208,30 @@ export type PreferredLanguageOption = {
   label: string;
 };
 
-/** DE and EN first; remaining codes A–Z by locale display label. */
+/**
+ * Berlin-common featured languages first (default visible grid), then remaining
+ * allowlisted codes A–Z by locale display label. Search covers the full list.
+ */
 export function getPreferredLanguageOptions(locale: Locale): PreferredLanguageOption[] {
+  const featuredSet = new Set<string>(FEATURED_PREFERRED_LANGUAGES);
+  const pinned = FEATURED_PREFERRED_LANGUAGES.map((code) => ({
+    code,
+    label: languageLabels[locale][code],
+  }));
+  const rest = PREFERRED_LANGUAGES.filter((code) => !featuredSet.has(code))
+    .map((code) => ({
+      code,
+      label: languageLabels[locale][code],
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, locale, { sensitivity: "base" }));
+  return [...pinned, ...rest];
+}
+
+/**
+ * Full language allowlist for native `<select>` controls (e.g. subtitle language).
+ * DE + EN first; remaining codes A–Z by locale display label — no featured collapse.
+ */
+export function getAllPreferredLanguageOptions(locale: Locale): PreferredLanguageOption[] {
   const pinned = PREFERRED_LANGUAGES.filter((code) => code === "DE" || code === "EN").map(
     (code) => ({
       code,

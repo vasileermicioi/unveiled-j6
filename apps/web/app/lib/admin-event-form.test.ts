@@ -55,7 +55,9 @@ describe("admin-event-form helpers", () => {
         partner_id: "partner-1",
         title: "Jazz Night",
         description: "Live set",
-        address: "Main St 1",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
         zip_code: "10115",
         country: "DE",
         city: "berlin",
@@ -98,7 +100,9 @@ describe("admin-event-form helpers", () => {
         partner_id: "partner-1",
         title: "Promo Night",
         description: "Codes",
-        address: "Main St 1",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
         zip_code: "10115",
         category: "Music",
         event_type: "Concert",
@@ -130,7 +134,9 @@ describe("admin-event-form helpers", () => {
         partner_id: "partner-1",
         title: "Jazz Night",
         description: "Live set",
-        address: "Main St 1",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
         zip_code: "10115",
         category: "Music",
         event_type: "Concert",
@@ -152,7 +158,9 @@ describe("admin-event-form helpers", () => {
         partner_id: "partner-1",
         title: "Jazz Night",
         description: "Live set",
-        address: "Main St 1",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
         zip_code: "10115",
         category: "Music",
         event_type: "Concert",
@@ -174,7 +182,9 @@ describe("admin-event-form helpers", () => {
       partner_id: "partner-1",
       title: "Jazz Night",
       description: "Live set",
-      address: "Main St 1",
+      street: "Main St",
+      house_number: "1",
+      address_line2: "",
       zip_code: "10115",
       category: "Music",
       event_type: "Concert",
@@ -202,7 +212,9 @@ describe("admin-event-form helpers", () => {
         partner_id: "partner-1",
         title: "Jazz Night",
         description: "Live set",
-        address: "Main St 1",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
         zip_code: "10115",
         category: "Music",
         event_type: "Concert",
@@ -228,7 +240,9 @@ describe("admin-event-form helpers", () => {
         partner_id: "partner-1",
         title: "Jazz Night",
         description: "Live set",
-        address: "Main St 1",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
         zip_code: "10115",
         category: "Music",
         event_type: "Concert",
@@ -261,7 +275,9 @@ describe("admin-event-form helpers", () => {
         partner_id: "partner-1",
         title: "Jazz Night",
         description: "Live set",
-        address: "Main St 1",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
         zip_code: "10115",
         category: "Music",
         event_type: "Concert",
@@ -289,7 +305,9 @@ describe("admin-event-form helpers", () => {
         partner_id: "partner-1",
         title: "Silent Walk",
         description: "No spoken language",
-        address: "Main St 1",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
         zip_code: "10115",
         category: "Art",
         event_type: "Exhibition",
@@ -309,6 +327,67 @@ describe("admin-event-form helpers", () => {
 
     expect(values.languageIndependent).toBe(true);
     expect(values.languages).toBeNull();
+  });
+
+  test("parseEventFormBody keeps subtitle language when subtitles on", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Film Night",
+        description: "With English subs",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
+        zip_code: "10115",
+        category: "Film",
+        event_type: "Screening",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "1",
+        total_capacity: "20",
+        ticket_type: "SECRET_CODE",
+        secret_code: "FILM1",
+        has_subtitles: "on",
+        subtitle_language: "EN",
+        language_independent: "on",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.hasSubtitles).toBe(true);
+    expect(values.subtitleLanguage).toBe("EN");
+    expect(values.languageIndependent).toBe(true);
+  });
+
+  test("parseEventFormBody clears subtitle language when subtitles off", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "No Subs",
+        description: "Plain talk",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
+        zip_code: "10115",
+        category: "Talk",
+        event_type: "Talk",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "1",
+        total_capacity: "20",
+        ticket_type: "SECRET_CODE",
+        secret_code: "TALK1",
+        subtitle_language: "EN",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.hasSubtitles).toBe(false);
+    expect(values.subtitleLanguage).toBeNull();
   });
 
   test("parseSeriesSlots expands builder weekdays", () => {

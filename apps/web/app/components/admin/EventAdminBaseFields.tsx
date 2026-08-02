@@ -5,6 +5,7 @@ import type { TicketType, TimingMode } from "@unveiled/db";
 import { useId, useState } from "react";
 
 import CheckboxMultiSelect from "../../islands/CheckboxMultiSelect";
+import { LANGUAGE_MULTI_SELECT_INITIAL_VISIBLE } from "../../islands/LanguageMultiSelect";
 import PdfVoucherInventoryIsland from "../../islands/PdfVoucherInventoryIsland";
 import PromoCodeInventoryIsland from "../../islands/PromoCodeInventoryIsland";
 import {
@@ -12,6 +13,7 @@ import {
   getEventAgeGroupOptions,
   getEventCategoryOptions,
   getEventLanguageOptions,
+  getEventSubtitleLanguageOptions,
   getEventTypeOptions,
 } from "../../lib/admin-content";
 import { geocodeBerlinAddress } from "../../lib/geocode-berlin";
@@ -45,6 +47,14 @@ function isTicketType(value: string): value is TicketType {
   return value === "SECRET_CODE" || value === "VOUCHER_PROMO" || value === "VOUCHER_PDF";
 }
 
+function structuredAddressFingerprint(
+  street: string,
+  houseNumber: string,
+  zipCode: string,
+): string {
+  return `${street.trim()}|${houseNumber.trim()}|${zipCode.trim()}`;
+}
+
 export function EventAdminBaseFields({
   locale,
   partners,
@@ -54,6 +64,7 @@ export function EventAdminBaseFields({
 }: EventAdminBaseFieldsProps) {
   const copy = getAdminCopy(locale);
   const languageOptions = getEventLanguageOptions(locale);
+  const subtitleLanguageOptions = getEventSubtitleLanguageOptions(locale);
   const ageGroupOptions = getEventAgeGroupOptions(locale);
   const categoryOptions = getEventCategoryOptions(locale);
   const eventTypeOptions = getEventTypeOptions(locale);
@@ -61,37 +72,53 @@ export function EventAdminBaseFields({
   const descriptionLabelId = useId();
   const descriptionHintId = useId();
   const [ticketType, setTicketType] = useState<TicketType>(defaultTicketType(defaults));
-  const [addressValue, setAddressValue] = useState(defaults?.address ?? "");
+  const [street, setStreet] = useState(defaults?.street ?? "");
+  const [houseNumber, setHouseNumber] = useState(defaults?.houseNumber ?? "");
+  const [addressLine2, setAddressLine2] = useState(defaults?.addressLine2 ?? "");
+  const [zipCode, setZipCode] = useState(defaults?.zipCode ?? "");
   const [addressRevision, setAddressRevision] = useState(0);
   const [externalLat, setExternalLat] = useState<string | null>(null);
   const [externalLng, setExternalLng] = useState<string | null>(null);
   const [externalRevision, setExternalRevision] = useState(0);
-  const [lastResolvedAddress, setLastResolvedAddress] = useState(() =>
-    defaults?.lat && defaults?.lng ? (defaults.address ?? "") : "",
+  const [lastResolvedFingerprint, setLastResolvedFingerprint] = useState(() =>
+    defaults?.lat && defaults?.lng
+      ? structuredAddressFingerprint(
+          defaults.street ?? "",
+          defaults.houseNumber ?? "",
+          defaults.zipCode ?? "",
+        )
+      : "",
   );
   const [languageIndependent, setLanguageIndependent] = useState(
     defaults?.languageIndependent ?? false,
   );
+  const [hasSubtitles, setHasSubtitles] = useState(defaults?.hasSubtitles ?? false);
 
-  async function applyAddressGeocode(address: string) {
-    const trimmed = address.trim();
-    if (!trimmed) {
-      return;
-    }
-
-    const geocoded = await geocodeBerlinAddress(trimmed);
+  async function applyAddressGeocode(fields: {
+    street: string;
+    houseNumber: string;
+    zipCode: string;
+  }) {
+    const geocoded = await geocodeBerlinAddress({
+      street: fields.street,
+      houseNumber: fields.houseNumber,
+      zipCode: fields.zipCode,
+      city: "berlin",
+    });
     if (!geocoded) {
       setExternalLat(null);
       setExternalLng(null);
       setExternalRevision((current) => current + 1);
-      setLastResolvedAddress("");
+      setLastResolvedFingerprint("");
       return;
     }
 
     setExternalLat(geocoded.lat.toFixed(6));
     setExternalLng(geocoded.lng.toFixed(6));
     setExternalRevision((current) => current + 1);
-    setLastResolvedAddress(trimmed);
+    setLastResolvedFingerprint(
+      structuredAddressFingerprint(fields.street, fields.houseNumber, fields.zipCode),
+    );
   }
 
   async function handlePartnerChange(partnerId: string) {
@@ -104,19 +131,40 @@ export function EventAdminBaseFields({
       return;
     }
 
-    setAddressValue(partner.address);
+    setStreet(partner.street);
+    setHouseNumber(partner.houseNumber);
+    setAddressLine2(partner.addressLine2 ?? "");
+    setZipCode(partner.zipCode);
     setAddressRevision((current) => current + 1);
-    await applyAddressGeocode(partner.address);
+    await applyAddressGeocode({
+      street: partner.street,
+      houseNumber: partner.houseNumber,
+      zipCode: partner.zipCode,
+    });
   }
 
-  async function handleAddressBlur(address: string) {
-    const trimmed = address.trim();
-    if (!trimmed || trimmed === lastResolvedAddress.trim()) {
+  async function handleStructuredAddressBlur() {
+    const trimmedStreet = street.trim();
+    const trimmedHouseNumber = houseNumber.trim();
+    const trimmedZipCode = zipCode.trim();
+    if (!trimmedStreet || !trimmedHouseNumber || !trimmedZipCode) {
       return;
     }
 
-    setAddressValue(trimmed);
-    await applyAddressGeocode(trimmed);
+    const fingerprint = structuredAddressFingerprint(
+      trimmedStreet,
+      trimmedHouseNumber,
+      trimmedZipCode,
+    );
+    if (fingerprint === lastResolvedFingerprint) {
+      return;
+    }
+
+    await applyAddressGeocode({
+      street: trimmedStreet,
+      houseNumber: trimmedHouseNumber,
+      zipCode: trimmedZipCode,
+    });
   }
 
   return (
@@ -157,18 +205,45 @@ export function EventAdminBaseFields({
       <Surface className="grid gap-4 lg:grid-cols-2 lg:items-start" variant="transparent">
         <Surface className="flex flex-col gap-4" variant="transparent">
           <TextField
-            key={`address-${addressRevision}`}
-            defaultValue={addressValue}
+            key={`street-${addressRevision}`}
             fullWidth
             isRequired
-            name="address"
+            name="street"
+            value={street}
           >
-            <Label>{copy.addressLabel}</Label>
+            <Label>{copy.streetLabel}</Label>
             <Input
-              onBlur={(event) => {
-                void handleAddressBlur(event.currentTarget.value);
+              onBlur={() => {
+                void handleStructuredAddressBlur();
               }}
+              onChange={(event) => setStreet(event.currentTarget.value)}
             />
+          </TextField>
+
+          <TextField
+            key={`house-number-${addressRevision}`}
+            fullWidth
+            isRequired
+            name="house_number"
+            value={houseNumber}
+          >
+            <Label>{copy.houseNumberLabel}</Label>
+            <Input
+              onBlur={() => {
+                void handleStructuredAddressBlur();
+              }}
+              onChange={(event) => setHouseNumber(event.currentTarget.value)}
+            />
+          </TextField>
+
+          <TextField
+            key={`address-line2-${addressRevision}`}
+            fullWidth
+            name="address_line2"
+            value={addressLine2}
+          >
+            <Label>{copy.addressLine2Label}</Label>
+            <Input onChange={(event) => setAddressLine2(event.currentTarget.value)} />
           </TextField>
 
           <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
@@ -200,13 +275,18 @@ export function EventAdminBaseFields({
             <Label htmlFor="event-zip-code">{copy.zipCodeLabel}</Label>
             <input
               className="admin-native-text"
-              defaultValue={defaults?.zipCode ?? ""}
               id="event-zip-code"
               inputMode="numeric"
+              key={`zip-code-${addressRevision}`}
               maxLength={5}
               name="zip_code"
+              onBlur={() => {
+                void handleStructuredAddressBlur();
+              }}
+              onChange={(event) => setZipCode(event.currentTarget.value)}
               required
               type="text"
+              value={zipCode}
             />
             <Description>{copy.zipCodeHint}</Description>
           </Surface>
@@ -357,10 +437,12 @@ export function EventAdminBaseFields({
           placeholder={copy.selectPlaceholder}
         />
         <Surface className="flex w-full flex-col gap-2" variant="transparent">
+          <Label>{copy.languageIndependentLabel}</Label>
           <Surface className="onboarding-form__options" variant="transparent">
             <NativePreferenceOption
               defaultChecked={languageIndependent}
-              label={copy.languageIndependentLabel}
+              inputLabel={copy.languageIndependentLabel}
+              label={copy.optionYes}
               name="language_independent"
               onChange={(event) => setLanguageIndependent(event.target.checked)}
               type="checkbox"
@@ -375,15 +457,42 @@ export function EventAdminBaseFields({
             <CheckboxMultiSelect
               enableSearch
               filterPlaceholder={copy.languagesSearchPlaceholder}
+              initialVisibleCount={LANGUAGE_MULTI_SELECT_INITIAL_VISIBLE}
               name="languages"
               options={languageOptions.map((option) => ({
                 value: option.id,
                 label: option.label,
               }))}
+              searchHint={copy.languagesSearchHint}
               selected={defaults?.languages ?? []}
             />
           </Surface>
         )}
+        <Surface className="flex w-full flex-col gap-2" variant="transparent">
+          <Label>{copy.hasSubtitlesLabel}</Label>
+          <Surface className="onboarding-form__options" variant="transparent">
+            <NativePreferenceOption
+              defaultChecked={hasSubtitles}
+              inputLabel={copy.hasSubtitlesLabel}
+              label={copy.optionYes}
+              name="has_subtitles"
+              onChange={(event) => setHasSubtitles(event.target.checked)}
+              type="checkbox"
+              value="on"
+            />
+          </Surface>
+          <Description>{copy.hasSubtitlesHint}</Description>
+        </Surface>
+        {hasSubtitles ? (
+          <AdminFormSelect
+            defaultSelectedKey={defaults?.subtitleLanguage ?? undefined}
+            isRequired
+            label={copy.subtitleLanguageLabel}
+            name="subtitle_language"
+            options={subtitleLanguageOptions}
+            placeholder={copy.selectPlaceholder}
+          />
+        ) : null}
         <Surface className="flex w-full flex-col gap-1" variant="transparent">
           <Label>{copy.targetAgeGroupsLabel}</Label>
           <CheckboxMultiSelect

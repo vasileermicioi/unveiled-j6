@@ -99,6 +99,20 @@
       "when": 1785350000000,
       "tag": "0013_berlin_zip_location",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785600000000,
+      "tag": "0014_structured_address",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1785700000000,
+      "tag": "0015_event_subtitles",
+      "breakpoints": true
     }
   ]
 }

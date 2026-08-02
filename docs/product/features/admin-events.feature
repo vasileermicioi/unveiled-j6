@@ -121,8 +121,9 @@ Feature: Admin — Event Management
 
   Scenario: Optional accessibility and audience metadata
     When I create or edit an event
-    Then I can optionally set barrier-free accessibility, supported languages, language-independent, and target age groups
+    Then I can optionally set barrier-free accessibility, supported languages, language-independent, subtitles, and target age groups
     And supported languages and language-independent are mutually exclusive in the UI
+    And subtitles are independent of spoken languages / language-independent
 
   Scenario: Check language-independent hides languages picker
     When I open create or edit event
@@ -135,32 +136,51 @@ Feature: Admin — Event Management
     Then the languages multi-select is shown again
     And I may select zero or more languages as today
 
+  Scenario: Check Subtitles reveals language select
+    When I open create or edit event
+    And I check Subtitles
+    Then a native subtitle language select with the full ISO 639-1 language list is shown and required
+
+  Scenario: Save event with Subtitles and language
+    When I create an event with Subtitles checked and a subtitle language selected
+    Then the saved event has has_subtitles true and the chosen subtitle_language
+    And the public detail DETAILS metadata shows subtitles availability and that language
+
+  Scenario: Subtitles controls available when language-independent
+    When I open create or edit event
+    And I check Language-independent
+    Then the Subtitles checkbox remains available
+    And checking Subtitles still shows the subtitle language select
+
   Scenario: Languages multi-select with search
     When I open create or edit event
     And Language-independent is unchecked
-    Then languages are chosen with checkboxes and a search filter that narrows visible options
-    And already-selected values remain available for the form POST even when filtered out of view
+    Then languages are chosen with a searchable checkbox multi-select
+    And only a short default list is shown until search is used
+    And a hint explains that search is needed to find other languages
+    And already-selected values remain available for the form POST even when filtered out of the visible list
 
   Scenario: Age groups multi-select without search
     When I open create or edit event
     Then target age groups are chosen with checkboxes and no search filter control
 
-  # Address is the only admin location input — no lat/lng/zoom fields; map is geocode preview only.
-  Scenario: Add event prefills address and map from partner
+  # Structured street/house/line2 + zip are the admin location inputs — no free-text address field;
+  # display `address` is composed on write. Map is structured-geocode preview only (line2 excluded).
+  Scenario: Add event prefills structured location and map from partner
     When I am on the new-event form and select a partner from the dropdown
-    Then the address field is set to that partner's address
-    And the map preview updates to a geocode of that address when geocoding succeeds
-    # Live Nominatim success is soft-fail — address prefill is required; map preview may stay at default
+    Then the street, house number, optional line2, and zip fields are set from that partner
+    And the map preview updates to a structured geocode when geocoding succeeds
+    # Live Nominatim success is soft-fail — structured prefill is required; map preview may stay at default
 
-  Scenario: Edit event keeps existing address when partner changes
+  Scenario: Edit event keeps existing location when partner changes
     When I am on the edit-event form and change the partner
-    Then the existing address remains unchanged until I edit it manually
-    And the map preview is not silently overwritten from the new partner's address
+    Then the existing structured location fields remain unchanged until I edit them manually
+    And the map preview is not silently overwritten from the new partner's location
 
-  Scenario: Geocode soft-fails leave address filled
-    When I am on the new-event form and select a partner whose address cannot be geocoded
-    Then the address field is still set to that partner's address
-    And saving the event with that address succeeds
+  Scenario: Geocode soft-fails leave structured location filled
+    When I am on the new-event form and select a partner whose location cannot be geocoded
+    Then the structured location fields are still set from that partner
+    And saving the event with that location succeeds
     And the map preview may stay unchanged
     And the saved event does not store invented default-center coordinates for that failed geocode
 
@@ -168,6 +188,7 @@ Feature: Admin — Event Management
     When I open create or edit event
     Then no latitude, longitude, or map zoom number fields are shown
     And the map marker is not offered as a drag-to-set authoring control
+    And no free-text address authoring field is shown as the street-location source of truth
 
   Scenario: Export redemption codes for an event
     Given an event has confirmed bookings with redemption codes
@@ -218,11 +239,14 @@ Feature: Admin — Event Management
   Scenario: List featured events
     When I open the Featured events tab ("/:locale/admin/featured")
     Then I see the current featured list ordered by sort_order
-    And each row shows at least title, partner, and date/time
+    And each row shows at least a primary-image thumbnail (or placeholder), title, partner, and date/time
+    And a missing or broken thumbnail does not block gallery or remove actions
 
   Scenario: Add by searching existing events
     When I search on the featured add page ("/:locale/admin/featured/add?q=")
     Then I see matching catalog events that are not already featured
+    And each result row shows a primary-image thumbnail (or placeholder) alongside title, partner, and date/time
+    And a missing or broken thumbnail does not block the add action
     And submitting add creates a featured row for that event
     And I am redirected to the featured list
 

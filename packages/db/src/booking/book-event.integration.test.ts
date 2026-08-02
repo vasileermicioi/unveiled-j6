@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { createTestImagePrebuilt } from "../catalog/test-image";
+import { structuredLocationFromAddress } from "../catalog/test-location";
 
 import {
   bookEvent,
@@ -56,7 +57,7 @@ describe("bookEvent", () => {
 
     const partner = await createPartner(httpDb, {
       name: `Booking Test Venue ${suffix.slice(0, 8)}`,
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       contactEmail: `book-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -66,7 +67,7 @@ describe("bookEvent", () => {
       partnerId: partner.id,
       title: `Booking Test Event ${suffix.slice(0, 8)}`,
       description: "Description",
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -221,7 +222,7 @@ describe("bookEvent", () => {
 
     const partner = await createPartner(httpDb, {
       name: `Booking Qty Venue ${suffix.slice(0, 8)}`,
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       contactEmail: `book-qty4-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -231,7 +232,7 @@ describe("bookEvent", () => {
       partnerId: partner.id,
       title: `Booking Qty Event ${suffix.slice(0, 8)}`,
       description: "Description",
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -306,7 +307,7 @@ describe("bookEvent", () => {
 
     const partner = await createPartner(httpDb, {
       name: `Promo Venue ${suffix.slice(0, 8)}`,
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       contactEmail: `promo-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -316,7 +317,7 @@ describe("bookEvent", () => {
       partnerId: partner.id,
       title: `Promo Event ${suffix.slice(0, 8)}`,
       description: "Description",
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",
@@ -431,7 +432,7 @@ describe("bookEvent", () => {
 
     const partner = await createPartner(httpDb, {
       name: `PDF Venue ${suffix.slice(0, 8)}`,
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       contactEmail: `pdf-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
@@ -441,7 +442,7 @@ describe("bookEvent", () => {
       partnerId: partner.id,
       title: `PDF Event ${suffix.slice(0, 8)}`,
       description: "Description",
-      address: "Teststraße 9, Berlin",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       country: "DE",
       city: "berlin",
       zipCode: "10115",

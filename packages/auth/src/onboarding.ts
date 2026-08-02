@@ -15,8 +15,6 @@ import {
   type AgeGroup,
   INTERESTS,
   INTERESTS_OTHER_MAX_LENGTH,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
   MOODS,
   PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
@@ -28,8 +26,6 @@ export {
   type AgeGroup,
   INTERESTS,
   INTERESTS_OTHER_MAX_LENGTH,
-  MAX_DISTANCE_MAX,
-  MAX_DISTANCE_MIN,
   MOODS,
   PREFERRED_LANGUAGES,
   TIMING_OPTIONS,
@@ -50,8 +46,6 @@ export type LocationStepPayload = {
   zipCode: string;
   country?: string;
   city?: string;
-  /** Integer km within `MAX_DISTANCE_MIN`–`MAX_DISTANCE_MAX`; required on location saves. */
-  maxDistance: number;
 };
 
 export type TimingStepPayload = {
@@ -75,36 +69,6 @@ export class OnboardingValidationError extends Error {
     this.name = "OnboardingValidationError";
     this.code = code;
   }
-}
-
-/**
- * Validates travel distance (km) for profile preference / onboarding location saves.
- * Requires a finite integer in `[MAX_DISTANCE_MIN, MAX_DISTANCE_MAX]`.
- */
-export function validateMaxDistance(value: unknown): number {
-  if (value === undefined || value === null || value === "") {
-    throw new OnboardingValidationError("invalid_max_distance", "max_distance is required");
-  }
-
-  const numeric =
-    typeof value === "number"
-      ? value
-      : typeof value === "string"
-        ? Number(value.trim())
-        : Number.NaN;
-
-  if (!Number.isFinite(numeric) || !Number.isInteger(numeric)) {
-    throw new OnboardingValidationError("invalid_max_distance", "max_distance must be an integer");
-  }
-
-  if (numeric < MAX_DISTANCE_MIN || numeric > MAX_DISTANCE_MAX) {
-    throw new OnboardingValidationError(
-      "invalid_max_distance",
-      `max_distance must be between ${MAX_DISTANCE_MIN} and ${MAX_DISTANCE_MAX}`,
-    );
-  }
-
-  return numeric;
 }
 
 const STEP_PATHS: Record<OnboardingStep, string> = {
@@ -288,16 +252,15 @@ export function validateOnboardingStepPayload(
     }
 
     case "location": {
-      const { zipCode, country, city, maxDistance } = payload as LocationStepPayload;
-      const max_distance = validateMaxDistance(maxDistance);
+      const { zipCode, country, city } = payload as LocationStepPayload;
       try {
         const location = validatePostalCode({ country, city, zipCode });
+        // Omit max_distance so merges leave any legacy JSONB value untouched.
         return {
           country: location.country,
           city: location.city,
           zip_code: location.zipCode,
           districts: null,
-          max_distance,
         };
       } catch (error) {
         if (error instanceof PostalValidationError) {

@@ -87,7 +87,8 @@ test.describe("onboarding.feature", () => {
       page.getByRole("spinbutton", {
         name: /wie weit bist du bereit zu fahren\?|how far will you travel\?/i,
       }),
-    ).toBeVisible();
+    ).toHaveCount(0);
+    await expect(page.locator("#max_distance")).toHaveCount(0);
     await completeLocationStep(page, locale);
   });
 
