@@ -1,5 +1,5 @@
 import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
-import type { Event } from "@unveiled/db";
+import type { Event, OpeningHoursWeek } from "@unveiled/db";
 import { buildDetailHeroSrc, buildDetailHeroSrcSet } from "@unveiled/ui";
 import { Calendar } from "lucide-react";
 
@@ -13,6 +13,7 @@ import { isEventBookable } from "../../lib/catalog-mappers";
 import { getEventDetailGalleryCopy } from "../../lib/event-detail-gallery-copy";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+import { formatPartnerOpeningHoursLines } from "../../lib/partner-opening-hours-display";
 import type { PublicEventGalleryImage } from "../../lib/public-event-gallery";
 import MarkdownContent from "../MarkdownContent";
 
@@ -22,6 +23,9 @@ export type EventDetailPartnerAttribution = {
   name: string;
   /** Public logo variant URL; omit or empty → name-only strip (no broken img). */
   logoUrl?: string;
+  /** When true with a valid week, DETAILS lists Mon→Sun hours under name/logo. */
+  hasOpeningHours?: boolean;
+  openingHours?: OpeningHoursWeek | null;
 };
 
 type EventDetailPageProps = {
@@ -497,6 +501,11 @@ export function EventDetailPage({
   const galleryCopy = getEventDetailGalleryCopy(locale);
   const partnerName = partnerAttribution?.name ?? event.partnerName;
   const partnerLogoUrl = partnerAttribution?.logoUrl?.trim() || undefined;
+  const partnerHoursLines = formatPartnerOpeningHoursLines(
+    Boolean(partnerAttribution?.hasOpeningHours),
+    partnerAttribution?.openingHours,
+    locale,
+  );
 
   let heroSrc = "";
   let heroSrcSet = "";
@@ -642,6 +651,22 @@ export function EventDetailPage({
                       {partnerName}
                     </Paragraph>
                   </Surface>
+                  {partnerHoursLines ? (
+                    <Surface
+                      className="event-detail--checkout__partner-hours"
+                      variant="transparent"
+                    >
+                      {partnerHoursLines.map((line) => (
+                        <Paragraph
+                          className="event-detail--checkout__partner-hours-row"
+                          key={line.dayKey}
+                          size="sm"
+                        >
+                          {`${line.dayLabel}: ${line.hoursLabel}`}
+                        </Paragraph>
+                      ))}
+                    </Surface>
+                  ) : null}
                 </Surface>
               ) : null}
               <Surface className="event-detail--checkout__meta-grid min-w-0" variant="transparent">

@@ -316,6 +316,20 @@ export type AdminCopy = {
   countryDisplay: string;
   cityLabel: string;
   cityDisplay: string;
+  openingHoursLabel: string;
+  openingHoursHint: string;
+  openingHoursClosedLabel: string;
+  openingHoursOpenLabel: string;
+  openingHoursCloseLabel: string;
+  openingHoursDayLabels: {
+    mon: string;
+    tue: string;
+    wed: string;
+    thu: string;
+    fri: string;
+    sat: string;
+    sun: string;
+  };
   categoryLabel: string;
   eventTypeLabel: string;
   tagsLabel: string;
@@ -424,6 +438,7 @@ export type AdminCopy = {
     redemption: string;
     series: string;
     subtitleLanguage: string;
+    openingHours: string;
   };
 };
 
@@ -758,6 +773,21 @@ const copy: Record<Locale, AdminCopy> = {
     countryDisplay: "Deutschland",
     cityLabel: "Stadt",
     cityDisplay: "Berlin",
+    openingHoursLabel: "Öffnungszeiten veröffentlichen",
+    openingHoursHint:
+      "Wenn aktiv, erscheinen die Zeiten auf der Event-Detailseite. Geschlossene Tage markieren oder Öffnungs- und Schlusszeit setzen.",
+    openingHoursClosedLabel: "Geschlossen",
+    openingHoursOpenLabel: "Öffnet",
+    openingHoursCloseLabel: "Schließt",
+    openingHoursDayLabels: {
+      mon: "Montag",
+      tue: "Dienstag",
+      wed: "Mittwoch",
+      thu: "Donnerstag",
+      fri: "Freitag",
+      sat: "Samstag",
+      sun: "Sonntag",
+    },
     categoryLabel: "Kategorie",
     eventTypeLabel: "Event-Typ",
     tagsLabel: "Tags",
@@ -879,6 +909,8 @@ const copy: Record<Locale, AdminCopy> = {
       series: "Mindestens ein gültiger Slot erforderlich.",
       subtitleLanguage:
         "Untertitelsprache ist erforderlich und muss ein gültiger ISO-639-1-Sprachcode sein.",
+      openingHours:
+        "Öffnungszeiten ungültig. Jeden Tag als geschlossen markieren oder Öffnungszeit vor Schlusszeit setzen.",
     },
   },
   en: {
@@ -1204,6 +1236,21 @@ const copy: Record<Locale, AdminCopy> = {
     countryDisplay: "Germany",
     cityLabel: "City",
     cityDisplay: "Berlin",
+    openingHoursLabel: "Publish opening hours",
+    openingHoursHint:
+      "When enabled, hours appear on the event detail page. Mark days closed or set open and close times.",
+    openingHoursClosedLabel: "Closed",
+    openingHoursOpenLabel: "Opens",
+    openingHoursCloseLabel: "Closes",
+    openingHoursDayLabels: {
+      mon: "Monday",
+      tue: "Tuesday",
+      wed: "Wednesday",
+      thu: "Thursday",
+      fri: "Friday",
+      sat: "Saturday",
+      sun: "Sunday",
+    },
     categoryLabel: "Category",
     eventTypeLabel: "Event type",
     tagsLabel: "Tags",
@@ -1320,6 +1367,8 @@ const copy: Record<Locale, AdminCopy> = {
       series: "At least one valid slot is required.",
       subtitleLanguage:
         "Subtitle language is required and must be a valid ISO 639-1 language code.",
+      openingHours:
+        "Opening hours are invalid. Mark each day closed or set open time before close time.",
     },
   },
 };
@@ -1342,6 +1391,7 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   EMPTY_SERIES_SLOTS: "series",
   EMPTY_DATE_TIMES: "dateTimes",
   INVALID_SUBTITLE_LANGUAGE: "subtitleLanguage",
+  INVALID_OPENING_HOURS: "openingHours",
   EVENT_NOT_FOUND: "title",
   PARTNER_HAS_EVENTS: "name",
   PARTNER_NOT_FOUND: "partnerId",

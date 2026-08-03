@@ -212,3 +212,58 @@ The Gherkin feature file and Playwright coverage (or a named deferral) SHALL cov
 
 - **WHEN** `bun run test:e2e` runs the admin-partners Playwright file against a configured environment
 - **THEN** each new partner-list Scenario either passes with proximity/layout selectors or is recorded as a named env/harness deferral in the coverage matrix
+
+### Requirement: Partner weekly opening hours
+
+The system SHALL persist optional venue opening hours on `partners` as `has_opening_hours` (boolean, not null, default false) and `opening_hours` (jsonb, nullable). When `has_opening_hours` is false, `opening_hours` MUST be null. When `has_opening_hours` is true, `opening_hours` MUST contain exactly the seven keys `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, `sun`, each either `{ "closed": true }` or `{ "open": "HH:MM", "close": "HH:MM" }` with `open` strictly before `close` on the same calendar day. Overnight spans are not supported. Create and update partner domain operations SHALL validate this contract and reject invalid payloads with a catalog validation error. Wall times are Europe/Berlin local times for display purposes (no per-partner timezone column).
+
+#### Scenario: Enable hours with a full week
+
+- **WHEN** an admin creates or updates a partner with `has_opening_hours` true and a valid seven-day schedule
+- **THEN** the partner row stores both fields
+- **AND** subsequent reads return the same schedule
+
+#### Scenario: Disable hours clears schedule
+
+- **WHEN** an admin updates a partner with `has_opening_hours` false
+- **THEN** `opening_hours` is stored as null
+- **AND** public consumers MUST treat hours as absent
+
+#### Scenario: Invalid range rejected
+
+- **WHEN** a day has `open` greater than or equal to `close`, or a day key is missing while hours are enabled
+- **THEN** the write is rejected without partial persistence of an invalid schedule
+
+### Requirement: Admin partner form opening hours toggle
+
+Admin partner create and edit pages SHALL include a native checkbox to enable opening hours. When checked, the form SHALL show one row per weekday (Monday–Sunday) with a native “closed” checkbox and native time inputs for open and close. When unchecked, weekday controls are hidden or ignored and the submitted write clears stored hours per domain rules. Mutations SHALL use the existing SSR form POST partner create/edit routes (no client-only mutation modal). Copy SHALL be available in DE and EN.
+
+#### Scenario: Toggle reveals weekday rows
+
+- **WHEN** an admin checks the opening-hours toggle on create or edit
+- **THEN** seven weekday rows appear for open/close (or closed)
+
+#### Scenario: Save enabled hours
+
+- **WHEN** an admin submits a valid enabled schedule
+- **THEN** the partner is saved with `has_opening_hours` true and the weekly JSON
+
+#### Scenario: Uncheck clears public hours
+
+- **WHEN** an admin unchecks the toggle and saves
+- **THEN** the partner is saved with hours disabled and no schedule for public display
+
+### Requirement: Admin partners feature documents opening hours
+
+`docs/product/features/admin-partners.feature` SHALL include scenarios for enabling weekly opening hours on create/edit, validating incomplete/invalid ranges, and disabling hours so they no longer appear on public event detail. Playwright coverage SHALL follow the BDD contract (proximity selectors; R2 skip only when logo upload is required for the scenario setup).
+
+#### Scenario: Feature file covers enable validate and disable
+
+- **WHEN** a reader follows `admin-partners.feature` after this step
+- **THEN** scenarios cover enabling a full week, rejecting invalid/incomplete ranges, and disabling hours
+
+#### Scenario: Playwright covers admin hours and public omit
+
+- **WHEN** admin partner and event-discovery e2e run with required env
+- **THEN** coverage includes saving enabled hours and asserting public detail shows or omits hours per `has_opening_hours`
+- **AND** selectors remain proximity/layout only

@@ -96,8 +96,21 @@ Feature: Event Discovery
     Given I am not signed in
     And a seeded partner with a logo hosts an upcoming event
     When I open that event's public detail URL ("/events/:id")
-    Then I see the partner name and logo in the identity area
+    Then I see the partner name and logo in the DETAILS attribution area
     And the logo is not rendered as a floating sticker on top of the event hero image
+
+  Scenario: Guest sees partner opening hours
+    Given I am not signed in
+    And that partner has opening hours enabled with a valid weekly schedule
+    When I open that event's public detail URL ("/events/:id")
+    Then the DETAILS attribution area also lists the weekday hours (including closed days)
+
+  Scenario: Hours omitted when disabled
+    Given I am not signed in
+    And the hosting partner has has_opening_hours false
+    When I open that event's public detail URL ("/events/:id")
+    Then event detail does not show an opening-hours list
+    And the partner name and logo attribution still behave as today
 
   Scenario: Guest views gallery on event detail
     Given I am not signed in

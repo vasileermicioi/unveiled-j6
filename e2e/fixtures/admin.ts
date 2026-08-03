@@ -293,6 +293,43 @@ export async function createPartnerViaUI(
   return partner;
 }
 
+/** Enable the partner opening-hours toggle (aria-label from admin copy). */
+export async function enablePartnerOpeningHoursToggle(page: Page): Promise<void> {
+  const toggle = page.getByRole("checkbox", {
+    name: /öffnungszeiten veröffentlichen|publish opening hours/i,
+  });
+  await expect(toggle).toBeVisible({ timeout: 15_000 });
+  if (!(await toggle.isChecked())) {
+    await toggle.check();
+  }
+  await expect(page.getByRole("checkbox", { name: /montag —|monday —/i })).toBeVisible();
+}
+
+/** Disable the partner opening-hours toggle. */
+export async function disablePartnerOpeningHoursToggle(page: Page): Promise<void> {
+  const toggle = page.getByRole("checkbox", {
+    name: /öffnungszeiten veröffentlichen|publish opening hours/i,
+  });
+  await expect(toggle).toBeVisible({ timeout: 15_000 });
+  if (await toggle.isChecked()) {
+    await toggle.uncheck();
+  }
+}
+
+/**
+ * Fill a simple valid week: Monday open 10:00–18:00; other days closed
+ * (default closed checkboxes left checked after enabling the toggle).
+ */
+export async function fillPartnerOpeningHoursSampleWeek(page: Page): Promise<void> {
+  await enablePartnerOpeningHoursToggle(page);
+  const monClosed = page.getByRole("checkbox", { name: /montag —|monday —/i });
+  if (await monClosed.isChecked()) {
+    await monClosed.uncheck();
+  }
+  await page.locator('input[name="open_mon"]').fill("10:00");
+  await page.locator('input[name="close_mon"]').fill("18:00");
+}
+
 export async function deletePartnerViaUI(
   page: Page,
   locale: Locale,

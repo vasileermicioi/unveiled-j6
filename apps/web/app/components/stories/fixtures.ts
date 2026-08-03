@@ -134,6 +134,8 @@ export const mockPartner: Partner = {
   zipCode: "10719",
   contactEmail: "team@literaturhaus.de",
   logoImageId: mockImageId,
+  hasOpeningHours: false,
+  openingHours: null,
   venueCheckInToken: null,
   portalUserId: null,
   portalUserEmail: null,

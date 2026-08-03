@@ -127,6 +127,13 @@
       "when": 1785771225910,
       "tag": "0017_sour_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785781073168,
+      "tag": "0018_furry_white_queen",
+      "breakpoints": true
     }
   ]
 }

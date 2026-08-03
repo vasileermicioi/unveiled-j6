@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import type { OpeningHoursWeek } from "../catalog/opening-hours";
 import { images } from "./images";
 import { users } from "./users";
 
@@ -16,6 +17,8 @@ export const partners = pgTable("partners", {
   logoImageId: uuid("logo_image_id")
     .notNull()
     .references(() => images.id, { onDelete: "restrict" }),
+  hasOpeningHours: boolean("has_opening_hours").notNull().default(false),
+  openingHours: jsonb("opening_hours").$type<OpeningHoursWeek | null>(),
   venueCheckInToken: text("venue_check_in_token").unique(),
   portalUserId: text("portal_user_id").references(() => users.id, { onDelete: "restrict" }),
   portalUserEmail: text("portal_user_email"),

@@ -6,10 +6,13 @@ import {
   ensureVoucherInventoryAvailable,
   eq,
   events,
+  getPartnerById,
   listEventGalleryImages,
   listEvents,
   listFeaturedPartners,
   listPartners,
+  type OpeningHoursWeek,
+  partners,
   removeFeaturedEvent,
   removeFeaturedPartner,
 } from "@unveiled/db";
@@ -197,4 +200,58 @@ export async function ensureEventHasCapacity(title: string, minRemaining = 5): P
   }
 
   return row.id;
+}
+
+/** Sample Mon–Sun week for discovery e2e (mix of open + closed days). */
+export const E2E_SAMPLE_OPENING_HOURS: OpeningHoursWeek = {
+  mon: { open: "10:00", close: "18:00" },
+  tue: { open: "10:00", close: "18:00" },
+  wed: { closed: true },
+  thu: { open: "12:00", close: "20:00" },
+  fri: { open: "10:00", close: "22:00" },
+  sat: { open: "11:00", close: "16:00" },
+  sun: { closed: true },
+};
+
+/**
+ * Temporarily set (or clear) a partner's published opening hours, restoring prior values after `fn`.
+ * Uses a direct column update (avoids `updatePartner` image-pipeline import in Playwright).
+ */
+export async function withPartnerOpeningHours(
+  partnerName: string,
+  hours: OpeningHoursWeek | null,
+  fn: () => Promise<void>,
+): Promise<void> {
+  const db = createDb(requireDatabaseUrl());
+  const partnerId = await getPartnerIdByName(partnerName);
+  const existing = await getPartnerById(db, partnerId);
+  if (!existing) {
+    throw new Error(`Partner not found: ${partnerName}`);
+  }
+
+  const previous = {
+    hasOpeningHours: existing.hasOpeningHours,
+    openingHours: existing.openingHours ?? null,
+  };
+
+  try {
+    await db
+      .update(partners)
+      .set({
+        hasOpeningHours: hours != null,
+        openingHours: hours,
+        updatedAt: new Date(),
+      })
+      .where(eq(partners.id, partnerId));
+    await fn();
+  } finally {
+    await db
+      .update(partners)
+      .set({
+        hasOpeningHours: previous.hasOpeningHours,
+        openingHours: previous.openingHours,
+        updatedAt: new Date(),
+      })
+      .where(eq(partners.id, partnerId));
+  }
 }

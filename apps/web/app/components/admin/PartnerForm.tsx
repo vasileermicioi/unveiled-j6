@@ -1,10 +1,17 @@
 "use client";
 
 import { Button, Description, Form, Input, Label, Link, Surface, TextField } from "@heroui/react";
+import { OPENING_HOURS_DAY_KEYS, type OpeningHoursDayKey } from "@unveiled/db";
+import { useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
+import {
+  emptyOpeningHoursDaysForm,
+  type PartnerOpeningHoursDaysForm,
+} from "../../lib/partner-opening-hours-form";
+import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 
 import { AdminFormError } from "./AdminFormError";
 import { PartnerLogoUpload } from "./PartnerLogoUpload";
@@ -18,6 +25,8 @@ export type PartnerFormDefaults = {
   zipCode?: string;
   country?: string;
   city?: string;
+  hasOpeningHours?: boolean;
+  openingHoursDays?: PartnerOpeningHoursDaysForm;
   currentLogoUrl?: string | null;
   currentLogoImageId?: string | null;
   imagePublicBaseUrl?: string | null;
@@ -33,6 +42,67 @@ type PartnerFormProps = {
   isEdit?: boolean;
 };
 
+function OpeningHoursDayRow({
+  day,
+  dayLabel,
+  closedLabel,
+  openLabel,
+  closeLabel,
+  defaults,
+}: {
+  day: OpeningHoursDayKey;
+  dayLabel: string;
+  closedLabel: string;
+  openLabel: string;
+  closeLabel: string;
+  defaults: { closed: boolean; open: string; close: string };
+}) {
+  const [closed, setClosed] = useState(defaults.closed);
+  const openId = `partner-open-${day}`;
+  const closeId = `partner-close-${day}`;
+
+  return (
+    <Surface className="flex flex-col gap-3" variant="transparent">
+      <Label>{dayLabel}</Label>
+      <Surface className="onboarding-form__options" variant="transparent">
+        <NativePreferenceOption
+          defaultChecked={defaults.closed}
+          inputLabel={`${dayLabel} — ${closedLabel}`}
+          label={closedLabel}
+          name={`closed_${day}`}
+          onChange={(event) => setClosed(event.target.checked)}
+          type="checkbox"
+          value="on"
+        />
+      </Surface>
+      <Surface className="grid gap-3 sm:grid-cols-2" variant="transparent">
+        <Surface className="flex w-full flex-col gap-1" variant="transparent">
+          <Label htmlFor={openId}>{openLabel}</Label>
+          <input
+            className="admin-native-text"
+            defaultValue={defaults.open}
+            disabled={closed}
+            id={openId}
+            name={`open_${day}`}
+            type="time"
+          />
+        </Surface>
+        <Surface className="flex w-full flex-col gap-1" variant="transparent">
+          <Label htmlFor={closeId}>{closeLabel}</Label>
+          <input
+            className="admin-native-text"
+            defaultValue={defaults.close}
+            disabled={closed}
+            id={closeId}
+            name={`close_${day}`}
+            type="time"
+          />
+        </Surface>
+      </Surface>
+    </Surface>
+  );
+}
+
 export function PartnerForm({
   locale,
   action,
@@ -43,6 +113,8 @@ export function PartnerForm({
   isEdit = false,
 }: PartnerFormProps) {
   const copy = getAdminCopy(locale);
+  const [hasOpeningHours, setHasOpeningHours] = useState(Boolean(defaults?.hasOpeningHours));
+  const openingHoursDays = defaults?.openingHoursDays ?? emptyOpeningHoursDaysForm(true);
 
   return (
     <Form
@@ -128,6 +200,38 @@ export function PartnerForm({
         isEdit={isEdit}
         locale={locale}
       />
+
+      <Surface className="flex w-full flex-col gap-3" variant="transparent">
+        <Label>{copy.openingHoursLabel}</Label>
+        <Surface className="onboarding-form__options" variant="transparent">
+          <NativePreferenceOption
+            defaultChecked={hasOpeningHours}
+            inputLabel={copy.openingHoursLabel}
+            label={copy.optionYes}
+            name="has_opening_hours"
+            onChange={(event) => setHasOpeningHours(event.target.checked)}
+            type="checkbox"
+            value="on"
+          />
+        </Surface>
+        <Description>{copy.openingHoursHint}</Description>
+
+        {hasOpeningHours ? (
+          <Surface className="flex flex-col gap-3" variant="transparent">
+            {OPENING_HOURS_DAY_KEYS.map((day) => (
+              <OpeningHoursDayRow
+                closeLabel={copy.openingHoursCloseLabel}
+                closedLabel={copy.openingHoursClosedLabel}
+                day={day}
+                dayLabel={copy.openingHoursDayLabels[day]}
+                defaults={openingHoursDays[day]}
+                key={day}
+                openLabel={copy.openingHoursOpenLabel}
+              />
+            ))}
+          </Surface>
+        ) : null}
+      </Surface>
 
       <Surface className="flex flex-col gap-3 sm:flex-row sm:items-center" variant="transparent">
         <Button className="button button--primary button--md sm:min-w-40" type="submit">

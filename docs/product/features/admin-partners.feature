@@ -52,6 +52,23 @@ Feature: Admin — Partner Management
     Then the changes are saved
     And the composed display address is updated on write
 
+  Scenario: Enable weekly opening hours on create or edit
+    When I enable opening hours on create or edit and set a valid open/close (or closed) value for each weekday Monday–Sunday
+    And I save the partner
+    Then the partner is stored with has_opening_hours true and the weekly schedule
+    And public event detail for that partner's events lists those weekday hours in the DETAILS attribution area
+
+  Scenario: Incomplete or invalid opening hours are rejected
+    When I enable opening hours and submit an incomplete day or an inverted/equal open–close range
+    Then the save is rejected with an opening-hours validation error
+    And the form re-shows the submitted hours values
+
+  Scenario: Disable opening hours
+    Given a partner has opening hours enabled
+    When I uncheck the opening-hours toggle and save
+    Then the partner is stored with has_opening_hours false and opening_hours null
+    And public event detail for that partner's events omits the opening-hours list
+
   Scenario: Renaming a partner propagates to its events
     Given a partner has existing events
     When I change that partner's display name

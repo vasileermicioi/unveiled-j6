@@ -5,7 +5,10 @@ import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
 import { AdminPageShell, adminPartnersPath } from "../../../../../components/admin/AdminPageShell";
-import { partnerListPath } from "../../../../../components/admin/PartnerForm";
+import {
+  type PartnerFormDefaults,
+  partnerListPath,
+} from "../../../../../components/admin/PartnerForm";
 import { NotFoundPage } from "../../../../../components/NotFoundPage";
 import PartnerForm from "../../../../../islands/PartnerForm";
 import { getAdminCopy } from "../../../../../lib/admin-content";
@@ -13,6 +16,8 @@ import { renderAdminPage } from "../../../../../lib/admin-render";
 import {
   guardAdminRoute,
   mapCatalogError,
+  openingHoursFormToWriteInput,
+  openingHoursWeekToFormDays,
   parsePartnerFormBody,
 } from "../../../../../lib/admin-route";
 import { getAuthOptions } from "../../../../../lib/auth";
@@ -40,19 +45,7 @@ function renderEditPage(
     locale: Locale;
     partnerId: string;
     error?: string | null;
-    defaults?: {
-      name: string;
-      contactEmail: string;
-      street: string;
-      houseNumber: string;
-      addressLine2: string | null;
-      zipCode: string;
-      country?: string;
-      city?: string;
-      currentLogoUrl?: string | null;
-      currentLogoImageId?: string | null;
-      imagePublicBaseUrl?: string | null;
-    };
+    defaults?: PartnerFormDefaults;
   },
 ) {
   const copy = getAdminCopy(options.locale);
@@ -116,6 +109,7 @@ export const POST = createRoute(async (c) => {
   try {
     const body = (await c.req.parseBody()) as Record<string, string | File | (string | File)[]>;
     values = await parsePartnerFormBody(body);
+    const hours = openingHoursFormToWriteInput(values.hasOpeningHours, values.openingHoursDays);
 
     await updatePartner(db, partnerId, {
       name: values.name,
@@ -126,6 +120,8 @@ export const POST = createRoute(async (c) => {
       country: values.country,
       city: values.city,
       contactEmail: values.contactEmail,
+      hasOpeningHours: hours.hasOpeningHours,
+      openingHours: hours.openingHours,
       logoUpload: values.logoUpload,
       logoPrebuilt: values.logoPrebuilt,
       uploadedBy: guard.session.user.id,
@@ -148,6 +144,9 @@ export const POST = createRoute(async (c) => {
         zipCode: values?.zipCode ?? existing.zipCode,
         country: values?.country ?? existing.country,
         city: values?.city ?? existing.city,
+        hasOpeningHours: values?.hasOpeningHours ?? existing.hasOpeningHours,
+        openingHoursDays:
+          values?.openingHoursDays ?? openingHoursWeekToFormDays(existing.openingHours),
         currentLogoUrl: buildPartnerLogoUrl(existing.logoImageId),
         currentLogoImageId: existing.logoImageId,
         imagePublicBaseUrl: resolveImagePublicBaseUrl(),
@@ -197,6 +196,8 @@ export default createRoute(async (c) => {
       zipCode: partner.zipCode,
       country: partner.country,
       city: partner.city,
+      hasOpeningHours: partner.hasOpeningHours,
+      openingHoursDays: openingHoursWeekToFormDays(partner.openingHours),
       currentLogoUrl: buildPartnerLogoUrl(partner.logoImageId),
       currentLogoImageId: partner.logoImageId,
       imagePublicBaseUrl: resolveImagePublicBaseUrl(),

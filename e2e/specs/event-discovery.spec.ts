@@ -6,11 +6,13 @@ import { signupFreshUser } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
 import { activateMemberForBooking, hasDatabaseUrl } from "../fixtures/billing";
 import {
+  E2E_SAMPLE_OPENING_HOURS,
   ensureDemoEventGallery,
   ensureDemoFeaturedPartnersSplit,
   ensureDemoFeaturedSplit,
   getEventIdByTitle,
   getPartnerIdByName,
+  withPartnerOpeningHours,
 } from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
 
@@ -169,6 +171,53 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByText(partnerName, { exact: true })).toBeVisible();
     await expect(page.getByRole("img", { name: partnerName })).toBeVisible();
     await expect(page.getByRole("img", { name: TITLES.tonight })).toBeVisible();
+  });
+
+  test.describe("partner opening hours on event detail", () => {
+    test.describe.configure({ mode: "serial" });
+
+    test("Scenario: Guest sees partner opening hours", async ({ page, locale }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event + partner");
+      await page.context().clearCookies();
+      const eventId = await getEventIdByTitle(TITLES.tonight);
+      const partnerName = partnerNameForSeedTitle(TITLES.tonight);
+
+      await withPartnerOpeningHours(partnerName, E2E_SAMPLE_OPENING_HOURS, async () => {
+        await page.goto(`/${locale}/events/${eventId}`);
+        await expect(page.getByRole("heading", { level: 1, name: TITLES.tonight })).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByText(/^details$/i).first()).toBeVisible();
+        await expect(page.getByText(partnerName, { exact: true })).toBeVisible();
+        // Locale weekday labels + sample open/closed rows (proximity — not CSS hashes).
+        if (locale === "de") {
+          await expect(page.getByText(/Montag:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
+          await expect(page.getByText(/Mittwoch:\s*Geschlossen/)).toBeVisible();
+          await expect(page.getByText(/Sonntag:\s*Geschlossen/)).toBeVisible();
+        } else {
+          await expect(page.getByText(/Monday:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
+          await expect(page.getByText(/Wednesday:\s*Closed/)).toBeVisible();
+          await expect(page.getByText(/Sunday:\s*Closed/)).toBeVisible();
+        }
+      });
+    });
+
+    test("Scenario: Hours omitted when disabled", async ({ page, locale }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event + partner");
+      await page.context().clearCookies();
+      const eventId = await getEventIdByTitle(TITLES.tonight);
+      const partnerName = partnerNameForSeedTitle(TITLES.tonight);
+
+      await withPartnerOpeningHours(partnerName, null, async () => {
+        await page.goto(`/${locale}/events/${eventId}`);
+        await expect(page.getByRole("heading", { level: 1, name: TITLES.tonight })).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByText(partnerName, { exact: true })).toBeVisible();
+        await expect(page.getByText(/Montag:\s*|Monday:\s*/)).toHaveCount(0);
+        await expect(page.getByText(/10:00\s*[–-]\s*18:00/)).toHaveCount(0);
+      });
+    });
   });
 
   test("Scenario: Detail shows subtitles when present", async ({ page, locale }) => {

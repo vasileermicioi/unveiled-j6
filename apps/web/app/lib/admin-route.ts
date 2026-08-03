@@ -11,6 +11,10 @@ import { getSession } from "./auth";
 import { buildLoginRedirectUrl } from "./auth-middleware";
 import type { Locale } from "./locale";
 import { isValidLocale } from "./locale";
+import {
+  type PartnerOpeningHoursDaysForm,
+  parseOpeningHoursFormFromBody,
+} from "./partner-opening-hours-form";
 
 export type {
   AdminEventsListQuery,
@@ -88,9 +92,23 @@ export type PartnerFormValues = {
   zipCode: string;
   country?: string;
   city?: string;
+  hasOpeningHours: boolean;
+  openingHoursDays: PartnerOpeningHoursDaysForm;
   logoUpload: Buffer | null;
   logoPrebuilt: PrebuiltImageVariantsInput | null;
 };
+
+export type {
+  PartnerOpeningHoursDayForm,
+  PartnerOpeningHoursDaysForm,
+} from "./partner-opening-hours-form";
+export {
+  emptyOpeningHoursDaysForm,
+  normalizeTimeInput,
+  openingHoursFormToWriteInput,
+  openingHoursWeekToFormDays,
+  parseOpeningHoursFormFromBody,
+} from "./partner-opening-hours-form";
 
 function getLocaleParam(value: string | undefined): Locale {
   return value && isValidLocale(value) ? value : "de";
@@ -143,6 +161,7 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
   const country = asString(body.country)?.trim() || undefined;
   const city = asString(body.city)?.trim() || undefined;
   const logoPrebuilt = await parsePrebuiltImageVariants(body, asString, asFile);
+  const { hasOpeningHours, openingHoursDays } = parseOpeningHoursFormFromBody(body, asString);
 
   let logoUpload: Buffer | null = null;
   if (!logoPrebuilt) {
@@ -161,6 +180,8 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
     zipCode,
     country,
     city,
+    hasOpeningHours,
+    openingHoursDays,
     logoUpload,
     logoPrebuilt,
   };

@@ -9,6 +9,7 @@ export * from "./featured-events";
 export * from "./featured-partners";
 export * from "./iso6391";
 export * from "./language-filter";
+export * from "./opening-hours";
 // Image pipeline (`@unveiled/images` / sip WASM) — import `@unveiled/db/catalog/images`
 // from server routes only. Do not re-export here (pulls WASM into client islands).
 export * from "./partners";

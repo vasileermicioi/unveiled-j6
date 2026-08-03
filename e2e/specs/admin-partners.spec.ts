@@ -5,7 +5,10 @@ import {
   createEventViaUI,
   createPartnerViaUI,
   deletePartnerViaUI,
+  disablePartnerOpeningHoursToggle,
+  enablePartnerOpeningHoursToggle,
   expectEventOnDiscover,
+  fillPartnerOpeningHoursSampleWeek,
   fillStructuredLocation,
   fillTextbox,
   navigateAdminTab,
@@ -161,6 +164,107 @@ test.describe("admin-partners.feature", () => {
       zipCode: updatedZip,
     });
     await expect(page.getByText(composed).first()).toBeVisible();
+  });
+
+  test("Scenario: Enable weekly opening hours on create or edit", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+
+    await page.goto(`/${locale}/admin/partners`);
+    const row = page.getByRole("row").filter({ hasText: partner.name });
+    await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
+    await fillPartnerOpeningHoursSampleWeek(page);
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`), { timeout: 60_000 });
+
+    // Prefill persists on re-open.
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await expect(
+      page.getByRole("checkbox", {
+        name: /öffnungszeiten veröffentlichen|publish opening hours/i,
+      }),
+    ).toBeChecked();
+    await expect(page.locator('input[name="open_mon"]')).toHaveValue("10:00");
+    await expect(page.locator('input[name="close_mon"]')).toHaveValue("18:00");
+
+    await page.goto(event.detailPath);
+    await expect(page.getByRole("heading", { level: 1, name: event.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    if (locale === "de") {
+      await expect(page.getByText(/Montag:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
+      await expect(page.getByText(/Dienstag:\s*Geschlossen/)).toBeVisible();
+    } else {
+      await expect(page.getByText(/Monday:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
+      await expect(page.getByText(/Tuesday:\s*Closed/)).toBeVisible();
+    }
+  });
+
+  test("Scenario: Incomplete or invalid opening hours are rejected", async ({ page, locale }) => {
+    test.setTimeout(90_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await enablePartnerOpeningHoursToggle(page);
+    const monClosed = page.getByRole("checkbox", { name: /montag —|monday —/i });
+    if (await monClosed.isChecked()) {
+      await monClosed.uncheck();
+    }
+    await page.locator('input[name="open_mon"]').fill("18:00");
+    await page.locator('input[name="close_mon"]').fill("10:00");
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/.+/edit`));
+    await expect(
+      page.getByText(/öffnungszeiten ungültig|opening hours are invalid/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("Scenario: Disable opening hours", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await fillPartnerOpeningHoursSampleWeek(page);
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`), { timeout: 60_000 });
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await disablePartnerOpeningHoursToggle(page);
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`), { timeout: 60_000 });
+
+    await page.goto(event.detailPath);
+    await expect(page.getByRole("heading", { level: 1, name: event.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(partner.name, { exact: true })).toBeVisible();
+    await expect(page.getByText(/Montag:\s*|Monday:\s*/)).toHaveCount(0);
+    await expect(page.getByText(/10:00\s*[–-]\s*18:00/)).toHaveCount(0);
   });
 
   test("Scenario: Renaming a partner propagates to its events", async ({ page, locale }) => {

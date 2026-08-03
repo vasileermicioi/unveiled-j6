@@ -9,6 +9,7 @@ import { renderAdminPage } from "../../../../lib/admin-render";
 import {
   guardAdminRoute,
   mapCatalogError,
+  openingHoursFormToWriteInput,
   parsePartnerFormBody,
 } from "../../../../lib/admin-route";
 import { getAuthOptions } from "../../../../lib/auth";
@@ -27,6 +28,7 @@ export const POST = createRoute(async (c) => {
     const body = (await c.req.parseBody()) as Record<string, string | File | (string | File)[]>;
     values = await parsePartnerFormBody(body);
     const { db } = getAuthOptions();
+    const hours = openingHoursFormToWriteInput(values.hasOpeningHours, values.openingHoursDays);
 
     await createPartner(db, {
       name: values.name,
@@ -37,6 +39,8 @@ export const POST = createRoute(async (c) => {
       country: values.country,
       city: values.city,
       contactEmail: values.contactEmail,
+      hasOpeningHours: hours.hasOpeningHours,
+      openingHours: hours.openingHours,
       logoUpload: values.logoUpload,
       logoPrebuilt: values.logoPrebuilt,
       uploadedBy: guard.session.user.id,
@@ -68,6 +72,8 @@ export const POST = createRoute(async (c) => {
                   zipCode: values.zipCode,
                   country: values.country,
                   city: values.city,
+                  hasOpeningHours: values.hasOpeningHours,
+                  openingHoursDays: values.openingHoursDays,
                 }
               : undefined
           }

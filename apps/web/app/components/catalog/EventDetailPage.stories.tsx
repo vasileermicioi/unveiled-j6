@@ -1,4 +1,5 @@
 import type { Story } from "@ladle/react";
+import type { OpeningHoursWeek } from "@unveiled/db";
 
 import type { PublicEventGalleryImage } from "../../lib/public-event-gallery";
 import {
@@ -16,9 +17,25 @@ import { EventDetailPage } from "./EventDetailPage";
  */
 const wideMeta = { width: 1280 as const };
 
+const storyOpeningHours: OpeningHoursWeek = {
+  mon: { open: "10:00", close: "18:00" },
+  tue: { open: "10:00", close: "18:00" },
+  wed: { closed: true },
+  thu: { open: "12:00", close: "20:00" },
+  fri: { open: "10:00", close: "22:00" },
+  sat: { open: "11:00", close: "16:00" },
+  sun: { closed: true },
+};
+
 const storyPartnerAttribution = {
   name: mockPartner.name,
   logoUrl: `https://cdn.example.com/images/${mockPartner.logoImageId}/medium-640.webp`,
+};
+
+const storyPartnerAttributionWithHours = {
+  ...storyPartnerAttribution,
+  hasOpeningHours: true,
+  openingHours: storyOpeningHours,
 };
 
 const storyGalleryImages: PublicEventGalleryImage[] = [
@@ -150,6 +167,20 @@ export const PartnerNameOnly: Story = () => (
 );
 PartnerNameOnly.storyName = "EventDetailPage / Partner name only";
 PartnerNameOnly.meta = wideMeta;
+
+/** DETAILS partner attribution with weekly opening hours. */
+export const PartnerWithOpeningHours: Story = () => (
+  <EventDetailPage
+    closeHref={`/${storyLocale}`}
+    event={mockEvent}
+    locale={storyLocale}
+    maxQty={3}
+    partnerAttribution={storyPartnerAttributionWithHours}
+    viewer={{ kind: "guest" }}
+  />
+);
+PartnerWithOpeningHours.storyName = "EventDetailPage / Partner with opening hours";
+PartnerWithOpeningHours.meta = wideMeta;
 
 /** Empty gallery prop (default) — section omitted. */
 export const WithoutGallery: Story = () => (

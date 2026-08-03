@@ -138,6 +138,8 @@ export default createRoute(async (c) => {
         partnerAttribution={{
           name: event.partnerName,
           logoUrl: partnerLogoUrl,
+          hasOpeningHours: partner?.hasOpeningHours ?? false,
+          openingHours: partner?.openingHours ?? null,
         }}
         viewer={viewer}
       />

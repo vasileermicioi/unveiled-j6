@@ -19,6 +19,7 @@ import { featuredPartners } from "../schema/featured-partners";
 import { type Partner, partners } from "../schema/partners";
 import { activeEventCondition } from "./active-event";
 import { CatalogValidationError } from "./errors";
+import { assertOpeningHoursForWrite, type OpeningHoursWeek } from "./opening-hours";
 import { requireNonEmpty, validateEmail, validateImageSourceExclusive } from "./validation";
 
 /** Lazy — keeps `@unveiled/images` / sip out of client graphs that import `@unveiled/db`. */
@@ -57,6 +58,9 @@ export type CreatePartnerInput = {
   city?: string | null;
   contactEmail: string;
   venueCheckInToken?: string | null;
+  /** Defaults to false when omitted. */
+  hasOpeningHours?: boolean;
+  openingHours?: OpeningHoursWeek | null;
   logoUpload?: Buffer | null;
   logoUrl?: string | null;
   logoPrebuilt?: PrebuiltImageVariantsInput | null;
@@ -73,12 +77,29 @@ export type UpdatePartnerInput = {
   country?: string | null;
   city?: string | null;
   contactEmail?: string;
+  hasOpeningHours?: boolean;
+  openingHours?: OpeningHoursWeek | null;
   logoUpload?: Buffer | null;
   logoUrl?: string | null;
   logoPrebuilt?: PrebuiltImageVariantsInput | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
 };
+
+function resolvePartnerOpeningHours(
+  hasOpeningHours: boolean,
+  openingHours: unknown,
+): { hasOpeningHours: boolean; openingHours: OpeningHoursWeek | null } {
+  try {
+    return {
+      hasOpeningHours,
+      openingHours: assertOpeningHoursForWrite(hasOpeningHours, openingHours),
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid opening hours";
+    throw new CatalogValidationError("INVALID_OPENING_HOURS", message);
+  }
+}
 
 function generateVenueCheckInToken(): string {
   return crypto.randomUUID().replace(/-/g, "");
@@ -210,6 +231,10 @@ export async function createPartner(db: Db, input: CreatePartnerInput): Promise<
     city: location.city,
   });
   const contactEmail = validateEmail(input.contactEmail);
+  const opening = resolvePartnerOpeningHours(
+    Boolean(input.hasOpeningHours),
+    input.hasOpeningHours ? (input.openingHours ?? null) : null,
+  );
 
   const { attachImageToPartner, deleteImageRecord } = await catalogImages();
   const logoImageId = await attachImageToPartner(db, "", input.logoUpload, input.logoUrl, {
@@ -234,6 +259,8 @@ export async function createPartner(db: Db, input: CreatePartnerInput): Promise<
         zipCode: location.zipCode,
         contactEmail,
         logoImageId,
+        hasOpeningHours: opening.hasOpeningHours,
+        openingHours: opening.openingHours,
         venueCheckInToken,
       })
       .returning();
@@ -318,6 +345,27 @@ export async function updatePartner(
       })
     : existing.address;
 
+  const hoursTouched = input.hasOpeningHours !== undefined || input.openingHours !== undefined;
+  const nextOpening = hoursTouched
+    ? resolvePartnerOpeningHours(
+        input.hasOpeningHours !== undefined
+          ? Boolean(input.hasOpeningHours)
+          : existing.hasOpeningHours,
+        (
+          input.hasOpeningHours !== undefined
+            ? Boolean(input.hasOpeningHours)
+            : existing.hasOpeningHours
+        )
+          ? input.openingHours !== undefined
+            ? input.openingHours
+            : existing.openingHours
+          : null,
+      )
+    : {
+        hasOpeningHours: existing.hasOpeningHours,
+        openingHours: existing.openingHours ?? null,
+      };
+
   const { replacePartnerLogo, deleteImageRecord } = await catalogImages();
   const previousLogoImageId = existing.logoImageId;
   const nextLogoImageId = await replacePartnerLogo(
@@ -346,6 +394,8 @@ export async function updatePartner(
       zipCode: location.zipCode,
       contactEmail: nextEmail,
       logoImageId: nextLogoImageId,
+      hasOpeningHours: nextOpening.hasOpeningHours,
+      openingHours: nextOpening.openingHours,
       updatedAt: new Date(),
     })
     .where(eq(partners.id, partnerId))
