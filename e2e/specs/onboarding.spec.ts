@@ -3,9 +3,14 @@ import { expect, test } from "../fixtures/base";
 import {
   completeAgeStep,
   completeInterestsStep,
+  completeInterestsStepBlank,
   completeLocationStep,
+  completeLocationStepBlank,
   completeOnboardingWizard,
+  completeOnboardingWizardBlank,
   completeTimingStep,
+  completeTimingStepBlank,
+  skipAgeStep,
 } from "../fixtures/onboarding";
 import { hasAdminCredentials } from "../fixtures/waitlist";
 
@@ -71,6 +76,13 @@ test.describe("onboarding.feature", () => {
     await completeInterestsStep(page, locale);
   });
 
+  test("Scenario: Step 2 — interests and moods optional", async ({ page, locale }) => {
+    await signupFreshUser(page, locale);
+    await completeAgeStep(page, locale);
+    await completeInterestsStepBlank(page, locale);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding/location`));
+  });
+
   test("Scenario: Step 3 — zip under Germany/Berlin", async ({ page, locale }) => {
     await signupFreshUser(page, locale);
     await completeAgeStep(page, locale);
@@ -81,6 +93,7 @@ test.describe("onboarding.feature", () => {
     );
     await expect(page.locator("#onboarding-city-display")).toHaveValue("Berlin");
     await expect(page.locator("#zip_code")).toBeVisible();
+    await expect(page.locator("#zip_code")).not.toHaveAttribute("required", "");
     await expect(page.getByRole("checkbox", { name: "Mitte" })).toHaveCount(0);
     await expect(page.getByRole("checkbox", { name: "Neukölln" })).toHaveCount(0);
     await expect(
@@ -89,7 +102,22 @@ test.describe("onboarding.feature", () => {
       }),
     ).toHaveCount(0);
     await expect(page.locator("#max_distance")).toHaveCount(0);
-    await completeLocationStep(page, locale);
+
+    // Invalid non-empty zip is rejected with a validation message.
+    await page.locator("#zip_code").evaluate(() => {
+      const zip = document.querySelector<HTMLInputElement>("#zip_code");
+      const form = document.querySelector<HTMLFormElement>("form.onboarding-form");
+      if (!zip || !form) {
+        throw new Error("location form fields missing");
+      }
+      zip.value = "80331";
+      form.requestSubmit();
+    });
+    await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding/location`), { timeout: 15_000 });
+    await expect(page.getByText(/bitte prüfe|please check/i)).toBeVisible();
+
+    // Blank zip advances to timing.
+    await completeLocationStepBlank(page, locale);
   });
 
   test("Scenario: Step 4 — timing, days, languages, accessibility", async ({ page, locale }) => {
@@ -115,9 +143,24 @@ test.describe("onboarding.feature", () => {
     await completeTimingStep(page, locale);
   });
 
+  test("Scenario: Step 4 — timing preferences optional", async ({ page, locale }) => {
+    await signupFreshUser(page, locale);
+    await skipAgeStep(page, locale);
+    await completeInterestsStepBlank(page, locale);
+    await completeLocationStepBlank(page, locale);
+    await completeTimingStepBlank(page, locale);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/membership`));
+  });
+
   test("Scenario: Completing onboarding", async ({ page, locale }) => {
     await signupFreshUser(page, locale);
     await completeOnboardingWizard(page, locale);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/membership`));
+  });
+
+  test("Scenario: Completing onboarding with all fields blank", async ({ page, locale }) => {
+    await signupFreshUser(page, locale);
+    await completeOnboardingWizardBlank(page, locale);
     await expect(page).toHaveURL(new RegExp(`/${locale}/membership`));
   });
 });

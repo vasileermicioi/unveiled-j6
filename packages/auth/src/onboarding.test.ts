@@ -33,6 +33,21 @@ describe("getOnboardingStepPath", () => {
     );
   });
 
+  test("progress resumes at timing after location with country and city only", () => {
+    expect(
+      getOnboardingStepPath(
+        {
+          interests: ["Kino"],
+          moods: ["Leicht"],
+          country: "DE",
+          city: "berlin",
+          zip_code: null,
+        },
+        {},
+      ),
+    ).toBe("/onboarding/timing");
+  });
+
   test("progress resumes at timing after location", () => {
     expect(
       getOnboardingStepPath(
@@ -46,6 +61,10 @@ describe("getOnboardingStepPath", () => {
         {},
       ),
     ).toBe("/onboarding/timing");
+  });
+
+  test("empty interests arrays still count as interests step done", () => {
+    expect(getOnboardingStepPath({ interests: [], moods: [] }, {})).toBe("/onboarding/location");
   });
 
   test("age skip pointer resumes at interests without age_group", () => {
@@ -65,14 +84,31 @@ describe("validateOnboardingStepPayload", () => {
     ).toThrow(OnboardingValidationError);
   });
 
-  test("rejects Other interest without free text", () => {
-    expect(() =>
+  test("accepts empty interests and moods", () => {
+    expect(
       validateOnboardingStepPayload("interests", {
-        interests: ["Other"],
+        interests: [],
+        moods: [],
+      }),
+    ).toEqual({
+      interests: [],
+      moods: [],
+      interests_other: null,
+    });
+  });
+
+  test("drops Other interest without free text instead of rejecting", () => {
+    expect(
+      validateOnboardingStepPayload("interests", {
+        interests: ["Kino", "Other"],
         moods: ["Leicht"],
         interests_other: "   ",
       }),
-    ).toThrow(OnboardingValidationError);
+    ).toEqual({
+      interests: ["Kino"],
+      moods: ["Leicht"],
+      interests_other: null,
+    });
   });
 
   test("accepts Other interest with trimmed free text", () => {
@@ -121,6 +157,21 @@ describe("validateOnboardingStepPayload", () => {
     ).toThrow(OnboardingValidationError);
   });
 
+  test("accepts empty zip and stores null with country/city defaults", () => {
+    expect(
+      validateOnboardingStepPayload("location", {
+        zipCode: "   ",
+        country: "DE",
+        city: "berlin",
+      }),
+    ).toEqual({
+      country: "DE",
+      city: "berlin",
+      zip_code: null,
+      districts: null,
+    });
+  });
+
   test("location payload stores zip trio, clears districts, and omits max_distance", () => {
     expect(
       validateOnboardingStepPayload("location", {
@@ -136,6 +187,22 @@ describe("validateOnboardingStepPayload", () => {
 
   test("age skip returns empty profile update", () => {
     expect(validateOnboardingStepPayload("age", { skip: true })).toEqual({});
+  });
+
+  test("accepts empty timing preferences", () => {
+    expect(
+      validateOnboardingStepPayload("timing", {
+        timing: [],
+        preferred_days: [],
+        preferred_languages: [],
+        accessibility: false,
+      }),
+    ).toEqual({
+      timing: [],
+      preferred_days: [],
+      preferred_languages: [],
+      accessibility: false,
+    });
   });
 
   test("accepts expanded preferred languages and accessibility boolean", () => {
@@ -231,6 +298,62 @@ describe("saveOnboardingStep and completeOnboarding", () => {
       expect(updated.profile.last_name).toBe("Berlin");
       expect(updated.profile.age_group).toBe("36-50");
     } finally {
+      await db.delete(users).where(eq(users.id, userId));
+    }
+  });
+
+  test("blank four-step save and complete round-trip", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const userId = `test-onboarding-blank-${crypto.randomUUID()}`;
+    const email = `${userId}@example.com`;
+
+    try {
+      await db.insert(users).values({
+        id: userId,
+        email,
+        profile: { onboarding_complete: false },
+      });
+
+      await saveOnboardingStep(db, userId, "age", { skip: true });
+      await saveOnboardingStep(db, userId, "interests", {
+        interests: [],
+        moods: [],
+      });
+      const afterLocation = await saveOnboardingStep(db, userId, "location", {
+        zipCode: "",
+        country: "DE",
+        city: "berlin",
+      });
+      expect(afterLocation.behavior.onboarding_step).toBe("timing");
+      expect(afterLocation.profile.zip_code).toBeNull();
+      expect(afterLocation.profile.country).toBe("DE");
+      expect(afterLocation.profile.city).toBe("berlin");
+      expect(getOnboardingStepPath(afterLocation.profile, afterLocation.behavior)).toBe(
+        "/onboarding/timing",
+      );
+
+      await saveOnboardingStep(db, userId, "timing", {
+        timing: [],
+        preferred_days: [],
+        preferred_languages: [],
+        accessibility: false,
+      });
+
+      const completed = await completeOnboarding(db, userId);
+
+      expect(completed.profile.onboarding_complete).toBe(true);
+      expect(completed.profile.interests).toEqual([]);
+      expect(completed.profile.moods).toEqual([]);
+      expect(completed.profile.zip_code).toBeNull();
+      expect(completed.profile.timing).toEqual([]);
+      expect(completed.behavior.onboarding_step).toBeNull();
+    } finally {
+      await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
       await db.delete(users).where(eq(users.id, userId));
     }
   });

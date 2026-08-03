@@ -1,8 +1,4 @@
-# Member Onboarding
-
-Four-step SSR onboarding wizard for incomplete USERs, gate/skip behavior for other roles, and automated browser coverage.
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: All onboarding preference fields are optional
 After registration, every onboarding step MAY be completed with no selections. The system SHALL NOT block the primary Next/Finish action on an empty preference field. Non-empty values that fail format or allowlist validation SHALL still be rejected. Completing the wizard with all preference fields blank SHALL mark onboarding complete and route the member to the membership checkout page.
@@ -40,6 +36,8 @@ After registration, every onboarding step MAY be completed with no selections. T
 - **THEN** my onboarding is marked complete
 - **AND** I am routed to the membership checkout page
 
+## MODIFIED Requirements
+
 ### Requirement: Automated browser coverage for onboarding wizard
 
 Each Gherkin scenario in `docs/product/features/onboarding.feature` SHALL have a Playwright test in `e2e/specs/onboarding.spec.ts` tracing the four-step SSR wizard (`age`, `interests`, `location`, `timing`), including: step 3 zip under prefilled Germany/Berlin **without** travel distance / `max_distance` and with blank-zip Next succeeding; interests Other + free text when provided, and empty interests/moods allowed; searchable languages with DE/EN first; accessibility “needed?” yes checkbox. Coverage SHALL include completing the wizard with all preference fields blank. Tests that mutate onboarding state SHALL use a fresh USER (prefer new signup) for isolation. Scenario titles SHALL match Gherkin `Scenario:` lines verbatim (including the step 3 zip title and optional-field scenarios).
@@ -62,37 +60,6 @@ Each Gherkin scenario in `docs/product/features/onboarding.feature` SHALL have a
 - **THEN** Next succeeds and the member reaches timing (or completes the wizard when finishing)
 - **AND** an invalid non-empty zip still fails with a visible validation message
 
-### Requirement: Preference controls are native and localized
-
-Onboarding preference forms SHALL use native HTML form controls (`checkbox`, `radio`, `input`, `select`, `textarea` as applicable) for preference capture — not HeroUI Checkbox/Radio/Switch/NumberField/Select custom chrome. All preference section labels and option values SHALL be available in German and English according to the active URL locale. Stored allowlist keys MAY remain locale-invariant; user-visible labels MUST come from locale copy maps. Location on step 3 SHALL use a native zip text input (plus non-editable country/city display) and SHALL NOT show a travel-distance / `max_distance` number input.
-
-#### Scenario: Accessibility preference is a visible native checkbox
-
-- **WHEN** a user reaches the onboarding timing/preferences step
-- **THEN** accessibility is a native checkbox with a visible short option label under an accessibility section title
-- **AND** the control is operable with keyboard and exposes an accessible name
-
-#### Scenario: Preference options follow locale
-
-- **WHEN** the user views onboarding preferences under `/de/...`
-- **THEN** option labels are German (not leftover English-only catalog strings)
-- **AND** under `/en/...` the same options are English
-
-#### Scenario: Multi-value preferences use native checkboxes
-
-- **WHEN** a user completes interests or timing onboarding steps
-- **THEN** multi-value fields (interests, moods, timing, preferred days) are native checkboxes
-- **AND** preferred languages use native checkboxes inside a searchable client-side filter control (not HeroUI Select)
-- **AND** when Other is selected under interests, a native text input or textarea captures `interests_other`
-- **AND** age group is a native radio (or native select) group
-
-#### Scenario: Location zip uses a native text input
-
-- **WHEN** a user completes onboarding step 3 (location)
-- **THEN** zip code is a native text input
-- **AND** country and city are shown as non-editable prefilled values (not HeroUI Select pickers)
-- **AND** no travel-distance / `max_distance` control is shown
-
 ### Requirement: Interests may include Other with free text
 The system SHALL offer an `Other` interest option on onboarding step 2. When `Other` is selected **and** non-empty free text is provided, the member's free-text interest SHALL be stored as `profile.interests_other` and the interests array SHALL include the allowlist key `Other`. When `Other` is not selected, or when `Other` is selected with empty/whitespace free text, `interests_other` SHALL be null and `Other` SHALL NOT remain in the persisted interests array. Empty interests and moods arrays SHALL be accepted and SHALL advance the step. `Other` SHALL be a normal member of `@unveiled/auth/constants` `INTERESTS` (appended after the existing eight keys). Locale labels SHALL be EN `Other` and DE `Sonstiges`. Free text SHALL be trimmed; when present it MUST NOT exceed the configured max length (100 characters). The Other free-text input SHALL NOT use HTML `required`.
 
@@ -114,31 +81,6 @@ The system SHALL offer an `Other` interest option on onboarding step 2. When `Ot
 - **WHEN** a member submits step 2 with no interests and no moods selected
 - **THEN** preferences are stored as empty arrays (or equivalent unset) for those fields
 - **AND** the member advances to the location step
-
-### Requirement: Accessibility preference section chrome
-The system SHALL present the accessibility preference as a titled question on onboarding step 4. The section title SHALL be locale-specific (EN `Accessibility needed?`, DE `Barrierefreiheit benötigt?`). The interactive control SHALL be a native checkbox whose option label is a short affirmative (EN `Yes`, DE `Ja`). When checked, the persisted value SHALL be `accessibility: true`; when unchecked, `false`.
-
-#### Scenario: Accessibility mirrors Languages structure
-- **WHEN** a member views onboarding step 4
-- **THEN** they see the accessibility question above its yes checkbox
-
-#### Scenario: Accessibility option uses short locale label
-- **WHEN** a member views onboarding step 4 under `/en`
-- **THEN** the accessibility checkbox accessible name is `Yes`
-- **AND** under `/de` the option label is `Ja`
-
-### Requirement: Preferred languages are a searchable multi-select
-The system SHALL let members multi-select preferred languages from an expanded allowlist on onboarding step 4. The UI SHALL provide a client-side search/filter over the option list (no server search). German (`DE`) and English (`EN`) SHALL appear as the first two options when the filter is empty; remaining options SHALL be ordered A–Z by locale display label. `Non-Verbal` SHALL NOT be offered. Posted values SHALL validate against `@unveiled/auth/constants` `PREFERRED_LANGUAGES`. Selected values SHALL still be submitted when they do not match the active filter.
-
-#### Scenario: Languages searchable list pins DE and EN
-- **WHEN** a member opens the languages control on onboarding step 4 with an empty filter
-- **THEN** the first two options are German and English (locale labels)
-- **AND** typing in the filter narrows the visible options client-side
-- **AND** Non-Verbal is not offered
-
-#### Scenario: Preferred language codes validate against allowlist
-- **WHEN** a timing step payload includes a preferred language outside `PREFERRED_LANGUAGES` (including `Non-Verbal`)
-- **THEN** validation rejects the payload without completing the step
 
 ### Requirement: Step 3 location preferences
 

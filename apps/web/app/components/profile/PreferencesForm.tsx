@@ -72,7 +72,6 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
               maxLength={INTERESTS_OTHER_MAX_LENGTH}
               name="interests_other"
               placeholder={onboarding.interestsOtherPlaceholder}
-              required
               type="text"
             />
           </Surface>
@@ -140,7 +139,6 @@ export function PreferencesForm({ locale, profile, copy, action }: PreferencesFo
             maxLength={5}
             name="zip_code"
             placeholder="10115"
-            required
             type="text"
           />
           <Description>{onboarding.zipCodeHint}</Description>

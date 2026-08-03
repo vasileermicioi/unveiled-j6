@@ -136,6 +136,7 @@ describe("onboarding-content i18n", () => {
     expect(getOnboardingCopy("de").cityDisplay).toBe("Berlin");
     expect(getOnboardingCopy("de").zipCodeLabel).toBe("PLZ");
     expect(getOnboardingCopy("de").zipCodeHint).toContain("Berlin");
+    expect(getOnboardingCopy("de").zipCodeHint.toLowerCase()).toMatch(/optional|leer/);
     expect(getOnboardingCopy("en").locationLabel).toBe("YOUR LOCATION");
     expect(getOnboardingCopy("en").countryLabel).toBe("Country");
     expect(getOnboardingCopy("en").countryDisplay).toBe("Germany");
@@ -143,5 +144,6 @@ describe("onboarding-content i18n", () => {
     expect(getOnboardingCopy("en").cityDisplay).toBe("Berlin");
     expect(getOnboardingCopy("en").zipCodeLabel).toBe("Zip code");
     expect(getOnboardingCopy("en").zipCodeHint).toContain("Berlin");
+    expect(getOnboardingCopy("en").zipCodeHint.toLowerCase()).toContain("optional");
   });
 });

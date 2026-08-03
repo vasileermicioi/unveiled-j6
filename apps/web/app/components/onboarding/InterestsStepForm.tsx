@@ -62,7 +62,6 @@ export function InterestsStepForm({ locale, profile }: InterestsStepFormProps) {
               maxLength={INTERESTS_OTHER_MAX_LENGTH}
               name="interests_other"
               placeholder={copy.interestsOtherPlaceholder}
-              required
               type="text"
             />
           </Surface>

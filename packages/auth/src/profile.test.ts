@@ -70,14 +70,30 @@ describe("validateCulturalPreferencesPayload", () => {
     });
   });
 
-  test("rejects Other interest without free text on profile preferences", () => {
-    expect(() =>
+  test("drops Other interest without free text on profile preferences", () => {
+    expect(
       validateCulturalPreferencesPayload({
         ...validPreferences,
         interests: ["Other"],
         interests_other: "",
       }),
-    ).toThrow(ProfileValidationError);
+    ).toMatchObject({
+      interests: [],
+      interests_other: null,
+    });
+  });
+
+  test("accepts empty zip on profile preferences", () => {
+    expect(
+      validateCulturalPreferencesPayload({
+        ...validPreferences,
+        zipCode: "",
+      }),
+    ).toMatchObject({
+      zip_code: null,
+      country: "DE",
+      city: "berlin",
+    });
   });
 
   test("rejects Non-Verbal preferred language", () => {

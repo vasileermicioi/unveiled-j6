@@ -59,7 +59,6 @@ export function LocationStepForm({ locale, profile }: LocationStepFormProps) {
           maxLength={5}
           name="zip_code"
           placeholder="10115"
-          required
           type="text"
         />
         <Description>{copy.zipCodeHint}</Description>

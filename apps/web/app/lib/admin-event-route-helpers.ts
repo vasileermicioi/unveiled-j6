@@ -2,7 +2,7 @@ import type { Event, Partner } from "@unveiled/db";
 import { buildVariantUrl, readImagePublicBaseUrl } from "@unveiled/images/urls";
 
 import type { EventFormDefaults } from "../components/admin/event-admin-types";
-import { eventDateTimesToFormRows, type EventFormValues } from "./admin-event-form";
+import { type EventFormValues, eventDateTimesToFormRows } from "./admin-event-form";
 
 export type PartnerOption = Pick<
   Partner,

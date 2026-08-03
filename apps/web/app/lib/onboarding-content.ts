@@ -58,7 +58,8 @@ const copy: Record<Locale, OnboardingCopy> = {
     cityLabel: "Stadt",
     cityDisplay: "Berlin",
     zipCodeLabel: "PLZ",
-    zipCodeHint: "Unveiled ist aktuell in Berlin verfügbar. Gib eine Berliner PLZ ein.",
+    zipCodeHint:
+      "Unveiled ist aktuell in Berlin verfügbar. Eine Berliner PLZ ist optional — du kannst das Feld auch leer lassen.",
     timingLabel: "WANN HAST DU ZEIT?",
     daysLabel: "WELCHE TAGE?",
     languagePrefLabel: "SPRACHEN?",
@@ -88,7 +89,8 @@ const copy: Record<Locale, OnboardingCopy> = {
     cityLabel: "City",
     cityDisplay: "Berlin",
     zipCodeLabel: "Zip code",
-    zipCodeHint: "Unveiled currently serves Berlin. Enter a Berlin zip code.",
+    zipCodeHint:
+      "Unveiled currently serves Berlin. A Berlin zip code is optional — you can leave this blank.",
     timingLabel: "WHEN DO YOU HAVE TIME?",
     daysLabel: "WHICH DAYS?",
     languagePrefLabel: "LANGUAGES?",

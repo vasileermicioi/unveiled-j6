@@ -1,5 +1,7 @@
 import {
   type Db,
+  DEFAULT_LOCATION_CITY,
+  DEFAULT_LOCATION_COUNTRY,
   type OnboardingStepKey,
   PostalValidationError,
   type User,
@@ -178,6 +180,12 @@ function isInterestsStepDone(profile: UserProfile): boolean {
 }
 
 function isLocationStepDone(profile: UserProfile): boolean {
+  const country = typeof profile.country === "string" ? profile.country.trim() : "";
+  const city = typeof profile.city === "string" ? profile.city.trim() : "";
+  if (country.length > 0 && city.length > 0) {
+    return true;
+  }
+
   return typeof profile.zip_code === "string" && profile.zip_code.trim().length > 0;
 }
 
@@ -231,21 +239,23 @@ export function validateOnboardingStepPayload(
       assertAllowlist(interests, INTERESTS, "invalid_interest");
       assertAllowlist(moods, MOODS, "invalid_mood");
 
+      const trimmedOther = (interests_other ?? "").trim();
+
       if (interests.includes("Other")) {
-        const trimmed = (interests_other ?? "").trim();
-        if (!trimmed) {
-          throw new OnboardingValidationError(
-            "interests_other_required",
-            "interests_other is required when Other is selected",
-          );
+        if (!trimmedOther) {
+          return {
+            interests: interests.filter((value) => value !== "Other"),
+            moods,
+            interests_other: null,
+          };
         }
-        if (trimmed.length > INTERESTS_OTHER_MAX_LENGTH) {
+        if (trimmedOther.length > INTERESTS_OTHER_MAX_LENGTH) {
           throw new OnboardingValidationError(
             "interests_other_too_long",
             `interests_other must be at most ${INTERESTS_OTHER_MAX_LENGTH} characters`,
           );
         }
-        return { interests, moods, interests_other: trimmed };
+        return { interests, moods, interests_other: trimmedOther };
       }
 
       return { interests, moods, interests_other: null };
@@ -253,8 +263,22 @@ export function validateOnboardingStepPayload(
 
     case "location": {
       const { zipCode, country, city } = payload as LocationStepPayload;
+      const trimmedZip = (zipCode ?? "").trim();
+
+      if (!trimmedZip) {
+        const normalizedCountry = (country ?? "").trim().toUpperCase() || DEFAULT_LOCATION_COUNTRY;
+        const normalizedCity = (city ?? "").trim().toLowerCase() || DEFAULT_LOCATION_CITY;
+        // Omit max_distance so merges leave any legacy JSONB value untouched.
+        return {
+          country: normalizedCountry,
+          city: normalizedCity,
+          zip_code: null,
+          districts: null,
+        };
+      }
+
       try {
-        const location = validatePostalCode({ country, city, zipCode });
+        const location = validatePostalCode({ country, city, zipCode: trimmedZip });
         // Omit max_distance so merges leave any legacy JSONB value untouched.
         return {
           country: location.country,

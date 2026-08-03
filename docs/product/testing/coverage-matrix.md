@@ -166,9 +166,12 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `onboarding.feature` | Already-onboarded users skip onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Already-onboarded users skip onboarding` | `pass` | Redirect may be `/events` or `/discover` by booking eligibility |
 | `onboarding.feature` | Step 1 — age group (skippable) | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 1 — age group (skippable)` | `pass` |  |
 | `onboarding.feature` | Step 2 — interests and moods | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 2 — interests and moods` | `pass` | Asserts Other / Sonstiges visibility; Other+text submit covered by auth unit tests |
-| `onboarding.feature` | Step 3 — zip under Germany/Berlin | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 3 — zip under Germany/Berlin` | `pass` | Germany/Berlin prefilled; Berlin PLZ; no travel distance |
+| `onboarding.feature` | Step 2 — interests and moods optional | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 2 — interests and moods optional` | `pass` | Empty interests/moods advance |
+| `onboarding.feature` | Step 3 — zip under Germany/Berlin | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 3 — zip under Germany/Berlin` | `pass` | Germany/Berlin prefilled; optional Berlin PLZ; blank Next OK; invalid non-empty zip rejected; no travel distance |
 | `onboarding.feature` | Step 4 — timing, days, languages, accessibility | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 4 — timing, days, languages, accessibility` | `pass` | Searchable languages; Accessibility needed? Yes/Ja |
+| `onboarding.feature` | Step 4 — timing preferences optional | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 4 — timing preferences optional` | `pass` | Empty timing/days/languages finish to membership |
 | `onboarding.feature` | Completing onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Completing onboarding` | `pass` |  |
+| `onboarding.feature` | Completing onboarding with all fields blank | `e2e/specs/onboarding.spec.ts` · `Scenario: Completing onboarding with all fields blank` | `pass` | Skip age + blank prefs through membership |
 | `profile.feature` | View and edit identity | `e2e/specs/profile.spec.ts` · `Scenario: View and edit identity` | `pass` |  |
 | `profile.feature` | Change password | `e2e/specs/profile.spec.ts` · `Scenario: Change password` | `pass` | Asserts `/profile/security` entry; Neon Auth owns mutation |
 | `profile.feature` | View billing information | `e2e/specs/profile.spec.ts` · `Scenario: View billing information` | `pass` |  |

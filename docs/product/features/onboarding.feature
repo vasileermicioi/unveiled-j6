@@ -8,6 +8,8 @@
 #   - Onboarding completion routes to checkout (paywall), not to the app. DECIDED: keep this — it
 #     matches the business model (preferences are captured before asking for payment, which is a
 #     reasonable order: invest the user in their profile before the ask).
+#   - All onboarding preference fields are optional. DECIDED: Next/Finish must not block on empty zip
+#     or empty Other text; invalid non-empty values still rejected.
 
 Feature: Onboarding
   As a newly signed-up member
@@ -44,12 +46,20 @@ Feature: Onboarding
     And when I select Other I can enter free-text interest text
     And I can multi-select moods via native checkbox from: Leicht, Experimentell, Klassisch, Politisch, Fam
 
+  Scenario: Step 2 — interests and moods optional
+    Given I am on onboarding step 2
+    When I submit with no interests and no moods selected
+    Then my preferences are stored as empty/unset for those fields
+    And I advance to the next step
+
   Scenario: Step 3 — zip under Germany/Berlin
     Given I am on onboarding step 3
     Then country shows Germany and city shows Berlin (prefilled, not a free picker)
-    And I can enter a Berlin PLZ via a native text input
+    And I can enter a Berlin PLZ via a native text input or leave it blank
     And I cannot multi-select hangout districts
     And I cannot set a travel distance / radius
+    And Next succeeds when zip is blank
+    And Next fails with a validation message when zip is present but not a valid Berlin PLZ
 
   Scenario: Step 4 — timing, days, languages, accessibility
     Given I am on onboarding step 4
@@ -58,9 +68,21 @@ Feature: Onboarding
     And I can multi-select preferred languages via a searchable native-checkbox list with German and English first (Non-Verbal is not offered)
     And I can answer "Accessibility needed?" via a native Yes/Ja checkbox
 
+  Scenario: Step 4 — timing preferences optional
+    Given I am on onboarding step 4
+    When I finish with no timing, days, or languages selected
+    Then onboarding is marked complete
+    And I am routed to the membership checkout page
+
   Scenario: Completing onboarding
     Given I have completed all onboarding steps
     When I finish the wizard
     Then my profile preferences are saved
     And my onboarding is marked complete
+    And I am routed to the membership checkout page
+
+  Scenario: Completing onboarding with all fields blank
+    Given I skip or leave blank every optional preference field across all steps
+    When I finish the wizard
+    Then my onboarding is marked complete
     And I am routed to the membership checkout page
