@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
 import {
   mockAdminListQuery,
-  mockPartner,
+  mockPartnerListItem,
   mockPartnerLogoUrls,
   storyLocale,
 } from "../stories/fixtures";
@@ -11,9 +11,20 @@ export const Default: Story = () => (
   <AdminPartnersListPage
     locale={storyLocale}
     logoUrls={mockPartnerLogoUrls}
-    partners={[mockPartner]}
+    partners={[mockPartnerListItem]}
     query={mockAdminListQuery}
     total={1}
   />
 );
 Default.storyName = "AdminPartnersListPage / Default";
+
+export const SortedByName: Story = () => (
+  <AdminPartnersListPage
+    locale={storyLocale}
+    logoUrls={mockPartnerLogoUrls}
+    partners={[mockPartnerListItem]}
+    query={{ ...mockAdminListQuery, sort: "name", dir: "asc" }}
+    total={1}
+  />
+);
+SortedByName.storyName = "AdminPartnersListPage / Sorted by name";

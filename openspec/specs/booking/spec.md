@@ -277,3 +277,71 @@ Book and waitlist ticket-quantity fields SHALL use a native HTML `<select>` (or 
 
 - **WHEN** an implementer reads post-booking / My Tickets scenarios in `booking.feature`
 - **THEN** they describe masked codes with reveal/hide, per-ticket rows for multi-ticket bookings, and PDF download for `VOUCHER_PDF`
+
+### Requirement: Admin sales export — tickets sold per event over a period
+
+The system SHALL provide an ADMIN-only sales-export page (`/:locale/admin/partners/export`) that accepts a date period (`from` / `to` as `YYYY-MM-DD`, Europe/Berlin calendar days, inclusive) and optional case-insensitive substring filters on event title (`title`) and partner name (`partner`), and SHALL show a table listing matching events with the number of tickets sold in that period, plus a CSV download of the **same filtered set**. Tickets sold SHALL be the sum of `bookings.tickets_count` for bookings whose `created_at` falls within the inclusive period and whose status is `CONFIRMED` or `USED` (excluding `CANCELLED` and `WAITLIST`). Comp tickets that create bookings on the shared booking path SHALL count. When `from`/`to` are omitted on first open, the page SHALL default to a recent inclusive window of the last 30 Europe/Berlin calendar days. Invalid ranges SHALL be rejected with a clear error and SHALL NOT produce a CSV attachment. The HTML and CSV responses SHALL be guarded by the existing admin route guard and SHALL use `noindex` for the HTML page. Aggregation and CSV formatting SHALL live in `@unveiled/db` (single-source helper), with the route wiring data and rendering only.
+
+#### Scenario: View tickets sold for a period
+
+- **WHEN** an ADMIN opens the sales-export page and sets a valid `from`/`to` period
+- **THEN** a table lists every event with its tickets-sold count for that period
+
+#### Scenario: Filter by event title and partner name
+
+- **WHEN** an ADMIN submits a valid period with `title` and/or `partner` query filters
+- **THEN** the table lists only events whose title and/or partner name match (case-insensitive substring)
+
+#### Scenario: Download sales CSV
+
+- **WHEN** an ADMIN requests the export in CSV format for a valid period
+- **THEN** the response is `text/csv` with a `Content-Disposition` attachment and one row per event with its tickets-sold count
+
+#### Scenario: CSV respects title and partner filters
+
+- **WHEN** an ADMIN requests CSV with the same `title`/`partner` filters as the HTML view
+- **THEN** the attachment includes only matching events
+
+#### Scenario: Cancelled and waitlist bookings excluded
+
+- **WHEN** calculating tickets sold for a period
+- **THEN** `CANCELLED` and `WAITLIST` bookings are not counted
+
+#### Scenario: Confirmed and used bookings counted
+
+- **WHEN** calculating tickets sold for a period that includes `CONFIRMED` and `USED` bookings
+- **THEN** each such booking’s `tickets_count` is included in the event’s tickets-sold total
+
+#### Scenario: Default period when params omitted
+
+- **WHEN** an ADMIN opens the sales-export page with no `from` or `to` query params
+- **THEN** the page applies the default last-30-calendar-days Europe/Berlin window and shows results for that period
+
+#### Scenario: Invalid period rejected
+
+- **WHEN** an ADMIN submits an invalid or inverted `from`/`to` range
+- **THEN** the page shows a clear error and does not treat the request as a successful export
+
+#### Scenario: Export is admin-only
+
+- **WHEN** a guest or `USER` requests the sales-export route
+- **THEN** access is denied per the existing admin route guard
+
+### Requirement: BDD and e2e cover sales export
+
+The Gherkin feature file and Playwright coverage (or a named deferral) SHALL cover the sales-export page: period selection, per-event tickets-sold table, CSV download, and the ADMIN-only guard, using proximity/layout selectors only per `docs/product/testing/bdd-and-e2e.md`. Scenarios SHALL live in `docs/product/features/admin-partners.feature` (preferred) or a dedicated `docs/product/features/admin-sales-export.feature` with a matching Playwright basename. Coverage-matrix rows SHALL exist for each new scenario with status `pass` or an explicit named deferral (owner/reason). Product sitemap and authorization docs SHALL include `/:locale/admin/partners/export`. Decision log SHALL record the tickets-sold definition (`CONFIRMED`/`USED` by `created_at` in the inclusive Europe/Berlin period).
+
+#### Scenario: Feature file documents sales export
+
+- **WHEN** a reader opens the sales-export feature scenarios after this step
+- **THEN** they cover a valid-period table, CSV download, and admin-only access
+
+#### Scenario: Coverage matrix lists sales export
+
+- **WHEN** this feature is marked released
+- **THEN** `docs/product/testing/coverage-matrix.md` includes a sales-export row (pass or named deferral)
+
+#### Scenario: Playwright mirrors sales export scenarios
+
+- **WHEN** `bun run test:e2e` runs the Playwright file that maps to the sales-export Gherkin scenarios
+- **THEN** each new sales-export Scenario either passes with proximity/layout selectors or is recorded as a named env/harness deferral in the coverage matrix

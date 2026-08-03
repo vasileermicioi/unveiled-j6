@@ -89,3 +89,126 @@ Partners SHALL use the same minimal structured location model as events: require
 
 - **WHEN** an admin on the new-event form selects a partner with structured location stored
 - **THEN** the event form can copy street, house number, optional line2, and zip from that partner
+
+### Requirement: Admin partners list domain returns event counts and honors sort
+
+The system SHALL support server-side sorting of the admin partner list in `@unveiled/db` (`listPartners`) and SHALL return, per partner, a count of events (`eventCount`) and a count of active events (`activeEventCount`) as part of the list result, computed from `events` via aggregate, without new schema columns. `PartnerSort` SHALL be `"name" | "created" | "events"` (URL-stable identifiers). When `sort` is `"events"`, ordering SHALL use `activeEventCount` (not total `eventCount`). `ListPartnersOptions` SHALL accept optional `sort`, `desc`, and `now` (active reference instant). When `sort` is omitted, ordering SHALL remain `created_at` descending then `id` descending. An event SHALL count as **active** when `date_time >= now` and `remaining_capacity > 0`. Name search SHALL remain name-only via the existing partner name filter. `countPartners` SHALL count partner rows matched by that same name filter so pagination totals stay correct. Default page size SHALL remain 25 with offset pagination.
+
+#### Scenario: Partner list sort by name
+
+- **WHEN** an ADMIN requests the partner list with `sort=name` and ascending direction
+- **THEN** partners are ordered alphabetically by name ascending
+
+#### Scenario: Partner list sort by last created
+
+- **WHEN** an ADMIN requests the partner list with `sort=created` and descending direction
+- **THEN** partners are ordered by `created_at` descending
+- **AND** `id` descending is used as the tiebreak
+
+#### Scenario: Partner list sort by active events
+
+- **WHEN** an ADMIN requests the partner list with `sort=events` and descending direction
+- **THEN** partners are ordered by their active event count descending
+- **AND** `id` descending is used as the tiebreak
+
+#### Scenario: Partner list returns active-event counts
+
+- **WHEN** an ADMIN lists partners
+- **THEN** each partner includes `eventCount` (all events for that partner) and `activeEventCount` using the active predicate (`date_time >= now` and `remaining_capacity > 0`)
+
+#### Scenario: Default sort unchanged when sort omitted
+
+- **WHEN** `listPartners` is called without a `sort` option
+- **THEN** partners are ordered by `created_at` descending then `id` descending
+
+#### Scenario: Partner count honors the name filter
+
+- **WHEN** an ADMIN filters the partner list by a name query
+- **THEN** the count used for pagination matches the number of filtered partner rows
+
+### Requirement: Admin partner list Name filter and active-events column
+
+The admin partner list (`/:locale/admin/partners`) SHALL label its search filter **Name** (DE: **Name**), consistent with the table's Name column, and SHALL display an **Active events** column per partner using the `activeEventCount` from the list domain. The shared admin search placeholder used by the events list ("Search title or partner" / "Titel oder Partner suchen") SHALL NOT be used on the partner list. `AdminSearchForm` SHALL accept an optional placeholder/label override so only the partner call site changes.
+
+#### Scenario: Partner search filter is labeled Name
+
+- **WHEN** an ADMIN opens the partner list
+- **THEN** the search field placeholder/label reads **Name**
+- **AND** it does not read "Search title or partner" or "Titel oder Partner suchen"
+
+#### Scenario: Partner list shows active events
+
+- **WHEN** an ADMIN views the partner list with at least one partner row
+- **THEN** each partner row shows an **Active events** count from `activeEventCount`
+
+#### Scenario: Events list search placeholder unchanged
+
+- **WHEN** an ADMIN opens the events list
+- **THEN** the search field still uses the existing title-or-partner placeholder copy
+
+### Requirement: Admin partner list sort controls
+
+The admin partner list SHALL offer server-driven sorting by Name, Created (last created), and Active events via **clickable table column headers** (not search-bar controls), each toggling ascending/descending. Query params `sort` (`name` | `created` | `events`) and `dir` (`asc` | `desc`) SHALL be preserved across name search submits (hidden fields) and pagination. The `sort=events` value SHALL order by **active** event count (same definition as the Active events column), not total event count. When `sort` is omitted, the list SHALL keep the domain default (last-created descending). A **Reset filters** control SHALL clear both the name query and sort params (returning to the default last-created sort). Sort controls in the search bar SHALL NOT be used. Page size SHALL remain 25 with offset pagination. Localized admin copy SHALL include an Export action label used by the partner-list Export control that navigates to the sales-export page.
+
+#### Scenario: Sort by name ascending
+
+- **WHEN** an ADMIN clicks the Name column header on the partner list
+- **THEN** the list orders by partner name ascending (or toggles direction if Name is already active)
+
+#### Scenario: Sort by active events descending
+
+- **WHEN** an ADMIN clicks the Active events column header when another sort is active
+- **THEN** the list orders by active event count descending
+
+#### Scenario: Search preserves sort
+
+- **WHEN** an ADMIN has a non-default sort and submits a name search
+- **THEN** the resulting URL retains `sort` and `dir` together with `q`
+
+#### Scenario: Reset filters clears search and sort
+
+- **WHEN** an ADMIN follows Reset filters with an active query and/or non-default sort
+- **THEN** the list returns to `/admin/partners` with default last-created ordering and no search query
+
+#### Scenario: Sort persists across pagination
+
+- **WHEN** an ADMIN sorts the list and navigates to another page
+- **THEN** the `sort` and `dir` parameters are preserved in pagination links
+
+#### Scenario: Sort persists across name filter submit
+
+- **WHEN** an ADMIN has an active sort/direction and submits a name search
+- **THEN** the resulting URL retains `sort` and `dir` together with `q`
+
+#### Scenario: Default sort when params omitted
+
+- **WHEN** an ADMIN opens `/:locale/admin/partners` with no `sort` query param
+- **THEN** partners are ordered by last created descending (domain default)
+
+### Requirement: Partner list Export action
+
+The admin partner list (`/:locale/admin/partners`) SHALL provide an **Export** action that navigates to the sales-export page (`/:locale/admin/partners/export`). The action SHALL be available at list level (toolbar), not as a partner-row-scoped export, because the report covers all events for a chosen period.
+
+#### Scenario: Partner list links to sales export
+
+- **WHEN** an ADMIN views the partner list
+- **THEN** an **Export** action is available that opens the sales-export page
+
+### Requirement: BDD and e2e cover partner list sorting and active events
+
+The Gherkin feature file and Playwright coverage (or a named deferral) SHALL cover the partner list **Name** filter label, the three sort modes with both directions, the **Active events** column, and the **Export** action, using proximity/layout selectors only per `docs/product/testing/bdd-and-e2e.md`. Product scenarios SHALL live in `docs/product/features/admin-partners.feature` (or a dedicated admin sales-export feature file only if split during apply). Coverage-matrix rows SHALL exist for each new scenario with status `pass` or an explicit named deferral (owner/reason). Sitemap and related product docs SHALL describe the list query params and the Export entry to the sales-export route.
+
+#### Scenario: Feature file documents partner list enhancements
+
+- **WHEN** a reader opens `docs/product/features/admin-partners.feature` after this step
+- **THEN** it includes scenarios for the Name filter, sorting (all three modes, asc/desc), the Active events column, and the Export action
+
+#### Scenario: Coverage matrix lists partner list scenarios
+
+- **WHEN** this feature is marked released
+- **THEN** `docs/product/testing/coverage-matrix.md` includes rows for sorting, active column, and export (pass or named deferral)
+
+#### Scenario: Playwright mirrors partner list scenarios
+
+- **WHEN** `bun run test:e2e` runs the admin-partners Playwright file against a configured environment
+- **THEN** each new partner-list Scenario either passes with proximity/layout selectors or is recorded as a named env/harness deferral in the coverage matrix

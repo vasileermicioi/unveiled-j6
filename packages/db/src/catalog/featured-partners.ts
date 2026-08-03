@@ -1,10 +1,15 @@
-import { and, asc, desc, eq, ilike, inArray, max, notExists, type SQL } from "drizzle-orm";
+import { asc, eq, inArray, max } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { featuredPartners } from "../schema/featured-partners";
 import { type Partner, partners } from "../schema/partners";
 import { CatalogValidationError } from "./errors";
-import { getPartnerById } from "./partners";
+import {
+  getPartnerById,
+  listPartners,
+  type ListPartnersOptions,
+  type PartnerListItem,
+} from "./partners";
 
 export type FeaturedPartnerRow = Partner & { sortOrder: number };
 
@@ -15,21 +20,10 @@ export type ListFeaturedPartnersOptions = {
   limit?: number;
 };
 
-export type SearchPartnersNotFeaturedOptions = {
-  q?: string;
-  limit?: number;
-  offset?: number;
-};
-
-function partnerSearchCondition(q?: string): SQL | undefined {
-  const search = q?.trim();
-  if (!search) {
-    return undefined;
-  }
-
-  const pattern = `%${search}%`;
-  return ilike(partners.name, pattern);
-}
+export type SearchPartnersNotFeaturedOptions = Pick<
+  ListPartnersOptions,
+  "q" | "limit" | "offset" | "sort" | "desc" | "now"
+>;
 
 export async function listFeaturedPartners(
   db: Db,
@@ -56,30 +50,11 @@ export async function listFeaturedPartners(
 export async function searchPartnersNotFeatured(
   db: Db,
   options: SearchPartnersNotFeaturedOptions = {},
-): Promise<Partner[]> {
-  const limit = options.limit ?? 25;
-  const offset = options.offset ?? 0;
-  const conditions: SQL[] = [
-    notExists(
-      db
-        .select({ one: featuredPartners.partnerId })
-        .from(featuredPartners)
-        .where(eq(featuredPartners.partnerId, partners.id)),
-    ),
-  ];
-
-  const searchCondition = partnerSearchCondition(options.q);
-  if (searchCondition) {
-    conditions.push(searchCondition);
-  }
-
-  return db
-    .select()
-    .from(partners)
-    .where(and(...conditions))
-    .orderBy(desc(partners.createdAt), desc(partners.id))
-    .limit(limit)
-    .offset(offset);
+): Promise<PartnerListItem[]> {
+  return listPartners(db, {
+    ...options,
+    excludeFeatured: true,
+  });
 }
 
 export async function addFeaturedPartner(db: Db, partnerId: string): Promise<FeaturedPartnerRow> {

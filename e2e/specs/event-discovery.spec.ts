@@ -281,15 +281,16 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByRole("button", { name: /^(foto|photo)\s*2$/i })).toBeVisible();
   });
 
-  test("Scenario: Guest sees zip on event detail", async ({ page, locale }) => {
+  test("Scenario: Guest does not see zip or age groups in DETAILS", async ({ page, locale }) => {
     test.skip(!process.env.DATABASE_URL, "DATABASE_URL required to resolve seeded event id");
 
     await page.context().clearCookies();
     const eventId = await getEventIdByTitle(TITLES.tonight);
     await page.goto(`/${locale}/events/${eventId}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText(/^plz$|^zip code$/i).first()).toBeVisible();
-    await expect(page.getByText(/\b1[0-4]\d{3}\b/).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^details$/i })).toBeVisible();
+    await expect(page.getByText(/^plz$|^zip code$/i)).toHaveCount(0);
+    await expect(page.getByText(/^zielgruppe$|^target age groups$/i)).toHaveCount(0);
     await expect(page.getByText(/kiez|neighborhood/i)).toHaveCount(0);
   });
 

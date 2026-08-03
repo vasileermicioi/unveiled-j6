@@ -1,3 +1,4 @@
+export * from "./active-event";
 export * from "./datetime";
 export * from "./discovery";
 export * from "./errors";

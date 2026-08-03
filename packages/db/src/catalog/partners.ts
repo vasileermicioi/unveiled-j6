@@ -1,10 +1,23 @@
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
-import { count, desc, eq, ilike } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  ilike,
+  notExists,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 
 import type { Db } from "../index";
 import { composeDisplayAddress, validatePostalCode } from "../location";
 import { events } from "../schema/events";
+import { featuredPartners } from "../schema/featured-partners";
 import { type Partner, partners } from "../schema/partners";
+import { activeEventCondition } from "./active-event";
 import { CatalogValidationError } from "./errors";
 import { requireNonEmpty, validateEmail, validateImageSourceExclusive } from "./validation";
 
@@ -13,10 +26,25 @@ function catalogImages() {
   return import("./images");
 }
 
+/** URL-stable sort keys for the admin partner list. */
+export type PartnerSort = "name" | "created" | "events";
+
+export type PartnerListItem = Partner & {
+  eventCount: number;
+  activeEventCount: number;
+};
+
 export type ListPartnersOptions = {
   limit?: number;
   offset?: number;
   q?: string;
+  sort?: PartnerSort;
+  /** When `sort` is set, defaults to ascending (`false`). Ignored when `sort` is omitted. */
+  desc?: boolean;
+  /** Active-event reference instant; defaults to `new Date()`. */
+  now?: Date;
+  /** When true, omit partners that already have a `featured_partners` row. */
+  excludeFeatured?: boolean;
 };
 
 export type CreatePartnerInput = {
@@ -74,15 +102,94 @@ function partnerSearchCondition(q?: string) {
   return ilike(partners.name, pattern);
 }
 
-export async function listPartners(db: Db, options: ListPartnersOptions = {}): Promise<Partner[]> {
+function partnerListOrderBy(
+  sort: PartnerSort | undefined,
+  descending: boolean,
+  activeEventCountCol: SQL<number>,
+): SQL[] {
+  if (!sort) {
+    return [desc(partners.createdAt), desc(partners.id)];
+  }
+
+  const primaryDir = descending ? desc : asc;
+  const idTiebreak = descending ? desc(partners.id) : asc(partners.id);
+
+  switch (sort) {
+    case "name":
+      return [primaryDir(partners.name), idTiebreak];
+    case "created":
+      return [primaryDir(partners.createdAt), idTiebreak];
+    case "events":
+      // `sort=events` orders by active-event count (matches the Active events column).
+      return [primaryDir(activeEventCountCol), desc(partners.id)];
+  }
+}
+
+export async function listPartners(
+  db: Db,
+  options: ListPartnersOptions = {},
+): Promise<PartnerListItem[]> {
   const limit = options.limit ?? 25;
   const offset = options.offset ?? 0;
+  const now = options.now ?? new Date();
   const searchCondition = partnerSearchCondition(options.q);
+  const descending = options.sort !== undefined ? Boolean(options.desc) : false;
+  const conditions: SQL[] = [];
+  if (searchCondition) {
+    conditions.push(searchCondition);
+  }
+  if (options.excludeFeatured) {
+    conditions.push(
+      notExists(
+        db
+          .select({ one: featuredPartners.partnerId })
+          .from(featuredPartners)
+          .where(eq(featuredPartners.partnerId, partners.id)),
+      ),
+    );
+  }
 
-  const baseQuery = db.select().from(partners).$dynamic();
-  const filtered = searchCondition ? baseQuery.where(searchCondition) : baseQuery;
+  const eventStats = db
+    .select({
+      partnerId: events.partnerId,
+      eventCount: sql<number>`count(*)::int`.as("event_count"),
+      activeEventCount: sql<number>`count(*) filter (where ${activeEventCondition(now)})::int`.as(
+        "active_event_count",
+      ),
+    })
+    .from(events)
+    .groupBy(events.partnerId)
+    .as("partner_event_stats");
 
-  return filtered.orderBy(desc(partners.createdAt), desc(partners.id)).limit(limit).offset(offset);
+  const eventCountCol = sql<number>`coalesce(${eventStats.eventCount}, 0)`.mapWith(Number);
+  const activeEventCountCol = sql<number>`coalesce(${eventStats.activeEventCount}, 0)`.mapWith(
+    Number,
+  );
+
+  const baseQuery = db
+    .select({
+      ...getTableColumns(partners),
+      eventCount: eventCountCol,
+      activeEventCount: activeEventCountCol,
+    })
+    .from(partners)
+    .leftJoin(eventStats, eq(partners.id, eventStats.partnerId))
+    .$dynamic();
+  const filtered =
+    conditions.length === 0
+      ? baseQuery
+      : baseQuery.where(conditions.length === 1 ? conditions[0]! : and(...conditions));
+
+  const rows = await filtered
+    .orderBy(...partnerListOrderBy(options.sort, descending, activeEventCountCol))
+    .limit(limit)
+    .offset(offset);
+
+  return rows.map((row) => ({
+    ...row,
+    eventCount: Number(row.eventCount),
+    activeEventCount: Number(row.activeEventCount),
+  }));
 }
 
 export async function createPartner(db: Db, input: CreatePartnerInput): Promise<Partner> {

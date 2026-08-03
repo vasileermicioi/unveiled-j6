@@ -10,7 +10,7 @@ import {
   adminListPageRedirectPath,
   buildAdminListQueryString,
   guardAdminRoute,
-  parseAdminListQuery,
+  parseAdminEventsListQuery,
 } from "../../../../lib/admin-route";
 import { getAuthOptions } from "../../../../lib/auth";
 
@@ -28,9 +28,13 @@ export default createRoute(async (c) => {
     return guard.response;
   }
 
-  const listQuery = parseAdminListQuery(new URL(c.req.url));
+  const listQuery = parseAdminEventsListQuery(new URL(c.req.url));
   const { db } = getAuthOptions();
-  const total = await countEvents(db, { q: listQuery.q || undefined });
+  const total = await countEvents(db, {
+    title: listQuery.title || undefined,
+    partner: listQuery.partner || undefined,
+    language: listQuery.language || undefined,
+  });
   const listPath = `/${guard.locale}/admin/events`;
   const redirectPath = adminListPageRedirectPath(listPath, listQuery, total);
   if (redirectPath) {
@@ -38,17 +42,25 @@ export default createRoute(async (c) => {
   }
 
   const events = await listEvents(db, {
-    q: listQuery.q || undefined,
+    title: listQuery.title || undefined,
+    partner: listQuery.partner || undefined,
+    language: listQuery.language || undefined,
     limit: listQuery.limit,
     offset: listQuery.offset,
+    sort: listQuery.sort,
+    desc: listQuery.dir === "desc",
   });
 
   await ensureEventImages(db, events);
 
   const copy = getAdminCopy(guard.locale);
   const queryString = buildAdminListQueryString({
-    q: listQuery.q || undefined,
+    title: listQuery.title || undefined,
+    partner: listQuery.partner || undefined,
+    language: listQuery.language || undefined,
     page: listQuery.page,
+    sort: listQuery.sort,
+    dir: listQuery.dir,
   });
 
   return renderAdminPage(
@@ -58,9 +70,13 @@ export default createRoute(async (c) => {
       imageUrls={buildEventImageUrls(events)}
       locale={guard.locale}
       query={{
-        q: listQuery.q,
+        title: listQuery.title,
+        partner: listQuery.partner,
+        language: listQuery.language,
         page: listQuery.page,
         limit: listQuery.limit,
+        sort: listQuery.sort,
+        dir: listQuery.dir,
       }}
       total={total}
     />,

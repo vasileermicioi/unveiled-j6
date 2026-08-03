@@ -1,26 +1,58 @@
 "use client";
 
 import { Button, Form, Input, Paragraph, Surface, Table } from "@heroui/react";
-import type { Partner } from "@unveiled/db";
+import type { PartnerListItem, PartnerSort } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import { formatEventDateTime } from "../../lib/admin-event-form";
+import {
+  type AdminListSortDir,
+  buildAdminListQueryString,
+  effectivePartnerListSort,
+  nextPartnerColumnSort,
+} from "../../lib/admin-list";
 import type { Locale } from "../../lib/locale";
 
 import { adminFeaturedPartnersAddPath } from "./admin-tabs";
+import { AdminSortableColumnHeader } from "./AdminSortableColumnHeader";
 
 type AdminFeaturedPartnersAddResultsProps = {
   locale: Locale;
-  partners: Partner[];
+  partners: PartnerListItem[];
   logoUrls: Record<string, string | undefined>;
+  listPath: string;
+  query: {
+    q: string;
+    sort?: PartnerSort;
+    dir?: AdminListSortDir;
+  };
 };
+
+function sortHref(
+  listPath: string,
+  q: string,
+  currentSort: PartnerSort | undefined,
+  currentDir: AdminListSortDir | undefined,
+  column: PartnerSort,
+): string {
+  const next = nextPartnerColumnSort(currentSort, currentDir, column);
+  return `${listPath}${buildAdminListQueryString({
+    q: q || undefined,
+    sort: next.sort,
+    dir: next.dir,
+  })}`;
+}
 
 export function AdminFeaturedPartnersAddResults({
   locale,
   partners,
   logoUrls,
+  listPath,
+  query,
 }: AdminFeaturedPartnersAddResultsProps) {
   const copy = getAdminCopy(locale);
   const action = adminFeaturedPartnersAddPath(locale);
+  const { sort: activeSort, dir: activeDir } = effectivePartnerListSort(query.sort, query.dir);
 
   if (partners.length === 0) {
     return <Paragraph color="muted">{copy.featuredPartnersAddEmpty}</Paragraph>;
@@ -32,8 +64,28 @@ export function AdminFeaturedPartnersAddResults({
         <Table.Content>
           <Table.Header>
             <Table.Column isRowHeader>{copy.tableLogo}</Table.Column>
-            <Table.Column isRowHeader>{copy.tableName}</Table.Column>
+            <AdminSortableColumnHeader
+              activeDir={activeDir}
+              activeSort={activeSort}
+              column="name"
+              href={sortHref(listPath, query.q, query.sort, query.dir, "name")}
+              label={copy.tableName}
+            />
             <Table.Column isRowHeader>{copy.tableAddress}</Table.Column>
+            <AdminSortableColumnHeader
+              activeDir={activeDir}
+              activeSort={activeSort}
+              column="created"
+              href={sortHref(listPath, query.q, query.sort, query.dir, "created")}
+              label={copy.tableCreated}
+            />
+            <AdminSortableColumnHeader
+              activeDir={activeDir}
+              activeSort={activeSort}
+              column="events"
+              href={sortHref(listPath, query.q, query.sort, query.dir, "events")}
+              label={copy.tableActiveEvents}
+            />
             <Table.Column className="admin-table__actions-column" isRowHeader>
               {copy.tableActions}
             </Table.Column>
@@ -54,6 +106,8 @@ export function AdminFeaturedPartnersAddResults({
                 </Table.Cell>
                 <Table.Cell>{partner.name}</Table.Cell>
                 <Table.Cell>{partner.address}</Table.Cell>
+                <Table.Cell>{formatEventDateTime(partner.createdAt, locale)}</Table.Cell>
+                <Table.Cell>{partner.activeEventCount}</Table.Cell>
                 <Table.Cell className="admin-table__actions-cell">
                   <Surface variant="transparent">
                     <Form action={action} method="post">

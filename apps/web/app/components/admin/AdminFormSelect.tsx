@@ -20,6 +20,8 @@ export type AdminFormSelectProps = {
   selectionMode?: "single";
   defaultSelectedKey?: string;
   onSelectionChange?: (value: string) => void;
+  /** Layout-only Tailwind classes for the wrapper (e.g. toolbar width). */
+  className?: string;
 };
 
 function selectIdForName(name: string): string {
@@ -35,6 +37,7 @@ export function AdminFormSelect({
   placeholder,
   listSize,
   onSelectionChange,
+  className,
 }: AdminFormSelectProps) {
   const id = selectIdForName(name);
   const defaultValue = defaultSelectedKey ?? "";
@@ -46,7 +49,10 @@ export function AdminFormSelect({
   };
 
   return (
-    <Surface className="flex w-full flex-col gap-1" variant="transparent">
+    <Surface
+      className={["flex w-full flex-col gap-1", className].filter(Boolean).join(" ")}
+      variant="transparent"
+    >
       <Label htmlFor={id}>{label}</Label>
       <select
         className={

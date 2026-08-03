@@ -116,7 +116,7 @@ See `ui/app-shell.md` for header/footer detail.
 | Route | Auth | Role | Notes |
 |---|---|---|---|
 | `/admin` | ✅ | ADMIN | Dashboard |
-| `/admin/events?q=&page=` | ✅ | ADMIN | Event list |
+| `/admin/events?title=&partner=&language=&sort=&dir=&page=` | ✅ | ADMIN | Event list (title/partner/language filters; language matches spoken or subtitle; column sort; default last-created desc; Reset filters; Languages + Subtitles columns) |
 | `/admin/events/new` | ✅ | ADMIN | Create event |
 | `/admin/events/:id/clone` | ✅ | ADMIN | Clone event (new date/time; voucher inventory not copied) |
 | `/admin/events/:id/edit` | ✅ | ADMIN | Edit event |
@@ -126,7 +126,7 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin/events/:id/delete` | ✅ | ADMIN | Delete confirmation |
 | `/admin/events/:id/codes` | ✅ | ADMIN | Export redemption codes (CSV) |
 | `/admin/featured` | ✅ | ADMIN | Featured events list (tab label **Featured events** / **Empfohlene Events**) |
-| `/admin/featured/add?q=` | ✅ | ADMIN | Search and add featured event |
+| `/admin/featured/add?title=&partner=&language=&sort=&dir=` | ✅ | ADMIN | Search and add featured event (title/partner/language filters; language matches spoken or subtitle; column sort; Languages + Subtitles columns; Reset filters; default last-created) |
 | `/admin/featured/:eventId/remove` | ✅ | ADMIN | Remove from featured (catalog event kept) |
 | `/admin/featured-partners` | ✅ | ADMIN | Featured partners grid (drag reorder + Save order; tab label **Featured partners** / **Empfohlene Partner**) |
 | `/admin/featured-partners/add?q=` | ✅ | ADMIN | Search and add featured partner |
@@ -134,7 +134,8 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin/bookings/:id/cancel` | ✅ | ADMIN | Cancel booking (+ waitlist promo path) |
 | `/admin/waitlist?eventId=&status=&page=` | ✅ | ADMIN | Waitlist list |
 | `/admin/waitlist/:id/promote` | ✅ | ADMIN | Manual promote |
-| `/admin/partners?q=&page=` | ✅ | ADMIN | Venue list |
+| `/admin/partners?q=&sort=&dir=&page=` | ✅ | ADMIN | Venue list (Name search; column sort `name`\|`created`\|`events`=active; default last-created desc; Reset filters; **Active events** + **Created** columns; toolbar **Export**) |
+| `/admin/partners/export?from=&to=&title=&partner=&format=` | ✅ | ADMIN | Sales export — tickets sold per event for inclusive `from`/`to` (Europe/Berlin); optional `title`/`partner` substring filters (HTML + CSV); `format=csv` attachment |
 | `/admin/partners/new` | ✅ | ADMIN | Create venue |
 | `/admin/partners/:id/edit` | ✅ | ADMIN | Edit venue |
 | `/admin/partners/:id/delete` | ✅ | ADMIN | Delete confirmation |

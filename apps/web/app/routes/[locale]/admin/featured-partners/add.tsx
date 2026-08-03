@@ -12,6 +12,7 @@ import {
   adminFeaturedPartnersPath,
 } from "../../../../components/admin/admin-tabs";
 import { getAdminCopy } from "../../../../lib/admin-content";
+import { parseAdminPartnersListQuery } from "../../../../lib/admin-list";
 import { buildPartnerLogoUrls } from "../../../../lib/admin-partner-logos";
 import { renderAdminPage } from "../../../../lib/admin-render";
 import { guardAdminRoute, mapCatalogError } from "../../../../lib/admin-route";
@@ -22,14 +23,16 @@ async function renderAddPage(
   c: Context,
   options: {
     locale: Locale;
-    query: string;
+    query: ReturnType<typeof parseAdminPartnersListQuery>;
     error?: string | null;
   },
 ) {
   const { db } = getAuthOptions();
   const partners = await searchPartnersNotFeatured(db, {
-    q: options.query || undefined,
+    q: options.query.q || undefined,
     limit: 25,
+    sort: options.query.sort,
+    desc: options.query.dir === "desc",
   });
   const copy = getAdminCopy(options.locale);
 
@@ -40,7 +43,11 @@ async function renderAddPage(
       locale={options.locale}
       logoUrls={buildPartnerLogoUrls(partners)}
       partners={partners}
-      query={options.query}
+      query={{
+        q: options.query.q,
+        sort: options.query.sort,
+        dir: options.query.dir,
+      }}
     />,
     {
       locale: options.locale,
@@ -64,7 +71,7 @@ export const POST = createRoute(async (c) => {
   if (!partnerId) {
     return renderAddPage(c, {
       locale: guard.locale,
-      query: "",
+      query: { q: "", page: 1, offset: 0, limit: 25 },
       error: mapCatalogError(
         new CatalogValidationError("PARTNER_NOT_FOUND", "Partner id is required"),
         guard.locale,
@@ -79,7 +86,7 @@ export const POST = createRoute(async (c) => {
   } catch (error) {
     return renderAddPage(c, {
       locale: guard.locale,
-      query: "",
+      query: { q: "", page: 1, offset: 0, limit: 25 },
       error: mapCatalogError(error, guard.locale),
     });
   }
@@ -91,8 +98,7 @@ export default createRoute(async (c) => {
     return guard.response;
   }
 
-  const url = new URL(c.req.url);
-  const query = url.searchParams.get("q")?.trim() ?? "";
+  const query = parseAdminPartnersListQuery(new URL(c.req.url));
 
   return renderAddPage(c, {
     locale: guard.locale,

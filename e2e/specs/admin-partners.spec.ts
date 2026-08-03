@@ -331,6 +331,184 @@ test.describe("admin-partners.feature", () => {
     });
   });
 
+  test("Scenario: Partner list search is labeled Name", async ({ page, locale }) => {
+    await navigateAdminTab(page, locale, "partners");
+    const search = page.getByRole("searchbox", { name: /^name$/i });
+    await expect(search).toBeVisible({ timeout: 15_000 });
+    await expect(search).toHaveAttribute("placeholder", /^Name$/i);
+    await expect(
+      page.getByRole("searchbox", { name: /titel oder partner|search title or partner/i }),
+    ).toHaveCount(0);
+  });
+
+  // Scenario Outline: Partner list can be sorted — column headers (Name / Created / Active events).
+  test("Scenario Outline: Partner list can be sorted", async ({ page, locale }) => {
+    const cases = [
+      { column: /^(name)$/i, sort: "name", dir: "asc" },
+      { column: /^(name)$/i, sort: "name", dir: "desc", secondClick: true },
+      { column: /^(erstellt|created)$/i, sort: "created", dir: "asc" },
+      { column: /^(aktive events|active events)$/i, sort: "events", dir: "desc" },
+      {
+        column: /^(aktive events|active events)$/i,
+        sort: "events",
+        dir: "asc",
+        secondClick: true,
+      },
+    ] as const;
+
+    for (const { column, sort, dir, ...rest } of cases) {
+      const secondClick = "secondClick" in rest && rest.secondClick;
+      await page.goto(`/${locale}/admin/partners`);
+      await expect(page.getByRole("heading", { name: /^partner$|^partners$/i })).toBeVisible({
+        timeout: 15_000,
+      });
+      const header = page.getByRole("link", { name: column }).first();
+      await header.click();
+      if (secondClick) {
+        await page.getByRole("link", { name: column }).first().click();
+      }
+      await expect(page.getByRole("main")).toBeVisible({ timeout: 15_000 });
+
+      const isDefault = sort === "created" && dir === "desc";
+      if (isDefault) {
+        await expect(page).not.toHaveURL(/[?&]sort=/);
+      } else {
+        await expect(page).toHaveURL(new RegExp(`[?&]sort=${sort}(?:&|$)`));
+        await expect(page).toHaveURL(new RegExp(`[?&]dir=${dir}(?:&|$)`));
+      }
+    }
+  });
+
+  test("Scenario: Partner list reset filters clears search and sort", async ({ page, locale }) => {
+    await page.goto(`/${locale}/admin/partners?q=demo&sort=name&dir=asc`);
+    await expect(page.getByRole("heading", { name: /^partner$|^partners$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByRole("link", { name: /filter zurücksetzen|reset filters/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`));
+    await expect(page).not.toHaveURL(/[?&](q|sort|dir)=/);
+  });
+
+  test("Scenario: Partner list shows Active events column", async ({ page, locale }) => {
+    await navigateAdminTab(page, locale, "partners");
+    const empty = page.getByText(/noch keine partner|no partners yet/i);
+    if ((await empty.count()) > 0) {
+      await expect(empty.first()).toBeVisible();
+      return;
+    }
+    await expect(page.getByText(/aktive events|active events/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    const row = page.getByRole("row").nth(1);
+    await expect(row).toBeVisible();
+    // Active events is the 6th cell (logo, name, email, address, created, active).
+    await expect(row.getByRole("cell").nth(5)).toHaveText(/^\d+$/);
+  });
+
+  test("Scenario: Partner list Export opens sales export", async ({ page, locale }) => {
+    await navigateAdminTab(page, locale, "partners");
+    await page.getByRole("link", { name: /^export$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/export`));
+    await expect(
+      page.getByRole("heading", { name: /^verkaufsexport$|^sales export$/i }),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("Scenario: View tickets sold for a period", async ({ page, locale }) => {
+    await page.goto(`/${locale}/admin/partners/export`);
+    await expect(
+      page.getByRole("heading", { name: /^verkaufsexport$|^sales export$/i }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByLabel(/^von$|^from$/i)).toBeVisible();
+    await expect(page.getByLabel(/^bis$|^to$/i)).toBeVisible();
+    await expect(page.getByLabel(/event-titel|event title/i)).toBeVisible();
+    await expect(page.getByLabel(/partnername|partner name/i)).toBeVisible();
+    await page.getByRole("button", { name: /^anzeigen$|^show$/i }).click();
+    await expect(page.getByRole("main")).toBeVisible({ timeout: 15_000 });
+
+    const empty = page.getByText(/keine events vorhanden|no events yet/i);
+    const table = page.getByRole("table", { name: /^verkaufsexport$|^sales export$/i });
+    if ((await empty.count()) > 0) {
+      await expect(empty.first()).toBeVisible();
+    } else {
+      await expect(table).toBeVisible();
+      await expect(page.getByRole("columnheader", { name: /^titel$|^title$/i })).toBeVisible();
+      await expect(page.getByRole("columnheader", { name: /^partner$/i })).toBeVisible();
+      await expect(page.getByRole("columnheader", { name: /^datum$|^date$/i })).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: /verkaufte tickets|tickets sold/i }),
+      ).toBeVisible();
+    }
+  });
+
+  test("Scenario: Filter sales export by event title and partner name", async ({
+    page,
+    locale,
+  }) => {
+    await page.goto(`/${locale}/admin/partners/export`);
+    await expect(
+      page.getByRole("heading", { name: /^verkaufsexport$|^sales export$/i }),
+    ).toBeVisible({ timeout: 15_000 });
+
+    const from = await page.getByLabel(/^von$|^from$/i).inputValue();
+    const to = await page.getByLabel(/^bis$|^to$/i).inputValue();
+    await page.getByLabel(/event-titel|event title/i).fill("demo");
+    await page.getByLabel(/partnername|partner name/i).fill("berlin");
+    await page.getByRole("button", { name: /^anzeigen$|^show$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`[?&]title=demo(?:&|$)`));
+    await expect(page).toHaveURL(new RegExp(`[?&]partner=berlin(?:&|$)`));
+    await expect(page.getByRole("link", { name: /filter zurücksetzen|reset filters/i })).toBeVisible();
+
+    const csvLink = page.getByRole("link", { name: /csv herunterladen|download csv/i }).first();
+    if ((await csvLink.count()) > 0) {
+      const href = await csvLink.getAttribute("href");
+      expect(href).toMatch(/[?&]title=demo(?:&|$)/);
+      expect(href).toMatch(/[?&]partner=berlin(?:&|$)/);
+      expect(href).toMatch(/[?&]format=csv(?:&|$)/);
+    } else {
+      const csvUrl = `/${locale}/admin/partners/export?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&title=demo&partner=berlin&format=csv`;
+      const response = await page.request.get(csvUrl);
+      expect(response.ok()).toBeTruthy();
+      const body = await response.text();
+      expect(body.split("\n")[0] ?? "").toMatch(/tickets_sold/);
+    }
+  });
+
+  test("Scenario: Download sales CSV", async ({ page, locale }) => {
+    await page.goto(`/${locale}/admin/partners/export`);
+    await expect(
+      page.getByRole("heading", { name: /^verkaufsexport$|^sales export$/i }),
+    ).toBeVisible({ timeout: 15_000 });
+
+    const from = await page.getByLabel(/^von$|^from$/i).inputValue();
+    const to = await page.getByLabel(/^bis$|^to$/i).inputValue();
+    expect(from).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(to).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    const csvUrl = `/${locale}/admin/partners/export?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&format=csv`;
+    const response = await page.request.get(csvUrl);
+    expect(response.ok()).toBeTruthy();
+    const contentType = response.headers()["content-type"] ?? "";
+    expect(contentType).toMatch(/text\/csv/);
+    const disposition = response.headers()["content-disposition"] ?? "";
+    expect(disposition).toMatch(/attachment/i);
+    expect(disposition).toMatch(/sales-export-/);
+    const body = await response.text();
+    expect(body.split("\n")[0] ?? "").toMatch(/tickets_sold/);
+
+    const filteredUrl = `/${locale}/admin/partners/export?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&title=__no_such_event__&format=csv`;
+    const filtered = await page.request.get(filteredUrl);
+    expect(filtered.ok()).toBeTruthy();
+    const filteredBody = await filtered.text();
+    expect(filteredBody.trim()).toBe("event_id,title,partner_name,date_time,tickets_sold");
+  });
+
+  test("Scenario: Sales export is admin-only", async ({ page, locale, context }) => {
+    await context.clearCookies();
+    await page.goto(`/${locale}/admin/partners/export`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?returnTo=`));
+  });
+
   test("Scenario: Regenerate a partner's venue check-in QR token", {
     tag: "@skip-no-ui",
   }, async () => {

@@ -1,7 +1,7 @@
 import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
 import type { Event } from "@unveiled/db";
 import { buildDetailHeroSrc, buildDetailHeroSrcSet } from "@unveiled/ui";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 import EventDetailCheckoutCard, {
   type CheckoutPrimaryAction,
@@ -201,10 +201,8 @@ function metadataLabel(key: string, locale: Locale): string {
     languages: { de: "Sprachen", en: "Languages" },
     languageIndependent: { de: "Sprache", en: "Language" },
     subtitles: { de: "Untertitel", en: "Subtitles" },
-    ageGroups: { de: "Zielgruppe", en: "Target age groups" },
     type: { de: "Format", en: "Event type" },
     when: { de: "Datum", en: "Date" },
-    zipCode: { de: "PLZ", en: "Zip code" },
     partner: { de: "Partner", en: "Partner" },
   };
 
@@ -222,21 +220,13 @@ function MetaCell({
 }: {
   label: string;
   value: string;
-  icon?: "calendar" | "mapPin";
+  icon?: "calendar";
 }) {
   return (
     <Surface className="event-detail--checkout__meta-cell" variant="transparent">
       <Surface className="event-detail--checkout__meta-label-row" variant="transparent">
         {icon === "calendar" ? (
           <Calendar
-            aria-hidden
-            className="event-detail--checkout__meta-icon"
-            size={META_ICON_SIZE}
-            strokeWidth={2}
-          />
-        ) : null}
-        {icon === "mapPin" ? (
-          <MapPin
             aria-hidden
             className="event-detail--checkout__meta-icon"
             size={META_ICON_SIZE}
@@ -632,20 +622,7 @@ export function EventDetailPage({
                     value={event.subtitleLanguage}
                   />
                 ) : null}
-                {event.targetAgeGroups && event.targetAgeGroups.length > 0 ? (
-                  <MetaCell
-                    label={metadataLabel("ageGroups", locale)}
-                    value={event.targetAgeGroups.join(", ")}
-                  />
-                ) : null}
                 <MetaCell label={metadataLabel("type", locale)} value={event.eventType} />
-                {event.zipCode ? (
-                  <MetaCell
-                    icon="mapPin"
-                    label={metadataLabel("zipCode", locale)}
-                    value={event.zipCode}
-                  />
-                ) : null}
               </Surface>
             </Surface>
           </Card.Content>

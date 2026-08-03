@@ -92,3 +92,55 @@ Feature: Admin — Partner Management
     Given no featured partner rows exist
     When I open "/:locale/admin/featured-partners"
     Then I see an empty state and a path to add featured partners
+
+  Scenario: Partner list search is labeled Name
+    When I open "/:locale/admin/partners"
+    Then the partner search filter is labeled "Name" (DE: "Name")
+    And it is not the events-list placeholder "Search title or partner" / "Titel oder Partner suchen"
+
+  Scenario Outline: Partner list can be sorted
+    When I open "/:locale/admin/partners" and click the "<column>" column header to sort
+    Then the partners table is sorted by <sort_param> (<dir_param>)
+    And the search query q is preserved when present
+    And when the selection is not the default (created + desc), the URL includes sort=<sort_param> and dir=<dir_param>
+
+    Examples:
+      | column         | sort_param | dir_param |
+      | Name           | name       | asc       |
+      | Created        | created    | asc       |
+      | Active events  | events     | desc      |
+
+  Scenario: Partner list reset filters clears search and sort
+    Given I have an active name filter and a non-default sort on "/:locale/admin/partners"
+    When I follow "Reset filters" / "Filter zurücksetzen"
+    Then I am on "/:locale/admin/partners" with default last-created sort and no search query
+
+  Scenario: Partner list shows Active events column
+    When I open "/:locale/admin/partners"
+    Then the partners table has an "Active events" / "Aktive Events" column
+    And each partner row shows an active-events count
+
+  Scenario: Partner list Export opens sales export
+    When I open "/:locale/admin/partners"
+    And I follow the list-level "Export" action
+    Then I am on "/:locale/admin/partners/export"
+
+  Scenario: View tickets sold for a period
+    When I open the sales-export page ("/:locale/admin/partners/export") and submit a valid from/to period
+    Then I see the sales-export results for that period (tickets-sold table with Title, Partner, Date, and Tickets sold, or empty-events copy when there are no events)
+
+  Scenario: Filter sales export by event title and partner name
+    When I open the sales-export page and filter by event title and/or partner name with a valid from/to period
+    Then the table lists only matching events
+    And Download CSV uses the same title and partner filters (format=csv with title/partner query params)
+
+  Scenario: Download sales CSV
+    When I request the sales-export CSV for a valid from/to period (format=csv)
+    Then the response is text/csv with a Content-Disposition attachment
+    And the CSV includes a tickets_sold column
+    And when title and/or partner filters are set, the CSV includes only matching events
+
+  Scenario: Sales export is admin-only
+    Given I am not signed in as ADMIN
+    When I open "/:locale/admin/partners/export"
+    Then access is denied (guest → login with returnTo; USER → locale home)

@@ -1,27 +1,79 @@
 "use client";
 
 import { Button, Form, Input, Paragraph, Surface, Table } from "@heroui/react";
-import type { Event } from "@unveiled/db";
+import type { Event, EventSort } from "@unveiled/db";
 
-import { getAdminCopy } from "../../lib/admin-content";
+import { formatAdminLanguageCode, getAdminCopy } from "../../lib/admin-content";
 import { formatEventDateTime } from "../../lib/admin-event-form";
+import {
+  type AdminListSortDir,
+  buildAdminListQueryString,
+  effectiveEventListSort,
+  nextEventColumnSort,
+} from "../../lib/admin-list";
 import type { Locale } from "../../lib/locale";
 
+import { AdminSortableColumnHeader } from "./AdminSortableColumnHeader";
 import { adminFeaturedAddPath } from "./admin-tabs";
 
 type AdminFeaturedAddResultsProps = {
   locale: Locale;
   events: Event[];
   imageUrls: Record<string, string | undefined>;
+  listPath: string;
+  query: {
+    title: string;
+    partner: string;
+    language: string;
+    sort?: EventSort;
+    dir?: AdminListSortDir;
+  };
 };
+
+function sortHref(
+  listPath: string,
+  query: AdminFeaturedAddResultsProps["query"],
+  column: EventSort,
+): string {
+  const next = nextEventColumnSort(query.sort, query.dir, column);
+  return `${listPath}${buildAdminListQueryString({
+    title: query.title,
+    partner: query.partner,
+    language: query.language,
+    sort: next.sort,
+    dir: next.dir,
+    page: 1,
+  })}`;
+}
+
+function formatSpokenLanguages(event: Event, locale: Locale, independentLabel: string): string {
+  if (event.languageIndependent) {
+    return independentLabel;
+  }
+  const codes = event.languages ?? [];
+  if (codes.length === 0) {
+    return "—";
+  }
+  return codes.map((code) => formatAdminLanguageCode(locale, code)).join(", ");
+}
+
+function formatSubtitleLanguage(event: Event, locale: Locale): string {
+  if (!event.hasSubtitles || !event.subtitleLanguage) {
+    return "—";
+  }
+  return formatAdminLanguageCode(locale, event.subtitleLanguage);
+}
 
 export function AdminFeaturedAddResults({
   locale,
   events,
   imageUrls,
+  listPath,
+  query,
 }: AdminFeaturedAddResultsProps) {
   const copy = getAdminCopy(locale);
   const action = adminFeaturedAddPath(locale);
+  const { sort: activeSort, dir: activeDir } = effectiveEventListSort(query.sort, query.dir);
 
   if (events.length === 0) {
     return <Paragraph color="muted">{copy.featuredAddEmpty}</Paragraph>;
@@ -33,9 +85,36 @@ export function AdminFeaturedAddResults({
         <Table.Content>
           <Table.Header>
             <Table.Column isRowHeader>{copy.tableLogo}</Table.Column>
-            <Table.Column isRowHeader>{copy.tableTitle}</Table.Column>
-            <Table.Column isRowHeader>{copy.tablePartner}</Table.Column>
-            <Table.Column isRowHeader>{copy.tableDate}</Table.Column>
+            <AdminSortableColumnHeader
+              activeDir={activeDir}
+              activeSort={activeSort}
+              column="title"
+              href={sortHref(listPath, query, "title")}
+              label={copy.tableTitle}
+            />
+            <AdminSortableColumnHeader
+              activeDir={activeDir}
+              activeSort={activeSort}
+              column="partner"
+              href={sortHref(listPath, query, "partner")}
+              label={copy.tablePartner}
+            />
+            <Table.Column isRowHeader>{copy.tableLanguages}</Table.Column>
+            <Table.Column isRowHeader>{copy.tableSubtitles}</Table.Column>
+            <AdminSortableColumnHeader
+              activeDir={activeDir}
+              activeSort={activeSort}
+              column="date"
+              href={sortHref(listPath, query, "date")}
+              label={copy.tableDate}
+            />
+            <AdminSortableColumnHeader
+              activeDir={activeDir}
+              activeSort={activeSort}
+              column="created"
+              href={sortHref(listPath, query, "created")}
+              label={copy.tableCreated}
+            />
             <Table.Column className="admin-table__actions-column" isRowHeader>
               {copy.tableActions}
             </Table.Column>
@@ -62,7 +141,12 @@ export function AdminFeaturedAddResults({
                 </Table.Cell>
                 <Table.Cell>{event.title}</Table.Cell>
                 <Table.Cell>{event.partnerName}</Table.Cell>
+                <Table.Cell>
+                  {formatSpokenLanguages(event, locale, copy.languageIndependentLabel)}
+                </Table.Cell>
+                <Table.Cell>{formatSubtitleLanguage(event, locale)}</Table.Cell>
                 <Table.Cell>{formatEventDateTime(event.dateTime, locale)}</Table.Cell>
+                <Table.Cell>{formatEventDateTime(event.createdAt, locale)}</Table.Cell>
                 <Table.Cell className="admin-table__actions-cell">
                   <Surface variant="transparent">
                     <Form action={action} method="post">

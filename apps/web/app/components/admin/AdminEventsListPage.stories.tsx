@@ -1,6 +1,6 @@
 import type { Story } from "@ladle/react";
 import {
-  mockAdminListQuery,
+  mockAdminEventsListQuery,
   mockEvent,
   mockEventImageUrls,
   storyLocale,
@@ -12,7 +12,7 @@ export const Default: Story = () => (
     events={[mockEvent]}
     imageUrls={mockEventImageUrls}
     locale={storyLocale}
-    query={mockAdminListQuery}
+    query={mockAdminEventsListQuery}
     total={1}
   />
 );

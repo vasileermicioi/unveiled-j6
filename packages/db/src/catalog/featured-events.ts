@@ -1,10 +1,10 @@
-import { and, asc, desc, eq, gte, ilike, max, notExists, or, type SQL } from "drizzle-orm";
+import { and, asc, eq, gte, max, type SQL } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { type Event, events } from "../schema/events";
 import { featuredEvents } from "../schema/featured-events";
 import { CatalogValidationError } from "./errors";
-import { getEventById } from "./events";
+import { getEventById, type ListEventsOptions, listEvents } from "./events";
 
 export type FeaturedEventRow = Event & { sortOrder: number };
 
@@ -13,21 +13,10 @@ export type ListFeaturedEventsOptions = {
   now?: Date;
 };
 
-export type SearchEventsNotFeaturedOptions = {
-  q?: string;
-  limit?: number;
-  offset?: number;
-};
-
-function eventSearchCondition(q?: string): SQL | undefined {
-  const search = q?.trim();
-  if (!search) {
-    return undefined;
-  }
-
-  const pattern = `%${search}%`;
-  return or(ilike(events.title, pattern), ilike(events.partnerName, pattern));
-}
+export type SearchEventsNotFeaturedOptions = Pick<
+  ListEventsOptions,
+  "q" | "title" | "partner" | "language" | "limit" | "offset" | "sort" | "desc"
+>;
 
 export async function listFeaturedEvents(
   db: Db,
@@ -70,29 +59,10 @@ export async function searchEventsNotFeatured(
   db: Db,
   options: SearchEventsNotFeaturedOptions = {},
 ): Promise<Event[]> {
-  const limit = options.limit ?? 25;
-  const offset = options.offset ?? 0;
-  const conditions: SQL[] = [
-    notExists(
-      db
-        .select({ one: featuredEvents.eventId })
-        .from(featuredEvents)
-        .where(eq(featuredEvents.eventId, events.id)),
-    ),
-  ];
-
-  const searchCondition = eventSearchCondition(options.q);
-  if (searchCondition) {
-    conditions.push(searchCondition);
-  }
-
-  return db
-    .select()
-    .from(events)
-    .where(and(...conditions))
-    .orderBy(desc(events.createdAt), desc(events.id))
-    .limit(limit)
-    .offset(offset);
+  return listEvents(db, {
+    ...options,
+    excludeFeatured: true,
+  });
 }
 
 export async function addFeaturedEvent(db: Db, eventId: string): Promise<FeaturedEventRow> {

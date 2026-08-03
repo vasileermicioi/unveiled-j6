@@ -1,10 +1,24 @@
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
-import { and, asc, count, desc, eq, gt, gte, ilike, or, type SQL, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  gte,
+  ilike,
+  notExists,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 
 import type { Db } from "../index";
 import { composeDisplayAddress, validatePostalCode } from "../location";
 import { eventGalleryImages } from "../schema/event-gallery-images";
 import { type Event, events, type TicketType, type TimingMode } from "../schema/events";
+import { featuredEvents } from "../schema/featured-events";
 import { deriveDateTimeFields } from "./datetime";
 import { CatalogValidationError } from "./errors";
 import { resolveEventSubtitles } from "./event-subtitles";
@@ -32,11 +46,29 @@ function catalogGallery() {
   return import("./event-gallery-images");
 }
 
+/** URL-stable sort keys for the admin event list. */
+export type EventSort = "title" | "partner" | "date" | "created" | "capacity";
+
 export type ListEventsOptions = {
   limit?: number;
   offset?: number;
+  /** Combined title/partner substring search (featured-add and legacy). */
   q?: string;
+  /** Case-insensitive substring filter on event title (admin events list). */
+  title?: string;
+  /** Case-insensitive substring filter on denormalized partner name. */
+  partner?: string;
+  /**
+   * Language code filter: matches spoken `languages` (case-insensitive) or
+   * `subtitle_language` (case-insensitive). Empty/omitted = no language filter.
+   */
+  language?: string;
   partnerId?: string;
+  sort?: EventSort;
+  /** When `sort` is set, defaults to ascending (`false`). Ignored when `sort` is omitted. */
+  desc?: boolean;
+  /** When true, omit events that already have a `featured_events` row. */
+  excludeFeatured?: boolean;
 };
 
 export type CreateEventInput = {
@@ -213,19 +245,125 @@ function eventSearchCondition(q?: string): SQL | undefined {
   return or(ilike(events.title, pattern), ilike(events.partnerName, pattern));
 }
 
-export async function listEvents(db: Db, options: ListEventsOptions = {}): Promise<Event[]> {
-  const limit = options.limit ?? 25;
-  const offset = options.offset ?? 0;
+function eventTitleCondition(title?: string): SQL | undefined {
+  const search = title?.trim();
+  if (!search) {
+    return undefined;
+  }
+  return ilike(events.title, `%${search}%`);
+}
+
+function eventPartnerNameCondition(partner?: string): SQL | undefined {
+  const search = partner?.trim();
+  if (!search) {
+    return undefined;
+  }
+  return ilike(events.partnerName, `%${search}%`);
+}
+
+/**
+ * Match spoken languages array or subtitle language (case-insensitive).
+ * Does not auto-include language-independent events — those only match via subtitle.
+ */
+function eventLanguageFilterCondition(language?: string): SQL | undefined {
+  const code = language?.trim();
+  if (!code) {
+    return undefined;
+  }
+  const lower = code.toLowerCase();
+  return or(
+    sql`exists (select 1 from unnest(${events.languages}) as lang where lower(lang) = ${lower})`,
+    sql`lower(${events.subtitleLanguage}) = ${lower}`,
+  );
+}
+
+function eventListFilterConditions(options: {
+  q?: string;
+  title?: string;
+  partner?: string;
+  language?: string;
+  partnerId?: string;
+  excludeFeatured?: boolean;
+  excludeFeaturedExists?: SQL;
+}): SQL[] {
   const conditions: SQL[] = [];
 
   if (options.partnerId) {
     conditions.push(eq(events.partnerId, options.partnerId));
   }
 
-  const searchCondition = eventSearchCondition(options.q);
-  if (searchCondition) {
-    conditions.push(searchCondition);
+  if (options.excludeFeaturedExists) {
+    conditions.push(options.excludeFeaturedExists);
   }
+
+  const titleCondition = eventTitleCondition(options.title);
+  const partnerCondition = eventPartnerNameCondition(options.partner);
+  if (titleCondition) {
+    conditions.push(titleCondition);
+  }
+  if (partnerCondition) {
+    conditions.push(partnerCondition);
+  }
+  // Combined `q` only when dedicated title/partner filters are unused (featured-add).
+  if (!titleCondition && !partnerCondition) {
+    const searchCondition = eventSearchCondition(options.q);
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  const languageCondition = eventLanguageFilterCondition(options.language);
+  if (languageCondition) {
+    conditions.push(languageCondition);
+  }
+
+  return conditions;
+}
+
+function eventListOrderBy(sort: EventSort | undefined, descending: boolean): SQL[] {
+  if (!sort) {
+    return [desc(events.createdAt), desc(events.id)];
+  }
+
+  const primaryDir = descending ? desc : asc;
+  const idTiebreak = descending ? desc(events.id) : asc(events.id);
+
+  switch (sort) {
+    case "title":
+      return [primaryDir(events.title), idTiebreak];
+    case "partner":
+      return [primaryDir(events.partnerName), idTiebreak];
+    case "date":
+      return [primaryDir(events.dateTime), idTiebreak];
+    case "created":
+      return [primaryDir(events.createdAt), idTiebreak];
+    case "capacity":
+      return [primaryDir(events.remainingCapacity), primaryDir(events.totalCapacity), idTiebreak];
+  }
+}
+
+export async function listEvents(db: Db, options: ListEventsOptions = {}): Promise<Event[]> {
+  const limit = options.limit ?? 25;
+  const offset = options.offset ?? 0;
+  const descending = options.sort !== undefined ? Boolean(options.desc) : false;
+
+  const excludeFeaturedExists = options.excludeFeatured
+    ? notExists(
+        db
+          .select({ one: featuredEvents.eventId })
+          .from(featuredEvents)
+          .where(eq(featuredEvents.eventId, events.id)),
+      )
+    : undefined;
+
+  const conditions = eventListFilterConditions({
+    q: options.q,
+    title: options.title,
+    partner: options.partner,
+    language: options.language,
+    partnerId: options.partnerId,
+    excludeFeaturedExists,
+  });
 
   let query = db.select().from(events).$dynamic();
   if (conditions.length === 1) {
@@ -234,7 +372,10 @@ export async function listEvents(db: Db, options: ListEventsOptions = {}): Promi
     query = query.where(and(...conditions));
   }
 
-  return query.orderBy(desc(events.createdAt), desc(events.id)).limit(limit).offset(offset);
+  return query
+    .orderBy(...eventListOrderBy(options.sort, descending))
+    .limit(limit)
+    .offset(offset);
 }
 
 async function resolvePartner(db: Db, partnerId: string) {
@@ -676,13 +817,28 @@ export async function deleteEvent(
 
 export type CountEventsOptions = {
   q?: string;
+  title?: string;
+  partner?: string;
+  language?: string;
 };
 
 export async function countEvents(db: Db, options: CountEventsOptions = {}): Promise<number> {
-  const searchCondition = eventSearchCondition(options.q);
+  const conditions = eventListFilterConditions({
+    q: options.q,
+    title: options.title,
+    partner: options.partner,
+    language: options.language,
+  });
 
-  if (searchCondition) {
-    const [result] = await db.select({ count: count() }).from(events).where(searchCondition);
+  if (conditions.length === 1) {
+    const [result] = await db.select({ count: count() }).from(events).where(conditions[0]);
+    return result?.count ?? 0;
+  }
+  if (conditions.length > 1) {
+    const [result] = await db
+      .select({ count: count() })
+      .from(events)
+      .where(and(...conditions));
     return result?.count ?? 0;
   }
 

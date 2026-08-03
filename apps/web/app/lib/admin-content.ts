@@ -47,19 +47,41 @@ export type AdminCopy = {
   newEvent: string;
   searchPlaceholder: string;
   searchSubmit: string;
+  partnersSearchPlaceholder: string;
+  eventsTitleFilter: string;
+  eventsPartnerFilter: string;
+  eventsLanguageFilter: string;
+  eventsLanguageAll: string;
+  resetFilters: string;
   tableLogo: string;
   tableName: string;
   tableEmail: string;
   tableAddress: string;
+  tableCreated: string;
+  tableActiveEvents: string;
   tableTitle: string;
   tablePartner: string;
   tableDate: string;
   tableCapacity: string;
+  tableLanguages: string;
+  tableSubtitles: string;
   tableActions: string;
   editAction: string;
   cloneAction: string;
   deleteAction: string;
+  exportAction: string;
   exportCodesAction: string;
+  salesExportTitle: string;
+  salesExportSubtitle: string;
+  salesExportFromLabel: string;
+  salesExportToLabel: string;
+  salesExportTitleFilter: string;
+  salesExportPartnerFilter: string;
+  salesExportSubmit: string;
+  salesExportTicketsSold: string;
+  salesExportEmpty: string;
+  salesExportCsvDownload: string;
+  salesExportPeriodError: string;
   emptyPartners: string;
   emptyEvents: string;
   emptyUsers: string;
@@ -441,19 +463,42 @@ const copy: Record<Locale, AdminCopy> = {
     newEvent: "Neues Event",
     searchPlaceholder: "Titel oder Partner suchen",
     searchSubmit: "Suchen",
+    partnersSearchPlaceholder: "Name",
+    eventsTitleFilter: "Event-Titel",
+    eventsPartnerFilter: "Partnername",
+    eventsLanguageFilter: "Sprache",
+    eventsLanguageAll: "Alle Sprachen",
+    resetFilters: "Filter zurücksetzen",
     tableLogo: "Bild",
     tableName: "Name",
     tableEmail: "E-Mail",
     tableAddress: "Adresse",
+    tableCreated: "Erstellt",
+    tableActiveEvents: "Aktive Events",
     tableTitle: "Titel",
     tablePartner: "Partner",
     tableDate: "Datum",
     tableCapacity: "Kapazität",
+    tableLanguages: "Sprachen",
+    tableSubtitles: "Untertitel",
     tableActions: "Aktionen",
     editAction: "Bearbeiten",
     cloneAction: "Klonen",
     deleteAction: "Löschen",
+    exportAction: "Export",
     exportCodesAction: "Codes",
+    salesExportTitle: "Verkaufsexport",
+    salesExportSubtitle:
+      "Tickets verkauft pro Event für Buchungen, die im gewählten Zeitraum erstellt wurden.",
+    salesExportFromLabel: "Von",
+    salesExportToLabel: "Bis",
+    salesExportTitleFilter: "Event-Titel",
+    salesExportPartnerFilter: "Partnername",
+    salesExportSubmit: "Anzeigen",
+    salesExportTicketsSold: "Verkaufte Tickets",
+    salesExportEmpty: "Keine Events vorhanden.",
+    salesExportCsvDownload: "CSV herunterladen",
+    salesExportPeriodError: "Bitte einen gültigen Zeitraum wählen (Von ≤ Bis, Format JJJJ-MM-TT).",
     emptyPartners: "Noch keine Partner vorhanden.",
     emptyEvents: "Noch keine Events vorhanden.",
     emptyUsers: "Keine Mitglieder gefunden.",
@@ -867,19 +912,41 @@ const copy: Record<Locale, AdminCopy> = {
     newEvent: "New event",
     searchPlaceholder: "Search title or partner",
     searchSubmit: "Search",
+    partnersSearchPlaceholder: "Name",
+    eventsTitleFilter: "Event title",
+    eventsPartnerFilter: "Partner name",
+    eventsLanguageFilter: "Language",
+    eventsLanguageAll: "All languages",
+    resetFilters: "Reset filters",
     tableLogo: "Image",
     tableName: "Name",
     tableEmail: "Email",
     tableAddress: "Address",
+    tableCreated: "Created",
+    tableActiveEvents: "Active events",
     tableTitle: "Title",
     tablePartner: "Partner",
     tableDate: "Date",
     tableCapacity: "Capacity",
+    tableLanguages: "Languages",
+    tableSubtitles: "Subtitles",
     tableActions: "Actions",
     editAction: "Edit",
     cloneAction: "Clone",
     deleteAction: "Delete",
+    exportAction: "Export",
     exportCodesAction: "Codes",
+    salesExportTitle: "Sales export",
+    salesExportSubtitle: "Tickets sold per event for bookings created in the selected period.",
+    salesExportFromLabel: "From",
+    salesExportToLabel: "To",
+    salesExportTitleFilter: "Event title",
+    salesExportPartnerFilter: "Partner name",
+    salesExportSubmit: "Show",
+    salesExportTicketsSold: "Tickets sold",
+    salesExportEmpty: "No events yet.",
+    salesExportCsvDownload: "Download CSV",
+    salesExportPeriodError: "Choose a valid period (From ≤ To, YYYY-MM-DD).",
     emptyPartners: "No partners yet.",
     emptyEvents: "No events yet.",
     emptyUsers: "No members found.",
@@ -1456,4 +1523,27 @@ export function getEventTypeOptions(locale: Locale): AdminSelectOption[] {
     id,
     label: eventTypeLabels[locale][id],
   }));
+}
+
+/** Display label for a language code in admin tables (spoken or subtitle). */
+export function formatAdminLanguageCode(locale: Locale, code: string): string {
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) {
+    return "—";
+  }
+  const fromPreferred = getPreferredLanguageOptions(locale).find(
+    (option) => option.code.toUpperCase() === normalized,
+  );
+  if (fromPreferred) {
+    return fromPreferred.label;
+  }
+  try {
+    return (
+      new Intl.DisplayNames([locale === "de" ? "de" : "en"], { type: "language" }).of(
+        normalized.toLowerCase(),
+      ) ?? normalized
+    );
+  } catch {
+    return normalized;
+  }
 }

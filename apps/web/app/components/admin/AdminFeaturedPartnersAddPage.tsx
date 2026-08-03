@@ -1,6 +1,11 @@
-import type { Partner } from "@unveiled/db";
+import type { PartnerListItem, PartnerSort } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import {
+  type AdminListSortDir,
+  buildAdminListQueryString,
+  isDefaultPartnerListSort,
+} from "../../lib/admin-list";
 import type { Locale } from "../../lib/locale";
 
 import { AdminFeaturedPartnersAddResults } from "./AdminFeaturedPartnersAddResults";
@@ -11,9 +16,13 @@ import { adminFeaturedPartnersAddPath } from "./admin-tabs";
 
 type AdminFeaturedPartnersAddPageProps = {
   locale: Locale;
-  partners: Partner[];
+  partners: PartnerListItem[];
   logoUrls: Record<string, string | undefined>;
-  query: string;
+  query: {
+    q: string;
+    sort?: PartnerSort;
+    dir?: AdminListSortDir;
+  };
   error?: string | null;
 };
 
@@ -27,6 +36,15 @@ export function AdminFeaturedPartnersAddPage({
   const copy = getAdminCopy(locale);
   const listHref = adminFeaturedPartnersPath(locale);
   const addPath = adminFeaturedPartnersAddPath(locale);
+  const hasFilters =
+    Boolean(query.q) || !isDefaultPartnerListSort(query.sort, query.dir);
+  const preserveParams =
+    query.sort && query.dir && !isDefaultPartnerListSort(query.sort, query.dir)
+      ? { sort: query.sort, dir: query.dir }
+      : undefined;
+  const resetHref = hasFilters
+    ? `${addPath}${buildAdminListQueryString({})}`
+    : undefined;
 
   return (
     <AdminPageShell
@@ -39,8 +57,21 @@ export function AdminFeaturedPartnersAddPage({
       title={copy.featuredPartnersAddTitle}
     >
       {error ? <AdminFormError message={error} /> : null}
-      <AdminSearchForm action={addPath} defaultQuery={query} locale={locale} />
-      <AdminFeaturedPartnersAddResults locale={locale} logoUrls={logoUrls} partners={partners} />
+      <AdminSearchForm
+        action={addPath}
+        defaultQuery={query.q}
+        locale={locale}
+        placeholder={copy.partnersSearchPlaceholder}
+        preserveParams={preserveParams}
+        resetHref={resetHref}
+      />
+      <AdminFeaturedPartnersAddResults
+        listPath={addPath}
+        locale={locale}
+        logoUrls={logoUrls}
+        partners={partners}
+        query={query}
+      />
     </AdminPageShell>
   );
 }

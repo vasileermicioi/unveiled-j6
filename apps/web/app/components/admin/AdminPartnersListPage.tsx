@@ -1,8 +1,12 @@
-import { Link } from "@heroui/react";
-import type { Partner } from "@unveiled/db";
+import { Link, Surface } from "@heroui/react";
+import type { PartnerListItem, PartnerSort } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
-import { buildAdminListQueryString } from "../../lib/admin-list";
+import {
+  type AdminListSortDir,
+  buildAdminListQueryString,
+  isDefaultPartnerListSort,
+} from "../../lib/admin-list";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
@@ -13,12 +17,14 @@ import { AdminSearchForm } from "./AdminSearchForm";
 
 type AdminPartnersListPageProps = {
   locale: Locale;
-  partners: Partner[];
+  partners: PartnerListItem[];
   logoUrls: Record<string, string | undefined>;
   query: {
     q: string;
     page: number;
     limit: number;
+    sort?: PartnerSort;
+    dir?: AdminListSortDir;
   };
   total: number;
 };
@@ -32,24 +38,56 @@ export function AdminPartnersListPage({
 }: AdminPartnersListPageProps) {
   const copy = getAdminCopy(locale);
   const listPath = `/${locale}/admin/partners`;
-  const queryString = buildAdminListQueryString({ q: query.q || undefined, page: query.page });
+  const queryString = buildAdminListQueryString({
+    q: query.q || undefined,
+    page: query.page,
+    sort: query.sort,
+    dir: query.dir,
+  });
+  const hasFilters =
+    Boolean(query.q) || !isDefaultPartnerListSort(query.sort, query.dir);
+  const preserveParams =
+    query.sort && query.dir && !isDefaultPartnerListSort(query.sort, query.dir)
+      ? { sort: query.sort, dir: query.dir }
+      : undefined;
 
   return (
     <AdminPageShell
       eyebrow={copy.pageEyebrow}
       actions={
-        <Link
-          className="button button--primary button--md"
-          href={localizedPath(locale, "admin/partners/new")}
-        >
-          {copy.newPartner}
-        </Link>
+        <Surface className="flex flex-wrap gap-2" variant="transparent">
+          <Link
+            className="button button--secondary button--md"
+            href={localizedPath(locale, "admin/partners/export")}
+          >
+            {copy.exportAction}
+          </Link>
+          <Link
+            className="button button--primary button--md"
+            href={localizedPath(locale, "admin/partners/new")}
+          >
+            {copy.newPartner}
+          </Link>
+        </Surface>
       }
       subtitle={copy.partnersSubtitle}
       title={copy.partnersTitle}
     >
-      <AdminSearchForm action={listPath} defaultQuery={query.q} locale={locale} />
-      <AdminPartnersTable locale={locale} logoUrls={logoUrls} partners={partners} />
+      <AdminSearchForm
+        action={listPath}
+        defaultQuery={query.q}
+        locale={locale}
+        placeholder={copy.partnersSearchPlaceholder}
+        preserveParams={preserveParams}
+        resetHref={hasFilters ? listPath : undefined}
+      />
+      <AdminPartnersTable
+        listPath={listPath}
+        locale={locale}
+        logoUrls={logoUrls}
+        partners={partners}
+        query={{ q: query.q, sort: query.sort, dir: query.dir }}
+      />
       <AdminPagination
         basePath={listPath}
         locale={locale}

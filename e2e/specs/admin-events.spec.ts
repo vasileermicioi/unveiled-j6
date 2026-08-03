@@ -309,6 +309,78 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("link", { name: /event.?serie|series/i })).toHaveCount(0);
   });
 
+  // Scenario Outline: Event list can be sorted — column headers (Title / Partner / Date / Created / Capacity).
+  test("Scenario Outline: Event list can be sorted", async ({ page, locale }) => {
+    const cases = [
+      { column: /^(titel|title)$/i, sort: "title", dir: "asc" },
+      { column: /^(partner)$/i, sort: "partner", dir: "asc" },
+      { column: /^(datum|date)$/i, sort: "date", dir: "desc" },
+      { column: /^(erstellt|created)$/i, sort: "created", dir: "asc" },
+      { column: /^(kapazität|capacity)$/i, sort: "capacity", dir: "desc" },
+      {
+        column: /^(titel|title)$/i,
+        sort: "title",
+        dir: "desc",
+        secondClick: true,
+      },
+    ] as const;
+
+    for (const { column, sort, dir, ...rest } of cases) {
+      const secondClick = "secondClick" in rest && rest.secondClick;
+      await page.goto(`/${locale}/admin/events`);
+      await expect(page.getByRole("heading", { name: /^events$/i })).toBeVisible({
+        timeout: 15_000,
+      });
+      const header = page.getByRole("link", { name: column }).first();
+      await header.click();
+      if (secondClick) {
+        await page.getByRole("link", { name: column }).first().click();
+      }
+      await expect(page.getByRole("main")).toBeVisible({ timeout: 15_000 });
+
+      const isDefault = sort === "created" && dir === "desc";
+      if (isDefault) {
+        await expect(page).not.toHaveURL(/[?&]sort=/);
+      } else {
+        await expect(page).toHaveURL(new RegExp(`[?&]sort=${sort}(?:&|$)`));
+        await expect(page).toHaveURL(new RegExp(`[?&]dir=${dir}(?:&|$)`));
+      }
+    }
+  });
+
+  test("Scenario: Event list reset filters clears search and sort", async ({ page, locale }) => {
+    await page.goto(
+      `/${locale}/admin/events?title=demo&partner=haus&language=EN&sort=title&dir=asc`,
+    );
+    await expect(page.getByRole("heading", { name: /^events$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByRole("link", { name: /filter zurücksetzen|reset filters/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`));
+    await expect(page).not.toHaveURL(/[?&](title|partner|language|sort|dir)=/);
+  });
+
+  test("Scenario: Event list filters by title, partner, and language", async ({ page, locale }) => {
+    await page.goto(`/${locale}/admin/events`);
+    await expect(page.getByRole("heading", { name: /^events$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByLabel(/event-titel|event title/i)).toBeVisible();
+    await expect(page.getByLabel(/partnername|partner name/i)).toBeVisible();
+    await expect(page.getByLabel(/^sprache$|^language$/i)).toBeVisible();
+    await page.getByLabel(/event-titel|event title/i).fill("demo");
+    await page.getByLabel(/partnername|partner name/i).fill("berlin");
+    await page.getByLabel(/^sprache$|^language$/i).selectOption("EN");
+    await page.getByRole("button", { name: /^suchen$|^search$/i }).click();
+    await expect(page).toHaveURL(/[?&]title=demo(?:&|$)/);
+    await expect(page).toHaveURL(/[?&]partner=berlin(?:&|$)/);
+    await expect(page).toHaveURL(/[?&]language=EN(?:&|$)/);
+    await expect(page.getByRole("columnheader", { name: /^sprachen$|^languages$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("columnheader", { name: /^untertitel$|^subtitles$/i })).toBeVisible();
+  });
+
   test("Scenario: Update an event's capacity", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     // Phase 4: sold=0 always — recalculation with sold tickets needs Phase 6 bookings.
@@ -746,7 +818,7 @@ test.describe("admin-events.feature", () => {
     await navigateAdminTab(page, locale, "featured");
     await page.getByRole("link", { name: /event hinzufügen|add event/i }).click();
     await expect(page).toHaveURL(/\/admin\/featured\/add/);
-    await page.goto(`/${locale}/admin/featured/add?q=${encodeURIComponent(event.title)}`);
+    await page.goto(`/${locale}/admin/featured/add?title=${encodeURIComponent(event.title)}`);
     const addRow = page.getByRole("row").filter({ hasText: event.title });
     await expect(addRow).toBeVisible({ timeout: 15_000 });
     // Decorative thumb <img alt=""> — assert DOM presence near the result title (proximity).

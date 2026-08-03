@@ -129,10 +129,11 @@ Feature: Event Discovery
     And selecting the marker opens a popup whose close control has a large enough hit target
     And activating the close control dismisses the popup
 
-  Scenario: Guest sees zip on event detail
+  Scenario: Guest does not see zip or age groups in DETAILS
     Given I am not signed in
     When I open a valid upcoming event detail URL ("/events/:id")
-    Then location metadata shows the event zip code (not neighborhood / Kiez)
+    Then the DETAILS section does not show Zip code / PLZ or Target age groups / Zielgruppe metadata rows
+    And location still uses the composed address in LOCATION (not a neighborhood / Kiez label)
 
   Scenario: Event card shows zip
     Given I am viewing Discover or the member events feed

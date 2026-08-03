@@ -12,14 +12,26 @@ import { buildLoginRedirectUrl } from "./auth-middleware";
 import type { Locale } from "./locale";
 import { isValidLocale } from "./locale";
 
-export type { AdminListQuery, AdminUsersListQuery, AdminWaitlistListQuery } from "./admin-list";
+export type {
+  AdminEventsListQuery,
+  AdminListQuery,
+  AdminListSortDir,
+  AdminListSortKey,
+  AdminPartnersListQuery,
+  AdminUsersListQuery,
+  AdminWaitlistListQuery,
+} from "./admin-list";
 export {
   adminListPageRedirectPath,
   adminWaitlistListPageRedirectPath,
   buildAdminListQueryString,
   buildAdminWaitlistQueryString,
   clampAdminListPage,
+  isDefaultEventListSort,
+  isDefaultPartnerListSort,
+  parseAdminEventsListQuery,
   parseAdminListQuery,
+  parseAdminPartnersListQuery,
   parseAdminUsersListQuery,
   parseAdminWaitlistListQuery,
 } from "./admin-list";

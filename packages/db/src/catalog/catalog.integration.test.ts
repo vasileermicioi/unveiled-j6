@@ -319,6 +319,7 @@ describe("catalog integration", () => {
 
       const rows = await listPartners(db, { q: suffix, limit: 10 });
       expect(rows.map((row) => row.id)).toEqual([newer.id, older.id]);
+      expect(rows.every((row) => row.eventCount === 0 && row.activeEventCount === 0)).toBe(true);
     } finally {
       await deletePartner(db, older.id, { skipBucket: true });
       await deletePartner(db, newer.id, { skipBucket: true });
@@ -416,6 +417,28 @@ describe("catalog integration", () => {
       const ordered = await listEvents(db, { q: suffix, limit: 10 });
       expect(ordered.map((row) => row.id)).toEqual([newerEvent.id, olderEvent.id]);
 
+      const byTitleAsc = await listEvents(db, {
+        q: suffix,
+        sort: "title",
+        limit: 10,
+      });
+      expect(byTitleAsc.map((row) => row.id)).toEqual([newerEvent.id, olderEvent.id]);
+
+      const byTitleDesc = await listEvents(db, {
+        q: suffix,
+        sort: "title",
+        desc: true,
+        limit: 10,
+      });
+      expect(byTitleDesc.map((row) => row.id)).toEqual([olderEvent.id, newerEvent.id]);
+
+      const byDateAsc = await listEvents(db, {
+        q: suffix,
+        sort: "date",
+        limit: 10,
+      });
+      expect(byDateAsc.map((row) => row.id)).toEqual([olderEvent.id, newerEvent.id]);
+
       expect(await countEvents(db, { q: `Newer Event ${suffix}` })).toBe(1);
       expect(await countEvents(db, { q: `Event Search Partner ${suffix}` })).toBe(2);
     } finally {
@@ -459,6 +482,215 @@ describe("catalog integration", () => {
       for (const partner of created) {
         await deletePartner(db, partner.id, { skipBucket: true });
       }
+    }
+  });
+
+  test("listPartners sorts by name, created, and event count", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const alpha = await createPartner(db, {
+      name: `Alpha Sort ${suffix}`,
+      ...structuredLocationFromAddress("Alphastraße 1, Berlin"),
+      contactEmail: `alpha-sort-${suffix}@example.com`,
+      logoPrebuilt: createTestImagePrebuilt(),
+      skipUpload: true,
+    });
+    const bravo = await createPartner(db, {
+      name: `Bravo Sort ${suffix}`,
+      ...structuredLocationFromAddress("Bravostraße 1, Berlin"),
+      contactEmail: `bravo-sort-${suffix}@example.com`,
+      logoPrebuilt: createTestImagePrebuilt(),
+      skipUpload: true,
+    });
+    const charlie = await createPartner(db, {
+      name: `Charlie Sort ${suffix}`,
+      ...structuredLocationFromAddress("Charliestraße 1, Berlin"),
+      contactEmail: `charlie-sort-${suffix}@example.com`,
+      logoPrebuilt: createTestImagePrebuilt(),
+      skipUpload: true,
+    });
+
+    const image = createTestImagePrebuilt();
+    const eventBase = {
+      description: "Sort coverage",
+      ...structuredLocationFromAddress("Sortstraße 1, Berlin"),
+      country: "DE" as const,
+      city: "berlin",
+      zipCode: "10115",
+      category: "Theater",
+      eventType: "Performance",
+      dateTime: new Date(Date.now() + 86_400_000),
+      creditPrice: 1,
+      imagePrebuilt: image,
+      skipUpload: true,
+    };
+
+    const bravoEvent = await createEvent(db, {
+      ...eventBase,
+      partnerId: bravo.id,
+      title: `Bravo One ${suffix}`,
+      secretCode: `BRV1${suffix}`.slice(0, 12),
+    });
+    const charlieEventA = await createEvent(db, {
+      ...eventBase,
+      partnerId: charlie.id,
+      title: `Charlie One ${suffix}`,
+      secretCode: `CHA1${suffix}`.slice(0, 12),
+      imagePrebuilt: createTestImagePrebuilt(),
+    });
+    const charlieEventB = await createEvent(db, {
+      ...eventBase,
+      partnerId: charlie.id,
+      title: `Charlie Two ${suffix}`,
+      secretCode: `CHA2${suffix}`.slice(0, 12),
+      imagePrebuilt: createTestImagePrebuilt(),
+    });
+
+    try {
+      await db
+        .update(partners)
+        .set({ createdAt: new Date("2024-01-01T12:00:00.000Z") })
+        .where(eq(partners.id, alpha.id));
+      await db
+        .update(partners)
+        .set({ createdAt: new Date("2024-03-01T12:00:00.000Z") })
+        .where(eq(partners.id, bravo.id));
+      await db
+        .update(partners)
+        .set({ createdAt: new Date("2024-06-01T12:00:00.000Z") })
+        .where(eq(partners.id, charlie.id));
+
+      const byNameAsc = await listPartners(db, { q: suffix, sort: "name", limit: 10 });
+      expect(byNameAsc.map((row) => row.id)).toEqual([alpha.id, bravo.id, charlie.id]);
+
+      const byNameDesc = await listPartners(db, {
+        q: suffix,
+        sort: "name",
+        desc: true,
+        limit: 10,
+      });
+      expect(byNameDesc.map((row) => row.id)).toEqual([charlie.id, bravo.id, alpha.id]);
+
+      const byCreatedAsc = await listPartners(db, { q: suffix, sort: "created", limit: 10 });
+      expect(byCreatedAsc.map((row) => row.id)).toEqual([alpha.id, bravo.id, charlie.id]);
+
+      const byCreatedDesc = await listPartners(db, {
+        q: suffix,
+        sort: "created",
+        desc: true,
+        limit: 10,
+      });
+      expect(byCreatedDesc.map((row) => row.id)).toEqual([charlie.id, bravo.id, alpha.id]);
+
+      const byEventsAsc = await listPartners(db, { q: suffix, sort: "events", limit: 10 });
+      expect(byEventsAsc.map((row) => row.id)).toEqual([alpha.id, bravo.id, charlie.id]);
+      expect(byEventsAsc.map((row) => row.activeEventCount)).toEqual([0, 1, 2]);
+
+      const byEventsDesc = await listPartners(db, {
+        q: suffix,
+        sort: "events",
+        desc: true,
+        limit: 10,
+      });
+      expect(byEventsDesc.map((row) => row.id)).toEqual([charlie.id, bravo.id, alpha.id]);
+      expect(byEventsDesc.map((row) => row.activeEventCount)).toEqual([2, 1, 0]);
+    } finally {
+      await deleteEvent(db, charlieEventB.id, { skipBucket: true });
+      await deleteEvent(db, charlieEventA.id, { skipBucket: true });
+      await deleteEvent(db, bravoEvent.id, { skipBucket: true });
+      await deletePartner(db, alpha.id, { skipBucket: true });
+      await deletePartner(db, bravo.id, { skipBucket: true });
+      await deletePartner(db, charlie.id, { skipBucket: true });
+    }
+  });
+
+  test("listPartners returns total and active event counts", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const now = new Date("2026-08-03T12:00:00.000Z");
+    const partner = await createPartner(db, {
+      name: `Active Counts ${suffix}`,
+      ...structuredLocationFromAddress("Countstraße 1, Berlin"),
+      contactEmail: `active-counts-${suffix}@example.com`,
+      logoPrebuilt: createTestImagePrebuilt(),
+      skipUpload: true,
+    });
+    const emptyPartner = await createPartner(db, {
+      name: `Empty Counts ${suffix}`,
+      ...structuredLocationFromAddress("Emptystraße 1, Berlin"),
+      contactEmail: `empty-counts-${suffix}@example.com`,
+      logoPrebuilt: createTestImagePrebuilt(),
+      skipUpload: true,
+    });
+
+    const eventBase = {
+      partnerId: partner.id,
+      description: "Active count coverage",
+      ...structuredLocationFromAddress("Countstraße 1, Berlin"),
+      country: "DE" as const,
+      city: "berlin",
+      zipCode: "10115",
+      category: "Theater",
+      eventType: "Performance",
+      creditPrice: 1,
+      skipUpload: true,
+    };
+
+    const past = await createEvent(db, {
+      ...eventBase,
+      title: `Past ${suffix}`,
+      dateTime: new Date("2026-08-01T12:00:00.000Z"),
+      secretCode: `PAST${suffix}`.slice(0, 12),
+      imagePrebuilt: createTestImagePrebuilt(),
+      totalCapacity: 5,
+    });
+    const soldOut = await createEvent(db, {
+      ...eventBase,
+      title: `Sold Out ${suffix}`,
+      dateTime: new Date("2026-08-10T12:00:00.000Z"),
+      secretCode: `SOLD${suffix}`.slice(0, 12),
+      imagePrebuilt: createTestImagePrebuilt(),
+      totalCapacity: 5,
+    });
+    const active = await createEvent(db, {
+      ...eventBase,
+      title: `Active ${suffix}`,
+      dateTime: new Date("2026-08-10T18:00:00.000Z"),
+      secretCode: `ACTV${suffix}`.slice(0, 12),
+      imagePrebuilt: createTestImagePrebuilt(),
+      totalCapacity: 5,
+    });
+
+    try {
+      await db.update(events).set({ remainingCapacity: 0 }).where(eq(events.id, soldOut.id));
+
+      const rows = await listPartners(db, { q: suffix, sort: "name", now, limit: 10 });
+      expect(rows).toHaveLength(2);
+
+      const withEvents = rows.find((row) => row.id === partner.id);
+      const withoutEvents = rows.find((row) => row.id === emptyPartner.id);
+      expect(withEvents?.eventCount).toBe(3);
+      expect(withEvents?.activeEventCount).toBe(1);
+      expect(withoutEvents?.eventCount).toBe(0);
+      expect(withoutEvents?.activeEventCount).toBe(0);
+
+      expect(await countPartners(db, { q: suffix })).toBe(2);
+    } finally {
+      await deleteEvent(db, active.id, { skipBucket: true });
+      await deleteEvent(db, soldOut.id, { skipBucket: true });
+      await deleteEvent(db, past.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
+      await deletePartner(db, emptyPartner.id, { skipBucket: true });
     }
   });
 

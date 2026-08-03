@@ -36,6 +36,7 @@ Default **deny**. Helpers: `requireAuth`, `requireRole`, `requireOwnerOrRole` (i
 |---|---|---|---|
 | Read (public display fields) | ✅ on Discover / event detail | ✅ | ✅ |
 | Create / Update / Delete | ❌ | ❌ | ✅ |
+| Sales export HTML + CSV (`/admin/partners/export`) | ❌ → login | ❌ → locale home | ✅ |
 
 ---
 

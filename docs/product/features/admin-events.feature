@@ -105,6 +105,31 @@ Feature: Admin — Event Management
     Then a Clone action linking to "/:locale/admin/events/:id/clone" is available
     And no Event series create CTA is shown
 
+  Scenario Outline: Event list can be sorted
+    When I open "/:locale/admin/events" and click the "<column>" column header to sort
+    Then the events table is sorted by <sort_param> (<dir_param>)
+    And title, partner, and language filters are preserved when present
+    And when the selection is not the default (created + desc), the URL includes sort=<sort_param> and dir=<dir_param>
+
+    Examples:
+      | column   | sort_param | dir_param |
+      | Title    | title      | asc       |
+      | Partner  | partner    | asc       |
+      | Date     | date       | desc      |
+      | Created  | created    | asc       |
+      | Capacity | capacity   | desc      |
+
+  Scenario: Event list filters by title, partner, and language
+    When I open "/:locale/admin/events" and filter by event title, partner name, and/or language
+    Then the list shows matching events
+    And language filter also matches events whose subtitle language equals the selected code
+    And the table shows Languages and Subtitles columns
+
+  Scenario: Event list reset filters clears search and sort
+    Given I have active title/partner/language filters and/or a non-default sort on "/:locale/admin/events"
+    When I follow "Reset filters" / "Filter zurücksetzen"
+    Then I am on "/:locale/admin/events" with default last-created sort and no filters
+
   Scenario: Update an event's capacity
     Given an event has some tickets already sold (remaining capacity less than total capacity)
     When I update its total capacity to a new value
@@ -243,9 +268,9 @@ Feature: Admin — Event Management
     And a missing or broken thumbnail does not block gallery or remove actions
 
   Scenario: Add by searching existing events
-    When I search on the featured add page ("/:locale/admin/featured/add?q=")
+    When I search on the featured add page ("/:locale/admin/featured/add") with title, partner, and/or language filters
     Then I see matching catalog events that are not already featured
-    And each result row shows a primary-image thumbnail (or placeholder) alongside title, partner, and date/time
+    And each result row shows a primary-image thumbnail (or placeholder) alongside title, partner, languages, subtitles, and date/time
     And a missing or broken thumbnail does not block the add action
     And submitting add creates a featured row for that event
     And I am redirected to the featured list

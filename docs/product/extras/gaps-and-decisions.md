@@ -143,6 +143,13 @@ A second review pass against the actual old-app source (`App.tsx`, `index.css`) 
 | Extraction-accuracy correction: `ui/assets-inventory.md` and `extras/integrations-and-config.md` previously claimed the old app had no image-upload UI at all ("Firebase Storage configured but never used"). Checked `AdminPanel.tsx` directly — there **is** a file-picker on both the event and partner forms ("SELECT JPEG"/"SELECT LOGO"), it just bypasses Storage: `FileReader.readAsDataURL()` converts the file to base64 client-side and writes it straight into the `imageUrl`/`logoUrl` text column. Corrected both docs to describe this accurately | `ui/assets-inventory.md`, `extras/integrations-and-config.md` |
 | **Superseded by the decision directly below:** the correction above initially concluded v1 should stay plain-URL-only with real object storage deferred. That call was revisited the same pass — see "Real image upload pipeline" below | — |
 
+## Admin partner list & sales export
+
+| Decision | Refs |
+|---|---|
+| **Active event (partner list count):** an event counts as active when `date_time >= now` and `remaining_capacity > 0` (Europe/Berlin `now` default; injectable for tests). Counts are query-time aggregates — no denormalized columns. Admin list `sort=events` orders by this active count (label **Active events** / **Aktive Events**), matching the table column — not total event count. | `features/admin-partners.feature`, `openspec/specs/partner-catalog/spec.md`, `@unveiled/db` `active-event` |
+| **Tickets sold (sales export):** sum of `bookings.tickets_count` for bookings whose `created_at` falls in the inclusive Europe/Berlin `from`/`to` calendar-day window and whose status is `CONFIRMED` or `USED` (exclude `CANCELLED` / `WAITLIST`). Comp tickets on the shared booking path count. Optional `title` / `partner` substring filters apply to both the HTML table and CSV. Route: `/admin/partners/export` (+ `format=csv`). | `features/admin-partners.feature`, `openspec/specs/booking/spec.md`, `@unveiled/db` `sales-export`, `sitemap/sitemap.md` |
+
 ## Image uploads
 
 | Decision | Refs |

@@ -6,6 +6,7 @@ import type {
   MemberDetail,
   MemberListItem,
   Partner,
+  PartnerListItem,
   UserBehavior,
   UserProfile,
   WaitlistEntry,
@@ -139,6 +140,12 @@ export const mockPartner: Partner = {
   updatedAt: storyNow,
 };
 
+export const mockPartnerListItem: PartnerListItem = {
+  ...mockPartner,
+  eventCount: 4,
+  activeEventCount: 2,
+};
+
 export const mockEventCardItem: EventCardItem = {
   id: mockEvent.id,
   title: mockEvent.title,
@@ -168,6 +175,14 @@ export const mockAdminMetrics: AdminMetrics = {
 
 export const mockAdminListQuery = {
   q: "",
+  page: 1,
+  limit: 10,
+};
+
+export const mockAdminEventsListQuery = {
+  title: "",
+  partner: "",
+  language: "",
   page: 1,
   limit: 10,
 };

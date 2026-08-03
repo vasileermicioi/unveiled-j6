@@ -558,7 +558,7 @@ The web app SHALL expose ADMIN-only SSR routes under `/:locale/admin/events/*` f
 
 ### Requirement: Admin event list discovery aids
 
-The admin events list at `/:locale/admin/events` SHALL support GET search and pagination (`?q=&page=`, page size 25) per `docs/product/extras/pagination-and-search.md`, searching event title and denormalized partner name. List results SHALL be ordered by `created_at` descending, then `id` descending. The list SHALL display a `small-320` thumbnail for each event's image when present, plus title, partner, date/time (Europe/Berlin), capacity, and row actions for edit, delete, codes export, and clone. The list SHALL NOT include a series create CTA.
+The admin events list at `/:locale/admin/events` SHALL support GET filters and pagination (`?title=&partner=&language=&page=`, page size 25) per `docs/product/extras/pagination-and-search.md`. Title and partner SHALL be case-insensitive substring filters on event title and denormalized partner name. Language (`language`, ISO 639-1 alpha-2) SHALL match events whose spoken `languages` array contains the code **or** whose `subtitle_language` equals the code (case-insensitive). Default list order SHALL be `created_at` descending, then `id` descending (URL omits `sort`/`dir` for that default). The list SHALL offer server-driven sorting by Title, Partner, Date, Created, and Capacity via **clickable table column headers** (not search-bar controls), using query params `sort` (`title` | `partner` | `date` | `created` | `capacity`) and `dir` (`asc` | `desc`). Filter submit SHALL preserve active sort via hidden fields; column sort SHALL preserve `title`/`partner`/`language`. A **Reset filters** control SHALL clear filters and sort params. The list SHALL display a `small-320` thumbnail for each event's image when present, plus title, partner, languages (or language-independent label), subtitle language (or em dash when none), date/time (Europe/Berlin), created timestamp, capacity, and row actions for edit, delete, codes export, and clone. The list SHALL NOT include a series create CTA.
 
 #### Scenario: Paginated admin event list
 
@@ -574,6 +574,21 @@ The admin events list at `/:locale/admin/events` SHALL support GET search and pa
 
 - **WHEN** an ADMIN opens `/admin/events` without filters
 - **THEN** events appear with the most recently created row first
+
+#### Scenario: Sort by title ascending
+
+- **WHEN** an ADMIN clicks the Title column header on the event list
+- **THEN** the list orders by title ascending (or toggles direction if Title is already active)
+
+#### Scenario: Search preserves sort
+
+- **WHEN** an ADMIN has a non-default sort and submits a title/partner search
+- **THEN** the resulting URL retains `sort` and `dir` together with `q`
+
+#### Scenario: Reset filters clears search and sort
+
+- **WHEN** an ADMIN follows Reset filters with an active query and/or non-default sort
+- **THEN** the list returns to `/admin/events` with default last-created ordering and no search query
 
 #### Scenario: Event list page clamp
 
