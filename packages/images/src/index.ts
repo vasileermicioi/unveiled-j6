@@ -30,17 +30,21 @@ export {
   REMOTE_IMAGE_USER_AGENT,
 } from "./remote-fetch";
 export {
+  createPrivateS3Client,
   createS3Client,
   deleteImageObjects,
   type GetObjectInput,
   getObject,
+  getPrivateObject,
   imageObjectsExist,
   normalizeS3Endpoint,
+  readPrivateS3Env,
   readS3Env,
   type S3Env,
   type UploadObjectInput,
   uploadImageVariants,
   uploadObject,
+  uploadPrivateObject,
 } from "./s3";
 export type { ImageSource, ProcessedImageMetadata, ProcessedImageResult } from "./types";
 export { buildVariantUrl, readImagePublicBaseUrl } from "./urls";

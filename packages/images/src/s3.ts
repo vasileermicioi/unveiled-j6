@@ -202,3 +202,81 @@ export async function getObject(
 
   return await result.Body.transformToByteArray();
 }
+
+/**
+ * Private-bucket env: requires `S3_PRIVATE_BUCKET`. Optional `S3_PRIVATE_ENDPOINT`,
+ * `S3_PRIVATE_REGION`, `S3_PRIVATE_ACCESS_KEY_ID`, `S3_PRIVATE_SECRET_ACCESS_KEY`
+ * fall back to the corresponding public `S3_*` values when unset.
+ * Must not be paired with a public CDN base URL.
+ */
+export function readPrivateS3Env(env: NodeJS.ProcessEnv = resolveRuntimeEnv()): S3Env {
+  const bucket = env.S3_PRIVATE_BUCKET;
+  if (!bucket) {
+    throw new Error("S3_PRIVATE_BUCKET is required for private object storage");
+  }
+
+  const endpointRaw = env.S3_PRIVATE_ENDPOINT ?? env.S3_ENDPOINT;
+  const region = env.S3_PRIVATE_REGION ?? env.S3_REGION;
+  const accessKeyId = env.S3_PRIVATE_ACCESS_KEY_ID ?? env.S3_ACCESS_KEY_ID;
+  const secretAccessKey = env.S3_PRIVATE_SECRET_ACCESS_KEY ?? env.S3_SECRET_ACCESS_KEY;
+
+  if (!endpointRaw || !region || !accessKeyId || !secretAccessKey) {
+    throw new Error(
+      "Private S3 requires endpoint, region, and credentials: set S3_PRIVATE_* overrides or public S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY",
+    );
+  }
+
+  return {
+    endpoint: normalizeS3Endpoint(endpointRaw),
+    region,
+    bucket,
+    accessKeyId,
+    secretAccessKey,
+  };
+}
+
+export function createPrivateS3Client(config: S3Env = readPrivateS3Env()): S3Client {
+  return createS3Client(config);
+}
+
+/** PutObject into the private bucket only (no public-bucket override). */
+export async function uploadPrivateObject(
+  input: UploadObjectInput,
+  client?: S3Client,
+): Promise<string> {
+  const env = readPrivateS3Env();
+  const resolvedClient = client ?? createS3Client(env);
+
+  await resolvedClient.send(
+    new PutObjectCommand({
+      Bucket: env.bucket,
+      Key: input.objectKey,
+      Body: input.body,
+      ContentType: input.contentType,
+    }),
+  );
+
+  return input.objectKey;
+}
+
+/** GetObject from the private bucket only (no public-bucket override). */
+export async function getPrivateObject(
+  input: GetObjectInput,
+  client?: S3Client,
+): Promise<Uint8Array> {
+  const env = readPrivateS3Env();
+  const resolvedClient = client ?? createS3Client(env);
+
+  const result = await resolvedClient.send(
+    new GetObjectCommand({
+      Bucket: env.bucket,
+      Key: input.objectKey,
+    }),
+  );
+
+  if (!result.Body) {
+    throw new Error(`Object body missing for key: ${input.objectKey}`);
+  }
+
+  return await result.Body.transformToByteArray();
+}

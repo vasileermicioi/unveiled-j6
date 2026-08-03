@@ -112,6 +112,7 @@ Delivery plan: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](../../.dev-plan/IMPLEMEN
 | Per-ticket redemption lives in `booking_tickets`; booking-level `redemption_*` remains a summary (typically ordinal 1) for email/compat | `features/booking.feature`, `database/schema-overview.md` |
 | Member UI masks secret/promo codes by default (reveal/hide island); PDF vouchers download via auth-gated `/:locale/bookings/:bookingId/tickets/:ticketId/voucher.pdf` — **not** attached to confirmation email in MVP | `features/booking.feature`, `sitemap/sitemap.md`, `ui/ui-component-map.md` |
 | Admin cancel restocks unused allocated promo/PDF inventory to `AVAILABLE`; credits are still never auto-refunded | `features/booking.feature` |
+| **Private assets bucket (current):** voucher PDFs (and other non-public files) use a dedicated `S3_PRIVATE_BUCKET` (optional `S3_PRIVATE_*` credential overrides falling back to public `S3_*`). Bucket must not be CDN-bound; delivery is BE-only via ownership-gated routes. Catalog images remain on the public bucket + `IMAGE_PUBLIC_BASE_URL`. Historical public-bucket `vouchers/` keys are one-shot backfilled (`bun scripts/backfill-vouchers-to-private-bucket.ts`); no permanent dual-read | `extras/image-uploads.md`, `extras/integrations-and-config.md`, `apps/web/DEPLOYMENT.md`, `@unveiled/images`, private-assets-bucket parent guide |
 
 ## Extraction-accuracy correction (this pass)
 

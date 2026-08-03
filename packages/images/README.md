@@ -18,12 +18,19 @@ There is no `sharp` and no `@standardagents/sip`. Variant filenames and Content-
 |---|---|
 | `S3_ENDPOINT` | S3-compatible API endpoint (R2 account host only — no bucket path) |
 | `S3_REGION` | Region string (`auto` for R2) |
-| `S3_BUCKET` | Bucket name |
+| `S3_BUCKET` | Public catalog bucket name |
 | `S3_ACCESS_KEY_ID` | R2/S3 access key |
 | `S3_SECRET_ACCESS_KEY` | R2/S3 secret key |
 | `IMAGE_PUBLIC_BASE_URL` | Public read base URL (R2.dev subdomain or custom domain) |
+| `S3_PRIVATE_BUCKET` | **Required for private helpers** — private bucket (must not be publicly readable / CDN-bound) |
+| `S3_PRIVATE_ENDPOINT` | Optional; falls back to `S3_ENDPOINT` |
+| `S3_PRIVATE_REGION` | Optional; falls back to `S3_REGION` |
+| `S3_PRIVATE_ACCESS_KEY_ID` | Optional; falls back to `S3_ACCESS_KEY_ID` |
+| `S3_PRIVATE_SECRET_ACCESS_KEY` | Optional; falls back to `S3_SECRET_ACCESS_KEY` |
 
 Variant URLs: `{IMAGE_PUBLIC_BASE_URL}/images/{imageId}/{variant}.webp`
+
+There is **no** public base URL for the private bucket. Private objects are only reachable via `uploadPrivateObject` / `getPrivateObject` (backend proxy), never through `IMAGE_PUBLIC_BASE_URL`.
 
 ## Storage layout
 
@@ -51,6 +58,8 @@ images/{id}/og-1200x630.webp
 - `deleteImageObjects(imageId)` — delete all five bucket objects
 - `buildVariantUrl(imageId, variantFilename)` — compute public CDN URL
 - `validateImageBuffer(buffer)` — lightweight magic/dimension checks for tooling
+- `readPrivateS3Env` / `createPrivateS3Client` — private-bucket env + client (shared credentials + distinct bucket by default)
+- `uploadPrivateObject` / `getPrivateObject` — generic Put/Get against `S3_PRIVATE_BUCKET` only (no public CDN URL)
 
 DB insert helper: `persistPrebuiltImage` from `@unveiled/db/catalog/images`.
 

@@ -61,7 +61,7 @@ bun run deploy:workers
 Set wrangler secrets from repo-root `.env` (one-time per environment):
 
 ```bash
-# Recommended — uploads DATABASE_URL, AUTH_URL, SITE_URL, and R2 vars from .env
+# Recommended — uploads DATABASE_URL, AUTH_URL, SITE_URL, public R2 vars, and S3_PRIVATE_* from .env
 bun run secrets:workers
 ```
 
@@ -79,6 +79,13 @@ bunx wrangler secret put S3_ENDPOINT
 bunx wrangler secret put S3_REGION
 bunx wrangler secret put S3_BUCKET
 bunx wrangler secret put IMAGE_PUBLIC_BASE_URL
+# Private assets (voucher PDFs) — required for admin staging + member download
+bunx wrangler secret put S3_PRIVATE_BUCKET
+# Optional private overrides (omit when sharing public S3_* credentials):
+# bunx wrangler secret put S3_PRIVATE_ENDPOINT
+# bunx wrangler secret put S3_PRIVATE_REGION
+# bunx wrangler secret put S3_PRIVATE_ACCESS_KEY_ID
+# bunx wrangler secret put S3_PRIVATE_SECRET_ACCESS_KEY
 ```
 
 ## Cloudflare Git import (Workers Builds)
@@ -120,6 +127,11 @@ Locally, root `.env` supplies the same vars (`bun --env-file=.env` on `db:migrat
 | `S3_ACCESS_KEY_ID` | 4+ | R2 access key |
 | `S3_SECRET_ACCESS_KEY` | 4+ | R2 secret key |
 | `IMAGE_PUBLIC_BASE_URL` | 4+ | Public R2.dev / custom domain |
+| `S3_PRIVATE_BUCKET` | 4+ | Private assets bucket (voucher PDFs); **no** public CDN |
+| `S3_PRIVATE_ENDPOINT` | 4+ (optional) | Falls back to `S3_ENDPOINT` |
+| `S3_PRIVATE_REGION` | 4+ (optional) | Falls back to `S3_REGION` |
+| `S3_PRIVATE_ACCESS_KEY_ID` | 4+ (optional) | Falls back to `S3_ACCESS_KEY_ID` |
+| `S3_PRIVATE_SECRET_ACCESS_KEY` | 4+ (optional) | Falls back to `S3_SECRET_ACCESS_KEY` |
 | `STRIPE_SECRET_KEY` | 6+ | Stripe secret key |
 | `STRIPE_PUBLISHABLE_KEY` | 6+ | Stripe publishable key |
 | `STRIPE_WEBHOOK_SECRET` | 6+ | Webhook signing secret |
@@ -173,6 +185,11 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 | `S3_ACCESS_KEY_ID` | **Yes (Phase 4 staging+)** | 4+ | R2 API token access key |
 | `S3_SECRET_ACCESS_KEY` | **Yes (Phase 4 staging+)** | 4+ | R2 API token secret |
 | `IMAGE_PUBLIC_BASE_URL` | **Yes (Phase 4 staging+)** | 4+ | Public read base URL for variants (R2.dev subdomain or custom domain) — **not** the S3 API endpoint |
+| `S3_PRIVATE_BUCKET` | **Yes (Phase 4 staging+ for voucher PDFs)** | 4+ | Private assets bucket name — must **not** enable public access / r2.dev / custom domain used by the app |
+| `S3_PRIVATE_ENDPOINT` | — | 4+ (optional) | Falls back to `S3_ENDPOINT` when unset |
+| `S3_PRIVATE_REGION` | — | 4+ (optional) | Falls back to `S3_REGION` when unset |
+| `S3_PRIVATE_ACCESS_KEY_ID` | — | 4+ (optional) | Falls back to `S3_ACCESS_KEY_ID` when unset |
+| `S3_PRIVATE_SECRET_ACCESS_KEY` | — | 4+ (optional) | Falls back to `S3_SECRET_ACCESS_KEY` when unset |
 | _(none for map)_ | — | 5+ | Event map uses **MapLibre GL JS** + **OpenStreetMap** tiles — no API key |
 | `STRIPE_SECRET_KEY` | **Yes (Phase 6 staging+)** | 6+ | Stripe secret key (**test mode** on staging) |
 | `STRIPE_PUBLISHABLE_KEY` | **Yes (Phase 6 staging+)** | 6+ | Stripe publishable key |
@@ -184,11 +201,47 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 
 ### Cloudflare R2 (Phase 4)
 
-The image pipeline stores **five WebP** variants per upload under `images/{uuid}/{variant}.webp` in the bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.webp` (and sibling variant filenames — see `docs/product/extras/image-uploads.md`). Demo seed (`bun run seed:demo`) uses `@unveiled/images` prebuilt persist and writes `.webp` keys.
+The image pipeline stores **five WebP** variants per upload under `images/{uuid}/{variant}.webp` in the **public** catalog bucket. Public URLs are `{IMAGE_PUBLIC_BASE_URL}/images/{uuid}/medium-640.webp` (and sibling variant filenames — see `docs/product/extras/image-uploads.md`). Demo seed (`bun run seed:demo`) uses `@unveiled/images` prebuilt persist and writes `.webp` keys.
 
-Admin voucher PDF inventory (ticket redemption) stages sliced ticket PDFs under the same R2 bucket with keys `vouchers/staging/{adminUserId}/{uuid}.pdf` (create) or `vouchers/{eventId}/{uuid}.pdf` (edit). No extra env vars — reuses `S3_*` / `IMAGE_PUBLIC_BASE_URL`.
+Admin voucher PDF inventory (ticket redemption) stages sliced ticket PDFs in the **private** assets bucket (`S3_PRIVATE_BUCKET`) with keys `vouchers/staging/{adminUserId}/{uuid}.pdf` (create) or `vouchers/{eventId}/{uuid}.pdf` (edit). Member download streams via `getPrivateObject` on `/:locale/bookings/:bookingId/tickets/:ticketId/voucher.pdf` after ownership checks — **not** via `IMAGE_PUBLIC_BASE_URL`. Prefer shared R2 credentials with a distinct private bucket; set optional `S3_PRIVATE_*` overrides only when the private bucket uses different endpoint/keys.
 
 If the bucket still has objects from the legacy JPEG pipeline (`*.jpg`), run `bun scripts/migrate-r2-jpeg-to-webp.ts` (or re-seed / re-upload) so public/admin pages resolve `.webp` variants — see the Host section migration note above.
+
+### Private assets bucket (voucher PDFs)
+
+**1. Create a second R2 bucket** — Cloudflare Dashboard → **R2** → create bucket (e.g. `unveiled-j6-private`). Do **not** enable Public access / R2.dev / custom domain for this bucket.
+
+**2. Env / Workers secrets** — Set `S3_PRIVATE_BUCKET` (and optional `S3_PRIVATE_*` overrides). Re-run `bun run secrets:workers` or `wrangler secret put S3_PRIVATE_BUCKET`.
+
+**3. Backfill historical public-bucket vouchers** (staging then production), after steps 01–02 wiring is deployed:
+
+```bash
+# Dry-run: list vouchers/ in public bucket that would copy
+bun scripts/backfill-vouchers-to-private-bucket.ts --dry-run
+
+# Copy vouchers/ public → private (idempotent: skips keys that already exist in private)
+bun scripts/backfill-vouchers-to-private-bucket.ts
+```
+
+App download stays **private-only** (no dual-read). After verifying member downloads, operators MAY delete public-bucket `vouchers/` keys as optional cleanup — the script does not delete sources.
+
+**CLI alternative** (same account credentials):
+
+```bash
+AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY \
+  aws s3 sync "s3://$S3_BUCKET/vouchers/" "s3://$S3_PRIVATE_BUCKET/vouchers/" \
+  --endpoint-url "$S3_ENDPOINT"
+```
+
+**4. Smoke checklist (private vouchers):**
+
+1. Sign in as ADMIN with public R2 vars + `S3_PRIVATE_BUCKET` set.
+2. Upload / stock a `VOUCHER_PDF` event (admin staging upload).
+3. Sign in as a member, book the event, download PDF via the ownership-gated route — expect `200` + `application/pdf`.
+4. Confirm `{IMAGE_PUBLIC_BASE_URL}/vouchers/...` for that object key returns **404 / denied** (private objects are not on the public CDN).
+5. Guest / other user hitting the voucher.pdf URL remains denied (redirect/401 or 404).
+
+### Public catalog bucket setup
 
 **1. Create bucket** — Cloudflare Dashboard → **R2** → create bucket (e.g. `unveiled-j6`).
 
@@ -212,7 +265,7 @@ Split it for env vars:
 
 **4. Public access** — Bucket → **Settings** → enable **Public access** / R2.dev subdomain. Copy the public URL (e.g. `https://pub-xxxxxxxx.r2.dev`) → `IMAGE_PUBLIC_BASE_URL` with no trailing slash.
 
-**5. Workers** — Add the same six R2 vars as wrangler secrets (or `[vars]` for non-sensitive) before catalog demos on staging.
+**5. Workers** — Add the same six public R2 vars **and** `S3_PRIVATE_BUCKET` (plus optional private overrides) as wrangler secrets (or `[vars]` for non-sensitive) before catalog + voucher demos on staging.
 
 **Optional sanity check** (after `@unveiled/images` exists):
 
@@ -486,7 +539,7 @@ Public catalog surfaces (`@unveiled/ui` EventCard, locale-home Discover live gri
 
 ### Demo seed images (Wikimedia Commons)
 
-`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **prebuilt five-WebP variant packs** under `public/images/seed/{partners,events}/`, then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`, and attaches **≥2 gallery images** to the featured theater demo (`DEMO_DISCOVERY_TITLES.theaterFuture`) for public detail slider demos. It also stocks additive ticket-redemption demos: **`Demo: Promo Code Inventory Night`** (`VOUCHER_PROMO`, six `DEMO-PROMO-0N` codes) and **`Demo: PDF Voucher Inventory Night`** (`VOUCHER_PDF`, six minimal PDFs under `vouchers/seed/…`). Abundo catalog events remain `SECRET_CODE` (e.g. theater / TARTUFFE). Refresh fixture + images with `bun run seed:fetch-abundo` then `bun scripts/bake-seed-image-variants.ts`. Seed uploads the five WebP variants to R2 via `persistPrebuiltImage` (no Worker resize); PDF objects upload unless `--skip-upload`. Existing catalogs seeded before Featured Discover / Featured Event Gallery / ticket-redemption inventory need `seed:demo -- --reset` (or manual Featured tab + gallery/inventory uploads) to populate Discover and the demo gallery.
+`bun run seed:demo` inserts Berlin partners/events from the Abundo fixture (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json`) using **prebuilt five-WebP variant packs** under `public/images/seed/{partners,events}/`, then features a small upcoming subset (`tonight`, theater, Ausstellung demos) on Discover via `featured_events`, and attaches **≥2 gallery images** to the featured theater demo (`DEMO_DISCOVERY_TITLES.theaterFuture`) for public detail slider demos. It also stocks additive ticket-redemption demos: **`Demo: Promo Code Inventory Night`** (`VOUCHER_PROMO`, six `DEMO-PROMO-0N` codes) and **`Demo: PDF Voucher Inventory Night`** (`VOUCHER_PDF`, six minimal PDFs under `vouchers/seed/…` in **`S3_PRIVATE_BUCKET`**). Abundo catalog events remain `SECRET_CODE` (e.g. theater / TARTUFFE). Refresh fixture + images with `bun run seed:fetch-abundo` then `bun scripts/bake-seed-image-variants.ts`. Seed uploads the five WebP variants to the public R2 bucket via `persistPrebuiltImage` (no Worker resize); PDF objects upload to the private bucket unless `--skip-upload`. Existing catalogs seeded before Featured Discover / Featured Event Gallery / ticket-redemption inventory need `seed:demo -- --reset` (or manual Featured tab + gallery/inventory uploads) to populate Discover and the demo gallery.
 
 ```bash
 # Fresh catalog on empty DB
@@ -522,7 +575,7 @@ Single package: `bun --filter @unveiled/ui stories` or `bun --filter @unveiled/w
 
 ### Playwright E2E (local)
 
-Prerequisites: root `.env` with `DATABASE_URL`, `AUTH_URL`, `SITE_URL`, and `E2E_USER_*` / `E2E_ADMIN_*` (see [`.env.example`](../../.env.example)). One-time: `bunx playwright install chromium`. Optional six R2 vars enable image-upload specs; without them those tests call `test.skip('R2 vars not configured')`.
+Prerequisites: root `.env` with `DATABASE_URL`, `AUTH_URL`, `SITE_URL`, and `E2E_USER_*` / `E2E_ADMIN_*` (see [`.env.example`](../../.env.example)). One-time: `bunx playwright install chromium`. Optional six public R2 vars enable image-upload specs; without them those tests call `test.skip('R2 vars not configured')`. Voucher PDF download specs additionally require `S3_PRIVATE_BUCKET` (and resolved shared/override credentials); they skip with a reason naming the private bucket when absent.
 
 ```bash
 # Playwright starts `bun run dev` via webServer (reuses a healthy local server when CI is unset)
@@ -552,6 +605,7 @@ The e2e job uses `SITE_URL=http://localhost:3000` and `CI=true` so Playwright’
 | `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` | **Yes** | Member test account |
 | `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | **Yes** | Admin test account |
 | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` | Optional | Enables admin image-upload E2E |
+| `S3_PRIVATE_BUCKET` (+ optional `S3_PRIVATE_*`) | Optional | Enables voucher PDF download/upload E2E (shared public `S3_*` creds OK when overrides unset) |
 
 If required E2E secrets are empty, the e2e job fails early with a clear error (does not silently skip auth). **Follow-up owner:** repo admin — provision the six required secrets in GitHub → Settings → Secrets and variables → Actions before the first green `main` run after this workflow lands.
 
@@ -938,9 +992,9 @@ Use before promoting a production Workers host (replace staging origin with prod
 
 1. **Neon Postgres** — Production branch/project; ensure production `DATABASE_URL` is a **Build** variable so `bun run build` migrates schema; decide empty vs curated catalog (prefer curated seed or admin-created venues — avoid demo-only junk).
 2. **Neon Auth** — Production `AUTH_URL`; add production origin to **trusted domains** (exact URL, no trailing slash); configure Google OAuth if offering social login; enable Admin plugin + `user.deleteUser` for GDPR disable paths.
-3. **Worker secrets / vars** — `DATABASE_URL`, `AUTH_URL`, `SITE_URL` (production origin); six R2 vars + `IMAGE_PUBLIC_BASE_URL`; Stripe **live** keys + `STRIPE_PRICE_ID_BASIC_BERLIN` + webhook secret; `RESEND_API_KEY` + `DAILY_CODES_FROM_EMAIL` (verified domain); optional `SENTRY_DSN`. Prefer secrets over committed `[vars]` for credentials.
+3. **Worker secrets / vars** — `DATABASE_URL`, `AUTH_URL`, `SITE_URL` (production origin); six public R2 vars + `IMAGE_PUBLIC_BASE_URL`; `S3_PRIVATE_BUCKET` (+ optional `S3_PRIVATE_*`); Stripe **live** keys + `STRIPE_PRICE_ID_BASIC_BERLIN` + webhook secret; `RESEND_API_KEY` + `DAILY_CODES_FROM_EMAIL` (verified domain); optional `SENTRY_DSN`. Prefer secrets over committed `[vars]` for credentials.
 4. **Stripe** — Live mode Checkout + Customer Portal (cancel at period end); webhook endpoint → `https://<prod>/api/webhooks/stripe` with events: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted` (see [Stripe webhook setup](#stripe-webhook-setup-dashboard--local)).
-5. **R2** — Production bucket (or same with separate prefix policy); public read base URL; CORS if needed for uploads.
+5. **R2** — Production public catalog bucket + public read base URL; separate **private** assets bucket (`S3_PRIVATE_BUCKET`, no public access); CORS if needed for uploads; backfill `vouchers/` if migrating from a shared public bucket.
 6. **Resend** — Domain/from verification; send a booking confirmation on staging/prod smoke.
 7. **DNS / Cloudflare** — Custom domain route to Worker; TLS; confirm `SITE_URL` matches browser origin (Auth + Stripe return URLs).
 8. **Admin provisioning** — Create ADMIN out-of-band (SQL promote or Neon Auth admin). **Do not** set `ADMIN_PROMOTE_EMAILS` on production.

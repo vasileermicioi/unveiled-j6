@@ -1,5 +1,5 @@
 import { getOwnedBookingTicketPdf } from "@unveiled/db";
-import { getObject } from "@unveiled/images";
+import { getPrivateObject } from "@unveiled/images";
 import { createRoute } from "honox/factory";
 
 import { getAuthOptions } from "../../../../../../lib/auth";
@@ -46,7 +46,7 @@ export default createRoute(async (c) => {
   }
 
   try {
-    const bytes = await getObject({ objectKey: owned.objectKey });
+    const bytes = await getPrivateObject({ objectKey: owned.objectKey });
     const filename = attachmentFilename(owned.ordinal, owned.originalFilename);
     const body = Uint8Array.from(bytes);
     return new Response(body, {

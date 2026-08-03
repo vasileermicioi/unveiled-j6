@@ -95,6 +95,12 @@ Client-visible localized errors (undecodable file, WebP encode unsupported, inco
 | `S3_BUCKET` | Bucket name |
 | `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Credentials, scoped to this one bucket only |
 | `IMAGE_PUBLIC_BASE_URL` | The public-facing base URL variant URLs are built from (custom domain fronting the bucket, or the provider's public bucket URL/CDN) — kept separate from `S3_ENDPOINT` because the API endpoint and the public read URL are frequently different hosts |
+| `S3_PRIVATE_BUCKET` | **Private assets bucket** for voucher PDFs (and other non-public files). Required for `@unveiled/images` private helpers. Must **not** enable public access / r2.dev / custom domain used by the app |
+| `S3_PRIVATE_ENDPOINT` / `S3_PRIVATE_REGION` / `S3_PRIVATE_ACCESS_KEY_ID` / `S3_PRIVATE_SECRET_ACCESS_KEY` | Optional per-field overrides; unset fields fall back to the corresponding public `S3_*` values |
+
+### Private assets (voucher PDFs)
+
+Catalog images stay in the public bucket and are served via `IMAGE_PUBLIC_BASE_URL`. **Voucher PDF inventory** (`event_voucher_pdfs.object_key`, typically `vouchers/...`) is stored in `S3_PRIVATE_BUCKET` only. Members download via the ownership-gated backend route `/:locale/bookings/:bookingId/tickets/:ticketId/voucher.pdf` (BE proxy / `getPrivateObject`) — the app MUST NOT construct or expose a public object URL under `IMAGE_PUBLIC_BASE_URL` for voucher keys. There is no `IMAGE_PRIVATE_BASE_URL`.
 
 ## 7. Runtime note
 

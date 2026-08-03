@@ -7,7 +7,7 @@ Env vars and third-party services for the production MVP. Partner-portal-only fl
 | Phase | Variables |
 |---|---|
 | 2+ | `DATABASE_URL`, `AUTH_URL` |
-| 4+ | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` |
+| 4+ | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL`; `S3_PRIVATE_BUCKET` (+ optional `S3_PRIVATE_*` overrides) for voucher PDFs / private assets |
 | 5+ | _(none)_ — MapLibre + OSM; no API key |
 | 6+ | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_BASIC_BERLIN` |
 | 6+ | `RESEND_API_KEY`, `DAILY_CODES_FROM_EMAIL` |
@@ -32,6 +32,7 @@ Env vars and third-party services for the production MVP. Partner-portal-only fl
 | — (new) | Google OAuth (decided: `features/auth.feature`) | No app env vars — configured directly in the Neon Auth project settings (shared test credentials out of the box, swap in real Google OAuth credentials there for production) |
 | — (new) | Stripe (decided: `features/credits-subscription.feature`) | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_BASIC_BERLIN` |
 | — (new) | S3-compatible image storage (decided: `extras/image-uploads.md`) | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` — set in repo-root `.env` for local dev (see `.env.example`) and on the staging host; `S3_ENDPOINT` is the R2 account host only (no bucket suffix), `IMAGE_PUBLIC_BASE_URL` is the public R2.dev or custom domain URL |
+| — (new) | Private assets bucket (voucher PDFs; decided: private-assets-bucket) | `S3_PRIVATE_BUCKET` (**required** for private helpers) plus optional `S3_PRIVATE_ENDPOINT` / `S3_PRIVATE_REGION` / `S3_PRIVATE_ACCESS_KEY_ID` / `S3_PRIVATE_SECRET_ACCESS_KEY` (unset fields fall back to public `S3_*`). Bucket must **not** have public access or an app-used CDN/custom domain — bytes are delivered only via auth-checked backend routes (e.g. member `voucher.pdf`), never via `IMAGE_PUBLIC_BASE_URL` |
 
 ## Third-party services
 

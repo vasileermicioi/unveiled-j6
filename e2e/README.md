@@ -37,15 +37,17 @@ SITE_URL=https://your-staging-host bun run test:e2e
 | `E2E_ADMIN_PASSWORD` | For admin specs | Admin test account password |
 | `S3_ENDPOINT` | For image upload specs | R2 S3 API host (no path) |
 | `S3_REGION` | For image upload specs | Usually `auto` |
-| `S3_BUCKET` | For image upload specs | Bucket name |
+| `S3_BUCKET` | For image upload specs | Public catalog bucket name |
 | `S3_ACCESS_KEY_ID` | For image upload specs | R2 access key |
 | `S3_SECRET_ACCESS_KEY` | For image upload specs | R2 secret |
 | `IMAGE_PUBLIC_BASE_URL` | For image upload specs | Public R2.dev / custom domain |
+| `S3_PRIVATE_BUCKET` | For voucher PDF specs | Private assets bucket (no public CDN) |
+| `S3_PRIVATE_*` | Optional | Private endpoint/region/key overrides; unset fields fall back to public `S3_*` |
 | `DATABASE_URL` | For credits/booking specs | Seed subscription status + credits via `fixtures/billing.ts` |
 | `E2E_STRIPE_CHECKOUT` | Optional (`1`) | Drive hosted Stripe Checkout in Playwright (needs webhook forwarding) |
 | `STRIPE_*` / `RESEND_*` | Staging / local app | Required for real Checkout + confirmation email (see `DEPLOYMENT.md` Phase 6) |
 
-Image create/edit tests call `test.skip('R2 vars not configured')` when any of the six R2 env vars is missing. Admin uploads generate **five WebP** variants **in the browser with Pica** (JS required; no sip) and work against **`bun run dev`** (default) and, when configured, against a **Workers preview or staging** base URL (`SITE_URL` / Playwright `baseURL` + the same six R2 vars). Partner create always attaches a logo. Do not skip image specs solely because the host is Workers.
+Image create/edit tests call `test.skip('R2 vars not configured')` when any of the six **public** R2 env vars is missing (`r2Configured()`). Voucher PDF download specs call `test.skip` when `S3_PRIVATE_BUCKET` (or resolved shared/override credentials) is missing — the skip reason names the private bucket (`privateR2Configured()`). Admin image uploads generate **five WebP** variants **in the browser with Pica** (JS required; no sip) and work against **`bun run dev`** (default) and, when configured, against a **Workers preview or staging** base URL (`SITE_URL` / Playwright `baseURL` + the same six R2 vars). Partner create always attaches a logo. Do not skip image specs solely because the host is Workers.
 
 **Fallbacks (local only):**
 
@@ -200,7 +202,7 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | Insufficient voucher inventory | `booking.spec.ts` | Covered by `book-event.integration.test` |
 | Idempotent retry | `booking.spec.ts` | Covered by `book-event.integration.test` |
 | Booking confirmation email | `booking.spec.ts` | No inbox harness; staging Resend checklist |
-| PDF download (no R2) | `booking.spec.ts` | Named skip when `S3_*` / `IMAGE_PUBLIC_BASE_URL` unset |
+| PDF download (no private bucket) | `booking.spec.ts` | Named skip when `S3_PRIVATE_BUCKET` (or shared/override S3 credentials) unset — reason mentions private bucket |
 | Promotion queue / partial capacity | `waitlist.spec.ts` | Covered by `waitlist.integration.test` |
 | Onboarding auto-`returnTo` after finish | (product polish) | Finish still → `/membership`; named deferral post-MVP — see coverage matrix |
 

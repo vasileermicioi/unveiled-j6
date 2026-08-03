@@ -232,7 +232,7 @@ Document all required vars in `apps/web/DEPLOYMENT.md`. Key vars by phase:
 | Phase | Variables |
 |---|---|
 | 2+ | `DATABASE_URL`, `AUTH_URL` |
-| 4+ | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` — repo-root `.env` (see `.env.example`); `S3_ENDPOINT` is R2 host only, `IMAGE_PUBLIC_BASE_URL` is public R2.dev/custom domain |
+| 4+ | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` — repo-root `.env` (see `.env.example`); `S3_ENDPOINT` is R2 host only, `IMAGE_PUBLIC_BASE_URL` is public R2.dev/custom domain. Also `S3_PRIVATE_BUCKET` (required for voucher PDFs / private helpers) plus optional `S3_PRIVATE_ENDPOINT` / `S3_PRIVATE_REGION` / `S3_PRIVATE_ACCESS_KEY_ID` / `S3_PRIVATE_SECRET_ACCESS_KEY` (fall back to public `S3_*`); private bucket must **not** use a public CDN binding |
 | 5+ | _(none)_ — event map uses **MapLibre GL JS** + **OpenStreetMap** tiles; no API key |
 | 6+ | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_BASIC_BERLIN` |
 | 6+ | `RESEND_API_KEY`, `DAILY_CODES_FROM_EMAIL` |

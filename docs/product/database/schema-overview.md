@@ -218,13 +218,13 @@ Promo-code inventory for `VOUCHER_PROMO` events (one row per redeemable code).
 
 ### `event_voucher_pdfs`
 
-PDF voucher inventory for `VOUCHER_PDF` events (one row per downloadable ticket PDF in R2).
+PDF voucher inventory for `VOUCHER_PDF` events (one row per downloadable ticket PDF in the **private** S3-compatible assets bucket — `S3_PRIVATE_BUCKET`; not the public catalog image CDN).
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | uuid, PK | |
 | `event_id` | FK → `events.id` | |
-| `object_key` | text | R2 object key; unique per event |
+| `object_key` | text | Private-bucket object key (e.g. `vouchers/...`); unique per event; bucket implied by asset class |
 | `original_filename`, `page_label` | text, nullable | Display / export metadata |
 | `status` | enum: `AVAILABLE`, `ALLOCATED` | |
 | `booking_ticket_id` | FK → `booking_tickets.id`, nullable | Set when allocated |

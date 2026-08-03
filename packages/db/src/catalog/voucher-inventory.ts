@@ -358,13 +358,13 @@ export async function ensureVoucherInventoryAvailable(
     return;
   }
 
-  const { uploadObject } = await import("@unveiled/images");
+  const { uploadPrivateObject } = await import("@unveiled/images");
   const pdfBytes = minimalPdfBytes();
   const items: VoucherPdfInventoryItem[] = [];
   for (let i = 1; i <= need; i++) {
     const objectKey = `vouchers/e2e/${eventId}/${suffix}-${i}.pdf`;
     if (!options.skipUpload) {
-      await uploadObject({
+      await uploadPrivateObject({
         objectKey,
         body: pdfBytes,
         contentType: "application/pdf",

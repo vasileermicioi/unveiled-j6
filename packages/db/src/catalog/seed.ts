@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { uploadObject } from "@unveiled/images";
+import { uploadPrivateObject } from "@unveiled/images";
 import { eq, sql } from "drizzle-orm";
 
 import { purgeAllBookingTicketGraph } from "../booking/purge-booking-tickets";
@@ -216,7 +216,7 @@ async function seedDemoVoucherRedemptionEvents(
   for (let i = 1; i <= DEMO_VOUCHER_PDF_COUNT; i++) {
     const objectKey = `vouchers/seed/${pdfEvent.id}/ticket-${i}-${randomUUID()}.pdf`;
     if (!options.skipBucket) {
-      await uploadObject({
+      await uploadPrivateObject({
         objectKey,
         body: MINIMAL_PDF_BYTES,
         contentType: "application/pdf",

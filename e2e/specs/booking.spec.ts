@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 
-import { r2Configured, settleAdminSession } from "../fixtures/admin";
+import { privateR2Configured, settleAdminSession } from "../fixtures/admin";
 import {
   hasAdminCredentials,
   loginAdminForMembershipHq,
@@ -184,7 +184,10 @@ test.describe("booking.feature", () => {
     locale,
   }) => {
     test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
-    test.skip(!r2Configured(), "R2 vars required for seeded PDF voucher download");
+    test.skip(
+      !privateR2Configured(),
+      "S3_PRIVATE_BUCKET (and shared/override S3 credentials) required for seeded PDF voucher download",
+    );
 
     const user = await onboardFreshMember(page, locale);
     await activateMemberForBooking(user.email);
@@ -308,7 +311,10 @@ test.describe("booking.feature", () => {
 
   test("Scenario: PDF voucher download is ownership-gated", async ({ page, locale, browser }) => {
     test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
-    test.skip(!r2Configured(), "R2 vars required for seeded PDF voucher download");
+    test.skip(
+      !privateR2Configured(),
+      "S3_PRIVATE_BUCKET (and shared/override S3 credentials) required for seeded PDF voucher download",
+    );
 
     const user = await onboardFreshMember(page, locale);
     await activateMemberForBooking(user.email);

@@ -1,4 +1,4 @@
-import { uploadObject } from "@unveiled/images";
+import { uploadPrivateObject } from "@unveiled/images";
 import { createRoute } from "honox/factory";
 
 import { guardAdminRoute } from "../../../../lib/admin-route";
@@ -87,7 +87,7 @@ export const POST = createRoute(async (c) => {
     : `vouchers/staging/${guard.session.user.id}/${crypto.randomUUID()}.pdf`;
 
   try {
-    await uploadObject({
+    await uploadPrivateObject({
       objectKey,
       body: bytes,
       contentType: "application/pdf",

@@ -103,6 +103,24 @@ export function r2Configured(): boolean {
   return R2_ENV_KEYS.every((key) => Boolean(process.env[key]?.trim()));
 }
 
+/**
+ * True when private-bucket env can resolve for voucher PDF helpers:
+ * `S3_PRIVATE_BUCKET` plus endpoint/region/keys (private overrides or public `S3_*` fallback).
+ * Does not require `IMAGE_PUBLIC_BASE_URL` (images stay on `r2Configured()`).
+ */
+export function privateR2Configured(): boolean {
+  if (!process.env.S3_PRIVATE_BUCKET?.trim()) {
+    return false;
+  }
+  const endpoint = process.env.S3_PRIVATE_ENDPOINT?.trim() || process.env.S3_ENDPOINT?.trim();
+  const region = process.env.S3_PRIVATE_REGION?.trim() || process.env.S3_REGION?.trim();
+  const accessKeyId =
+    process.env.S3_PRIVATE_ACCESS_KEY_ID?.trim() || process.env.S3_ACCESS_KEY_ID?.trim();
+  const secretAccessKey =
+    process.env.S3_PRIVATE_SECRET_ACCESS_KEY?.trim() || process.env.S3_SECRET_ACCESS_KEY?.trim();
+  return Boolean(endpoint && region && accessKeyId && secretAccessKey);
+}
+
 export function futureDateISO(daysAhead: number): string {
   const date = new Date();
   date.setDate(date.getDate() + daysAhead);
