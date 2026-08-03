@@ -1303,6 +1303,17 @@
     color: var(--muted);
   }
 
+  .event-detail--checkout__meta-datetimes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .event-detail--checkout__meta-value--next {
+    color: var(--color-brand-dark);
+    font-weight: 600;
+  }
+
   .event-detail--checkout__location {
     width: 100%;
   }
@@ -2775,7 +2786,8 @@
   }
 
   .event-map__popup-partner,
-  .event-map__popup-address {
+  .event-map__popup-address,
+  .event-map__popup-when {
     color: var(--color-brand-dark);
     font-family: var(--font-sans);
     font-size: 0.875rem;

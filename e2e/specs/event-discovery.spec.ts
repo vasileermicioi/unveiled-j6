@@ -390,6 +390,7 @@ test.describe("event-discovery.feature", () => {
   test("Scenario: Events with invalid or past dates are hidden", async ({ page, locale }) => {
     await loginMember(page, locale);
     await page.goto(`/${locale}/events`);
+    // Fully past events (including multi-datetime events with every slot past) stay out of the feed.
     await expect(page.getByText(TITLES.pastHidden)).toHaveCount(0);
 
     const from = berlinYmd(-30);
@@ -411,6 +412,35 @@ test.describe("event-discovery.feature", () => {
     );
     await expect(page).toHaveURL(/category=Ausstellung/);
 
+    await expect(page.getByText(TITLES.ausstellung)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(TITLES.tonight)).toHaveCount(0);
+    await expect(page.getByText(TITLES.konzert)).toHaveCount(0);
+  });
+
+  test("Scenario: Event name filter control", async ({ page, locale }) => {
+    await loginMember(page, locale);
+    await page.goto(`/${locale}/events`);
+
+    const titleField = page.getByLabel(/eventname|event name/i);
+    await expect(titleField).toBeVisible();
+    await expect(page.getByLabel(/partner/i).first()).toBeVisible();
+    await expect(page.getByLabel(/von|from/i)).toBeVisible();
+    await expect(page.getByLabel(/bis|until/i)).toBeVisible();
+
+    const today = berlinYmd(0);
+    await expect(page.getByLabel(/von|from/i)).toHaveAttribute("min", today);
+    await expect(page.getByLabel(/bis|until/i)).toHaveAttribute("min", today);
+  });
+
+  test("Scenario: Filter by event name", async ({ page, locale }) => {
+    await loginMember(page, locale);
+    const from = berlinYmd(0);
+    const to = berlinYmd(30);
+    const titleQuery = "Ausstellung";
+    await page.goto(
+      `/${locale}/events?title=${encodeURIComponent(titleQuery)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    );
+    await expect(page).toHaveURL(/title=/);
     await expect(page.getByText(TITLES.ausstellung)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(TITLES.tonight)).toHaveCount(0);
     await expect(page.getByText(TITLES.konzert)).toHaveCount(0);
@@ -448,11 +478,12 @@ test.describe("event-discovery.feature", () => {
 
   test("Scenario: Reset filters", async ({ page, locale }) => {
     await loginMember(page, locale);
-    await page.goto(`/${locale}/events`);
-
     const from = berlinYmd(0);
     const to = berlinYmd(30);
-    await applyDateRange(page, from, to);
+    await page.goto(
+      `/${locale}/events?title=${encodeURIComponent("Ausstellung")}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    );
+    await expect(page).toHaveURL(/title=/);
     await expect(page.getByText(/zeitraum:|range:/i)).toBeVisible();
 
     await page
@@ -460,7 +491,10 @@ test.describe("event-discovery.feature", () => {
       .first()
       .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/?$`));
+    await expect(page).not.toHaveURL(/title=/);
+    await expect(page).not.toHaveURL(/from=/);
     await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toBeVisible();
+    await expect(page.getByLabel(/eventname|event name/i)).toHaveValue("");
   });
 
   test("Scenario: No results", async ({ page, locale }) => {
@@ -481,7 +515,7 @@ test.describe("event-discovery.feature", () => {
     const to = berlinYmd(30);
     // GET filters (same contract as the filter form) — preserve query on map link
     await page.goto(
-      `/${locale}/events?category=Theater&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      `/${locale}/events?title=${encodeURIComponent("Theater")}&category=Theater&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
     );
     await expect(page.getByText(TITLES.tonight)).toBeVisible({ timeout: 15_000 });
 
@@ -490,6 +524,7 @@ test.describe("event-discovery.feature", () => {
       .getByRole("link", { name: /karte|map/i })
       .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/map`));
+    await expect(page).toHaveURL(/title=/);
     await expect(page).toHaveURL(/category=Theater/);
     await expect(page).toHaveURL(/from=/);
 
@@ -513,8 +548,10 @@ test.describe("event-discovery.feature", () => {
       name: /liste|list/i,
     });
     await expect(listTab).toBeVisible();
+    await expect(listTab).toHaveAttribute("href", /title=/);
     await expect(listTab).toHaveAttribute("href", /category=Theater/);
     await expect(page.getByText(/filtern|filters/i).first()).toBeVisible();
+    await expect(page.getByLabel(/eventname|event name/i)).toBeVisible();
     await expect(page.getByText(TITLES.ausstellung)).toHaveCount(0);
     // Popup close hit-target coverage lives on guest detail LOCATION map (same EventMap
     // chrome) to avoid Neon Auth signup flake on this member-only scenario.

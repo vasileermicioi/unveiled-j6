@@ -455,9 +455,11 @@ test.describe("admin-partners.feature", () => {
     await page.getByLabel(/event-titel|event title/i).fill("demo");
     await page.getByLabel(/partnername|partner name/i).fill("berlin");
     await page.getByRole("button", { name: /^anzeigen$|^show$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`[?&]title=demo(?:&|$)`));
-    await expect(page).toHaveURL(new RegExp(`[?&]partner=berlin(?:&|$)`));
-    await expect(page.getByRole("link", { name: /filter zurücksetzen|reset filters/i })).toBeVisible();
+    await expect(page).toHaveURL(/[?&]title=demo(?:&|$)/);
+    await expect(page).toHaveURL(/[?&]partner=berlin(?:&|$)/);
+    await expect(
+      page.getByRole("link", { name: /filter zurücksetzen|reset filters/i }),
+    ).toBeVisible();
 
     const csvLink = page.getByRole("link", { name: /csv herunterladen|download csv/i }).first();
     if ((await csvLink.count()) > 0) {

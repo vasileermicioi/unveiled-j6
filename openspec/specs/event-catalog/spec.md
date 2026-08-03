@@ -6,7 +6,7 @@ Phase 4 catalog persistence and image processing for partner venue records and e
 
 ### Requirement: Catalog persistence tables
 
-The `@unveiled/db` package SHALL define Drizzle schema and migrations for `public.images`, `public.partners`, and `public.events` matching the project schema docs (as updated for ticket redemption and the extensible location model), including FK from `events.image_id` → `images.id` (required), `partners.logo_image_id` → `images.id` (optional), and `events.partner_id` → `partners.id`. The schema SHALL include enums for image source, ticket type (`SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF`), and timing mode; SHALL NOT include a `secret_code_mode` enum/column; SHALL include required event location columns `country`, `city`, and `zip_code` and SHALL NOT include `events.neighborhood`; a check constraint `remaining_capacity >= 0` on `events`; and indexes on `events(date_time)`, `(date_time, partner_id)`, and `(date_time, category)`. Voucher inventory and `booking_tickets` tables SHALL also be defined as part of the ticket-redemption schema work.
+The `@unveiled/db` package SHALL define Drizzle schema and migrations for `public.images`, `public.partners`, and `public.events` matching the project schema docs (as updated for ticket redemption and the extensible location model), including FK from `events.image_id` → `images.id` (required), `partners.logo_image_id` → `images.id` (optional), and `events.partner_id` → `partners.id`. The schema SHALL include enums for image source, ticket type (`SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF`), and timing mode; SHALL NOT include a `secret_code_mode` enum/column; SHALL include required event location columns `country`, `city`, and `zip_code` and SHALL NOT include `events.neighborhood`; a check constraint `remaining_capacity >= 0` on `events`; a non-empty `date_times timestamptz[]` column with check `cardinality(date_times) >= 1`; a denormalized `date_time timestamptz` primary/next instant kept in sync with `date_times` on write; and indexes on `events(date_time)`, `(date_time, partner_id)`, and `(date_time, category)`. Voucher inventory and `booking_tickets` tables SHALL also be defined as part of the ticket-redemption schema work.
 
 #### Scenario: Migration applies on empty catalog
 
@@ -32,6 +32,40 @@ The `@unveiled/db` package SHALL define Drizzle schema and migrations for `publi
 
 - **WHEN** the berlin-zip-code location migration has been applied
 - **THEN** `events` has required `country`, `city`, and `zip_code` columns and has no `neighborhood` column
+
+#### Scenario: date_times present after multi-datetime migration
+
+- **WHEN** the multi-datetime migration has been applied
+- **THEN** `events` has non-empty `date_times` and retained denormalized `date_time` with existing `date_time` indexes
+
+### Requirement: events.date_times
+
+The `events` table SHALL store `date_times` as a non-empty array of `timestamptz` values. Catalog writes SHALL persist the list in ascending order with duplicate instants removed. The system SHALL migrate existing rows to a single-element array from the former sole `date_time` value. A database check constraint SHALL enforce `cardinality(date_times) >= 1`.
+
+#### Scenario: Backfill
+
+- **WHEN** the multi-datetime migration runs
+- **THEN** every event has `date_times` with length ≥ 1
+- **AND** each backfilled array’s sole element equals that row’s previous `date_time`
+
+#### Scenario: Empty date_times rejected at database
+
+- **WHEN** an insert or update would store an empty `date_times` array
+- **THEN** the database rejects the write
+
+### Requirement: events.date_time denormalized primary
+
+`events.date_time` SHALL equal the next upcoming instant in `date_times` relative to write-time `now` (minimum element `>= now`), or the earliest instant in `date_times` when all elements are past. Catalog create/update/clone SHALL recompute `date_time` whenever `date_times` is written. `start_time_minutes` and `weekday` SHALL continue to derive from that primary instant in Europe/Berlin.
+
+#### Scenario: Primary is next upcoming
+
+- **WHEN** an event is written with multiple `date_times` of which at least one is `>= now`
+- **THEN** `date_time` equals the soonest element that is `>= now`
+
+#### Scenario: Primary falls back when all past
+
+- **WHEN** an event is written with `date_times` where every element is `< now`
+- **THEN** `date_time` equals the earliest element in the list
 
 ### Requirement: Event location fields
 
@@ -176,7 +210,7 @@ The catalog domain layer in `@unveiled/db` SHALL enforce partner validation and 
 
 ### Requirement: Event catalog domain rules
 
-The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature` (as aligned with ticket redemption and the extensible location model), including required image (upload buffer or remote URL path, exactly one source); required location via `street` / `house_number` / optional `address_line2` / `country` / `city` / `zip_code` with defaults `DE` / `berlin`, postal validation through `validatePostalCode`, and compose-on-write display `address` (no `neighborhood`); redemption configuration rules (`SECRET_CODE` requires `secretCode`; `VOUCHER_PROMO` requires `eventWebsiteUrl` and does not require event-level `promoCode`; `VOUCHER_PDF` does not require event-level promo/code fields); default capacity 10, ticket type `SECRET_CODE`, timing mode `TIME_SLOT` (no secret-code mode default); computed `start_time_minutes` and `weekday` from `date_time` in Europe/Berlin; capacity recalculation when total capacity changes; and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8. Multi-slot series create (`createEventSeries` / series slot uniqueness) is not part of the catalog domain; reuse of catalog metadata for another occurrence SHALL use clone (see Requirement: Clone event). `createEvent` remains for blank creates.
+The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature` (as aligned with ticket redemption and the extensible location model), including required image (upload buffer or remote URL path, exactly one source); required location via `street` / `house_number` / optional `address_line2` / `country` / `city` / `zip_code` with defaults `DE` / `berlin`, postal validation through `validatePostalCode`, and compose-on-write display `address` (no `neighborhood`); redemption configuration rules (`SECRET_CODE` requires `secretCode`; `VOUCHER_PROMO` requires `eventWebsiteUrl` and does not require event-level `promoCode`; `VOUCHER_PDF` does not require event-level promo/code fields); default capacity 10, ticket type `SECRET_CODE`, timing mode `TIME_SLOT` (no secret-code mode default); required non-empty `dateTimes: Date[]` on create (sorted unique on write), with update/clone accepting the same list shape; computed `start_time_minutes` and `weekday` from the denormalized primary `date_time` in Europe/Berlin; capacity recalculation when total capacity changes; and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8. Multi-slot series create (`createEventSeries` / series slot uniqueness) is not part of the catalog domain; reuse of catalog metadata for another occurrence SHALL use clone (see Requirement: Clone event). `createEvent` remains for blank creates.
 
 #### Scenario: Missing event image rejected
 
@@ -195,8 +229,20 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 
 #### Scenario: Derived datetime fields on write
 
-- **WHEN** an event is created or its `date_time` is updated
-- **THEN** `start_time_minutes` and `weekday` are computed from `date_time` using Europe/Berlin local time
+- **WHEN** an event is created or its `date_times` list is updated
+- **THEN** denormalized `date_time` is recomputed from the list
+- **AND** `start_time_minutes` and `weekday` are computed from that primary `date_time` using Europe/Berlin local time
+
+#### Scenario: Create with multiple dateTimes
+
+- **WHEN** `createEvent` is called with two or more distinct `dateTimes`
+- **THEN** the event row stores sorted unique `date_times`
+- **AND** `date_time` equals the primary/next instant per denormalized rules
+
+#### Scenario: Empty dateTimes rejected
+
+- **WHEN** `createEvent` or `updateEvent` is called with an empty `dateTimes` list
+- **THEN** the operation fails validation without writing rows
 
 #### Scenario: Secret code required without mode
 
@@ -226,13 +272,14 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 
 ### Requirement: Clone event
 
-The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, structured location fields including composed address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, ticket type, secret code when `SECRET_CODE`, website URL, accessibility/language/age metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The caller SHALL supply a `dateTime` (and any create-required redemption inventory for voucher types). The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.
+The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, structured location fields including composed address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, ticket type, secret code when `SECRET_CODE`, website URL, accessibility/language/age metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The caller SHALL supply a non-empty `dateTimes` list (and any create-required redemption inventory for voucher types). The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.
 
 #### Scenario: Clone creates a distinct event
 
-- **WHEN** `cloneEvent` is called with a valid source id and new dateTime
-- **THEN** a new event id exists with copied title/partner and the new dateTime
+- **WHEN** `cloneEvent` is called with a valid source id and a non-empty `dateTimes` list
+- **THEN** a new event id exists with copied title/partner and the supplied `date_times`
 - **AND** remaining_capacity equals total_capacity
+- **AND** denormalized `date_time` matches primary/next rules
 
 #### Scenario: Clone copies structured location fields
 
@@ -312,22 +359,28 @@ Admin event create and edit forms SHALL NOT expose a remote image URL text field
 
 ### Requirement: Admin event form select controls
 
-Admin event create/edit and clone forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, barrier-free, languages, subtitle language, and target age groups where those fields appear. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`). Series create forms SHALL NOT be documented or offered.
+Admin event create/edit and clone forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, barrier-free, languages, and subtitle language where those fields appear. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged except that `target_age_groups` is no longer a form field. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`). Series create forms SHALL NOT be documented or offered.
 
 #### Scenario: Partner field is a native select
 
 - **WHEN** an admin opens Create Event
 - **THEN** the Partner control is a native HTML select (or equivalent native multi pattern) associated with an accessible label
 
-#### Scenario: Multi-value fields post the same array names
+#### Scenario: Multi-value language fields post the same array names
 
-- **WHEN** an admin submits languages or target age groups
-- **THEN** the POST body still carries the existing array field names accepted by admin parsers
+- **WHEN** an admin submits languages
+- **THEN** the POST body still carries the existing `languages` array field name accepted by admin parsers
 
 #### Scenario: Category and event type remain native selects
 
 - **WHEN** an admin opens Create Event or Edit Event
 - **THEN** category and event type are native HTML selects (or documented native multi pattern) with unchanged `name` attributes
+
+#### Scenario: Target age groups are not a form control
+
+- **WHEN** an admin opens Create Event, Edit Event, or Clone Event
+- **THEN** no target age groups control is shown
+- **AND** create/update/clone do not write `target_age_groups`
 
 ### Requirement: Admin event numeric fields
 
@@ -349,24 +402,33 @@ Admin event create/edit forms SHALL use native HTML `<input type="number">` for 
 - **THEN** credit price defaults to at least 1 and total capacity defaults to 10 (matching existing product/parser defaults)
 - **AND** client-side min constraints remain ≥ 1 for both fields
 
-### Requirement: Admin event languages and age groups multi-select
+### Requirement: Admin event languages multi-select
 
-The admin event form SHALL capture `languages` and `target_age_groups` as multi-value fields with predefined options, not comma-separated free text. Both SHALL use native checkbox multi-selects posting the existing array field names (`languages`, `target_age_groups`). Submitted values SHALL persist to the existing `text[]` and enum-array columns respectively.
+The admin event form SHALL capture `languages` as a multi-value field with predefined options, not comma-separated free text. It SHALL use a native checkbox multi-select posting the existing array field name (`languages`). Submitted values SHALL persist to the existing `text[]` column. The form SHALL NOT capture `target_age_groups`.
 
 #### Scenario: Admin selects multiple languages
 
 - **WHEN** an ADMIN selects German and English in the languages multi-value control and submits a valid form
 - **THEN** the event row stores both language codes in `languages`
 
-#### Scenario: Admin selects multiple age groups
+#### Scenario: Multi-value POST field name for languages unchanged
 
-- **WHEN** an ADMIN selects two or more target age group options and submits a valid form
-- **THEN** the event row stores the selected values in `target_age_groups`
+- **WHEN** an ADMIN submits languages via the native multi-value control
+- **THEN** the request body still uses the `languages` array field name
 
-#### Scenario: Multi-value POST field names unchanged
+### Requirement: Product schema overview omits events.target_age_groups
 
-- **WHEN** an ADMIN submits languages and target age groups via the native multi-value controls
-- **THEN** the request body still uses the `languages` and `target_age_groups` array field names
+`docs/product/database/schema-overview.md` SHALL NOT list `events.target_age_groups` as a current field. Catalog create/update/clone and the Drizzle `events` schema SHALL NOT include `targetAgeGroups` / `target_age_groups` after the drop migration is applied.
+
+#### Scenario: Schema overview has no event target age groups column
+
+- **WHEN** an implementer reads the `events` table section in `docs/product/database/schema-overview.md`
+- **THEN** `target_age_groups` is not listed as a current column
+
+#### Scenario: Catalog writes omit target age groups
+
+- **WHEN** create, update, or clone event runs
+- **THEN** the write path does not set or copy `target_age_groups`
 
 ### Requirement: Admin event map geolocation with zoom
 

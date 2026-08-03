@@ -1,9 +1,5 @@
 import type { Story } from "@ladle/react";
-import {
-  mockEvent,
-  mockEventImageUrls,
-  storyLocale,
-} from "../stories/fixtures";
+import { mockEvent, mockEventImageUrls, storyLocale } from "../stories/fixtures";
 import { AdminEventsTable } from "./AdminEventsTable";
 
 export const WithRows: Story = () => (

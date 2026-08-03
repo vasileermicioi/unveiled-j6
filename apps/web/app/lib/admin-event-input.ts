@@ -1,7 +1,7 @@
 import type { CreateEventInput, UpdateEventInput } from "@unveiled/db";
 
 import type { EventFormValues } from "./admin-event-form";
-import { eventFormValuesToDateTime } from "./admin-event-form";
+import { eventFormValuesToDateTimes } from "./admin-event-form";
 
 export function toCreateEventInput(values: EventFormValues, uploadedBy: string): CreateEventInput {
   return {
@@ -17,7 +17,7 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
     category: values.category,
     eventType: values.eventType,
     tags: values.tags,
-    dateTime: eventFormValuesToDateTime(values),
+    dateTimes: eventFormValuesToDateTimes(values),
     timingMode: values.timingMode,
     creditPrice: values.creditPrice,
     totalCapacity: values.totalCapacity,
@@ -29,7 +29,6 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
     languages: values.languages,
     hasSubtitles: values.hasSubtitles,
     subtitleLanguage: values.subtitleLanguage,
-    targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,
     imageUpload: values.imageUpload,
@@ -54,7 +53,7 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
     category: values.category,
     eventType: values.eventType,
     tags: values.tags,
-    dateTime: eventFormValuesToDateTime(values),
+    dateTimes: eventFormValuesToDateTimes(values),
     timingMode: values.timingMode,
     creditPrice: values.creditPrice,
     totalCapacity: values.totalCapacity,
@@ -66,7 +65,6 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
     languages: values.languages,
     hasSubtitles: values.hasSubtitles,
     subtitleLanguage: values.subtitleLanguage,
-    targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,
     imageUpload: values.imageUpload,
@@ -81,8 +79,8 @@ export function toSeriesCreateInput(
   values: EventFormValues,
   slots: Date[],
   uploadedBy: string,
-): Omit<CreateEventInput, "dateTime"> & { slots: Date[] } {
-  // Series forms omit event_date/event_time — do not call eventFormValuesToDateTime.
+): Omit<CreateEventInput, "dateTimes"> & { slots: Date[] } {
+  // Series forms omit datetime rows — do not call eventFormValuesToDateTimes.
   return {
     partnerId: values.partnerId,
     title: values.title,
@@ -107,7 +105,6 @@ export function toSeriesCreateInput(
     languages: values.languages,
     hasSubtitles: values.hasSubtitles,
     subtitleLanguage: values.subtitleLanguage,
-    targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,
     imageUpload: values.imageUpload,

@@ -24,6 +24,8 @@ export type EventDiscoveryShellProps = {
   view: EventFeedView;
   query: EventFeedQuery;
   total: number;
+  /** Europe/Berlin today YYYY-MM-DD for date input min. */
+  minDate: string;
   categoryOptions: AdminFormSelectOption[];
   partnerOptions: AdminFormSelectOption[];
   /** Membership gate alert — list view only. */
@@ -36,6 +38,7 @@ export function EventDiscoveryShell({
   view,
   query,
   total,
+  minDate,
   categoryOptions,
   partnerOptions,
   subscriptionActive,
@@ -44,6 +47,7 @@ export function EventDiscoveryShell({
   const copy = getEventFeedCopy(locale);
   const basePath = view === "map" ? `/${locale}/events/map` : `/${locale}/events`;
   const queryString = buildEventFeedQueryString({
+    title: query.title,
     category: query.category,
     partnerId: query.partnerId,
     from: query.from,
@@ -101,6 +105,7 @@ export function EventDiscoveryShell({
             action={basePath}
             categoryOptions={categoryOptions}
             locale={locale}
+            minDate={minDate}
             partnerOptions={partnerOptions}
             query={query}
           />

@@ -13,11 +13,27 @@ Feature: Admin — Event Management
     Given I am signed in as "ADMIN"
 
   Scenario: Create a single event
-    When I create a new event with a title, partner, credit price, capacity, description, image, Berlin zip code, and dateTime
+    When I create a new event with a title, partner, credit price, capacity, description, image, Berlin zip code, and one or more dateTimes
     Then the event is added to the catalog
     And its remaining capacity defaults to its total capacity
-    And its startTimeMinutes and weekday are computed from its dateTime
+    And its startTimeMinutes and weekday are computed from its primary/next dateTime
     # description is Markdown source (MDXEditor-assisted); other required fields unchanged
+    # Admin create/edit/clone forms present an editable datetime list (add/remove inplace)
+
+  Scenario: Add and remove datetimes on create
+    When I am on the new-event form
+    And I add a second datetime row and remove one row
+    Then submitting persists exactly the remaining datetime values on the event
+
+  Scenario: Edit datetimes inplace
+    When I edit an event that already has multiple datetimes
+    Then I see all values as editable rows
+    And I can add or remove rows and save
+
+  Scenario: Admin event list shows next upcoming datetime
+    When I view the admin Events catalog for an event with multiple datetimes including a future occurrence
+    Then the date column shows the next upcoming datetime
+    And it may append a simple +N count of additional datetimes
 
   Scenario: Admin sets Berlin zip on create
     When I create a new event with a valid Berlin PLZ and other required fields
@@ -146,9 +162,10 @@ Feature: Admin — Event Management
 
   Scenario: Optional accessibility and audience metadata
     When I create or edit an event
-    Then I can optionally set barrier-free accessibility, supported languages, language-independent, subtitles, and target age groups
+    Then I can optionally set barrier-free accessibility, supported languages, language-independent, and subtitles
     And supported languages and language-independent are mutually exclusive in the UI
     And subtitles are independent of spoken languages / language-independent
+    And no target age groups control is shown
 
   Scenario: Check language-independent hides languages picker
     When I open create or edit event
@@ -184,10 +201,6 @@ Feature: Admin — Event Management
     And only a short default list is shown until search is used
     And a hint explains that search is needed to find other languages
     And already-selected values remain available for the form POST even when filtered out of the visible list
-
-  Scenario: Age groups multi-select without search
-    When I open create or edit event
-    Then target age groups are chosen with checkboxes and no search filter control
 
   # Structured street/house/line2 + zip are the admin location inputs — no free-text address field;
   # display `address` is composed on write. Map is structured-geocode preview only (line2 excluded).

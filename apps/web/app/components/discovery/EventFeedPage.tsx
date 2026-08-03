@@ -17,6 +17,7 @@ export type EventFeedPageProps = {
   total: number;
   subscriptionActive: boolean;
   savedEventIds: ReadonlySet<string>;
+  minDate: string;
   categoryOptions: AdminFormSelectOption[];
   partnerOptions: AdminFormSelectOption[];
 };
@@ -32,12 +33,14 @@ export function EventFeedPage({
   total,
   subscriptionActive,
   savedEventIds,
+  minDate,
   categoryOptions,
   partnerOptions,
 }: EventFeedPageProps) {
   const copy = getEventFeedCopy(locale);
   const feedPath = `/${locale}/events`;
   const queryString = buildEventFeedQueryString({
+    title: query.title,
     category: query.category,
     partnerId: query.partnerId,
     from: query.from,
@@ -50,6 +53,7 @@ export function EventFeedPage({
     <EventDiscoveryShell
       categoryOptions={categoryOptions}
       locale={locale}
+      minDate={minDate}
       partnerOptions={partnerOptions}
       query={query}
       subscriptionActive={subscriptionActive}

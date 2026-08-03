@@ -44,8 +44,7 @@ export function AdminPartnersListPage({
     sort: query.sort,
     dir: query.dir,
   });
-  const hasFilters =
-    Boolean(query.q) || !isDefaultPartnerListSort(query.sort, query.dir);
+  const hasFilters = Boolean(query.q) || !isDefaultPartnerListSort(query.sort, query.dir);
   const preserveParams =
     query.sort && query.dir && !isDefaultPartnerListSort(query.sort, query.dir)
       ? { sort: query.sort, dir: query.dir }

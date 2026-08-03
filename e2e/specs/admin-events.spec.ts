@@ -98,6 +98,72 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByText(/10115/)).toBeVisible();
   });
 
+  test("Scenario: Add and remove datetimes on create", async ({ page, locale }) => {
+    test.skip(true, "Multi-datetime admin UI parked (ALLOW_MULTI_DATETIME_UI=false)");
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const suffix = uniqueSuffix();
+    const title = `E2E Multi DT ${suffix}`;
+    const firstDate = futureDateISO(14);
+    const secondDate = futureDateISO(21);
+
+    await page.goto(`/${locale}/admin/events/new`);
+    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.waitForLoadState("networkidle");
+    await selectOptionByLabel(page, adminLabels.partner, partner.name);
+    await fillTextbox(page, adminLabels.title, title);
+    await fillTextbox(page, adminLabels.description, `Multi datetime ${suffix}`);
+    await fillStructuredLocation(page, {
+      street: `Multi Straße ${suffix}`,
+      houseNumber: "3",
+      zipCode: "10115",
+    });
+    await selectOptionByLabel(page, adminLabels.category, "Theater");
+    await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+
+    await fillLabeledDateOrTime(page, /^(datum|date)\*?$/i, firstDate, { nth: 0 });
+    await page.getByRole("button", { name: /termin hinzufügen|add datetime/i }).click();
+    await fillLabeledDateOrTime(page, /^(datum|date)\*?$/i, secondDate, { nth: 1 });
+
+    const secretField = page.getByRole("textbox", { name: adminLabels.secretCode, exact: true });
+    if ((await secretField.count()) > 0) {
+      await secretField.fill(`E2EMDT${suffix.slice(0, 6).toUpperCase()}`);
+    }
+
+    await attachEventImageFile(page);
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+
+    const row = page.getByRole("row").filter({ hasText: title });
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await expect(row.getByText(/\+\s*1/)).toBeVisible();
+
+    await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    const dateFields = page.getByRole("textbox", { name: /^(datum|date)\*?$/i });
+    await expect(dateFields).toHaveCount(2);
+    await expect(dateFields.nth(0)).toHaveValue(firstDate);
+    await expect(dateFields.nth(1)).toHaveValue(secondDate);
+
+    await page
+      .getByRole("button", { name: /^entfernen$|^remove$/i })
+      .nth(1)
+      .click();
+    await expect(page.getByRole("textbox", { name: /^(datum|date)\*?$/i })).toHaveCount(1);
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await expect(
+      page
+        .getByRole("row")
+        .filter({ hasText: title })
+        .getByText(/\+\s*1/),
+    ).toHaveCount(0);
+  });
+
   test("Scenario: Admin sets Berlin zip on create", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
@@ -378,7 +444,9 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("columnheader", { name: /^sprachen$|^languages$/i })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByRole("columnheader", { name: /^untertitel$|^subtitles$/i })).toBeVisible();
+    await expect(
+      page.getByRole("columnheader", { name: /^untertitel$|^subtitles$/i }),
+    ).toBeVisible();
   });
 
   test("Scenario: Update an event's capacity", async ({ page, locale }) => {
@@ -439,13 +507,12 @@ test.describe("admin-events.feature", () => {
       partnerName: partner.name,
       barrierFree: "Ja",
       language: /deutsch|german/i,
-      ageGroup: "18-25",
     });
     await page.goto(event.detailPath);
     await expect(page.getByRole("heading", { name: event.title })).toBeVisible();
-    await expect(
-      page.getByText(/barrierefrei|barrier.?free|18-25|deutsch|german/i).first(),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/barrierefrei|barrier.?free|deutsch|german/i).first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("Scenario: Check Subtitles reveals language select", async ({ page, locale }) => {
@@ -529,22 +596,6 @@ test.describe("admin-events.feature", () => {
     await search.fill("ZH");
     await checkOptionByName(page, /chinesisch|chinese/i);
     await expect(page.getByRole("checkbox", { name: /chinesisch|chinese/i })).toBeChecked();
-  });
-
-  test("Scenario: Age groups multi-select without search", async ({ page, locale }) => {
-    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
-    const partner = await createPartnerViaUI(page, locale);
-    await page.goto(`/${locale}/admin/events/new`);
-    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.waitForLoadState("networkidle");
-    await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await expect(page.getByText(adminLabels.ageGroups).first()).toBeVisible();
-    // Language search exists separately; age groups have no search control of their own.
-    await expect(page.getByRole("checkbox", { name: "18-25" })).toBeVisible();
-    await checkOptionByName(page, "18-25");
-    await expect(page.getByRole("checkbox", { name: "18-25" })).toBeChecked();
   });
 
   test("Scenario: Add event prefills structured location and map from partner", async ({

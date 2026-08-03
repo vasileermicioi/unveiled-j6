@@ -1,5 +1,10 @@
 import type { TicketType, TimingMode, VoucherInventoryCounts } from "@unveiled/db";
 
+export type EventDateTimeRow = {
+  date: string;
+  time: string;
+};
+
 export type EventFormDefaults = Partial<{
   partnerId: string;
   title: string;
@@ -13,8 +18,7 @@ export type EventFormDefaults = Partial<{
   category: string;
   eventType: string;
   tags: string[];
-  eventDate: string;
-  eventTime: string;
+  dateTimeRows: EventDateTimeRow[];
   timingMode: TimingMode;
   creditPrice: number;
   totalCapacity: number;
@@ -28,7 +32,6 @@ export type EventFormDefaults = Partial<{
   languages: string[] | null;
   hasSubtitles: boolean;
   subtitleLanguage: string | null;
-  targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
   currentImageUrl: string | null;

@@ -2,11 +2,7 @@ import type { Event, Partner } from "@unveiled/db";
 import { buildVariantUrl, readImagePublicBaseUrl } from "@unveiled/images/urls";
 
 import type { EventFormDefaults } from "../components/admin/event-admin-types";
-import {
-  type EventFormValues,
-  formatEventDateInput,
-  formatEventTimeInput,
-} from "./admin-event-form";
+import { eventDateTimesToFormRows, type EventFormValues } from "./admin-event-form";
 
 export type PartnerOption = Pick<
   Partner,
@@ -56,8 +52,7 @@ export function eventToFormDefaults(
     category: event.category,
     eventType: event.eventType,
     tags: event.tags,
-    eventDate: formatEventDateInput(event.dateTime),
-    eventTime: formatEventTimeInput(event.dateTime),
+    dateTimeRows: eventDateTimesToFormRows(event),
     timingMode: event.timingMode,
     creditPrice: event.creditPrice,
     totalCapacity: event.totalCapacity,
@@ -71,7 +66,6 @@ export function eventToFormDefaults(
     languages: event.languages,
     hasSubtitles: event.hasSubtitles,
     subtitleLanguage: event.subtitleLanguage,
-    targetAgeGroups: event.targetAgeGroups,
     lat: event.lat,
     lng: event.lng,
     currentImageUrl,
@@ -96,8 +90,7 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     category: values.category,
     eventType: values.eventType,
     tags: values.tags,
-    eventDate: values.eventDate,
-    eventTime: values.eventTime,
+    dateTimeRows: values.dateTimeRows,
     timingMode: values.timingMode,
     creditPrice: values.creditPrice,
     totalCapacity: values.totalCapacity,
@@ -109,7 +102,6 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     languages: values.languages,
     hasSubtitles: values.hasSubtitles,
     subtitleLanguage: values.subtitleLanguage,
-    targetAgeGroups: values.targetAgeGroups,
     lat: values.lat,
     lng: values.lng,
     currentImageUrl: null,

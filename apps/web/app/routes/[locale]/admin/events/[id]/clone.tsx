@@ -7,14 +7,14 @@ import { createRoute } from "honox/factory";
 import { AdminPageShell, adminEventsPath } from "../../../../../components/admin/AdminPageShell";
 import type { CloneEventFormSource } from "../../../../../components/admin/CloneEventForm";
 import { eventListPath } from "../../../../../components/admin/EventAdminForm";
+import type { EventDateTimeRow } from "../../../../../components/admin/event-admin-types";
 import { NotFoundPage } from "../../../../../components/NotFoundPage";
 import CloneEventForm from "../../../../../islands/CloneEventForm";
 import { getAdminCopy } from "../../../../../lib/admin-content";
 import {
-  eventFormValuesToDateTime,
-  formatEventDateInput,
+  eventDateTimesToFormRows,
+  eventFormValuesToDateTimes,
   formatEventDateTime,
-  formatEventTimeInput,
 } from "../../../../../lib/admin-event-form";
 import { renderAdminPage } from "../../../../../lib/admin-render";
 import {
@@ -46,8 +46,7 @@ function sourceFromEvent(
     timingMode: event.timingMode,
     dateTimeLabel: formatEventDateTime(event.dateTime, locale),
     imageUrl,
-    eventDate: formatEventDateInput(event.dateTime),
-    eventTime: formatEventTimeInput(event.dateTime),
+    dateTimeRows: eventDateTimesToFormRows(event),
   };
 }
 
@@ -57,7 +56,7 @@ function renderClonePage(
     locale: Locale;
     sourceEventId: string;
     source: CloneEventFormSource;
-    defaults?: { eventDate?: string; eventTime?: string };
+    defaults?: { dateTimeRows?: EventDateTimeRow[] };
     error?: string | null;
   },
 ) {
@@ -128,11 +127,11 @@ export const POST = createRoute(async (c) => {
     values.ticketType = existing.ticketType;
     values.timingMode = existing.timingMode;
 
-    const dateTime = eventFormValuesToDateTime(values);
+    const dateTimes = eventFormValuesToDateTimes(values);
     const payload = voucherPayloadFromFormValues(values);
 
     const cloned = await cloneEvent(db, eventId, {
-      dateTime,
+      dateTimes,
       voucherInventory: {
         promoCodes: payload.promoCodes,
         pdfItems: payload.pdfItems,
@@ -141,10 +140,10 @@ export const POST = createRoute(async (c) => {
 
     return c.redirect(localizedPath(guard.locale, `admin/events/${cloned.id}/edit`), 302);
   } catch (error) {
-    let defaults: { eventDate?: string; eventTime?: string } | undefined;
+    let defaults: { dateTimeRows?: EventDateTimeRow[] } | undefined;
     try {
       const values = await parseEventFormBodyFromRequest(body);
-      defaults = { eventDate: values.eventDate, eventTime: values.eventTime };
+      defaults = { dateTimeRows: values.dateTimeRows };
     } catch {
       defaults = undefined;
     }

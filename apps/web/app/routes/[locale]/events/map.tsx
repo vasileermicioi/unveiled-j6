@@ -1,4 +1,4 @@
-import { listMemberFeedEvents, listPartners } from "@unveiled/db";
+import { getBerlinCalendarDate, listMemberFeedEvents, listPartners } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { EventMapPage } from "../../../components/discovery/EventMapPage";
@@ -12,8 +12,20 @@ import {
 } from "../../../lib/event-feed";
 import { guardMemberFeedRoute } from "../../../lib/event-feed-route";
 import { getEventMapCopy } from "../../../lib/event-map-content";
+import type { Locale } from "../../../lib/locale";
 
 const PARTNER_FILTER_LIMIT = 500;
+
+function formatMapDateTime(dateTime: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Berlin",
+  }).format(dateTime);
+}
 
 function parseCoordinate(value: string | null | undefined): number | null {
   if (value == null || !String(value).trim()) {
@@ -33,9 +45,11 @@ export default createRoute(async (c) => {
   const feedQuery = parseEventFeedQuery(new URL(c.req.url));
   const mapPath = `/${guard.locale}/events/map`;
   const copy = getEventMapCopy(guard.locale);
+  const minDate = getBerlinCalendarDate(new Date());
 
   const [feed, partners] = await Promise.all([
     listMemberFeedEvents(db, {
+      title: feedQuery.title,
       category: feedQuery.category,
       partnerId: feedQuery.partnerId,
       from: feedQuery.from,
@@ -67,6 +81,7 @@ export default createRoute(async (c) => {
       title: event.title,
       partnerName: event.partnerName,
       address: event.address,
+      dateTimeLabel: formatMapDateTime(event.dateTime, guard.locale),
       lat,
       lng,
       href: `/${guard.locale}/events/${event.id}`,
@@ -74,6 +89,7 @@ export default createRoute(async (c) => {
   }
 
   const queryString = buildEventFeedQueryString({
+    title: feedQuery.title,
     category: feedQuery.category,
     partnerId: feedQuery.partnerId,
     from: feedQuery.from,
@@ -87,6 +103,7 @@ export default createRoute(async (c) => {
       filteredTotal={feed.total}
       locale={guard.locale}
       markers={markers}
+      minDate={minDate}
       partnerOptions={partners.map((partner) => ({
         id: partner.id,
         label: partner.name,

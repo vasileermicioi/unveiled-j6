@@ -1,4 +1,9 @@
-import { listMemberFeedEvents, listPartners, listSavedEventIds } from "@unveiled/db";
+import {
+  getBerlinCalendarDate,
+  listMemberFeedEvents,
+  listPartners,
+  listSavedEventIds,
+} from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { EventFeedPage } from "../../../components/discovery/EventFeedPage";
@@ -25,9 +30,11 @@ export default createRoute(async (c) => {
   const feedQuery = parseEventFeedQuery(new URL(c.req.url));
   const feedPath = `/${guard.locale}/events`;
   const userId = guard.session.user.id;
+  const minDate = getBerlinCalendarDate(new Date());
 
   const [feed, partners, savedIds] = await Promise.all([
     listMemberFeedEvents(db, {
+      title: feedQuery.title,
       category: feedQuery.category,
       partnerId: feedQuery.partnerId,
       from: feedQuery.from,
@@ -47,6 +54,7 @@ export default createRoute(async (c) => {
   const subscriptionActive = true;
   const copy = getEventFeedCopy(guard.locale);
   const queryString = buildEventFeedQueryString({
+    title: feedQuery.title,
     category: feedQuery.category,
     partnerId: feedQuery.partnerId,
     from: feedQuery.from,
@@ -59,6 +67,7 @@ export default createRoute(async (c) => {
       categoryOptions={getEventCategoryOptions(guard.locale)}
       events={feed.items.map(toEventCardItem)}
       locale={guard.locale}
+      minDate={minDate}
       partnerOptions={partners.map((partner) => ({
         id: partner.id,
         label: partner.name,

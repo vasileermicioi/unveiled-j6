@@ -4,7 +4,7 @@ import { Paragraph, Surface, Table } from "@heroui/react";
 import type { FeaturedEventRow } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
-import { formatEventDateTime } from "../../lib/admin-event-form";
+import { formatEventDateTimeWithCount } from "../../lib/admin-event-form";
 import type { Locale } from "../../lib/locale";
 
 import { AdminTableActions } from "./AdminTableActions";
@@ -58,7 +58,13 @@ export function AdminFeaturedTable({ locale, events, imageUrls }: AdminFeaturedT
                 </Table.Cell>
                 <Table.Cell>{event.title}</Table.Cell>
                 <Table.Cell>{event.partnerName}</Table.Cell>
-                <Table.Cell>{formatEventDateTime(event.dateTime, locale)}</Table.Cell>
+                <Table.Cell>
+                  {formatEventDateTimeWithCount(
+                    event.dateTime,
+                    locale,
+                    event.dateTimes?.length ?? 1,
+                  )}
+                </Table.Cell>
                 <Table.Cell className="admin-table__actions-cell">
                   <AdminTableActions
                     actions={[

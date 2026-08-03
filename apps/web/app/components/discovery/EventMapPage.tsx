@@ -14,6 +14,7 @@ export type EventMapPageProps = {
   markers: EventMapMarker[];
   /** Total matching feed filters (before coord filter). */
   filteredTotal: number;
+  minDate: string;
   categoryOptions: AdminFormSelectOption[];
   partnerOptions: AdminFormSelectOption[];
 };
@@ -23,6 +24,7 @@ export function EventMapPage({
   query,
   markers,
   filteredTotal,
+  minDate,
   categoryOptions,
   partnerOptions,
 }: EventMapPageProps) {
@@ -34,6 +36,7 @@ export function EventMapPage({
     <EventDiscoveryShell
       categoryOptions={categoryOptions}
       locale={locale}
+      minDate={minDate}
       partnerOptions={partnerOptions}
       query={query}
       total={filteredTotal}

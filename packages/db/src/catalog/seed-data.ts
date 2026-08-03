@@ -299,7 +299,7 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
           category: event.category,
           eventType: event.eventType,
           tags: event.tags,
-          dateTime: berlinDaysFromToday(event.daysFromToday, event.hour, event.minute),
+          dateTimes: [berlinDaysFromToday(event.daysFromToday, event.hour, event.minute)],
           creditPrice: event.creditPrice,
           ...(event.totalCapacity != null ? { totalCapacity: event.totalCapacity } : {}),
           secretCode: event.secretCode,

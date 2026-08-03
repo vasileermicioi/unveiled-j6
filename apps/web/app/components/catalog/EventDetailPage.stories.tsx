@@ -98,7 +98,11 @@ MembershipRequired.meta = wideMeta;
 export const MembershipRequiredPast: Story = () => (
   <EventDetailPage
     closeHref={`/${storyLocale}/discover`}
-    event={{ ...mockEvent, dateTime: new Date("2020-01-01T20:00:00+01:00") }}
+    event={{
+      ...mockEvent,
+      dateTime: new Date("2020-01-01T20:00:00+01:00"),
+      dateTimes: [new Date("2020-01-01T20:00:00+01:00")],
+    }}
     locale={storyLocale}
     partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "membership_required" }}
@@ -118,6 +122,20 @@ export const PastDue: Story = () => (
 );
 PastDue.storyName = "EventDetailPage / Past due";
 PastDue.meta = wideMeta;
+
+/** Eligible member sees all datetimes listed (next upcoming emphasized). */
+export const MultiDateTimesEligible: Story = () => (
+  <EventDetailPage
+    closeHref={`/${storyLocale}/events`}
+    event={mockEvent}
+    locale={storyLocale}
+    maxQty={6}
+    partnerAttribution={storyPartnerAttribution}
+    viewer={{ kind: "eligible" }}
+  />
+);
+MultiDateTimesEligible.storyName = "EventDetailPage / Multi datetimes (eligible)";
+MultiDateTimesEligible.meta = wideMeta;
 
 /** Name-only attribution when logo URL is absent. */
 export const PartnerNameOnly: Story = () => (

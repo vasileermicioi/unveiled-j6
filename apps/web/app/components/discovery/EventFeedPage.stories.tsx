@@ -36,6 +36,7 @@ export const EmptyNoResults: Story = () => (
     categoryOptions={categoryOptions}
     events={[]}
     locale="en"
+    minDate="2026-08-03"
     partnerOptions={partnerOptions}
     query={emptyQuery}
     savedEventIds={new Set()}
@@ -50,6 +51,7 @@ export const PopulatedInactiveSub: Story = () => (
     categoryOptions={categoryOptions}
     events={[mockEventCardItem]}
     locale="en"
+    minDate="2026-08-03"
     partnerOptions={partnerOptions}
     query={populatedQuery}
     savedEventIds={new Set()}
@@ -64,6 +66,7 @@ export const EmptyNoResultsDe: Story = () => (
     categoryOptions={categoryOptions}
     events={[]}
     locale="de"
+    minDate="2026-08-03"
     partnerOptions={partnerOptions}
     query={emptyQuery}
     savedEventIds={new Set()}

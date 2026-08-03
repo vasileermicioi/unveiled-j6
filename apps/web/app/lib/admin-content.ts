@@ -1,13 +1,9 @@
-import { AGE_GROUPS, EVENT_TYPES, INTERESTS } from "@unveiled/auth/constants";
+import { EVENT_TYPES, INTERESTS } from "@unveiled/auth/constants";
 import { listIso6391LanguageCodes } from "@unveiled/db";
 import type { CatalogErrorCode } from "@unveiled/db/catalog/errors";
 
 import type { Locale } from "./locale";
-import {
-  getAgeGroupLabel,
-  getInterestLabel,
-  getPreferredLanguageOptions,
-} from "./onboarding-content";
+import { getInterestLabel, getPreferredLanguageOptions } from "./onboarding-content";
 
 export const ADMIN_LIST_PAGE_SIZE = 25;
 export const ADMIN_PARTNERS_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE;
@@ -326,6 +322,9 @@ export type AdminCopy = {
   tagsHint: string;
   eventDateLabel: string;
   eventTimeLabel: string;
+  eventDateTimesLabel: string;
+  addDateTimeLabel: string;
+  removeDateTimeLabel: string;
   timingModeLabel: string;
   timingModeTimeSlot: string;
   timingModeAllDay: string;
@@ -382,7 +381,6 @@ export type AdminCopy = {
   languagesLabel: string;
   languagesSearchPlaceholder: string;
   languagesSearchHint: string;
-  targetAgeGroupsLabel: string;
   mapLocationLabel: string;
   imageSectionLabel: string;
   imageFileLabel: string;
@@ -422,6 +420,7 @@ export type AdminCopy = {
     category: string;
     eventType: string;
     eventDate: string;
+    dateTimes: string;
     redemption: string;
     series: string;
     subtitleLanguage: string;
@@ -711,7 +710,8 @@ const copy: Record<Locale, AdminCopy> = {
     cloneEventSubtitle:
       "Metadaten und Bild werden übernommen. Neues Datum/Uhrzeit wählen; bei Voucher-Events neues Inventar hochladen.",
     cloneSubmit: "Klonen",
-    cloneDateTimeHint: "Datum und Uhrzeit für den neuen Termin (Europe/Berlin).",
+    cloneDateTimeHint:
+      "Termine für das geklonte Event (Europe/Berlin). Liste bearbeiten, hinzufügen oder entfernen.",
     cloneInventoryHint:
       "Voucher-Inventar wird nicht kopiert. Bitte neues Inventar für den Klon bereitstellen.",
     cloneSourceLabel: "Quell-Event",
@@ -764,6 +764,9 @@ const copy: Record<Locale, AdminCopy> = {
     tagsHint: "Kommagetrennt",
     eventDateLabel: "Datum",
     eventTimeLabel: "Uhrzeit",
+    eventDateTimesLabel: "Termine",
+    addDateTimeLabel: "Termin hinzufügen",
+    removeDateTimeLabel: "Entfernen",
     timingModeLabel: "Zeitmodus",
     timingModeTimeSlot: "Zeitfenster",
     timingModeAllDay: "Ganztägig",
@@ -828,7 +831,6 @@ const copy: Record<Locale, AdminCopy> = {
     languagesSearchPlaceholder: "Sprachen suchen",
     languagesSearchHint:
       "Nur häufige Sprachen sind angezeigt. Nutze die Suche, um weitere zu finden und auszuwählen.",
-    targetAgeGroupsLabel: "Altersgruppen",
     mapLocationLabel: "Karten-Vorschau",
     imageSectionLabel: "Event-Bild",
     imageFileLabel: "Event-Bild hochladen",
@@ -872,6 +874,7 @@ const copy: Record<Locale, AdminCopy> = {
       category: "Kategorie ist erforderlich.",
       eventType: "Event-Typ ist erforderlich.",
       eventDate: "Datum ist erforderlich.",
+      dateTimes: "Mindestens ein Termin ist erforderlich.",
       redemption: "Redemption-Konfiguration unvollständig.",
       series: "Mindestens ein gültiger Slot erforderlich.",
       subtitleLanguage:
@@ -1155,7 +1158,8 @@ const copy: Record<Locale, AdminCopy> = {
     cloneEventSubtitle:
       "Metadata and image are copied. Set a new date/time; for voucher events upload new inventory.",
     cloneSubmit: "Clone",
-    cloneDateTimeHint: "Date and time for the new occurrence (Europe/Berlin).",
+    cloneDateTimeHint:
+      "Date and times for the cloned event (Europe/Berlin). Edit, add, or remove rows in the list.",
     cloneInventoryHint: "Voucher inventory is not copied. Provide new inventory for the clone.",
     cloneSourceLabel: "Source event",
     cloneSourceImageAlt: "Source event image",
@@ -1206,6 +1210,9 @@ const copy: Record<Locale, AdminCopy> = {
     tagsHint: "Comma-separated",
     eventDateLabel: "Date",
     eventTimeLabel: "Time",
+    eventDateTimesLabel: "Date & times",
+    addDateTimeLabel: "Add datetime",
+    removeDateTimeLabel: "Remove",
     timingModeLabel: "Timing mode",
     timingModeTimeSlot: "Time slot",
     timingModeAllDay: "All day",
@@ -1268,7 +1275,6 @@ const copy: Record<Locale, AdminCopy> = {
     languagesLabel: "Languages",
     languagesSearchPlaceholder: "Search languages",
     languagesSearchHint: "Only common languages are shown. Use search to find and select others.",
-    targetAgeGroupsLabel: "Age groups",
     mapLocationLabel: "Map preview",
     imageSectionLabel: "Event image",
     imageFileLabel: "Upload event image",
@@ -1309,6 +1315,7 @@ const copy: Record<Locale, AdminCopy> = {
       category: "Category is required.",
       eventType: "Event type is required.",
       eventDate: "Date is required.",
+      dateTimes: "At least one datetime is required.",
       redemption: "Redemption configuration is incomplete.",
       series: "At least one valid slot is required.",
       subtitleLanguage:
@@ -1333,6 +1340,7 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   DUPLICATE_VOUCHER_CODE: "redemption",
   DUPLICATE_SERIES_SLOTS: "series",
   EMPTY_SERIES_SLOTS: "series",
+  EMPTY_DATE_TIMES: "dateTimes",
   INVALID_SUBTITLE_LANGUAGE: "subtitleLanguage",
   EVENT_NOT_FOUND: "title",
   PARTNER_HAS_EVENTS: "name",
@@ -1392,6 +1400,10 @@ export function mapCatalogErrorCode(
 
   if (code === "DUPLICATE_SERIES_SLOTS" || code === "EMPTY_SERIES_SLOTS") {
     return adminCopy.fieldErrors.series;
+  }
+
+  if (code === "EMPTY_DATE_TIMES") {
+    return adminCopy.fieldErrors.dateTimes;
   }
 
   if (code === "INVALID_SUBTITLE_LANGUAGE") {
@@ -1479,13 +1491,6 @@ export function getEventSubtitleLanguageOptions(locale: Locale): AdminSelectOpti
     .filter((option) => option.id !== "DE" && option.id !== "EN")
     .sort((a, b) => a.label.localeCompare(b.label, intlLocale, { sensitivity: "base" }));
   return [...pinned, ...rest];
-}
-
-export function getEventAgeGroupOptions(locale: Locale): AdminSelectOption[] {
-  return AGE_GROUPS.map((id) => ({
-    id,
-    label: getAgeGroupLabel(locale, id),
-  }));
 }
 
 export function getEventCategoryOptions(locale: Locale): AdminSelectOption[] {

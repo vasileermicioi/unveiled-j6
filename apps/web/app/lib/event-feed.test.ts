@@ -11,6 +11,7 @@ describe("event-feed helpers", () => {
   test("parseEventFeedQuery defaults page to 1 and omits empty filters", () => {
     const query = parseEventFeedQuery(new URL("https://example.com/en/events"));
     expect(query).toEqual({
+      title: undefined,
       category: undefined,
       partnerId: undefined,
       from: undefined,
@@ -22,16 +23,26 @@ describe("event-feed helpers", () => {
   test("parseEventFeedQuery reads filters and page", () => {
     const query = parseEventFeedQuery(
       new URL(
-        "https://example.com/en/events?category=Theater&partnerId=abc&from=2026-07-09&to=2026-07-10&page=2",
+        "https://example.com/en/events?title=Jazz&category=Theater&partnerId=abc&from=2026-07-09&to=2026-07-10&page=2",
       ),
     );
     expect(query).toEqual({
+      title: "Jazz",
       category: "Theater",
       partnerId: "abc",
       from: "2026-07-09",
       to: "2026-07-10",
       page: 2,
     });
+  });
+
+  test("parseEventFeedQuery trims title and omits whitespace-only title", () => {
+    expect(
+      parseEventFeedQuery(new URL("https://example.com/en/events?title=%20Jazz%20Night%20")).title,
+    ).toBe("Jazz Night");
+    expect(
+      parseEventFeedQuery(new URL("https://example.com/en/events?title=%20%20")).title,
+    ).toBeUndefined();
   });
 
   test("parseEventFeedQuery ignores invalid dates and non-positive pages", () => {
@@ -45,15 +56,17 @@ describe("event-feed helpers", () => {
 
   test("buildEventFeedQueryString omits page=1 and empty filters", () => {
     expect(buildEventFeedQueryString({ page: 1 })).toBe("");
+    expect(buildEventFeedQueryString({ title: "  " })).toBe("");
     expect(
       buildEventFeedQueryString({
+        title: "Jazz",
         category: "Theater",
         partnerId: "p1",
         from: "2026-07-09",
         to: "2026-07-12",
         page: 3,
       }),
-    ).toBe("?category=Theater&partnerId=p1&from=2026-07-09&to=2026-07-12&page=3");
+    ).toBe("?title=Jazz&category=Theater&partnerId=p1&from=2026-07-09&to=2026-07-12&page=3");
   });
 
   test("clampEventFeedPage caps to total pages with size 24", () => {
@@ -64,10 +77,10 @@ describe("event-feed helpers", () => {
 
   test("eventFeedPageRedirectPath preserves filters when clamping", () => {
     const query = parseEventFeedQuery(
-      new URL("https://example.com/en/events?category=Theater&page=99"),
+      new URL("https://example.com/en/events?title=Jazz&category=Theater&page=99"),
     );
     expect(eventFeedPageRedirectPath("/en/events", query, 30)).toBe(
-      "/en/events?category=Theater&page=2",
+      "/en/events?title=Jazz&category=Theater&page=2",
     );
     expect(
       eventFeedPageRedirectPath(

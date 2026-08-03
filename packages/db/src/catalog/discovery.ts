@@ -1,9 +1,9 @@
-import { and, asc, count, eq, gte, inArray, lt, type SQL } from "drizzle-orm";
+import { and, asc, count, eq, gte, ilike, inArray, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { type Event, events } from "../schema/events";
 import { savedEvents } from "../schema/saved-events";
-import { berlinInclusiveDateRange } from "./datetime";
+import { type BerlinDayRange, berlinInclusiveDateRange, getBerlinCalendarDate } from "./datetime";
 
 export const MEMBER_FEED_PAGE_SIZE = 24;
 
@@ -11,6 +11,8 @@ export const MEMBER_FEED_PAGE_SIZE = 24;
 export const MEMBER_FEED_MAP_MAX = 500;
 
 export type MemberFeedFilters = {
+  /** Case-insensitive substring match on `events.title`. */
+  title?: string;
   /** One or more categories (OR). Single string still accepted. */
   category?: string | string[];
   /** One or more partner ids (OR). Single string still accepted. */
@@ -35,7 +37,18 @@ export type MemberFeedResult = {
 /** Map list omits feed `page`; same filter window / past exclusion as the feed. */
 export type MemberFeedMapFilters = Omit<MemberFeedFilters, "page">;
 
-function resolveFeedWindow(filters: MemberFeedFilters) {
+/** Escape `\`, `%`, and `_` so user input is literal in Postgres `ILIKE` patterns. */
+function escapeIlikePattern(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+/**
+ * Resolve the calendar range for a ranged feed query.
+ * - `null` — no from/to (default upcoming window).
+ * - `"empty"` — inverted after clamping (past-only range).
+ * - otherwise inclusive Berlin day bounds (caller still intersects with `now`).
+ */
+function resolveFeedWindow(filters: MemberFeedFilters, now: Date): BerlinDayRange | "empty" | null {
   const hasFrom = Boolean(filters.from?.trim());
   const hasTo = Boolean(filters.to?.trim());
 
@@ -43,9 +56,25 @@ function resolveFeedWindow(filters: MemberFeedFilters) {
     return null;
   }
 
-  const from = hasFrom ? (filters.from as string) : (filters.to as string);
-  const to = hasTo ? (filters.to as string) : (filters.from as string);
-  return berlinInclusiveDateRange(from, to);
+  let fromYmd = hasFrom ? (filters.from as string).trim() : (filters.to as string).trim();
+  let toYmd = hasTo ? (filters.to as string).trim() : (filters.from as string).trim();
+
+  if (fromYmd > toYmd) {
+    const swap = fromYmd;
+    fromYmd = toYmd;
+    toYmd = swap;
+  }
+
+  const todayYmd = getBerlinCalendarDate(now);
+  if (fromYmd < todayYmd) {
+    fromYmd = todayYmd;
+  }
+
+  if (fromYmd > toYmd) {
+    return "empty";
+  }
+
+  return berlinInclusiveDateRange(fromYmd, toYmd);
 }
 
 function normalizeFilterList(value?: string | string[]): string[] {
@@ -67,13 +96,38 @@ function normalizeFilterList(value?: string | string[]): string[] {
 }
 
 function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
-  const window = resolveFeedWindow(filters);
+  const window = resolveFeedWindow(filters, now);
   // Default: all upcoming (`date_time >= now`), soonest first via orderBy.
-  // Optional from/to replaces that default with an inclusive Europe/Berlin calendar range
-  // (past days are allowed when the period filter includes them).
-  const conditions: SQL[] = window
-    ? [gte(events.dateTime, window.start), lt(events.dateTime, window.end)]
-    : [gte(events.dateTime, now)];
+  // Ranged: inclusive Europe/Berlin calendar days, clamped so from ≥ Berlin today,
+  // always intersected with `date_time >= now` so past showtimes stay hidden.
+  const conditions: SQL[] = [];
+
+  if (window === "empty") {
+    conditions.push(sql`false`);
+  } else if (window === null) {
+    conditions.push(gte(events.dateTime, now));
+  } else {
+    const effectiveStart = window.start > now ? window.start : now;
+    if (effectiveStart >= window.end) {
+      conditions.push(sql`false`);
+    } else {
+      // Upcoming gate via denormalized next; range matches any occurrence in the window.
+      conditions.push(gte(events.dateTime, now));
+      conditions.push(
+        sql`EXISTS (
+          SELECT 1
+          FROM unnest(${events.dateTimes}) AS occurrence(dt)
+          WHERE occurrence.dt >= ${effectiveStart}
+            AND occurrence.dt < ${window.end}
+        )`,
+      );
+    }
+  }
+
+  const title = filters.title?.trim();
+  if (title) {
+    conditions.push(ilike(events.title, `%${escapeIlikePattern(title)}%`));
+  }
 
   const categories = normalizeFilterList(filters.category);
   if (categories.length === 1) {

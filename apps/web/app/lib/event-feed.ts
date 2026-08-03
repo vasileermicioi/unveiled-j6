@@ -1,6 +1,7 @@
 import { MEMBER_FEED_PAGE_SIZE } from "@unveiled/db";
 
 export type EventFeedQuery = {
+  title?: string;
   category?: string;
   partnerId?: string;
   /** YYYY-MM-DD Europe/Berlin calendar day */
@@ -30,6 +31,7 @@ export function parseEventFeedQuery(url: URL): EventFeedQuery {
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
 
   return {
+    title: parseOptionalParam(url.searchParams.get("title")),
     category: parseOptionalParam(url.searchParams.get("category")),
     partnerId: parseOptionalParam(url.searchParams.get("partnerId")),
     from: parseDateParam(url.searchParams.get("from")),
@@ -39,6 +41,7 @@ export function parseEventFeedQuery(url: URL): EventFeedQuery {
 }
 
 export function buildEventFeedQueryString(query: {
+  title?: string;
   category?: string;
   partnerId?: string;
   from?: string;
@@ -47,6 +50,9 @@ export function buildEventFeedQueryString(query: {
 }): string {
   const params = new URLSearchParams();
 
+  if (query.title?.trim()) {
+    params.set("title", query.title.trim());
+  }
   if (query.category?.trim()) {
     params.set("category", query.category.trim());
   }
@@ -83,6 +89,7 @@ export function eventFeedPageRedirectPath(
   }
 
   return `${basePath}${buildEventFeedQueryString({
+    title: query.title,
     category: query.category,
     partnerId: query.partnerId,
     from: query.from,

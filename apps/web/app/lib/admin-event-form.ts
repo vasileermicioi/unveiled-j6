@@ -1,4 +1,5 @@
 import type { TicketType, TimingMode } from "@unveiled/db";
+import { CatalogValidationError } from "@unveiled/db";
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 
 import { parsePrebuiltImageVariants } from "./admin-prebuilt-image";
@@ -13,6 +14,13 @@ export type VoucherPdfFormItem = {
   pageLabel?: string | null;
 };
 
+export type EventDateTimeRow = {
+  date: string;
+  time: string;
+};
+
+export const MAX_EVENT_DATE_TIME_ROWS = 52;
+
 export type EventFormValues = {
   partnerId: string;
   title: string;
@@ -26,8 +34,7 @@ export type EventFormValues = {
   category: string;
   eventType: string;
   tags: string[];
-  eventDate: string;
-  eventTime: string;
+  dateTimeRows: EventDateTimeRow[];
   timingMode: TimingMode;
   creditPrice: number;
   totalCapacity: number;
@@ -42,7 +49,6 @@ export type EventFormValues = {
   languages: string[] | null;
   hasSubtitles: boolean;
   subtitleLanguage: string | null;
-  targetAgeGroups: string[] | null;
   lat: string | null;
   lng: string | null;
   imageUpload: Buffer | null;
@@ -127,6 +133,19 @@ export function formatEventDateTime(date: Date, locale: "de" | "en"): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+/** Primary/next datetime plus optional `+N` when the event has more occurrences. */
+export function formatEventDateTimeWithCount(
+  date: Date,
+  locale: "de" | "en",
+  dateTimesCount = 1,
+): string {
+  const primary = formatEventDateTime(date, locale);
+  if (dateTimesCount <= 1) {
+    return primary;
+  }
+  return `${primary} +${dateTimesCount - 1}`;
 }
 
 export function formatEventDateInput(date: Date): string {
@@ -413,6 +432,81 @@ export function parseManualSeriesSlots(
 
 export type ParsedBody = Record<string, string | File | (string | File)[]>;
 
+export function parseEventDateTimeRows(
+  body: ParsedBody,
+  asString: (value: string | File | (string | File)[] | undefined) => string | undefined,
+): EventDateTimeRow[] {
+  const countRaw = asString(body.datetime_count)?.trim();
+  const parsedCount = countRaw ? Number.parseInt(countRaw, 10) : Number.NaN;
+  const hasIndexed =
+    Number.isFinite(parsedCount) ||
+    asString(body.event_date_0) !== undefined ||
+    body.event_date_0 !== undefined;
+
+  if (hasIndexed) {
+    let count = Number.isFinite(parsedCount)
+      ? Math.min(Math.max(parsedCount, 0), MAX_EVENT_DATE_TIME_ROWS)
+      : 0;
+
+    if (!Number.isFinite(parsedCount)) {
+      for (let index = 0; index < MAX_EVENT_DATE_TIME_ROWS; index += 1) {
+        if (
+          asString(body[`event_date_${index}`]) === undefined &&
+          body[`event_date_${index}`] === undefined
+        ) {
+          break;
+        }
+        count = index + 1;
+      }
+    }
+
+    const rows: EventDateTimeRow[] = [];
+    for (let index = 0; index < count; index += 1) {
+      rows.push({
+        date: asString(body[`event_date_${index}`])?.trim() ?? "",
+        time: asString(body[`event_time_${index}`])?.trim() ?? "",
+      });
+    }
+    return rows.length > 0 ? rows : [{ date: "", time: "" }];
+  }
+
+  // Legacy single-field posts (pre multi-datetime form).
+  return [
+    {
+      date: asString(body.event_date)?.trim() ?? "",
+      time: asString(body.event_time)?.trim() ?? "",
+    },
+  ];
+}
+
+export function dateTimesToFormRows(dateTimes: Date[]): EventDateTimeRow[] {
+  if (dateTimes.length === 0) {
+    return [{ date: "", time: "" }];
+  }
+
+  return dateTimes.map((dateTime) => ({
+    date: formatEventDateInput(dateTime),
+    time: formatEventTimeInput(dateTime),
+  }));
+}
+
+/**
+ * Multi-datetime admin chrome (add/remove rows) is parked.
+ * Schema + parsers still accept `dateTimes[]`; flip this to re-enable the list UI.
+ */
+export const ALLOW_MULTI_DATETIME_UI = false;
+
+/** Prefill create/edit/clone datetime rows — primary only while multi UI is parked. */
+export function eventDateTimesToFormRows(event: {
+  dateTimes: Date[];
+  dateTime: Date;
+}): EventDateTimeRow[] {
+  if (ALLOW_MULTI_DATETIME_UI) {
+    return dateTimesToFormRows(event.dateTimes);
+  }
+  return dateTimesToFormRows([event.dateTime]);
+}
+
 export async function parseEventFormBody(
   body: ParsedBody,
   asString: (value: string | File | (string | File)[] | undefined) => string | undefined,
@@ -438,7 +532,6 @@ export async function parseEventFormBody(
   const hasSubtitles = asString(body.has_subtitles) === "on";
   const subtitleLanguageRaw = asString(body.subtitle_language)?.trim() || null;
   const subtitleLanguage = hasSubtitles ? subtitleLanguageRaw : null;
-  const targetAgeGroups = parseBodyStringArrayField(body, "target_age_groups", asString);
   const imageUrl = asString(body.image_url)?.trim() || null;
 
   return {
@@ -454,8 +547,7 @@ export async function parseEventFormBody(
     category: asString(body.category)?.trim() ?? "",
     eventType: asString(body.event_type)?.trim() ?? "",
     tags: parseCommaSeparated(asString(body.tags)),
-    eventDate: asString(body.event_date)?.trim() ?? "",
-    eventTime: asString(body.event_time)?.trim() ?? "",
+    dateTimeRows: parseEventDateTimeRows(body, asString),
     timingMode,
     creditPrice: parseInteger(asString(body.credit_price), 1),
     totalCapacity: parseInteger(asString(body.total_capacity), 10),
@@ -470,7 +562,6 @@ export async function parseEventFormBody(
     languages: languages.length > 0 ? languages : null,
     hasSubtitles,
     subtitleLanguage,
-    targetAgeGroups: targetAgeGroups.length > 0 ? targetAgeGroups : null,
     lat: asString(body.lat)?.trim() || null,
     lng: asString(body.lng)?.trim() || null,
     imageUpload,
@@ -480,8 +571,32 @@ export async function parseEventFormBody(
   };
 }
 
+/** @deprecated Prefer eventFormValuesToDateTimes — kept for any one-off single-date callers. */
 export function eventFormValuesToDateTime(values: EventFormValues): Date {
-  return parseBerlinDateTime(values.eventDate, values.eventTime, values.timingMode);
+  const [first] = eventFormValuesToDateTimes(values);
+  if (!first) {
+    throw new CatalogValidationError("EMPTY_DATE_TIMES", "At least one datetime is required");
+  }
+  return first;
+}
+
+export function eventFormValuesToDateTimes(values: EventFormValues): Date[] {
+  const dates: Date[] = [];
+
+  for (const row of values.dateTimeRows) {
+    if (!row.date.trim()) {
+      continue;
+    }
+
+    const timeStr = row.time.trim() || null;
+    dates.push(parseBerlinDateTime(row.date, timeStr, values.timingMode));
+  }
+
+  if (dates.length === 0) {
+    throw new CatalogValidationError("EMPTY_DATE_TIMES", "At least one datetime is required");
+  }
+
+  return dates;
 }
 
 function parseBodyStringArray(

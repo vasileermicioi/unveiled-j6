@@ -13,6 +13,7 @@ const sampleMarkers: EventMapMarker[] = [
     title: "Tonight: Der Enkeltrick (Kriminalkomödie von Frank Piotraschke)",
     partnerName: "Berliner Kriminal Theater",
     address: "Palisadenstraße 48, 10243 Berlin",
+    dateTimeLabel: "Sat, 15 Aug, 19:00",
     lat: 52.5181715,
     lng: 13.4399455,
     href: "/en/events/evt-1",
@@ -22,6 +23,7 @@ const sampleMarkers: EventMapMarker[] = [
     title: "Die Renaissance des Bisexuell-Seins",
     partnerName: "theatre pool",
     address: "Boxhagener Str. 18, 10245 Berlin",
+    dateTimeLabel: "Sun, 16 Aug, 20:00",
     lat: 52.5128003,
     lng: 13.4550712,
     href: "/en/events/evt-2",
@@ -50,6 +52,7 @@ export const ConsentFallback: Story = () => {
               <Card.Description>{marker.partnerName}</Card.Description>
             </Card.Header>
             <Card.Content className="flex flex-col gap-2">
+              {marker.dateTimeLabel ? <Paragraph>{marker.dateTimeLabel}</Paragraph> : null}
               {marker.address ? <Paragraph>{marker.address}</Paragraph> : null}
               <Surface className="flex flex-col gap-2 sm:flex-row" variant="transparent">
                 <Link className="button button--secondary button--sm" href={marker.href}>
@@ -126,6 +129,7 @@ export const MarkersPageChrome: Story = () => (
     filteredTotal={2}
     locale="en"
     markers={sampleMarkers}
+    minDate="2026-08-03"
     partnerOptions={storyPartnerOptions}
     query={{
       category: "Theater",
@@ -144,6 +148,7 @@ export const EmptyFiltered: Story = () => (
     filteredTotal={0}
     locale="en"
     markers={[]}
+    minDate="2026-08-03"
     partnerOptions={storyPartnerOptions}
     query={{
       category: "Kino",

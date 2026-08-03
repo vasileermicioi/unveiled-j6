@@ -12,9 +12,8 @@ import {
   nextPartnerColumnSort,
 } from "../../lib/admin-list";
 import type { Locale } from "../../lib/locale";
-
-import { adminFeaturedPartnersAddPath } from "./admin-tabs";
 import { AdminSortableColumnHeader } from "./AdminSortableColumnHeader";
+import { adminFeaturedPartnersAddPath } from "./admin-tabs";
 
 type AdminFeaturedPartnersAddResultsProps = {
   locale: Locale;

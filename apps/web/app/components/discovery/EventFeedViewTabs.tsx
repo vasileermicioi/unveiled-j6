@@ -27,6 +27,7 @@ function ViewTabIcon({ view }: { view: EventFeedView }): ReactNode {
 export function EventFeedViewTabs({ locale, activeView, query }: EventFeedViewTabsProps) {
   const copy = getEventFeedCopy(locale);
   const filterQuery = buildEventFeedQueryString({
+    title: query.title,
     category: query.category,
     partnerId: query.partnerId,
     from: query.from,

@@ -1,7 +1,12 @@
-import { Input, Label, Surface, TextField } from "@heroui/react";
+"use client";
+
+import { Button, Input, Label, Surface, TextField } from "@heroui/react";
+import { useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import { ALLOW_MULTI_DATETIME_UI } from "../../lib/admin-event-form";
 import type { Locale } from "../../lib/locale";
+import type { EventDateTimeRow } from "./event-admin-types";
 
 type EventAdminDateInputProps = {
   locale: Locale;
@@ -28,6 +33,12 @@ type EventAdminDateTimeFieldsProps = {
   isDateRequired?: boolean;
 };
 
+type EventAdminDateTimeListProps = {
+  locale: Locale;
+  rows?: EventDateTimeRow[];
+  isDateRequired?: boolean;
+};
+
 const DEFAULT_EVENT_TIME = "19:30";
 
 function getDefaultTimeValue(eventTime: string | undefined, defaultEmpty: boolean): string {
@@ -36,6 +47,25 @@ function getDefaultTimeValue(eventTime: string | undefined, defaultEmpty: boolea
   }
 
   return defaultEmpty ? "" : DEFAULT_EVENT_TIME;
+}
+
+type RowState = EventDateTimeRow & { id: string };
+
+function createRow(date = "", time = DEFAULT_EVENT_TIME): RowState {
+  return {
+    id: crypto.randomUUID(),
+    date,
+    time,
+  };
+}
+
+function normalizeInitialRows(rows: EventDateTimeRow[] | undefined): RowState[] {
+  if (rows && rows.length > 0) {
+    const source = ALLOW_MULTI_DATETIME_UI ? rows : rows.slice(0, 1);
+    return source.map((row) => createRow(row.date, row.time || DEFAULT_EVENT_TIME));
+  }
+
+  return [createRow()];
 }
 
 export function EventAdminDateInput({
@@ -100,6 +130,83 @@ export function EventAdminDateTimeFields({
         name={dateName}
       />
       <EventAdminTimeInput eventTime={eventTime} locale={locale} name={timeName} />
+    </Surface>
+  );
+}
+
+export function EventAdminDateTimeList({
+  locale,
+  rows: initialRows,
+  isDateRequired = false,
+}: EventAdminDateTimeListProps) {
+  const copy = getAdminCopy(locale);
+  const [rows, setRows] = useState<RowState[]>(() => normalizeInitialRows(initialRows));
+
+  function addRow() {
+    if (!ALLOW_MULTI_DATETIME_UI) {
+      return;
+    }
+    setRows((current) => [...current, createRow()]);
+  }
+
+  function removeRow(id: string) {
+    if (!ALLOW_MULTI_DATETIME_UI) {
+      return;
+    }
+    setRows((current) => {
+      if (current.length <= 1) {
+        return current;
+      }
+      return current.filter((row) => row.id !== id);
+    });
+  }
+
+  const listLabel = ALLOW_MULTI_DATETIME_UI ? copy.eventDateTimesLabel : null;
+
+  return (
+    <Surface className="flex flex-col gap-3" variant="transparent">
+      {listLabel ? <Label>{listLabel}</Label> : null}
+      <input name="datetime_count" type="hidden" value={String(rows.length)} />
+      {rows.map((row, index) => (
+        <Surface
+          className="flex flex-col gap-3 sm:flex-row sm:items-end"
+          key={row.id}
+          variant="transparent"
+        >
+          <Surface className="grid min-w-0 flex-1 gap-4 sm:grid-cols-2" variant="transparent">
+            <EventAdminDateInput
+              eventDate={row.date}
+              isRequired={isDateRequired && index === 0}
+              locale={locale}
+              name={`event_date_${index}`}
+            />
+            <EventAdminTimeInput
+              eventTime={row.time}
+              locale={locale}
+              name={`event_time_${index}`}
+            />
+          </Surface>
+          {ALLOW_MULTI_DATETIME_UI ? (
+            <Button
+              className="button button--secondary button--md shrink-0"
+              isDisabled={rows.length <= 1}
+              onPress={() => removeRow(row.id)}
+              type="button"
+            >
+              {copy.removeDateTimeLabel}
+            </Button>
+          ) : null}
+        </Surface>
+      ))}
+      {ALLOW_MULTI_DATETIME_UI ? (
+        <Button
+          className="button button--secondary button--md self-start"
+          onPress={addRow}
+          type="button"
+        >
+          {copy.addDateTimeLabel}
+        </Button>
+      ) : null}
     </Surface>
   );
 }

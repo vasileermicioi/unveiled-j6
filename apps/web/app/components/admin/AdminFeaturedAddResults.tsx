@@ -4,7 +4,7 @@ import { Button, Form, Input, Paragraph, Surface, Table } from "@heroui/react";
 import type { Event, EventSort } from "@unveiled/db";
 
 import { formatAdminLanguageCode, getAdminCopy } from "../../lib/admin-content";
-import { formatEventDateTime } from "../../lib/admin-event-form";
+import { formatEventDateTime, formatEventDateTimeWithCount } from "../../lib/admin-event-form";
 import {
   type AdminListSortDir,
   buildAdminListQueryString,
@@ -145,7 +145,13 @@ export function AdminFeaturedAddResults({
                   {formatSpokenLanguages(event, locale, copy.languageIndependentLabel)}
                 </Table.Cell>
                 <Table.Cell>{formatSubtitleLanguage(event, locale)}</Table.Cell>
-                <Table.Cell>{formatEventDateTime(event.dateTime, locale)}</Table.Cell>
+                <Table.Cell>
+                  {formatEventDateTimeWithCount(
+                    event.dateTime,
+                    locale,
+                    event.dateTimes?.length ?? 1,
+                  )}
+                </Table.Cell>
                 <Table.Cell>{formatEventDateTime(event.createdAt, locale)}</Table.Cell>
                 <Table.Cell className="admin-table__actions-cell">
                   <Surface variant="transparent">

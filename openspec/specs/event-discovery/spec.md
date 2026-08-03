@@ -30,17 +30,41 @@ The system SHALL store member bookmarks in a `saved_events` join table keyed by 
 
 ### Requirement: Member feed query contract
 
-The system SHALL list discoverable events for the member feed using Europe/Berlin day boundaries, excluding events whose start time is in the past, and SHALL support filters `category`, `partnerId`, `from`, `to`, and `page` (fixed page size 24) with stable ordering by `date_time` then `id`, returning both the page of items and a total count matching the same filters.
+The system SHALL list discoverable events for the member feed using Europe/Berlin day boundaries, including an event when **any** of its `date_times` is still upcoming (`>= now`) — equivalently, when the denormalized primary `date_time >= now` after write-time sync — and SHALL support filters `title`, `category`, `partnerId`, `from`, `to`, and `page` (fixed page size 24) with stable ordering by denormalized `date_time` (next upcoming) then `id`, returning both the page of items and a total count matching the same filters. When `from` and/or `to` are provided, the inclusive Europe/Berlin calendar range SHALL match events that have **at least one** `date_times` element inside that window, SHALL still exclude events with no upcoming occurrence, and the effective range start SHALL NOT be before Berlin today (a requested `from` earlier than today is treated as today).
 
-#### Scenario: Default scope is today
+#### Scenario: Default scope is all upcoming
 
 - **WHEN** `from` and `to` are omitted
-- **THEN** only events happening today (Europe/Berlin) that have not already started are returned
+- **THEN** only events with at least one upcoming datetime (`date_time >= now` under denormalized sync) are returned
+- **AND** results are ordered by next upcoming `date_time` ascending then `id` ascending (soonest first)
 
-#### Scenario: Custom date range overrides today
+#### Scenario: Multi-datetime event with a later upcoming slot remains discoverable
+
+- **WHEN** an event has one past and one future element in `date_times`
+- **THEN** it appears in the default upcoming feed
+- **AND** it is ordered by its next upcoming instant
+
+#### Scenario: All-past multi-datetime event is excluded
+
+- **WHEN** every element of an event’s `date_times` is in the past relative to `now`
+- **THEN** that event does not appear in the member feed result
+
+#### Scenario: Custom date range intersects any occurrence
 
 - **WHEN** `from` and/or `to` are provided
-- **THEN** only events within that inclusive full-day Europe/Berlin range are returned and the today-only default does not apply
+- **THEN** only events with at least one `date_times` element within that inclusive full-day Europe/Berlin range that still have an upcoming occurrence are returned
+- **AND** the all-upcoming default no longer applies as the sole window (the range narrows results)
+
+#### Scenario: Date range lower bound is not before Berlin today
+
+- **WHEN** a requested `from` is earlier than the Europe/Berlin calendar date of `now`
+- **THEN** the feed behaves as if `from` were Berlin today
+- **AND** no fully past events appear
+
+#### Scenario: Filter by title
+
+- **WHEN** a non-empty `title` filter is applied
+- **THEN** only events whose title contains the filter string (case-insensitive) are included in items and total
 
 #### Scenario: Filter by category
 
@@ -54,8 +78,8 @@ The system SHALL list discoverable events for the member feed using Europe/Berli
 
 #### Scenario: Past events are excluded
 
-- **WHEN** an event has a start time in the past relative to `now`
-- **THEN** that event does not appear in the member feed result
+- **WHEN** an event has no start time in the future relative to `now`
+- **THEN** that event does not appear in the member feed result, including when a custom date range is applied
 
 #### Scenario: Empty result
 
@@ -67,9 +91,30 @@ The system SHALL list discoverable events for the member feed using Europe/Berli
 - **WHEN** the feed is requested with `page` greater than 1
 - **THEN** results use `LIMIT 24` and `OFFSET (page - 1) * 24` with `ORDER BY date_time ASC, id ASC`
 
+### Requirement: Event feed URL query includes title
+
+`parseEventFeedQuery`, `buildEventFeedQueryString`, and `eventFeedPageRedirectPath` SHALL support an optional `title` query parameter (trimmed; empty omitted). Member feed and map routes SHALL pass parsed `title` into the discovery list helpers. The Browse events filter UI SHALL expose a control that submits `title` via GET so members can set the param without hand-editing the URL.
+
+#### Scenario: Parse and build title
+
+- **WHEN** the events URL includes a non-empty `title` search param
+- **THEN** `parseEventFeedQuery` returns that trimmed value
+- **AND** `buildEventFeedQueryString` / page redirect helpers preserve `title` alongside other filters
+
+#### Scenario: Empty title is omitted
+
+- **WHEN** `title` is missing or whitespace-only
+- **THEN** the parsed query omits `title` and the built query string does not include a `title` param
+
+#### Scenario: Filter form submits title
+
+- **WHEN** a booking-eligible member enters an event name in the feed filters and applies
+- **THEN** the resulting URL includes a `title` query param
+- **AND** the feed shows only matching events
+
 ### Requirement: Saved upcoming list query
 
-The system SHALL list a user's saved events that are still upcoming (`date_time >= now`), ordered by `date_time` then `id`, without applying the today-only default.
+The system SHALL list a user's saved events that are still upcoming (any `date_times` element `>= now`, equivalently denormalized `date_time >= now`), ordered by next upcoming `date_time` then `id`, without applying the today-only default.
 
 #### Scenario: Saved upcoming ignores today default
 
@@ -78,12 +123,17 @@ The system SHALL list a user's saved events that are still upcoming (`date_time 
 
 #### Scenario: Past saved events are omitted
 
-- **WHEN** a saved event's start time is in the past
+- **WHEN** a saved event has no upcoming datetime relative to `now`
 - **THEN** it does not appear in the saved upcoming list
+
+#### Scenario: Saved multi-datetime with later slot remains
+
+- **WHEN** a saved event’s earliest `date_times` element is past but a later element is still upcoming
+- **THEN** it appears in the saved upcoming list ordered by its next upcoming instant
 
 ### Requirement: Authenticated events feed page
 
-The system SHALL serve `/:locale/events` as a fully server-rendered page for signed-in `USER` members with a booking-eligible subscription (`ACTIVE` or `CANCELLED_PENDING`), driven by GET query parameters `category`, `partnerId`, `from`, `to`, and `page`, with no client-side filter store required to reproduce the view. Guests SHALL be redirected to sign in. Signed-in `USER` members without a booking-eligible subscription SHALL be redirected to `/:locale/discover` and SHALL NOT receive the full feed (subscription-banner-while-listing is not the primary gate). The page SHALL render a GET filter form, pagination that preserves active query params with a "Showing X–Y of Z" summary, and an empty/no-results state when filters match nothing. The feed page SHALL be served with `noindex` robots metadata.
+The system SHALL serve `/:locale/events` as a fully server-rendered page for signed-in `USER` members with a booking-eligible subscription (`ACTIVE` or `CANCELLED_PENDING`), driven by GET query parameters `title`, `category`, `partnerId`, `from`, `to`, and `page`, with no client-side filter store required to reproduce the view. Guests SHALL be redirected to sign in. Signed-in `USER` members without a booking-eligible subscription SHALL be redirected to `/:locale/discover` and SHALL NOT receive the full feed (subscription-banner-while-listing is not the primary gate). The page SHALL render a GET filter form (including event name, category, partner, and date range), pagination that preserves active query params with a "Showing X–Y of Z" summary, and an empty/no-results state when filters match nothing. The feed page SHALL be served with `noindex` robots metadata. Date inputs on the filter form SHALL set `min` to the Europe/Berlin calendar date of request time (YYYY-MM-DD); server-side clamp remains authoritative.
 
 #### Scenario: Guest is redirected
 
@@ -95,17 +145,18 @@ The system SHALL serve `/:locale/events` as a fully server-rendered page for sig
 - **WHEN** a signed-in USER whose subscription is not booking-eligible requests `/events`
 - **THEN** they are redirected to `/:locale/discover`
 
-#### Scenario: Default feed shows today's events only
+#### Scenario: Default feed shows all upcoming events
 
 - **WHEN** a booking-eligible USER views `/events` with no date filters
-- **THEN** only events happening today (Europe/Berlin) that have not already started are shown
+- **THEN** only events with start time in the future (`date_time >= now`) are shown
+- **AND** events are ordered soonest first
 
 #### Scenario: Filters and reset
 
-- **WHEN** the member applies category, partner, or date-range filters via the GET form
+- **WHEN** the member applies event name, category, partner, or date-range filters via the GET form
 - **THEN** the feed shows only matching events
 - **AND WHEN** they reset filters
-- **THEN** the feed returns to the default today scope
+- **THEN** the feed returns to the default all-upcoming scope with title, category, partner, and date params cleared
 
 #### Scenario: No results
 
@@ -115,13 +166,28 @@ The system SHALL serve `/:locale/events` as a fully server-rendered page for sig
 #### Scenario: Pagination preserves filters
 
 - **WHEN** the member navigates to another page of results while filters are active
-- **THEN** pagination links preserve `category`, `partnerId`, `from`, and `to`
+- **THEN** pagination links preserve `title`, `category`, `partnerId`, `from`, and `to`
 - **AND** the page shows a "Showing X–Y of Z" summary for the current page
 
 #### Scenario: Feed is not indexed
 
 - **WHEN** a crawler or browser loads `/events`
 - **THEN** the response includes robots metadata instructing not to index the page
+
+#### Scenario: Date inputs advertise Berlin today as minimum
+
+- **WHEN** a booking-eligible member views the events feed filter form
+- **THEN** the `from` and `to` date controls expose `min` equal to Europe/Berlin today (YYYY-MM-DD)
+
+### Requirement: Event name control on Browse events
+
+The Browse events filter form on `/:locale/events` and `/:locale/events/map` SHALL include an event name text field submitted as `title` via GET, alongside partner and date range controls (category remains).
+
+#### Scenario: Event name filter control
+
+- **GIVEN** a booking-eligible member is viewing the events feed filters
+- **WHEN** they view the filter form
+- **THEN** they see an event name field alongside partner and date range controls
 
 ### Requirement: EventCard CTA precedence on the feed
 
@@ -240,11 +306,11 @@ The system SHALL show signed-in USER navigation a Saved link (`mySaves`: Gemerkt
 
 ### Requirement: Filtered map view
 
-The system SHALL provide an authenticated map view at `/:locale/events/map` using MapLibre GL JS and OpenStreetMap tiles (no map API key) that shows markers only for events matching the current feed filters (`category`, `partnerId`, `from`, `to` — same semantics as `listMemberFeedEvents`, including the today default when dates are omitted) and having non-null coordinates. The map SHALL load the full filtered set without feed page slicing, subject to a documented upper bound. Marker previews SHALL link to the public event detail page (`/:locale/events/:id`); booking POST from the popup is out of scope. Guests SHALL be redirected to sign in. The page SHALL be served with `noindex` robots metadata. Required OpenStreetMap attribution SHALL be visible when the map loads. Events missing `lat`/`lng` SHALL be omitted from markers (coordinates MUST NOT be invented).
+The system SHALL provide an authenticated map view at `/:locale/events/map` using MapLibre GL JS and OpenStreetMap tiles (no map API key) that shows markers only for events matching the current feed filters (`title`, `category`, `partnerId`, `from`, `to` — same semantics as `listMemberFeedEvents`, including all-upcoming default when dates are omitted and future-only / Berlin today floor when a range is applied) and having non-null coordinates. The map SHALL load the full filtered set without feed page slicing, subject to a documented upper bound. Marker previews SHALL link to the public event detail page (`/:locale/events/:id`); booking POST from the popup is out of scope. Guests SHALL be redirected to sign in. The page SHALL be served with `noindex` robots metadata. Required OpenStreetMap attribution SHALL be visible when the map loads. Events missing `lat`/`lng` SHALL be omitted from markers (coordinates MUST NOT be invented). The map page SHALL render the same GET filter form contract as the list (including event name and date `min`).
 
 #### Scenario: Map view mirrors the filtered feed
 
-- **WHEN** a member has applied filters to the events feed and opens the map view
+- **WHEN** a member has applied filters (including event name when set) to the events feed and opens the map view
 - **THEN** the map shows markers only for the currently filtered events that have coordinates
 - **AND** selecting a marker opens a preview with a link to the event detail page
 
@@ -321,7 +387,7 @@ The system SHALL NOT load MapLibre GL JS or third-party OpenStreetMap tile reque
 
 ### Requirement: List and map navigation preserves filters
 
-The system SHALL provide navigation between `/:locale/events` and `/:locale/events/map` that preserves the active filter query parameters (`category`, `partnerId`, `from`, `to`). Feed `page` MAY be omitted on the map link.
+The system SHALL provide navigation between `/:locale/events` and `/:locale/events/map` that preserves the active filter query parameters (`title`, `category`, `partnerId`, `from`, `to`). Feed `page` MAY be omitted on the map link.
 
 #### Scenario: Feed to map preserves filters
 
@@ -424,7 +490,7 @@ The system SHALL render `/events/:id` for guests without requiring login, using 
 
 ### Requirement: Public event detail for guests
 
-The system SHALL allow unauthenticated users to view public event detail pages. The system SHALL NOT display membership credit price or event date/time on that page to guests (or other non–booking-eligible viewers). Booking-eligible members SHALL continue to see credit price and date/time needed to book. Visibility SHALL be decided from the SSR session + membership eligibility used for booking CTAs (not a client-only hide). Structured data / Open Graph MAY still include `startDate` for crawlers.
+The system SHALL allow unauthenticated users to view public event detail pages. The system SHALL NOT display membership credit price or event date/time on that page to guests (or other non–booking-eligible viewers). Booking-eligible members SHALL continue to see credit price and date/time needed to book. When date chrome is shown, DETAILS / summary date presentation SHALL list **all** event datetimes formatted in Europe/Berlin and SHALL emphasize the **next upcoming** datetime (denormalized primary `date_time`). Visibility SHALL be decided from the SSR session + membership eligibility used for booking CTAs (not a client-only hide). Structured data / Open Graph MAY still include a single `startDate` equal to the next upcoming datetime for crawlers.
 
 #### Scenario: Guest public detail omits credits and date
 
@@ -436,6 +502,13 @@ The system SHALL allow unauthenticated users to view public event detail pages. 
 
 - **WHEN** a booking-eligible signed-in member opens the same event detail
 - **THEN** credit cost and date/time remain visible
+
+#### Scenario: Detail lists multiple datetimes
+
+- **GIVEN** an upcoming event with two future datetimes
+- **WHEN** a booking-eligible member opens `/events/:id`
+- **THEN** both datetimes are visible in the detail date presentation
+- **AND** the next upcoming datetime is emphasized
 
 #### Scenario: Non-eligible signed-in viewer is gated like a guest
 
@@ -749,3 +822,33 @@ When `has_subtitles` is true, the public event detail DETAILS metadata SHALL sho
 
 - **WHEN** a guest or member opens a public event detail page for an event with `has_subtitles = false`
 - **THEN** the DETAILS metadata does not include a subtitles row
+
+### Requirement: Guest DETAILS omits target age groups
+
+The public event DETAILS section SHALL NOT show a Target age groups / Zielgruppe metadata row. Because events no longer store target age groups, no public or member surface SHALL display event age-group audience metadata. (Zip / PLZ omission in DETAILS remains as already specified in product discovery features.)
+
+#### Scenario: Guest does not see age groups in DETAILS
+
+- **WHEN** a guest opens a valid upcoming event detail URL
+- **THEN** the DETAILS section does not show Target age groups / Zielgruppe
+
+#### Scenario: Product discovery feature omits event age-group metadata
+
+- **WHEN** an implementer reads `docs/product/features/event-discovery.feature`
+- **THEN** guest DETAILS scenarios do not require events to expose target age groups
+- **AND** any remaining absence assertion is regression-only (field is not collected)
+
+### Requirement: Compact discovery surfaces show next upcoming datetime
+
+Event cards on Discover / member feed / saved surfaces and map marker popups SHALL display the event’s **next upcoming** datetime (denormalized `date_time`), formatted in Europe/Berlin for the active locale. They SHALL NOT show an arbitrary past slot when a later upcoming datetime exists. Map popups MAY continue to omit booking actions and SHALL link to public event detail.
+
+#### Scenario: Event card shows next upcoming
+
+- **WHEN** a multi-datetime event with one past and one future occurrence appears on a card surface
+- **THEN** the card date line shows the future (next upcoming) datetime
+
+#### Scenario: Map popup shows next upcoming
+
+- **WHEN** a member opens a map marker popup for an upcoming multi-datetime event
+- **THEN** the popup includes the next upcoming datetime
+- **AND** a link to the public event detail remains available

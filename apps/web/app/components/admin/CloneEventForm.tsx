@@ -9,7 +9,8 @@ import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
 import { AdminFormError } from "./AdminFormError";
-import { EventAdminDateTimeFields } from "./EventAdminDateFields";
+import { EventAdminDateTimeList } from "./EventAdminDateFields";
+import type { EventDateTimeRow } from "./event-admin-types";
 
 /** Island props must be JSON-serializable — no Date objects. */
 export type CloneEventFormSource = {
@@ -21,8 +22,7 @@ export type CloneEventFormSource = {
   /** Preformatted Europe/Berlin date/time label for the source summary. */
   dateTimeLabel: string;
   imageUrl: string | null;
-  eventDate: string;
-  eventTime: string;
+  dateTimeRows: EventDateTimeRow[];
 };
 
 type CloneEventFormProps = {
@@ -31,8 +31,7 @@ type CloneEventFormProps = {
   cancelHref: string;
   source: CloneEventFormSource;
   defaults?: {
-    eventDate?: string;
-    eventTime?: string;
+    dateTimeRows?: EventDateTimeRow[];
   };
   error?: string | null;
 };
@@ -93,11 +92,10 @@ export function CloneEventForm({
       </Surface>
 
       <Surface className="flex flex-col gap-2" variant="transparent">
-        <EventAdminDateTimeFields
-          eventDate={defaults?.eventDate ?? source.eventDate}
-          eventTime={defaults?.eventTime ?? source.eventTime}
+        <EventAdminDateTimeList
           isDateRequired
           locale={locale}
+          rows={defaults?.dateTimeRows ?? source.dateTimeRows}
         />
         <Description>{copy.cloneDateTimeHint}</Description>
       </Surface>

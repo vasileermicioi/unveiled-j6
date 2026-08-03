@@ -36,15 +36,12 @@ export function AdminFeaturedPartnersAddPage({
   const copy = getAdminCopy(locale);
   const listHref = adminFeaturedPartnersPath(locale);
   const addPath = adminFeaturedPartnersAddPath(locale);
-  const hasFilters =
-    Boolean(query.q) || !isDefaultPartnerListSort(query.sort, query.dir);
+  const hasFilters = Boolean(query.q) || !isDefaultPartnerListSort(query.sort, query.dir);
   const preserveParams =
     query.sort && query.dir && !isDefaultPartnerListSort(query.sort, query.dir)
       ? { sort: query.sort, dir: query.dir }
       : undefined;
-  const resetHref = hasFilters
-    ? `${addPath}${buildAdminListQueryString({})}`
-    : undefined;
+  const resetHref = hasFilters ? `${addPath}${buildAdminListQueryString({})}` : undefined;
 
   return (
     <AdminPageShell

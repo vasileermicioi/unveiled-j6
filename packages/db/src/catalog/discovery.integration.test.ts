@@ -67,7 +67,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-09T18:00:00.000Z"),
+      dateTimes: [new Date("2026-07-09T18:00:00.000Z")],
       creditPrice: 1,
       secretCode: `TODAYF${suffix.slice(0, 4)}`,
       imagePrebuilt: await createTestImage(),
@@ -84,7 +84,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-09T10:00:00.000Z"),
+      dateTimes: [new Date("2026-07-09T10:00:00.000Z")],
       creditPrice: 1,
       secretCode: `TODAYP${suffix.slice(0, 4)}`,
       imagePrebuilt: await createTestImage(),
@@ -101,7 +101,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-10T18:00:00.000Z"),
+      dateTimes: [new Date("2026-07-10T18:00:00.000Z")],
       creditPrice: 1,
       secretCode: `TOMOR${suffix.slice(0, 4)}`,
       imagePrebuilt: await createTestImage(),
@@ -124,7 +124,7 @@ describe("discovery integration", () => {
     }
   });
 
-  test("period filter replaces upcoming default and can include past days", async () => {
+  test("period filter clamps past from to Berlin today and excludes past events", async () => {
     if (!databaseUrl) {
       console.warn("DATABASE_URL not set — skipping integration test");
       return;
@@ -152,9 +152,41 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-07T18:00:00.000Z"),
+      dateTimes: [new Date("2026-07-07T18:00:00.000Z")],
       creditPrice: 1,
       secretCode: `PAST${suffix.slice(0, 4)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+    const todayFuture = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Today Future Clamp ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Paststraße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "Theater",
+      eventType: "Performance",
+      dateTimes: [new Date("2026-07-09T18:00:00.000Z")],
+      creditPrice: 1,
+      secretCode: `TFCL${suffix.slice(0, 4)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+    const todayPast = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Today Past Clamp ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Paststraße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "Theater",
+      eventType: "Performance",
+      dateTimes: [new Date("2026-07-09T10:00:00.000Z")],
+      creditPrice: 1,
+      secretCode: `TPCL${suffix.slice(0, 4)}`,
       imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
@@ -168,7 +200,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-12T18:00:00.000Z"),
+      dateTimes: [new Date("2026-07-12T18:00:00.000Z")],
       creditPrice: 1,
       secretCode: `FUTR${suffix.slice(0, 4)}`,
       imagePrebuilt: await createTestImage(),
@@ -179,17 +211,112 @@ describe("discovery integration", () => {
       const defaultFeed = await listMemberFeedEvents(db, { now });
       expect(defaultFeed.items.map((row) => row.id)).not.toContain(past.id);
 
-      const ranged = await listMemberFeedEvents(db, {
+      // Past-only range: after clamp from→today > to→past day → empty
+      const pastOnly = await listMemberFeedEvents(db, {
         now,
         from: "2026-07-07",
         to: "2026-07-07",
       });
-      const rangedIds = new Set(ranged.items.map((row) => row.id));
-      expect(rangedIds.has(past.id)).toBe(true);
-      expect(rangedIds.has(future.id)).toBe(false);
+      expect(pastOnly.items.map((row) => row.id)).not.toContain(past.id);
+      expect(pastOnly.total).toBe(0);
+
+      // from before today clamped to today; still excludes already-started showtimes
+      const clamped = await listMemberFeedEvents(db, {
+        now,
+        from: "2026-07-07",
+        to: "2026-07-09",
+      });
+      const clampedIds = new Set(clamped.items.map((row) => row.id));
+      expect(clampedIds.has(past.id)).toBe(false);
+      expect(clampedIds.has(todayPast.id)).toBe(false);
+      expect(clampedIds.has(todayFuture.id)).toBe(true);
+      expect(clampedIds.has(future.id)).toBe(false);
     } finally {
       await deleteEvent(db, past.id, { skipBucket: true });
+      await deleteEvent(db, todayFuture.id, { skipBucket: true });
+      await deleteEvent(db, todayPast.id, { skipBucket: true });
       await deleteEvent(db, future.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
+  test("title filter matches case-insensitive substring", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const partner = await createPartner(db, {
+      name: `Discovery Title ${suffix}`,
+      ...structuredLocationFromAddress("Titlestraße 1, Berlin"),
+      contactEmail: `discovery-title-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    const now = new Date("2026-07-09T08:00:00.000Z");
+    const match = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Neon Jazz Night ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Titlestraße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "Music",
+      eventType: "Concert",
+      dateTimes: [new Date("2026-07-11T18:00:00.000Z")],
+      creditPrice: 1,
+      secretCode: `TITL${suffix.slice(0, 4)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+    const other = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Silent Reading ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Titlestraße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "Theater",
+      eventType: "Performance",
+      dateTimes: [new Date("2026-07-11T19:00:00.000Z")],
+      creditPrice: 1,
+      secretCode: `OTHR${suffix.slice(0, 4)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    try {
+      const byTitle = await listMemberFeedEvents(db, {
+        now,
+        title: "jazz",
+        partnerId: partner.id,
+      });
+      expect(byTitle.items.map((row) => row.id)).toEqual([match.id]);
+      expect(byTitle.total).toBe(1);
+
+      const mapByTitle = await listMemberFeedMapEvents(db, {
+        now,
+        title: "  JAZZ  ",
+        partnerId: partner.id,
+      });
+      expect(mapByTitle.items.map((row) => row.id)).toEqual([match.id]);
+
+      const noMatch = await listMemberFeedEvents(db, {
+        now,
+        title: "ballet",
+        partnerId: partner.id,
+      });
+      expect(noMatch.items).toEqual([]);
+      expect(noMatch.total).toBe(0);
+      expect(other.id).toBeTruthy();
+    } finally {
+      await deleteEvent(db, match.id, { skipBucket: true });
+      await deleteEvent(db, other.id, { skipBucket: true });
       await deletePartner(db, partner.id, { skipBucket: true });
     }
   });
@@ -232,7 +359,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: categoryTheater,
       eventType: "Performance",
-      dateTime: new Date("2026-07-11T18:00:00.000Z"),
+      dateTimes: [new Date("2026-07-11T18:00:00.000Z")],
       creditPrice: 1,
       secretCode: `THA${suffix.slice(0, 5)}`,
       imagePrebuilt: await createTestImage(),
@@ -249,7 +376,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: categoryMusic,
       eventType: "Concert",
-      dateTime: new Date("2026-07-11T20:00:00.000Z"),
+      dateTimes: [new Date("2026-07-11T20:00:00.000Z")],
       creditPrice: 1,
       secretCode: `MUA${suffix.slice(0, 5)}`,
       imagePrebuilt: await createTestImage(),
@@ -266,7 +393,7 @@ describe("discovery integration", () => {
       zipCode: "10961",
       category: categoryTheater,
       eventType: "Performance",
-      dateTime: new Date("2026-07-11T19:00:00.000Z"),
+      dateTimes: [new Date("2026-07-11T19:00:00.000Z")],
       creditPrice: 1,
       secretCode: `THB${suffix.slice(0, 5)}`,
       imagePrebuilt: await createTestImage(),
@@ -369,7 +496,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-12T18:00:00.000Z"),
+      dateTimes: [new Date("2026-07-12T18:00:00.000Z")],
       creditPrice: 1,
       secretCode: `MPC${suffix.slice(0, 5)}`,
       imagePrebuilt: await createTestImage(),
@@ -388,7 +515,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-12T19:00:00.000Z"),
+      dateTimes: [new Date("2026-07-12T19:00:00.000Z")],
       creditPrice: 1,
       secretCode: `MPN${suffix.slice(0, 5)}`,
       imagePrebuilt: await createTestImage(),
@@ -405,7 +532,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-09T06:00:00.000Z"),
+      dateTimes: [new Date("2026-07-09T06:00:00.000Z")],
       creditPrice: 1,
       secretCode: `MPP${suffix.slice(0, 5)}`,
       imagePrebuilt: await createTestImage(),
@@ -475,7 +602,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-09T18:00:00.000Z"),
+      dateTimes: [new Date("2026-07-09T18:00:00.000Z")],
       creditPrice: 1,
       secretCode: `SVT${suffix.slice(0, 5)}`,
       imagePrebuilt: await createTestImage(),
@@ -492,7 +619,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Music",
       eventType: "Concert",
-      dateTime: new Date("2026-07-15T18:00:00.000Z"),
+      dateTimes: [new Date("2026-07-15T18:00:00.000Z")],
       creditPrice: 1,
       secretCode: `SVL${suffix.slice(0, 5)}`,
       imagePrebuilt: await createTestImage(),
@@ -509,7 +636,7 @@ describe("discovery integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-07-09T10:00:00.000Z"),
+      dateTimes: [new Date("2026-07-09T10:00:00.000Z")],
       creditPrice: 1,
       secretCode: `SVP${suffix.slice(0, 5)}`,
       imagePrebuilt: await createTestImage(),
@@ -542,6 +669,92 @@ describe("discovery integration", () => {
       await deleteEvent(db, pastEvent.id, { skipBucket: true });
       await deletePartner(db, partner.id, { skipBucket: true });
       await db.delete(users).where(eq(users.id, userId));
+    }
+  });
+
+  test("multi-datetime: upcoming via later slot; range matches any occurrence", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const now = new Date("2026-07-09T14:00:00.000Z");
+    const partnerImage = await createTestImage();
+    const partner = await createPartner(db, {
+      name: `Discovery MultiDT ${suffix}`,
+      ...structuredLocationFromAddress("MultiFeed Straße 1, Berlin"),
+      contactEmail: `discovery-mdt-${suffix}@example.com`,
+      logoPrebuilt: partnerImage,
+      skipUpload: true,
+    });
+
+    const multi = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Multi Slot ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("MultiFeed Straße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "Theater",
+      eventType: "Performance",
+      dateTimes: [new Date("2026-07-08T18:00:00.000Z"), new Date("2026-07-15T18:00:00.000Z")],
+      now,
+      creditPrice: 1,
+      secretCode: `MF${suffix.slice(0, 6)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    const allPast = await createEvent(db, {
+      partnerId: partner.id,
+      title: `All Past Multi ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("MultiFeed Straße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "Theater",
+      eventType: "Performance",
+      dateTimes: [new Date("2026-07-07T18:00:00.000Z"), new Date("2026-07-08T10:00:00.000Z")],
+      now,
+      creditPrice: 1,
+      secretCode: `MP${suffix.slice(0, 6)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    try {
+      expect(multi.dateTime.toISOString()).toBe("2026-07-15T18:00:00.000Z");
+
+      const feed = await listMemberFeedEvents(db, { now, title: suffix });
+      const ids = feed.items.map((row) => row.id);
+      expect(ids).toContain(multi.id);
+      expect(ids).not.toContain(allPast.id);
+
+      const ranged = await listMemberFeedEvents(db, {
+        now,
+        from: "2026-07-15",
+        to: "2026-07-15",
+        title: suffix,
+      });
+      expect(ranged.items.map((row) => row.id)).toContain(multi.id);
+
+      const earlyRange = await listMemberFeedEvents(db, {
+        now,
+        from: "2026-07-08",
+        to: "2026-07-08",
+        title: suffix,
+      });
+      // Past occurrence on 08th is in range, but no upcoming occurrence within the clamped window
+      // (effectiveStart = now on 09th). Event stays out unless a future slot falls in-range.
+      expect(earlyRange.items.map((row) => row.id)).not.toContain(multi.id);
+    } finally {
+      await deleteEvent(db, multi.id, { skipBucket: true });
+      await deleteEvent(db, allPast.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
     }
   });
 });

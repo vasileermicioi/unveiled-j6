@@ -57,6 +57,15 @@ function formatEventDateTime(dateTime: Date, locale: Locale): string {
   }).format(dateTime);
 }
 
+/** Ascending list for DETAILS; next upcoming emphasized via denormalized primary. */
+function sortedEventDateTimes(dateTimes: Date[]): Date[] {
+  return [...dateTimes].sort((a, b) => a.getTime() - b.getTime());
+}
+
+function isSameInstant(a: Date, b: Date): boolean {
+  return a.getTime() === b.getTime();
+}
+
 function soldOutMessage(locale: Locale): string {
   return locale === "de" ? "Dieses Event ist ausverkauft." : "This event is sold out.";
 }
@@ -188,6 +197,7 @@ function eventDetailMarkers(event: Event, locale: Locale): EventMapMarker[] {
       title: event.title,
       partnerName: event.partnerName,
       address: event.address,
+      dateTimeLabel: formatEventDateTime(event.dateTime, locale),
       lat,
       lng,
       href: localizedPath(locale, `events/${event.id}`),
@@ -213,15 +223,7 @@ function languageIndependentValue(locale: Locale): string {
   return locale === "de" ? "Sprachunabhängig" : "Language-independent";
 }
 
-function MetaCell({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon?: "calendar";
-}) {
+function MetaCell({ label, value, icon }: { label: string; value: string; icon?: "calendar" }) {
   return (
     <Surface className="event-detail--checkout__meta-cell" variant="transparent">
       <Surface className="event-detail--checkout__meta-label-row" variant="transparent">
@@ -240,6 +242,55 @@ function MetaCell({
       <Paragraph className="event-detail--checkout__meta-value" color="muted" size="sm">
         {value}
       </Paragraph>
+    </Surface>
+  );
+}
+
+function DateTimesMetaCell({
+  label,
+  dateTimes,
+  nextDateTime,
+  locale,
+}: {
+  label: string;
+  dateTimes: Date[];
+  nextDateTime: Date;
+  locale: Locale;
+}) {
+  const ordered = sortedEventDateTimes(dateTimes.length > 0 ? dateTimes : [nextDateTime]);
+
+  return (
+    <Surface className="event-detail--checkout__meta-cell" variant="transparent">
+      <Surface className="event-detail--checkout__meta-label-row" variant="transparent">
+        <Calendar
+          aria-hidden
+          className="event-detail--checkout__meta-icon"
+          size={META_ICON_SIZE}
+          strokeWidth={2}
+        />
+        <Paragraph className="event-detail--checkout__meta-label" size="sm">
+          {label}
+        </Paragraph>
+      </Surface>
+      <Surface className="event-detail--checkout__meta-datetimes" variant="transparent">
+        {ordered.map((dateTime) => {
+          const isNext = isSameInstant(dateTime, nextDateTime);
+          return (
+            <Paragraph
+              className={
+                isNext
+                  ? "event-detail--checkout__meta-value event-detail--checkout__meta-value--next"
+                  : "event-detail--checkout__meta-value"
+              }
+              color={isNext ? undefined : "muted"}
+              key={dateTime.toISOString()}
+              size="sm"
+            >
+              {formatEventDateTime(dateTime, locale)}
+            </Paragraph>
+          );
+        })}
+      </Surface>
     </Surface>
   );
 }
@@ -595,10 +646,11 @@ export function EventDetailPage({
               ) : null}
               <Surface className="event-detail--checkout__meta-grid min-w-0" variant="transparent">
                 {showMemberBookingChrome ? (
-                  <MetaCell
-                    icon="calendar"
+                  <DateTimesMetaCell
+                    dateTimes={event.dateTimes}
                     label={metadataLabel("when", locale)}
-                    value={formatEventDateTime(event.dateTime, locale)}
+                    locale={locale}
+                    nextDateTime={event.dateTime}
                   />
                 ) : null}
                 <MetaCell

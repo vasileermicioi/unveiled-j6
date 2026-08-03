@@ -19,7 +19,7 @@ import { composeDisplayAddress, validatePostalCode } from "../location";
 import { eventGalleryImages } from "../schema/event-gallery-images";
 import { type Event, events, type TicketType, type TimingMode } from "../schema/events";
 import { featuredEvents } from "../schema/featured-events";
-import { deriveDateTimeFields } from "./datetime";
+import { deriveDateTimeFields, tryNormalizeEventDateTimes } from "./datetime";
 import { CatalogValidationError } from "./errors";
 import { resolveEventSubtitles } from "./event-subtitles";
 import { resolveEventLanguages } from "./language-filter";
@@ -92,7 +92,10 @@ export type CreateEventInput = {
   category: string;
   eventType: string;
   tags?: string[];
-  dateTime: Date;
+  /** Non-empty occurrence list; sorted unique on write. Primary `date_time` derived from this. */
+  dateTimes: Date[];
+  /** Injected clock for primary/next derivation in tests; defaults to `new Date()`. */
+  now?: Date;
   timingMode?: TimingMode | null;
   creditPrice: number;
   totalCapacity?: number | null;
@@ -104,7 +107,6 @@ export type CreateEventInput = {
   languages?: string[] | null;
   hasSubtitles?: boolean;
   subtitleLanguage?: string | null;
-  targetAgeGroups?: string[] | null;
   lat?: string | null;
   lng?: string | null;
   uploadedBy?: string | null;
@@ -132,7 +134,10 @@ export type UpdateEventInput = {
   category?: string;
   eventType?: string;
   tags?: string[];
-  dateTime?: Date;
+  /** When set, replaces the full occurrence list (non-empty after normalize). */
+  dateTimes?: Date[];
+  /** Injected clock for primary/next derivation when `dateTimes` is written. */
+  now?: Date;
   timingMode?: TimingMode | null;
   creditPrice?: number;
   totalCapacity?: number;
@@ -144,7 +149,6 @@ export type UpdateEventInput = {
   languages?: string[] | null;
   hasSubtitles?: boolean;
   subtitleLanguage?: string | null;
-  targetAgeGroups?: string[] | null;
   lat?: string | null;
   lng?: string | null;
   uploadedBy?: string | null;
@@ -153,10 +157,11 @@ export type UpdateEventInput = {
 
 /**
  * Clone an existing catalog event into a new row.
- * Caller supplies `dateTime`; voucher types require create-mode inventory (not copied from source).
+ * Caller supplies `dateTimes`; voucher types require create-mode inventory (not copied from source).
  */
 export type CloneEventInput = {
-  dateTime: Date;
+  dateTimes: Date[];
+  now?: Date;
   voucherInventory?: VoucherInventoryPayload;
 };
 
@@ -475,6 +480,17 @@ async function resolveUpdatePrimaryImageId(
   return currentImageId;
 }
 
+function requireNormalizedDateTimes(dateTimes: Date[], now: Date = new Date()) {
+  const normalized = tryNormalizeEventDateTimes(dateTimes, now);
+  if (!normalized) {
+    throw new CatalogValidationError(
+      "EMPTY_DATE_TIMES",
+      "At least one dateTimes value is required",
+    );
+  }
+  return normalized;
+}
+
 async function insertEventRow(
   db: Db,
   input: CreateEventInput,
@@ -504,7 +520,9 @@ async function insertEventRow(
     city: location.city,
   });
 
-  const derived = deriveDateTimeFields(input.dateTime, defaults.timingMode);
+  const now = input.now ?? new Date();
+  const { dateTimes, dateTime } = requireNormalizedDateTimes(input.dateTimes, now);
+  const derived = deriveDateTimeFields(dateTime, defaults.timingMode);
   const subtitles = resolveEventSubtitles(input.hasSubtitles ?? false, input.subtitleLanguage);
 
   const inserted = await db
@@ -525,7 +543,8 @@ async function insertEventRow(
       category: requireNonEmpty(input.category, "category"),
       eventType: requireNonEmpty(input.eventType, "eventType"),
       tags: input.tags ?? [],
-      dateTime: input.dateTime,
+      dateTimes,
+      dateTime,
       timingMode: defaults.timingMode,
       startTimeMinutes: derived.startTimeMinutes,
       weekday: derived.weekday,
@@ -541,7 +560,6 @@ async function insertEventRow(
       languages: resolveEventLanguages(input.languageIndependent ?? false, input.languages),
       hasSubtitles: subtitles.hasSubtitles,
       subtitleLanguage: subtitles.subtitleLanguage,
-      targetAgeGroups: input.targetAgeGroups ?? null,
       lat: input.lat ?? null,
       lng: input.lng ?? null,
     })
@@ -597,7 +615,8 @@ export async function cloneEvent(
     category: source.category,
     eventType: source.eventType,
     tags: source.tags ?? [],
-    dateTime: input.dateTime,
+    dateTimes: input.dateTimes,
+    now: input.now,
     timingMode: source.timingMode,
     creditPrice: source.creditPrice,
     totalCapacity: source.totalCapacity,
@@ -609,7 +628,6 @@ export async function cloneEvent(
     languages: source.languages,
     hasSubtitles: source.hasSubtitles,
     subtitleLanguage: source.subtitleLanguage,
-    targetAgeGroups: source.targetAgeGroups,
     lat: source.lat,
     lng: source.lng,
   };
@@ -652,9 +670,27 @@ export async function updateEvent(
     eventWebsiteUrl: input.eventWebsiteUrl ?? existing.eventWebsiteUrl,
   });
 
-  const nextDateTime = input.dateTime ?? existing.dateTime;
+  const now = input.now ?? new Date();
+  const timingTouched = input.dateTimes !== undefined || input.timingMode !== undefined;
+  const nextDateTimes =
+    input.dateTimes !== undefined
+      ? requireNormalizedDateTimes(input.dateTimes, now)
+      : {
+          dateTimes: existing.dateTimes,
+          dateTime: existing.dateTime,
+        };
+  // Re-sync primary when list unchanged but wall clock advanced (optional); prefer list write path.
+  const nextDateTime = input.dateTimes !== undefined ? nextDateTimes.dateTime : existing.dateTime;
   const nextTimingMode = input.timingMode ?? existing.timingMode;
-  const derived = deriveDateTimeFields(nextDateTime, nextTimingMode);
+  const derived = timingTouched
+    ? deriveDateTimeFields(
+        input.dateTimes !== undefined ? nextDateTimes.dateTime : existing.dateTime,
+        nextTimingMode,
+      )
+    : {
+        startTimeMinutes: existing.startTimeMinutes,
+        weekday: existing.weekday,
+      };
 
   const nextTotalCapacity = input.totalCapacity ?? existing.totalCapacity;
   const nextRemainingCapacity =
@@ -736,6 +772,7 @@ export async function updateEvent(
           ? requireNonEmpty(input.eventType, "eventType")
           : existing.eventType,
       tags: input.tags ?? existing.tags,
+      dateTimes: nextDateTimes.dateTimes,
       dateTime: nextDateTime,
       timingMode: nextTimingMode,
       startTimeMinutes: derived.startTimeMinutes,
@@ -764,8 +801,6 @@ export async function updateEvent(
       ),
       hasSubtitles: subtitles.hasSubtitles,
       subtitleLanguage: subtitles.subtitleLanguage,
-      targetAgeGroups:
-        input.targetAgeGroups !== undefined ? input.targetAgeGroups : existing.targetAgeGroups,
       lat: input.lat !== undefined ? input.lat : existing.lat,
       lng: input.lng !== undefined ? input.lng : existing.lng,
       updatedAt: new Date(),

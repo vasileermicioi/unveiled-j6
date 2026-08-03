@@ -56,11 +56,19 @@ Feature: Event Booking
     And the event has enough remaining capacity for my requested ticket count
     And I have enough credits to cover creditPrice × ticket count
     When I confirm the booking
-    Then a confirmed booking is created for me
+    Then a confirmed booking is created for me against the event (event-scoped; no datetime slot selection)
     And my credits are decremented by creditPrice × ticket count
     And the event's remaining capacity is decremented by the ticket count
     And a negative-amount ledger entry of type "BOOKING" is recorded
     And I receive redemption info appropriate to the event's ticket type
+
+  Scenario: Book event with multiple datetimes
+    Given I am signed in with an "ACTIVE" subscription
+    And the event has multiple future datetimes
+    And the event has enough remaining capacity and I have enough credits
+    When I confirm the booking
+    Then a confirmed booking is created for the event without a slot selection step
+    And confirmation surfaces use the next upcoming datetime for calendar/ICS display
 
   Scenario Outline: Redemption info by ticket type
     Given the event's ticket type is "<ticketType>"
@@ -110,6 +118,7 @@ Feature: Event Booking
     And I can copy a textual redemption code even while it remains masked
     And for VOUCHER_PDF tickets I can download each allocated PDF via an auth-gated app route
     And I can download an .ics calendar file for the event
+    And the .ics / confirm / email time fields use the event's next upcoming datetime
     And I can see a support email for help
 
   Scenario: Multi-ticket promo codes are listed separately

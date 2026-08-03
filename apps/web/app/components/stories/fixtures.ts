@@ -25,6 +25,7 @@ export const mockEventId = "00000000-0000-4000-8000-000000000002";
 export const mockPartnerId = "00000000-0000-4000-8000-000000000003";
 
 const storyNow = new Date("2026-08-15T19:00:00+02:00");
+const storyLater = new Date("2026-08-22T19:00:00+02:00");
 
 export const mockProfile: UserProfile = {
   first_name: "Alex",
@@ -92,6 +93,7 @@ export const mockEvent: Event = {
   category: "Music",
   eventType: "Live",
   tags: ["jazz", "poetry"],
+  dateTimes: [storyNow, storyLater],
   dateTime: storyNow,
   timingMode: "TIME_SLOT",
   startTimeMinutes: 1140,
@@ -108,7 +110,6 @@ export const mockEvent: Event = {
   languages: ["DE", "EN"],
   hasSubtitles: false,
   subtitleLanguage: null,
-  targetAgeGroups: ["18-25", "26-35"],
   lat: "52.5025",
   lng: "13.3275",
   createdAt: storyNow,

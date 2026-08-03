@@ -57,7 +57,7 @@ export function buildPaginationEventInput(
     category: "Theater",
     eventType: "Performance",
     tags: ["pagination-seed"],
-    dateTime: daysFromNow((index % 30) + 1),
+    dateTimes: [daysFromNow((index % 30) + 1)],
     creditPrice: 1,
     secretCode: `PAGE${String(index).padStart(4, "0")}`,
     imagePrebuilt,

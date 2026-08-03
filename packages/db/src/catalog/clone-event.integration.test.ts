@@ -68,7 +68,7 @@ describe("cloneEvent integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-08-10T18:00:00.000Z"),
+      dateTimes: [new Date("2026-08-10T18:00:00.000Z")],
       creditPrice: 2,
       totalCapacity: 8,
       secretCode: `SRC${suffix.slice(0, 5)}`,
@@ -91,7 +91,7 @@ describe("cloneEvent integration", () => {
     let clonedId: string | undefined;
 
     try {
-      const cloned = await cloneEvent(db, source.id, { dateTime: cloneDate });
+      const cloned = await cloneEvent(db, source.id, { dateTimes: [cloneDate] });
       clonedId = cloned.id;
 
       expect(cloned.id).not.toBe(source.id);
@@ -148,7 +148,7 @@ describe("cloneEvent integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-08-11T18:00:00.000Z"),
+      dateTimes: [new Date("2026-08-11T18:00:00.000Z")],
       creditPrice: 1,
       totalCapacity: 5,
       ticketType: "VOUCHER_PROMO",
@@ -164,22 +164,22 @@ describe("cloneEvent integration", () => {
 
     try {
       await expect(
-        cloneEvent(db, crypto.randomUUID(), { dateTime: new Date("2026-09-02T18:00:00.000Z") }),
+        cloneEvent(db, crypto.randomUUID(), { dateTimes: [new Date("2026-09-02T18:00:00.000Z")] }),
       ).rejects.toMatchObject({ code: "EVENT_NOT_FOUND" });
 
       await expect(
-        cloneEvent(db, voucherSource.id, { dateTime: new Date("2026-09-02T18:00:00.000Z") }),
+        cloneEvent(db, voucherSource.id, { dateTimes: [new Date("2026-09-02T18:00:00.000Z")] }),
       ).rejects.toBeInstanceOf(CatalogValidationError);
 
       await expect(
         cloneEvent(db, voucherSource.id, {
-          dateTime: new Date("2026-09-02T18:00:00.000Z"),
+          dateTimes: [new Date("2026-09-02T18:00:00.000Z")],
           voucherInventory: { promoCodes: [], pdfItems: [] },
         }),
       ).rejects.toMatchObject({ code: "EMPTY_VOUCHER_INVENTORY" });
 
       const cloned = await cloneEvent(db, voucherSource.id, {
-        dateTime: new Date("2026-09-02T18:00:00.000Z"),
+        dateTimes: [new Date("2026-09-02T18:00:00.000Z")],
         voucherInventory: {
           promoCodes: [`CLONE-${suffix}`],
           pdfItems: [],

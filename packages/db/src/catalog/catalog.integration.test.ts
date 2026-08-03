@@ -57,7 +57,7 @@ describe("catalog integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date(Date.now() + 86_400_000),
+      dateTimes: [new Date(Date.now() + 86_400_000)],
       creditPrice: 1,
       secretCode: "TESTCODE",
       imagePrebuilt: image,
@@ -108,7 +108,7 @@ describe("catalog integration", () => {
           zipCode: "10115",
           category: "Theater",
           eventType: "Performance",
-          dateTime: new Date(Date.now() + 86_400_000),
+          dateTimes: [new Date(Date.now() + 86_400_000)],
           creditPrice: 1,
           ticketType: "SECRET_CODE",
           secretCode: "",
@@ -132,7 +132,7 @@ describe("catalog integration", () => {
         zipCode: "10115",
         category: "Theater",
         eventType: "Performance",
-        dateTime: new Date(Date.now() + 86_400_000),
+        dateTimes: [new Date(Date.now() + 86_400_000)],
         creditPrice: 1,
         secretCode: "STAGED1",
         stagedImageId,
@@ -181,7 +181,7 @@ describe("catalog integration", () => {
           zipCode: "10115",
           category: "Theater",
           eventType: "Performance",
-          dateTime: new Date(Date.now() + 86_400_000),
+          dateTimes: [new Date(Date.now() + 86_400_000)],
           creditPrice: 1,
           ticketType: "SECRET_CODE",
           secretCode: "",
@@ -227,7 +227,7 @@ describe("catalog integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date(Date.now() + 86_400_000),
+      dateTimes: [new Date(Date.now() + 86_400_000)],
       creditPrice: 1,
       secretCode: "REPLACE1",
       imagePrebuilt: originalImage,
@@ -381,7 +381,7 @@ describe("catalog integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date(Date.now() + 86_400_000),
+      dateTimes: [new Date(Date.now() + 86_400_000)],
       creditPrice: 1,
       secretCode: "OLDER01",
       imagePrebuilt: image,
@@ -397,7 +397,7 @@ describe("catalog integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date(Date.now() + 172_800_000),
+      dateTimes: [new Date(Date.now() + 172_800_000)],
       creditPrice: 1,
       secretCode: "NEWER01",
       imagePrebuilt: await createTestImage(),
@@ -524,7 +524,7 @@ describe("catalog integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date(Date.now() + 86_400_000),
+      dateTimes: [new Date(Date.now() + 86_400_000)],
       creditPrice: 1,
       imagePrebuilt: image,
       skipUpload: true,
@@ -649,7 +649,7 @@ describe("catalog integration", () => {
     const past = await createEvent(db, {
       ...eventBase,
       title: `Past ${suffix}`,
-      dateTime: new Date("2026-08-01T12:00:00.000Z"),
+      dateTimes: [new Date("2026-08-01T12:00:00.000Z")],
       secretCode: `PAST${suffix}`.slice(0, 12),
       imagePrebuilt: createTestImagePrebuilt(),
       totalCapacity: 5,
@@ -657,7 +657,7 @@ describe("catalog integration", () => {
     const soldOut = await createEvent(db, {
       ...eventBase,
       title: `Sold Out ${suffix}`,
-      dateTime: new Date("2026-08-10T12:00:00.000Z"),
+      dateTimes: [new Date("2026-08-10T12:00:00.000Z")],
       secretCode: `SOLD${suffix}`.slice(0, 12),
       imagePrebuilt: createTestImagePrebuilt(),
       totalCapacity: 5,
@@ -665,7 +665,7 @@ describe("catalog integration", () => {
     const active = await createEvent(db, {
       ...eventBase,
       title: `Active ${suffix}`,
-      dateTime: new Date("2026-08-10T18:00:00.000Z"),
+      dateTimes: [new Date("2026-08-10T18:00:00.000Z")],
       secretCode: `ACTV${suffix}`.slice(0, 12),
       imagePrebuilt: createTestImagePrebuilt(),
       totalCapacity: 5,
@@ -724,7 +724,7 @@ describe("catalog integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: laterDate,
+      dateTimes: [laterDate],
       creditPrice: 1,
       secretCode: "LATERCODE",
       imagePrebuilt: image,
@@ -741,7 +741,7 @@ describe("catalog integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: soonerDate,
+      dateTimes: [soonerDate],
       creditPrice: 1,
       secretCode: "SOONCODE",
       imagePrebuilt: await createTestImage(),
@@ -758,7 +758,7 @@ describe("catalog integration", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: pastDate,
+      dateTimes: [pastDate],
       creditPrice: 1,
       secretCode: "PASTCODE",
       imagePrebuilt: await createTestImage(),
@@ -782,6 +782,102 @@ describe("catalog integration", () => {
       await deleteEvent(db, laterEvent.id, { skipBucket: true });
       await deleteEvent(db, soonerEvent.id, { skipBucket: true });
       await deleteEvent(db, pastEvent.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+});
+
+describe("multi-datetime catalog writes", () => {
+  test("create/update persist date_times and sync primary date_time", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const now = new Date("2026-07-09T14:00:00.000Z");
+    const partnerImage = await createTestImage();
+    const partner = await createPartner(db, {
+      name: `Multi DT Partner ${suffix}`,
+      ...structuredLocationFromAddress("MultiDT Straße 1, Berlin"),
+      contactEmail: `multi-dt-${suffix}@example.com`,
+      logoPrebuilt: partnerImage,
+      skipUpload: true,
+    });
+
+    const past = new Date("2026-07-08T18:00:00.000Z");
+    const next = new Date("2026-07-10T18:00:00.000Z");
+    const later = new Date("2026-07-12T18:00:00.000Z");
+
+    try {
+      const created = await createEvent(db, {
+        partnerId: partner.id,
+        title: `Multi DT ${suffix}`,
+        description: "Description",
+        ...structuredLocationFromAddress("MultiDT Straße 1, Berlin"),
+        country: "DE",
+        city: "berlin",
+        zipCode: "10115",
+        category: "Theater",
+        eventType: "Performance",
+        dateTimes: [later, past, next, next],
+        now,
+        creditPrice: 1,
+        secretCode: `MDT${suffix.slice(0, 5)}`,
+        imagePrebuilt: await createTestImage(),
+        skipUpload: true,
+      });
+
+      expect(created.dateTimes.map((d) => d.toISOString())).toEqual([
+        past.toISOString(),
+        next.toISOString(),
+        later.toISOString(),
+      ]);
+      expect(created.dateTime.toISOString()).toBe(next.toISOString());
+
+      await expect(
+        createEvent(db, {
+          partnerId: partner.id,
+          title: `Empty DT ${suffix}`,
+          description: "Description",
+          ...structuredLocationFromAddress("MultiDT Straße 1, Berlin"),
+          country: "DE",
+          city: "berlin",
+          zipCode: "10115",
+          category: "Theater",
+          eventType: "Performance",
+          dateTimes: [],
+          now,
+          creditPrice: 1,
+          secretCode: `MDE${suffix.slice(0, 5)}`,
+          imagePrebuilt: await createTestImage(),
+          skipUpload: true,
+        }),
+      ).rejects.toMatchObject({ code: "EMPTY_DATE_TIMES" });
+
+      const updated = await updateEvent(db, created.id, {
+        dateTimes: [past, later],
+        now,
+      });
+      expect(updated.dateTimes.map((d) => d.toISOString())).toEqual([
+        past.toISOString(),
+        later.toISOString(),
+      ]);
+      expect(updated.dateTime.toISOString()).toBe(later.toISOString());
+
+      const allPast = await updateEvent(db, created.id, {
+        dateTimes: [past, new Date("2026-07-09T10:00:00.000Z")],
+        now,
+      });
+      expect(allPast.dateTime.toISOString()).toBe(past.toISOString());
+    } finally {
+      const leftover = await db.query.events.findMany({
+        where: (fields, { eq }) => eq(fields.partnerId, partner.id),
+      });
+      for (const row of leftover) {
+        await deleteEvent(db, row.id, { skipBucket: true });
+      }
       await deletePartner(db, partner.id, { skipBucket: true });
     }
   });

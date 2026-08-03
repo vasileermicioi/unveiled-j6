@@ -21,6 +21,8 @@ export type EventMapMarker = {
   title: string;
   partnerName: string;
   address?: string | null;
+  /** Formatted next-upcoming datetime (Europe/Berlin); optional for detail-only pins. */
+  dateTimeLabel?: string | null;
   lat: number;
   lng: number;
   href: string;
@@ -108,6 +110,13 @@ function createPopupContent(marker: EventMapMarker, openLabel: string): HTMLDivE
   partner.textContent = marker.partnerName;
   root.appendChild(partner);
 
+  if (marker.dateTimeLabel?.trim()) {
+    const when = document.createElement("p");
+    when.className = "event-map__popup-when";
+    when.textContent = marker.dateTimeLabel.trim();
+    root.appendChild(when);
+  }
+
   if (marker.address?.trim()) {
     const address = document.createElement("p");
     address.className = "event-map__popup-address";
@@ -163,6 +172,9 @@ function EventMapFallbackList({
                 <Card.Description>{marker.partnerName}</Card.Description>
               </Card.Header>
               <Card.Content className="flex flex-col gap-2">
+                {marker.dateTimeLabel?.trim() ? (
+                  <Paragraph>{marker.dateTimeLabel.trim()}</Paragraph>
+                ) : null}
                 {marker.address?.trim() ? <Paragraph>{marker.address.trim()}</Paragraph> : null}
                 <Surface className="flex flex-col gap-2 sm:flex-row" variant="transparent">
                   <Link className="button button--secondary button--sm" href={marker.href}>

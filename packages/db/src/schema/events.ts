@@ -44,6 +44,12 @@ export const events = pgTable(
     category: text("category").notNull(),
     eventType: text("event_type").notNull(),
     tags: text("tags").array().notNull().default([]),
+    /**
+     * Full sorted unique list of occurrence instants.
+     * `dateTime` is the denormalized primary/next instant derived from this list on write.
+     */
+    dateTimes: timestamp("date_times", { withTimezone: true, mode: "date" }).array().notNull(),
+    /** Next upcoming instant in `dateTimes`, or earliest when all are past. */
     dateTime: timestamp("date_time", { withTimezone: true, mode: "date" }).notNull(),
     timingMode: timingModeEnum("timing_mode").notNull(),
     startTimeMinutes: integer("start_time_minutes").notNull(),
@@ -63,7 +69,6 @@ export const events = pgTable(
     hasSubtitles: boolean("has_subtitles").notNull().default(false),
     /** Single subtitle language code (same allowlist as spoken event languages); null when off. */
     subtitleLanguage: text("subtitle_language"),
-    targetAgeGroups: text("target_age_groups").array(),
     lat: numeric("lat"),
     lng: numeric("lng"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
@@ -71,6 +76,7 @@ export const events = pgTable(
   },
   (table) => [
     check("events_remaining_capacity_non_negative", sql`${table.remainingCapacity} >= 0`),
+    check("events_date_times_non_empty", sql`cardinality(${table.dateTimes}) >= 1`),
     index("events_date_time_idx").on(table.dateTime),
     index("events_date_time_partner_id_idx").on(table.dateTime, table.partnerId),
     index("events_date_time_category_idx").on(table.dateTime, table.category),

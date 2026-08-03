@@ -4,6 +4,7 @@ export type EventFeedCopy = {
   eyebrow: string;
   title: string;
   filtersTitle: string;
+  titleLabel: string;
   categoryLabel: string;
   partnerLabel: string;
   from: string;
@@ -34,6 +35,7 @@ const copyByLocale: Record<Locale, EventFeedCopy> = {
     eyebrow: "Entdecken",
     title: "Events",
     filtersTitle: "FILTERN",
+    titleLabel: "Eventname",
     categoryLabel: "Kategorie",
     partnerLabel: "Partner",
     from: "VON",
@@ -63,6 +65,7 @@ const copyByLocale: Record<Locale, EventFeedCopy> = {
     eyebrow: "Discover",
     title: "Events",
     filtersTitle: "FILTERS",
+    titleLabel: "Event name",
     categoryLabel: "Category",
     partnerLabel: "Partner",
     from: "FROM",

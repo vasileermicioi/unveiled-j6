@@ -39,7 +39,6 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-events.feature` | Save event with Subtitles and language | `e2e/specs/admin-events.spec.ts` · `Scenario: Save event with Subtitles and language` | `pass` | R2 env-skip; asserts public DETAILS Subtitles + EN |
 | `admin-events.feature` | Subtitles controls available when language-independent | `e2e/specs/admin-events.spec.ts` · `Scenario: Subtitles controls available when language-independent` | `pass` | R2 env-skip (partner logo) |
 | `admin-events.feature` | Languages multi-select with search | `e2e/specs/admin-events.spec.ts` · `Scenario: Languages multi-select with search` | `pass` | R2 env-skip (partner logo); CheckboxMultiSelect + search |
-| `admin-events.feature` | Age groups multi-select without search | `e2e/specs/admin-events.spec.ts` · `Scenario: Age groups multi-select without search` | `pass` | R2 env-skip (partner logo) |
 | `admin-events.feature` | Add event prefills structured location and map from partner | `e2e/specs/admin-events.spec.ts` · `Scenario: Add event prefills structured location and map from partner` | `pass` | Street/house/zip prefill required; live Nominatim map-pin not required in CI |
 | `admin-events.feature` | Edit event keeps existing location when partner changes | `e2e/specs/admin-events.spec.ts` · `Scenario: Edit event keeps existing location when partner changes` | `pass` | R2 env-skip; asserts structured fields unchanged on partner change |
 | `admin-events.feature` | Geocode soft-fails leave structured location filled | `e2e/specs/admin-events.spec.ts` · `Scenario: Geocode soft-fails leave structured location filled` | `pass` | Structured prefill asserted; soft-fail paths unit-tested in `geocode-berlin.test.ts` (live Nominatim not forced) |
@@ -141,7 +140,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Detail omits subtitles when absent | `e2e/specs/event-discovery.spec.ts` · `Scenario: Detail omits subtitles when absent` | `pass` | Needs `DATABASE_URL`; seeded tonight has no subtitles |
 | `event-discovery.feature` | Large viewport uses two primary rows | `e2e/specs/event-discovery.spec.ts` · `Scenario: Large viewport uses two primary rows` | `pass` | Smoke: identity + checkout CTA + hero + DETAILS (no CSS-grid hashes) |
 | `event-discovery.feature` | Guest sees partner attribution | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees partner attribution` | `pass` | Needs `DATABASE_URL` + R2; partner logo alt = partner name |
-| `event-discovery.feature` | Guest does not see zip or age groups in DETAILS | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest does not see zip or age groups in DETAILS` | `pass` | Needs `DATABASE_URL`; DETAILS omits PLZ / Zip code and Target age groups |
+| `event-discovery.feature` | Guest does not see zip or age groups in DETAILS | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest does not see zip or age groups in DETAILS` | `pass` | Needs `DATABASE_URL`; DETAILS omits PLZ / Zip code; Target age groups row remains absent (field removed) |
 | `event-discovery.feature` | Detail LOCATION shows composed address with map | `e2e/specs/event-discovery.spec.ts` · (LOCATION with map) | `pass` | Composed address text; map gated on lat/lng + cookie consent |
 | `event-discovery.feature` | Detail LOCATION shows composed address without coordinates | `e2e/specs/event-discovery.spec.ts` · (LOCATION without map) | `pass` | Composed address when lat/lng null; no map required |
 | `event-discovery.feature` | Event card shows zip | `e2e/specs/event-discovery.spec.ts` · `Scenario: Event card shows zip` | `pass` | Discover card shows Berlin PLZ |
@@ -152,11 +151,13 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Default feed shows all upcoming events soonest first | `e2e/specs/event-discovery.spec.ts` · `Scenario: Default feed shows all upcoming events soonest first` | `pass` |  |
 | `event-discovery.feature` | Events with invalid or past dates are hidden | `e2e/specs/event-discovery.spec.ts` · `Scenario: Events with invalid or past dates are hidden` | `pass` |  |
 | `event-discovery.feature` | Filter by category | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by category` | `pass` |  |
+| `event-discovery.feature` | Event name filter control | `e2e/specs/event-discovery.spec.ts` · `Scenario: Event name filter control` | `pass` | Event name field visible with partner/date controls; date `min` = Berlin today |
+| `event-discovery.feature` | Filter by event name | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by event name` | `pass` | Title substring via GET `title` |
 | `event-discovery.feature` | Filter by partner (venue) | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by partner (venue)` | `pass` |  |
-| `event-discovery.feature` | Filter by custom date range | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by custom date range` | `pass` |  |
-| `event-discovery.feature` | Reset filters | `e2e/specs/event-discovery.spec.ts` · `Scenario: Reset filters` | `pass` |  |
+| `event-discovery.feature` | Filter by custom date range | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by custom date range` | `pass` | Inclusive Berlin days; future-only / today floor |
+| `event-discovery.feature` | Reset filters | `e2e/specs/event-discovery.spec.ts` · `Scenario: Reset filters` | `pass` | Clears title + category + partner + dates |
 | `event-discovery.feature` | No results | `e2e/specs/event-discovery.spec.ts` · `Scenario: No results` | `pass` |  |
-| `event-discovery.feature` | Map view mirrors the filtered feed | `e2e/specs/event-discovery.spec.ts` · `Scenario: Map view mirrors the filtered feed` | `pass` |  |
+| `event-discovery.feature` | Map view mirrors the filtered feed | `e2e/specs/event-discovery.spec.ts` · `Scenario: Map view mirrors the filtered feed` | `pass` | Preserves title/category/partner/date |
 | `event-discovery.feature` | Saved events view | `e2e/specs/event-discovery.spec.ts` · `Scenario: Saved events view` | `pass` |  |
 | `event-discovery.feature` | Save and unsave an event | `e2e/specs/event-discovery.spec.ts` · `Scenario: Save and unsave an event` | `pass` |  |
 | `event-discovery.feature` | Saving requires authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Saving requires authentication` | `pass` |  |

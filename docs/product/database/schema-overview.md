@@ -120,10 +120,11 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `image_id` | uuid, FK → `images.id`, **not nullable** | **Was `image_url` (text)** — replaced by a real image with generated size variants; see `extras/image-uploads.md`. Stays required, matching today's `image` field being non-optional on event create/edit (`features/admin-events.feature`) |
 | `category`, `event_type` | text | Free-form strings today — consider enum/lookup table if the category list is meant to be fixed |
 | `tags` | text[] | |
-| `date_time` | timestamptz | |
+| `date_times` | timestamptz[], not null | Non-empty list of occurrence instants (ascending, duplicates removed on write). Check: `cardinality(date_times) >= 1`. Public/member detail lists all values; compact surfaces use `date_time`. |
+| `date_time` | timestamptz | **Denormalized primary/next** instant: next upcoming in `date_times` (or earliest when all past). Synced on every catalog write. Existing btree indexes remain on this column. Used for feed sort, cards, map popups, admin list primary cell, ICS/email calendar fields. |
 | `timing_mode` | enum: `TIME_SLOT`, `ALL_DAY` | |
-| `start_time_minutes` | integer (0–1439) | Derived/cached from `date_time` — recompute on write rather than trusting client input |
-| `weekday` | integer (0–6) | Same — derived |
+| `start_time_minutes` | integer (0–1439) | Derived/cached from primary `date_time` — recompute on write rather than trusting client input |
+| `weekday` | integer (0–6) | Same — derived from primary `date_time` |
 | `credit_price` | integer | |
 | `total_capacity`, `remaining_capacity` | integer | `remaining_capacity` must never go negative — recommend a DB check constraint (`remaining_capacity >= 0`) in addition to app-layer transaction logic |
 | `ticket_type` | enum: `SECRET_CODE`, `VOUCHER_PROMO`, `VOUCHER_PDF` | Replaces legacy `VOUCHER`. No secret-code generation modes. |
@@ -137,7 +138,6 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `languages` | text[], nullable | Spoken-language codes when not language-independent; null/empty means unset / none selected for language-specific events |
 | `has_subtitles` | boolean, **not nullable**, default `false` | When true, the event has subtitles; independent of spoken `languages` / `language_independent`. |
 | `subtitle_language` | text, nullable | Single ISO 639-1 language code (uppercase alpha-2, e.g. `DE`, `EN`, `SW`) when `has_subtitles` is true — broader than spoken-event `EVENT_LANGUAGES`; MUST be null when `has_subtitles` is false. |
-| `target_age_groups` | enum[], nullable | |
 | `lat`, `lng` | numeric, nullable | System-derived from **structured** geocode (`street` + `house_number` + `zip_code`; `address_line2` excluded) for map display only — not admin-authored. Null when geocode soft-fails; MUST NOT store invented default-center coordinates |
 | ~~`map_zoom`~~ | — | **Decided cut:** admin zoom authoring removed; maps use a UI default zoom. Column dropped. |
 | `created_at` / `updated_at` | timestamptz | |

@@ -6,8 +6,8 @@ import { type Partner, partners } from "../schema/partners";
 import { CatalogValidationError } from "./errors";
 import {
   getPartnerById,
-  listPartners,
   type ListPartnersOptions,
+  listPartners,
   type PartnerListItem,
 } from "./partners";
 

@@ -9,6 +9,8 @@ export type EventFeedFiltersProps = {
   locale: Locale;
   action: string;
   query: EventFeedQuery;
+  /** Europe/Berlin today YYYY-MM-DD — client hint; server clamp remains authoritative. */
+  minDate: string;
   categoryOptions: AdminFormSelectOption[];
   partnerOptions: AdminFormSelectOption[];
 };
@@ -17,6 +19,7 @@ export function EventFeedFilters({
   locale,
   action,
   query,
+  minDate,
   categoryOptions,
   partnerOptions,
 }: EventFeedFiltersProps) {
@@ -41,9 +44,14 @@ export function EventFeedFilters({
 
       <Form action={action} className="flex flex-col gap-3" method="get">
         <Surface
-          className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
           variant="transparent"
         >
+          <TextField className="w-full" defaultValue={query.title ?? ""} fullWidth name="title">
+            <Label htmlFor="event-feed-title">{copy.titleLabel}</Label>
+            <Input id="event-feed-title" placeholder={copy.titleLabel} type="search" />
+          </TextField>
+
           <Surface className="event-feed-filters__field flex w-full flex-col" variant="transparent">
             <Label htmlFor="event-feed-category">{copy.categoryLabel}</Label>
             <select
@@ -80,11 +88,11 @@ export function EventFeedFilters({
 
           <TextField className="w-full" defaultValue={query.from ?? ""} fullWidth name="from">
             <Label>{copy.from}</Label>
-            <Input type="date" />
+            <Input min={minDate} type="date" />
           </TextField>
           <TextField className="w-full" defaultValue={query.to ?? ""} fullWidth name="to">
             <Label>{copy.to}</Label>
-            <Input type="date" />
+            <Input min={minDate} type="date" />
           </TextField>
         </Surface>
 

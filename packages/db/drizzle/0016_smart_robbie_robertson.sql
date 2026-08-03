@@ -1,0 +1,1 @@
+ALTER TABLE "events" DROP COLUMN "target_age_groups";

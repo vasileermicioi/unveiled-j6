@@ -30,8 +30,8 @@ export const adminLabels = {
   zipCode: "PLZ*",
   category: "Kategorie*",
   eventType: "Event-Typ*",
-  eventDate: "Datum*",
-  eventTime: "Uhrzeit",
+  eventDate: /^(datum|date)\*?$/i,
+  eventTime: /^(uhrzeit|time)\*?$/i,
   credits: "Credits*",
   capacity: "Kapazität*",
   secretCode: "Secret Code",
@@ -41,7 +41,6 @@ export const adminLabels = {
   codeMode: "Code-Modus",
   barrierFree: "Barrierefrei",
   languages: /sprachen|languages/i,
-  ageGroups: "Altersgruppen",
   hasSubtitles: /untertitel|subtitles/i,
   subtitleLanguage: /untertitelsprache|subtitle language/i,
 } as const;
@@ -337,7 +336,6 @@ export type CreateEventOverrides = {
   skipImage?: boolean;
   barrierFree?: "Ja" | "Nein" | "Yes" | "No";
   language?: string | RegExp;
-  ageGroup?: string | RegExp;
   hasSubtitles?: boolean;
   /** Native select value (allowlisted code, e.g. `EN`). Defaults to `EN` when hasSubtitles. */
   subtitleLanguage?: string;
@@ -408,9 +406,6 @@ export async function createEventViaUI(
   }
   if (overrides.language) {
     await checkOptionByName(page, overrides.language);
-  }
-  if (overrides.ageGroup) {
-    await checkOptionByName(page, overrides.ageGroup);
   }
   if (overrides.hasSubtitles) {
     await page.getByRole("checkbox", { name: adminLabels.hasSubtitles }).check();

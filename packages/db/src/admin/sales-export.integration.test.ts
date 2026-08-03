@@ -50,7 +50,7 @@ describe("listSalesByEvent (integration)", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-09-01T18:00:00.000Z"),
+      dateTimes: [new Date("2026-09-01T18:00:00.000Z")],
       creditPrice: 2,
       totalCapacity: 20,
       secretCode: "SALESA",
@@ -68,7 +68,7 @@ describe("listSalesByEvent (integration)", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date("2026-09-02T18:00:00.000Z"),
+      dateTimes: [new Date("2026-09-02T18:00:00.000Z")],
       creditPrice: 2,
       totalCapacity: 20,
       secretCode: "SALESB",
@@ -161,16 +161,17 @@ describe("listSalesByEvent (integration)", () => {
       expect(rowA?.partnerName).toBe(partner.name);
       expect(rowA?.title).toBe(eventA.title);
 
-      const byTitle = await listSalesByEvent(db, { ...period, title: `Event A ${suffix.slice(0, 8)}` });
+      const byTitle = await listSalesByEvent(db, {
+        ...period,
+        title: `Event A ${suffix.slice(0, 8)}`,
+      });
       expect(byTitle.map((row) => row.eventId)).toEqual([eventA.id]);
 
       const byPartner = await listSalesByEvent(db, {
         ...period,
         partner: `Venue ${suffix.slice(0, 8)}`,
       });
-      expect(byPartner.map((row) => row.eventId).sort()).toEqual(
-        [eventA.id, eventB.id].sort(),
-      );
+      expect(byPartner.map((row) => row.eventId).sort()).toEqual([eventA.id, eventB.id].sort());
 
       const byBoth = await listSalesByEvent(db, {
         ...period,

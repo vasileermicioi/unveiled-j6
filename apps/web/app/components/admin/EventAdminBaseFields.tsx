@@ -10,7 +10,6 @@ import PdfVoucherInventoryIsland from "../../islands/PdfVoucherInventoryIsland";
 import PromoCodeInventoryIsland from "../../islands/PromoCodeInventoryIsland";
 import {
   getAdminCopy,
-  getEventAgeGroupOptions,
   getEventCategoryOptions,
   getEventLanguageOptions,
   getEventSubtitleLanguageOptions,
@@ -21,7 +20,7 @@ import type { Locale } from "../../lib/locale";
 import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 import { AdminFormNumberField } from "./AdminFormNumberField";
 import { AdminFormSelect } from "./AdminFormSelect";
-import { EventAdminDateTimeFields } from "./EventAdminDateFields";
+import { EventAdminDateTimeList } from "./EventAdminDateFields";
 import { EventDescriptionEditor } from "./EventDescriptionEditor";
 import { EventGeoPicker } from "./EventGeoPicker";
 import { EventImageUpload } from "./EventImageUpload";
@@ -65,7 +64,6 @@ export function EventAdminBaseFields({
   const copy = getAdminCopy(locale);
   const languageOptions = getEventLanguageOptions(locale);
   const subtitleLanguageOptions = getEventSubtitleLanguageOptions(locale);
-  const ageGroupOptions = getEventAgeGroupOptions(locale);
   const categoryOptions = getEventCategoryOptions(locale);
   const eventTypeOptions = getEventTypeOptions(locale);
   const descriptionFieldId = useId();
@@ -331,12 +329,7 @@ export function EventAdminBaseFields({
       </TextField>
 
       {includeDateTime ? (
-        <EventAdminDateTimeFields
-          eventDate={defaults?.eventDate}
-          eventTime={defaults?.eventTime}
-          isDateRequired
-          locale={locale}
-        />
+        <EventAdminDateTimeList isDateRequired locale={locale} rows={defaults?.dateTimeRows} />
       ) : null}
 
       <AdminFormSelect
@@ -493,18 +486,6 @@ export function EventAdminBaseFields({
             placeholder={copy.selectPlaceholder}
           />
         ) : null}
-        <Surface className="flex w-full flex-col gap-1" variant="transparent">
-          <Label>{copy.targetAgeGroupsLabel}</Label>
-          <CheckboxMultiSelect
-            name="target_age_groups"
-            options={ageGroupOptions.map((option) => ({
-              value: option.id,
-              label: option.label,
-            }))}
-            optionsClassName="checkbox-multi-select__options onboarding-form__options onboarding-form__options--stack"
-            selected={defaults?.targetAgeGroups ?? []}
-          />
-        </Surface>
       </Surface>
 
       <EventImageUpload

@@ -4,6 +4,43 @@ ADMIN catalog management for events, including the Featured curation tab used by
 
 ## Requirements
 
+### Requirement: Create a single event accepts dateTimes list
+
+Creating an event SHALL require at least one datetime value supplied as a list (`dateTimes`). The catalog SHALL persist sorted unique `date_times`, set denormalized primary `date_time` to the next upcoming instant (or earliest if all past), and compute `startTimeMinutes` and `weekday` from that primary datetime in Europe/Berlin. Admin create and edit SSR paths SHALL post the editable datetime list (not a single wrapped field) into `dateTimes`.
+
+#### Scenario: Create a single event
+
+- **WHEN** I create a new event with a title, partner, credit price, capacity, description, image, Berlin zip code, and one or more dateTimes
+- **THEN** the event is added to the catalog
+- **AND** its remaining capacity defaults to its total capacity
+- **AND** its startTimeMinutes and weekday are computed from its primary/next dateTime
+
+#### Scenario: Create with multiple dateTimes persists the list
+
+- **WHEN** an admin create path (or catalog `createEvent`) supplies two or more dateTimes
+- **THEN** the stored event has `date_times` length equal to the unique sorted input count
+- **AND** denormalized `date_time` matches the primary/next rule
+
+### Requirement: Editable list of event datetimes
+Admin create and edit forms SHALL present event datetimes as an editable list.
+The admin SHALL be able to add and remove datetime rows inplace before submitting the SSR form.
+The system SHALL reject submit when zero datetimes remain.
+
+#### Scenario: Add and remove datetimes on create
+- **WHEN** I am on the new-event form
+- **AND** I add a second datetime row and remove one row
+- **THEN** submitting persists exactly the remaining datetime values on the event
+
+#### Scenario: Edit datetimes inplace
+- **WHEN** I edit an event that already has multiple datetimes
+- **THEN** I see all values as editable rows
+- **AND** I can add or remove rows and save
+
+#### Scenario: Empty datetime list rejected on admin form
+- **WHEN** an admin submits create or edit with no complete datetime rows
+- **THEN** the form is re-rendered with an error
+- **AND** no catalog write occurs
+
 ### Requirement: Admin manages event gallery photos
 
 Admins SHALL be able to add, reorder, and remove gallery photos for any existing catalog event through ADMIN-only SSR routes under `/:locale/admin/events/:id/gallery*` (list), `.../gallery/add` (multi-upload), and `.../gallery/remove` (confirm remove). Gallery management entry SHALL be available from the admin Events list and/or the event edit page. Featured Discover membership SHALL NOT be required to manage an event's gallery; the Featured list MAY retain a convenience gallery shortcut but SHALL NOT be the sole entry. Create-event forms SHALL NOT require gallery manage. Mutations SHALL use dedicated pages with form POST (no client-only modals). Selection for bulk remove SHALL NOT use checkbox or radio inputs; the system SHALL use native multi-select and/or discrete per-photo remove links. Each uploaded file SHALL be processed into five WebP variants client-side and persisted as gallery images (separate from the required primary `events.image_id`). Removal SHALL call the catalog remove path so associations disappear from the gallery list and unreferenced image objects are cleaned up per image-upload rules. There is **no hard count cap** on gallery photos; primary `events.image_id` remains separate. Product Gherkin in `docs/product/features/admin-events.feature` SHALL include scenarios that match these routes and SSR confirm behavior (proximity/layout selectors only), SHALL describe five WebP variants (not six JPEG), and SHALL document Events list/edit gallery entry (not Featured-exclusive). Admin-visible empty-state and validation error copy SHALL be present for the manage surfaces.
@@ -161,7 +198,7 @@ The system SHALL allow ADMIN to mark an event as language-independent on create 
 - **THEN** the persisted event has `language_independent = true` and `languages = null`
 
 ### Requirement: Multi-value event metadata uses checkbox multi-selects
-The admin event create/edit form SHALL collect supported languages via a searchable native-checkbox multi-select (same interaction model as onboarding preferred languages) and target age groups via a native-checkbox multi-select without a search filter, except that when Language-independent is checked the languages multi-select SHALL NOT be shown or required. Other single-value choice fields (partner, category, etc.) SHALL continue to use a native HTML `select` unless a documented exception applies. Supported languages and language-independent are mutually exclusive in the UI: language-independent checked means languages are not collected.
+The admin event create/edit form SHALL collect supported languages via a searchable native-checkbox multi-select (same interaction model as onboarding preferred languages), except that when Language-independent is checked the languages multi-select SHALL NOT be shown or required. The form SHALL NOT collect or display target age groups. Other single-value choice fields (partner, category, etc.) SHALL continue to use a native HTML `select` unless a documented exception applies. Supported languages and language-independent are mutually exclusive in the UI: language-independent checked means languages are not collected.
 
 #### Scenario: Languages multi-select with search
 - **WHEN** an admin opens create or edit event
@@ -171,9 +208,9 @@ The admin event create/edit form SHALL collect supported languages via a searcha
 - **AND** a hint explains that search is needed to find other languages
 - **AND** already-selected values remain available for the form POST even when filtered out of the visible list
 
-#### Scenario: Age groups multi-select without search
+#### Scenario: No target age groups control
 - **WHEN** an admin opens create or edit event
-- **THEN** target age groups are chosen with checkboxes and no search filter control
+- **THEN** no target age groups / Altersgruppen checkbox multi-select is shown
 
 ### Requirement: Admin event location authoring
 Admin create/edit SHALL collect a postal code (`zip_code` / form field `zipCode`) instead of neighborhood/Kiez, with country and city prefilled to Germany (`DE`) and Berlin (`berlin`) and not user-selectable in this release. Country and city SHALL be visibly shown as fixed (disabled/readonly or equivalent non-editable display) with submitted values `DE` / `berlin`. The zip control SHALL be a native text input validated via the shared postal registry for `(DE, berlin)`. Street location SHALL be collected as structured native fields (`street`, `house_number`, optional `address_line2`) with structured geocode preview (line2 excluded). The form SHALL NOT ship a city/country picker.
@@ -238,15 +275,16 @@ When creating a single event, changing the partner control SHALL prefill the eve
 - **AND** saving the event with that location succeeds
 
 ### Requirement: BDD coverage for form control and prefill UX
-Gherkin scenarios for checkbox multi-select languages/age groups and add-only partner structured-location/map prefill SHALL have matching Playwright tests using proximity-only selectors, or a named deferral recorded in the coverage matrix with owner and target phase. Structured street/house/zip prefill on add (and non-overwrite on edit) MUST be covered; live Nominatim map-pin success MAY be deferred when CI cannot reach Nominatim reliably.
+Gherkin scenarios for checkbox multi-select languages and add-only partner structured-location/map prefill SHALL have matching Playwright tests using proximity-only selectors, or a named deferral recorded in the coverage matrix with owner and target phase. Structured street/house/zip prefill on add (and non-overwrite on edit) MUST be covered; live Nominatim map-pin success MAY be deferred when CI cannot reach Nominatim reliably. There SHALL NOT be a required e2e scenario for event target age groups multi-select.
 
 #### Scenario: Coverage matrix lists new admin form scenarios
 - **WHEN** this feature is marked released
 - **THEN** `docs/product/testing/coverage-matrix.md` includes rows for the new admin-events scenarios (pass or explicit deferral)
+- **AND** it does not require a pass row for “Age groups multi-select without search”
 
-#### Scenario: Admin languages and age groups use checkbox multi-selects
+#### Scenario: Admin languages use checkbox multi-select
 - **WHEN** an admin opens create or edit event
-- **THEN** Playwright can assert languages and target age groups are chosen with checkboxes (languages expose a search filter; age groups do not)
+- **THEN** Playwright can assert languages are chosen with checkboxes that expose a search filter
 - **AND** selectors remain proximity/layout only per `docs/product/testing/bdd-and-e2e.md`
 
 #### Scenario: Add event prefills partner structured location
@@ -321,11 +359,13 @@ When an admin opens edit for an event with voucher inventory, the form SHALL sho
 - **THEN** defaults describe `ticketType` `SECRET_CODE` (and capacity/timing as today) without `secretCodeMode`
 
 ### Requirement: Admin clones an event
-Admins SHALL clone an existing event via a dedicated SSR page `/:locale/admin/events/:id/clone` with form POST (no client-only modal). The form SHALL be prefilled from the source event (at least a source summary and a date/time control) and SHALL require a date/time for the new occurrence. Primary image upload SHALL NOT be required on clone (source image id is reused by the catalog clone operation). For `VOUCHER_PROMO` or `VOUCHER_PDF` source events, the clone form SHALL require new redemption inventory using create-mode semantics. On success, a new catalog event exists and the admin is redirected to a sensible admin events surface (edit of the new event or the events list). Entry points SHALL exist on the Events list and/or event edit page. The admin Events UI SHALL NOT offer series create.
+Admins SHALL clone an existing event via a dedicated SSR page `/:locale/admin/events/:id/clone` with form POST (no client-only modal). The form SHALL be prefilled from the source event (at least a source summary and an editable datetime list copied from the source) and SHALL require at least one datetime before confirm. The admin SHALL be able to add or remove datetime rows inplace before submit. Primary image upload SHALL NOT be required on clone (source image id is reused by the catalog clone operation). For `VOUCHER_PROMO` or `VOUCHER_PDF` source events, the clone form SHALL require new redemption inventory using create-mode semantics. On success, a new catalog event exists and the admin is redirected to a sensible admin events surface (edit of the new event or the events list). Entry points SHALL exist on the Events list and/or event edit page. The admin Events UI SHALL NOT offer series create.
 
 #### Scenario: Clone event from catalog list
-- **WHEN** an admin opens clone for an existing event, sets a new date/time, and confirms
-- **THEN** a new event appears in the catalog with the copied title and new date/time
+- **WHEN** an admin opens clone for an existing event
+- **THEN** the datetime list is prefilled from the source event
+- **AND** when the admin edits the list if needed and confirms
+- **THEN** a new event appears in the catalog with the copied title and the submitted dateTimes
 
 #### Scenario: Clone voucher event requires inventory
 - **WHEN** an admin clones a `VOUCHER_PROMO` or `VOUCHER_PDF` event without providing new inventory
@@ -372,3 +412,44 @@ Admin create and edit event forms SHALL offer a native Subtitles checkbox (`has_
 
 - **WHEN** an ADMIN checks Language-independent on the event form
 - **THEN** the Subtitles checkbox (and language select when Subtitles is checked) remain available
+
+### Requirement: Optional accessibility and audience metadata without age groups
+
+The system SHALL allow admins to optionally set barrier-free accessibility, supported languages, language-independent, and subtitles when creating or editing an event. The system SHALL NOT collect or store target age groups on events.
+
+#### Scenario: Optional accessibility and audience metadata
+
+- **WHEN** I create or edit an event
+- **THEN** I can optionally set barrier-free accessibility, supported languages, language-independent, and subtitles
+- **AND** supported languages and language-independent are mutually exclusive in the UI
+- **AND** subtitles are independent of spoken languages / language-independent
+- **AND** no target age groups control is shown
+
+### Requirement: Admin event lists show next upcoming datetime
+
+Admin Events catalog and Featured tables (and related add-result rows that show an event datetime) SHALL display the event’s **next upcoming** datetime (denormalized primary `date_time`) formatted in Europe/Berlin for the admin locale. When an event has more than one datetime, the cell MAY append a simple `+N` count of additional datetimes. The list SHALL NOT invent a past slot as the primary display when a later upcoming datetime exists.
+
+#### Scenario: Catalog list shows primary next datetime
+
+- **WHEN** an admin views `/admin/events` for an event with multiple datetimes including a future occurrence
+- **THEN** the date column shows the next upcoming datetime
+
+#### Scenario: Multiple datetimes indicated simply
+
+- **WHEN** an admin views a list row for an event with three datetimes
+- **THEN** the date presentation shows the primary/next datetime
+- **AND** optionally indicates two additional datetimes (e.g. `+2`)
+
+### Requirement: Multi-datetime admin and discovery e2e coverage
+
+BDD/Playwright SHALL cover admin add/remove datetime smoke on create or edit and SHALL keep discovery assertions that fully past multi-datetime events stay out of the default upcoming feed. Selectors SHALL remain proximity/layout only. Product feature files (`admin-events`, `event-discovery`, booking as needed), schema overview, ui-component-map, and gaps-and-decisions SHALL document event-level booking plus multi-datetime display rules.
+
+#### Scenario: Admin multi-datetime smoke
+
+- **WHEN** an admin creates or edits an event with two datetime rows via the SSR form
+- **THEN** Playwright can assert both values persist (edit re-open or equivalent proximity assertion)
+
+#### Scenario: Discovery excludes fully past multi-datetime events
+
+- **WHEN** every datetime on an event is in the past
+- **THEN** the member feed does not list that event

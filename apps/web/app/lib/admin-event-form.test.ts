@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
+import { CatalogValidationError } from "@unveiled/db";
 import { VARIANT_FILENAMES } from "@unveiled/images";
 
 import {
+  eventFormValuesToDateTimes,
   expandSeriesSlotsFromBuilder,
   parseBerlinDateTime,
   parseBuilderTimes,
@@ -82,6 +84,7 @@ describe("admin-event-form helpers", () => {
     expect(values.country).toBe("DE");
     expect(values.city).toBe("berlin");
     expect(values.tags).toEqual(["jazz", "live"]);
+    expect(values.dateTimeRows).toEqual([{ date: "2026-08-01", time: "20:00" }]);
     expect(values.creditPrice).toBe(2);
     expect(values.totalCapacity).toBe(15);
     expect(values.secretCode).toBe("JAZZ123");
@@ -92,6 +95,94 @@ describe("admin-event-form helpers", () => {
     expect(values.imageUrl).toBeNull();
     expect(values.imagePrebuilt).toBeNull();
     expect(values.stagedImageId).toBeNull();
+  });
+
+  test("parseEventFormBody extracts indexed datetime rows and ignores blank trailing rows", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        street: "Main St",
+        house_number: "1",
+        zip_code: "10115",
+        category: "Music",
+        event_type: "Concert",
+        datetime_count: "3",
+        event_date_0: "2026-08-01",
+        event_time_0: "20:00",
+        event_date_1: "2026-08-08",
+        event_time_1: "21:00",
+        event_date_2: "",
+        event_time_2: "",
+        timing_mode: "TIME_SLOT",
+        credit_price: "2",
+        total_capacity: "15",
+        ticket_type: "SECRET_CODE",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.dateTimeRows).toEqual([
+      { date: "2026-08-01", time: "20:00" },
+      { date: "2026-08-08", time: "21:00" },
+      { date: "", time: "" },
+    ]);
+
+    const dateTimes = eventFormValuesToDateTimes(values);
+    expect(dateTimes).toHaveLength(2);
+    const [first, second] = dateTimes;
+    expect(first).toBeDefined();
+    expect(second).toBeDefined();
+    if (!first || !second) {
+      throw new Error("expected two dateTimes");
+    }
+    expect(formatBerlin(first)).toMatch(/01\.08\.26/);
+    expect(formatBerlinTime(first)).toBe("20:00");
+    expect(formatBerlin(second)).toMatch(/08\.08\.26/);
+    expect(formatBerlinTime(second)).toBe("21:00");
+  });
+
+  test("eventFormValuesToDateTimes rejects empty datetime list", () => {
+    expect(() =>
+      eventFormValuesToDateTimes({
+        partnerId: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        street: "Main St",
+        houseNumber: "1",
+        addressLine2: null,
+        zipCode: "10115",
+        category: "Music",
+        eventType: "Concert",
+        tags: [],
+        dateTimeRows: [
+          { date: "", time: "" },
+          { date: "  ", time: "20:00" },
+        ],
+        timingMode: "TIME_SLOT",
+        creditPrice: 2,
+        totalCapacity: 15,
+        ticketType: "SECRET_CODE",
+        secretCode: null,
+        eventWebsiteUrl: null,
+        promoCodes: [],
+        voucherPdfs: [],
+        replaceUnusedInventory: false,
+        barrierFree: null,
+        languageIndependent: false,
+        languages: null,
+        hasSubtitles: false,
+        subtitleLanguage: null,
+        lat: null,
+        lng: null,
+        imageUpload: null,
+        imageUrl: null,
+        imagePrebuilt: null,
+        stagedImageId: null,
+      }),
+    ).toThrow(CatalogValidationError);
   });
 
   test("parseEventFormBody extracts promo and pdf inventory payloads", async () => {
@@ -254,7 +345,6 @@ describe("admin-event-form helpers", () => {
         ticket_type: "SECRET_CODE",
         secret_code: "JAZZ123",
         languages: ["DE", "EN"],
-        target_age_groups: ["18-25", "26-35"],
         lat: "52.520008",
         lng: "13.404954",
       },
@@ -264,9 +354,40 @@ describe("admin-event-form helpers", () => {
 
     expect(values.languageIndependent).toBe(false);
     expect(values.languages).toEqual(["DE", "EN"]);
-    expect(values.targetAgeGroups).toEqual(["18-25", "26-35"]);
     expect(values.lat).toBe("52.520008");
     expect(values.lng).toBe("13.404954");
+  });
+
+  test("parseEventFormBody ignores legacy target_age_groups POST field", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
+        zip_code: "10115",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "2",
+        total_capacity: "15",
+        ticket_type: "SECRET_CODE",
+        secret_code: "JAZZ123",
+        languages: ["DE", "EN"],
+        target_age_groups: ["18-25", "26-35"],
+        lat: "52.520008",
+        lng: "13.404954",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.languages).toEqual(["DE", "EN"]);
+    expect("targetAgeGroups" in values).toBe(false);
   });
 
   test("parseEventFormBody treats empty lat/lng as null (geocode soft-fail)", async () => {

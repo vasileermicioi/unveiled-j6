@@ -45,7 +45,7 @@ describe("voucher inventory catalog (integration)", () => {
       zipCode: "10115",
       category: "Theater",
       eventType: "Performance",
-      dateTime: new Date(Date.now() + 86_400_000),
+      dateTimes: [new Date(Date.now() + 86_400_000)],
       creditPrice: 1,
       ticketType: "VOUCHER_PROMO",
       eventWebsiteUrl: "https://example.com/event",

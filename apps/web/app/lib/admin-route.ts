@@ -99,6 +99,7 @@ function getLocaleParam(value: string | undefined): Locale {
 export type { EventFormValues, SeriesSlotMode } from "./admin-event-form";
 export {
   eventFormValuesToDateTime,
+  eventFormValuesToDateTimes,
   formatEventDateInput,
   formatEventDateTime,
   formatEventTimeInput,

@@ -5,6 +5,9 @@ import {
   berlinTodayRange,
   deriveDateTimeFields,
   getBerlinCalendarDate,
+  primaryDateTimeFromList,
+  sortUniqueDateTimes,
+  tryNormalizeEventDateTimes,
 } from "./datetime";
 
 describe("deriveDateTimeFields", () => {
@@ -25,6 +28,52 @@ describe("deriveDateTimeFields", () => {
     expect(derived.startTimeMinutes).toBe(0);
     expect(derived.weekday).toBeGreaterThanOrEqual(0);
     expect(derived.weekday).toBeLessThanOrEqual(6);
+  });
+});
+
+describe("multi-datetime normalize helpers", () => {
+  const now = new Date("2026-07-09T12:00:00.000Z");
+
+  test("sortUniqueDateTimes sorts and dedupes by epoch ms", () => {
+    const a = new Date("2026-07-11T18:00:00.000Z");
+    const b = new Date("2026-07-10T18:00:00.000Z");
+    const dup = new Date(a.getTime());
+    expect(sortUniqueDateTimes([a, b, dup]).map((d) => d.toISOString())).toEqual([
+      "2026-07-10T18:00:00.000Z",
+      "2026-07-11T18:00:00.000Z",
+    ]);
+  });
+
+  test("primaryDateTimeFromList picks next upcoming", () => {
+    const past = new Date("2026-07-08T18:00:00.000Z");
+    const next = new Date("2026-07-10T18:00:00.000Z");
+    const later = new Date("2026-07-12T18:00:00.000Z");
+    expect(primaryDateTimeFromList([later, past, next], now).toISOString()).toBe(
+      "2026-07-10T18:00:00.000Z",
+    );
+  });
+
+  test("primaryDateTimeFromList falls back to earliest when all past", () => {
+    const earlier = new Date("2026-07-01T18:00:00.000Z");
+    const laterPast = new Date("2026-07-08T18:00:00.000Z");
+    expect(primaryDateTimeFromList([laterPast, earlier], now).toISOString()).toBe(
+      "2026-07-01T18:00:00.000Z",
+    );
+  });
+
+  test("tryNormalizeEventDateTimes returns null for empty input", () => {
+    expect(tryNormalizeEventDateTimes([], now)).toBeNull();
+  });
+
+  test("tryNormalizeEventDateTimes normalizes and derives primary", () => {
+    const past = new Date("2026-07-08T18:00:00.000Z");
+    const future = new Date("2026-07-11T18:00:00.000Z");
+    const normalized = tryNormalizeEventDateTimes([future, past, future], now);
+    expect(normalized?.dateTimes.map((d) => d.toISOString())).toEqual([
+      "2026-07-08T18:00:00.000Z",
+      "2026-07-11T18:00:00.000Z",
+    ]);
+    expect(normalized?.dateTime.toISOString()).toBe("2026-07-11T18:00:00.000Z");
   });
 });
 

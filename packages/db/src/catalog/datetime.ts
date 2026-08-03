@@ -42,6 +42,74 @@ export function deriveDateTimeFields(
   };
 }
 
+/**
+ * Sort ascending and dedupe by epoch ms. Does not reject empty — callers validate.
+ */
+export function sortUniqueDateTimes(dateTimes: Date[]): Date[] {
+  const byMs = new Map<number, Date>();
+  for (const value of dateTimes) {
+    const ms = value.getTime();
+    if (!Number.isFinite(ms)) {
+      continue;
+    }
+    if (!byMs.has(ms)) {
+      byMs.set(ms, value);
+    }
+  }
+  return [...byMs.entries()].sort(([a], [b]) => a - b).map(([, date]) => date);
+}
+
+/**
+ * Next upcoming instant (`>= now`), or the earliest instant when all are past.
+ * Assumes `dateTimes` is non-empty and preferably pre-normalized.
+ */
+export function primaryDateTimeFromList(dateTimes: Date[], now: Date = new Date()): Date {
+  if (dateTimes.length === 0) {
+    throw new Error("primaryDateTimeFromList requires a non-empty list");
+  }
+
+  const nowMs = now.getTime();
+  let next: Date | undefined;
+  const first = dateTimes[0];
+  if (!first) {
+    throw new Error("primaryDateTimeFromList requires a non-empty list");
+  }
+  let earliest = first;
+
+  for (const value of dateTimes) {
+    if (value.getTime() < earliest.getTime()) {
+      earliest = value;
+    }
+    if (value.getTime() >= nowMs && (next === undefined || value.getTime() < next.getTime())) {
+      next = value;
+    }
+  }
+
+  return next ?? earliest;
+}
+
+export type NormalizedEventDateTimes = {
+  dateTimes: Date[];
+  dateTime: Date;
+};
+
+/**
+ * Sort+unique then derive primary. Returns null when the list is empty after normalize.
+ */
+export function tryNormalizeEventDateTimes(
+  dateTimes: Date[],
+  now: Date = new Date(),
+): NormalizedEventDateTimes | null {
+  const normalized = sortUniqueDateTimes(dateTimes);
+  if (normalized.length === 0) {
+    return null;
+  }
+  return {
+    dateTimes: normalized,
+    dateTime: primaryDateTimeFromList(normalized, now),
+  };
+}
+
 /** Calendar date (YYYY-MM-DD) of `date` in Europe/Berlin. */
 export function getBerlinCalendarDate(date: Date): string {
   return new Intl.DateTimeFormat("en-CA", {

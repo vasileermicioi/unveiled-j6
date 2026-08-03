@@ -4,8 +4,10 @@
 #   - Discover = /:locale/discover with admin-featured preview (includes past featured; not a public full feed)
 #   - /events/:id is public (no auth); book/save/waitlist remain gated
 #   - Member feed /events, /events/map, /saved require USER; browse/map also require booking-eligible subscription
-#   - No algorithmic ranking — explicit filters only (category / partner / date; single-select)
-#   - Default feed scope = all upcoming (date_time >= now), soonest first; custom date range available
+#   - No algorithmic ranking — explicit filters only (event name / category / partner / date; single-select partner)
+#   - Default feed scope = all upcoming (any date_times element >= now / denormalized date_time >= now), soonest first by next upcoming; custom date range available
+#   - Date range lower bound is never before Berlin today; ranged results still exclude already-started events
+#   - Cards/map popups show next upcoming datetime; booking-eligible detail lists all datetimes (emphasize next)
 #   - List and map share the same filters + pagination; view switch is tabs (admin-style)
 #
 # Prefer Scenario titles that match shipped e2e/specs/event-discovery.spec.ts when
@@ -120,6 +122,26 @@ Feature: Event Discovery
     Then the summary card shows ticket quantity controls and total credits
     And DETAILS includes date/time chrome
 
+  Scenario: Detail lists multiple datetimes
+    Given an upcoming event with two future datetimes
+    And I am signed in as a booking-eligible member
+    When I open "/events/:id"
+    Then both datetimes are visible in the detail date presentation
+    And the next upcoming datetime is emphasized
+
+  Scenario: Event card shows next upcoming datetime
+    Given a multi-datetime event with one past and one future occurrence
+    And I am signed in as a booking-eligible member
+    When the event appears on Discover or the member feed
+    Then the card date line shows the future (next upcoming) datetime
+
+  Scenario: Map popup shows next upcoming datetime
+    Given I am signed in as a booking-eligible member
+    And I have accepted non-essential cookie consent
+    When I open a map marker popup for an upcoming multi-datetime event
+    Then the popup includes the next upcoming datetime
+    And a link to the public event detail remains available
+
   Scenario: Detail LOCATION shows composed address with map
     Given I am not signed in
     And I have accepted non-essential cookie consent
@@ -132,7 +154,8 @@ Feature: Event Discovery
   Scenario: Guest does not see zip or age groups in DETAILS
     Given I am not signed in
     When I open a valid upcoming event detail URL ("/events/:id")
-    Then the DETAILS section does not show Zip code / PLZ or Target age groups / Zielgruppe metadata rows
+    Then the DETAILS section does not show Zip code / PLZ
+    And the DETAILS section does not show Target age groups / Zielgruppe metadata rows
     And location still uses the composed address in LOCATION (not a neighborhood / Kiez label)
 
   Scenario: Event card shows zip
@@ -190,6 +213,16 @@ Feature: Event Discovery
     When a guest or member opens an event detail page with has_subtitles false
     Then the DETAILS metadata does not include a subtitles row
 
+  Scenario: Event name filter control
+    Given I am viewing the events feed as a booking-eligible member
+    When I view the filters
+    Then I see an event name field alongside partner and date range controls
+
+  Scenario: Filter by event name
+    Given I am viewing the events feed as a booking-eligible member
+    When I enter an event name filter and apply
+    Then only events whose title matches the filter are shown
+
   Scenario: Filter by partner (venue)
     Given I am viewing the events feed as a booking-eligible member
     When I select a specific partner/venue filter
@@ -198,13 +231,15 @@ Feature: Event Discovery
   Scenario: Filter by custom date range
     Given I am viewing the events feed as a booking-eligible member
     When I set a start date and an end date
-    Then only events within that date range (inclusive, full days) are shown
+    Then only events within that date range (inclusive, full days) that have not already started are shown
     And the all-upcoming default no longer applies
+    And a start date before Berlin today is treated as today
 
   Scenario: Reset filters
     Given I have applied one or more filters as a booking-eligible member
     When I reset the filters
     Then the feed returns to the default all-upcoming scope
+    And event name, category, partner, and date filters are cleared
 
   Scenario: No results
     Given my applied filters match no events
@@ -215,6 +250,7 @@ Feature: Event Discovery
     Given I have applied filters to the events feed as a booking-eligible member
     When I open the map view
     Then the map shows markers only for the currently filtered events
+    And the same title, category, partner, and date filters apply
     And selecting a marker opens a preview with a link to book
     And the popup close control has a large enough hit target to activate reliably
     And activating the close control dismisses the popup
