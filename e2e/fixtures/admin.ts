@@ -47,7 +47,47 @@ export const adminLabels = {
   languages: /sprachen|languages/i,
   hasSubtitles: /untertitel|subtitles/i,
   subtitleLanguage: /untertitelsprache|subtitle language/i,
+  wizardStepGeneral: /^(allgemein|general)$/i,
+  wizardStepDateTickets: /^(datum & tickets|date & tickets)$/i,
+  wizardStepImage: /^(bild|image)$/i,
+  wizardNext: /^(weiter|next)$/i,
+  wizardBack: /^(zurück|back)$/i,
+  wizardProgress: /schritt \d+ von \d+|step \d+ of \d+/i,
+  addDateTime: /termin hinzufügen|add datetime/i,
+  imageSection: /event-bild|event image/i,
 } as const;
+
+export type EventFormStep = 1 | 2 | 3;
+
+const EVENT_FORM_STEP_NAMES: Record<EventFormStep, RegExp> = {
+  1: adminLabels.wizardStepGeneral,
+  2: adminLabels.wizardStepDateTickets,
+  3: adminLabels.wizardStepImage,
+};
+
+export async function expectEventFormStep(page: Page, step: EventFormStep): Promise<void> {
+  await expect(
+    page.getByText(new RegExp(`schritt ${step} von 3|step ${step} of 3`, "i")),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: EVENT_FORM_STEP_NAMES[step] })).toHaveAttribute(
+    "aria-current",
+    "step",
+  );
+}
+
+export async function clickEventFormNext(page: Page, nextStep?: EventFormStep): Promise<void> {
+  const next = page.getByRole("button", { name: adminLabels.wizardNext });
+  await expect(next).toBeVisible({ timeout: 15_000 });
+  await next.click();
+  if (nextStep != null) {
+    await expectEventFormStep(page, nextStep);
+  }
+}
+
+export async function goToEventFormStep(page: Page, step: EventFormStep): Promise<void> {
+  await page.getByRole("main").getByRole("button", { name: EVENT_FORM_STEP_NAMES[step] }).click();
+  await expectEventFormStep(page, step);
+}
 
 /** Fill a native date/time field by accessible name (gap G7). */
 export async function fillLabeledDateOrTime(
@@ -455,6 +495,21 @@ export async function createEventViaUI(
   await selectOptionByLabel(page, adminLabels.category, overrides.category ?? "Theater");
   await selectOptionByLabel(page, adminLabels.eventType, overrides.eventType ?? "Performance");
 
+  if (overrides.language) {
+    await checkOptionByName(page, overrides.language);
+  }
+  if (overrides.hasSubtitles) {
+    await page.getByRole("checkbox", { name: adminLabels.hasSubtitles }).check();
+    const subtitleCode = overrides.subtitleLanguage ?? "EN";
+    await selectOptionByLabel(
+      page,
+      adminLabels.subtitleLanguage,
+      subtitleCode === "EN" ? /englisch|english/i : new RegExp(subtitleCode, "i"),
+    );
+  }
+
+  await clickEventFormNext(page, 2);
+
   const eventDate = overrides.eventDate ?? futureDateISO(14);
   await fillLabeledDateOrTime(page, adminLabels.eventDate, eventDate);
   if (overrides.eventTime) {
@@ -483,18 +538,7 @@ export async function createEventViaUI(
     }
   }
 
-  if (overrides.language) {
-    await checkOptionByName(page, overrides.language);
-  }
-  if (overrides.hasSubtitles) {
-    await page.getByRole("checkbox", { name: adminLabels.hasSubtitles }).check();
-    const subtitleCode = overrides.subtitleLanguage ?? "EN";
-    await selectOptionByLabel(
-      page,
-      adminLabels.subtitleLanguage,
-      subtitleCode === "EN" ? /englisch|english/i : new RegExp(subtitleCode, "i"),
-    );
-  }
+  await clickEventFormNext(page, 3);
 
   if (imagePath) {
     // BDD exception: file-input

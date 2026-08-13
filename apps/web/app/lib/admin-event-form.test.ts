@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { CatalogValidationError, type OpeningHoursWeek } from "@unveiled/db";
+import { CatalogValidationError, type OpeningHoursWeek, PostalValidationError } from "@unveiled/db";
 import { VARIANT_FILENAMES } from "@unveiled/images";
+import { ImageValidationError } from "@unveiled/images/errors";
 
 import {
   defaultRangeSlotsFromHours,
+  eventFormErrorStep,
   eventFormValuesToDateTimes,
   eventFormValuesToOccurrences,
   expandOccurrencesFromRange,
@@ -950,6 +952,37 @@ describe("expandOccurrencesFromRange", () => {
       expect(error).toBeInstanceOf(CatalogValidationError);
       expect((error as CatalogValidationError).code).toBe("TOO_MANY_OCCURRENCES");
     }
+  });
+});
+
+describe("eventFormErrorStep", () => {
+  test("maps missing image to step 3", () => {
+    expect(
+      eventFormErrorStep(
+        new CatalogValidationError("MISSING_EVENT_IMAGE", "Event image is required"),
+      ),
+    ).toBe(3);
+    expect(eventFormErrorStep(new ImageValidationError("Image must be JPEG"))).toBe(3);
+    expect(eventFormErrorStep(new Error("S3_BUCKET is required"))).toBe(3);
+  });
+
+  test("maps empty dateTimes to step 2", () => {
+    expect(
+      eventFormErrorStep(
+        new CatalogValidationError("EMPTY_DATE_TIMES", "At least one datetime is required"),
+      ),
+    ).toBe(2);
+    expect(
+      eventFormErrorStep(new CatalogValidationError("REQUIRED_FIELD", "secretCode is required")),
+    ).toBe(2);
+  });
+
+  test("maps title and zip required to step 1", () => {
+    expect(
+      eventFormErrorStep(new CatalogValidationError("REQUIRED_FIELD", "title is required")),
+    ).toBe(1);
+    expect(eventFormErrorStep(new PostalValidationError("INVALID_POSTAL_CODE", "bad zip"))).toBe(1);
+    expect(eventFormErrorStep(new Error("something else"))).toBe(1);
   });
 });
 

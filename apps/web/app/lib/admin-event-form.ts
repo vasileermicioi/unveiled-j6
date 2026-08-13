@@ -1,6 +1,12 @@
 import type { EventOccurrence, OpeningHoursWeek, TicketType, TimingMode } from "@unveiled/db";
-import { CatalogValidationError, distinctOpenTimes, isClosedOnBerlinYmd } from "@unveiled/db";
+import {
+  CatalogValidationError,
+  distinctOpenTimes,
+  isClosedOnBerlinYmd,
+  PostalValidationError,
+} from "@unveiled/db";
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
+import { ImageValidationError } from "@unveiled/images/errors";
 
 import { parsePrebuiltImageVariants } from "./admin-prebuilt-image";
 
@@ -25,6 +31,84 @@ export const DEFAULT_ROW_CREDITS = "1";
 export const DEFAULT_RANGE_SLOT_TIME = "19:30";
 
 export const MAX_EVENT_DATE_TIME_ROWS = 52;
+
+export type EventFormStep = 1 | 2 | 3;
+
+const IMAGE_CATALOG_CODES = new Set([
+  "MISSING_EVENT_IMAGE",
+  "CLIENT_IMAGE_REQUIRED",
+  "CONFLICTING_IMAGE_SOURCES",
+  "IMAGE_NOT_FOUND",
+  "IMAGE_CREDIT_TOO_LONG",
+]);
+
+const SCHEDULE_CATALOG_CODES = new Set([
+  "EMPTY_DATE_TIMES",
+  "DUPLICATE_OCCURRENCE_INSTANTS",
+  "TOO_MANY_OCCURRENCES",
+  "NEGATIVE_CREDIT_PRICE",
+  "OCCURRENCE_LENGTH_MISMATCH",
+  "INVALID_REDEMPTION_CONFIG",
+  "EMPTY_VOUCHER_INVENTORY",
+  "DUPLICATE_VOUCHER_CODE",
+]);
+
+const SCHEDULE_REQUIRED_FIELDS = new Set([
+  "eventDate",
+  "dateTimes",
+  "creditPrice",
+  "redemption",
+  "secret_code",
+  "secretCode",
+  "total_capacity",
+  "totalCapacity",
+  "event_website_url",
+  "eventWebsiteUrl",
+]);
+
+function isImageStorageConfigError(error: Error): boolean {
+  return (
+    error.message.includes("S3_ENDPOINT") ||
+    error.message.includes("S3_REGION") ||
+    error.message.includes("S3_BUCKET") ||
+    error.message.includes("S3_ACCESS_KEY_ID") ||
+    error.message.includes("S3_SECRET_ACCESS_KEY") ||
+    error.message.includes("IMAGE_PUBLIC_BASE_URL")
+  );
+}
+
+/** Which wizard step owns a create/edit validation error. Unknown errors → step 1. */
+export function eventFormErrorStep(error: unknown): EventFormStep {
+  if (error instanceof PostalValidationError) {
+    return 1;
+  }
+
+  if (error instanceof ImageValidationError) {
+    return 3;
+  }
+
+  if (error instanceof Error && isImageStorageConfigError(error)) {
+    return 3;
+  }
+
+  if (error instanceof CatalogValidationError) {
+    if (IMAGE_CATALOG_CODES.has(error.code)) {
+      return 3;
+    }
+    if (SCHEDULE_CATALOG_CODES.has(error.code)) {
+      return 2;
+    }
+    if (error.code === "REQUIRED_FIELD") {
+      const field = error.message.replace(/ is required$/, "");
+      if (SCHEDULE_REQUIRED_FIELDS.has(field)) {
+        return 2;
+      }
+    }
+    return 1;
+  }
+
+  return 1;
+}
 
 export type RangeBuilderSlotRow = {
   time: string;

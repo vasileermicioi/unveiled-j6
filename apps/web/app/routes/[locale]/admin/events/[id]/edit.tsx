@@ -13,6 +13,7 @@ import { eventListPath } from "../../../../../components/admin/EventAdminForm";
 import { NotFoundPage } from "../../../../../components/NotFoundPage";
 import EventAdminForm from "../../../../../islands/EventAdminForm";
 import { getAdminCopy } from "../../../../../lib/admin-content";
+import { eventFormErrorStep } from "../../../../../lib/admin-event-form";
 import { toUpdateEventInput } from "../../../../../lib/admin-event-input";
 import {
   eventToFormDefaults,
@@ -45,6 +46,7 @@ function renderEditPage(
     partners: ReturnType<typeof toPartnerOptions>;
     defaults?: ReturnType<typeof eventToFormDefaults>;
     error?: string | null;
+    initialStep?: ReturnType<typeof eventFormErrorStep>;
   },
 ) {
   const copy = getAdminCopy(options.locale);
@@ -80,6 +82,7 @@ function renderEditPage(
         cancelHref={eventListPath(options.locale)}
         defaults={options.defaults}
         error={options.error ?? null}
+        initialStep={options.initialStep}
         isEdit
         locale={options.locale}
         partners={options.partners}
@@ -212,6 +215,7 @@ export const POST = createRoute(async (c) => {
       partners: partnerOptions,
       defaults,
       error: mapCatalogError(error, guard.locale),
+      initialStep: eventFormErrorStep(error),
     });
   }
 });

@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { createDb, eq, events, listPartners, subscriptions, users } from "@unveiled/db";
 
-import { adminLabels, fillNumberByLabel } from "./admin";
+import { adminLabels, fillNumberByLabel, goToEventFormStep } from "./admin";
 import { getAdminCredentials, loginAsAdmin, logout } from "./auth";
 import type { Locale } from "./base";
 import { expect } from "./base";
@@ -131,6 +131,7 @@ export async function bumpEventCapacityViaAdmin(
   });
   await page.waitForLoadState("networkidle");
 
+  await goToEventFormStep(page, 2);
   await fillNumberByLabel(page, adminLabels.capacity, target);
 
   await page.getByRole("button", { name: /^speichern$|^save$/i }).click();

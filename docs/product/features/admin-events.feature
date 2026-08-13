@@ -90,6 +90,26 @@ Feature: Admin — Event Management
     When I attempt to create or edit an event without uploading an image
     Then the creation/edit is rejected until an image is provided
 
+  Scenario: Create walks three steps
+    When I open the new-event form
+    Then I see step 1 General with progress indicating step 1 of 3
+    And I do not see the datetime list or image uploader until I go to those steps
+
+  Scenario: Create submit is on the image step
+    When I am on new-event step 3
+    Then I can submit the form
+    And earlier steps' values are included in the POST
+
+  Scenario: Edit can jump to image
+    When I open edit-event
+    Then I can move to step 3 without posting
+    And saving posts the full form including unchanged dates and image id
+
+  Scenario: Missing image returns to step 3
+    When I create an event and submit without a primary image
+    Then the form is rejected
+    And the re-rendered form shows the image step
+
   Scenario: Failed create keeps event image for retry
     When I create an event with a processed image and the submit is rejected
     Then I still see the resized-variant preview for that image on the form
@@ -162,6 +182,10 @@ Feature: Admin — Event Management
     When I view the Events list or an event edit page
     Then a Clone action linking to "/:locale/admin/events/:id/clone" is available
     And no Event series create CTA is shown
+
+  Scenario: Clone is not a wizard
+    When I open clone for an existing event
+    Then I do not see the three-step progress chrome from create/edit
 
   Scenario Outline: Event list can be sorted
     When I open "/:locale/admin/events" and click the "<column>" column header to sort

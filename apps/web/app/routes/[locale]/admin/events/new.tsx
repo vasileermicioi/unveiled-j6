@@ -6,6 +6,7 @@ import { eventListPath } from "../../../../components/admin/EventAdminForm";
 import type { EventFormDefaults } from "../../../../components/admin/event-admin-types";
 import EventAdminForm from "../../../../islands/EventAdminForm";
 import { getAdminCopy } from "../../../../lib/admin-content";
+import { eventFormErrorStep } from "../../../../lib/admin-event-form";
 import { toCreateEventInput } from "../../../../lib/admin-event-input";
 import { formValuesToDefaults, toPartnerOptions } from "../../../../lib/admin-event-route-helpers";
 import { renderAdminPage } from "../../../../lib/admin-render";
@@ -75,6 +76,7 @@ export const POST = createRoute(async (c) => {
           cancelHref={eventListPath(guard.locale)}
           defaults={defaults}
           error={mapCatalogError(error, guard.locale)}
+          initialStep={eventFormErrorStep(error)}
           locale={guard.locale}
           partners={partnerOptions}
           submitLabel={copy.create}

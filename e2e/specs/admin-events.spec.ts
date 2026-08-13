@@ -6,9 +6,11 @@ import {
   adminLabels,
   adminTabLabels,
   checkOptionByName,
+  clickEventFormNext,
   createEventViaUI,
   createPartnerViaUI,
   deleteEventViaUI,
+  expectEventFormStep,
   expectEventOnDiscover,
   expectPublicEventDetail,
   fillCreditsNth,
@@ -17,6 +19,7 @@ import {
   fillStructuredLocation,
   fillTextbox,
   futureDateISO,
+  goToEventFormStep,
   navigateAdminTab,
   r2Configured,
   SAMPLE_EVENT_IMAGE,
@@ -29,6 +32,7 @@ import { expect, test } from "../fixtures/base";
 import { E2E_WEEKDAY_10_HOURS, withPartnerOpeningHours } from "../fixtures/catalog";
 import { hasAdminCredentials } from "../fixtures/waitlist";
 
+/** Step 1 (General) only — callers that need dates MUST Next first. */
 async function fillNewEventRequiredFields(
   page: Page,
   locale: "de" | "en",
@@ -76,6 +80,7 @@ function weekdayISO(jsWeekday: number, minDaysAhead = 10): string {
 async function attachEventImageFile(page: Page): Promise<void> {
   // BDD exception: file-input
   await page.locator('input[name="image"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+  await expect(page.getByText(/ausgewählt:|selected:/i).first()).toBeVisible({ timeout: 60_000 });
 }
 
 async function createVoucherPromoViaUI(
@@ -100,10 +105,12 @@ async function createVoucherPromoViaUI(
   });
   await selectOptionByLabel(page, adminLabels.category, "Theater");
   await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+  await clickEventFormNext(page, 2);
   await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(16));
   await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);
   await fillTextbox(page, adminLabels.eventWebsite, "https://example.com/e2e-voucher");
   await page.getByLabel(/codes einfügen|paste codes/i).fill(`CODE-A-${suffix}\nCODE-B-${suffix}`);
+  await clickEventFormNext(page, 3);
   await attachEventImageFile(page);
   await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
@@ -153,10 +160,11 @@ test.describe("admin-events.feature", () => {
     const secondDate = futureDateISO(21);
 
     await fillNewEventRequiredFields(page, locale, partner.name, title, `Multi datetime ${suffix}`);
+    await clickEventFormNext(page, 2);
 
     await fillLabeledDateOrTime(page, adminLabels.eventDate, firstDate, { nth: 0 });
     await fillCreditsNth(page, 1, "2");
-    await page.getByRole("button", { name: /termin hinzufügen|add datetime/i }).click();
+    await page.getByRole("button", { name: adminLabels.addDateTime }).click();
     await fillLabeledDateOrTime(page, adminLabels.eventDate, secondDate, { nth: 1 });
     await fillCreditsNth(page, 2, "5");
 
@@ -165,6 +173,7 @@ test.describe("admin-events.feature", () => {
       await secretField.fill(`E2EMDT${suffix.slice(0, 6).toUpperCase()}`);
     }
 
+    await clickEventFormNext(page, 3);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
@@ -177,6 +186,7 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
       timeout: 15_000,
     });
+    await goToEventFormStep(page, 2);
     const dateFields = datetimeDateFields(page);
     await expect(dateFields).toHaveCount(2);
     await expect(dateFields.nth(0)).toHaveValue(firstDate);
@@ -208,9 +218,10 @@ test.describe("admin-events.feature", () => {
     const secondDate = futureDateISO(21);
 
     await fillNewEventRequiredFields(page, locale, partner.name, title, `Credits ${suffix}`);
+    await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, firstDate, { nth: 0 });
     await fillCreditsNth(page, 1, "1");
-    await page.getByRole("button", { name: /termin hinzufügen|add datetime/i }).click();
+    await page.getByRole("button", { name: adminLabels.addDateTime }).click();
     await fillLabeledDateOrTime(page, adminLabels.eventDate, secondDate, { nth: 1 });
     await fillCreditsNth(page, 2, "3");
 
@@ -218,6 +229,7 @@ test.describe("admin-events.feature", () => {
     if ((await secretField.count()) > 0) {
       await secretField.fill(`E2ECR${suffix.slice(0, 6).toUpperCase()}`);
     }
+    await clickEventFormNext(page, 3);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
@@ -227,6 +239,7 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
       timeout: 15_000,
     });
+    await goToEventFormStep(page, 2);
     await expect(page.getByLabel(adminLabels.rowCredits).nth(1)).toHaveValue("1");
     await expect(page.getByLabel(adminLabels.rowCredits).nth(2)).toHaveValue("3");
   });
@@ -241,8 +254,9 @@ test.describe("admin-events.feature", () => {
       `E2E Total ${uniqueSuffix()}`,
       "Total credits",
     );
+    await clickEventFormNext(page, 2);
     await fillCreditsNth(page, 1, "2");
-    await page.getByRole("button", { name: /termin hinzufügen|add datetime/i }).click();
+    await page.getByRole("button", { name: adminLabels.addDateTime }).click();
     await fillCreditsNth(page, 2, "5");
     await expect(page.getByText(/credits gesamt:\s*7|total credits:\s*7/i)).toBeVisible();
   });
@@ -257,6 +271,7 @@ test.describe("admin-events.feature", () => {
       `E2E Range ${uniqueSuffix()}`,
       "Range grid",
     );
+    await clickEventFormNext(page, 2);
     const start = futureDateISO(14);
     const end = futureDateISO(15);
     await fillLabeledDateOrTime(page, adminLabels.rangeStart, start);
@@ -283,12 +298,13 @@ test.describe("admin-events.feature", () => {
       `E2E Rebuild ${uniqueSuffix()}`,
       "Rebuild",
     );
+    await clickEventFormNext(page, 2);
     const start = futureDateISO(14);
     const end = futureDateISO(16);
     await fillLabeledDateOrTime(page, adminLabels.rangeStart, start);
     await fillLabeledDateOrTime(page, adminLabels.rangeEnd, end);
     await expect(datetimeDateFields(page)).toHaveCount(3, { timeout: 10_000 });
-    await page.getByRole("button", { name: /termin hinzufügen|add datetime/i }).click();
+    await page.getByRole("button", { name: adminLabels.addDateTime }).click();
     await expect(datetimeDateFields(page)).toHaveCount(4);
     await fillLabeledDateOrTime(page, adminLabels.rangeEnd, start);
     await expect(datetimeDateFields(page)).toHaveCount(1, { timeout: 10_000 });
@@ -298,12 +314,14 @@ test.describe("admin-events.feature", () => {
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     await withPartnerOpeningHours(partner.name, E2E_WEEKDAY_10_HOURS, async () => {
-      await page.goto(`/${locale}/admin/events/new`);
-      await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
-        timeout: 15_000,
-      });
-      await page.waitForLoadState("networkidle");
-      await selectOptionByLabel(page, adminLabels.partner, partner.name);
+      await fillNewEventRequiredFields(
+        page,
+        locale,
+        partner.name,
+        `E2E Prefill ${uniqueSuffix()}`,
+        "Partner hours",
+      );
+      await clickEventFormNext(page, 2);
       await expect(page.getByRole("textbox", { name: adminLabels.eventTime }).nth(0)).toHaveValue(
         "10:00",
         { timeout: 10_000 },
@@ -327,6 +345,7 @@ test.describe("admin-events.feature", () => {
         `E2E Closed ${uniqueSuffix()}`,
         "Closed Sunday",
       );
+      await clickEventFormNext(page, 2);
       await fillLabeledDateOrTime(page, adminLabels.rangeStart, saturday);
       await fillLabeledDateOrTime(page, adminLabels.rangeEnd, monday);
       await expect(datetimeDateFields(page)).toHaveCount(2, { timeout: 10_000 });
@@ -393,13 +412,97 @@ test.describe("admin-events.feature", () => {
     });
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+    await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await fillTextbox(page, adminLabels.secretCode, "NOIMG001");
+    await clickEventFormNext(page, 3);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
     await expect(
       page.getByText(/event-bild ist erforderlich|event image is required/i).first(),
     ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("Scenario: Create walks three steps", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    const title = `E2E Wizard Walk ${uniqueSuffix()}`;
+    await fillNewEventRequiredFields(page, locale, partner.name, title, "Wizard walk");
+    await expectEventFormStep(page, 1);
+    await expect(page.getByRole("button", { name: adminLabels.addDateTime })).toHaveCount(0);
+    await expect(page.getByText(adminLabels.imageSection).first()).not.toBeVisible();
+
+    await clickEventFormNext(page, 2);
+    await expect(page.getByRole("button", { name: adminLabels.addDateTime })).toBeVisible();
+    await expect(page.getByText(adminLabels.imageSection).first()).not.toBeVisible();
+
+    await clickEventFormNext(page, 3);
+    await expect(page.getByText(adminLabels.imageSection).first()).toBeVisible();
+  });
+
+  test("Scenario: Create submit is on the image step", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const title = `E2E Wizard Submit ${uniqueSuffix()}`;
+    await fillNewEventRequiredFields(page, locale, partner.name, title, "Wizard submit");
+    await expect(page.getByRole("button", { name: /^anlegen$|^create$/i })).toHaveCount(0);
+
+    await clickEventFormNext(page, 2);
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(14));
+    await expect(page.getByRole("button", { name: /^anlegen$|^create$/i })).toHaveCount(0);
+
+    await clickEventFormNext(page, 3);
+    await expect(page.getByRole("button", { name: /^anlegen$|^create$/i })).toBeVisible();
+    await attachEventImageFile(page);
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await expect(page.getByText(title).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("Scenario: Edit can jump to image", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+
+    await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expectEventFormStep(page, 1);
+    await goToEventFormStep(page, 3);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/${event.eventId}/edit`));
+    await expect(page.getByText(adminLabels.imageSection).first()).toBeVisible();
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+
+    await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await goToEventFormStep(page, 2);
+    await expect(datetimeDateFields(page).first()).toBeVisible();
+  });
+
+  test("Scenario: Missing image returns to step 3", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    await fillNewEventRequiredFields(
+      page,
+      locale,
+      partner.name,
+      `No Image Step ${uniqueSuffix()}`,
+      "Missing image step",
+    );
+    await clickEventFormNext(page, 2);
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
+    await clickEventFormNext(page, 3);
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
+    await expect(
+      page.getByText(/event-bild ist erforderlich|event image is required/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+    await expectEventFormStep(page, 3);
+    await expect(page.getByText(adminLabels.imageSection).first()).toBeVisible();
   });
 
   test("Scenario Outline: Redemption configuration validation on create — ticketType = SECRET_CODE, requiredField = secretCode", async ({
@@ -419,7 +522,9 @@ test.describe("admin-events.feature", () => {
     });
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+    await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
+    await clickEventFormNext(page, 3);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
@@ -445,8 +550,10 @@ test.describe("admin-events.feature", () => {
     });
     await selectOptionByLabel(page, adminLabels.category, "Theater");
     await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+    await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);
+    await clickEventFormNext(page, 3);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
@@ -501,6 +608,7 @@ test.describe("admin-events.feature", () => {
       timeout: 60_000,
     });
     await expect(page.getByDisplayValue(source.title)).toBeVisible({ timeout: 15_000 });
+    await goToEventFormStep(page, 2);
     await expect(page.getByDisplayValue(cloneDate)).toBeVisible();
 
     await page.goto(`/${locale}/admin/events`);
@@ -544,6 +652,24 @@ test.describe("admin-events.feature", () => {
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/${source.eventId}/edit`));
     await expect(page.getByRole("link", { name: /^klonen$|^clone$/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /event.?serie|series/i })).toHaveCount(0);
+  });
+
+  test("Scenario: Clone is not a wizard", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const source = await createEventViaUI(page, locale, { partnerName: partner.name });
+
+    await page.goto(`/${locale}/admin/events/${source.eventId}/clone`);
+    await expect(page.getByRole("heading", { name: /event klonen|clone event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(adminLabels.wizardProgress)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: adminLabels.wizardStepGeneral })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: adminLabels.wizardStepDateTickets })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole("button", { name: adminLabels.wizardStepImage })).toHaveCount(0);
+    await expect(page.getByRole("textbox", { name: adminLabels.eventDate }).first()).toBeVisible();
   });
 
   // Scenario Outline: Event list can be sorted — column headers (Title / Partner / Date / Created / Capacity).
@@ -631,6 +757,10 @@ test.describe("admin-events.feature", () => {
 
     const row = page.getByRole("row").filter({ hasText: event.title });
     await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await goToEventFormStep(page, 2);
     await fillNumberByLabel(page, adminLabels.capacity, "15");
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`));
@@ -932,6 +1062,10 @@ test.describe("admin-events.feature", () => {
     });
 
     await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await goToEventFormStep(page, 3);
     const creditField = page.getByRole("textbox", { name: adminLabels.imageCredit });
     await expect(creditField).toHaveValue("Photo: Ada", { timeout: 15_000 });
     await creditField.fill("Photo: Bea");

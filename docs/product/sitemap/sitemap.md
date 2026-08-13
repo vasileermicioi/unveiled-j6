@@ -117,9 +117,9 @@ See `ui/app-shell.md` for header/footer detail.
 |---|---|---|---|
 | `/admin` | ✅ | ADMIN | Dashboard |
 | `/admin/events?title=&partner=&language=&sort=&dir=&page=` | ✅ | ADMIN | Event list (title/partner/language filters; language matches spoken or subtitle; column sort; default last-created desc; Reset filters; Languages + Subtitles columns) |
-| `/admin/events/new` | ✅ | ADMIN | Create event |
-| `/admin/events/:id/clone` | ✅ | ADMIN | Clone event (new date/time; voucher inventory not copied) |
-| `/admin/events/:id/edit` | ✅ | ADMIN | Edit event |
+| `/admin/events/new` | ✅ | ADMIN | Create event (three-step wizard: general → date & tickets → image; one POST) |
+| `/admin/events/:id/clone` | ✅ | ADMIN | Clone event (new date/time; voucher inventory not copied; not the create/edit stepper) |
+| `/admin/events/:id/edit` | ✅ | ADMIN | Edit event (same three-step stepper; Save from any step) |
 | `/admin/events/:id/gallery` | ✅ | ADMIN | Event gallery list |
 | `/admin/events/:id/gallery/add` | ✅ | ADMIN | Multi-upload gallery photos |
 | `/admin/events/:id/gallery/remove` | ✅ | ADMIN | Remove one or many gallery photos (confirm) |

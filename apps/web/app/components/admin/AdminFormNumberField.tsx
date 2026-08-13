@@ -26,7 +26,7 @@ export function AdminFormNumberField({
   const id = numberIdForName(name);
 
   return (
-    <Surface className="flex w-full flex-col gap-1" variant="transparent">
+    <Surface className="admin-form__native-field w-full" variant="transparent">
       <Label htmlFor={id}>{label}</Label>
       <input
         className="admin-native-number"

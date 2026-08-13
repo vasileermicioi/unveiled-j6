@@ -288,6 +288,12 @@ export type AdminCopy = {
   cancel: string;
   save: string;
   create: string;
+  wizardStepGeneral: string;
+  wizardStepDateTickets: string;
+  wizardStepImage: string;
+  wizardStepProgress: (current: number, total: number) => string;
+  wizardNext: string;
+  wizardBack: string;
   nameLabel: string;
   emailLabel: string;
   addressLabel: string;
@@ -751,6 +757,12 @@ const copy: Record<Locale, AdminCopy> = {
     cancel: "Abbrechen",
     save: "Speichern",
     create: "Anlegen",
+    wizardStepGeneral: "Allgemein",
+    wizardStepDateTickets: "Datum & Tickets",
+    wizardStepImage: "Bild",
+    wizardStepProgress: (current, total) => `Schritt ${current} von ${total}`,
+    wizardNext: "Weiter",
+    wizardBack: "Zurück",
     nameLabel: "Name",
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
@@ -1230,6 +1242,12 @@ const copy: Record<Locale, AdminCopy> = {
     cancel: "Cancel",
     save: "Save",
     create: "Create",
+    wizardStepGeneral: "General",
+    wizardStepDateTickets: "Date & tickets",
+    wizardStepImage: "Image",
+    wizardStepProgress: (current, total) => `Step ${current} of ${total}`,
+    wizardNext: "Next",
+    wizardBack: "Back",
     nameLabel: "Name",
     emailLabel: "Contact email",
     addressLabel: "Address",

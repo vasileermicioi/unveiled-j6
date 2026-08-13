@@ -15,6 +15,7 @@ import {
   getEventSubtitleLanguageOptions,
   getEventTypeOptions,
 } from "../../lib/admin-content";
+import type { EventFormStep } from "../../lib/admin-event-form";
 import { geocodeBerlinAddress } from "../../lib/geocode-berlin";
 import type { Locale } from "../../lib/locale";
 import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
@@ -32,7 +33,20 @@ type EventAdminBaseFieldsProps = {
   defaults?: EventFormDefaults;
   includeDateTime?: boolean;
   isEdit?: boolean;
+  /** When set, inactive steps stay mounted but `hidden`/`inert`. Omit to show all sections. */
+  activeStep?: EventFormStep;
 };
+
+function stepSurfaceProps(activeStep: EventFormStep | undefined, step: EventFormStep) {
+  const inactive = activeStep != null && activeStep !== step;
+  return {
+    "data-event-form-step": String(step),
+    hidden: inactive,
+    inert: inactive ? true : undefined,
+    className: "flex flex-col gap-6",
+    variant: "transparent" as const,
+  };
+}
 
 function defaultTicketType(defaults?: EventFormDefaults): TicketType {
   return defaults?.ticketType ?? "SECRET_CODE";
@@ -60,6 +74,7 @@ export function EventAdminBaseFields({
   defaults,
   includeDateTime = true,
   isEdit = false,
+  activeStep,
 }: EventAdminBaseFieldsProps) {
   const copy = getAdminCopy(locale);
   const languageOptions = getEventLanguageOptions(locale);
@@ -172,333 +187,339 @@ export function EventAdminBaseFields({
 
   return (
     <>
-      <AdminFormSelect
-        defaultSelectedKey={defaults?.partnerId}
-        isRequired
-        label={copy.partnerLabel}
-        name="partner_id"
-        onSelectionChange={(value) => {
-          if (typeof value === "string") {
-            void handlePartnerChange(value);
-          }
-        }}
-        options={partners.map((partner) => ({ id: partner.id, label: partner.name }))}
-        placeholder={copy.selectPlaceholder}
-      />
-
-      <TextField defaultValue={defaults?.title} fullWidth isRequired name="title">
-        <Label>{copy.titleLabel}</Label>
-        <Input />
-      </TextField>
-
-      {/* Description: MDXEditor exception; SSR POST still submits native name="description". */}
-      <Surface className="flex flex-col gap-2" variant="transparent">
-        <Label id={descriptionLabelId}>{copy.descriptionLabel}</Label>
-        <EventDescriptionEditor
-          aria-describedby={descriptionHintId}
-          aria-labelledby={descriptionLabelId}
-          id={descriptionFieldId}
-          initialMarkdown={defaults?.description ?? ""}
-          name="description"
-          required
-        />
-        <Description id={descriptionHintId}>{copy.descriptionMarkdownHint}</Description>
-      </Surface>
-
-      <Surface className="grid gap-4 lg:grid-cols-2 lg:items-start" variant="transparent">
-        <Surface className="flex flex-col gap-4" variant="transparent">
-          <TextField
-            key={`street-${addressRevision}`}
-            fullWidth
-            isRequired
-            name="street"
-            value={street}
-          >
-            <Label>{copy.streetLabel}</Label>
-            <Input
-              onBlur={() => {
-                void handleStructuredAddressBlur();
-              }}
-              onChange={(event) => setStreet(event.currentTarget.value)}
-            />
-          </TextField>
-
-          <TextField
-            key={`house-number-${addressRevision}`}
-            fullWidth
-            isRequired
-            name="house_number"
-            value={houseNumber}
-          >
-            <Label>{copy.houseNumberLabel}</Label>
-            <Input
-              onBlur={() => {
-                void handleStructuredAddressBlur();
-              }}
-              onChange={(event) => setHouseNumber(event.currentTarget.value)}
-            />
-          </TextField>
-
-          <TextField
-            key={`address-line2-${addressRevision}`}
-            fullWidth
-            name="address_line2"
-            value={addressLine2}
-          >
-            <Label>{copy.addressLine2Label}</Label>
-            <Input onChange={(event) => setAddressLine2(event.currentTarget.value)} />
-          </TextField>
-
-          <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
-            <Surface className="flex w-full flex-col gap-1" variant="transparent">
-              <Label htmlFor="event-country-display">{copy.countryLabel}</Label>
-              <input
-                className="admin-native-text"
-                defaultValue={copy.countryDisplay}
-                id="event-country-display"
-                readOnly
-                tabIndex={-1}
-                type="text"
-              />
-            </Surface>
-            <Surface className="flex w-full flex-col gap-1" variant="transparent">
-              <Label htmlFor="event-city-display">{copy.cityLabel}</Label>
-              <input
-                className="admin-native-text"
-                defaultValue={copy.cityDisplay}
-                id="event-city-display"
-                readOnly
-                tabIndex={-1}
-                type="text"
-              />
-            </Surface>
-          </Surface>
-
-          <Surface className="flex w-full flex-col gap-1" variant="transparent">
-            <Label htmlFor="event-zip-code">{copy.zipCodeLabel}</Label>
-            <input
-              className="admin-native-text"
-              id="event-zip-code"
-              inputMode="numeric"
-              key={`zip-code-${addressRevision}`}
-              maxLength={5}
-              name="zip_code"
-              onBlur={() => {
-                void handleStructuredAddressBlur();
-              }}
-              onChange={(event) => setZipCode(event.currentTarget.value)}
-              required
-              type="text"
-              value={zipCode}
-            />
-            <Description>{copy.zipCodeHint}</Description>
-          </Surface>
-
-          <input name="country" type="hidden" value={defaults?.country ?? "DE"} />
-          <input name="city" type="hidden" value={defaults?.city ?? "berlin"} />
-        </Surface>
-
-        <EventGeoPicker
-          externalLat={externalLat}
-          externalLng={externalLng}
-          externalRevision={externalRevision}
-          lat={defaults?.lat}
-          lng={defaults?.lng}
-          locale={locale}
-        />
-      </Surface>
-
-      <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
+      <Surface {...stepSurfaceProps(activeStep, 1)}>
         <AdminFormSelect
-          defaultSelectedKey={defaults?.category}
+          defaultSelectedKey={defaults?.partnerId}
           isRequired
-          label={copy.categoryLabel}
-          name="category"
-          options={categoryOptions}
+          label={copy.partnerLabel}
+          name="partner_id"
+          onSelectionChange={(value) => {
+            if (typeof value === "string") {
+              void handlePartnerChange(value);
+            }
+          }}
+          options={partners.map((partner) => ({ id: partner.id, label: partner.name }))}
           placeholder={copy.selectPlaceholder}
         />
-        <AdminFormSelect
-          defaultSelectedKey={defaults?.eventType}
-          isRequired
-          label={copy.eventTypeLabel}
-          name="event_type"
-          options={eventTypeOptions}
-          placeholder={copy.selectPlaceholder}
-        />
-      </Surface>
 
-      <TextField defaultValue={defaults?.tags?.join(", ")} fullWidth name="tags">
-        <Label>{copy.tagsLabel}</Label>
-        <Input />
-        <Description>{copy.tagsHint}</Description>
-      </TextField>
-
-      {includeDateTime ? (
-        <EventAdminDateTimeList
-          applyPartnerHours={!isEdit}
-          hasOpeningHours={selectedPartner?.hasOpeningHours ?? false}
-          isDateRequired
-          locale={locale}
-          openingHours={selectedPartner?.openingHours ?? null}
-          partnerId={selectedPartnerId}
-          rangeEnd={defaults?.rangeEnd}
-          rangeSlots={defaults?.rangeSlots}
-          rangeStart={defaults?.rangeStart}
-          rows={defaults?.dateTimeRows}
-          timingMode={timingMode}
-        />
-      ) : null}
-
-      <AdminFormSelect
-        defaultSelectedKey={timingMode}
-        label={copy.timingModeLabel}
-        name="timing_mode"
-        onSelectionChange={(value) => {
-          if (value === "ALL_DAY" || value === "TIME_SLOT") {
-            setTimingMode(value);
-          }
-        }}
-        options={[
-          { id: "TIME_SLOT", label: copy.timingModeTimeSlot },
-          { id: "ALL_DAY", label: copy.timingModeAllDay },
-        ]}
-        placeholder={copy.selectPlaceholder}
-      />
-
-      {ticketType === "SECRET_CODE" ? (
-        <AdminFormNumberField
-          defaultValue={defaults?.totalCapacity ?? 10}
-          isRequired
-          label={copy.capacityLabel}
-          minValue={1}
-          name="total_capacity"
-        />
-      ) : null}
-
-      <AdminFormSelect
-        defaultSelectedKey={ticketType}
-        label={copy.ticketTypeLabel}
-        name="ticket_type"
-        onSelectionChange={(value) => {
-          if (typeof value === "string" && isTicketType(value)) {
-            setTicketType(value);
-          }
-        }}
-        options={[
-          { id: "SECRET_CODE", label: copy.ticketTypeSecretCode },
-          { id: "VOUCHER_PROMO", label: copy.ticketTypeVoucher },
-          { id: "VOUCHER_PDF", label: copy.ticketTypeVoucherPdf },
-        ]}
-        placeholder={copy.selectPlaceholder}
-      />
-
-      {ticketType === "VOUCHER_PROMO" || ticketType === "VOUCHER_PDF" ? (
-        <Description>{copy.capacityFromInventoryHint}</Description>
-      ) : null}
-
-      {ticketType === "SECRET_CODE" ? (
-        <TextField defaultValue={defaults?.secretCode ?? undefined} fullWidth name="secret_code">
-          <Label>{copy.secretCodeLabel}</Label>
+        <TextField defaultValue={defaults?.title} fullWidth isRequired name="title">
+          <Label>{copy.titleLabel}</Label>
           <Input />
         </TextField>
-      ) : null}
 
-      {ticketType === "VOUCHER_PROMO" ? (
-        <>
-          <TextField
-            defaultValue={defaults?.eventWebsiteUrl ?? undefined}
-            fullWidth
-            name="event_website_url"
-          >
-            <Label>{copy.eventWebsiteUrlLabel}</Label>
-            <Input type="url" />
-          </TextField>
-          <PromoCodeInventoryIsland
-            inventoryCounts={defaults?.inventoryCounts?.promo ?? null}
-            isEdit={isEdit}
+        {/* Description: MDXEditor exception; SSR POST still submits native name="description". */}
+        <Surface className="flex flex-col gap-2" variant="transparent">
+          <Label id={descriptionLabelId}>{copy.descriptionLabel}</Label>
+          <EventDescriptionEditor
+            aria-describedby={descriptionHintId}
+            aria-labelledby={descriptionLabelId}
+            id={descriptionFieldId}
+            initialMarkdown={defaults?.description ?? ""}
+            name="description"
+            required
+          />
+          <Description id={descriptionHintId}>{copy.descriptionMarkdownHint}</Description>
+        </Surface>
+
+        <Surface className="grid gap-4 lg:grid-cols-2 lg:items-start" variant="transparent">
+          <Surface className="flex flex-col gap-4" variant="transparent">
+            <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
+              <Surface className="flex w-full flex-col gap-1" variant="transparent">
+                <Label htmlFor="event-country-display">{copy.countryLabel}</Label>
+                <input
+                  className="admin-native-text"
+                  defaultValue={copy.countryDisplay}
+                  id="event-country-display"
+                  readOnly
+                  tabIndex={-1}
+                  type="text"
+                />
+              </Surface>
+              <Surface className="flex w-full flex-col gap-1" variant="transparent">
+                <Label htmlFor="event-city-display">{copy.cityLabel}</Label>
+                <input
+                  className="admin-native-text"
+                  defaultValue={copy.cityDisplay}
+                  id="event-city-display"
+                  readOnly
+                  tabIndex={-1}
+                  type="text"
+                />
+              </Surface>
+            </Surface>
+
+            <Surface className="flex w-full flex-col gap-1" variant="transparent">
+              <Label htmlFor="event-zip-code">{copy.zipCodeLabel}</Label>
+              <input
+                className="admin-native-text"
+                id="event-zip-code"
+                inputMode="numeric"
+                key={`zip-code-${addressRevision}`}
+                maxLength={5}
+                name="zip_code"
+                onBlur={() => {
+                  void handleStructuredAddressBlur();
+                }}
+                onChange={(event) => setZipCode(event.currentTarget.value)}
+                required
+                type="text"
+                value={zipCode}
+              />
+              <Description>{copy.zipCodeHint}</Description>
+            </Surface>
+
+            <TextField
+              key={`street-${addressRevision}`}
+              fullWidth
+              isRequired
+              name="street"
+              value={street}
+            >
+              <Label>{copy.streetLabel}</Label>
+              <Input
+                onBlur={() => {
+                  void handleStructuredAddressBlur();
+                }}
+                onChange={(event) => setStreet(event.currentTarget.value)}
+              />
+            </TextField>
+
+            <TextField
+              key={`house-number-${addressRevision}`}
+              fullWidth
+              isRequired
+              name="house_number"
+              value={houseNumber}
+            >
+              <Label>{copy.houseNumberLabel}</Label>
+              <Input
+                onBlur={() => {
+                  void handleStructuredAddressBlur();
+                }}
+                onChange={(event) => setHouseNumber(event.currentTarget.value)}
+              />
+            </TextField>
+
+            <TextField
+              key={`address-line2-${addressRevision}`}
+              fullWidth
+              name="address_line2"
+              value={addressLine2}
+            >
+              <Label>{copy.addressLine2Label}</Label>
+              <Input onChange={(event) => setAddressLine2(event.currentTarget.value)} />
+            </TextField>
+
+            <input name="country" type="hidden" value={defaults?.country ?? "DE"} />
+            <input name="city" type="hidden" value={defaults?.city ?? "berlin"} />
+          </Surface>
+
+          <EventGeoPicker
+            externalLat={externalLat}
+            externalLng={externalLng}
+            externalRevision={externalRevision}
+            lat={defaults?.lat}
+            lng={defaults?.lng}
             locale={locale}
           />
-        </>
-      ) : null}
-
-      {ticketType === "VOUCHER_PDF" ? (
-        <PdfVoucherInventoryIsland
-          eventId={defaults?.eventId ?? null}
-          inventoryCounts={defaults?.inventoryCounts?.pdf ?? null}
-          isEdit={isEdit}
-          locale={locale}
-          uploadPath={`/${locale}/admin/uploads/voucher-pdf`}
-        />
-      ) : null}
-
-      <Surface className="flex flex-col gap-4" variant="transparent">
-        <Surface className="flex w-full flex-col gap-2" variant="transparent">
-          <Label>{copy.languageIndependentLabel}</Label>
-          <Surface className="onboarding-form__options" variant="transparent">
-            <NativePreferenceOption
-              defaultChecked={languageIndependent}
-              inputLabel={copy.languageIndependentLabel}
-              label={copy.optionYes}
-              name="language_independent"
-              onChange={(event) => setLanguageIndependent(event.target.checked)}
-              type="checkbox"
-              value="on"
-            />
-          </Surface>
-          <Description>{copy.languageIndependentHint}</Description>
         </Surface>
-        {languageIndependent ? null : (
-          <Surface className="flex w-full flex-col gap-1" variant="transparent">
-            <Label>{copy.languagesLabel}</Label>
-            <CheckboxMultiSelect
-              enableSearch
-              filterPlaceholder={copy.languagesSearchPlaceholder}
-              initialVisibleCount={LANGUAGE_MULTI_SELECT_INITIAL_VISIBLE}
-              name="languages"
-              options={languageOptions.map((option) => ({
-                value: option.id,
-                label: option.label,
-              }))}
-              searchHint={copy.languagesSearchHint}
-              selected={defaults?.languages ?? []}
-            />
-          </Surface>
-        )}
-        <Surface className="flex w-full flex-col gap-2" variant="transparent">
-          <Label>{copy.hasSubtitlesLabel}</Label>
-          <Surface className="onboarding-form__options" variant="transparent">
-            <NativePreferenceOption
-              defaultChecked={hasSubtitles}
-              inputLabel={copy.hasSubtitlesLabel}
-              label={copy.optionYes}
-              name="has_subtitles"
-              onChange={(event) => setHasSubtitles(event.target.checked)}
-              type="checkbox"
-              value="on"
-            />
-          </Surface>
-          <Description>{copy.hasSubtitlesHint}</Description>
-        </Surface>
-        {hasSubtitles ? (
+
+        <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
           <AdminFormSelect
-            defaultSelectedKey={defaults?.subtitleLanguage ?? undefined}
+            defaultSelectedKey={defaults?.category}
             isRequired
-            label={copy.subtitleLanguageLabel}
-            name="subtitle_language"
-            options={subtitleLanguageOptions}
+            label={copy.categoryLabel}
+            name="category"
+            options={categoryOptions}
             placeholder={copy.selectPlaceholder}
+          />
+          <AdminFormSelect
+            defaultSelectedKey={defaults?.eventType}
+            isRequired
+            label={copy.eventTypeLabel}
+            name="event_type"
+            options={eventTypeOptions}
+            placeholder={copy.selectPlaceholder}
+          />
+        </Surface>
+
+        <TextField defaultValue={defaults?.tags?.join(", ")} fullWidth name="tags">
+          <Label>{copy.tagsLabel}</Label>
+          <Input />
+          <Description>{copy.tagsHint}</Description>
+        </TextField>
+
+        <Surface className="flex flex-col gap-4" variant="transparent">
+          <Surface className="flex w-full flex-col gap-2" variant="transparent">
+            <Label>{copy.languageIndependentLabel}</Label>
+            <Surface className="onboarding-form__options" variant="transparent">
+              <NativePreferenceOption
+                defaultChecked={languageIndependent}
+                inputLabel={copy.languageIndependentLabel}
+                label={copy.optionYes}
+                name="language_independent"
+                onChange={(event) => setLanguageIndependent(event.target.checked)}
+                type="checkbox"
+                value="on"
+              />
+            </Surface>
+            <Description>{copy.languageIndependentHint}</Description>
+          </Surface>
+          {languageIndependent ? null : (
+            <Surface className="flex w-full flex-col gap-1" variant="transparent">
+              <Label>{copy.languagesLabel}</Label>
+              <CheckboxMultiSelect
+                enableSearch
+                filterPlaceholder={copy.languagesSearchPlaceholder}
+                initialVisibleCount={LANGUAGE_MULTI_SELECT_INITIAL_VISIBLE}
+                name="languages"
+                options={languageOptions.map((option) => ({
+                  value: option.id,
+                  label: option.label,
+                }))}
+                searchHint={copy.languagesSearchHint}
+                selected={defaults?.languages ?? []}
+              />
+            </Surface>
+          )}
+          <Surface className="flex w-full flex-col gap-2" variant="transparent">
+            <Label>{copy.hasSubtitlesLabel}</Label>
+            <Surface className="onboarding-form__options" variant="transparent">
+              <NativePreferenceOption
+                defaultChecked={hasSubtitles}
+                inputLabel={copy.hasSubtitlesLabel}
+                label={copy.optionYes}
+                name="has_subtitles"
+                onChange={(event) => setHasSubtitles(event.target.checked)}
+                type="checkbox"
+                value="on"
+              />
+            </Surface>
+            <Description>{copy.hasSubtitlesHint}</Description>
+          </Surface>
+          {hasSubtitles ? (
+            <AdminFormSelect
+              defaultSelectedKey={defaults?.subtitleLanguage ?? undefined}
+              isRequired
+              label={copy.subtitleLanguageLabel}
+              name="subtitle_language"
+              options={subtitleLanguageOptions}
+              placeholder={copy.selectPlaceholder}
+            />
+          ) : null}
+        </Surface>
+      </Surface>
+
+      <Surface {...stepSurfaceProps(activeStep, 2)}>
+        {includeDateTime ? (
+          <EventAdminDateTimeList
+            applyPartnerHours={!isEdit}
+            hasOpeningHours={selectedPartner?.hasOpeningHours ?? false}
+            isDateRequired
+            locale={locale}
+            openingHours={selectedPartner?.openingHours ?? null}
+            partnerId={selectedPartnerId}
+            rangeEnd={defaults?.rangeEnd}
+            rangeSlots={defaults?.rangeSlots}
+            rangeStart={defaults?.rangeStart}
+            rows={defaults?.dateTimeRows}
+            timingMode={timingMode}
+          />
+        ) : null}
+
+        <AdminFormSelect
+          defaultSelectedKey={timingMode}
+          label={copy.timingModeLabel}
+          name="timing_mode"
+          onSelectionChange={(value) => {
+            if (value === "ALL_DAY" || value === "TIME_SLOT") {
+              setTimingMode(value);
+            }
+          }}
+          options={[
+            { id: "TIME_SLOT", label: copy.timingModeTimeSlot },
+            { id: "ALL_DAY", label: copy.timingModeAllDay },
+          ]}
+          placeholder={copy.selectPlaceholder}
+        />
+
+        {ticketType === "SECRET_CODE" ? (
+          <AdminFormNumberField
+            defaultValue={defaults?.totalCapacity ?? 10}
+            isRequired
+            label={copy.capacityLabel}
+            minValue={1}
+            name="total_capacity"
+          />
+        ) : null}
+
+        <AdminFormSelect
+          defaultSelectedKey={ticketType}
+          label={copy.ticketTypeLabel}
+          name="ticket_type"
+          onSelectionChange={(value) => {
+            if (typeof value === "string" && isTicketType(value)) {
+              setTicketType(value);
+            }
+          }}
+          options={[
+            { id: "SECRET_CODE", label: copy.ticketTypeSecretCode },
+            { id: "VOUCHER_PROMO", label: copy.ticketTypeVoucher },
+            { id: "VOUCHER_PDF", label: copy.ticketTypeVoucherPdf },
+          ]}
+          placeholder={copy.selectPlaceholder}
+        />
+
+        {ticketType === "VOUCHER_PROMO" || ticketType === "VOUCHER_PDF" ? (
+          <Description>{copy.capacityFromInventoryHint}</Description>
+        ) : null}
+
+        {ticketType === "SECRET_CODE" ? (
+          <TextField defaultValue={defaults?.secretCode ?? undefined} fullWidth name="secret_code">
+            <Label>{copy.secretCodeLabel}</Label>
+            <Input />
+          </TextField>
+        ) : null}
+
+        {ticketType === "VOUCHER_PROMO" ? (
+          <>
+            <TextField
+              defaultValue={defaults?.eventWebsiteUrl ?? undefined}
+              fullWidth
+              name="event_website_url"
+            >
+              <Label>{copy.eventWebsiteUrlLabel}</Label>
+              <Input type="url" />
+            </TextField>
+            <PromoCodeInventoryIsland
+              inventoryCounts={defaults?.inventoryCounts?.promo ?? null}
+              isEdit={isEdit}
+              locale={locale}
+            />
+          </>
+        ) : null}
+
+        {ticketType === "VOUCHER_PDF" ? (
+          <PdfVoucherInventoryIsland
+            eventId={defaults?.eventId ?? null}
+            inventoryCounts={defaults?.inventoryCounts?.pdf ?? null}
+            isEdit={isEdit}
+            locale={locale}
+            uploadPath={`/${locale}/admin/uploads/voucher-pdf`}
           />
         ) : null}
       </Surface>
 
-      <EventImageUpload
-        currentCredit={defaults?.currentImageCredit}
-        currentImageId={defaults?.currentImageId}
-        currentImageUrl={defaults?.currentImageUrl}
-        imagePublicBaseUrl={defaults?.imagePublicBaseUrl}
-        isEdit={isEdit}
-        locale={locale}
-      />
+      <Surface {...stepSurfaceProps(activeStep, 3)}>
+        <EventImageUpload
+          currentCredit={defaults?.currentImageCredit}
+          currentImageId={defaults?.currentImageId}
+          currentImageUrl={defaults?.currentImageUrl}
+          imagePublicBaseUrl={defaults?.imagePublicBaseUrl}
+          isEdit={isEdit}
+          locale={locale}
+        />
+      </Surface>
     </>
   );
 }

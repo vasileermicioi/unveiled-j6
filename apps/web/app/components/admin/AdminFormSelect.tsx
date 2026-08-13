@@ -50,7 +50,7 @@ export function AdminFormSelect({
 
   return (
     <Surface
-      className={["flex w-full flex-col gap-1", className].filter(Boolean).join(" ")}
+      className={["admin-form__native-field w-full", className].filter(Boolean).join(" ")}
       variant="transparent"
     >
       <Label htmlFor={id}>{label}</Label>

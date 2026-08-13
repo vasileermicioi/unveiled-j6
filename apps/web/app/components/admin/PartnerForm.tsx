@@ -138,21 +138,6 @@ export function PartnerForm({
         <Input type="email" />
       </TextField>
 
-      <TextField defaultValue={defaults?.street} fullWidth isRequired name="street">
-        <Label>{copy.streetLabel}</Label>
-        <Input />
-      </TextField>
-
-      <TextField defaultValue={defaults?.houseNumber} fullWidth isRequired name="house_number">
-        <Label>{copy.houseNumberLabel}</Label>
-        <Input />
-      </TextField>
-
-      <TextField defaultValue={defaults?.addressLine2 ?? undefined} fullWidth name="address_line2">
-        <Label>{copy.addressLine2Label}</Label>
-        <Input />
-      </TextField>
-
       <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
         <Surface className="flex w-full flex-col gap-1" variant="transparent">
           <Label htmlFor="partner-country-display">{copy.countryLabel}</Label>
@@ -192,6 +177,21 @@ export function PartnerForm({
         />
         <Description>{copy.zipCodeHint}</Description>
       </Surface>
+
+      <TextField defaultValue={defaults?.street} fullWidth isRequired name="street">
+        <Label>{copy.streetLabel}</Label>
+        <Input />
+      </TextField>
+
+      <TextField defaultValue={defaults?.houseNumber} fullWidth isRequired name="house_number">
+        <Label>{copy.houseNumberLabel}</Label>
+        <Input />
+      </TextField>
+
+      <TextField defaultValue={defaults?.addressLine2 ?? undefined} fullWidth name="address_line2">
+        <Label>{copy.addressLine2Label}</Label>
+        <Input />
+      </TextField>
 
       <input name="country" type="hidden" value={defaults?.country ?? "DE"} />
       <input name="city" type="hidden" value={defaults?.city ?? "berlin"} />

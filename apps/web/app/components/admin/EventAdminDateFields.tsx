@@ -124,7 +124,7 @@ export function EventAdminDateInput({
       name={name}
     >
       <Label>{label ?? copy.eventDateLabel}</Label>
-      <Input className="admin-form__native-input" type="date" />
+      <Input className="admin-form__native-input admin-native-date" type="date" />
     </TextField>
   );
 }
@@ -146,7 +146,7 @@ export function EventAdminTimeInput({
       name={name}
     >
       <Label>{label ?? copy.eventTimeLabel}</Label>
-      <Input className="admin-form__native-input" type="time" />
+      <Input className="admin-form__native-input admin-native-time" type="time" />
     </TextField>
   );
 }
@@ -187,7 +187,7 @@ function EventAdminCreditInput({
   const id = `admin-number-${name}`;
 
   return (
-    <Surface className="flex w-full flex-col gap-1" variant="transparent">
+    <Surface className="admin-form__native-field w-full" variant="transparent">
       <Label htmlFor={id}>{copy.creditPriceLabel}</Label>
       <input
         className="admin-native-number"
@@ -393,12 +393,12 @@ export function EventAdminDateTimeList({
   return (
     <Surface className="flex flex-col gap-4" variant="transparent">
       <Surface className="flex flex-col gap-3" variant="transparent">
-        <Label>{copy.rangeBuilderLabel}</Label>
+        <Label className="admin-form__section-label">{copy.rangeBuilderLabel}</Label>
         <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
-          <Surface className="flex w-full flex-col gap-1" variant="transparent">
+          <Surface className="admin-form__native-date-field w-full" variant="transparent">
             <Label htmlFor="admin-date-range_start">{copy.builderStartLabel}</Label>
             <input
-              className="admin-form__native-input"
+              className="admin-native-date"
               id="admin-date-range_start"
               name="range_start"
               onChange={(event) => updateStart(event.target.value)}
@@ -406,10 +406,10 @@ export function EventAdminDateTimeList({
               value={startDate}
             />
           </Surface>
-          <Surface className="flex w-full flex-col gap-1" variant="transparent">
+          <Surface className="admin-form__native-date-field w-full" variant="transparent">
             <Label htmlFor="admin-date-range_end">{copy.builderEndLabel}</Label>
             <input
-              className="admin-form__native-input"
+              className="admin-native-date"
               id="admin-date-range_end"
               name="range_end"
               onChange={(event) => updateEnd(event.target.value)}
@@ -418,7 +418,7 @@ export function EventAdminDateTimeList({
             />
           </Surface>
         </Surface>
-        <Label>{copy.rangeTimeSlotsLabel}</Label>
+        <Label className="admin-form__section-label">{copy.rangeTimeSlotsLabel}</Label>
         <input name="range_slot_count" type="hidden" value={String(timeSlots.length)} />
         {timeSlots.map((slot, index) => (
           <Surface
@@ -427,10 +427,10 @@ export function EventAdminDateTimeList({
             variant="transparent"
           >
             <Surface className="grid min-w-0 flex-1 gap-4 sm:grid-cols-2" variant="transparent">
-              <Surface className="flex w-full flex-col gap-1" variant="transparent">
+              <Surface className="admin-form__native-time-field w-full" variant="transparent">
                 <Label htmlFor={`admin-time-range_slot_time_${index}`}>{copy.eventTimeLabel}</Label>
                 <input
-                  className="admin-form__native-input"
+                  className="admin-native-time"
                   id={`admin-time-range_slot_time_${index}`}
                   name={`range_slot_time_${index}`}
                   onChange={(event) => updateTimeSlot(slot.id, { time: event.target.value })}
@@ -474,7 +474,7 @@ export function EventAdminDateTimeList({
       </Surface>
 
       <Surface className="flex flex-col gap-3" variant="transparent">
-        <Label>{copy.eventDateTimesLabel}</Label>
+        <Label className="admin-form__section-label">{copy.eventDateTimesLabel}</Label>
         <input name="datetime_count" type="hidden" value={String(rows.length)} />
         {rows.map((row, index) => (
           <Surface
