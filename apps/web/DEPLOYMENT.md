@@ -1036,7 +1036,7 @@ After deploy (with `SITE_URL` set to the staging origin), confirm:
 2. Footer legal links work on every page
 3. `curl -s $SITE_URL/robots.txt` — shows `Allow`, `Disallow`, and `Sitemap:` lines
 4. `curl -s $SITE_URL/sitemap.xml` — valid XML with marketing/legal locale URLs (`/de`, `/en/terms`, etc.); no `/events/` URLs until bookable events are included
-5. View Source on `/en/faq` — server-rendered `<title>`, description, canonical, hreflang, and `og:image` pointing at `/og-default.png`
+5. View Source on `/en/faq` — server-rendered `<title>`, description, canonical, hreflang, and `og:image` pointing at `/og-default-v2.png` with `og:image:width` 1200 and `og:image:height` 630
 6. Cookie consent banner appears on first visit; Accept/Decline persists across reloads until storage is cleared
 7. Browser console shows no errors on `/de` and `/en`
 
@@ -1052,7 +1052,7 @@ curl -s http://localhost:3000/robots.txt
 curl -s http://localhost:3000/sitemap.xml | rg -c '<url>'
 # expect 16
 curl -s http://localhost:3000/favicon.svg -o /dev/null -w '%{http_code}\n'
-curl -s http://localhost:3000/og-default.png -o /dev/null -w '%{http_code}\n'
+curl -s http://localhost:3000/og-default-v2.png -o /dev/null -w '%{http_code}\n'
 ```
 
 ## Phase 0 verification
@@ -1070,7 +1070,7 @@ After deploy, confirm:
 
 Logo SVGs live in `apps/web/public/logos/` (Illustrator exports — black, white, yellow). Served at `/logos/unveiled-logo-{tone}.svg`. Replace only by overwriting those three files; `<Logo />` picks them up automatically.
 
-Site-wide Open Graph fallback: `apps/web/public/og-default.png` (1200×630, yellow background). Used when a page has no page-specific image.
+Site-wide Open Graph fallback: `apps/web/public/og-default-v2.png` (1200×630 PNG, brand yellow `#FAFF86`; wordmark inside the center 630×630 so a 1:1 crop stays legible). Used when a page has no page-specific image. After changing this artwork, bump the filename so crawlers refetch. Optional post-deploy check: Facebook Sharing Debugger or Telegram paste of a marketing URL (paste a cache-bust query such as `?v=2` — Telegram keys previews on the page URL).
 
 ## Demo accounts
 

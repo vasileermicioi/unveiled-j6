@@ -88,7 +88,7 @@ None of these exist in the current app — add them fresh:
 
 - Favicon (`.ico` and/or SVG)
 - Web app manifest (`manifest.json`) for PWA-style install support
-- Site-wide Open Graph / social preview image — the static fallback used for pages with no natural image (marketing/legal pages); event detail pages use their own per-event `og-1200x630` variant instead (`extras/image-uploads.md`, `extras/seo-and-metadata.md`)
+- Site-wide Open Graph / social preview image — `apps/web/public/og-default-v2.png` (1200×630 PNG, brand yellow; Unveiled wordmark entirely inside the center 630×630 for 1:1 crops). Used for marketing/legal pages; event detail pages use their own per-event `og-1200x630` variant instead (`extras/image-uploads.md`, `extras/seo-and-metadata.md`)
 - Apple touch icon / other platform app icons
 
 ## Metadata

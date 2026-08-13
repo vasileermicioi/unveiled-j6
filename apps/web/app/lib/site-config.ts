@@ -1,6 +1,6 @@
 import { getEnvVar } from "./runtime-env";
 
-export const DEFAULT_OG_IMAGE_PATH = "/og-default.png";
+export const DEFAULT_OG_IMAGE_PATH = "/og-default-v2.png";
 
 export function getSiteUrl(): string {
   const raw = getEnvVar("SITE_URL") ?? "http://localhost:3000";

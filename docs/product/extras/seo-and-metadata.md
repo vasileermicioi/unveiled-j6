@@ -27,7 +27,10 @@ Every indexable page needs SSR (initial HTML):
 - `<title>` — unique. Pattern: `{Page} — Unveiled Berlin`; events: `{Event title} at {Partner name} — Unveiled Berlin`
 - `<meta name="description">` — unique ~150–160 chars; events from event description (truncated)
 - `<link rel="canonical">` — self URL including locale
-- Open Graph + Twitter Card; event `og:image` / `twitter:image` = **`og-1200x630`** variant
+- Open Graph + Twitter Card (`twitter:card` = `summary_large_image`)
+  - Pages without a page-specific image use the site-wide fallback `/og-default-v2.png` (PNG 1200×630, brand yellow `#FAFF86`). The Unveiled wordmark fits entirely inside the **center 630×630** so a 1:1 crop (Telegram and similar) stays legible. Change the filename when the artwork changes so crawlers refetch.
+  - SSR tags: `og:image`, `og:image:width` (`1200`), `og:image:height` (`630`), `og:image:type` (`image/png` for the fallback; `image/webp` when an event `og-1200x630` override is present), `og:image:alt`, matching `twitter:image`
+  - Event `og:image` / `twitter:image` = **`og-1200x630`** variant when present
 - `<meta name="robots">` per table above (dynamic for event bookability)
 
 ## 3. Locale, canonical, hreflang

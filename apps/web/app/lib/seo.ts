@@ -65,6 +65,10 @@ export function buildPageMeta(input: PageMetaInput): PageMeta {
 
   const resolvedOgImage = ogImage ?? getDefaultOgImage();
   openGraph["og:image"] = resolvedOgImage;
+  openGraph["og:image:width"] = "1200";
+  openGraph["og:image:height"] = "630";
+  openGraph["og:image:type"] = ogImage ? "image/webp" : "image/png";
+  openGraph["og:image:alt"] = SITE_NAME;
   twitter["twitter:image"] = resolvedOgImage;
 
   return {
