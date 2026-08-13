@@ -12,13 +12,35 @@ import { images } from "../schema/images";
 import { CatalogValidationError } from "./errors";
 import { type ImageAttachInput, validateImageSourceExclusive } from "./validation";
 
+export const IMAGE_CREDIT_MAX_LENGTH = 200;
+
 export type PersistImageOptions = {
   uploadedBy?: string | null;
   skipUpload?: boolean;
   prebuilt?: PrebuiltImageVariantsInput | null;
   /** Optional remote origin when prebuilt variants were generated from a URL. */
   sourceUrl?: string | null;
+  /** Optional human photo credit; independent of pipeline `source` / `source_url`. */
+  credit?: string | null;
 };
+
+/** Trim; empty/omitted → `null`; reject trimmed length over {@link IMAGE_CREDIT_MAX_LENGTH}. */
+export function normalizeImageCredit(credit?: string | null): string | null {
+  if (credit == null) {
+    return null;
+  }
+  const trimmed = credit.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  if (trimmed.length > IMAGE_CREDIT_MAX_LENGTH) {
+    throw new CatalogValidationError(
+      "IMAGE_CREDIT_TOO_LONG",
+      `Image credit must be ${IMAGE_CREDIT_MAX_LENGTH} characters or fewer`,
+    );
+  }
+  return trimmed;
+}
 
 export type PersistPrebuiltImageOptions = PersistImageOptions &
   Pick<PersistPrebuiltOptions, "source" | "sourceUrl">;
@@ -29,6 +51,7 @@ export async function persistPrebuiltImage(
   input: PrebuiltImageVariantsInput,
   options: PersistPrebuiltImageOptions = {},
 ): Promise<string> {
+  const credit = normalizeImageCredit(options.credit);
   const sourceUrl = options.sourceUrl ?? null;
   const processed = await persistPrebuiltImageVariants(input, {
     skipUpload: options.skipUpload,
@@ -42,6 +65,7 @@ export async function persistPrebuiltImage(
     originalHeight: processed.metadata.height,
     source: processed.metadata.source,
     sourceUrl: processed.metadata.sourceUrl,
+    credit,
     uploadedBy: options.uploadedBy ?? null,
   });
 
@@ -122,6 +146,34 @@ export async function assertImageExists(db: Db, imageId: string): Promise<void> 
   if (!row) {
     throw new CatalogValidationError("IMAGE_NOT_FOUND", `Image ${imageId} not found`);
   }
+}
+
+export async function getImageCredit(db: Db, imageId: string): Promise<string | null> {
+  const row = await db.query.images.findFirst({
+    where: eq(images.id, imageId),
+    columns: { credit: true },
+  });
+  if (!row) {
+    throw new CatalogValidationError("IMAGE_NOT_FOUND", `Image ${imageId} not found`);
+  }
+  return row.credit;
+}
+
+export async function updateImageCredit(
+  db: Db,
+  imageId: string,
+  credit?: string | null,
+): Promise<string | null> {
+  const nextCredit = normalizeImageCredit(credit);
+  const updated = await db
+    .update(images)
+    .set({ credit: nextCredit })
+    .where(eq(images.id, imageId))
+    .returning({ credit: images.credit });
+  if (updated.length === 0) {
+    throw new CatalogValidationError("IMAGE_NOT_FOUND", `Image ${imageId} not found`);
+  }
+  return updated[0]?.credit ?? null;
 }
 
 export async function replacePartnerLogo(

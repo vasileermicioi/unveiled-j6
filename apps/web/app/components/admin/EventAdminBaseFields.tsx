@@ -432,16 +432,6 @@ export function EventAdminBaseFields({
       ) : null}
 
       <Surface className="flex flex-col gap-4" variant="transparent">
-        <AdminFormSelect
-          defaultSelectedKey={defaults?.barrierFree === true ? "on" : "off"}
-          label={copy.barrierFreeLabel}
-          name="barrier_free"
-          options={[
-            { id: "off", label: copy.optionNo },
-            { id: "on", label: copy.optionYes },
-          ]}
-          placeholder={copy.selectPlaceholder}
-        />
         <Surface className="flex w-full flex-col gap-2" variant="transparent">
           <Label>{copy.languageIndependentLabel}</Label>
           <Surface className="onboarding-form__options" variant="transparent">
@@ -502,6 +492,7 @@ export function EventAdminBaseFields({
       </Surface>
 
       <EventImageUpload
+        currentCredit={defaults?.currentImageCredit}
         currentImageId={defaults?.currentImageId}
         currentImageUrl={defaults?.currentImageUrl}
         imagePublicBaseUrl={defaults?.imagePublicBaseUrl}

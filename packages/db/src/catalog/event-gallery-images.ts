@@ -16,6 +16,7 @@ export type EventGalleryImageRow = {
   imageId: string;
   sortOrder: number;
   createdAt: Date;
+  credit: string | null;
 };
 
 export type RemoveEventGalleryImagesOptions = {
@@ -36,8 +37,10 @@ export async function listEventGalleryImages(
       imageId: eventGalleryImages.imageId,
       sortOrder: eventGalleryImages.sortOrder,
       createdAt: eventGalleryImages.createdAt,
+      credit: images.credit,
     })
     .from(eventGalleryImages)
+    .innerJoin(images, eq(eventGalleryImages.imageId, images.id))
     .where(eq(eventGalleryImages.eventId, eventId))
     .orderBy(asc(eventGalleryImages.sortOrder), asc(eventGalleryImages.imageId));
 }

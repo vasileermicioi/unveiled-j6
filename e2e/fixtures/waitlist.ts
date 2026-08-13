@@ -71,7 +71,6 @@ export async function getSoldOutWaitlistEventId(): Promise<string> {
       ticketType: "SECRET_CODE",
       secretCode: "WAITLIST26",
       languages: ["de", "en"],
-      barrierFree: true,
       hasSubtitles: false,
       subtitleLanguage: null,
       lat: template.lat,

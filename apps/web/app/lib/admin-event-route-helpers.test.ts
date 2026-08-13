@@ -28,7 +28,6 @@ function baseValues(overrides: Partial<EventFormValues> = {}): EventFormValues {
     promoCodes: [],
     voucherPdfs: [],
     replaceUnusedInventory: false,
-    barrierFree: null,
     languageIndependent: false,
     languages: null,
     hasSubtitles: false,
@@ -39,6 +38,7 @@ function baseValues(overrides: Partial<EventFormValues> = {}): EventFormValues {
     imageUrl: null,
     imagePrebuilt: null,
     stagedImageId: null,
+    imageCredit: "",
     ...overrides,
   };
 }
@@ -101,5 +101,10 @@ describe("formValuesToDefaults", () => {
       { time: "20:00", credits: "1" },
       { time: "21:00", credits: "3" },
     ]);
+  });
+
+  test("round-trips imageCredit onto currentImageCredit", () => {
+    const defaults = formValuesToDefaults(baseValues({ imageCredit: "Photo: Ada" }));
+    expect(defaults.currentImageCredit).toBe("Photo: Ada");
   });
 });

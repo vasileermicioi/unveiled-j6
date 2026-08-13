@@ -41,8 +41,10 @@ export const POST = createRoute(async (c) => {
       contactEmail: values.contactEmail,
       hasOpeningHours: hours.hasOpeningHours,
       openingHours: hours.openingHours,
+      barrierFree: values.barrierFree,
       logoUpload: values.logoUpload,
       logoPrebuilt: values.logoPrebuilt,
+      logoCredit: values.logoCredit,
       uploadedBy: guard.session.user.id,
     });
 
@@ -74,6 +76,8 @@ export const POST = createRoute(async (c) => {
                   city: values.city,
                   hasOpeningHours: values.hasOpeningHours,
                   openingHoursDays: values.openingHoursDays,
+                  barrierFree: values.barrierFree,
+                  currentLogoCredit: values.logoCredit,
                 }
               : undefined
           }

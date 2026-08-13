@@ -8,6 +8,8 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
+import { AdminImageCreditField } from "./AdminImageCreditField";
+
 import {
   type ProcessedAdminUpload,
   VARIANT_FILENAMES,
@@ -285,9 +287,12 @@ export function AdminImageVariantGallery({
 export function AdminImageVariantGallerySummary({
   locale,
   processedList,
+  includeCreditFields = false,
 }: {
   locale: Locale;
   processedList: ProcessedAdminUpload[];
+  /** Gallery add: one `image_credit_{index}` field per processed file. */
+  includeCreditFields?: boolean;
 }) {
   const copy = getAdminCopy(locale);
   if (processedList.length === 0) {
@@ -299,7 +304,14 @@ export function AdminImageVariantGallerySummary({
     if (!only) {
       return null;
     }
-    return <AdminImageVariantGallery locale={locale} processed={only} />;
+    return (
+      <Surface className="flex flex-col gap-3" variant="transparent">
+        <AdminImageVariantGallery locale={locale} processed={only} />
+        {includeCreditFields ? (
+          <AdminImageCreditField locale={locale} name="image_credit_0" />
+        ) : null}
+      </Surface>
+    );
   }
 
   return (
@@ -307,13 +319,17 @@ export function AdminImageVariantGallerySummary({
       <Description>{copy.gallerySelectedFilesLabel(processedList.length)}</Description>
       <Surface className="admin-gallery-multi-preview__grid" variant="transparent">
         {processedList.map((item, index) => (
-          <AdminImageVariantGallery
-            compact
-            key={item.imageId}
-            label={copy.galleryPhotoLabel(index + 1)}
-            locale={locale}
-            processed={item}
-          />
+          <Surface className="flex flex-col gap-2" key={item.imageId} variant="transparent">
+            <AdminImageVariantGallery
+              compact
+              label={copy.galleryPhotoLabel(index + 1)}
+              locale={locale}
+              processed={item}
+            />
+            {includeCreditFields ? (
+              <AdminImageCreditField locale={locale} name={`image_credit_${index}`} />
+            ) : null}
+          </Surface>
         ))}
       </Surface>
     </Surface>

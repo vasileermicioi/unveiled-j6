@@ -94,8 +94,11 @@ export type PartnerFormValues = {
   city?: string;
   hasOpeningHours: boolean;
   openingHoursDays: PartnerOpeningHoursDaysForm;
+  barrierFree: boolean | null;
   logoUpload: Buffer | null;
   logoPrebuilt: PrebuiltImageVariantsInput | null;
+  /** Posted `image_credit`; empty string clears on keep-file. */
+  logoCredit: string;
 };
 
 export type {
@@ -162,6 +165,7 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
   const city = asString(body.city)?.trim() || undefined;
   const logoPrebuilt = await parsePrebuiltImageVariants(body, asString, asFile);
   const { hasOpeningHours, openingHoursDays } = parseOpeningHoursFormFromBody(body, asString);
+  const barrierFree = asString(body.barrier_free) === "on" ? true : null;
 
   let logoUpload: Buffer | null = null;
   if (!logoPrebuilt) {
@@ -182,8 +186,10 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
     city,
     hasOpeningHours,
     openingHoursDays,
+    barrierFree,
     logoUpload,
     logoPrebuilt,
+    logoCredit: asString(body.image_credit)?.trim() ?? "",
   };
 }
 

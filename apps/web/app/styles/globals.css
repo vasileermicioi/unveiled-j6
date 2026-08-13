@@ -929,11 +929,14 @@
 
   .event-detail--checkout__hero {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 0.5rem;
     width: 100%;
     max-width: none;
     min-width: 0;
+    padding-block: 0 0.75rem;
     border: 2px solid var(--color-brand-dark);
     background-color: transparent;
   }
@@ -1141,6 +1144,23 @@
     object-position: center;
     border: none;
     background-color: transparent;
+  }
+
+  .event-detail--checkout__hero-credit,
+  .event-detail--checkout__partner-logo-credit,
+  .event-detail-gallery__credit {
+    margin: 0;
+    padding-inline: 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .event-detail--checkout__partner-logo-credit {
+    text-align: start;
+    padding-inline: 0;
   }
 
   .event-detail--checkout__card {
@@ -1395,8 +1415,10 @@
 
   .event-detail-gallery__stage {
     display: flex;
+    flex-direction: column;
     width: 100%;
     align-items: center;
+    gap: 0.5rem;
     justify-content: center;
     padding: 0;
     background: transparent;

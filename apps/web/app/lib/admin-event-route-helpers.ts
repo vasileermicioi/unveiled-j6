@@ -40,6 +40,7 @@ function resolveImagePublicBaseUrl(): string | null {
 export function eventToFormDefaults(
   event: Event,
   inventoryCounts?: EventFormDefaults["inventoryCounts"],
+  currentImageCredit?: string | null,
 ): EventFormDefaults & { partnerId: string } {
   let currentImageUrl: string | null = null;
   try {
@@ -70,7 +71,6 @@ export function eventToFormDefaults(
     eventWebsiteUrl: event.eventWebsiteUrl,
     eventId: event.id,
     inventoryCounts,
-    barrierFree: event.barrierFree,
     languageIndependent: event.languageIndependent,
     languages: event.languages,
     hasSubtitles: event.hasSubtitles,
@@ -79,6 +79,7 @@ export function eventToFormDefaults(
     lng: event.lng,
     currentImageUrl,
     currentImageId: event.imageId,
+    currentImageCredit: currentImageCredit ?? null,
     imagePublicBaseUrl: resolveImagePublicBaseUrl(),
   };
 }
@@ -109,7 +110,6 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     ticketType: values.ticketType,
     secretCode: values.secretCode,
     eventWebsiteUrl: values.eventWebsiteUrl,
-    barrierFree: values.barrierFree,
     languageIndependent: values.languageIndependent,
     languages: values.languages,
     hasSubtitles: values.hasSubtitles,
@@ -118,6 +118,7 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     lng: values.lng,
     currentImageUrl: null,
     currentImageId,
+    currentImageCredit: values.imageCredit,
     imagePublicBaseUrl: resolveImagePublicBaseUrl(),
   };
 }

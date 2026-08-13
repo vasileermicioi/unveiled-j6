@@ -116,9 +116,11 @@ export const POST = createRoute(async (c) => {
 
   const persistedIds: string[] = [];
   try {
-    for (const input of sets) {
+    for (const [index, input] of sets.entries()) {
+      const credit = asString(body[`image_credit_${index}`]);
       const imageId = await persistPrebuiltImage(db, input, {
         uploadedBy: guard.session.user.id,
+        credit,
       });
       persistedIds.push(imageId);
     }

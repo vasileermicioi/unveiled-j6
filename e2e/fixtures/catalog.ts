@@ -8,7 +8,9 @@ import {
   eq,
   events,
   getBerlinCalendarDate,
+  getEventById,
   getPartnerById,
+  images,
   listEventGalleryImages,
   listEvents,
   listFeaturedPartners,
@@ -239,7 +241,6 @@ export async function createPricedSlotEvent(options?: {
       ticketType: "SECRET_CODE",
       secretCode: `SLOT${Date.now().toString(36).slice(-6).toUpperCase()}`,
       languages: ["de", "en"],
-      barrierFree: true,
       hasSubtitles: false,
       subtitleLanguage: null,
       lat: template.lat,
@@ -376,5 +377,99 @@ export async function withPartnerOpeningHours(
         updatedAt: new Date(),
       })
       .where(eq(partners.id, partnerId));
+  }
+}
+
+/**
+ * Temporarily set a partner's barrier-free flag, restoring the prior value after `fn`.
+ * Uses a direct column update (avoids `updatePartner` image-pipeline import in Playwright).
+ */
+export async function withPartnerBarrierFree(
+  partnerName: string,
+  barrierFree: boolean | null,
+  fn: () => Promise<void>,
+): Promise<void> {
+  const db = createDb(requireDatabaseUrl());
+  const partnerId = await getPartnerIdByName(partnerName);
+  const existing = await getPartnerById(db, partnerId);
+  if (!existing) {
+    throw new Error(`Partner not found: ${partnerName}`);
+  }
+
+  const previous = existing.barrierFree ?? null;
+
+  try {
+    await db
+      .update(partners)
+      .set({
+        barrierFree,
+        updatedAt: new Date(),
+      })
+      .where(eq(partners.id, partnerId));
+    await fn();
+  } finally {
+    await db
+      .update(partners)
+      .set({
+        barrierFree: previous,
+        updatedAt: new Date(),
+      })
+      .where(eq(partners.id, partnerId));
+  }
+}
+
+/**
+ * Temporarily set an event's primary-image credit, restoring the prior value after `fn`.
+ * Direct column update (avoids `@unveiled/db/catalog/images` / WASM in Playwright).
+ */
+export async function withEventPrimaryCredit(
+  eventId: string,
+  credit: string | null,
+  fn: () => Promise<void>,
+): Promise<void> {
+  const db = createDb(requireDatabaseUrl());
+  const event = await getEventById(db, eventId);
+  if (!event) {
+    throw new Error(`Event not found: ${eventId}`);
+  }
+
+  const existing = await db.query.images.findFirst({
+    where: eq(images.id, event.imageId),
+    columns: { credit: true },
+  });
+  if (!existing) {
+    throw new Error(`Primary image not found for event: ${eventId}`);
+  }
+  const previous = existing.credit ?? null;
+
+  try {
+    await db.update(images).set({ credit }).where(eq(images.id, event.imageId));
+    await fn();
+  } finally {
+    await db.update(images).set({ credit: previous }).where(eq(images.id, event.imageId));
+  }
+}
+
+/**
+ * Temporarily set the first gallery image's credit, restoring the prior value after `fn`.
+ */
+export async function withGalleryImageCredit(
+  eventId: string,
+  credit: string | null,
+  fn: () => Promise<void>,
+): Promise<void> {
+  const db = createDb(requireDatabaseUrl());
+  const gallery = await listEventGalleryImages(db, eventId);
+  const first = gallery[0];
+  if (!first) {
+    throw new Error(`Event has no gallery images: ${eventId}`);
+  }
+  const previous = first.credit ?? null;
+
+  try {
+    await db.update(images).set({ credit }).where(eq(images.id, first.imageId));
+    await fn();
+  } finally {
+    await db.update(images).set({ credit: previous }).where(eq(images.id, first.imageId));
   }
 }

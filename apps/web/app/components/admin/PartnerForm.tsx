@@ -14,6 +14,7 @@ import {
 import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 
 import { AdminFormError } from "./AdminFormError";
+import { AdminFormSelect } from "./AdminFormSelect";
 import { PartnerLogoUpload } from "./PartnerLogoUpload";
 
 export type PartnerFormDefaults = {
@@ -27,8 +28,10 @@ export type PartnerFormDefaults = {
   city?: string;
   hasOpeningHours?: boolean;
   openingHoursDays?: PartnerOpeningHoursDaysForm;
+  barrierFree?: boolean | null;
   currentLogoUrl?: string | null;
   currentLogoImageId?: string | null;
+  currentLogoCredit?: string | null;
   imagePublicBaseUrl?: string | null;
 };
 
@@ -194,6 +197,7 @@ export function PartnerForm({
       <input name="city" type="hidden" value={defaults?.city ?? "berlin"} />
 
       <PartnerLogoUpload
+        currentCredit={defaults?.currentLogoCredit}
         currentLogoImageId={defaults?.currentLogoImageId}
         currentLogoUrl={defaults?.currentLogoUrl}
         imagePublicBaseUrl={defaults?.imagePublicBaseUrl}
@@ -232,6 +236,17 @@ export function PartnerForm({
           </Surface>
         ) : null}
       </Surface>
+
+      <AdminFormSelect
+        defaultSelectedKey={defaults?.barrierFree === true ? "on" : "off"}
+        label={copy.barrierFreeLabel}
+        name="barrier_free"
+        options={[
+          { id: "off", label: copy.optionNo },
+          { id: "on", label: copy.optionYes },
+        ]}
+        placeholder={copy.selectPlaceholder}
+      />
 
       <Surface className="flex flex-col gap-3 sm:flex-row sm:items-center" variant="transparent">
         <Button className="button button--primary button--md sm:min-w-40" type="submit">

@@ -62,7 +62,6 @@ export type EventFormValues = {
   promoCodes: string[];
   voucherPdfs: VoucherPdfFormItem[];
   replaceUnusedInventory: boolean;
-  barrierFree: boolean | null;
   languageIndependent: boolean;
   languages: string[] | null;
   hasSubtitles: boolean;
@@ -74,6 +73,8 @@ export type EventFormValues = {
   imagePrebuilt: PrebuiltImageVariantsInput | null;
   /** Persisted primary image id posted without variant Files (error-form retry). */
   stagedImageId: string | null;
+  /** Posted `image_credit`; empty string clears on keep-file. */
+  imageCredit: string;
 };
 
 export type SeriesSlotMode = "manual" | "builder";
@@ -745,7 +746,6 @@ export async function parseEventFormBody(
     promoCodes: parsePromoCodesJson(asString(body.promo_codes_json)),
     voucherPdfs: parseVoucherPdfsJson(asString(body.voucher_pdfs_json)),
     replaceUnusedInventory: asString(body.replace_unused_inventory) === "on",
-    barrierFree: asString(body.barrier_free) === "on" ? true : null,
     languageIndependent,
     languages: languages.length > 0 ? languages : null,
     hasSubtitles,
@@ -756,6 +756,7 @@ export async function parseEventFormBody(
     imageUrl,
     imagePrebuilt,
     stagedImageId,
+    imageCredit: asString(body.image_credit)?.trim() ?? "",
   };
 }
 

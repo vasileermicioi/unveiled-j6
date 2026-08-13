@@ -212,6 +212,8 @@ export type AdminCopy = {
   gallerySelectLabel: (index: number) => string;
   galleryReorderHint: string;
   gallerySaveOrderAction: string;
+  imageCreditLabel: string;
+  imageCreditHint: string;
   gallerySelectedFilesLabel: (count: number) => string;
   waitlistTitle: string;
   waitlistSubtitle: string;
@@ -435,6 +437,7 @@ export type AdminCopy = {
     houseNumber: string;
     logo: string;
     image: string;
+    imageCredit: string;
     partnerId: string;
     title: string;
     description: string;
@@ -664,8 +667,10 @@ const copy: Record<Locale, AdminCopy> = {
     galleryPhotoLabel: (index) => `Foto ${index}`,
     gallerySelectLabel: (index) => `Foto ${index} auswählen`,
     galleryReorderHint:
-      "Ziehen zum Sortieren, dann Reihenfolge speichern. Auswählen, dann Fotos entfernen.",
+      "Ziehen zum Sortieren, dann Reihenfolge speichern (speichert auch Bildnachweise). Auswählen, dann Fotos entfernen.",
     gallerySaveOrderAction: "Reihenfolge speichern",
+    imageCreditLabel: "Bildnachweis",
+    imageCreditHint: "z. B. Foto: Name",
     gallerySelectedFilesLabel: (count) => `${count} Dateien vorbereitet`,
     waitlistTitle: "Warteliste",
     waitlistSubtitle: "Einträge filtern und manuell befördern.",
@@ -916,6 +921,7 @@ const copy: Record<Locale, AdminCopy> = {
       houseNumber: "Hausnummer ist erforderlich.",
       logo: "Partner-Logo ist erforderlich. Bitte ein Bild hochladen.",
       image: "Event-Bild ist erforderlich. Bitte ein Bild hochladen.",
+      imageCredit: "Bildnachweis darf höchstens 200 Zeichen haben.",
       partnerId: "Partner ist erforderlich.",
       title: "Titel ist erforderlich.",
       description: "Beschreibung ist erforderlich.",
@@ -1141,8 +1147,11 @@ const copy: Record<Locale, AdminCopy> = {
     galleryRemoveSelectionRequired: "Select at least one photo to remove.",
     galleryPhotoLabel: (index) => `Photo ${index}`,
     gallerySelectLabel: (index) => `Select photo ${index}`,
-    galleryReorderHint: "Drag to reorder, then save order. Select photos, then remove.",
+    galleryReorderHint:
+      "Drag to reorder, then save order (also saves image credits). Select photos, then remove.",
     gallerySaveOrderAction: "Save order",
+    imageCreditLabel: "Image credit",
+    imageCreditHint: "e.g. Photo: Name",
     gallerySelectedFilesLabel: (count) => `${count} files ready`,
     waitlistTitle: "Waitlist",
     waitlistSubtitle: "Filter entries and promote manually.",
@@ -1385,6 +1394,7 @@ const copy: Record<Locale, AdminCopy> = {
       houseNumber: "House number is required.",
       logo: "Partner logo is required. Please upload an image.",
       image: "Event image is required. Please upload an image.",
+      imageCredit: "Image credit must be 200 characters or fewer.",
       partnerId: "Partner is required.",
       title: "Title is required.",
       description: "Description is required.",
@@ -1415,6 +1425,7 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   CONFLICTING_IMAGE_SOURCES: "image",
   MISSING_EVENT_IMAGE: "image",
   IMAGE_NOT_FOUND: "image",
+  IMAGE_CREDIT_TOO_LONG: "imageCredit",
   INVALID_REDEMPTION_CONFIG: "redemption",
   EMPTY_VOUCHER_INVENTORY: "redemption",
   DUPLICATE_VOUCHER_CODE: "redemption",
@@ -1461,6 +1472,10 @@ export function mapCatalogErrorCode(
 
   if (code === "MISSING_EVENT_IMAGE" || code === "IMAGE_NOT_FOUND") {
     return adminCopy.fieldErrors.image;
+  }
+
+  if (code === "IMAGE_CREDIT_TOO_LONG") {
+    return adminCopy.fieldErrors.imageCredit;
   }
 
   if (

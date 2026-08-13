@@ -113,6 +113,18 @@ Feature: Event Discovery
     Then event detail does not show an opening-hours list
     And the partner name and logo attribution still behave as today
 
+  Scenario: Event detail shows partner barrier-free
+    Given I am not signed in
+    And the hosting partner has barrier_free true
+    When I open that event's public detail URL ("/events/:id")
+    Then DETAILS shows Barrier-free / Barrierefrei
+
+  Scenario: Event detail when partner barrier-free is unset
+    Given I am not signed in
+    And the hosting partner has barrier_free null
+    When I open that event's public detail URL ("/events/:id")
+    Then DETAILS shows Not specified / Keine Angabe
+
   Scenario: Guest views gallery on event detail
     Given I am not signed in
     And an event has two or more gallery images
@@ -129,6 +141,23 @@ Feature: Event Discovery
     Given demo seed has run
     When I open the public detail URL for an upcoming featured demo event that was seeded with a gallery
     Then I see multiple gallery images on the detail page
+
+  Scenario: Hero shows credit
+    When I open a public event whose primary image has credit
+    Then I see that credit under the primary image
+
+  Scenario: Gallery photo credit in lightbox
+    When a gallery image has credit "Photo: Ada"
+    And I open that photo in the public gallery lightbox
+    Then I see the credit caption
+
+  Scenario: Empty credit omitted
+    When an image has NULL credit
+    Then public event detail does not show a credit caption for that image
+
+  Scenario: Cards omit credit
+    When I view Discover or the member feed
+    Then event cards do not show image credit
 
   Scenario: Booking-eligible member sees tickets, credits and date on event detail
     Given I am signed in as a booking-eligible member

@@ -1,5 +1,5 @@
 import { getPartnerById, updatePartner } from "@unveiled/db";
-import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
+import { ensureImageVariantsUploaded, getImageCredit } from "@unveiled/db/catalog/images";
 import { buildVariantUrl, readImagePublicBaseUrl } from "@unveiled/images/urls";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
@@ -122,8 +122,10 @@ export const POST = createRoute(async (c) => {
       contactEmail: values.contactEmail,
       hasOpeningHours: hours.hasOpeningHours,
       openingHours: hours.openingHours,
+      barrierFree: values.barrierFree,
       logoUpload: values.logoUpload,
       logoPrebuilt: values.logoPrebuilt,
+      logoCredit: values.logoCredit,
       uploadedBy: guard.session.user.id,
     });
 
@@ -147,8 +149,10 @@ export const POST = createRoute(async (c) => {
         hasOpeningHours: values?.hasOpeningHours ?? existing.hasOpeningHours,
         openingHoursDays:
           values?.openingHoursDays ?? openingHoursWeekToFormDays(existing.openingHours),
+        barrierFree: values?.barrierFree ?? existing.barrierFree,
         currentLogoUrl: buildPartnerLogoUrl(existing.logoImageId),
         currentLogoImageId: existing.logoImageId,
+        currentLogoCredit: values?.logoCredit ?? (await getImageCredit(db, existing.logoImageId)),
         imagePublicBaseUrl: resolveImagePublicBaseUrl(),
       },
     });
@@ -183,6 +187,7 @@ export default createRoute(async (c) => {
   }
 
   await ensureImageVariantsUploaded(db, partner.logoImageId);
+  const currentLogoCredit = await getImageCredit(db, partner.logoImageId);
 
   return renderEditPage(c, {
     locale: guard.locale,
@@ -198,8 +203,10 @@ export default createRoute(async (c) => {
       city: partner.city,
       hasOpeningHours: partner.hasOpeningHours,
       openingHoursDays: openingHoursWeekToFormDays(partner.openingHours),
+      barrierFree: partner.barrierFree,
       currentLogoUrl: buildPartnerLogoUrl(partner.logoImageId),
       currentLogoImageId: partner.logoImageId,
+      currentLogoCredit,
       imagePublicBaseUrl: resolveImagePublicBaseUrl(),
     },
   });

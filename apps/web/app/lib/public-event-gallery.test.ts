@@ -19,6 +19,7 @@ function row(imageId: string, sortOrder: number): EventGalleryImageRow {
     imageId,
     sortOrder,
     createdAt: new Date("2026-07-01T12:00:00.000Z"),
+    credit: null,
   };
 }
 
@@ -40,6 +41,15 @@ describe("toPublicEventGalleryImages", () => {
     expect(items[0]?.thumbSrcSet).toContain("small-320.webp");
     expect(items[0]?.fullSrc).toContain(`/images/${id}/large-1280.webp`);
     expect(items[0]?.fullSrcSet).toContain("medium-640.webp");
+    expect(items[0]?.credit).toBeNull();
+  });
+
+  test("maps non-empty gallery credit", () => {
+    process.env.IMAGE_PUBLIC_BASE_URL = "https://cdn.example.com";
+    const id = "11111111-1111-4111-8111-111111111111";
+    const credited = { ...row(id, 0), credit: "Photo: Ada" };
+    const items = toPublicEventGalleryImages([credited]);
+    expect(items[0]?.credit).toBe("Photo: Ada");
   });
 
   test("skips rows when public base URL is missing", () => {

@@ -9,6 +9,8 @@ export const images = pgTable("images", {
   originalHeight: integer("original_height").notNull(),
   source: imageSourceEnum("source").notNull(),
   sourceUrl: text("source_url"),
+  /** Optional human photo credit; independent of pipeline `source` / `source_url`. */
+  credit: text("credit"),
   uploadedBy: text("uploaded_by").references(() => users.id, { onDelete: "restrict" }),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });

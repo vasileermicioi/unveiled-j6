@@ -117,6 +117,11 @@ export default function EventGallerySlider({ images, copy }: EventGallerySliderP
                     src={active.fullSrc}
                     srcSet={active.fullSrcSet}
                   />
+                  {active.credit?.trim() ? (
+                    <Paragraph className="event-detail-gallery__credit" size="sm">
+                      {active.credit.trim()}
+                    </Paragraph>
+                  ) : null}
                 </Surface>
                 <Surface
                   className="event-detail-gallery__pager flex items-center justify-center gap-6"

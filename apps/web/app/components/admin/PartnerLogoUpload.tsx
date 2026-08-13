@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
+import { AdminImageCreditField } from "./AdminImageCreditField";
 import { AdminImageVariantFields } from "./AdminImageVariantFields";
 import { AdminImageVariantGallery } from "./AdminImageVariantGallery";
 import {
@@ -22,6 +23,8 @@ export type PartnerLogoUploadProps = {
   /** @deprecated Prefer currentLogoImageId + imagePublicBaseUrl for the variant gallery. */
   currentLogoUrl?: string | null;
   currentLogoImageId?: string | null;
+  /** Existing credit when keeping the current logo; ignored once a new file is processed. */
+  currentCredit?: string | null;
   imagePublicBaseUrl?: string | null;
   /** Reserved for featured-event-gallery reuse; partner logo stays single-file. */
   multiple?: boolean;
@@ -43,6 +46,7 @@ export function PartnerLogoUpload({
   isEdit = false,
   currentLogoUrl = null,
   currentLogoImageId = null,
+  currentCredit = null,
   imagePublicBaseUrl = null,
   multiple = false,
   inputName = "logo",
@@ -218,6 +222,12 @@ export function PartnerLogoUpload({
           <AdminImageVariantFields processed={processed} />
         </>
       ) : null}
+      <AdminImageCreditField
+        defaultValue={processed ? "" : (currentCredit ?? "")}
+        key={processed ? `new-${processed.imageId}` : (currentLogoImageId ?? "empty")}
+        locale={locale}
+        name="image_credit"
+      />
     </Surface>
   );
 }

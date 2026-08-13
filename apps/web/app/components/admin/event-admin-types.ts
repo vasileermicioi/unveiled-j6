@@ -37,7 +37,6 @@ export type EventFormDefaults = Partial<{
   eventWebsiteUrl: string | null;
   eventId: string;
   inventoryCounts: VoucherInventoryCounts;
-  barrierFree: boolean | null;
   languageIndependent: boolean;
   languages: string[] | null;
   hasSubtitles: boolean;
@@ -46,6 +45,7 @@ export type EventFormDefaults = Partial<{
   lng: string | null;
   currentImageUrl: string | null;
   currentImageId: string | null;
+  currentImageCredit: string | null;
   imagePublicBaseUrl: string | null;
 }>;
 

@@ -342,7 +342,7 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 
 ### Requirement: Clone event
 
-The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, structured location fields including composed address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, ticket type, secret code when `SECRET_CODE`, website URL, accessibility/language/age metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The caller SHALL supply a non-empty `dateTimes` list (and any create-required redemption inventory for voucher types). The caller MAY supply `occurrenceCreditPrices` of equal length; when omitted, the clone SHALL unique-sort `dateTimes` and fill every credit from `source.creditPrice`. The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.
+The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, structured location fields including composed address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, ticket type, secret code when `SECRET_CODE`, website URL, language/subtitle metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The clone SHALL NOT copy barrier-free accessibility (that value lives on the partner). The caller SHALL supply a non-empty `dateTimes` list (and any create-required redemption inventory for voucher types). The caller MAY supply `occurrenceCreditPrices` of equal length; when omitted, the clone SHALL unique-sort `dateTimes` and fill every credit from `source.creditPrice`. The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.
 
 #### Scenario: Clone creates a distinct event
 
@@ -361,6 +361,12 @@ The catalog domain SHALL provide an ADMIN-facing clone operation that creates a 
 - **WHEN** `cloneEvent` is called with `dateTimes` and no `occurrenceCreditPrices`
 - **THEN** every stored `occurrence_credit_prices` element equals `source.creditPrice`
 - **AND** denormalized `credit_price` equals the primary occurrence’s price
+
+#### Scenario: Clone does not copy barrier-free onto the event
+
+- **WHEN** `cloneEvent` is called
+- **THEN** the new event row has no `barrier_free` column/value
+- **AND** public detail accessibility for the clone still comes from the hosting partner
 
 ### Requirement: Admin image upload on the application host
 
@@ -435,7 +441,7 @@ Admin event create and edit forms SHALL NOT expose a remote image URL text field
 
 ### Requirement: Admin event form select controls
 
-Admin event create/edit and clone forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, barrier-free, languages, and subtitle language where those fields appear. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged except that `target_age_groups` is no longer a form field. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`). Series create forms SHALL NOT be documented or offered.
+Admin event create/edit and clone forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, languages, and subtitle language where those fields appear. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged except that `target_age_groups` and `barrier_free` are no longer event form fields. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`). Series create forms SHALL NOT be documented or offered.
 
 #### Scenario: Partner field is a native select
 
@@ -457,6 +463,23 @@ Admin event create/edit and clone forms SHALL use native HTML `<select>` (or nat
 - **WHEN** an admin opens Create Event, Edit Event, or Clone Event
 - **THEN** no target age groups control is shown
 - **AND** create/update/clone do not write `target_age_groups`
+
+#### Scenario: Barrier-free is not an event form control
+
+- **WHEN** an admin opens Create Event, Edit Event, or Clone Event
+- **THEN** no barrier-free control is shown
+- **AND** create/update/clone do not write `events.barrier_free`
+
+### Requirement: Optional accessibility and audience metadata without age groups
+
+The system SHALL allow admins to optionally set supported languages, language-independent, and subtitles when creating or editing an event. The system SHALL NOT collect or store barrier-free accessibility or target age groups on events. Barrier-free SHALL be stored only on the hosting partner. `docs/product/features/admin-events.feature` SHALL include a scenario titled `Optional audience metadata without barrier-free`. Playwright SHALL use that title verbatim.
+
+#### Scenario: Optional audience metadata without barrier-free
+
+- **WHEN** I create or edit an event
+- **THEN** I can optionally set supported languages, language-independent, and subtitles
+- **AND** no barrier-free control is shown
+- **AND** no target age groups control is shown
 
 ### Requirement: Admin event numeric fields
 

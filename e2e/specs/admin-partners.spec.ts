@@ -14,6 +14,7 @@ import {
   navigateAdminTab,
   r2Configured,
   SAMPLE_EVENT_IMAGE,
+  selectOptionByLabel,
   settleAdminSession,
   uniqueSuffix,
 } from "../fixtures/admin";
@@ -164,6 +165,75 @@ test.describe("admin-partners.feature", () => {
       zipCode: updatedZip,
     });
     await expect(page.getByText(composed).first()).toBeVisible();
+  });
+
+  test("Scenario: Set barrier-free on create", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const yes = locale === "en" ? "Yes" : "Ja";
+    const partner = await createPartnerViaUI(page, locale, { barrierFree: yes });
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await expect(page.getByLabel(/barrierefrei|barrier-free/i)).toHaveValue("on");
+  });
+
+  test("Scenario: Clear barrier-free on edit", async ({ page, locale }) => {
+    test.setTimeout(90_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const yes = locale === "en" ? "Yes" : "Ja";
+    const no = locale === "en" ? "No" : "Nein";
+    const partner = await createPartnerViaUI(page, locale, { barrierFree: yes });
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await expect(page.getByLabel(/barrierefrei|barrier-free/i)).toHaveValue("on");
+    await selectOptionByLabel(page, /barrierefrei|barrier-free/i, no);
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`), { timeout: 60_000 });
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await expect(page.getByLabel(/barrierefrei|barrier-free/i)).toHaveValue("off");
+  });
+
+  test("Scenario: Partner logo credit without replacing the file", async ({ page, locale }) => {
+    test.setTimeout(90_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    const creditField = page.getByRole("textbox", { name: adminLabels.imageCredit });
+    await expect(creditField).toBeVisible({ timeout: 15_000 });
+    await creditField.fill("Logo: Venue");
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`), { timeout: 60_000 });
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await expect(page.getByRole("textbox", { name: adminLabels.imageCredit })).toHaveValue(
+      "Logo: Venue",
+    );
   });
 
   test("Scenario: Enable weekly opening hours on create or edit", async ({ page, locale }) => {

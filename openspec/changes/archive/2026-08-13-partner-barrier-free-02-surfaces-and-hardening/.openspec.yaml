@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-13
+goal: Admins set barrier-free on the partner form; public event detail reads the
+  hosting partner; events.barrier_free is dropped after bool_or backfill.

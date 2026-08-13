@@ -1,0 +1,1 @@
+ALTER TABLE "partners" ADD COLUMN "barrier_free" boolean;

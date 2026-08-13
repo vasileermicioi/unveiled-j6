@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-13
+goal: Admins can credit photos; members and guests see those credits on event
+  detail when present.

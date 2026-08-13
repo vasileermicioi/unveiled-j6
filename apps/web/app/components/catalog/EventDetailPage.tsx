@@ -27,6 +27,10 @@ export type EventDetailPartnerAttribution = {
   /** When true with a valid week, DETAILS lists Mon→Sun hours under name/logo. */
   hasOpeningHours?: boolean;
   openingHours?: OpeningHoursWeek | null;
+  /** Venue accessibility; DETAILS Accessibility row. `null` → Not specified. */
+  barrierFree?: boolean | null;
+  /** Partner logo credit; muted caption under the logo when non-empty. */
+  logoCredit?: string | null;
 };
 
 type EventDetailPageProps = {
@@ -43,6 +47,8 @@ type EventDetailPageProps = {
   defaultDateTimeIso?: string;
   /** Ordered gallery images; omit or empty → no gallery section. */
   galleryImages?: PublicEventGalleryImage[];
+  /** Caption under the primary hero when `images.credit` is non-empty. */
+  heroCredit?: string | null;
   /** Hosting partner name + optional logo for DETAILS-card attribution. */
   partnerAttribution?: EventDetailPartnerAttribution;
 };
@@ -501,6 +507,7 @@ export function EventDetailPage({
   occurrences,
   defaultDateTimeIso,
   galleryImages = [],
+  heroCredit = null,
   partnerAttribution,
 }: EventDetailPageProps) {
   const bookable = isEventBookable(event);
@@ -615,6 +622,11 @@ export function EventDetailPage({
                 src={heroSrc}
                 srcSet={heroSrcSet}
               />
+              {heroCredit?.trim() ? (
+                <Paragraph className="event-detail--checkout__hero-credit" size="sm">
+                  {heroCredit.trim()}
+                </Paragraph>
+              ) : null}
             </Surface>
           ) : null}
           <Surface
@@ -660,6 +672,11 @@ export function EventDetailPage({
                         src={partnerLogoUrl}
                       />
                     ) : null}
+                    {partnerAttribution?.logoCredit?.trim() ? (
+                      <Paragraph className="event-detail--checkout__partner-logo-credit" size="sm">
+                        {partnerAttribution.logoCredit.trim()}
+                      </Paragraph>
+                    ) : null}
                     <Paragraph className="event-detail--checkout__partner-name">
                       {partnerName}
                     </Paragraph>
@@ -693,7 +710,7 @@ export function EventDetailPage({
                 ) : null}
                 <MetaCell
                   label={metadataLabel("accessibility", locale)}
-                  value={accessibilityValue(event.barrierFree, locale)}
+                  value={accessibilityValue(partnerAttribution?.barrierFree ?? null, locale)}
                 />
                 {event.languageIndependent ? (
                   <MetaCell

@@ -19,6 +19,8 @@ export const partners = pgTable("partners", {
     .references(() => images.id, { onDelete: "restrict" }),
   hasOpeningHours: boolean("has_opening_hours").notNull().default(false),
   openingHours: jsonb("opening_hours").$type<OpeningHoursWeek | null>(),
+  /** Venue accessibility: `true` or `NULL` (unset). Distinct stored `false` is not used. */
+  barrierFree: boolean("barrier_free"),
   venueCheckInToken: text("venue_check_in_token").unique(),
   portalUserId: text("portal_user_id").references(() => users.id, { onDelete: "restrict" }),
   portalUserEmail: text("portal_user_email"),

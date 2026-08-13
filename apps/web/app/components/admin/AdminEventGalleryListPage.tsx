@@ -42,6 +42,7 @@ export function AdminEventGalleryListPage({
     thumbnailUrl: image.thumbnailUrl,
     label: copy.galleryPhotoLabel(index + 1),
     selectLabel: copy.gallerySelectLabel(index + 1),
+    credit: image.credit,
   }));
 
   return (

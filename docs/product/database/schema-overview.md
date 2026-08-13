@@ -81,6 +81,7 @@ Counters (`session_count`, `event_open_count`, `booking_count`, `waitlist_count`
 | `portal_user_email` | text, nullable | **Post-MVP** — denormalized portal email |
 | `has_opening_hours` | boolean, not null, default `false` | When false, public surfaces MUST omit hours; `opening_hours` MUST be null. Public event detail DETAILS partner attribution lists hours only when true with a valid week. |
 | `opening_hours` | jsonb, nullable | Weekly schedule when enabled: keys `mon`…`sun`, each `{ "closed": true }` or `{ "open": "HH:MM", "close": "HH:MM" }` (24h, `open` strictly before `close`, same calendar day; no overnight). Wall times are Europe/Berlin local (no per-partner timezone column). Displayed Mon→Sun on public `/events/:id` DETAILS attribution only (not Discover cards/map). |
+| `barrier_free` | boolean, nullable | Venue accessibility (`true` or `NULL`). Public event detail DETAILS Accessibility / Barrierefreiheit reads this flag (`true` → Barrier-free / Barrierefrei; unset → Not specified / Keine Angabe). Admin sets it on the partner form, not on events. |
 | `created_at` / `updated_at` | timestamptz | |
 
 ---
@@ -95,6 +96,7 @@ Counters (`session_count`, `event_open_count`, `booking_count`, `waitlist_count`
 | `original_width`, `original_height` | integer | Natural dimensions of the decoded source, before any resizing (claimed from the client when no master object is stored) |
 | `source` | enum: `UPLOAD`, `REMOTE_URL` | Which entry path produced this image (`extras/image-uploads.md` §3) |
 | `source_url` | text, nullable | The original remote URL, only set when `source = REMOTE_URL` — kept for audit/re-processing, never used for direct display (the app always serves its own bucket copy) |
+| `credit` | text, nullable | Optional human photo credit (trimmed, max 200 in catalog writes). Independent of pipeline `source` / `source_url`. Empty/omitted stores `NULL`. Replacing an image creates a new row and does not copy this value. |
 | `uploaded_by` | text/uuid, FK → `users.id`, nullable | Who triggered the upload/fetch (signed-in admin; partner uploads are **post-MVP**) |
 | `created_at` | timestamptz | |
 
@@ -136,7 +138,6 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | ~~`voucher_template`, `secret_code_rules`~~ | — | **Decided cut:** present in the old type system but referenced by no scenario in any feature file and no current UI/business logic — dropped from the schema rather than carried forward as dead fields |
 | `promo_code` | text, nullable | **Deprecated for new writes.** Legacy migration may seed at most one `event_voucher_codes` row; voucher redemption source is inventory, not this column. |
 | `event_website_url` | text, nullable | Required when `ticket_type = VOUCHER_PROMO` (partner site link shown with promo codes) |
-| `barrier_free` | boolean, nullable | |
 | `language_independent` | boolean, **not nullable**, default `false` | When true, the event has no spoken-language requirement; `languages` MUST be null. Language filters treat these events as matching every language value. |
 | `languages` | text[], nullable | Spoken-language codes when not language-independent; null/empty means unset / none selected for language-specific events |
 | `has_subtitles` | boolean, **not nullable**, default `false` | When true, the event has subtitles; independent of spoken `languages` / `language_independent`. |

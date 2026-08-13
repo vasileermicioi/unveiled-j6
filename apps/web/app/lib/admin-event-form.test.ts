@@ -102,6 +102,56 @@ describe("admin-event-form helpers", () => {
     expect(values.imageUrl).toBeNull();
     expect(values.imagePrebuilt).toBeNull();
     expect(values.stagedImageId).toBeNull();
+    expect(values.imageCredit).toBe("");
+  });
+
+  test("parseEventFormBody extracts image_credit and omits to empty string", async () => {
+    const credited = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        street: "Main St",
+        house_number: "1",
+        zip_code: "10115",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "2",
+        total_capacity: "15",
+        ticket_type: "SECRET_CODE",
+        secret_code: "ABC",
+        image_credit: "  Photo: Ada  ",
+      },
+      asString,
+      asFile,
+    );
+    expect(credited.imageCredit).toBe("Photo: Ada");
+    expect(toCreateEventInput(credited, "admin-1").imageCredit).toBe("Photo: Ada");
+
+    const omitted = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        street: "Main St",
+        house_number: "1",
+        zip_code: "10115",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "2",
+        total_capacity: "15",
+        ticket_type: "SECRET_CODE",
+      },
+      asString,
+      asFile,
+    );
+    expect(omitted.imageCredit).toBe("");
   });
 
   test("parseEventFormBody extracts indexed datetime rows and ignores blank trailing rows", async () => {
@@ -185,7 +235,6 @@ describe("admin-event-form helpers", () => {
         promoCodes: [],
         voucherPdfs: [],
         replaceUnusedInventory: false,
-        barrierFree: null,
         languageIndependent: false,
         languages: null,
         hasSubtitles: false,
@@ -196,6 +245,7 @@ describe("admin-event-form helpers", () => {
         imageUrl: null,
         imagePrebuilt: null,
         stagedImageId: null,
+        imageCredit: "",
       }),
     ).toThrow(CatalogValidationError);
   });
@@ -223,7 +273,6 @@ describe("admin-event-form helpers", () => {
         promoCodes: [],
         voucherPdfs: [],
         replaceUnusedInventory: false,
-        barrierFree: null,
         languageIndependent: false,
         languages: null,
         hasSubtitles: false,
@@ -234,6 +283,7 @@ describe("admin-event-form helpers", () => {
         imageUrl: null,
         imagePrebuilt: null,
         stagedImageId: null,
+        imageCredit: "",
       }),
     ).toThrow(CatalogValidationError);
   });
@@ -263,7 +313,6 @@ describe("admin-event-form helpers", () => {
       promoCodes: [],
       voucherPdfs: [],
       replaceUnusedInventory: false,
-      barrierFree: null,
       languageIndependent: false,
       languages: null,
       hasSubtitles: false,
@@ -274,6 +323,7 @@ describe("admin-event-form helpers", () => {
       imageUrl: null,
       imagePrebuilt: null,
       stagedImageId: null,
+      imageCredit: "",
     };
 
     const created = toCreateEventInput(values, "admin-1");
@@ -883,7 +933,6 @@ describe("expandOccurrencesFromRange", () => {
         promoCodes: [],
         voucherPdfs: [],
         replaceUnusedInventory: false,
-        barrierFree: null,
         languageIndependent: false,
         languages: null,
         hasSubtitles: false,
@@ -894,6 +943,7 @@ describe("expandOccurrencesFromRange", () => {
         imageUrl: null,
         imagePrebuilt: null,
         stagedImageId: null,
+        imageCredit: "",
       });
       throw new Error("expected TOO_MANY_OCCURRENCES");
     } catch (error) {

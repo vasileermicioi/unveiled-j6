@@ -100,6 +100,19 @@ Feature: Admin — Event Management
     Then the re-rendered form shows the newly processed/staged replacement preview
     And I can retry submit without choosing the replacement file again
 
+  Scenario: Event primary credit on create
+    When I create an event and set image credit to "Photo: Ada"
+    Then the public event detail shows that credit under the primary image
+
+  Scenario: Keep existing image and edit credit
+    Given an event with an existing primary image
+    When I edit the event, keep the image, and change the credit
+    Then the stored credit is updated without replacing the image
+
+  Scenario: Gallery photo credit on add
+    When I add a gallery photo and set its credit
+    Then the gallery manage list shows that credit
+
   Scenario Outline: Redemption configuration validation on create
     Given I am creating an event with ticket type "<ticketType>"
     When I omit "<requiredField>"
@@ -189,11 +202,12 @@ Feature: Admin — Event Management
     When I delete an event
     Then it is removed from the catalog and no longer bookable
 
-  Scenario: Optional accessibility and audience metadata
+  Scenario: Optional audience metadata without barrier-free
     When I create or edit an event
-    Then I can optionally set barrier-free accessibility, supported languages, language-independent, and subtitles
+    Then I can optionally set supported languages, language-independent, and subtitles
     And supported languages and language-independent are mutually exclusive in the UI
     And subtitles are independent of spoken languages / language-independent
+    And no barrier-free control is shown
     And no target age groups control is shown
 
   Scenario: Check language-independent hides languages picker

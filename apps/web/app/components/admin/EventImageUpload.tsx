@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
+import { AdminImageCreditField } from "./AdminImageCreditField";
 import { AdminGalleryImageVariantFields, AdminImageVariantFields } from "./AdminImageVariantFields";
 import {
   AdminImageVariantGallery,
@@ -25,6 +26,8 @@ export type EventImageUploadProps = {
   /** @deprecated Prefer currentImageId + imagePublicBaseUrl for the variant gallery. */
   currentImageUrl?: string | null;
   currentImageId?: string | null;
+  /** Existing credit when keeping the current file; ignored once a new file is processed. */
+  currentCredit?: string | null;
   imagePublicBaseUrl?: string | null;
   /** When true, process/emit all selected files as indexed gallery prebuilt sets. */
   multiple?: boolean;
@@ -48,6 +51,7 @@ export function EventImageUpload({
   isEdit = false,
   currentImageUrl = null,
   currentImageId = null,
+  currentCredit = null,
   imagePublicBaseUrl = null,
   multiple = false,
   inputName = "image",
@@ -263,7 +267,11 @@ export function EventImageUpload({
 
       {multiple && processedList.length > 0 ? (
         <>
-          <AdminImageVariantGallerySummary locale={locale} processedList={processedList} />
+          <AdminImageVariantGallerySummary
+            includeCreditFields
+            locale={locale}
+            processedList={processedList}
+          />
           <AdminGalleryImageVariantFields processed={processedList} />
         </>
       ) : null}
@@ -272,6 +280,18 @@ export function EventImageUpload({
           <AdminImageVariantGallery locale={locale} processed={singleProcessed} />
           <AdminImageVariantFields processed={singleProcessed} />
         </>
+      ) : null}
+      {!multiple ? (
+        <AdminImageCreditField
+          defaultValue={singleProcessed ? "" : (currentCredit ?? "")}
+          key={
+            singleProcessed
+              ? `new-${singleProcessed.imageId}`
+              : (stagedOrExistingImageId ?? "empty")
+          }
+          locale={locale}
+          name="image_credit"
+        />
       ) : null}
     </Surface>
   );

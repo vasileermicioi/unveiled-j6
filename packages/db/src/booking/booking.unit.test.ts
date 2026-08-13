@@ -40,7 +40,6 @@ function baseEvent(overrides: Partial<Event> = {}): Event {
     secretCode: "ABC123",
     promoCode: null,
     eventWebsiteUrl: null,
-    barrierFree: null,
     languageIndependent: false,
     languages: null,
     hasSubtitles: false,

@@ -6,6 +6,7 @@ import {
   listEventGalleryImages,
   maxBookableTickets,
 } from "@unveiled/db";
+import { getImageCredit } from "@unveiled/db/catalog/images";
 import { buildVariantUrl } from "@unveiled/images/urls";
 import { createRoute } from "honox/factory";
 
@@ -134,18 +135,25 @@ export default createRoute(async (c) => {
       maxQty,
   );
 
-  const [galleryRows, partner] = await Promise.all([
+  const [galleryRows, partner, heroCredit] = await Promise.all([
     listEventGalleryImages(db, eventId),
     getPartnerById(db, event.partnerId),
+    getImageCredit(db, event.imageId).catch(() => null),
   ]);
   const galleryImages = toPublicEventGalleryImages(galleryRows);
 
   let partnerLogoUrl: string | undefined;
+  let logoCredit: string | null = null;
   if (partner?.logoImageId) {
     try {
       partnerLogoUrl = buildVariantUrl(partner.logoImageId, "medium-640.webp");
     } catch {
       partnerLogoUrl = undefined;
+    }
+    try {
+      logoCredit = await getImageCredit(db, partner.logoImageId);
+    } catch {
+      logoCredit = null;
     }
   }
 
@@ -160,6 +168,7 @@ export default createRoute(async (c) => {
         defaultQty={defaultQty}
         event={event}
         galleryImages={galleryImages}
+        heroCredit={heroCredit}
         locale={locale}
         maxQty={maxQty}
         occurrences={occurrences}
@@ -168,6 +177,8 @@ export default createRoute(async (c) => {
           logoUrl: partnerLogoUrl,
           hasOpeningHours: partner?.hasOpeningHours ?? false,
           openingHours: partner?.openingHours ?? null,
+          barrierFree: partner?.barrierFree ?? null,
+          logoCredit,
         }}
         viewer={viewer}
       />

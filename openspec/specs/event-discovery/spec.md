@@ -788,6 +788,25 @@ Gherkin scenarios for the two-row public detail layout and partner logo/name att
 - **THEN** product Gherkin describes lg+ row 1 (title/location | checkout) and row 2 (hero | Markdown description)
 - **AND** Playwright covers a proximity smoke for identity, checkout CTA, hero, and description without CSS-module hashes
 
+### Requirement: Public event detail shows partner barrier-free
+
+Public event detail DETAILS SHALL show an Accessibility / Barrierefreiheit row whose value comes from the hosting partner's `barrier_free` (`true` → Barrier-free / Barrierefrei; `NULL` → Not specified / Keine Angabe). Guests and members see the same ungated row (like partner hours). The page SHALL NOT read `events.barrier_free`. The unused display branch for stored `false` MAY remain for defensive reads. `docs/product/features/event-discovery.feature` SHALL include scenarios titled `Event detail shows partner barrier-free` and `Event detail when partner barrier-free is unset`. Playwright SHALL use those titles verbatim. The Event detail entry in `docs/product/ui/ui-component-map.md` SHALL note that Accessibility is partner-sourced.
+
+#### Scenario: Event detail shows partner barrier-free
+
+- **WHEN** I open a public event whose partner has barrier_free true
+- **THEN** DETAILS shows Barrier-free / Barrierefrei
+
+#### Scenario: Event detail when partner barrier-free is unset
+
+- **WHEN** I open a public event whose partner has barrier_free null
+- **THEN** DETAILS shows Not specified / Keine Angabe
+
+#### Scenario: Accessibility row is ungated
+
+- **WHEN** a guest or a booking-eligible member opens the same event
+- **THEN** both see the Accessibility / Barrierefreiheit row with the partner value
+
 ### Requirement: Guest sees partner attribution with optional opening hours
 
 Public event detail SHALL show the hosting partner’s name and logo in the DETAILS card partner attribution area (not as a floating sticker on the hero). When the partner has `has_opening_hours` true and a valid schedule, the same attribution area SHALL also list weekly opening hours (Monday–Sunday, Europe/Berlin wall times, closed days labeled). When `has_opening_hours` is false or hours are null, the hours list MUST be omitted while name/logo behavior remains unchanged. Hours visibility SHALL NOT depend on booking eligibility (guests and members see the same hours when enabled).
@@ -928,3 +947,23 @@ Event cards on Discover / member feed / saved surfaces and map marker popups SHA
 - **WHEN** a member opens a map marker popup for an upcoming multi-datetime event
 - **THEN** the popup includes the next upcoming datetime
 - **AND** a link to the public event detail remains available
+
+### Requirement: Public captions for image credit
+Public event detail SHALL show `images.credit` as a caption under the primary hero when non-empty, and in the gallery lightbox for that photo when non-empty. The caption SHALL be the stored string as-is (no automatic `Foto:` / `Photo:` prefix). Compact EventCards and map popups SHALL NOT show credit. When the partner logo has credit, DETAILS SHALL show it as a muted caption under the logo; when empty, no caption. Guests and members see the same ungated captions. `docs/product/features/event-discovery.feature` SHALL include scenarios titled `Hero shows credit`, `Gallery photo credit in lightbox`, `Empty credit omitted`, and `Cards omit credit`. Playwright SHALL use those titles verbatim. The Event detail entry in `docs/product/ui/ui-component-map.md` SHALL note hero, lightbox, and optional partner-logo captions.
+
+#### Scenario: Hero shows credit
+- **WHEN** I open a public event whose primary image has credit
+- **THEN** I see that credit under the primary image
+
+#### Scenario: Gallery photo credit in lightbox
+- **WHEN** a gallery image has credit "Photo: Ada"
+- **AND** I open that photo in the public gallery lightbox
+- **THEN** I see the credit caption
+
+#### Scenario: Empty credit omitted
+- **WHEN** an image has NULL credit
+- **THEN** public event detail does not show a credit caption for that image
+
+#### Scenario: Cards omit credit
+- **WHEN** I view Discover or the member feed
+- **THEN** event cards do not show image credit

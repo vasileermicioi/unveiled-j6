@@ -61,9 +61,15 @@ export type CreatePartnerInput = {
   /** Defaults to false when omitted. */
   hasOpeningHours?: boolean;
   openingHours?: OpeningHoursWeek | null;
+  /**
+   * Venue accessibility. Omit stores `NULL`. `true` persists; `null`/`false` store `NULL`.
+   */
+  barrierFree?: boolean | null;
   logoUpload?: Buffer | null;
   logoUrl?: string | null;
   logoPrebuilt?: PrebuiltImageVariantsInput | null;
+  /** Optional human photo credit for the logo image. */
+  logoCredit?: string | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
 };
@@ -79,12 +85,32 @@ export type UpdatePartnerInput = {
   contactEmail?: string;
   hasOpeningHours?: boolean;
   openingHours?: OpeningHoursWeek | null;
+  /**
+   * Venue accessibility. Omit leaves the existing value. `true` sets; `null`/`false` clear to `NULL`.
+   */
+  barrierFree?: boolean | null;
   logoUpload?: Buffer | null;
   logoUrl?: string | null;
   logoPrebuilt?: PrebuiltImageVariantsInput | null;
+  /** Optional human photo credit for the logo image. */
+  logoCredit?: string | null;
   uploadedBy?: string | null;
   skipUpload?: boolean;
 };
+
+/**
+ * Stored partner barrier-free is `true` or `NULL` only. `false` coerces to `NULL`
+ * (admin No means unset). Omit on create stores NULL; omit on update leaves existing.
+ */
+function resolvePartnerBarrierFree(
+  input: boolean | null | undefined,
+  existing?: boolean | null,
+): boolean | null {
+  if (input === undefined) {
+    return existing ?? null;
+  }
+  return input === true ? true : null;
+}
 
 function resolvePartnerOpeningHours(
   hasOpeningHours: boolean,
@@ -241,6 +267,7 @@ export async function createPartner(db: Db, input: CreatePartnerInput): Promise<
     uploadedBy: input.uploadedBy,
     skipUpload: input.skipUpload,
     prebuilt: input.logoPrebuilt,
+    credit: input.logoCredit,
   });
 
   const venueCheckInToken = input.venueCheckInToken?.trim() || generateVenueCheckInToken();
@@ -261,6 +288,7 @@ export async function createPartner(db: Db, input: CreatePartnerInput): Promise<
         logoImageId,
         hasOpeningHours: opening.hasOpeningHours,
         openingHours: opening.openingHours,
+        barrierFree: resolvePartnerBarrierFree(input.barrierFree),
         venueCheckInToken,
       })
       .returning();
@@ -366,7 +394,7 @@ export async function updatePartner(
         openingHours: existing.openingHours ?? null,
       };
 
-  const { replacePartnerLogo, deleteImageRecord } = await catalogImages();
+  const { replacePartnerLogo, deleteImageRecord, updateImageCredit } = await catalogImages();
   const previousLogoImageId = existing.logoImageId;
   const nextLogoImageId = await replacePartnerLogo(
     db,
@@ -378,8 +406,12 @@ export async function updatePartner(
       uploadedBy: input.uploadedBy,
       skipUpload: input.skipUpload,
       prebuilt: input.logoPrebuilt,
+      credit: input.logoCredit,
     },
   );
+  if (nextLogoImageId === previousLogoImageId && input.logoCredit !== undefined) {
+    await updateImageCredit(db, nextLogoImageId, input.logoCredit);
+  }
 
   const updated = await db
     .update(partners)
@@ -396,6 +428,7 @@ export async function updatePartner(
       logoImageId: nextLogoImageId,
       hasOpeningHours: nextOpening.hasOpeningHours,
       openingHours: nextOpening.openingHours,
+      barrierFree: resolvePartnerBarrierFree(input.barrierFree, existing.barrierFree),
       updatedAt: new Date(),
     })
     .where(eq(partners.id, partnerId))

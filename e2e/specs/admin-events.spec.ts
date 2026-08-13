@@ -670,18 +670,23 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByText(event.title)).toHaveCount(0);
   });
 
-  test("Scenario: Optional accessibility and audience metadata", async ({ page, locale }) => {
+  test("Scenario: Optional audience metadata without barrier-free", async ({ page, locale }) => {
     test.setTimeout(90_000);
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     const event = await createEventViaUI(page, locale, {
       partnerName: partner.name,
-      barrierFree: "Ja",
       language: /deutsch|german/i,
     });
+    await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByLabel(/barrierefrei|barrier-free/i)).toHaveCount(0);
+    await expect(page.getByRole("checkbox", { name: adminLabels.hasSubtitles })).toBeVisible();
     await page.goto(event.detailPath);
     await expect(page.getByRole("heading", { name: event.title })).toBeVisible();
-    await expect(page.getByText(/barrierefrei|barrier.?free|deutsch|german/i).first()).toBeVisible({
+    await expect(page.getByText(/deutsch|german/i).first()).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -901,6 +906,66 @@ test.describe("admin-events.feature", () => {
     await galleryLink.click();
     await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery`));
     await expect(page.getByRole("heading", { name: /event-galerie|event gallery/i })).toBeVisible();
+  });
+
+  test("Scenario: Event primary credit on create", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      imageCredit: "Photo: Ada",
+    });
+
+    await expectPublicEventDetail(page, locale, event);
+    await expect(page.getByRole("img", { name: event.title })).toBeVisible();
+    await expect(page.getByText("Photo: Ada")).toBeVisible();
+  });
+
+  test("Scenario: Keep existing image and edit credit", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      imageCredit: "Photo: Ada",
+    });
+
+    await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
+    const creditField = page.getByRole("textbox", { name: adminLabels.imageCredit });
+    await expect(creditField).toHaveValue("Photo: Ada", { timeout: 15_000 });
+    await creditField.fill("Photo: Bea");
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+
+    await expectPublicEventDetail(page, locale, event);
+    await expect(page.getByRole("img", { name: event.title })).toBeVisible();
+    await expect(page.getByText("Photo: Bea")).toBeVisible();
+    await expect(page.getByText("Photo: Ada")).toHaveCount(0);
+  });
+
+  test("Scenario: Gallery photo credit on add", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+
+    await page.goto(`/${locale}/admin/events/${event.eventId}/gallery/add`);
+    await expect(
+      page.getByRole("heading", { name: /galerie-fotos hinzufügen|add gallery photos/i }),
+    ).toBeVisible({ timeout: 15_000 });
+
+    // BDD exception: file-input — single gallery file so `image_credit_0` is posted
+    await page.locator('input[type="file"]').setInputFiles(SAMPLE_EVENT_IMAGE);
+    await expect(
+      page.getByText(/1 dateien vorbereitet|1 files ready|1 files prepared/i),
+    ).toBeVisible({ timeout: 60_000 });
+    await page.getByRole("textbox", { name: adminLabels.imageCredit }).fill("Photo: Ada");
+    await page.getByRole("button", { name: /fotos speichern|save photos/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery/?$`), {
+      timeout: 90_000,
+    });
+    await expect(page.getByText("Photo: Ada")).toBeVisible({ timeout: 15_000 });
   });
 
   test("Scenario: Admin multi-upload gallery photos", async ({ page, locale }) => {

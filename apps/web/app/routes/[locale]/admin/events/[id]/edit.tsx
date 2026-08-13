@@ -1,6 +1,6 @@
 import { Link, Surface } from "@heroui/react";
 import { getEventById, getVoucherInventoryCounts, listPartners, updateEvent } from "@unveiled/db";
-import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
+import { ensureImageVariantsUploaded, getImageCredit } from "@unveiled/db/catalog/images";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
@@ -183,7 +183,8 @@ export const POST = createRoute(async (c) => {
   } catch (error) {
     await ensureImageVariantsUploaded(db, existing.imageId);
     const inventoryCounts = await getVoucherInventoryCounts(db, eventId);
-    const existingDefaults = eventToFormDefaults(existing, inventoryCounts);
+    const existingCredit = await getImageCredit(db, existing.imageId);
+    const existingDefaults = eventToFormDefaults(existing, inventoryCounts, existingCredit);
     let defaults = existingDefaults;
     try {
       const formDefaults = formValuesToDefaults(await parseEventFormBodyFromRequest(body));
@@ -246,11 +247,12 @@ export default createRoute(async (c) => {
 
   const partners = await listPartners(db, { limit: 1000 });
   const inventoryCounts = await getVoucherInventoryCounts(db, eventId);
+  const currentImageCredit = await getImageCredit(db, event.imageId);
 
   return renderEditPage(c, {
     locale: guard.locale,
     eventId,
     partners: toPartnerOptions(partners),
-    defaults: eventToFormDefaults(event, inventoryCounts),
+    defaults: eventToFormDefaults(event, inventoryCounts, currentImageCredit),
   });
 });

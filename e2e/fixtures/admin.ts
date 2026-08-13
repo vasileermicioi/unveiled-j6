@@ -43,6 +43,7 @@ export const adminLabels = {
   ticketType: "Ticket-Typ",
   codeMode: "Code-Modus",
   barrierFree: "Barrierefrei",
+  imageCredit: /^(bildnachweis|image credit)$/i,
   languages: /sprachen|languages/i,
   hasSubtitles: /untertitel|subtitles/i,
   subtitleLanguage: /untertitelsprache|subtitle language/i,
@@ -261,6 +262,8 @@ export type CreatePartnerOverrides = Partial<Omit<CreatedPartner, "composedAddre
   logoPath?: string;
   /** When true, do not attach a logo (for required-logo rejection tests). */
   skipLogo?: boolean;
+  barrierFree?: "Ja" | "Nein" | "Yes" | "No";
+  imageCredit?: string;
 };
 
 export async function createPartnerViaUI(
@@ -314,6 +317,19 @@ export async function createPartnerViaUI(
   if (logoPath) {
     // BDD exception: file-input
     await page.locator('input[name="logo"]').setInputFiles(logoPath);
+    if (overrides.imageCredit) {
+      await expect(page.getByText(/ausgewählt:|selected:/i).first()).toBeVisible({
+        timeout: 60_000,
+      });
+    }
+  }
+
+  if (overrides.barrierFree) {
+    await selectOptionByLabel(page, /barrierefrei|barrier-free/i, overrides.barrierFree);
+  }
+
+  if (overrides.imageCredit) {
+    await page.getByRole("textbox", { name: adminLabels.imageCredit }).fill(overrides.imageCredit);
   }
 
   await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
@@ -400,11 +416,11 @@ export type CreateEventOverrides = {
   eventWebsiteUrl?: string;
   imagePath?: string;
   skipImage?: boolean;
-  barrierFree?: "Ja" | "Nein" | "Yes" | "No";
   language?: string | RegExp;
   hasSubtitles?: boolean;
   /** Native select value (allowlisted code, e.g. `EN`). Defaults to `EN` when hasSubtitles. */
   subtitleLanguage?: string;
+  imageCredit?: string;
 };
 
 export async function createEventViaUI(
@@ -467,9 +483,6 @@ export async function createEventViaUI(
     }
   }
 
-  if (overrides.barrierFree) {
-    await selectOptionByLabel(page, adminLabels.barrierFree, overrides.barrierFree);
-  }
   if (overrides.language) {
     await checkOptionByName(page, overrides.language);
   }
@@ -486,6 +499,11 @@ export async function createEventViaUI(
   if (imagePath) {
     // BDD exception: file-input
     await page.locator('input[name="image"]').setInputFiles(imagePath);
+    await expect(page.getByText(/ausgewählt:|selected:/i).first()).toBeVisible({ timeout: 60_000 });
+  }
+
+  if (overrides.imageCredit) {
+    await page.getByRole("textbox", { name: adminLabels.imageCredit }).fill(overrides.imageCredit);
   }
 
   await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();

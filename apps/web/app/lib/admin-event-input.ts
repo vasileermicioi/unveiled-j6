@@ -26,7 +26,6 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
     ticketType: values.ticketType,
     secretCode: values.secretCode,
     eventWebsiteUrl: values.eventWebsiteUrl,
-    barrierFree: values.barrierFree,
     languageIndependent: values.languageIndependent,
     languages: values.languages,
     hasSubtitles: values.hasSubtitles,
@@ -37,6 +36,7 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
     imageUrl: values.imageUrl,
     imagePrebuilt: values.imagePrebuilt,
     stagedImageId: values.stagedImageId,
+    imageCredit: values.imageCredit,
     uploadedBy,
   };
 }
@@ -64,7 +64,6 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
     ticketType: values.ticketType,
     secretCode: values.secretCode,
     eventWebsiteUrl: values.eventWebsiteUrl,
-    barrierFree: values.barrierFree,
     languageIndependent: values.languageIndependent,
     languages: values.languages,
     hasSubtitles: values.hasSubtitles,
@@ -75,6 +74,7 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
     imageUrl: values.imageUrl,
     imagePrebuilt: values.imagePrebuilt,
     stagedImageId: values.stagedImageId,
+    imageCredit: values.imageCredit,
     uploadedBy,
   };
 }
@@ -104,7 +104,6 @@ export function toSeriesCreateInput(
     ticketType: values.ticketType,
     secretCode: values.secretCode,
     eventWebsiteUrl: values.eventWebsiteUrl,
-    barrierFree: values.barrierFree,
     languageIndependent: values.languageIndependent,
     languages: values.languages,
     hasSubtitles: values.hasSubtitles,
@@ -115,6 +114,7 @@ export function toSeriesCreateInput(
     imageUrl: values.imageUrl,
     imagePrebuilt: values.imagePrebuilt,
     stagedImageId: values.stagedImageId,
+    imageCredit: values.imageCredit,
     uploadedBy,
     slots,
   };

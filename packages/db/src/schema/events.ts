@@ -68,7 +68,6 @@ export const events = pgTable(
     /** @deprecated Unused for new writes; legacy migration seed only. Prefer event_voucher_codes. */
     promoCode: text("promo_code"),
     eventWebsiteUrl: text("event_website_url"),
-    barrierFree: boolean("barrier_free"),
     languageIndependent: boolean("language_independent").notNull().default(false),
     languages: text("languages").array(),
     /** When true, `subtitle_language` MUST be an allowlisted code; when false, language is null. */

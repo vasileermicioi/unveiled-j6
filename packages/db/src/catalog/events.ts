@@ -95,6 +95,8 @@ export type CreateEventInput = {
    * Ignored when `imagePrebuilt` is present (new prebuilt wins).
    */
   stagedImageId?: string | null;
+  /** Optional human photo credit for the primary image. */
+  imageCredit?: string | null;
   category: string;
   eventType: string;
   tags?: string[];
@@ -113,7 +115,6 @@ export type CreateEventInput = {
   ticketType?: TicketType | null;
   secretCode?: string | null;
   eventWebsiteUrl?: string | null;
-  barrierFree?: boolean | null;
   languageIndependent?: boolean;
   languages?: string[] | null;
   hasSubtitles?: boolean;
@@ -142,6 +143,8 @@ export type UpdateEventInput = {
    * Ignored when `imagePrebuilt` is present (new prebuilt wins).
    */
   stagedImageId?: string | null;
+  /** Optional human photo credit; keep-file / staged-id calls `updateImageCredit`. */
+  imageCredit?: string | null;
   category?: string;
   eventType?: string;
   tags?: string[];
@@ -160,7 +163,6 @@ export type UpdateEventInput = {
   ticketType?: TicketType | null;
   secretCode?: string | null;
   eventWebsiteUrl?: string | null;
-  barrierFree?: boolean | null;
   languageIndependent?: boolean;
   languages?: string[] | null;
   hasSubtitles?: boolean;
@@ -411,8 +413,26 @@ async function resolvePartner(db: Db, partnerId: string) {
 
 type CreatePrimaryImageInput = Pick<
   CreateEventInput,
-  "imageUpload" | "imageUrl" | "imagePrebuilt" | "stagedImageId" | "uploadedBy" | "skipUpload"
+  | "imageUpload"
+  | "imageUrl"
+  | "imagePrebuilt"
+  | "stagedImageId"
+  | "uploadedBy"
+  | "skipUpload"
+  | "imageCredit"
 >;
+
+async function applyKeptImageCredit(
+  db: Db,
+  imageId: string,
+  credit: string | null | undefined,
+): Promise<void> {
+  if (credit === undefined) {
+    return;
+  }
+  const { updateImageCredit } = await catalogImages();
+  await updateImageCredit(db, imageId, credit);
+}
 
 /**
  * Persist-before-domain: stage a new prebuilt set first, else reuse a staged id.
@@ -433,6 +453,7 @@ async function resolveCreatePrimaryImageId(
       uploadedBy: input.uploadedBy,
       skipUpload: input.skipUpload,
       prebuilt: input.imagePrebuilt,
+      credit: input.imageCredit,
     });
   }
 
@@ -449,6 +470,7 @@ async function resolveCreatePrimaryImageId(
     }
     const { assertImageExists } = await catalogImages();
     await assertImageExists(db, stagedImageId);
+    await applyKeptImageCredit(db, stagedImageId, input.imageCredit);
     return stagedImageId;
   }
 
@@ -473,6 +495,7 @@ async function resolveUpdatePrimaryImageId(
       uploadedBy: input.uploadedBy,
       skipUpload: input.skipUpload,
       prebuilt: input.imagePrebuilt,
+      credit: input.imageCredit,
     });
   }
 
@@ -489,12 +512,14 @@ async function resolveUpdatePrimaryImageId(
     }
     const { assertImageExists } = await catalogImages();
     await assertImageExists(db, stagedImageId);
+    await applyKeptImageCredit(db, stagedImageId, input.imageCredit);
     return stagedImageId;
   }
 
   validateImageSourceExclusive(input.imageUpload, input.imageUrl, {
     prebuilt: input.imagePrebuilt,
   });
+  await applyKeptImageCredit(db, currentImageId, input.imageCredit);
   return currentImageId;
 }
 
@@ -638,7 +663,6 @@ async function insertEventRow(
       secretCode: input.secretCode?.trim() || null,
       promoCode: null,
       eventWebsiteUrl: input.eventWebsiteUrl?.trim() || null,
-      barrierFree: input.barrierFree ?? null,
       languageIndependent: input.languageIndependent ?? false,
       languages: resolveEventLanguages(input.languageIndependent ?? false, input.languages),
       hasSubtitles: subtitles.hasSubtitles,
@@ -707,7 +731,6 @@ export async function cloneEvent(
     ticketType: source.ticketType,
     secretCode: source.secretCode,
     eventWebsiteUrl: source.eventWebsiteUrl,
-    barrierFree: source.barrierFree,
     languageIndependent: source.languageIndependent,
     languages: source.languages,
     hasSubtitles: source.hasSubtitles,
@@ -864,7 +887,6 @@ export async function updateEvent(
         input.eventWebsiteUrl !== undefined
           ? input.eventWebsiteUrl?.trim() || null
           : existing.eventWebsiteUrl,
-      barrierFree: input.barrierFree !== undefined ? input.barrierFree : existing.barrierFree,
       languageIndependent:
         input.languageIndependent !== undefined
           ? input.languageIndependent

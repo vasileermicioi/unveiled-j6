@@ -182,7 +182,6 @@ async function seedDemoVoucherRedemptionEvents(
     eventWebsiteUrl: "https://example.com/demo-promo",
     stagedImageId: sharedImageId,
     languages: ["de", "en"],
-    barrierFree: false,
     hasSubtitles: true,
     subtitleLanguage: "EN",
     skipUpload: options.skipBucket,
@@ -208,7 +207,6 @@ async function seedDemoVoucherRedemptionEvents(
     ticketType: "VOUCHER_PDF",
     stagedImageId: sharedImageId,
     languages: ["de", "en"],
-    barrierFree: false,
     skipUpload: options.skipBucket,
   });
 

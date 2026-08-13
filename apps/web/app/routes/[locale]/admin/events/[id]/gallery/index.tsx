@@ -1,4 +1,5 @@
 import { getEventById, listEventGalleryImages, reorderEventGalleryImages } from "@unveiled/db";
+import { updateImageCredit } from "@unveiled/db/catalog/images";
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 
@@ -88,6 +89,12 @@ export const POST = createRoute(async (c) => {
 
   try {
     await reorderEventGalleryImages(db, eventId, imageIds);
+    for (const imageId of imageIds) {
+      const credit = asString(body[`image_credit_${imageId}`]);
+      if (credit !== undefined) {
+        await updateImageCredit(db, imageId, credit);
+      }
+    }
     return c.redirect(adminEventGalleryPath(guard.locale, eventId), 302);
   } catch (error) {
     return renderGalleryList(c, {

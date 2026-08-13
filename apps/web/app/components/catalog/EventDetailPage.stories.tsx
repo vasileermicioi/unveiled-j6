@@ -46,6 +46,7 @@ const storyGalleryImages: PublicEventGalleryImage[] = [
     thumbSrcSet: `https://cdn.example.com/images/${mockImageId}/small-320.webp 320w, https://cdn.example.com/images/${mockImageId}/medium-640.webp 640w`,
     fullSrc: `https://cdn.example.com/images/${mockImageId}/large-1280.webp`,
     fullSrcSet: `https://cdn.example.com/images/${mockImageId}/medium-640.webp 640w, https://cdn.example.com/images/${mockImageId}/large-1280.webp 1280w`,
+    credit: "Photo: Ada",
   },
   {
     imageId: "00000000-0000-4000-8000-0000000000aa",
@@ -56,6 +57,7 @@ const storyGalleryImages: PublicEventGalleryImage[] = [
     fullSrc: "https://cdn.example.com/images/00000000-0000-4000-8000-0000000000aa/large-1280.webp",
     fullSrcSet:
       "https://cdn.example.com/images/00000000-0000-4000-8000-0000000000aa/medium-640.webp 640w, https://cdn.example.com/images/00000000-0000-4000-8000-0000000000aa/large-1280.webp 1280w",
+    credit: null,
   },
 ];
 
@@ -215,9 +217,10 @@ export const WithGallery: Story = () => (
     closeHref={`/${storyLocale}`}
     event={mockEvent}
     galleryImages={storyGalleryImages}
+    heroCredit="Photo: Ada"
     locale={storyLocale}
     maxQty={3}
-    partnerAttribution={storyPartnerAttribution}
+    partnerAttribution={{ ...storyPartnerAttribution, logoCredit: "Logo: Venue" }}
     viewer={{ kind: "guest" }}
   />
 );

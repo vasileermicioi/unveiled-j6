@@ -9,6 +9,7 @@ export type PublicEventGalleryImage = {
   thumbSrcSet: string;
   fullSrc: string;
   fullSrcSet: string;
+  credit: string | null;
 };
 
 function buildGalleryLightboxSrc(imageId: string): string {
@@ -36,6 +37,7 @@ export function toPublicEventGalleryImages(
         thumbSrcSet: buildCardImageSrcSet(row.imageId),
         fullSrc: buildGalleryLightboxSrc(row.imageId),
         fullSrcSet: buildGalleryLightboxSrcSet(row.imageId),
+        credit: row.credit?.trim() || null,
       });
     } catch {
       // Skip broken/missing IMAGE_PUBLIC_BASE_URL or invalid id — never fail the page.

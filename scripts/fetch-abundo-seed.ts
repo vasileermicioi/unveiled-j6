@@ -210,7 +210,6 @@ type FixtureEvent = {
   creditPrice: number;
   secretCode: string;
   languages: string[];
-  barrierFree: boolean;
   lat: string;
   lng: string;
   daysFromToday: number;
@@ -757,7 +756,6 @@ async function main() {
       creditPrice: category === "Ausstellung" || category === "Museum" ? 1 : 2,
       secretCode: secretCodeFromSlug(detail.slug),
       languages: ["de", "en"],
-      barrierFree: false,
       lat,
       lng,
       daysFromToday: FUTURE_DAY_OFFSETS[events.length % FUTURE_DAY_OFFSETS.length] ?? 7,

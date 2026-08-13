@@ -13,6 +13,9 @@ import {
   ensureDemoFeaturedSplit,
   getEventIdByTitle,
   getPartnerIdByName,
+  withEventPrimaryCredit,
+  withGalleryImageCredit,
+  withPartnerBarrierFree,
   withPartnerOpeningHours,
 } from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
@@ -221,6 +224,44 @@ test.describe("event-discovery.feature", () => {
     });
   });
 
+  test.describe("partner barrier-free on event detail", () => {
+    test.describe.configure({ mode: "serial" });
+
+    test("Scenario: Event detail shows partner barrier-free", async ({ page, locale }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event + partner");
+      await page.context().clearCookies();
+      const eventId = await getEventIdByTitle(TITLES.tonight);
+      const partnerName = partnerNameForSeedTitle(TITLES.tonight);
+
+      await withPartnerBarrierFree(partnerName, true, async () => {
+        await page.goto(`/${locale}/events/${eventId}`);
+        await expect(page.getByRole("heading", { level: 1, name: TITLES.tonight })).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByText(/^details$/i).first()).toBeVisible();
+        await expect(page.getByText(/^barrierefreiheit$|^accessibility$/i).first()).toBeVisible();
+        await expect(page.getByText(/^barrierefrei$|^barrier-free$/i).first()).toBeVisible();
+      });
+    });
+
+    test("Scenario: Event detail when partner barrier-free is unset", async ({ page, locale }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event + partner");
+      await page.context().clearCookies();
+      const eventId = await getEventIdByTitle(TITLES.tonight);
+      const partnerName = partnerNameForSeedTitle(TITLES.tonight);
+
+      await withPartnerBarrierFree(partnerName, null, async () => {
+        await page.goto(`/${locale}/events/${eventId}`);
+        await expect(page.getByRole("heading", { level: 1, name: TITLES.tonight })).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByText(/^details$/i).first()).toBeVisible();
+        await expect(page.getByText(/^barrierefreiheit$|^accessibility$/i).first()).toBeVisible();
+        await expect(page.getByText(/^keine angabe$|^not specified$/i).first()).toBeVisible();
+      });
+    });
+  });
+
   test("Scenario: Detail shows subtitles when present", async ({ page, locale }) => {
     test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded promo event");
     await page.context().clearCookies();
@@ -364,6 +405,73 @@ test.describe("event-discovery.feature", () => {
     });
     await expect(page.getByRole("button", { name: /^(foto|photo)\s*1$/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /^(foto|photo)\s*2$/i })).toBeVisible();
+  });
+
+  test.describe("image credit on public surfaces", () => {
+    test.describe.configure({ mode: "serial" });
+
+    test("Scenario: Hero shows credit", async ({ page, locale }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event");
+      await page.context().clearCookies();
+      const eventId = await getEventIdByTitle(TITLES.tonight);
+      await withEventPrimaryCredit(eventId, "Photo: Ada", async () => {
+        await page.goto(`/${locale}/events/${eventId}`);
+        await expect(page.getByRole("heading", { level: 1, name: TITLES.tonight })).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByRole("img", { name: TITLES.tonight })).toBeVisible();
+        await expect(page.getByText("Photo: Ada")).toBeVisible();
+      });
+    });
+
+    test("Scenario: Gallery photo credit in lightbox", async ({ page, locale }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event + gallery");
+      test.skip(!r2Configured(), "R2 vars required so gallery image URLs resolve");
+      await page.context().clearCookies();
+      let eventId: string;
+      try {
+        eventId = await ensureDemoEventGallery(TITLES.theaterFuture);
+      } catch (error) {
+        test.skip(true, error instanceof Error ? error.message : String(error));
+        return;
+      }
+      await withGalleryImageCredit(eventId, "Photo: Ada", async () => {
+        await page.goto(`/${locale}/events/${eventId}`);
+        await expect(page.getByText(/^(galerie|gallery)$/i).first()).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByText("Photo: Ada")).toHaveCount(0);
+        await page.getByRole("button", { name: /^(foto|photo)\s*1$/i }).click();
+        await expect(page.getByText("Photo: Ada")).toBeVisible({ timeout: 10_000 });
+      });
+    });
+
+    test("Scenario: Empty credit omitted", async ({ page, locale }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded event");
+      await page.context().clearCookies();
+      const eventId = await getEventIdByTitle(TITLES.tonight);
+      await withEventPrimaryCredit(eventId, null, async () => {
+        await page.goto(`/${locale}/events/${eventId}`);
+        await expect(page.getByRole("heading", { level: 1, name: TITLES.tonight })).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByRole("img", { name: TITLES.tonight })).toBeVisible();
+        await expect(page.getByText("Photo: Ada")).toHaveCount(0);
+      });
+    });
+
+    test("Scenario: Cards omit credit", async ({ page, locale }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded featured event");
+      await page.context().clearCookies();
+      const eventId = await getEventIdByTitle(TITLES.theaterFuture);
+      await withEventPrimaryCredit(eventId, "Photo: Ada", async () => {
+        await ensureDemoFeaturedSplit();
+        await page.goto(`/${locale}/discover`);
+        const main = page.getByRole("main");
+        await expect(main.getByText(TITLES.theaterFuture).first()).toBeVisible({ timeout: 15_000 });
+        await expect(main.getByText("Photo: Ada")).toHaveCount(0);
+      });
+    });
   });
 
   test("Scenario: Guest does not see zip or age groups in DETAILS", async ({ page, locale }) => {

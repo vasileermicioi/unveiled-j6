@@ -52,6 +52,18 @@ Feature: Admin — Partner Management
     Then the changes are saved
     And the composed display address is updated on write
 
+  Scenario: Set barrier-free on create
+    When I create a partner and set barrier-free to Yes
+    Then the partner is stored with barrier_free true
+
+  Scenario: Clear barrier-free on edit
+    When I edit a partner and set barrier-free to No
+    Then the partner is stored with barrier_free null
+
+  Scenario: Partner logo credit without replacing the file
+    When I edit a partner, keep the logo, and set credit to "Logo: Venue"
+    Then the stored logo image credit is "Logo: Venue"
+
   Scenario: Enable weekly opening hours on create or edit
     When I enable opening hours on create or edit and set a valid open/close (or closed) value for each weekday Monday–Sunday
     And I save the partner

@@ -20,6 +20,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button, Link, Paragraph, Surface } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 
+import { AdminImageCreditField } from "../components/admin/AdminImageCreditField";
 import { adminEventGalleryRemovePath } from "../components/admin/admin-tabs";
 import type { Locale } from "../lib/locale";
 
@@ -32,6 +33,7 @@ export type AdminGalleryManagerItem = {
   thumbnailUrl: string | null;
   label: string;
   selectLabel: string;
+  credit: string | null;
 };
 
 export type AdminEventGalleryManagerCopy = {
@@ -50,18 +52,40 @@ export type AdminEventGalleryManagerProps = {
 
 type SortableTileProps = {
   item: AdminGalleryManagerItem;
+  locale: Locale;
   selected: boolean;
+  creditValue: string;
   onToggle: (imageId: string) => void;
+  onCreditChange: (imageId: string, value: string) => void;
 };
 
 function orderKey(items: readonly AdminGalleryManagerItem[]): string {
   return items.map((item) => item.imageId).join("\0");
 }
 
-function SortableTile({ item, selected, onToggle }: SortableTileProps) {
+function creditsKey(items: readonly AdminGalleryManagerItem[]): string {
+  return items.map((item) => `${item.imageId}:${item.credit ?? ""}`).join("\0");
+}
+
+function draftCreditsKey(
+  items: readonly AdminGalleryManagerItem[],
+  draft: Record<string, string>,
+): string {
+  return items.map((item) => `${item.imageId}:${draft[item.imageId] ?? ""}`).join("\0");
+}
+
+function SortableTile({
+  item,
+  locale,
+  selected,
+  creditValue,
+  onToggle,
+  onCreditChange,
+}: SortableTileProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.imageId,
   });
+  const storedCredit = item.credit?.trim() || "";
 
   return (
     <Surface
@@ -112,12 +136,27 @@ function SortableTile({ item, selected, onToggle }: SortableTileProps) {
           <Paragraph size="sm">{item.label}</Paragraph>
         </Surface>
       )}
+      {storedCredit ? (
+        <Paragraph className="admin-event-gallery__credit" size="sm">
+          {storedCredit}
+        </Paragraph>
+      ) : null}
+      <Surface className="admin-event-gallery__credit-field" variant="transparent">
+        <AdminImageCreditField
+          defaultValue={creditValue}
+          locale={locale}
+          name={`image_credit_${item.imageId}`}
+          onValueChange={(value) => onCreditChange(item.imageId, value)}
+          stopDrag
+        />
+      </Surface>
     </Surface>
   );
 }
 
 /**
  * Admin gallery grid: drag-to-reorder (explicit Save order POST) + checkbox select → remove confirm.
+ * The same POST also saves per-image credits.
  */
 export default function AdminEventGalleryManager({
   locale,
@@ -128,11 +167,19 @@ export default function AdminEventGalleryManager({
 }: AdminEventGalleryManagerProps) {
   const [items, setItems] = useState(initialItems);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [creditDraft, setCreditDraft] = useState<Record<string, string>>(() =>
+    Object.fromEntries(initialItems.map((item) => [item.imageId, item.credit ?? ""])),
+  );
   const baselineKey = useMemo(() => orderKey(initialItems), [initialItems]);
-  const isDirty = orderKey(items) !== baselineKey;
+  const baselineCredits = useMemo(() => creditsKey(initialItems), [initialItems]);
+  const isDirty =
+    orderKey(items) !== baselineKey || draftCreditsKey(items, creditDraft) !== baselineCredits;
 
   useEffect(() => {
     setItems(initialItems);
+    setCreditDraft(
+      Object.fromEntries(initialItems.map((item) => [item.imageId, item.credit ?? ""])),
+    );
   }, [initialItems]);
 
   const sensors = useSensors(
@@ -167,16 +214,16 @@ export default function AdminEventGalleryManager({
 
   return (
     <Surface className="admin-event-gallery" variant="transparent">
-      <Surface
-        className="admin-event-gallery__toolbar flex flex-wrap items-center justify-between gap-3"
-        variant="transparent"
-      >
-        <Paragraph className="admin-event-gallery__hint">{copy.reorderHint}</Paragraph>
-        <Surface className="flex flex-wrap gap-3" variant="transparent">
-          <form action={reorderAction} className="admin-event-gallery__save-form" method="post">
-            {items.map((item) => (
-              <input key={item.imageId} name="imageIds" type="hidden" value={item.imageId} />
-            ))}
+      <form action={reorderAction} className="admin-event-gallery__save-form" method="post">
+        {items.map((item) => (
+          <input key={item.imageId} name="imageIds" type="hidden" value={item.imageId} />
+        ))}
+        <Surface
+          className="admin-event-gallery__toolbar flex flex-wrap items-center justify-between gap-3"
+          variant="transparent"
+        >
+          <Paragraph className="admin-event-gallery__hint">{copy.reorderHint}</Paragraph>
+          <Surface className="flex flex-wrap gap-3" variant="transparent">
             <Button
               className="button button--primary button--md"
               isDisabled={!isDirty}
@@ -184,33 +231,38 @@ export default function AdminEventGalleryManager({
             >
               {copy.saveOrderAction}
             </Button>
-          </form>
-          {removeHref ? (
-            <Link className="button button--secondary button--md" href={removeHref}>
-              {copy.removeBulkAction}
-            </Link>
-          ) : (
-            <Button className="button button--secondary button--md" isDisabled type="button">
-              {copy.removeBulkAction}
-            </Button>
-          )}
-        </Surface>
-      </Surface>
-
-      <DndContext collisionDetection={closestCenter} onDragEnd={onDragEnd} sensors={sensors}>
-        <SortableContext items={items.map((item) => item.imageId)} strategy={rectSortingStrategy}>
-          <Surface className="admin-event-gallery__grid" variant="transparent">
-            {items.map((item) => (
-              <SortableTile
-                item={item}
-                key={item.imageId}
-                onToggle={toggleSelected}
-                selected={selectedIds.includes(item.imageId)}
-              />
-            ))}
+            {removeHref ? (
+              <Link className="button button--secondary button--md" href={removeHref}>
+                {copy.removeBulkAction}
+              </Link>
+            ) : (
+              <Button className="button button--secondary button--md" isDisabled type="button">
+                {copy.removeBulkAction}
+              </Button>
+            )}
           </Surface>
-        </SortableContext>
-      </DndContext>
+        </Surface>
+
+        <DndContext collisionDetection={closestCenter} onDragEnd={onDragEnd} sensors={sensors}>
+          <SortableContext items={items.map((item) => item.imageId)} strategy={rectSortingStrategy}>
+            <Surface className="admin-event-gallery__grid" variant="transparent">
+              {items.map((item) => (
+                <SortableTile
+                  creditValue={creditDraft[item.imageId] ?? item.credit ?? ""}
+                  item={item}
+                  key={item.imageId}
+                  locale={locale}
+                  onCreditChange={(imageId, value) => {
+                    setCreditDraft((current) => ({ ...current, [imageId]: value }));
+                  }}
+                  onToggle={toggleSelected}
+                  selected={selectedIds.includes(item.imageId)}
+                />
+              ))}
+            </Surface>
+          </SortableContext>
+        </DndContext>
+      </form>
     </Surface>
   );
 }

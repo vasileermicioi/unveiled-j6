@@ -87,7 +87,8 @@ type FixtureEvent = {
   creditPrice: number;
   secretCode: string;
   languages: string[];
-  barrierFree: boolean;
+  /** Optional leftover on older fixtures; `true` lifts onto the partner. Not stored on events. */
+  barrierFree?: boolean;
   lat: string;
   lng: string;
   daysFromToday: number;
@@ -259,10 +260,12 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
 
     const logoPath = partner.logoPath;
     const partnerLocation = structuredLocationFromAddress(partner.address);
+    const partnerLifted = partnerEvents.some((event) => event.barrierFree === true);
     const partnerInput: CreatePartnerInput = {
       name: partner.name,
       ...partnerLocation,
       contactEmail: partner.contactEmail,
+      ...(partnerLifted ? { barrierFree: true } : {}),
     };
 
     if (!logoPath) {
@@ -304,7 +307,6 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
           ...(event.totalCapacity != null ? { totalCapacity: event.totalCapacity } : {}),
           secretCode: event.secretCode,
           languages: event.languages,
-          barrierFree: event.barrierFree,
           ...normalizeSeedCoords(event.lat, event.lng),
         };
 
