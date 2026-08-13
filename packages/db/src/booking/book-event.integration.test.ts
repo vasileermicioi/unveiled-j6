@@ -518,4 +518,199 @@ describe("bookEvent", () => {
       await txDb.pool.end().catch(() => undefined);
     }
   });
+
+  test("charges selected slot, rejects unknown/past, and ignores datetime on idempotent retry", async () => {
+    if (!databaseUrl) {
+      console.warn("Skipping bookEvent slot integration test (DATABASE_URL unset)");
+      return;
+    }
+
+    const httpDb = createDb(databaseUrl);
+    const txDb = createTxDb(databaseUrl);
+    const suffix = crypto.randomUUID();
+    const userId = `book-slot-${suffix}`;
+    const partnerImage = await createTestImage();
+    const eventImage = await createTestImage();
+    const pastEventImage = await createTestImage();
+    const morning = new Date(Date.now() + 86_400_000);
+    morning.setUTCHours(8, 0, 0, 0);
+    const evening = new Date(morning.getTime() + 10 * 3_600_000);
+    const pastSlot = new Date(Date.now() - 86_400_000);
+
+    const partner = await createPartner(httpDb, {
+      name: `Slot Venue ${suffix.slice(0, 8)}`,
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      contactEmail: `slot-${suffix}@example.com`,
+      logoPrebuilt: partnerImage,
+      skipUpload: true,
+    });
+
+    const event = await createEvent(httpDb, {
+      partnerId: partner.id,
+      title: `Slot Event ${suffix.slice(0, 8)}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "Theater",
+      eventType: "Performance",
+      dateTimes: [morning, evening],
+      occurrenceCreditPrices: [1, 3],
+      creditPrice: 1,
+      totalCapacity: 10,
+      secretCode: "SLOTTEST",
+      imagePrebuilt: eventImage,
+      skipUpload: true,
+    });
+
+    let pastOnEventId: string | undefined;
+    try {
+      await httpDb.insert(users).values({
+        id: userId,
+        email: `${userId}@example.com`,
+        emailVerified: true,
+        credits: 20,
+      });
+      await httpDb.insert(subscriptions).values({
+        userId,
+        status: "ACTIVE",
+        plan: "Basic Berlin",
+      });
+
+      const eveningBook = await bookEvent(txDb, {
+        userId,
+        eventId: event.id,
+        ticketsCount: 2,
+        dateTime: evening,
+        idempotencyKey: `idem-slot-evening-${suffix}`,
+      });
+      expect(eveningBook.created).toBe(true);
+      expect(eveningBook.booking.dateTime.getTime()).toBe(evening.getTime());
+      expect(eveningBook.booking.totalCredits).toBe(6);
+
+      const afterEvening = await httpDb.query.users.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
+      });
+      expect(afterEvening?.credits).toBe(14);
+      const eventAfterEvening = await httpDb.query.events.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, event.id),
+      });
+      expect(eventAfterEvening?.remainingCapacity).toBe(8);
+
+      const morningBook = await bookEvent(txDb, {
+        userId,
+        eventId: event.id,
+        ticketsCount: 2,
+        dateTime: morning,
+        idempotencyKey: `idem-slot-morning-${suffix}`,
+      });
+      expect(morningBook.created).toBe(true);
+      expect(morningBook.booking.dateTime.getTime()).toBe(morning.getTime());
+      expect(morningBook.booking.totalCredits).toBe(2);
+
+      const afterMorning = await httpDb.query.users.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
+      });
+      expect(afterMorning?.credits).toBe(12);
+
+      const omitted = await bookEvent(txDb, {
+        userId,
+        eventId: event.id,
+        ticketsCount: 1,
+        idempotencyKey: `idem-slot-omit-${suffix}`,
+      });
+      expect(omitted.created).toBe(true);
+      expect(omitted.booking.dateTime.getTime()).toBe(morning.getTime());
+      expect(omitted.booking.totalCredits).toBe(1);
+
+      let unknownCode: string | undefined;
+      try {
+        await bookEvent(txDb, {
+          userId,
+          eventId: event.id,
+          ticketsCount: 1,
+          dateTime: new Date(evening.getTime() + 60_000),
+          idempotencyKey: `idem-slot-unknown-${suffix}`,
+        });
+      } catch (error) {
+        unknownCode = error instanceof Error ? (error as { code?: string }).code : undefined;
+      }
+      expect(unknownCode).toBe("UNKNOWN_SLOT");
+
+      let pastCode: string | undefined;
+      try {
+        await bookEvent(txDb, {
+          userId,
+          eventId: event.id,
+          ticketsCount: 1,
+          dateTime: pastSlot,
+          idempotencyKey: `idem-slot-past-${suffix}`,
+        });
+      } catch (error) {
+        pastCode = error instanceof Error ? (error as { code?: string }).code : undefined;
+      }
+      expect(pastCode).toBe("UNKNOWN_SLOT");
+
+      const pastOnEvent = await createEvent(httpDb, {
+        partnerId: partner.id,
+        title: `Past Slot Event ${suffix.slice(0, 8)}`,
+        description: "Description",
+        ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+        country: "DE",
+        city: "berlin",
+        zipCode: "10115",
+        category: "Theater",
+        eventType: "Performance",
+        dateTimes: [pastSlot, evening],
+        occurrenceCreditPrices: [1, 3],
+        creditPrice: 3,
+        totalCapacity: 5,
+        secretCode: "PASTSLOT",
+        imagePrebuilt: pastEventImage,
+        skipUpload: true,
+      });
+      pastOnEventId = pastOnEvent.id;
+
+      let pastOnEventCode: string | undefined;
+      try {
+        await bookEvent(txDb, {
+          userId,
+          eventId: pastOnEvent.id,
+          ticketsCount: 1,
+          dateTime: pastSlot,
+          idempotencyKey: `idem-slot-past-on-event-${suffix}`,
+        });
+      } catch (error) {
+        pastOnEventCode = error instanceof Error ? (error as { code?: string }).code : undefined;
+      }
+      expect(pastOnEventCode).toBe("PAST_SLOT");
+
+      const retry = await bookEvent(txDb, {
+        userId,
+        eventId: event.id,
+        ticketsCount: 2,
+        dateTime: morning,
+        idempotencyKey: `idem-slot-evening-${suffix}`,
+      });
+      expect(retry.created).toBe(false);
+      expect(retry.booking.id).toBe(eveningBook.booking.id);
+      expect(retry.booking.dateTime.getTime()).toBe(evening.getTime());
+
+      const creditsAfterRetry = await httpDb.query.users.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
+      });
+      expect(creditsAfterRetry?.credits).toBe(11);
+    } finally {
+      await cleanupUserBookings(httpDb, userId);
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await httpDb.delete(users).where(eq(users.id, userId));
+      if (typeof pastOnEventId === "string") {
+        await deleteEvent(httpDb, pastOnEventId, { skipBucket: true });
+      }
+      await deleteEvent(httpDb, event.id, { skipBucket: true });
+      await deletePartner(httpDb, partner.id, { skipBucket: true });
+      await txDb.pool.end().catch(() => undefined);
+    }
+  });
 });

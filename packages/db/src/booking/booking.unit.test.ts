@@ -32,6 +32,7 @@ function baseEvent(overrides: Partial<Event> = {}): Event {
     timingMode: "TIME_SLOT",
     startTimeMinutes: 0,
     weekday: 2,
+    occurrenceCreditPrices: [1],
     creditPrice: 1,
     totalCapacity: 10,
     remainingCapacity: 10,
@@ -133,6 +134,25 @@ describe("maxBookableTickets", () => {
         creditPrice: 0,
         remainingCapacity: 6,
         availableInventory: 2,
+      }),
+    ).toBe(2);
+  });
+
+  test("signed-in max follows selected slot price 3 vs 1", () => {
+    expect(
+      maxBookableTickets({
+        viewerKind: "signed-in",
+        credits: 6,
+        creditPrice: 1,
+        remainingCapacity: 10,
+      }),
+    ).toBe(6);
+    expect(
+      maxBookableTickets({
+        viewerKind: "signed-in",
+        credits: 6,
+        creditPrice: 3,
+        remainingCapacity: 10,
       }),
     ).toBe(2);
   });

@@ -19,7 +19,13 @@ import { composeDisplayAddress, validatePostalCode } from "../location";
 import { eventGalleryImages } from "../schema/event-gallery-images";
 import { type Event, events, type TicketType, type TimingMode } from "../schema/events";
 import { featuredEvents } from "../schema/featured-events";
-import { deriveDateTimeFields, tryNormalizeEventDateTimes } from "./datetime";
+import {
+  deriveDateTimeFields,
+  type NormalizedEventOccurrences,
+  type NormalizeOccurrencesResult,
+  tryFillOccurrenceCreditsFromPrice,
+  tryNormalizePairedDateTimesAndCredits,
+} from "./datetime";
 import { CatalogValidationError } from "./errors";
 import { resolveEventSubtitles } from "./event-subtitles";
 import { resolveEventLanguages } from "./language-filter";
@@ -94,6 +100,11 @@ export type CreateEventInput = {
   tags?: string[];
   /** Non-empty occurrence list; sorted unique on write. Primary `date_time` derived from this. */
   dateTimes: Date[];
+  /**
+   * Optional parallel credits (same length as `dateTimes` before normalize).
+   * When omitted, every slot is filled from `creditPrice`.
+   */
+  occurrenceCreditPrices?: number[];
   /** Injected clock for primary/next derivation in tests; defaults to `new Date()`. */
   now?: Date;
   timingMode?: TimingMode | null;
@@ -136,6 +147,11 @@ export type UpdateEventInput = {
   tags?: string[];
   /** When set, replaces the full occurrence list (non-empty after normalize). */
   dateTimes?: Date[];
+  /**
+   * Optional parallel credits. When set, paired with `dateTimes` or the stored list.
+   * When omitted and `dateTimes` or `creditPrice` is set, fills from that single price.
+   */
+  occurrenceCreditPrices?: number[];
   /** Injected clock for primary/next derivation when `dateTimes` is written. */
   now?: Date;
   timingMode?: TimingMode | null;
@@ -161,6 +177,8 @@ export type UpdateEventInput = {
  */
 export type CloneEventInput = {
   dateTimes: Date[];
+  /** When omitted, unique-sort `dateTimes` and fill every credit from `source.creditPrice`. */
+  occurrenceCreditPrices?: number[];
   now?: Date;
   voucherInventory?: VoucherInventoryPayload;
 };
@@ -480,15 +498,80 @@ async function resolveUpdatePrimaryImageId(
   return currentImageId;
 }
 
-function requireNormalizedDateTimes(dateTimes: Date[], now: Date = new Date()) {
-  const normalized = tryNormalizeEventDateTimes(dateTimes, now);
-  if (!normalized) {
-    throw new CatalogValidationError(
-      "EMPTY_DATE_TIMES",
-      "At least one dateTimes value is required",
+function throwFromNormalize(result: NormalizeOccurrencesResult): NormalizedEventOccurrences {
+  if (result.ok) {
+    return result.value;
+  }
+  switch (result.code) {
+    case "EMPTY":
+      throw new CatalogValidationError(
+        "EMPTY_DATE_TIMES",
+        "At least one dateTimes value is required",
+      );
+    case "DUPLICATE_INSTANT":
+      throw new CatalogValidationError(
+        "DUPLICATE_OCCURRENCE_INSTANTS",
+        "Occurrence instants must be unique",
+      );
+    case "LENGTH_MISMATCH":
+      throw new CatalogValidationError(
+        "OCCURRENCE_LENGTH_MISMATCH",
+        "dateTimes and occurrenceCreditPrices must have the same length",
+      );
+    case "NEGATIVE_CREDIT":
+      throw new CatalogValidationError(
+        "NEGATIVE_CREDIT_PRICE",
+        "Credit prices must be integers >= 0",
+      );
+  }
+}
+
+function resolveCreateOccurrences(input: CreateEventInput): NormalizedEventOccurrences {
+  const now = input.now ?? new Date();
+  if (input.occurrenceCreditPrices !== undefined) {
+    return throwFromNormalize(
+      tryNormalizePairedDateTimesAndCredits(input.dateTimes, input.occurrenceCreditPrices, now),
     );
   }
-  return normalized;
+  return throwFromNormalize(
+    tryFillOccurrenceCreditsFromPrice(input.dateTimes, input.creditPrice, now),
+  );
+}
+
+function resolveUpdateOccurrences(
+  existing: Event,
+  input: UpdateEventInput,
+): NormalizedEventOccurrences {
+  const now = input.now ?? new Date();
+  if (input.occurrenceCreditPrices !== undefined) {
+    return throwFromNormalize(
+      tryNormalizePairedDateTimesAndCredits(
+        input.dateTimes ?? existing.dateTimes,
+        input.occurrenceCreditPrices,
+        now,
+      ),
+    );
+  }
+  if (input.dateTimes !== undefined) {
+    return throwFromNormalize(
+      tryFillOccurrenceCreditsFromPrice(
+        input.dateTimes,
+        input.creditPrice ?? existing.creditPrice,
+        now,
+      ),
+    );
+  }
+  if (input.creditPrice !== undefined) {
+    return throwFromNormalize(
+      tryFillOccurrenceCreditsFromPrice(existing.dateTimes, input.creditPrice, now),
+    );
+  }
+  return {
+    dateTimes: existing.dateTimes,
+    occurrenceCreditPrices: existing.occurrenceCreditPrices,
+    dateTime: existing.dateTime,
+    creditPrice: existing.creditPrice,
+  };
 }
 
 async function insertEventRow(
@@ -520,9 +603,8 @@ async function insertEventRow(
     city: location.city,
   });
 
-  const now = input.now ?? new Date();
-  const { dateTimes, dateTime } = requireNormalizedDateTimes(input.dateTimes, now);
-  const derived = deriveDateTimeFields(dateTime, defaults.timingMode);
+  const occurrences = resolveCreateOccurrences(input);
+  const derived = deriveDateTimeFields(occurrences.dateTime, defaults.timingMode);
   const subtitles = resolveEventSubtitles(input.hasSubtitles ?? false, input.subtitleLanguage);
 
   const inserted = await db
@@ -543,12 +625,13 @@ async function insertEventRow(
       category: requireNonEmpty(input.category, "category"),
       eventType: requireNonEmpty(input.eventType, "eventType"),
       tags: input.tags ?? [],
-      dateTimes,
-      dateTime,
+      dateTimes: occurrences.dateTimes,
+      dateTime: occurrences.dateTime,
       timingMode: defaults.timingMode,
       startTimeMinutes: derived.startTimeMinutes,
       weekday: derived.weekday,
-      creditPrice: input.creditPrice,
+      occurrenceCreditPrices: occurrences.occurrenceCreditPrices,
+      creditPrice: occurrences.creditPrice,
       totalCapacity: defaults.totalCapacity,
       remainingCapacity: defaults.totalCapacity,
       ticketType: defaults.ticketType,
@@ -616,6 +699,7 @@ export async function cloneEvent(
     eventType: source.eventType,
     tags: source.tags ?? [],
     dateTimes: input.dateTimes,
+    occurrenceCreditPrices: input.occurrenceCreditPrices,
     now: input.now,
     timingMode: source.timingMode,
     creditPrice: source.creditPrice,
@@ -670,23 +754,14 @@ export async function updateEvent(
     eventWebsiteUrl: input.eventWebsiteUrl ?? existing.eventWebsiteUrl,
   });
 
-  const now = input.now ?? new Date();
-  const timingTouched = input.dateTimes !== undefined || input.timingMode !== undefined;
-  const nextDateTimes =
-    input.dateTimes !== undefined
-      ? requireNormalizedDateTimes(input.dateTimes, now)
-      : {
-          dateTimes: existing.dateTimes,
-          dateTime: existing.dateTime,
-        };
-  // Re-sync primary when list unchanged but wall clock advanced (optional); prefer list write path.
-  const nextDateTime = input.dateTimes !== undefined ? nextDateTimes.dateTime : existing.dateTime;
+  const nextOccurrences = resolveUpdateOccurrences(existing, input);
+  const timingTouched =
+    input.dateTimes !== undefined ||
+    input.occurrenceCreditPrices !== undefined ||
+    input.timingMode !== undefined;
   const nextTimingMode = input.timingMode ?? existing.timingMode;
   const derived = timingTouched
-    ? deriveDateTimeFields(
-        input.dateTimes !== undefined ? nextDateTimes.dateTime : existing.dateTime,
-        nextTimingMode,
-      )
+    ? deriveDateTimeFields(nextOccurrences.dateTime, nextTimingMode)
     : {
         startTimeMinutes: existing.startTimeMinutes,
         weekday: existing.weekday,
@@ -772,12 +847,13 @@ export async function updateEvent(
           ? requireNonEmpty(input.eventType, "eventType")
           : existing.eventType,
       tags: input.tags ?? existing.tags,
-      dateTimes: nextDateTimes.dateTimes,
-      dateTime: nextDateTime,
+      dateTimes: nextOccurrences.dateTimes,
+      dateTime: nextOccurrences.dateTime,
       timingMode: nextTimingMode,
       startTimeMinutes: derived.startTimeMinutes,
       weekday: derived.weekday,
-      creditPrice: input.creditPrice ?? existing.creditPrice,
+      occurrenceCreditPrices: nextOccurrences.occurrenceCreditPrices,
+      creditPrice: nextOccurrences.creditPrice,
       totalCapacity: nextTotalCapacity,
       remainingCapacity: nextRemainingCapacity,
       ticketType,

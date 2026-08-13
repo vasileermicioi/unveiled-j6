@@ -70,6 +70,8 @@ export function EventAdminBaseFields({
   const descriptionLabelId = useId();
   const descriptionHintId = useId();
   const [ticketType, setTicketType] = useState<TicketType>(defaultTicketType(defaults));
+  const [timingMode, setTimingMode] = useState<TimingMode>(defaultTimingMode(defaults));
+  const [selectedPartnerId, setSelectedPartnerId] = useState(defaults?.partnerId ?? "");
   const [street, setStreet] = useState(defaults?.street ?? "");
   const [houseNumber, setHouseNumber] = useState(defaults?.houseNumber ?? "");
   const [addressLine2, setAddressLine2] = useState(defaults?.addressLine2 ?? "");
@@ -120,6 +122,7 @@ export function EventAdminBaseFields({
   }
 
   async function handlePartnerChange(partnerId: string) {
+    setSelectedPartnerId(partnerId);
     if (isEdit) {
       return;
     }
@@ -164,6 +167,8 @@ export function EventAdminBaseFields({
       zipCode: trimmedZipCode,
     });
   }
+
+  const selectedPartner = partners.find((partner) => partner.id === selectedPartnerId);
 
   return (
     <>
@@ -329,13 +334,30 @@ export function EventAdminBaseFields({
       </TextField>
 
       {includeDateTime ? (
-        <EventAdminDateTimeList isDateRequired locale={locale} rows={defaults?.dateTimeRows} />
+        <EventAdminDateTimeList
+          applyPartnerHours={!isEdit}
+          hasOpeningHours={selectedPartner?.hasOpeningHours ?? false}
+          isDateRequired
+          locale={locale}
+          openingHours={selectedPartner?.openingHours ?? null}
+          partnerId={selectedPartnerId}
+          rangeEnd={defaults?.rangeEnd}
+          rangeSlots={defaults?.rangeSlots}
+          rangeStart={defaults?.rangeStart}
+          rows={defaults?.dateTimeRows}
+          timingMode={timingMode}
+        />
       ) : null}
 
       <AdminFormSelect
-        defaultSelectedKey={defaultTimingMode(defaults)}
+        defaultSelectedKey={timingMode}
         label={copy.timingModeLabel}
         name="timing_mode"
+        onSelectionChange={(value) => {
+          if (value === "ALL_DAY" || value === "TIME_SLOT") {
+            setTimingMode(value);
+          }
+        }}
         options={[
           { id: "TIME_SLOT", label: copy.timingModeTimeSlot },
           { id: "ALL_DAY", label: copy.timingModeAllDay },
@@ -343,24 +365,15 @@ export function EventAdminBaseFields({
         placeholder={copy.selectPlaceholder}
       />
 
-      <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
+      {ticketType === "SECRET_CODE" ? (
         <AdminFormNumberField
-          defaultValue={defaults?.creditPrice ?? 1}
+          defaultValue={defaults?.totalCapacity ?? 10}
           isRequired
-          label={copy.creditPriceLabel}
+          label={copy.capacityLabel}
           minValue={1}
-          name="credit_price"
+          name="total_capacity"
         />
-        {ticketType === "SECRET_CODE" ? (
-          <AdminFormNumberField
-            defaultValue={defaults?.totalCapacity ?? 10}
-            isRequired
-            label={copy.capacityLabel}
-            minValue={1}
-            name="total_capacity"
-          />
-        ) : null}
-      </Surface>
+      ) : null}
 
       <AdminFormSelect
         defaultSelectedKey={ticketType}

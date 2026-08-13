@@ -123,11 +123,12 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `category`, `event_type` | text | Free-form strings today — consider enum/lookup table if the category list is meant to be fixed |
 | `tags` | text[] | |
 | `date_times` | timestamptz[], not null | Non-empty list of occurrence instants (ascending, duplicates removed on write). Check: `cardinality(date_times) >= 1`. Public/member detail lists all values; compact surfaces use `date_time`. |
-| `date_time` | timestamptz | **Denormalized primary/next** instant: next upcoming in `date_times` (or earliest when all past). Synced on every catalog write. Existing btree indexes remain on this column. Used for feed sort, cards, map popups, admin list primary cell, ICS/email calendar fields. |
+| `occurrence_credit_prices` | integer[], not null | Per-occurrence credits, same cardinality and order as `date_times`. Check: `cardinality` match + `0 <= ALL (occurrence_credit_prices)`. Backfilled from `credit_price`. |
+| `date_time` | timestamptz | **Denormalized primary/next** instant: next upcoming in `date_times` (or earliest when all past). Synced on every catalog write. Existing btree indexes remain on this column. Used for feed sort, cards, map popups, and admin list primary cell. Confirm / ICS / email / ticket card use `bookings.date_time`, not this column. |
 | `timing_mode` | enum: `TIME_SLOT`, `ALL_DAY` | |
 | `start_time_minutes` | integer (0–1439) | Derived/cached from primary `date_time` — recompute on write rather than trusting client input |
 | `weekday` | integer (0–6) | Same — derived from primary `date_time` |
-| `credit_price` | integer | |
+| `credit_price` | integer | **Denormalized** price of the primary/next occurrence (`occurrence_credit_prices` element for `date_time`). Cards/feed/map still read this column. |
 | `total_capacity`, `remaining_capacity` | integer | `remaining_capacity` must never go negative — recommend a DB check constraint (`remaining_capacity >= 0`) in addition to app-layer transaction logic |
 | `ticket_type` | enum: `SECRET_CODE`, `VOUCHER_PROMO`, `VOUCHER_PDF` | Replaces legacy `VOUCHER`. No secret-code generation modes. |
 | ~~`secret_code_mode`~~ | — | **Decided cut:** `SHARED_GENERATED` / `UNIQUE_PER_BOOKING` / `MANUAL` modes removed. `SECRET_CODE` is always an admin-configured manual `secret_code`. |
@@ -246,6 +247,7 @@ For `VOUCHER_PROMO` / `VOUCHER_PDF`, admin does not set capacity separately — 
 | `redemption_type` | enum: `SECRET_CODE`, `VOUCHER_PROMO`, `VOUCHER_PDF`, nullable | Same enum as `events.ticket_type` |
 | `redemption_info`, `redemption_url` | text, nullable | Booking-level summary (typically ticket ordinal 1) for email/backward-compatible readers; member UI prefers `booking_tickets` |
 | `idempotency_key` | text | See PK note above |
+| `date_time` | timestamptz, not null | **Booked occurrence** instant (the chosen `events.date_times` element). Confirm page, ICS `DTSTART`, ticket card, and confirmation-email “when” read this column. Historical rows backfilled from denormalized `events.date_time`. |
 | `checked_in_at` | timestamptz, nullable | **Post-MVP** active use (door check-in); column may exist for forward compatibility |
 | `cancelled_at` | timestamptz, nullable | Set when an admin cancels a booking; distinct from `checked_in_at` |
 | `cancellation_reason` | text, nullable | New — required whenever `status` is set to `CANCELLED` by an admin |

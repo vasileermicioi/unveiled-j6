@@ -84,7 +84,7 @@ export function BookingTicketCard({
           ) : null}
         </Surface>
         <Paragraph color="muted" size="sm">
-          {event.partnerName} · {formatEventDateTime(event.dateTime, locale)}
+          {event.partnerName} · {formatEventDateTime(booking.dateTime, locale)}
         </Paragraph>
         <Paragraph size="sm">{confirmCopy.ticketsLabel(booking.ticketsCount)}</Paragraph>
       </Card.Header>

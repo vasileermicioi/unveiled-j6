@@ -110,6 +110,191 @@ export function tryNormalizeEventDateTimes(
   };
 }
 
+export type EventOccurrence = {
+  startsAt: Date;
+  creditPrice: number;
+};
+
+export type NormalizedEventOccurrences = {
+  dateTimes: Date[];
+  occurrenceCreditPrices: number[];
+  dateTime: Date;
+  creditPrice: number;
+};
+
+export type NormalizeOccurrencesFailureCode =
+  | "EMPTY"
+  | "DUPLICATE_INSTANT"
+  | "LENGTH_MISMATCH"
+  | "NEGATIVE_CREDIT";
+
+export type NormalizeOccurrencesResult =
+  | { ok: true; value: NormalizedEventOccurrences }
+  | { ok: false; code: NormalizeOccurrencesFailureCode };
+
+function isValidCreditPrice(value: number): boolean {
+  return Number.isInteger(value) && value >= 0;
+}
+
+function zipOccurrences(dateTimes: Date[], occurrenceCreditPrices: number[]): EventOccurrence[] {
+  const length = Math.min(dateTimes.length, occurrenceCreditPrices.length);
+  const zipped: EventOccurrence[] = [];
+  for (let index = 0; index < length; index += 1) {
+    const startsAt = dateTimes[index];
+    const creditPrice = occurrenceCreditPrices[index];
+    if (!startsAt || creditPrice === undefined || !Number.isFinite(startsAt.getTime())) {
+      continue;
+    }
+    zipped.push({ startsAt, creditPrice });
+  }
+  return zipped;
+}
+
+function primaryCreditFromLists(
+  dateTimes: Date[],
+  occurrenceCreditPrices: number[],
+  dateTime: Date,
+): number {
+  const credit = creditPriceForOccurrence(dateTimes, occurrenceCreditPrices, dateTime);
+  const fallback = occurrenceCreditPrices[0];
+  if (credit === null && fallback === undefined) {
+    throw new Error("primaryCreditFromLists requires a non-empty credit list");
+  }
+  return credit ?? fallback ?? 0;
+}
+
+/**
+ * Credit for an occurrence instant. Exact epoch-ms match after Date normalize.
+ * Returns null when the instant is missing or the parallel arrays are misaligned.
+ */
+export function creditPriceForOccurrence(
+  dateTimes: Date[],
+  occurrenceCreditPrices: number[],
+  dateTime: Date,
+): number | null {
+  const targetMs = dateTime.getTime();
+  if (!Number.isFinite(targetMs)) {
+    return null;
+  }
+  const index = dateTimes.findIndex((value) => value.getTime() === targetMs);
+  if (index < 0) {
+    return null;
+  }
+  const credit = occurrenceCreditPrices[index];
+  return credit === undefined ? null : credit;
+}
+
+/**
+ * Occurrences with `startsAt >= now`, sorted ascending by instant.
+ * Zips by index; extra elements on either array are ignored.
+ */
+export function futureOccurrences(
+  dateTimes: Date[],
+  occurrenceCreditPrices: number[],
+  now: Date = new Date(),
+): EventOccurrence[] {
+  const nowMs = now.getTime();
+  return zipOccurrences(dateTimes, occurrenceCreditPrices)
+    .filter((occurrence) => occurrence.startsAt.getTime() >= nowMs)
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+}
+
+/**
+ * Pair occurrences, sort by instant, reject empty / duplicate instants / invalid credits.
+ * Does **not** unique-merge — callers that need silent dedupe must use the legacy fill helper.
+ */
+export function tryNormalizeEventOccurrences(
+  occurrences: EventOccurrence[],
+  now: Date = new Date(),
+): NormalizeOccurrencesResult {
+  if (occurrences.length === 0) {
+    return { ok: false, code: "EMPTY" };
+  }
+
+  const seen = new Set<number>();
+  const paired: EventOccurrence[] = [];
+  for (const occurrence of occurrences) {
+    const ms = occurrence.startsAt.getTime();
+    if (!Number.isFinite(ms)) {
+      continue;
+    }
+    if (!isValidCreditPrice(occurrence.creditPrice)) {
+      return { ok: false, code: "NEGATIVE_CREDIT" };
+    }
+    if (seen.has(ms)) {
+      return { ok: false, code: "DUPLICATE_INSTANT" };
+    }
+    seen.add(ms);
+    paired.push(occurrence);
+  }
+
+  if (paired.length === 0) {
+    return { ok: false, code: "EMPTY" };
+  }
+
+  paired.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  const dateTimes = paired.map((occurrence) => occurrence.startsAt);
+  const occurrenceCreditPrices = paired.map((occurrence) => occurrence.creditPrice);
+  const dateTime = primaryDateTimeFromList(dateTimes, now);
+
+  return {
+    ok: true,
+    value: {
+      dateTimes,
+      occurrenceCreditPrices,
+      dateTime,
+      creditPrice: primaryCreditFromLists(dateTimes, occurrenceCreditPrices, dateTime),
+    },
+  };
+}
+
+/**
+ * Pair parallel arrays by index, then normalize. Length mismatch is rejected before pairing.
+ */
+export function tryNormalizePairedDateTimesAndCredits(
+  dateTimes: Date[],
+  occurrenceCreditPrices: number[],
+  now: Date = new Date(),
+): NormalizeOccurrencesResult {
+  if (dateTimes.length !== occurrenceCreditPrices.length) {
+    return { ok: false, code: "LENGTH_MISMATCH" };
+  }
+  return tryNormalizeEventOccurrences(
+    dateTimes.map((startsAt, index) => ({
+      startsAt,
+      creditPrice: occurrenceCreditPrices[index] ?? Number.NaN,
+    })),
+    now,
+  );
+}
+
+/**
+ * Legacy single-price path: unique-sort `dateTimes`, then fill every credit with `creditPrice`.
+ */
+export function tryFillOccurrenceCreditsFromPrice(
+  dateTimes: Date[],
+  creditPrice: number,
+  now: Date = new Date(),
+): NormalizeOccurrencesResult {
+  if (!isValidCreditPrice(creditPrice)) {
+    return { ok: false, code: "NEGATIVE_CREDIT" };
+  }
+  const normalized = tryNormalizeEventDateTimes(dateTimes, now);
+  if (!normalized) {
+    return { ok: false, code: "EMPTY" };
+  }
+  const occurrenceCreditPrices = normalized.dateTimes.map(() => creditPrice);
+  return {
+    ok: true,
+    value: {
+      dateTimes: normalized.dateTimes,
+      occurrenceCreditPrices,
+      dateTime: normalized.dateTime,
+      creditPrice,
+    },
+  };
+}
+
 /** Calendar date (YYYY-MM-DD) of `date` in Europe/Berlin. */
 export function getBerlinCalendarDate(date: Date): string {
   return new Intl.DateTimeFormat("en-CA", {

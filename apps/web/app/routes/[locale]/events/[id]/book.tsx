@@ -2,6 +2,8 @@ import {
   BookingError,
   bookEvent,
   createTxDb,
+  type Event,
+  futureOccurrences,
   getPublicEventById,
   isBookingEligibleStatus,
   maxBookableTickets,
@@ -14,6 +16,11 @@ import { NotFoundPage } from "../../../../components/NotFoundPage";
 import { getAuthOptions, getSessionIfConfigured } from "../../../../lib/auth";
 import { getBookPageCopy } from "../../../../lib/booking-content";
 import { getCatalogDb } from "../../../../lib/catalog-db";
+import {
+  type CheckoutOccurrence,
+  firstFormString,
+  parseDateTimeParam,
+} from "../../../../lib/checkout-slot";
 import type { Locale } from "../../../../lib/locale";
 import { isValidLocale } from "../../../../lib/locale";
 import { resolveEnvVarFromContext } from "../../../../lib/runtime-env";
@@ -46,6 +53,25 @@ function computeBookMaxQty(
     creditPrice,
     remainingCapacity,
   });
+}
+
+function toBookOccurrences(event: Event, credits: number): CheckoutOccurrence[] {
+  return futureOccurrences(event.dateTimes, event.occurrenceCreditPrices).map((occurrence) => ({
+    startsAtIso: occurrence.startsAt.toISOString(),
+    creditPrice: occurrence.creditPrice,
+    maxQty: computeBookMaxQty(credits, occurrence.creditPrice, event.remainingCapacity),
+  }));
+}
+
+function matchOccurrence(
+  occurrences: CheckoutOccurrence[],
+  dateTime: Date | null,
+): CheckoutOccurrence | undefined {
+  if (!dateTime) {
+    return undefined;
+  }
+  const targetMs = dateTime.getTime();
+  return occurrences.find((occurrence) => new Date(occurrence.startsAtIso).getTime() === targetMs);
 }
 
 async function sendConfirmationSafe(options: {
@@ -176,7 +202,11 @@ export default createRoute(async (c) => {
   }
 
   const credits = user?.credits ?? 0;
-  const maxQty = computeBookMaxQty(credits, event.creditPrice, event.remainingCapacity);
+  const occurrences = toBookOccurrences(event, credits);
+  const requested = parseDateTimeParam(c.req.query("dateTime"));
+  const selected = matchOccurrence(occurrences, requested) ?? occurrences[0];
+  const maxQty =
+    selected?.maxQty ?? computeBookMaxQty(credits, event.creditPrice, event.remainingCapacity);
   const defaultTickets = parseQtyParam(c.req.query("qty"), maxQty);
 
   return c.render(
@@ -188,6 +218,8 @@ export default createRoute(async (c) => {
       idempotencyKey={crypto.randomUUID()}
       locale={locale}
       maxQty={Math.max(1, maxQty)}
+      occurrences={occurrences}
+      slotDateTimeIso={selected?.startsAtIso}
       view="form"
     />,
     {
@@ -268,11 +300,41 @@ export const POST = createRoute(async (c) => {
     where: (fields, { eq }) => eq(fields.id, session.user.id),
   });
   const creditsForMax = userForMax?.credits ?? 0;
-  const maxQty = computeBookMaxQty(creditsForMax, event.creditPrice, event.remainingCapacity);
+  const formDateTime = firstFormString(form.date_time);
+  const parsedSlot = parseDateTimeParam(formDateTime ?? c.req.query("dateTime"));
+  const occurrences = toBookOccurrences(event, creditsForMax);
+  const selected = matchOccurrence(occurrences, parsedSlot) ?? occurrences[0];
+  const maxQty =
+    selected?.maxQty ??
+    computeBookMaxQty(creditsForMax, event.creditPrice, event.remainingCapacity);
   const selectMaxQty = Math.max(1, maxQty);
   const defaultTicketsClamped = parseQtyParam(ticketsRaw, selectMaxQty);
 
   const databaseUrl = resolveEnvVarFromContext(c, "DATABASE_URL");
+  if (!parsedSlot) {
+    return c.render(
+      <BookEventPage
+        availableCredits={creditsForMax}
+        copy={copy}
+        defaultTickets={defaultTicketsClamped}
+        errorMessage={copy.errorUnknownSlot}
+        event={event}
+        idempotencyKey={idempotencyKey}
+        locale={locale}
+        maxQty={selectMaxQty}
+        occurrences={occurrences}
+        slotDateTimeIso={selected?.startsAtIso}
+        view="form"
+      />,
+      {
+        locale,
+        title: copy.title,
+        robots: "noindex",
+        canonicalPath: bookPath,
+      },
+    );
+  }
+
   if (!databaseUrl) {
     return c.render(
       <BookEventPage
@@ -284,6 +346,8 @@ export const POST = createRoute(async (c) => {
         idempotencyKey={idempotencyKey}
         locale={locale}
         maxQty={selectMaxQty}
+        occurrences={occurrences}
+        slotDateTimeIso={selected?.startsAtIso}
         view="form"
       />,
       {
@@ -302,6 +366,7 @@ export const POST = createRoute(async (c) => {
       eventId,
       ticketsCount,
       idempotencyKey,
+      dateTime: parsedSlot,
     });
 
     if (result.created) {
@@ -314,7 +379,7 @@ export const POST = createRoute(async (c) => {
           id: event.id,
           title: event.title,
           address: event.address,
-          dateTime: event.dateTime,
+          dateTime: result.booking.dateTime,
           partnerName: event.partnerName,
         },
         booking: {
@@ -343,6 +408,10 @@ export const POST = createRoute(async (c) => {
         offerWaitlist = true;
       } else if (error.code === "PAST_DUE") {
         errorMessage = copy.errorPastDue;
+      } else if (error.code === "UNKNOWN_SLOT") {
+        errorMessage = copy.errorUnknownSlot;
+      } else if (error.code === "PAST_SLOT") {
+        errorMessage = copy.errorPastSlot;
       } else if (error.code === "INELIGIBLE_SUBSCRIPTION") {
         return c.redirect(`/${locale}/membership`, 302);
       }
@@ -358,7 +427,9 @@ export const POST = createRoute(async (c) => {
         idempotencyKey={idempotencyKey}
         locale={locale}
         maxQty={selectMaxQty}
+        occurrences={occurrences}
         offerWaitlist={offerWaitlist}
+        slotDateTimeIso={selected?.startsAtIso}
         view="form"
       />,
       {

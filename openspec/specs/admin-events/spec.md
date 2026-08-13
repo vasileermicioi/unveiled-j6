@@ -6,40 +6,104 @@ ADMIN catalog management for events, including the Featured curation tab used by
 
 ### Requirement: Create a single event accepts dateTimes list
 
-Creating an event SHALL require at least one datetime value supplied as a list (`dateTimes`). The catalog SHALL persist sorted unique `date_times`, set denormalized primary `date_time` to the next upcoming instant (or earliest if all past), and compute `startTimeMinutes` and `weekday` from that primary datetime in Europe/Berlin. Admin create and edit SSR paths SHALL post the editable datetime list (not a single wrapped field) into `dateTimes`.
+Creating an event SHALL require at least one datetime value supplied as a list (`dateTimes`). Admin create and edit SSR paths SHALL post the editable datetime list (not a single wrapped field) into `dateTimes` together with a parallel `occurrenceCreditPrices` list of equal length (one credit price per complete datetime row). The catalog SHALL persist sorted `date_times` with matching `occurrence_credit_prices`, set denormalized primary `date_time` to the next upcoming instant (or earliest if all past), set denormalized `credit_price` to that primary occurrence’s price, and compute `startTimeMinutes` and `weekday` from that primary datetime in Europe/Berlin. Duplicate instants SHALL be rejected (paired path). The admin form SHALL NOT post a separate event-level `credit_price` field that overrides row credits.
 
 #### Scenario: Create a single event
 
-- **WHEN** I create a new event with a title, partner, credit price, capacity, description, image, Berlin zip code, and one or more dateTimes
+- **WHEN** I create a new event with a title, partner, per-datetime credit prices, capacity, description, image, Berlin zip code, and one or more dateTimes
 - **THEN** the event is added to the catalog
 - **AND** its remaining capacity defaults to its total capacity
 - **AND** its startTimeMinutes and weekday are computed from its primary/next dateTime
 
 #### Scenario: Create with multiple dateTimes persists the list
 
-- **WHEN** an admin create path (or catalog `createEvent`) supplies two or more dateTimes
+- **WHEN** an admin create path (or catalog `createEvent`) supplies two or more dateTimes with matching credit prices
 - **THEN** the stored event has `date_times` length equal to the unique sorted input count
 - **AND** denormalized `date_time` matches the primary/next rule
+- **AND** `occurrence_credit_prices` follow that datetime order
 
 ### Requirement: Editable list of event datetimes
-Admin create and edit forms SHALL present event datetimes as an editable list.
-The admin SHALL be able to add and remove datetime rows inplace before submitting the SSR form.
-The system SHALL reject submit when zero datetimes remain.
+
+Admin create, edit, and clone forms SHALL present event datetimes as an editable list. Each row SHALL include a date, a time (when timing mode is `TIME_SLOT`), and a credit price. The admin SHALL be able to add and remove rows inplace before submitting the SSR form. The system SHALL reject submit when zero complete datetime rows remain. The form SHALL display the sum of the listed credit prices. The form SHALL NOT show a separate event-level Credits field; `events.credit_price` is derived from the primary occurrence on write.
 
 #### Scenario: Add and remove datetimes on create
+
 - **WHEN** I am on the new-event form
-- **AND** I add a second datetime row and remove one row
-- **THEN** submitting persists exactly the remaining datetime values on the event
+- **AND** I add a second datetime row, set a credit price on each remaining row, and remove one row
+- **THEN** submitting persists exactly the remaining datetime values and their credits on the event
+
+#### Scenario: Per-datetime credits persist
+
+- **WHEN** I create an event with two datetime rows priced 1 and 3 credits
+- **THEN** the stored `occurrence_credit_prices` are 1 and 3 in datetime order
+- **AND** denormalized `credit_price` equals the primary/next slot’s price
+
+#### Scenario: Total credits shown on the form
+
+- **WHEN** the datetime list has rows priced 2 and 5
+- **THEN** the form shows a total of 7 credits for the list
 
 #### Scenario: Edit datetimes inplace
+
 - **WHEN** I edit an event that already has multiple datetimes
-- **THEN** I see all values as editable rows
+- **THEN** I see all values as editable rows including each row’s credits
 - **AND** I can add or remove rows and save
 
 #### Scenario: Empty datetime list rejected on admin form
+
 - **WHEN** an admin submits create or edit with no complete datetime rows
 - **THEN** the form is re-rendered with an error
 - **AND** no catalog write occurs
+
+### Requirement: Date-range occurrence builder
+Admin create, edit, and clone event forms SHALL offer a range builder: an inclusive start date, an inclusive end date, and one or more time slots each with a clock time and a credit price. The occurrence list SHALL be the cartesian product of each Europe/Berlin calendar date in that range and each time slot. Changing start date, end date, or any time-slot row SHALL replace the occurrence list from scratch (manual add/remove of list rows is discarded). The system SHALL reject a generated list that is empty or that exceeds 52 occurrences. Submit SHALL persist the generated (or subsequently edited) list via the existing SSR form POST. When timing mode is `ALL_DAY`, the builder SHALL still expand dates but SHALL emit one row per date at Europe/Berlin midnight using the first time slot’s credit price (time-of-day on additional slots is ignored). The builder SHALL live on create/edit/clone event forms; the system SHALL NOT revive `/admin/events/series/new`.
+
+#### Scenario: Range and two time slots generate a grid
+- **WHEN** I set start 2026-09-01, end 2026-09-03, and time slots 10:00 at 1 credit and 18:00 at 3 credits
+- **THEN** the datetime list has six rows (each date × each time)
+- **AND** morning rows are priced 1 and evening rows are priced 3
+
+#### Scenario: Changing the end date rebuilds from scratch
+- **WHEN** a generated list exists and I have manually added an extra row
+- **AND** I change the builder end date
+- **THEN** the list is replaced by a fresh expansion
+- **AND** the manually added row is gone
+
+#### Scenario: Over-cap range is rejected
+- **WHEN** start, end, and time slots would produce more than 52 occurrences
+- **THEN** the form shows an error
+- **AND** no catalog write occurs on submit
+
+#### Scenario: Empty generated list rejected on submit
+- **WHEN** the rebuilt datetime list has zero complete rows (including start after end, or every date skipped)
+- **THEN** the form is re-rendered with an error
+- **AND** no catalog write occurs
+
+#### Scenario: ALL_DAY expands one row per date
+- **WHEN** timing mode is `ALL_DAY` and I generate 2026-09-01 through 2026-09-02 with slots 10:00 at 1 credit and 18:00 at 3 credits
+- **THEN** the datetime list has two rows (one per date at Berlin midnight)
+- **AND** each row is priced 1 (first slot’s credits)
+
+### Requirement: Partner opening hours default time slots
+On the **create** event form, when the admin selects a partner with `has_opening_hours` true and a valid week, the builder’s default time-slot rows SHALL be the distinct `open` times from open weekdays, sorted. Range expansion SHALL skip dates whose Berlin weekday is marked closed on that partner. When the partner has no published hours, the default time slot SHALL be 19:30 at 1 credit and every calendar day in range SHALL be included. On **edit**, changing partner SHALL NOT overwrite existing datetimes or builder fields.
+
+#### Scenario: Create prefills slots from partner open times
+- **WHEN** I am on the new-event form and select a partner open 10:00–18:00 weekdays and closed Sunday
+- **THEN** the builder shows a 10:00 time slot by default
+
+#### Scenario: Closed weekdays omitted from expansion
+- **WHEN** that partner is selected and I generate 2026-09-05 (Saturday) through 2026-09-07 (Monday) with the default 10:00 slot
+- **THEN** Sunday is not in the datetime list
+- **AND** Saturday and Monday are
+
+#### Scenario: No published hours includes every calendar day
+- **WHEN** I select a partner with `has_opening_hours` false and generate 2026-09-05 through 2026-09-07 with the default 19:30 slot
+- **THEN** the datetime list includes Saturday, Sunday, and Monday
+
+#### Scenario: Edit partner change does not overwrite datetimes
+- **WHEN** I edit an event that already has datetime rows and builder fields
+- **AND** I change the partner
+- **THEN** the datetime list and builder fields are unchanged
 
 ### Requirement: Admin manages event gallery photos
 
@@ -359,30 +423,34 @@ When an admin opens edit for an event with voucher inventory, the form SHALL sho
 - **THEN** defaults describe `ticketType` `SECRET_CODE` (and capacity/timing as today) without `secretCodeMode`
 
 ### Requirement: Admin clones an event
-Admins SHALL clone an existing event via a dedicated SSR page `/:locale/admin/events/:id/clone` with form POST (no client-only modal). The form SHALL be prefilled from the source event (at least a source summary and an editable datetime list copied from the source) and SHALL require at least one datetime before confirm. The admin SHALL be able to add or remove datetime rows inplace before submit. Primary image upload SHALL NOT be required on clone (source image id is reused by the catalog clone operation). For `VOUCHER_PROMO` or `VOUCHER_PDF` source events, the clone form SHALL require new redemption inventory using create-mode semantics. On success, a new catalog event exists and the admin is redirected to a sensible admin events surface (edit of the new event or the events list). Entry points SHALL exist on the Events list and/or event edit page. The admin Events UI SHALL NOT offer series create.
+
+Admins SHALL clone an existing event via a dedicated SSR page `/:locale/admin/events/:id/clone` with form POST (no client-only modal). The form SHALL be prefilled from the source event (at least a source summary and an editable datetime list copied from the source, including each row’s credit price from `occurrence_credit_prices`) and SHALL require at least one datetime before confirm. The admin SHALL be able to add or remove datetime rows inplace before submit. Clone POST SHALL persist the submitted `dateTimes` together with `occurrenceCreditPrices` (not flatten to `source.creditPrice` when row credits are posted). Primary image upload SHALL NOT be required on clone (source image id is reused by the catalog clone operation). For `VOUCHER_PROMO` or `VOUCHER_PDF` source events, the clone form SHALL require new redemption inventory using create-mode semantics. On success, a new catalog event exists and the admin is redirected to a sensible admin events surface (edit of the new event or the events list). Entry points SHALL exist on the Events list and/or event edit page. The admin Events UI SHALL NOT offer series create.
 
 #### Scenario: Clone event from catalog list
+
 - **WHEN** an admin opens clone for an existing event
-- **THEN** the datetime list is prefilled from the source event
+- **THEN** the datetime list is prefilled from the source event including each row’s credits
 - **AND** when the admin edits the list if needed and confirms
-- **THEN** a new event appears in the catalog with the copied title and the submitted dateTimes
+- **THEN** a new event appears in the catalog with the copied title, the submitted dateTimes, and the submitted occurrence credit prices
 
 #### Scenario: Clone voucher event requires inventory
+
 - **WHEN** an admin clones a `VOUCHER_PROMO` or `VOUCHER_PDF` event without providing new inventory
 - **THEN** the clone is rejected until inventory is provided
 
 #### Scenario: Clone entry points visible
+
 - **WHEN** an admin views the Events list or an event edit page
 - **THEN** a Clone action linking to `/:locale/admin/events/:id/clone` is available
 - **AND** no Event series create CTA is shown
 
 ### Requirement: Product docs describe clone not series
-`docs/product/features/admin-events.feature`, `docs/product/sitemap/sitemap.md`, and `docs/product/ui/ui-component-map.md` SHALL document `/admin/events/:id/clone` (ADMIN clone flow) and SHALL NOT document `/admin/events/series/new` or series builders (manual slots, date-range / weekday builders) as current MVP behavior. Feature scenarios SHALL include clone acceptance coverage (happy path and entry points; voucher inventory reject when practical) and SHALL NOT require series-create scenarios.
+`docs/product/features/admin-events.feature`, `docs/product/sitemap/sitemap.md`, and `docs/product/ui/ui-component-map.md` SHALL document `/admin/events/:id/clone` (ADMIN clone flow) and SHALL NOT document `/admin/events/series/new` as a current MVP route. An inline date-range builder on create, edit, and clone event forms is a current MVP surface (not a separate series route). Feature scenarios SHALL include clone acceptance coverage (happy path and entry points; voucher inventory reject when practical) and SHALL NOT require series-create scenarios. Canonical Gherkin SHALL include the inline builder, per-datetime credits, and partner-hours defaults. `docs/product/ui/ui-component-map.md` Events row SHALL mention per-row credits, the list total, and the range builder. `docs/product/extras/gaps-and-decisions.md` SHALL NOT describe admin add/remove datetime UI as parked or `ALLOW_MULTI_DATETIME_UI = false`.
 
 #### Scenario: Feature file documents clone
 - **WHEN** a reader opens `docs/product/features/admin-events.feature`
 - **THEN** it includes clone acceptance scenarios
-- **AND** it has no required series-create scenarios (manual slots or date-range builder)
+- **AND** it has no required series-create scenarios (no `/admin/events/series/new`)
 
 #### Scenario: Sitemap lists clone not series
 - **WHEN** a reader opens `docs/product/sitemap/sitemap.md`
@@ -393,6 +461,11 @@ Admins SHALL clone an existing event via a dedicated SSR page `/:locale/admin/ev
 - **WHEN** a reader opens the Events row in `docs/product/ui/ui-component-map.md`
 - **THEN** admin events document SSR CRUD and clone
 - **AND** they do not describe series create as a current surface
+
+#### Scenario: UI map and Gherkin describe the inline builder
+- **WHEN** a reader opens `admin-events.feature` and the Events row of `ui-component-map.md`
+- **THEN** both describe per-datetime credits and the inline date-range builder on create/edit/clone
+- **AND** neither describes admin multi-datetime UI as parked
 
 ### Requirement: Admin subtitles checkbox and language
 
@@ -442,7 +515,7 @@ Admin Events catalog and Featured tables (and related add-result rows that show 
 
 ### Requirement: Multi-datetime admin and discovery e2e coverage
 
-BDD/Playwright SHALL cover admin add/remove datetime smoke on create or edit and SHALL keep discovery assertions that fully past multi-datetime events stay out of the default upcoming feed. Selectors SHALL remain proximity/layout only. Product feature files (`admin-events`, `event-discovery`, booking as needed), schema overview, ui-component-map, and gaps-and-decisions SHALL document event-level booking plus multi-datetime display rules.
+BDD/Playwright SHALL cover admin add/remove datetime smoke on create or edit and SHALL keep discovery assertions that fully past multi-datetime events stay out of the default upcoming feed. Selectors SHALL remain proximity/layout only. Product feature files (`admin-events`, `event-discovery`, booking as needed), schema overview, ui-component-map, and gaps-and-decisions SHALL document slot-scoped booking for time and credits, event-level capacity, and multi-datetime display rules.
 
 #### Scenario: Admin multi-datetime smoke
 
@@ -453,3 +526,45 @@ BDD/Playwright SHALL cover admin add/remove datetime smoke on create or edit and
 
 - **WHEN** every datetime on an event is in the past
 - **THEN** the member feed does not list that event
+
+### Requirement: Admin events feature documents occurrence credits
+`docs/product/features/admin-events.feature` SHALL include scenarios for add/remove datetime rows with per-row credits, the list total, range generation from start/end plus time slots, rebuild-from-scratch, partner opening-hours default slots on create, and closed-day skip. The create scenario SHALL say “one or more dateTimes” and credits per datetime (not a single event-level credit price). Playwright titles in `e2e/specs/admin-events.spec.ts` SHALL match those Scenario lines verbatim. Native datetime and credit controls SHALL be asserted with `getByLabel` (and `nth` / layout filters when several “Credits” labels exist). The parked skip `ALLOW_MULTI_DATETIME_UI=false` SHALL NOT remain on `Scenario: Add and remove datetimes on create`. Environment skips (`E2E_ADMIN_*`, R2) MAY remain as named `test.skip` reasons. The system SHALL NOT add `data-testid` for these scenarios.
+
+#### Scenario: Coverage traces admin occurrence-credit scenarios
+- **WHEN** the coverage matrix is updated for this feature
+- **THEN** it includes rows for the new admin-events scenarios (pass or explicit environment skip)
+- **AND** none of those rows use `@skip-no-ui` as the reason the UI is unbuilt
+
+#### Scenario: Add and remove datetimes on create
+- **WHEN** I am on the new-event form
+- **AND** I add a second datetime row, set a credit price on each remaining row, and remove one row
+- **THEN** submitting persists exactly the remaining datetime values and their credits on the event
+
+#### Scenario: Per-datetime credits persist
+- **WHEN** I create an event with two datetime rows priced 1 and 3 credits
+- **THEN** the stored `occurrence_credit_prices` are 1 and 3 in datetime order
+- **AND** denormalized `credit_price` equals the primary/next slot’s price
+
+#### Scenario: Total credits shown on the form
+- **WHEN** the datetime list has rows priced 2 and 5
+- **THEN** the form shows a total of 7 credits for the list
+
+#### Scenario: Range and two time slots generate a grid
+- **WHEN** I set a start date, end date, and time slots 10:00 at 1 credit and 18:00 at 3 credits
+- **THEN** the datetime list has one row per date × each time
+- **AND** morning rows are priced 1 and evening rows are priced 3
+
+#### Scenario: Changing the end date rebuilds from scratch
+- **WHEN** a generated list exists and I have manually added an extra row
+- **AND** I change the builder end date
+- **THEN** the list is replaced by a fresh expansion
+- **AND** the manually added row is gone
+
+#### Scenario: Create prefills slots from partner open times
+- **WHEN** I am on the new-event form and select a partner open 10:00–18:00 weekdays and closed Sunday
+- **THEN** the builder shows a 10:00 time slot by default
+
+#### Scenario: Closed weekdays omitted from expansion
+- **WHEN** that partner is selected and I generate a range that includes Sunday with the default 10:00 slot
+- **THEN** Sunday is not in the datetime list
+- **AND** open weekdays in range are

@@ -15,7 +15,6 @@ export const CollapsedPreview: Story = () => (
       city: "berlin",
       zipCode: mockPartner.zipCode,
       category: "music",
-      creditPrice: 2,
       totalCapacity: 40,
       languages: ["DE", "EN"],
       hasSubtitles: true,
@@ -31,6 +30,8 @@ export const CollapsedPreview: Story = () => (
         houseNumber: mockPartner.houseNumber,
         addressLine2: mockPartner.addressLine2,
         zipCode: mockPartner.zipCode,
+        hasOpeningHours: mockPartner.hasOpeningHours,
+        openingHours: mockPartner.openingHours,
       },
     ]}
   />

@@ -122,6 +122,7 @@ describe("gdpr domain (integration)", () => {
           partnerId: partner.id,
           ticketsCount: 1,
           totalCredits: 2,
+          dateTime: event.dateTime,
           status: "CONFIRMED",
           redemptionType: "SECRET_CODE",
           redemptionInfo: "GDPRTEST",

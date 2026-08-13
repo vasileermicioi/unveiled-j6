@@ -18,6 +18,8 @@ const SKIP_BOOKING_CODES = new Set([
   "INSUFFICIENT_CREDITS",
   "INSUFFICIENT_VOUCHER_INVENTORY",
   "USER_NOT_FOUND",
+  "UNKNOWN_SLOT",
+  "PAST_SLOT",
 ]);
 
 export type PromoteOutcome =

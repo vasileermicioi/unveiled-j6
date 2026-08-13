@@ -32,6 +32,9 @@ export const adminLabels = {
   eventType: "Event-Typ*",
   eventDate: /^(datum|date)\*?$/i,
   eventTime: /^(uhrzeit|time)\*?$/i,
+  rangeStart: /^(startdatum|start date)\*?$/i,
+  rangeEnd: /^(enddatum|end date)\*?$/i,
+  rowCredits: /^credits$/i,
   credits: "Credits*",
   capacity: "Kapazität*",
   secretCode: "Secret Code",
@@ -52,8 +55,9 @@ export async function fillLabeledDateOrTime(
   value: string,
   options?: { nth?: number },
 ): Promise<void> {
-  // Chromium exposes HeroUI TextField date/time inputs as textboxes with the label name.
-  const field = page.getByRole("textbox", { name: label }).nth(options?.nth ?? 0);
+  const nth = options?.nth ?? 0;
+  const byRole = page.getByRole("textbox", { name: label }).nth(nth);
+  const field = (await byRole.count()) > 0 ? byRole : page.getByLabel(label).nth(nth);
   await expect(field).toBeVisible({ timeout: 15_000 });
   await field.fill(value);
 }
@@ -206,14 +210,21 @@ export async function fillNumberByLabel(
   page: Page,
   label: string | RegExp,
   value: string | number,
+  options?: { nth?: number },
 ): Promise<void> {
-  const field =
+  const locator =
     typeof label === "string" ? page.getByLabel(label, { exact: true }) : page.getByLabel(label);
+  const field = locator.nth(options?.nth ?? 0);
   await expect(field).toBeVisible({ timeout: 15_000 });
   const asString = String(value);
   await field.fill("");
   await field.fill(asString);
   await expect(field).toHaveValue(asString, { timeout: 5_000 });
+}
+
+/** Per-row / range-slot Credits inputs share the same accessible name. */
+export async function fillCreditsNth(page: Page, nth: number, value: string): Promise<void> {
+  await fillNumberByLabel(page, /^credits$/i, value, { nth });
 }
 
 export async function fillTextbox(

@@ -1,8 +1,13 @@
 import { eq } from "drizzle-orm";
+import {
+  creditPriceForOccurrence,
+  futureOccurrences,
+  primaryDateTimeFromList,
+} from "../catalog/datetime";
 import type { TxDb } from "../index";
 import { type Booking, bookings } from "../schema/bookings";
 import { creditLedger } from "../schema/credit-ledger";
-import { events } from "../schema/events";
+import { type Event, events } from "../schema/events";
 import { users } from "../schema/users";
 
 import { lockRedemptionAllocation, writeRedemptionTickets } from "./allocate-redemption-tickets";
@@ -14,6 +19,8 @@ export type BookEventInput = {
   eventId: string;
   ticketsCount: number;
   idempotencyKey: string;
+  /** Chosen occurrence instant. Omit for waitlist promotion / admin comps. */
+  dateTime?: Date;
   /** Future admin comps — skips credit deduction and BOOKING ledger write. */
   skipCreditCharge?: boolean;
 };
@@ -25,6 +32,34 @@ export type BookEventResult = {
 
 function bookingLedgerKey(userId: string, idempotencyKey: string): string {
   return `booking:${userId}:${idempotencyKey}`;
+}
+
+function canonicalOccurrenceInstant(event: Event, dateTime: Date): Date | undefined {
+  const targetMs = dateTime.getTime();
+  return event.dateTimes.find((value) => value.getTime() === targetMs);
+}
+
+/**
+ * Member purchase: posted instant must match a future occurrence.
+ * Waitlist/comp omit `dateTime` → next upcoming, else primary when all past.
+ */
+function resolveBookingSlot(event: Event, posted: Date | undefined, now: Date): Date {
+  if (posted !== undefined) {
+    const canonical = canonicalOccurrenceInstant(event, posted);
+    if (!canonical) {
+      throw new BookingError("UNKNOWN_SLOT", "Datetime is not an occurrence of this event");
+    }
+    if (canonical.getTime() < now.getTime()) {
+      throw new BookingError("PAST_SLOT", "Datetime is in the past");
+    }
+    return canonical;
+  }
+
+  const next = futureOccurrences(event.dateTimes, event.occurrenceCreditPrices, now)[0];
+  if (next) {
+    return next.startsAt;
+  }
+  return primaryDateTimeFromList(event.dateTimes, now);
 }
 
 /**
@@ -76,7 +111,18 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
       throw new BookingError("SOLD_OUT", "Not enough remaining capacity for this booking");
     }
 
-    const totalCredits = event.creditPrice * input.ticketsCount;
+    const now = new Date();
+    const slotDateTime = resolveBookingSlot(event, input.dateTime, now);
+    const slotPrice = creditPriceForOccurrence(
+      event.dateTimes,
+      event.occurrenceCreditPrices,
+      slotDateTime,
+    );
+    if (slotPrice === null) {
+      throw new BookingError("UNKNOWN_SLOT", "Datetime is not an occurrence of this event");
+    }
+
+    const totalCredits = slotPrice * input.ticketsCount;
     const skipCharge = Boolean(input.skipCreditCharge);
 
     if (!skipCharge && user.credits < totalCredits) {
@@ -84,7 +130,6 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
     }
 
     const allocation = await lockRedemptionAllocation(tx, event, input.ticketsCount);
-    const now = new Date();
     const nextCapacity = event.remainingCapacity - input.ticketsCount;
     const nextCredits = skipCharge ? user.credits : user.credits - totalCredits;
 
@@ -114,6 +159,7 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
         partnerId: event.partnerId,
         ticketsCount: input.ticketsCount,
         totalCredits: skipCharge ? 0 : totalCredits,
+        dateTime: slotDateTime,
         status: "CONFIRMED",
         redemptionType: allocation.summary.redemptionType,
         redemptionInfo: allocation.summary.redemptionInfo,

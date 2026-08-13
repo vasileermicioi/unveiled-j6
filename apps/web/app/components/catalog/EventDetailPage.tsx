@@ -10,6 +10,7 @@ import EventDetailCheckoutCard, {
 import EventGallerySlider from "../../islands/EventGallerySlider";
 import EventMap, { type EventMapMarker } from "../../islands/EventMap";
 import { isEventBookable } from "../../lib/catalog-mappers";
+import type { CheckoutOccurrence } from "../../lib/checkout-slot";
 import { getEventDetailGalleryCopy } from "../../lib/event-detail-gallery-copy";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
@@ -37,6 +38,9 @@ type EventDetailPageProps = {
   defaultQty?: number;
   /** Inclusive qty max for checkout controls (eligible members: credits ∩ capacity). */
   maxQty?: number;
+  /** Future priced slots for eligible members; omit for guests. */
+  occurrences?: CheckoutOccurrence[];
+  defaultDateTimeIso?: string;
   /** Ordered gallery images; omit or empty → no gallery section. */
   galleryImages?: PublicEventGalleryImage[];
   /** Hosting partner name + optional logo for DETAILS-card attribution. */
@@ -126,6 +130,10 @@ function pastDueLabel(locale: Locale): string {
 
 function ticketsLabel(locale: Locale): string {
   return locale === "de" ? "Tickets" : "Tickets";
+}
+
+function datetimeLabel(locale: Locale): string {
+  return locale === "de" ? "Datum und Uhrzeit" : "Date and time";
 }
 
 function totalLabel(locale: Locale): string {
@@ -490,6 +498,8 @@ export function EventDetailPage({
   closeHref,
   defaultQty = 1,
   maxQty = 3,
+  occurrences,
+  defaultDateTimeIso,
   galleryImages = [],
   partnerAttribution,
 }: EventDetailPageProps) {
@@ -569,13 +579,16 @@ export function EventDetailPage({
 
           <Surface className="event-detail--checkout__checkout min-w-0" variant="transparent">
             <EventDetailCheckoutCard
+              datetimeLabel={datetimeLabel(locale)}
               decreaseAriaLabel={decreaseAriaLabel(locale)}
+              defaultDateTimeIso={defaultDateTimeIso}
               defaultQty={defaultQty}
               increaseAriaLabel={increaseAriaLabel(locale)}
               locale={locale}
-              creditPrice={event.creditPrice}
-              maxQty={maxQty}
+              creditPrice={occurrences?.[0]?.creditPrice ?? event.creditPrice}
+              maxQty={occurrences?.[0]?.maxQty ?? maxQty}
               noticeText={checkout.noticeText}
+              occurrences={showMemberBookingChrome ? occurrences : undefined}
               policyText={policyText()}
               primaryAction={checkout.primaryAction}
               secondaryAction={checkout.secondaryAction}

@@ -13,7 +13,7 @@ import CloneEventForm from "../../../../../islands/CloneEventForm";
 import { getAdminCopy } from "../../../../../lib/admin-content";
 import {
   eventDateTimesToFormRows,
-  eventFormValuesToDateTimes,
+  eventFormValuesToOccurrenceLists,
   formatEventDateTime,
 } from "../../../../../lib/admin-event-form";
 import { renderAdminPage } from "../../../../../lib/admin-render";
@@ -127,11 +127,12 @@ export const POST = createRoute(async (c) => {
     values.ticketType = existing.ticketType;
     values.timingMode = existing.timingMode;
 
-    const dateTimes = eventFormValuesToDateTimes(values);
+    const { dateTimes, occurrenceCreditPrices } = eventFormValuesToOccurrenceLists(values);
     const payload = voucherPayloadFromFormValues(values);
 
     const cloned = await cloneEvent(db, eventId, {
       dateTimes,
+      occurrenceCreditPrices,
       voucherInventory: {
         promoCodes: payload.promoCodes,
         pdfItems: payload.pdfItems,
@@ -140,10 +141,22 @@ export const POST = createRoute(async (c) => {
 
     return c.redirect(localizedPath(guard.locale, `admin/events/${cloned.id}/edit`), 302);
   } catch (error) {
-    let defaults: { dateTimeRows?: EventDateTimeRow[] } | undefined;
+    let defaults:
+      | {
+          dateTimeRows?: EventDateTimeRow[];
+          rangeStart?: string;
+          rangeEnd?: string;
+          rangeSlots?: { time: string; credits: string }[];
+        }
+      | undefined;
     try {
       const values = await parseEventFormBodyFromRequest(body);
-      defaults = { dateTimeRows: values.dateTimeRows };
+      defaults = {
+        dateTimeRows: values.dateTimeRows,
+        rangeStart: values.rangeStart,
+        rangeEnd: values.rangeEnd,
+        rangeSlots: values.rangeSlots,
+      };
     } catch {
       defaults = undefined;
     }

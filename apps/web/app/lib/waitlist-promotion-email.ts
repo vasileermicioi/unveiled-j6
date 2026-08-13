@@ -54,7 +54,10 @@ export async function sendWaitlistPromotionEmailsSafe(
         from: options.from,
         locale: options.locale,
         toEmail,
-        event: options.event,
+        event: {
+          ...options.event,
+          dateTime: booking.dateTime,
+        },
         booking: {
           id: booking.id,
           ticketsCount: booking.ticketsCount,

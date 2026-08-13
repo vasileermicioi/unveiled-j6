@@ -134,6 +134,20 @@
       "when": 1785781073168,
       "tag": "0018_furry_white_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786574344948,
+      "tag": "0019_exotic_madame_web",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1786578548281,
+      "tag": "0020_absurd_purifiers",
+      "breakpoints": true
     }
   ]
 }

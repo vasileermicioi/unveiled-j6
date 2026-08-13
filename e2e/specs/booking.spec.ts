@@ -15,7 +15,7 @@ import {
   hasDatabaseUrl,
   setSubscriptionStatus,
 } from "../fixtures/billing";
-import { ensureEventHasCapacity } from "../fixtures/catalog";
+import { createPricedSlotEvent, ensureEventHasCapacity } from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
 import {
   forceEventSoldOut,
@@ -57,8 +57,9 @@ async function confirmBooking(page: Page, locale: Locale, title: string, tickets
   const bookUrl = tickets > 1 ? `${eventPath}/book?qty=${tickets}` : `${eventPath}/book`;
   await page.goto(bookUrl);
   await expect(page).toHaveURL(new RegExp(`/${locale}/events/.+/book`));
+  await expect(page.getByLabel(/anzahl tickets|ticket count/i)).toBeVisible();
   await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
-  await expect(page).toHaveURL(/\/book\/confirm/);
+  await expect(page).toHaveURL(/\/book\/confirm/, { timeout: 15_000 });
 }
 
 async function expectMaskedCode(page: Page, code: string) {
@@ -133,14 +134,57 @@ test.describe("booking.feature", () => {
 
     const eventPath = await bookableEventPath(locale);
     await page.goto(`${eventPath}/book`);
+    await expect(page.getByLabel(/anzahl tickets|ticket count/i)).toBeVisible();
     await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
 
-    await expect(page).toHaveURL(/\/book\/confirm/);
+    await expect(page).toHaveURL(/\/book\/confirm/, { timeout: 15_000 });
     await expect(
       page.getByRole("heading", { name: /buchung bestätigt|booking confirmed/i }),
     ).toBeVisible();
     await expect(page.getByText(/DEIN TICKET-CODE|YOUR TICKET CODE/i).first()).toBeVisible();
     await expectMaskedCode(page, SECRET_CODE);
+  });
+
+  test("Scenario: Book a priced datetime slot", async ({ page, locale }) => {
+    test.skip(
+      !hasDatabaseUrl(),
+      "DATABASE_URL required to seed multi-slot event + activate member",
+    );
+
+    const event = await createPricedSlotEvent();
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email, 17);
+    const creditsBefore = await getUserCredits(user.email);
+
+    await page.goto(`/${locale}/events/${event.id}`);
+    await expect(page.getByRole("heading", { level: 1, name: event.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    const slotSelect = page.getByLabel(/datum und uhrzeit|date and time/i);
+    await expect(slotSelect).toBeVisible();
+    const eveningIso = await slotSelect.locator("option").nth(1).getAttribute("value");
+    expect(eveningIso).toBeTruthy();
+    await page.goto(
+      `/${locale}/events/${event.id}/book?dateTime=${encodeURIComponent(eveningIso ?? "")}`,
+    );
+    const bookSelect = page.getByLabel(/datum und uhrzeit|date and time/i);
+    await expect(bookSelect).toBeVisible();
+    await bookSelect.selectOption(eveningIso ?? "");
+    await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
+    await expect(page).toHaveURL(/\/book\/confirm/, { timeout: 15_000 });
+    await expect(
+      page.getByRole("heading", { name: /buchung bestätigt|booking confirmed/i }),
+    ).toBeVisible();
+
+    const eveningLabel = new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Berlin",
+    }).format(event.evening);
+    await expect(
+      page.getByText(new RegExp(eveningLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))),
+    ).toBeVisible();
+    expect(await getUserCredits(user.email)).toBe(creditsBefore - 4);
   });
 
   test("Scenario Outline: Redemption info by ticket type — ticketType = SECRET_CODE", async ({

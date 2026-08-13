@@ -29,7 +29,7 @@ export type BuildIcsInput = {
 
 /**
  * Build a VEVENT ICS payload (Europe/Berlin wall times expressed as UTC instants).
- * Uses the event's denormalized next-upcoming `dateTime` (MVP: event-scoped booking, not a slot).
+ * `event.dateTime` is the booked occurrence instant (`bookings.date_time`), not catalog primary.
  */
 export function buildEventIcs(input: BuildIcsInput): string {
   const start = input.event.dateTime;

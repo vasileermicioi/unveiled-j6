@@ -18,6 +18,15 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | Feature file | Scenario title | Playwright | Status | Notes |
 |---|---|---|---|---|
 | `admin-events.feature` | Create a single event | `e2e/specs/admin-events.spec.ts` · `Scenario: Create a single event` | `pass` | Fills Berlin PLZ `10115`; asserts zip on public detail |
+| `admin-events.feature` | Add and remove datetimes on create | `e2e/specs/admin-events.spec.ts` · `Scenario: Add and remove datetimes on create` | `pass` | R2 env-skip; per-row credits via `getByLabel`; unskipped (multi-datetime UI shipped) |
+| `admin-events.feature` | Per-datetime credits persist | `e2e/specs/admin-events.spec.ts` · `Scenario: Per-datetime credits persist` | `pass` | R2 env-skip; edit form shows 1 then 3 |
+| `admin-events.feature` | Total credits shown on the form | `e2e/specs/admin-events.spec.ts` · `Scenario: Total credits shown on the form` | `pass` | R2 env-skip (partner create); live island total |
+| `admin-events.feature` | Edit datetimes inplace | `e2e/specs/admin-events.spec.ts` · `Scenario: Add and remove datetimes on create` (edit + remove) | `pass` | Covered by add/remove edit path |
+| `admin-events.feature` | Range and two time slots generate a grid | `e2e/specs/admin-events.spec.ts` · `Scenario: Range and two time slots generate a grid` | `pass` | R2 env-skip; 2 days × 2 slots |
+| `admin-events.feature` | Changing the end date rebuilds from scratch | `e2e/specs/admin-events.spec.ts` · `Scenario: Changing the end date rebuilds from scratch` | `pass` | R2 env-skip; also covered by `admin-event-form.test.ts` |
+| `admin-events.feature` | Create prefills slots from partner open times | `e2e/specs/admin-events.spec.ts` · `Scenario: Create prefills slots from partner open times` | `pass` | R2 env-skip; DB hours then select partner |
+| `admin-events.feature` | Closed weekdays omitted from expansion | `e2e/specs/admin-events.spec.ts` · `Scenario: Closed weekdays omitted from expansion` | `pass` | R2 env-skip; Sat–Mon skips Sunday |
+| `admin-events.feature` | Admin event list shows next upcoming datetime | `e2e/specs/admin-events.spec.ts` · `Scenario: Add and remove datetimes on create` (`+N` on list) | `pass` | List `+1` asserted in add/remove |
 | `admin-events.feature` | Admin sets Berlin zip on create | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin sets Berlin zip on create` | `pass` | R2 env-skip; asserts saved zip on public detail |
 | `admin-events.feature` | Country and city are fixed on the form | `e2e/specs/admin-events.spec.ts` · `Scenario: Country and city are fixed on the form` | `pass` | Germany/Berlin readonly; zip editable; no neighborhood |
 | `admin-events.feature` | Supply the event image as a direct upload | `e2e/specs/admin-events.spec.ts` · `Scenario: Supply the event image as a direct upload` | `pass` | R2 env-skip; asserts `.webp` hero/srcset |
@@ -104,6 +113,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `booking.feature` | Booking requires authentication | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires authentication` | `pass` | Needs `DATABASE_URL` for seeded event id |
 | `booking.feature` | Booking requires an active subscription | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires an active subscription` | `pass` |  |
 | `booking.feature` | Successful booking | `e2e/specs/booking.spec.ts` · `Scenario: Successful booking` | `pass` | Seeds ACTIVE via billing fixture |
+| `booking.feature` | Book a priced datetime slot | `e2e/specs/booking.spec.ts` · `Scenario: Book a priced datetime slot` | `pass` | Needs `DATABASE_URL`; evening slot 4 credits; confirm time + ledger |
 | `booking.feature` | Redemption info by ticket type | `e2e/specs/booking.spec.ts` · outline rows SECRET / VOUCHER_PROMO / VOUCHER_PDF | `pass` | Seed titles; PDF row skips without `S3_PRIVATE_BUCKET` |
 | `booking.feature` | Booking fails — insufficient voucher inventory | `e2e/specs/booking.spec.ts` · `Scenario: Booking fails — insufficient voucher inventory` | `skip` | Covered by `book-event.integration.test` |
 | `booking.feature` | Sold out — automatic waitlist offer | `e2e/specs/booking.spec.ts` · `Scenario: Sold out — automatic waitlist offer` | `pass` | Seed title `Sold Out: Waitlist Demo Night` |
@@ -139,6 +149,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Guest sees featured partners only | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees featured partners only` | `pass` | Needs `DATABASE_URL`; `ensureDemoFeaturedPartnersSplit` |
 | `event-discovery.feature` | Empty featured partners hides Partner venues | — | `skip` | Deferred — owner: featured-partners step 03; clearing all featured partners on shared staging DB risks parallel Discover tests |
 | `event-discovery.feature` | Guest can view public event detail without authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest can view public event detail without authentication` | `pass` |  |
+| `event-discovery.feature` | Dropdown changes credits | `e2e/specs/event-discovery.spec.ts` · `Scenario: Dropdown changes credits` | `pass` | Needs `DATABASE_URL`; `createPricedSlotEvent` morning 1 / evening 4 |
+| `event-discovery.feature` | Guest checkout omits slot picker | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest checkout omits slot picker` | `pass` | Needs `DATABASE_URL`; no datetime select, no credit totals |
 | `event-discovery.feature` | Detail shows subtitles when present | `e2e/specs/event-discovery.spec.ts` · `Scenario: Detail shows subtitles when present` | `pass` | Needs `DATABASE_URL` + reseeded demo promo event (`has_subtitles`); also covered by admin-events save scenario |
 | `event-discovery.feature` | Detail omits subtitles when absent | `e2e/specs/event-discovery.spec.ts` · `Scenario: Detail omits subtitles when absent` | `pass` | Needs `DATABASE_URL`; seeded tonight has no subtitles |
 | `event-discovery.feature` | Large viewport uses two primary rows | `e2e/specs/event-discovery.spec.ts` · `Scenario: Large viewport uses two primary rows` | `pass` | Smoke: identity + checkout CTA + hero + DETAILS (no CSS-grid hashes) |

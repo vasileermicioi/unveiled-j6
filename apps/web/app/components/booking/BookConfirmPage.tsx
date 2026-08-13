@@ -37,6 +37,17 @@ export function BookConfirmPage({
       <Paragraph>
         {event.partnerName} · {copy.ticketsLabel(booking.ticketsCount)}
       </Paragraph>
+      <Paragraph>
+        {new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Europe/Berlin",
+        }).format(booking.dateTime)}
+      </Paragraph>
 
       <TicketRedemptionBlock booking={booking} copy={copy} locale={locale} tickets={tickets} />
 

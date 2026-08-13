@@ -34,6 +34,7 @@ export const bookings = pgTable(
       .references(() => partners.id, { onDelete: "restrict" }),
     ticketsCount: integer("tickets_count").notNull(),
     totalCredits: integer("total_credits").notNull(),
+    dateTime: timestamp("date_time", { withTimezone: true, mode: "date" }).notNull(),
     status: bookingStatusEnum("status").notNull(),
     redemptionType: ticketTypeEnum("redemption_type"),
     redemptionInfo: text("redemption_info"),

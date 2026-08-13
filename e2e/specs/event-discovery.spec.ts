@@ -6,6 +6,7 @@ import { signupFreshUser } from "../fixtures/auth";
 import { expect, type Locale, test } from "../fixtures/base";
 import { activateMemberForBooking, hasDatabaseUrl } from "../fixtures/billing";
 import {
+  createPricedSlotEvent,
   E2E_SAMPLE_OPENING_HOURS,
   ensureDemoEventGallery,
   ensureDemoFeaturedPartnersSplit,
@@ -269,6 +270,41 @@ test.describe("event-discovery.feature", () => {
     await expect(
       page.getByRole("link", { name: /tickets buchen|book tickets/i }).first(),
     ).toBeVisible();
+  });
+
+  test("Scenario: Dropdown changes credits", async ({ page, locale }) => {
+    test.skip(
+      !hasDatabaseUrl(),
+      "DATABASE_URL required to seed multi-slot event + activate member",
+    );
+
+    const event = await createPricedSlotEvent();
+    const user = await signupFreshUser(page, locale);
+    await completeOnboardingWizard(page, locale);
+    await activateMemberForBooking(user.email, 17);
+
+    await page.goto(`/${locale}/events/${event.id}`);
+    await expect(page.getByRole("heading", { level: 1, name: event.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    const slotSelect = page.getByLabel(/datum und uhrzeit|date and time/i);
+    await expect(slotSelect).toBeVisible();
+    await expect(page.getByText(/1 CREDIT\b/i).first()).toBeVisible();
+    await slotSelect.selectOption({ index: 1 });
+    await expect(page.getByText(/4 CREDITS/i).first()).toBeVisible();
+  });
+
+  test("Scenario: Guest checkout omits slot picker", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to seed multi-slot event");
+
+    const event = await createPricedSlotEvent();
+    await page.context().clearCookies();
+    await page.goto(`/${locale}/events/${event.id}`);
+    await expect(page.getByRole("heading", { level: 1, name: event.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByLabel(/datum und uhrzeit|date and time/i)).toHaveCount(0);
+    await expect(page.getByText(/\d+\s*CREDITS?/i)).toHaveCount(0);
   });
 
   test("Scenario: Guest views gallery on event detail", async ({ page, locale }) => {

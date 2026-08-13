@@ -7,7 +7,8 @@
 #   - No algorithmic ranking — explicit filters only (event name / category / partner / date; single-select partner)
 #   - Default feed scope = all upcoming (any date_times element >= now / denormalized date_time >= now), soonest first by next upcoming; custom date range available
 #   - Date range lower bound is never before Berlin today; ranged results still exclude already-started events
-#   - Cards/map popups show next upcoming datetime; booking-eligible detail lists all datetimes (emphasize next)
+#   - Cards/map popups show next upcoming datetime + denormalized credit_price; booking-eligible detail lists all datetimes (emphasize next)
+#   - Booking-eligible checkout shows a native datetime dropdown when two or more future occurrences exist; guests omit dropdown and credits
 #   - List and map share the same filters + pagination; view switch is tabs (admin-style)
 #
 # Prefer Scenario titles that match shipped e2e/specs/event-discovery.spec.ts when
@@ -134,6 +135,16 @@ Feature: Event Discovery
     When I open the same valid upcoming event detail URL ("/events/:id")
     Then the summary card shows ticket quantity controls and total credits
     And DETAILS includes date/time chrome
+
+  Scenario: Dropdown changes credits
+    Given an upcoming event with a morning slot priced 1 and an evening slot priced 4
+    And I am signed in as a booking-eligible member
+    When I open "/events/:id" and choose the evening datetime
+    Then the checkout total uses 4 credits per ticket
+
+  Scenario: Guest checkout omits slot picker
+    When a guest opens the same event
+    Then the checkout card does not show a datetime dropdown or credit totals
 
   Scenario: Detail lists multiple datetimes
     Given an upcoming event with two future datetimes

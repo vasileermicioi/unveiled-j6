@@ -1,19 +1,26 @@
 import { describe, expect, test } from "bun:test";
 
-import { CatalogValidationError } from "@unveiled/db";
+import { CatalogValidationError, type OpeningHoursWeek } from "@unveiled/db";
 import { VARIANT_FILENAMES } from "@unveiled/images";
 
 import {
+  defaultRangeSlotsFromHours,
   eventFormValuesToDateTimes,
+  eventFormValuesToOccurrences,
+  expandOccurrencesFromRange,
   expandSeriesSlotsFromBuilder,
+  formatEventDateInput,
+  occurrencesToFormRows,
   parseBerlinDateTime,
   parseBuilderTimes,
   parseEventFormBody,
   parseIsoSlotDates,
   parsePromoCodesJson,
+  parseRangeBuilder,
   parseSeriesSlots,
   parseVoucherPdfsJson,
 } from "./admin-event-form";
+import { toCreateEventInput, toUpdateEventInput } from "./admin-event-input";
 
 function asString(value: string | File | (string | File)[] | undefined): string | undefined {
   if (value === undefined) {
@@ -84,7 +91,7 @@ describe("admin-event-form helpers", () => {
     expect(values.country).toBe("DE");
     expect(values.city).toBe("berlin");
     expect(values.tags).toEqual(["jazz", "live"]);
-    expect(values.dateTimeRows).toEqual([{ date: "2026-08-01", time: "20:00" }]);
+    expect(values.dateTimeRows).toEqual([{ date: "2026-08-01", time: "20:00", credits: "2" }]);
     expect(values.creditPrice).toBe(2);
     expect(values.totalCapacity).toBe(15);
     expect(values.secretCode).toBe("JAZZ123");
@@ -111,12 +118,14 @@ describe("admin-event-form helpers", () => {
         datetime_count: "3",
         event_date_0: "2026-08-01",
         event_time_0: "20:00",
+        event_credit_0: "1",
         event_date_1: "2026-08-08",
         event_time_1: "21:00",
+        event_credit_1: "3",
         event_date_2: "",
         event_time_2: "",
+        event_credit_2: "",
         timing_mode: "TIME_SLOT",
-        credit_price: "2",
         total_capacity: "15",
         ticket_type: "SECRET_CODE",
       },
@@ -125,10 +134,11 @@ describe("admin-event-form helpers", () => {
     );
 
     expect(values.dateTimeRows).toEqual([
-      { date: "2026-08-01", time: "20:00" },
-      { date: "2026-08-08", time: "21:00" },
-      { date: "", time: "" },
+      { date: "2026-08-01", time: "20:00", credits: "1" },
+      { date: "2026-08-08", time: "21:00", credits: "3" },
+      { date: "", time: "", credits: "" },
     ]);
+    expect(values.creditPrice).toBe(1);
 
     const dateTimes = eventFormValuesToDateTimes(values);
     expect(dateTimes).toHaveLength(2);
@@ -142,6 +152,11 @@ describe("admin-event-form helpers", () => {
     expect(formatBerlinTime(first)).toBe("20:00");
     expect(formatBerlin(second)).toMatch(/08\.08\.26/);
     expect(formatBerlinTime(second)).toBe("21:00");
+
+    const occurrences = eventFormValuesToOccurrences(values);
+    expect(occurrences).toHaveLength(2);
+    expect(occurrences[0]?.creditPrice).toBe(1);
+    expect(occurrences[1]?.creditPrice).toBe(3);
   });
 
   test("eventFormValuesToDateTimes rejects empty datetime list", () => {
@@ -158,8 +173,8 @@ describe("admin-event-form helpers", () => {
         eventType: "Concert",
         tags: [],
         dateTimeRows: [
-          { date: "", time: "" },
-          { date: "  ", time: "20:00" },
+          { date: "", time: "", credits: "1" },
+          { date: "  ", time: "20:00", credits: "2" },
         ],
         timingMode: "TIME_SLOT",
         creditPrice: 2,
@@ -183,6 +198,92 @@ describe("admin-event-form helpers", () => {
         stagedImageId: null,
       }),
     ).toThrow(CatalogValidationError);
+  });
+
+  test("eventFormValuesToOccurrences rejects blank credits on a complete date row", () => {
+    expect(() =>
+      eventFormValuesToOccurrences({
+        partnerId: "partner-1",
+        title: "Jazz Night",
+        description: "Live set",
+        street: "Main St",
+        houseNumber: "1",
+        addressLine2: null,
+        zipCode: "10115",
+        category: "Music",
+        eventType: "Concert",
+        tags: [],
+        dateTimeRows: [{ date: "2026-08-01", time: "20:00", credits: "" }],
+        timingMode: "TIME_SLOT",
+        creditPrice: 1,
+        totalCapacity: 15,
+        ticketType: "SECRET_CODE",
+        secretCode: null,
+        eventWebsiteUrl: null,
+        promoCodes: [],
+        voucherPdfs: [],
+        replaceUnusedInventory: false,
+        barrierFree: null,
+        languageIndependent: false,
+        languages: null,
+        hasSubtitles: false,
+        subtitleLanguage: null,
+        lat: null,
+        lng: null,
+        imageUpload: null,
+        imageUrl: null,
+        imagePrebuilt: null,
+        stagedImageId: null,
+      }),
+    ).toThrow(CatalogValidationError);
+  });
+
+  test("toCreateEventInput and toUpdateEventInput pass paired occurrence credits", () => {
+    const values = {
+      partnerId: "partner-1",
+      title: "Jazz Night",
+      description: "Live set",
+      street: "Main St",
+      houseNumber: "1",
+      addressLine2: null,
+      zipCode: "10115",
+      category: "Music",
+      eventType: "Concert",
+      tags: [],
+      dateTimeRows: [
+        { date: "2026-08-01", time: "20:00", credits: "1" },
+        { date: "2026-08-08", time: "21:00", credits: "3" },
+      ],
+      timingMode: "TIME_SLOT" as const,
+      creditPrice: 1,
+      totalCapacity: 15,
+      ticketType: "SECRET_CODE" as const,
+      secretCode: null,
+      eventWebsiteUrl: null,
+      promoCodes: [],
+      voucherPdfs: [],
+      replaceUnusedInventory: false,
+      barrierFree: null,
+      languageIndependent: false,
+      languages: null,
+      hasSubtitles: false,
+      subtitleLanguage: null,
+      lat: null,
+      lng: null,
+      imageUpload: null,
+      imageUrl: null,
+      imagePrebuilt: null,
+      stagedImageId: null,
+    };
+
+    const created = toCreateEventInput(values, "admin-1");
+    expect(created.occurrenceCreditPrices).toEqual([1, 3]);
+    expect(created.dateTimes).toHaveLength(2);
+    expect(created.creditPrice).toBe(1);
+
+    const updated = toUpdateEventInput(values, "admin-1");
+    expect(updated.occurrenceCreditPrices).toEqual([1, 3]);
+    expect(updated.dateTimes).toHaveLength(2);
   });
 
   test("parseEventFormBody extracts promo and pdf inventory payloads", async () => {
@@ -565,6 +666,240 @@ describe("admin-event-form helpers", () => {
     });
 
     expect(slots).toHaveLength(0);
+  });
+});
+
+function weekdayHours(overrides?: Partial<OpeningHoursWeek>): OpeningHoursWeek {
+  const week: OpeningHoursWeek = {
+    mon: { open: "10:00", close: "18:00" },
+    tue: { open: "10:00", close: "18:00" },
+    wed: { open: "10:00", close: "18:00" },
+    thu: { open: "10:00", close: "18:00" },
+    fri: { open: "10:00", close: "18:00" },
+    sat: { open: "10:00", close: "18:00" },
+    sun: { closed: true },
+  };
+  return { ...week, ...overrides };
+}
+
+describe("expandOccurrencesFromRange", () => {
+  test("3 days × 2 slots produce six occurrences with per-slot credits", () => {
+    const occurrences = expandOccurrencesFromRange({
+      startDate: "2026-09-01",
+      endDate: "2026-09-03",
+      slots: [
+        { time: "10:00", creditPrice: 1 },
+        { time: "18:00", creditPrice: 3 },
+      ],
+      timingMode: "TIME_SLOT",
+    });
+
+    expect(occurrences).toHaveLength(6);
+    expect(occurrences.map((row) => formatBerlinTime(row.startsAt))).toEqual([
+      "10:00",
+      "18:00",
+      "10:00",
+      "18:00",
+      "10:00",
+      "18:00",
+    ]);
+    expect(occurrences.map((row) => row.creditPrice)).toEqual([1, 3, 1, 3, 1, 3]);
+  });
+
+  test("skips Sunday when the partner week marks it closed", () => {
+    const occurrences = expandOccurrencesFromRange({
+      startDate: "2026-09-05",
+      endDate: "2026-09-07",
+      slots: [{ time: "10:00", creditPrice: 1 }],
+      timingMode: "TIME_SLOT",
+      openingHours: weekdayHours(),
+    });
+
+    expect(occurrences.map((row) => formatEventDateInput(row.startsAt))).toEqual([
+      "2026-09-05",
+      "2026-09-07",
+    ]);
+  });
+
+  test("includes Sunday when no opening hours are provided", () => {
+    const occurrences = expandOccurrencesFromRange({
+      startDate: "2026-09-05",
+      endDate: "2026-09-07",
+      slots: [{ time: "19:30", creditPrice: 1 }],
+      timingMode: "TIME_SLOT",
+    });
+
+    expect(occurrences).toHaveLength(3);
+    expect(occurrences.map((row) => formatEventDateInput(row.startsAt))).toEqual([
+      "2026-09-05",
+      "2026-09-06",
+      "2026-09-07",
+    ]);
+  });
+
+  test("throws TOO_MANY_OCCURRENCES above 52", () => {
+    expect(() =>
+      expandOccurrencesFromRange({
+        startDate: "2026-09-01",
+        endDate: "2026-10-23",
+        slots: [{ time: "10:00", creditPrice: 1 }],
+        timingMode: "TIME_SLOT",
+      }),
+    ).toThrow(CatalogValidationError);
+
+    try {
+      expandOccurrencesFromRange({
+        startDate: "2026-09-01",
+        endDate: "2026-10-23",
+        slots: [{ time: "10:00", creditPrice: 1 }],
+        timingMode: "TIME_SLOT",
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(CatalogValidationError);
+      expect((error as CatalogValidationError).code).toBe("TOO_MANY_OCCURRENCES");
+    }
+  });
+
+  test("ALL_DAY emits one midnight row per date using the first slot credits", () => {
+    const occurrences = expandOccurrencesFromRange({
+      startDate: "2026-09-01",
+      endDate: "2026-09-02",
+      slots: [
+        { time: "10:00", creditPrice: 1 },
+        { time: "18:00", creditPrice: 3 },
+      ],
+      timingMode: "ALL_DAY",
+    });
+
+    expect(occurrences).toHaveLength(2);
+    expect(occurrences.map((row) => formatBerlinTime(row.startsAt))).toEqual(["00:00", "00:00"]);
+    expect(occurrences.map((row) => row.creditPrice)).toEqual([1, 1]);
+  });
+
+  test("start after end returns an empty list", () => {
+    expect(
+      expandOccurrencesFromRange({
+        startDate: "2026-09-03",
+        endDate: "2026-09-01",
+        slots: [{ time: "10:00", creditPrice: 1 }],
+        timingMode: "TIME_SLOT",
+      }),
+    ).toEqual([]);
+  });
+
+  test("rebuild replace is a fresh assignment not a merge", () => {
+    const previous = occurrencesToFormRows(
+      expandOccurrencesFromRange({
+        startDate: "2026-09-01",
+        endDate: "2026-09-03",
+        slots: [
+          { time: "10:00", creditPrice: 1 },
+          { time: "18:00", creditPrice: 3 },
+        ],
+        timingMode: "TIME_SLOT",
+      }),
+    );
+    const rebuilt = occurrencesToFormRows(
+      expandOccurrencesFromRange({
+        startDate: "2026-09-01",
+        endDate: "2026-09-02",
+        slots: [
+          { time: "10:00", creditPrice: 1 },
+          { time: "18:00", creditPrice: 3 },
+        ],
+        timingMode: "TIME_SLOT",
+      }),
+    );
+
+    expect(previous).toHaveLength(6);
+    expect(rebuilt).toHaveLength(4);
+    expect(rebuilt.some((row) => row.date === "2026-09-03")).toBe(false);
+    expect(previous.some((row) => row.date === "2026-09-03")).toBe(true);
+  });
+
+  test("defaultRangeSlotsFromHours uses distinct open times or 19:30", () => {
+    expect(
+      defaultRangeSlotsFromHours(true, weekdayHours({ sat: { open: "12:00", close: "16:00" } })),
+    ).toEqual([
+      { time: "10:00", credits: "1" },
+      { time: "12:00", credits: "1" },
+    ]);
+    expect(defaultRangeSlotsFromHours(false, weekdayHours())).toEqual([
+      { time: "19:30", credits: "1" },
+    ]);
+  });
+
+  test("parseRangeBuilder reads range_* fields and ignores builder_time_N", () => {
+    const parsed = parseRangeBuilder(
+      {
+        range_start: "2026-09-01",
+        range_end: "2026-09-03",
+        range_slot_count: "2",
+        range_slot_time_0: "10:00",
+        range_slot_credit_0: "1",
+        range_slot_time_1: "18:00",
+        range_slot_credit_1: "3",
+        builder_time_0: "08:00",
+      },
+      asString,
+    );
+
+    expect(parsed).toEqual({
+      rangeStart: "2026-09-01",
+      rangeEnd: "2026-09-03",
+      rangeSlots: [
+        { time: "10:00", credits: "1" },
+        { time: "18:00", credits: "3" },
+      ],
+    });
+  });
+
+  test("eventFormValuesToOccurrences rejects more than 52 complete rows", () => {
+    const dateTimeRows = Array.from({ length: 53 }, (_, index) => ({
+      date: `2026-09-${String((index % 30) + 1).padStart(2, "0")}`,
+      time: `${String(8 + Math.floor(index / 30)).padStart(2, "0")}:${String(index % 60).padStart(2, "0")}`,
+      credits: "1",
+    }));
+
+    try {
+      eventFormValuesToOccurrences({
+        partnerId: "partner-1",
+        title: "Cap",
+        description: "x",
+        street: "Main",
+        houseNumber: "1",
+        addressLine2: null,
+        zipCode: "10115",
+        category: "Music",
+        eventType: "Concert",
+        tags: [],
+        dateTimeRows,
+        timingMode: "TIME_SLOT",
+        creditPrice: 1,
+        totalCapacity: 10,
+        ticketType: "SECRET_CODE",
+        secretCode: null,
+        eventWebsiteUrl: null,
+        promoCodes: [],
+        voucherPdfs: [],
+        replaceUnusedInventory: false,
+        barrierFree: null,
+        languageIndependent: false,
+        languages: null,
+        hasSubtitles: false,
+        subtitleLanguage: null,
+        lat: null,
+        lng: null,
+        imageUpload: null,
+        imageUrl: null,
+        imagePrebuilt: null,
+        stagedImageId: null,
+      });
+      throw new Error("expected TOO_MANY_OCCURRENCES");
+    } catch (error) {
+      expect(error).toBeInstanceOf(CatalogValidationError);
+      expect((error as CatalogValidationError).code).toBe("TOO_MANY_OCCURRENCES");
+    }
   });
 });
 

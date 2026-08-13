@@ -188,6 +188,7 @@ describe("admin-route helpers", () => {
       mapCatalogError(new CatalogValidationError("REQUIRED_FIELD", "name is required"), "en"),
     ).toContain("Name is required");
     expect(mapCatalogErrorCode("de", "PARTNER_HAS_EVENTS")).toContain("Events");
+    expect(mapCatalogErrorCode("en", "TOO_MANY_OCCURRENCES")).toContain("52");
     expect(
       mapCatalogError(
         new CatalogValidationError("MISSING_EVENT_IMAGE", "Partner logo image is required"),

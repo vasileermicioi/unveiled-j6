@@ -1,9 +1,10 @@
 import type { CreateEventInput, UpdateEventInput } from "@unveiled/db";
 
 import type { EventFormValues } from "./admin-event-form";
-import { eventFormValuesToDateTimes } from "./admin-event-form";
+import { eventFormValuesToOccurrenceLists } from "./admin-event-form";
 
 export function toCreateEventInput(values: EventFormValues, uploadedBy: string): CreateEventInput {
+  const { dateTimes, occurrenceCreditPrices } = eventFormValuesToOccurrenceLists(values);
   return {
     partnerId: values.partnerId,
     title: values.title,
@@ -17,7 +18,8 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
     category: values.category,
     eventType: values.eventType,
     tags: values.tags,
-    dateTimes: eventFormValuesToDateTimes(values),
+    dateTimes,
+    occurrenceCreditPrices,
     timingMode: values.timingMode,
     creditPrice: values.creditPrice,
     totalCapacity: values.totalCapacity,
@@ -40,6 +42,7 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
 }
 
 export function toUpdateEventInput(values: EventFormValues, uploadedBy: string): UpdateEventInput {
+  const { dateTimes, occurrenceCreditPrices } = eventFormValuesToOccurrenceLists(values);
   return {
     partnerId: values.partnerId,
     title: values.title,
@@ -53,7 +56,8 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
     category: values.category,
     eventType: values.eventType,
     tags: values.tags,
-    dateTimes: eventFormValuesToDateTimes(values),
+    dateTimes,
+    occurrenceCreditPrices,
     timingMode: values.timingMode,
     creditPrice: values.creditPrice,
     totalCapacity: values.totalCapacity,

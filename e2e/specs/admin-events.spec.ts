@@ -11,6 +11,7 @@ import {
   deleteEventViaUI,
   expectEventOnDiscover,
   expectPublicEventDetail,
+  fillCreditsNth,
   fillLabeledDateOrTime,
   fillNumberByLabel,
   fillStructuredLocation,
@@ -25,7 +26,52 @@ import {
 } from "../fixtures/admin";
 import { loginAsAdmin } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
+import { E2E_WEEKDAY_10_HOURS, withPartnerOpeningHours } from "../fixtures/catalog";
 import { hasAdminCredentials } from "../fixtures/waitlist";
+
+async function fillNewEventRequiredFields(
+  page: Page,
+  locale: "de" | "en",
+  partnerName: string,
+  title: string,
+  description: string,
+): Promise<void> {
+  await page.goto(`/${locale}/admin/events/new`);
+  await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.waitForLoadState("networkidle");
+  await selectOptionByLabel(page, adminLabels.partner, partnerName);
+  await fillTextbox(page, adminLabels.title, title);
+  await fillTextbox(page, adminLabels.description, description);
+  await fillStructuredLocation(page, {
+    street: `Multi Straße ${title.slice(-8)}`,
+    houseNumber: "3",
+    zipCode: "10115",
+  });
+  await selectOptionByLabel(page, adminLabels.category, "Theater");
+  await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+}
+
+function datetimeDateFields(page: Page) {
+  return page.getByRole("textbox", { name: adminLabels.eventDate });
+}
+
+function localISODate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function weekdayISO(jsWeekday: number, minDaysAhead = 10): string {
+  const date = new Date();
+  date.setDate(date.getDate() + minDaysAhead);
+  while (date.getDay() !== jsWeekday) {
+    date.setDate(date.getDate() + 1);
+  }
+  return localISODate(date);
+}
 
 async function attachEventImageFile(page: Page): Promise<void> {
   // BDD exception: file-input
@@ -99,7 +145,6 @@ test.describe("admin-events.feature", () => {
   });
 
   test("Scenario: Add and remove datetimes on create", async ({ page, locale }) => {
-    test.skip(true, "Multi-datetime admin UI parked (ALLOW_MULTI_DATETIME_UI=false)");
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     const suffix = uniqueSuffix();
@@ -107,25 +152,13 @@ test.describe("admin-events.feature", () => {
     const firstDate = futureDateISO(14);
     const secondDate = futureDateISO(21);
 
-    await page.goto(`/${locale}/admin/events/new`);
-    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.waitForLoadState("networkidle");
-    await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await fillTextbox(page, adminLabels.title, title);
-    await fillTextbox(page, adminLabels.description, `Multi datetime ${suffix}`);
-    await fillStructuredLocation(page, {
-      street: `Multi Straße ${suffix}`,
-      houseNumber: "3",
-      zipCode: "10115",
-    });
-    await selectOptionByLabel(page, adminLabels.category, "Theater");
-    await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+    await fillNewEventRequiredFields(page, locale, partner.name, title, `Multi datetime ${suffix}`);
 
-    await fillLabeledDateOrTime(page, /^(datum|date)\*?$/i, firstDate, { nth: 0 });
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, firstDate, { nth: 0 });
+    await fillCreditsNth(page, 1, "2");
     await page.getByRole("button", { name: /termin hinzufügen|add datetime/i }).click();
-    await fillLabeledDateOrTime(page, /^(datum|date)\*?$/i, secondDate, { nth: 1 });
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, secondDate, { nth: 1 });
+    await fillCreditsNth(page, 2, "5");
 
     const secretField = page.getByRole("textbox", { name: adminLabels.secretCode, exact: true });
     if ((await secretField.count()) > 0) {
@@ -144,16 +177,18 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
       timeout: 15_000,
     });
-    const dateFields = page.getByRole("textbox", { name: /^(datum|date)\*?$/i });
+    const dateFields = datetimeDateFields(page);
     await expect(dateFields).toHaveCount(2);
     await expect(dateFields.nth(0)).toHaveValue(firstDate);
     await expect(dateFields.nth(1)).toHaveValue(secondDate);
+    await expect(page.getByLabel(adminLabels.rowCredits).nth(1)).toHaveValue("2");
+    await expect(page.getByLabel(adminLabels.rowCredits).nth(2)).toHaveValue("5");
 
     await page
       .getByRole("button", { name: /^entfernen$|^remove$/i })
-      .nth(1)
+      .last()
       .click();
-    await expect(page.getByRole("textbox", { name: /^(datum|date)\*?$/i })).toHaveCount(1);
+    await expect(datetimeDateFields(page)).toHaveCount(1);
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
     await expect(
@@ -162,6 +197,142 @@ test.describe("admin-events.feature", () => {
         .filter({ hasText: title })
         .getByText(/\+\s*1/),
     ).toHaveCount(0);
+  });
+
+  test("Scenario: Per-datetime credits persist", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const suffix = uniqueSuffix();
+    const title = `E2E Slot Credits ${suffix}`;
+    const firstDate = futureDateISO(14);
+    const secondDate = futureDateISO(21);
+
+    await fillNewEventRequiredFields(page, locale, partner.name, title, `Credits ${suffix}`);
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, firstDate, { nth: 0 });
+    await fillCreditsNth(page, 1, "1");
+    await page.getByRole("button", { name: /termin hinzufügen|add datetime/i }).click();
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, secondDate, { nth: 1 });
+    await fillCreditsNth(page, 2, "3");
+
+    const secretField = page.getByRole("textbox", { name: adminLabels.secretCode, exact: true });
+    if ((await secretField.count()) > 0) {
+      await secretField.fill(`E2ECR${suffix.slice(0, 6).toUpperCase()}`);
+    }
+    await attachEventImageFile(page);
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+
+    const row = page.getByRole("row").filter({ hasText: title });
+    await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByLabel(adminLabels.rowCredits).nth(1)).toHaveValue("1");
+    await expect(page.getByLabel(adminLabels.rowCredits).nth(2)).toHaveValue("3");
+  });
+
+  test("Scenario: Total credits shown on the form", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    await fillNewEventRequiredFields(
+      page,
+      locale,
+      partner.name,
+      `E2E Total ${uniqueSuffix()}`,
+      "Total credits",
+    );
+    await fillCreditsNth(page, 1, "2");
+    await page.getByRole("button", { name: /termin hinzufügen|add datetime/i }).click();
+    await fillCreditsNth(page, 2, "5");
+    await expect(page.getByText(/credits gesamt:\s*7|total credits:\s*7/i)).toBeVisible();
+  });
+
+  test("Scenario: Range and two time slots generate a grid", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    await fillNewEventRequiredFields(
+      page,
+      locale,
+      partner.name,
+      `E2E Range ${uniqueSuffix()}`,
+      "Range grid",
+    );
+    const start = futureDateISO(14);
+    const end = futureDateISO(15);
+    await fillLabeledDateOrTime(page, adminLabels.rangeStart, start);
+    await fillLabeledDateOrTime(page, adminLabels.rangeEnd, end);
+    await fillLabeledDateOrTime(page, adminLabels.eventTime, "10:00", { nth: 0 });
+    await fillCreditsNth(page, 0, "1");
+    await page.getByRole("button", { name: /zeitfenster hinzufügen|add time slot/i }).click();
+    await fillLabeledDateOrTime(page, adminLabels.eventTime, "18:00", { nth: 1 });
+    await fillCreditsNth(page, 1, "3");
+    await expect(datetimeDateFields(page)).toHaveCount(4, { timeout: 10_000 });
+    await expect(page.getByLabel(adminLabels.rowCredits).nth(2)).toHaveValue("1");
+    await expect(page.getByLabel(adminLabels.rowCredits).nth(3)).toHaveValue("3");
+    await expect(page.getByLabel(adminLabels.rowCredits).nth(4)).toHaveValue("1");
+    await expect(page.getByLabel(adminLabels.rowCredits).nth(5)).toHaveValue("3");
+  });
+
+  test("Scenario: Changing the end date rebuilds from scratch", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    await fillNewEventRequiredFields(
+      page,
+      locale,
+      partner.name,
+      `E2E Rebuild ${uniqueSuffix()}`,
+      "Rebuild",
+    );
+    const start = futureDateISO(14);
+    const end = futureDateISO(16);
+    await fillLabeledDateOrTime(page, adminLabels.rangeStart, start);
+    await fillLabeledDateOrTime(page, adminLabels.rangeEnd, end);
+    await expect(datetimeDateFields(page)).toHaveCount(3, { timeout: 10_000 });
+    await page.getByRole("button", { name: /termin hinzufügen|add datetime/i }).click();
+    await expect(datetimeDateFields(page)).toHaveCount(4);
+    await fillLabeledDateOrTime(page, adminLabels.rangeEnd, start);
+    await expect(datetimeDateFields(page)).toHaveCount(1, { timeout: 10_000 });
+  });
+
+  test("Scenario: Create prefills slots from partner open times", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    await withPartnerOpeningHours(partner.name, E2E_WEEKDAY_10_HOURS, async () => {
+      await page.goto(`/${locale}/admin/events/new`);
+      await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+        timeout: 15_000,
+      });
+      await page.waitForLoadState("networkidle");
+      await selectOptionByLabel(page, adminLabels.partner, partner.name);
+      await expect(page.getByRole("textbox", { name: adminLabels.eventTime }).nth(0)).toHaveValue(
+        "10:00",
+        { timeout: 10_000 },
+      );
+    });
+  });
+
+  test("Scenario: Closed weekdays omitted from expansion", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const saturday = weekdayISO(6);
+    const mondayDate = new Date(`${saturday}T12:00:00`);
+    mondayDate.setDate(mondayDate.getDate() + 2);
+    const monday = localISODate(mondayDate);
+
+    await withPartnerOpeningHours(partner.name, E2E_WEEKDAY_10_HOURS, async () => {
+      await fillNewEventRequiredFields(
+        page,
+        locale,
+        partner.name,
+        `E2E Closed ${uniqueSuffix()}`,
+        "Closed Sunday",
+      );
+      await fillLabeledDateOrTime(page, adminLabels.rangeStart, saturday);
+      await fillLabeledDateOrTime(page, adminLabels.rangeEnd, monday);
+      await expect(datetimeDateFields(page)).toHaveCount(2, { timeout: 10_000 });
+      await expect(datetimeDateFields(page).nth(0)).toHaveValue(saturday);
+      await expect(datetimeDateFields(page).nth(1)).toHaveValue(monday);
+    });
   });
 
   test("Scenario: Admin sets Berlin zip on create", async ({ page, locale }) => {

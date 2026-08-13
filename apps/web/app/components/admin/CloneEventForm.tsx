@@ -32,6 +32,9 @@ type CloneEventFormProps = {
   source: CloneEventFormSource;
   defaults?: {
     dateTimeRows?: EventDateTimeRow[];
+    rangeStart?: string;
+    rangeEnd?: string;
+    rangeSlots?: { time: string; credits: string }[];
   };
   error?: string | null;
 };
@@ -93,9 +96,15 @@ export function CloneEventForm({
 
       <Surface className="flex flex-col gap-2" variant="transparent">
         <EventAdminDateTimeList
+          applyPartnerHours={false}
           isDateRequired
           locale={locale}
+          openingHours={null}
+          rangeEnd={defaults?.rangeEnd}
+          rangeSlots={defaults?.rangeSlots}
+          rangeStart={defaults?.rangeStart}
           rows={defaults?.dateTimeRows ?? source.dateTimeRows}
+          timingMode={source.timingMode}
         />
         <Description>{copy.cloneDateTimeHint}</Description>
       </Surface>

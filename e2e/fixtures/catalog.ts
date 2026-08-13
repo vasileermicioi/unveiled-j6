@@ -1,11 +1,13 @@
 import {
   addFeaturedEvent,
   addFeaturedPartner,
+  berlinInclusiveDateRange,
   CatalogValidationError,
   createDb,
   ensureVoucherInventoryAvailable,
   eq,
   events,
+  getBerlinCalendarDate,
   getPartnerById,
   listEventGalleryImages,
   listEvents,
@@ -151,6 +153,106 @@ export async function ensureDemoFeaturedPartnersSplit(): Promise<{
   return { featuredName: featuredRow.name, nonFeaturedName: nonFeatured.name };
 }
 
+/** Weekdays + Saturday 10:00–18:00, Sunday closed — one distinct open time for builder defaults. */
+export const E2E_WEEKDAY_10_HOURS: OpeningHoursWeek = {
+  mon: { open: "10:00", close: "18:00" },
+  tue: { open: "10:00", close: "18:00" },
+  wed: { open: "10:00", close: "18:00" },
+  thu: { open: "10:00", close: "18:00" },
+  fri: { open: "10:00", close: "18:00" },
+  sat: { open: "10:00", close: "18:00" },
+  sun: { closed: true },
+};
+
+function addCalendarDaysYmd(ymd: string, days: number): string {
+  const [year, month, day] = ymd.split("-").map(Number);
+  const utc = new Date(Date.UTC(year, (month ?? 1) - 1, (day ?? 1) + days));
+  return `${utc.getUTCFullYear()}-${String(utc.getUTCMonth() + 1).padStart(2, "0")}-${String(utc.getUTCDate()).padStart(2, "0")}`;
+}
+
+function berlinWallClock(daysAhead: number, hour: number): Date {
+  const ymd = addCalendarDaysYmd(getBerlinCalendarDate(new Date()), daysAhead);
+  return new Date(berlinInclusiveDateRange(ymd, ymd).start.getTime() + hour * 3_600_000);
+}
+
+/**
+ * Insert a SECRET_CODE event with two future same-day slots (morning 1 credit, evening 4).
+ * Reuses an existing partner + image so Playwright does not need R2.
+ */
+export async function createPricedSlotEvent(options?: {
+  title?: string;
+  daysAhead?: number;
+  morningHour?: number;
+  eveningHour?: number;
+  morningPrice?: number;
+  eveningPrice?: number;
+}): Promise<{ id: string; title: string; morning: Date; evening: Date }> {
+  const db = createDb(requireDatabaseUrl());
+  const template = await db.query.events.findFirst();
+  if (!template) {
+    throw new Error("No events in catalog — run bun run seed:demo");
+  }
+  const partnerRows = await listPartners(db, { limit: 1 });
+  const partner = partnerRows[0];
+  if (!partner) {
+    throw new Error("No partners in catalog — run bun run seed:demo");
+  }
+
+  const daysAhead = options?.daysAhead ?? 14;
+  const morningHour = options?.morningHour ?? 10;
+  const eveningHour = options?.eveningHour ?? 18;
+  const morningPrice = options?.morningPrice ?? 1;
+  const eveningPrice = options?.eveningPrice ?? 4;
+  const title =
+    options?.title ?? `E2E Slot ${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+  const morning = berlinWallClock(daysAhead, morningHour);
+  const evening = berlinWallClock(daysAhead, eveningHour);
+
+  const [created] = await db
+    .insert(events)
+    .values({
+      partnerId: partner.id,
+      partnerName: partner.name,
+      title,
+      description: "E2E multi-slot priced occurrences",
+      address: partner.address || "Berlin",
+      street: template.street || "E2E Straße",
+      houseNumber: template.houseNumber || "1",
+      addressLine2: template.addressLine2,
+      country: "DE",
+      city: "berlin",
+      zipCode: template.zipCode || "10115",
+      imageId: template.imageId,
+      category: template.category || "Theater",
+      eventType: template.eventType || "Performance",
+      tags: ["e2e", "slots"],
+      dateTimes: [morning, evening],
+      dateTime: morning,
+      timingMode: template.timingMode,
+      startTimeMinutes: morningHour * 60,
+      weekday: morning.getDay(),
+      occurrenceCreditPrices: [morningPrice, eveningPrice],
+      creditPrice: morningPrice,
+      totalCapacity: 20,
+      remainingCapacity: 20,
+      ticketType: "SECRET_CODE",
+      secretCode: `SLOT${Date.now().toString(36).slice(-6).toUpperCase()}`,
+      languages: ["de", "en"],
+      barrierFree: true,
+      hasSubtitles: false,
+      subtitleLanguage: null,
+      lat: template.lat,
+      lng: template.lng,
+    })
+    .returning();
+
+  if (!created) {
+    throw new Error("Failed to insert priced-slot e2e event");
+  }
+  return { id: created.id, title, morning, evening };
+}
+
 /**
  * Resolve a demo event that already has ≥2 gallery images (from `bun run seed:demo`).
  * Prefer theaterFuture — featured + reliably upcoming. Does not attach images here
@@ -170,6 +272,16 @@ export async function ensureDemoEventGallery(
   return eventId;
 }
 
+function shiftOccurrencesToFuture(dateTimes: Date[], daysAhead = 14): Date[] {
+  const nowMs = Date.now();
+  if (dateTimes.some((value) => value.getTime() >= nowMs)) {
+    return dateTimes;
+  }
+  const earliest = Math.min(...dateTimes.map((value) => value.getTime()));
+  const shift = nowMs + daysAhead * 86_400_000 - earliest;
+  return dateTimes.map((value) => new Date(value.getTime() + shift));
+}
+
 /** Restore bookable capacity when prior e2e runs depleted a seed event. */
 export async function ensureEventHasCapacity(title: string, minRemaining = 5): Promise<string> {
   const url = process.env.DATABASE_URL;
@@ -183,16 +295,27 @@ export async function ensureEventHasCapacity(title: string, minRemaining = 5): P
   if (!row) {
     throw new Error(`Event not found in catalog: ${title}`);
   }
+  const nextDates = shiftOccurrencesToFuture(row.dateTimes);
+  const datesStale = nextDates.some(
+    (value, index) => value.getTime() !== row.dateTimes[index]?.getTime(),
+  );
+  const patch: {
+    totalCapacity?: number;
+    remainingCapacity?: number;
+    dateTimes?: Date[];
+    dateTime?: Date;
+    updatedAt: Date;
+  } = { updatedAt: new Date() };
   if (row.remainingCapacity < minRemaining) {
-    const nextTotal = Math.max(row.totalCapacity, minRemaining);
-    await db
-      .update(events)
-      .set({
-        totalCapacity: nextTotal,
-        remainingCapacity: minRemaining,
-        updatedAt: new Date(),
-      })
-      .where(eq(events.id, row.id));
+    patch.totalCapacity = Math.max(row.totalCapacity, minRemaining);
+    patch.remainingCapacity = minRemaining;
+  }
+  if (datesStale) {
+    patch.dateTimes = nextDates;
+    patch.dateTime = nextDates[0];
+  }
+  if (patch.totalCapacity !== undefined || datesStale) {
+    await db.update(events).set(patch).where(eq(events.id, row.id));
   }
 
   if (row.ticketType === "VOUCHER_PROMO" || row.ticketType === "VOUCHER_PDF") {

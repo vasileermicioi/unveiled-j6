@@ -80,6 +80,18 @@ export const Eligible: Story = () => (
     event={mockEvent}
     locale={storyLocale}
     maxQty={8}
+    occurrences={[
+      {
+        startsAtIso: mockEvent.dateTimes[0]?.toISOString() ?? mockEvent.dateTime.toISOString(),
+        creditPrice: 1,
+        maxQty: 8,
+      },
+      {
+        startsAtIso: mockEvent.dateTimes[1]?.toISOString() ?? mockEvent.dateTime.toISOString(),
+        creditPrice: 4,
+        maxQty: 3,
+      },
+    ]}
     partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "eligible" }}
   />

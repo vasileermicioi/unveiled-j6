@@ -54,6 +54,12 @@ export const events = pgTable(
     timingMode: timingModeEnum("timing_mode").notNull(),
     startTimeMinutes: integer("start_time_minutes").notNull(),
     weekday: integer("weekday").notNull(),
+    /**
+     * Per-occurrence credits, same cardinality and order as `dateTimes`.
+     * `creditPrice` is the denormalized primary/next slot’s price.
+     */
+    occurrenceCreditPrices: integer("occurrence_credit_prices").array().notNull(),
+    /** Price of the primary/next instant in `dateTimes` / `occurrenceCreditPrices`. */
     creditPrice: integer("credit_price").notNull(),
     totalCapacity: integer("total_capacity").notNull(),
     remainingCapacity: integer("remaining_capacity").notNull(),
@@ -77,6 +83,14 @@ export const events = pgTable(
   (table) => [
     check("events_remaining_capacity_non_negative", sql`${table.remainingCapacity} >= 0`),
     check("events_date_times_non_empty", sql`cardinality(${table.dateTimes}) >= 1`),
+    check(
+      "events_occurrence_credit_prices_cardinality",
+      sql`cardinality(${table.dateTimes}) = cardinality(${table.occurrenceCreditPrices})`,
+    ),
+    check(
+      "events_occurrence_credit_prices_non_negative",
+      sql`0 <= ALL (${table.occurrenceCreditPrices})`,
+    ),
     index("events_date_time_idx").on(table.dateTime),
     index("events_date_time_partner_id_idx").on(table.dateTime, table.partnerId),
     index("events_date_time_category_idx").on(table.dateTime, table.category),

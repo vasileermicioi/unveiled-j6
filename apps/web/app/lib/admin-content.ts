@@ -339,6 +339,14 @@ export type AdminCopy = {
   eventDateTimesLabel: string;
   addDateTimeLabel: string;
   removeDateTimeLabel: string;
+  dateTimesTotalCreditsLabel: (total: number) => string;
+  rangeBuilderLabel: string;
+  rangeTimeSlotsLabel: string;
+  addTimeSlotLabel: string;
+  rangeRebuildHint: string;
+  rangeClosedDaysHint: string;
+  rangeStartAfterEnd: string;
+  tooManyOccurrences: string;
   timingModeLabel: string;
   timingModeTimeSlot: string;
   timingModeAllDay: string;
@@ -435,6 +443,7 @@ export type AdminCopy = {
     eventType: string;
     eventDate: string;
     dateTimes: string;
+    creditPrice: string;
     redemption: string;
     series: string;
     subtitleLanguage: string;
@@ -797,6 +806,16 @@ const copy: Record<Locale, AdminCopy> = {
     eventDateTimesLabel: "Termine",
     addDateTimeLabel: "Termin hinzufügen",
     removeDateTimeLabel: "Entfernen",
+    dateTimesTotalCreditsLabel: (total) => `Credits gesamt: ${total}`,
+    rangeBuilderLabel: "Aus Zeitraum erzeugen",
+    rangeTimeSlotsLabel: "Zeitfenster",
+    addTimeSlotLabel: "Zeitfenster hinzufügen",
+    rangeRebuildHint:
+      "Änderungen am Zeitraum oder an den Zeitfenstern erzeugen die Terminliste neu und verwerfen manuelles Hinzufügen/Entfernen.",
+    rangeClosedDaysHint: "Geschlossene Wochentage laut Partner-Öffnungszeiten werden übersprungen.",
+    rangeStartAfterEnd: "Das Enddatum muss am oder nach dem Startdatum liegen.",
+    tooManyOccurrences:
+      "Ein Zeitraum darf höchstens 52 Termine erzeugen. Zeitraum verkürzen oder ein Zeitfenster entfernen.",
     timingModeLabel: "Zeitmodus",
     timingModeTimeSlot: "Zeitfenster",
     timingModeAllDay: "Ganztägig",
@@ -905,6 +924,7 @@ const copy: Record<Locale, AdminCopy> = {
       eventType: "Event-Typ ist erforderlich.",
       eventDate: "Datum ist erforderlich.",
       dateTimes: "Mindestens ein Termin ist erforderlich.",
+      creditPrice: "Credits müssen eine ganze Zahl ≥ 0 sein.",
       redemption: "Redemption-Konfiguration unvollständig.",
       series: "Mindestens ein gültiger Slot erforderlich.",
       subtitleLanguage:
@@ -1260,6 +1280,16 @@ const copy: Record<Locale, AdminCopy> = {
     eventDateTimesLabel: "Date & times",
     addDateTimeLabel: "Add datetime",
     removeDateTimeLabel: "Remove",
+    dateTimesTotalCreditsLabel: (total) => `Total credits: ${total}`,
+    rangeBuilderLabel: "Generate from date range",
+    rangeTimeSlotsLabel: "Time slots",
+    addTimeSlotLabel: "Add time slot",
+    rangeRebuildHint:
+      "Changing the range or time slots rebuilds the datetime list and discards manual add/remove.",
+    rangeClosedDaysHint: "Closed weekdays from the partner’s opening hours are skipped.",
+    rangeStartAfterEnd: "End date must be on or after start date.",
+    tooManyOccurrences:
+      "A range can create at most 52 datetimes. Narrow the dates or remove a time slot.",
     timingModeLabel: "Timing mode",
     timingModeTimeSlot: "Time slot",
     timingModeAllDay: "All day",
@@ -1363,6 +1393,7 @@ const copy: Record<Locale, AdminCopy> = {
       eventType: "Event type is required.",
       eventDate: "Date is required.",
       dateTimes: "At least one datetime is required.",
+      creditPrice: "Credits must be a whole number ≥ 0.",
       redemption: "Redemption configuration is incomplete.",
       series: "At least one valid slot is required.",
       subtitleLanguage:
@@ -1390,6 +1421,8 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   DUPLICATE_SERIES_SLOTS: "series",
   EMPTY_SERIES_SLOTS: "series",
   EMPTY_DATE_TIMES: "dateTimes",
+  NEGATIVE_CREDIT_PRICE: "creditPrice",
+  DUPLICATE_OCCURRENCE_INSTANTS: "dateTimes",
   INVALID_SUBTITLE_LANGUAGE: "subtitleLanguage",
   INVALID_OPENING_HOURS: "openingHours",
   EVENT_NOT_FOUND: "title",
@@ -1454,6 +1487,20 @@ export function mapCatalogErrorCode(
 
   if (code === "EMPTY_DATE_TIMES") {
     return adminCopy.fieldErrors.dateTimes;
+  }
+
+  if (code === "TOO_MANY_OCCURRENCES") {
+    return adminCopy.tooManyOccurrences;
+  }
+
+  if (code === "NEGATIVE_CREDIT_PRICE") {
+    return adminCopy.fieldErrors.creditPrice;
+  }
+
+  if (code === "DUPLICATE_OCCURRENCE_INSTANTS") {
+    return locale === "de"
+      ? "Zwei Termine dürfen nicht dieselbe Uhrzeit haben."
+      : "Two datetimes cannot share the same instant.";
   }
 
   if (code === "INVALID_SUBTITLE_LANGUAGE") {

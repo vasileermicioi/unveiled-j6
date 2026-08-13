@@ -1,8 +1,9 @@
 import { Alert, Button, Card, Form, Input, Link, Paragraph, Surface } from "@heroui/react";
 import type { Event } from "@unveiled/db";
 
-import TicketCountSelect from "../../islands/TicketCountSelect";
+import BookSlotFields from "../../islands/BookSlotFields";
 import type { BookPageCopy } from "../../lib/booking-content";
+import { BOOK_DATE_TIME_INPUT_ID, type CheckoutOccurrence } from "../../lib/checkout-slot";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import { PageSectionHeader } from "../marketing/PageSectionHeader";
@@ -22,6 +23,8 @@ export type BookEventPageProps = {
   availableCredits?: number;
   /** Inclusive upper bound for ticket Select (credits ∩ capacity). */
   maxQty?: number;
+  occurrences?: CheckoutOccurrence[];
+  slotDateTimeIso?: string;
 };
 
 export function BookEventPage({
@@ -35,11 +38,27 @@ export function BookEventPage({
   offerWaitlist = false,
   availableCredits,
   maxQty = 3,
+  occurrences = [],
+  slotDateTimeIso,
 }: BookEventPageProps) {
   const eventHref = localizedPath(locale, `events/${event.id}`);
   const action = localizedPath(locale, `events/${event.id}/book`);
   const waitlistHref = `${localizedPath(locale, `events/${event.id}/waitlist`)}?qty=${encodeURIComponent(defaultTickets)}`;
-  const unitPrice = event.creditPrice;
+  const selected = occurrences.find((occurrence) => occurrence.startsAtIso === slotDateTimeIso);
+  const unitPrice = selected?.creditPrice ?? occurrences[0]?.creditPrice ?? event.creditPrice;
+  const slotIso = selected?.startsAtIso ?? occurrences[0]?.startsAtIso ?? slotDateTimeIso;
+  const slotMaxQty = selected?.maxQty ?? occurrences[0]?.maxQty ?? maxQty;
+
+  const fieldsOccurrences: CheckoutOccurrence[] =
+    occurrences.length > 0
+      ? occurrences
+      : [
+          {
+            startsAtIso: slotIso ?? event.dateTime.toISOString(),
+            creditPrice: unitPrice,
+            maxQty: slotMaxQty,
+          },
+        ];
 
   if (view === "past_due") {
     return (
@@ -73,7 +92,7 @@ export function BookEventPage({
       <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
       <Paragraph>{copy.subtitle(event.title)}</Paragraph>
       <Paragraph>
-        {event.partnerName} · {unitPrice} {locale === "de" ? "Credit / Ticket" : "credit / ticket"}
+        {event.partnerName}
         {availableCredits != null
           ? ` · ${availableCredits} ${locale === "de" ? "verfügbar" : "available"}`
           : null}
@@ -97,16 +116,21 @@ export function BookEventPage({
         <Card.Content className="flex flex-col gap-6">
           <Form action={action} className="flex flex-col gap-6" method="post">
             <Input name="idempotencyKey" type="hidden" value={idempotencyKey} />
-            <TicketCountSelect
-              defaultValue={defaultTickets}
-              label={copy.ticketsLabel}
-              maxQty={maxQty}
-              name="ticketsCount"
+            <input
+              id={BOOK_DATE_TIME_INPUT_ID}
+              name="date_time"
+              type="hidden"
+              value={slotIso ?? fieldsOccurrences[0]?.startsAtIso ?? ""}
+            />
+            <BookSlotFields
+              datetimeLabel={copy.datetimeLabel}
+              defaultDateTimeIso={slotIso ?? fieldsOccurrences[0]?.startsAtIso}
+              defaultTickets={defaultTickets}
+              locale={locale}
+              occurrences={fieldsOccurrences}
+              ticketsLabel={copy.ticketsLabel}
             />
             <Paragraph>{copy.policy}</Paragraph>
-            <Paragraph>
-              {copy.creditCost(unitPrice)} {locale === "de" ? "pro Ticket" : "per ticket"}
-            </Paragraph>
             <Button className="button button--primary button--md" type="submit">
               {copy.submit}
             </Button>

@@ -1,8 +1,15 @@
 "use client";
 
-import { Button, Link, Paragraph, Surface } from "@heroui/react";
-import { useState } from "react";
+import { Button, Label, Link, Paragraph, Surface } from "@heroui/react";
+import { useMemo, useState } from "react";
 
+import {
+  type CheckoutOccurrence,
+  clampQty,
+  formatOccurrenceLabel,
+  resolveSelectedOccurrence,
+  withQtyAndDateTimeQuery,
+} from "../lib/checkout-slot";
 import type { Locale } from "../lib/locale";
 
 const MIN_QTY = 1;
@@ -35,39 +42,28 @@ export type EventDetailCheckoutCardProps = {
   secondaryAction?: CheckoutSecondaryAction | null;
   decreaseAriaLabel: string;
   increaseAriaLabel: string;
+  /** Future occurrences for eligible members. Omit for guests. */
+  occurrences?: CheckoutOccurrence[];
+  defaultDateTimeIso?: string;
+  datetimeLabel?: string;
 };
 
-function clampQty(value: number, maxQty: number): number {
-  if (!Number.isFinite(value)) {
-    return MIN_QTY;
-  }
-  if (maxQty < MIN_QTY) {
-    return MIN_QTY;
-  }
-  return Math.min(maxQty, Math.max(MIN_QTY, Math.trunc(value)));
-}
-
-function withQtyQuery(path: string, qty: number): string {
-  const url = new URL(path, "https://unveiled.local");
-  url.searchParams.set("qty", String(qty));
-  return `${url.pathname}${url.search}`;
-}
-
-function resolvePrimaryHref(action: CheckoutPrimaryAction, qty: number): string {
+function resolvePrimaryHref(
+  action: CheckoutPrimaryAction,
+  qty: number,
+  dateTimeIso?: string,
+): string {
   if (action.type === "book") {
-    return withQtyQuery(action.bookPath, qty);
+    return withQtyAndDateTimeQuery(action.bookPath, qty, dateTimeIso);
   }
   if (action.type === "login") {
-    const returnTo = withQtyQuery(action.returnPath, qty);
+    const returnTo = withQtyAndDateTimeQuery(action.returnPath, qty);
     return `${action.loginPath}?returnTo=${encodeURIComponent(returnTo)}`;
   }
   return action.href;
 }
 
-function formatCreditsTotal(total: number, locale: Locale): string {
-  if (locale === "de") {
-    return `${total} CREDIT${total === 1 ? "" : "S"}`;
-  }
+function formatCreditsTotal(total: number): string {
   return `${total} CREDIT${total === 1 ? "" : "S"}`;
 }
 
@@ -87,34 +83,85 @@ export default function EventDetailCheckoutCard({
   secondaryAction = null,
   decreaseAriaLabel,
   increaseAriaLabel,
+  occurrences = [],
+  defaultDateTimeIso,
+  datetimeLabel,
 }: EventDetailCheckoutCardProps) {
-  const [qty, setQty] = useState(() => clampQty(defaultQty, maxQty));
-  const total = qty * creditPrice;
-  const primaryHref = primaryAction ? resolvePrimaryHref(primaryAction, qty) : null;
-  const increaseDisabled = maxQty < MIN_QTY || qty >= maxQty;
+  const [selectedIso, setSelectedIso] = useState(
+    () => resolveSelectedOccurrence(occurrences, defaultDateTimeIso)?.startsAtIso,
+  );
+  const selected = resolveSelectedOccurrence(occurrences, selectedIso ?? defaultDateTimeIso);
+  const slotPrice = selected?.creditPrice ?? creditPrice;
+  const slotMaxQty = selected?.maxQty ?? maxQty;
+  const [qty, setQty] = useState(() => clampQty(defaultQty, slotMaxQty));
+  const clampedQty = clampQty(qty, slotMaxQty);
+  const total = clampedQty * slotPrice;
+  const dateTimeIso = selected?.startsAtIso;
+  const primaryHref = primaryAction
+    ? resolvePrimaryHref(primaryAction, clampedQty, dateTimeIso)
+    : null;
+  const increaseDisabled = slotMaxQty < MIN_QTY || clampedQty >= slotMaxQty;
+  const showDatetimeSelect = occurrences.length >= 2;
+  const datetimeSelectId = "event-detail-checkout-datetime";
+
+  const options = useMemo(
+    () =>
+      occurrences.map((occurrence) => ({
+        ...occurrence,
+        label: formatOccurrenceLabel(occurrence.startsAtIso, locale),
+      })),
+    [occurrences, locale],
+  );
 
   return (
     <Surface className="event-detail--checkout__card">
       {showTicketControls ? (
         <>
+          {showDatetimeSelect && datetimeLabel ? (
+            <Surface
+              className="event-detail--checkout__row flex flex-col gap-1"
+              variant="transparent"
+            >
+              <Label htmlFor={datetimeSelectId}>{datetimeLabel}</Label>
+              <select
+                className="event-feed-filters__select"
+                id={datetimeSelectId}
+                onChange={(event) => {
+                  const nextIso = event.currentTarget.value;
+                  setSelectedIso(nextIso);
+                  const next = resolveSelectedOccurrence(occurrences, nextIso);
+                  if (next) {
+                    setQty((current) => clampQty(current, next.maxQty));
+                  }
+                }}
+                value={selected?.startsAtIso ?? options[0]?.startsAtIso}
+              >
+                {options.map((option) => (
+                  <option key={option.startsAtIso} value={option.startsAtIso}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </Surface>
+          ) : null}
           <Surface className="event-detail--checkout__row" variant="transparent">
             <Paragraph className="event-detail--checkout__row-label">{ticketsLabel}</Paragraph>
             <Surface className="event-detail--checkout__qty" variant="transparent">
               <Button
                 aria-label={decreaseAriaLabel}
                 className="event-detail--checkout__qty-btn"
-                isDisabled={qty <= MIN_QTY}
-                onPress={() => setQty((current) => clampQty(current - 1, maxQty))}
+                isDisabled={clampedQty <= MIN_QTY}
+                onPress={() => setQty((current) => clampQty(current - 1, slotMaxQty))}
                 type="button"
               >
                 −
               </Button>
-              <Paragraph className="event-detail--checkout__qty-value">{qty}</Paragraph>
+              <Paragraph className="event-detail--checkout__qty-value">{clampedQty}</Paragraph>
               <Button
                 aria-label={increaseAriaLabel}
                 className="event-detail--checkout__qty-btn"
                 isDisabled={increaseDisabled}
-                onPress={() => setQty((current) => clampQty(current + 1, maxQty))}
+                onPress={() => setQty((current) => clampQty(current + 1, slotMaxQty))}
                 type="button"
               >
                 +
@@ -129,7 +176,7 @@ export default function EventDetailCheckoutCard({
               <Surface className="event-detail--checkout__row" variant="transparent">
                 <Paragraph className="event-detail--checkout__row-label">{totalLabel}</Paragraph>
                 <Paragraph className="event-detail--checkout__total-value">
-                  {formatCreditsTotal(total, locale)}
+                  {formatCreditsTotal(total)}
                 </Paragraph>
               </Surface>
             </>

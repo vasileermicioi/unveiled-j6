@@ -100,3 +100,56 @@ export function assertOpeningHoursForWrite(
 
   return parseOpeningHours(openingHours);
 }
+
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const WEEKDAY_SHORT_TO_KEY: Record<string, OpeningHoursDayKey> = {
+  Mon: "mon",
+  Tue: "tue",
+  Wed: "wed",
+  Thu: "thu",
+  Fri: "fri",
+  Sat: "sat",
+  Sun: "sun",
+};
+
+function isClosedDay(day: OpeningHoursDay): day is OpeningHoursClosedDay {
+  return "closed" in day && day.closed === true;
+}
+
+/** Europe/Berlin weekday of a calendar YMD, mapped onto `OPENING_HOURS_DAY_KEYS`. */
+export function berlinYmdToOpeningHoursDayKey(ymd: string): OpeningHoursDayKey {
+  if (!YMD_RE.test(ymd)) {
+    throw new Error(`Invalid Berlin calendar date: ${ymd}`);
+  }
+
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Berlin",
+    weekday: "short",
+  }).format(new Date(`${ymd}T12:00:00.000Z`));
+
+  const key = WEEKDAY_SHORT_TO_KEY[weekday];
+  if (!key) {
+    throw new Error(`Unexpected weekday: ${weekday}`);
+  }
+
+  return key;
+}
+
+/** Sorted unique `open` times from days that are not marked closed. */
+export function distinctOpenTimes(week: OpeningHoursWeek): string[] {
+  const times = new Set<string>();
+  for (const key of OPENING_HOURS_DAY_KEYS) {
+    const day = week[key];
+    if (isClosedDay(day)) {
+      continue;
+    }
+    times.add(day.open);
+  }
+  return [...times].sort();
+}
+
+/** True when the partner week marks the Europe/Berlin weekday of `ymd` closed. */
+export function isClosedOnBerlinYmd(week: OpeningHoursWeek, ymd: string): boolean {
+  return isClosedDay(week[berlinYmdToOpeningHoursDayKey(ymd)]);
+}

@@ -3,11 +3,16 @@ import { describe, expect, test } from "bun:test";
 import {
   berlinInclusiveDateRange,
   berlinTodayRange,
+  creditPriceForOccurrence,
   deriveDateTimeFields,
+  futureOccurrences,
   getBerlinCalendarDate,
   primaryDateTimeFromList,
   sortUniqueDateTimes,
+  tryFillOccurrenceCreditsFromPrice,
   tryNormalizeEventDateTimes,
+  tryNormalizeEventOccurrences,
+  tryNormalizePairedDateTimesAndCredits,
 } from "./datetime";
 
 describe("deriveDateTimeFields", () => {
@@ -77,6 +82,91 @@ describe("multi-datetime normalize helpers", () => {
   });
 });
 
+describe("occurrence credit normalize helpers", () => {
+  const now = new Date("2026-07-09T12:00:00.000Z");
+  const past = new Date("2026-07-08T18:00:00.000Z");
+  const future = new Date("2026-07-11T18:00:00.000Z");
+
+  test("tryNormalizeEventOccurrences sorts and keeps paired credits", () => {
+    const result = tryNormalizeEventOccurrences(
+      [
+        { startsAt: future, creditPrice: 3 },
+        { startsAt: past, creditPrice: 1 },
+      ],
+      now,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.value.dateTimes.map((d) => d.toISOString())).toEqual([
+      past.toISOString(),
+      future.toISOString(),
+    ]);
+    expect(result.value.occurrenceCreditPrices).toEqual([1, 3]);
+    expect(result.value.dateTime.toISOString()).toBe(future.toISOString());
+    expect(result.value.creditPrice).toBe(3);
+  });
+
+  test("primary credit follows next upcoming (past=1, future=3)", () => {
+    const result = tryNormalizeEventOccurrences(
+      [
+        { startsAt: past, creditPrice: 1 },
+        { startsAt: future, creditPrice: 3 },
+      ],
+      now,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.value.dateTime.toISOString()).toBe(future.toISOString());
+    expect(result.value.creditPrice).toBe(3);
+  });
+
+  test("tryNormalizeEventOccurrences rejects duplicate instants", () => {
+    const result = tryNormalizeEventOccurrences(
+      [
+        { startsAt: future, creditPrice: 1 },
+        { startsAt: new Date(future.getTime()), creditPrice: 2 },
+      ],
+      now,
+    );
+    expect(result).toEqual({ ok: false, code: "DUPLICATE_INSTANT" });
+  });
+
+  test("tryNormalizePairedDateTimesAndCredits rejects length mismatch", () => {
+    const result = tryNormalizePairedDateTimesAndCredits([past, future], [1], now);
+    expect(result).toEqual({ ok: false, code: "LENGTH_MISMATCH" });
+  });
+
+  test("tryNormalizeEventOccurrences rejects negative credits", () => {
+    const result = tryNormalizeEventOccurrences([{ startsAt: future, creditPrice: -1 }], now);
+    expect(result).toEqual({ ok: false, code: "NEGATIVE_CREDIT" });
+  });
+
+  test("tryFillOccurrenceCreditsFromPrice unique-merges duplicates and fills", () => {
+    const result = tryFillOccurrenceCreditsFromPrice([future, past, future], 2, now);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.value.dateTimes.map((d) => d.toISOString())).toEqual([
+      past.toISOString(),
+      future.toISOString(),
+    ]);
+    expect(result.value.occurrenceCreditPrices).toEqual([2, 2]);
+    expect(result.value.creditPrice).toBe(2);
+  });
+
+  test("tryFillOccurrenceCreditsFromPrice rejects empty dateTimes", () => {
+    expect(tryFillOccurrenceCreditsFromPrice([], 1, now)).toEqual({
+      ok: false,
+      code: "EMPTY",
+    });
+  });
+});
+
 describe("berlin day ranges", () => {
   test("berlinTodayRange uses the Europe/Berlin calendar day of now", () => {
     // 2026-03-15 15:00 UTC = 16:00 CET
@@ -122,5 +212,37 @@ describe("berlin day ranges", () => {
     expect(getBerlinCalendarDate(range.end)).toBe("2026-03-30");
     // Day is 23 hours in Berlin; exclusive end must still be next midnight
     expect(range.end.getTime() - range.start.getTime()).toBe(23 * 3_600_000);
+  });
+});
+
+describe("occurrence credit lookup", () => {
+  const morning = new Date("2026-09-01T08:00:00.000Z");
+  const evening = new Date("2026-09-01T17:00:00.000Z");
+  const dateTimes = [morning, evening];
+  const credits = [1, 3];
+
+  test("creditPriceForOccurrence matches cheaper morning vs expensive evening", () => {
+    expect(creditPriceForOccurrence(dateTimes, credits, morning)).toBe(1);
+    expect(creditPriceForOccurrence(dateTimes, credits, evening)).toBe(3);
+    expect(creditPriceForOccurrence(dateTimes, credits, new Date(evening.getTime()))).toBe(3);
+  });
+
+  test("creditPriceForOccurrence returns null for unknown instant", () => {
+    expect(
+      creditPriceForOccurrence(dateTimes, credits, new Date("2026-09-01T12:00:00.000Z")),
+    ).toBeNull();
+  });
+
+  test("futureOccurrences excludes past instants and sorts ascending", () => {
+    const past = new Date("2026-08-01T18:00:00.000Z");
+    const soon = new Date("2026-09-10T08:00:00.000Z");
+    const later = new Date("2026-09-10T17:00:00.000Z");
+    const now = new Date("2026-09-05T12:00:00.000Z");
+    const result = futureOccurrences([later, past, soon], [4, 1, 2], now);
+    expect(result.map((row) => row.startsAt.toISOString())).toEqual([
+      soon.toISOString(),
+      later.toISOString(),
+    ]);
+    expect(result.map((row) => row.creditPrice)).toEqual([2, 4]);
   });
 });

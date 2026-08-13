@@ -32,7 +32,7 @@ Feature: Event Booking
   Background:
     Given I am viewing an event's booking panel
     And guests and non–booking-eligible viewers do not see ticket quantity on public event detail
-    And booking-eligible members may select up to min(floor(credits ÷ creditPrice), remainingCapacity) tickets on detail and book (creditPrice ≤ 0 → capacity-only)
+    And booking-eligible members may select up to min(floor(credits ÷ selected occurrence creditPrice), remainingCapacity) tickets on detail and book (creditPrice ≤ 0 → capacity-only)
     And a successful booking is not limited by a universal hard max of 3 when credits and capacity allow a higher count
 
   Scenario: Booking requires authentication
@@ -54,21 +54,23 @@ Feature: Event Booking
   Scenario: Successful booking
     Given I am signed in with an "ACTIVE" subscription
     And the event has enough remaining capacity for my requested ticket count
-    And I have enough credits to cover creditPrice × ticket count
+    And I have enough credits to cover the selected occurrence creditPrice × ticket count
     When I confirm the booking
-    Then a confirmed booking is created for me against the event (event-scoped; no datetime slot selection)
-    And my credits are decremented by creditPrice × ticket count
+    Then a confirmed booking is created for me against the event and the selected datetime
+    And my credits are decremented by that occurrence's creditPrice × ticket count
     And the event's remaining capacity is decremented by the ticket count
     And a negative-amount ledger entry of type "BOOKING" is recorded
     And I receive redemption info appropriate to the event's ticket type
 
-  Scenario: Book event with multiple datetimes
+  Scenario: Book a priced datetime slot
     Given I am signed in with an "ACTIVE" subscription
-    And the event has multiple future datetimes
+    And the event has multiple future datetimes with different credit prices
     And the event has enough remaining capacity and I have enough credits
-    When I confirm the booking
-    Then a confirmed booking is created for the event without a slot selection step
-    And confirmation surfaces use the next upcoming datetime for calendar/ICS display
+    When I select a non-primary future datetime and confirm the booking
+    Then a confirmed booking is stored with that date_time
+    And credits deducted equal that occurrence's price times ticket count
+    And remaining capacity decreases by the ticket count (event-level)
+    And confirmation surfaces use the booked datetime for calendar/ICS display
 
   Scenario Outline: Redemption info by ticket type
     Given the event's ticket type is "<ticketType>"
@@ -118,7 +120,7 @@ Feature: Event Booking
     And I can copy a textual redemption code even while it remains masked
     And for VOUCHER_PDF tickets I can download each allocated PDF via an auth-gated app route
     And I can download an .ics calendar file for the event
-    And the .ics / confirm / email time fields use the event's next upcoming datetime
+    And the .ics / confirm / email time fields use the booked datetime
     And I can see a support email for help
 
   Scenario: Multi-ticket promo codes are listed separately

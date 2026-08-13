@@ -18,7 +18,7 @@ function baseValues(overrides: Partial<EventFormValues> = {}): EventFormValues {
     category: "Music",
     eventType: "Concert",
     tags: [],
-    dateTimeRows: [{ date: "2026-08-01", time: "20:00" }],
+    dateTimeRows: [{ date: "2026-08-01", time: "20:00", credits: "2" }],
     timingMode: "TIME_SLOT",
     creditPrice: 2,
     totalCapacity: 15,
@@ -73,5 +73,33 @@ describe("formValuesToDefaults", () => {
   test("leaves currentImageId null when no staged or prebuilt image", () => {
     const defaults = formValuesToDefaults(baseValues());
     expect(defaults.currentImageId).toBeNull();
+  });
+
+  test("round-trips datetime row credits and range builder fields on error re-render", () => {
+    const defaults = formValuesToDefaults(
+      baseValues({
+        dateTimeRows: [
+          { date: "2026-08-01", time: "20:00", credits: "1" },
+          { date: "2026-08-08", time: "21:00", credits: "3" },
+        ],
+        creditPrice: 1,
+        rangeStart: "2026-08-01",
+        rangeEnd: "2026-08-08",
+        rangeSlots: [
+          { time: "20:00", credits: "1" },
+          { time: "21:00", credits: "3" },
+        ],
+      }),
+    );
+    expect(defaults.dateTimeRows).toEqual([
+      { date: "2026-08-01", time: "20:00", credits: "1" },
+      { date: "2026-08-08", time: "21:00", credits: "3" },
+    ]);
+    expect(defaults.rangeStart).toBe("2026-08-01");
+    expect(defaults.rangeEnd).toBe("2026-08-08");
+    expect(defaults.rangeSlots).toEqual([
+      { time: "20:00", credits: "1" },
+      { time: "21:00", credits: "3" },
+    ]);
   });
 });

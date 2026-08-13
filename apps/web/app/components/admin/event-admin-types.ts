@@ -1,8 +1,15 @@
-import type { TicketType, TimingMode, VoucherInventoryCounts } from "@unveiled/db";
+import type {
+  OpeningHoursWeek,
+  TicketType,
+  TimingMode,
+  VoucherInventoryCounts,
+} from "@unveiled/db";
 
 export type EventDateTimeRow = {
   date: string;
   time: string;
+  /** Form string; parsed to an integer `>= 0` on submit. */
+  credits: string;
 };
 
 export type EventFormDefaults = Partial<{
@@ -19,6 +26,9 @@ export type EventFormDefaults = Partial<{
   eventType: string;
   tags: string[];
   dateTimeRows: EventDateTimeRow[];
+  rangeStart: string;
+  rangeEnd: string;
+  rangeSlots: { time: string; credits: string }[];
   timingMode: TimingMode;
   creditPrice: number;
   totalCapacity: number;
@@ -46,4 +56,6 @@ export type PartnerOption = {
   houseNumber: string;
   addressLine2: string | null;
   zipCode: string;
+  hasOpeningHours: boolean;
+  openingHours: OpeningHoursWeek | null;
 };

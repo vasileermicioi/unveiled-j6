@@ -7,7 +7,9 @@ export type BookingErrorCode =
   | "SOLD_OUT"
   | "INVALID_TICKET_COUNT"
   | "INVALID_REDEMPTION_CONFIG"
-  | "INSUFFICIENT_VOUCHER_INVENTORY";
+  | "INSUFFICIENT_VOUCHER_INVENTORY"
+  | "UNKNOWN_SLOT"
+  | "PAST_SLOT";
 
 export class BookingError extends Error {
   readonly code: BookingErrorCode;

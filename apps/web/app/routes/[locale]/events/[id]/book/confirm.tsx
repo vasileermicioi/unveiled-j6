@@ -82,7 +82,7 @@ export default createRoute(async (c) => {
         id: event.id,
         title: event.title,
         address: event.address,
-        dateTime: event.dateTime,
+        dateTime: booking.dateTime,
         partnerName: event.partnerName,
       },
       bookingId: booking.id,

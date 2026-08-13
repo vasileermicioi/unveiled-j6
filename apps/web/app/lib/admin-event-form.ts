@@ -1,5 +1,5 @@
-import type { TicketType, TimingMode } from "@unveiled/db";
-import { CatalogValidationError } from "@unveiled/db";
+import type { EventOccurrence, OpeningHoursWeek, TicketType, TimingMode } from "@unveiled/db";
+import { CatalogValidationError, distinctOpenTimes, isClosedOnBerlinYmd } from "@unveiled/db";
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 
 import { parsePrebuiltImageVariants } from "./admin-prebuilt-image";
@@ -17,9 +17,24 @@ export type VoucherPdfFormItem = {
 export type EventDateTimeRow = {
   date: string;
   time: string;
+  /** Form string; parsed to an integer `>= 0` on submit. */
+  credits: string;
 };
 
+export const DEFAULT_ROW_CREDITS = "1";
+export const DEFAULT_RANGE_SLOT_TIME = "19:30";
+
 export const MAX_EVENT_DATE_TIME_ROWS = 52;
+
+export type RangeBuilderSlotRow = {
+  time: string;
+  credits: string;
+};
+
+export type RangeOccurrenceSlot = {
+  time: string;
+  creditPrice: number;
+};
 
 export type EventFormValues = {
   partnerId: string;
@@ -35,6 +50,9 @@ export type EventFormValues = {
   eventType: string;
   tags: string[];
   dateTimeRows: EventDateTimeRow[];
+  rangeStart?: string;
+  rangeEnd?: string;
+  rangeSlots?: RangeBuilderSlotRow[];
   timingMode: TimingMode;
   creditPrice: number;
   totalCapacity: number;
@@ -210,6 +228,31 @@ function parseInteger(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+/** Strict integer `>= 0`; blank / NaN / non-integer / negative → null (submit must fail). */
+export function parseOccurrenceCredit(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed || !/^-?\d+$/.test(trimmed)) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function derivedCreditPrice(rows: EventDateTimeRow[]): number {
+  for (const row of rows) {
+    if (!row.date.trim()) {
+      continue;
+    }
+    return parseOccurrenceCredit(row.credits) ?? 1;
+  }
+  return 1;
+}
+
 function parseBodyStringArrayField(
   body: ParsedBody,
   key: string,
@@ -329,6 +372,93 @@ function enumerateDatesInclusive(start: string, end: string): string[] {
   return dates;
 }
 
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function throwTooManyOccurrences(): never {
+  throw new CatalogValidationError(
+    "TOO_MANY_OCCURRENCES",
+    `A range can create at most ${MAX_EVENT_DATE_TIME_ROWS} datetimes`,
+  );
+}
+
+export function defaultRangeSlotsFromHours(
+  hasOpeningHours: boolean,
+  openingHours: OpeningHoursWeek | null | undefined,
+): RangeBuilderSlotRow[] {
+  if (hasOpeningHours && openingHours) {
+    const times = distinctOpenTimes(openingHours);
+    if (times.length > 0) {
+      return times.map((time) => ({ time, credits: DEFAULT_ROW_CREDITS }));
+    }
+  }
+
+  return [{ time: DEFAULT_RANGE_SLOT_TIME, credits: DEFAULT_ROW_CREDITS }];
+}
+
+export function hoursForRangeExpand(
+  hasOpeningHours: boolean,
+  openingHours: OpeningHoursWeek | null | undefined,
+): OpeningHoursWeek | null {
+  if (!hasOpeningHours || openingHours == null) {
+    return null;
+  }
+  return openingHours;
+}
+
+export function expandOccurrencesFromRange(options: {
+  startDate: string;
+  endDate: string;
+  slots: RangeOccurrenceSlot[];
+  timingMode: TimingMode;
+  openingHours?: OpeningHoursWeek | null;
+}): EventOccurrence[] {
+  const startDate = options.startDate.trim();
+  const endDate = options.endDate.trim();
+  const slots = options.slots.filter((slot) => slot.time.trim().length > 0);
+
+  if (!YMD_RE.test(startDate) || !YMD_RE.test(endDate) || slots.length === 0) {
+    return [];
+  }
+
+  if (startDate > endDate) {
+    return [];
+  }
+
+  const dates = enumerateDatesInclusive(startDate, endDate);
+  const hours = options.openingHours ?? null;
+  const openDates = hours ? dates.filter((ymd) => !isClosedOnBerlinYmd(hours, ymd)) : dates;
+
+  const occurrences: EventOccurrence[] = [];
+
+  if (options.timingMode === "ALL_DAY") {
+    const firstSlot = slots[0];
+    if (!firstSlot) {
+      return [];
+    }
+    for (const ymd of openDates) {
+      occurrences.push({
+        startsAt: parseBerlinDateTime(ymd, null, "ALL_DAY"),
+        creditPrice: firstSlot.creditPrice,
+      });
+    }
+  } else {
+    for (const ymd of openDates) {
+      for (const slot of slots) {
+        occurrences.push({
+          startsAt: parseBerlinDateTime(ymd, slot.time.trim(), "TIME_SLOT"),
+          creditPrice: slot.creditPrice,
+        });
+      }
+    }
+  }
+
+  if (occurrences.length > MAX_EVENT_DATE_TIME_ROWS) {
+    throwTooManyOccurrences();
+  }
+
+  return occurrences;
+}
+
 function getBerlinWeekdayIndex(dateStr: string): number {
   const weekday = new Intl.DateTimeFormat("en-US", {
     timeZone: "Europe/Berlin",
@@ -409,6 +539,27 @@ export function parseBuilderTimes(
   return parseCommaSeparated(asString(body.builder_times) ?? undefined);
 }
 
+export function parseRangeBuilder(
+  body: ParsedBody,
+  asString: (value: string | File | (string | File)[] | undefined) => string | undefined,
+): { rangeStart: string; rangeEnd: string; rangeSlots: RangeBuilderSlotRow[] } {
+  const rangeStart = asString(body.range_start)?.trim() ?? "";
+  const rangeEnd = asString(body.range_end)?.trim() ?? "";
+  const countRaw = asString(body.range_slot_count)?.trim();
+  const count = countRaw ? Number.parseInt(countRaw, 10) : 0;
+  const rangeSlots: RangeBuilderSlotRow[] = [];
+
+  if (Number.isFinite(count) && count > 0) {
+    for (let index = 0; index < count; index += 1) {
+      const time = asString(body[`range_slot_time_${index}`])?.trim() ?? "";
+      const credits = asString(body[`range_slot_credit_${index}`])?.trim() || DEFAULT_ROW_CREDITS;
+      rangeSlots.push({ time, credits });
+    }
+  }
+
+  return { rangeStart, rangeEnd, rangeSlots };
+}
+
 export function parseManualSeriesSlots(
   body: Record<string, string | File | (string | File)[]>,
   timingMode: TimingMode,
@@ -432,6 +583,26 @@ export function parseManualSeriesSlots(
 
 export type ParsedBody = Record<string, string | File | (string | File)[]>;
 
+function emptyDateTimeRow(credits = DEFAULT_ROW_CREDITS): EventDateTimeRow {
+  return { date: "", time: "", credits };
+}
+
+function creditsForParsedRow(
+  body: ParsedBody,
+  asString: (value: string | File | (string | File)[] | undefined) => string | undefined,
+  index: number,
+  legacyCredit: string | undefined,
+): string {
+  const raw = asString(body[`event_credit_${index}`]);
+  if (raw !== undefined) {
+    return raw.trim();
+  }
+  if (legacyCredit !== undefined) {
+    return legacyCredit;
+  }
+  return DEFAULT_ROW_CREDITS;
+}
+
 export function parseEventDateTimeRows(
   body: ParsedBody,
   asString: (value: string | File | (string | File)[] | undefined) => string | undefined,
@@ -442,6 +613,9 @@ export function parseEventDateTimeRows(
     Number.isFinite(parsedCount) ||
     asString(body.event_date_0) !== undefined ||
     body.event_date_0 !== undefined;
+  const hasIndexedCredits =
+    asString(body.event_credit_0) !== undefined || body.event_credit_0 !== undefined;
+  const legacyCredit = hasIndexedCredits ? undefined : asString(body.credit_price)?.trim();
 
   if (hasIndexed) {
     let count = Number.isFinite(parsedCount)
@@ -465,9 +639,10 @@ export function parseEventDateTimeRows(
       rows.push({
         date: asString(body[`event_date_${index}`])?.trim() ?? "",
         time: asString(body[`event_time_${index}`])?.trim() ?? "",
+        credits: creditsForParsedRow(body, asString, index, legacyCredit),
       });
     }
-    return rows.length > 0 ? rows : [{ date: "", time: "" }];
+    return rows.length > 0 ? rows : [emptyDateTimeRow(legacyCredit ?? DEFAULT_ROW_CREDITS)];
   }
 
   // Legacy single-field posts (pre multi-datetime form).
@@ -475,36 +650,43 @@ export function parseEventDateTimeRows(
     {
       date: asString(body.event_date)?.trim() ?? "",
       time: asString(body.event_time)?.trim() ?? "",
+      credits: creditsForParsedRow(body, asString, 0, legacyCredit),
     },
   ];
 }
 
-export function dateTimesToFormRows(dateTimes: Date[]): EventDateTimeRow[] {
+export function dateTimesToFormRows(
+  dateTimes: Date[],
+  occurrenceCreditPrices?: number[],
+): EventDateTimeRow[] {
   if (dateTimes.length === 0) {
-    return [{ date: "", time: "" }];
+    return [emptyDateTimeRow()];
   }
 
-  return dateTimes.map((dateTime) => ({
-    date: formatEventDateInput(dateTime),
-    time: formatEventTimeInput(dateTime),
-  }));
+  return dateTimes.map((dateTime, index) => {
+    const price = occurrenceCreditPrices?.[index];
+    return {
+      date: formatEventDateInput(dateTime),
+      time: formatEventTimeInput(dateTime),
+      credits: price !== undefined ? String(price) : DEFAULT_ROW_CREDITS,
+    };
+  });
 }
 
-/**
- * Multi-datetime admin chrome (add/remove rows) is parked.
- * Schema + parsers still accept `dateTimes[]`; flip this to re-enable the list UI.
- */
-export const ALLOW_MULTI_DATETIME_UI = false;
+export function occurrencesToFormRows(occurrences: EventOccurrence[]): EventDateTimeRow[] {
+  return dateTimesToFormRows(
+    occurrences.map((occurrence) => occurrence.startsAt),
+    occurrences.map((occurrence) => occurrence.creditPrice),
+  );
+}
 
-/** Prefill create/edit/clone datetime rows — primary only while multi UI is parked. */
+/** Prefill create/edit/clone datetime rows from the full occurrence lists. */
 export function eventDateTimesToFormRows(event: {
   dateTimes: Date[];
   dateTime: Date;
+  occurrenceCreditPrices?: number[];
 }): EventDateTimeRow[] {
-  if (ALLOW_MULTI_DATETIME_UI) {
-    return dateTimesToFormRows(event.dateTimes);
-  }
-  return dateTimesToFormRows([event.dateTime]);
+  return dateTimesToFormRows(event.dateTimes, event.occurrenceCreditPrices);
 }
 
 export async function parseEventFormBody(
@@ -534,6 +716,9 @@ export async function parseEventFormBody(
   const subtitleLanguage = hasSubtitles ? subtitleLanguageRaw : null;
   const imageUrl = asString(body.image_url)?.trim() || null;
 
+  const dateTimeRows = parseEventDateTimeRows(body, asString);
+  const range = parseRangeBuilder(body, asString);
+
   return {
     partnerId: asString(body.partner_id)?.trim() ?? "",
     title: asString(body.title)?.trim() ?? "",
@@ -547,9 +732,12 @@ export async function parseEventFormBody(
     category: asString(body.category)?.trim() ?? "",
     eventType: asString(body.event_type)?.trim() ?? "",
     tags: parseCommaSeparated(asString(body.tags)),
-    dateTimeRows: parseEventDateTimeRows(body, asString),
+    dateTimeRows,
+    rangeStart: range.rangeStart,
+    rangeEnd: range.rangeEnd,
+    rangeSlots: range.rangeSlots,
     timingMode,
-    creditPrice: parseInteger(asString(body.credit_price), 1),
+    creditPrice: derivedCreditPrice(dateTimeRows),
     totalCapacity: parseInteger(asString(body.total_capacity), 10),
     ticketType: parseTicketType(asString(body.ticket_type)),
     secretCode: asString(body.secret_code)?.trim() || null,
@@ -580,23 +768,53 @@ export function eventFormValuesToDateTime(values: EventFormValues): Date {
   return first;
 }
 
-export function eventFormValuesToDateTimes(values: EventFormValues): Date[] {
-  const dates: Date[] = [];
+export function eventFormValuesToOccurrences(values: EventFormValues): EventOccurrence[] {
+  const occurrences: EventOccurrence[] = [];
 
   for (const row of values.dateTimeRows) {
     if (!row.date.trim()) {
       continue;
     }
 
+    const creditPrice = parseOccurrenceCredit(row.credits);
+    if (creditPrice === null) {
+      throw new CatalogValidationError(
+        "NEGATIVE_CREDIT_PRICE",
+        "Each datetime row must have a whole-number credit price of 0 or more",
+      );
+    }
+
     const timeStr = row.time.trim() || null;
-    dates.push(parseBerlinDateTime(row.date, timeStr, values.timingMode));
+    occurrences.push({
+      startsAt: parseBerlinDateTime(row.date, timeStr, values.timingMode),
+      creditPrice,
+    });
   }
 
-  if (dates.length === 0) {
+  if (occurrences.length === 0) {
     throw new CatalogValidationError("EMPTY_DATE_TIMES", "At least one datetime is required");
   }
 
-  return dates;
+  if (occurrences.length > MAX_EVENT_DATE_TIME_ROWS) {
+    throwTooManyOccurrences();
+  }
+
+  return occurrences;
+}
+
+export function eventFormValuesToOccurrenceLists(values: EventFormValues): {
+  dateTimes: Date[];
+  occurrenceCreditPrices: number[];
+} {
+  const occurrences = eventFormValuesToOccurrences(values);
+  return {
+    dateTimes: occurrences.map((occurrence) => occurrence.startsAt),
+    occurrenceCreditPrices: occurrences.map((occurrence) => occurrence.creditPrice),
+  };
+}
+
+export function eventFormValuesToDateTimes(values: EventFormValues): Date[] {
+  return eventFormValuesToOccurrenceLists(values).dateTimes;
 }
 
 function parseBodyStringArray(

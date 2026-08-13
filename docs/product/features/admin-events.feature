@@ -13,22 +13,51 @@ Feature: Admin — Event Management
     Given I am signed in as "ADMIN"
 
   Scenario: Create a single event
-    When I create a new event with a title, partner, credit price, capacity, description, image, Berlin zip code, and one or more dateTimes
+    When I create a new event with a title, partner, per-datetime credit prices, capacity, description, image, Berlin zip code, and one or more dateTimes
     Then the event is added to the catalog
     And its remaining capacity defaults to its total capacity
     And its startTimeMinutes and weekday are computed from its primary/next dateTime
     # description is Markdown source (MDXEditor-assisted); other required fields unchanged
-    # Admin create/edit/clone forms present an editable datetime list (add/remove inplace)
+    # Admin create/edit/clone forms present an editable datetime list (add/remove inplace) with credits per row
 
   Scenario: Add and remove datetimes on create
     When I am on the new-event form
-    And I add a second datetime row and remove one row
-    Then submitting persists exactly the remaining datetime values on the event
+    And I add a second datetime row, set a credit price on each remaining row, and remove one row
+    Then submitting persists exactly the remaining datetime values and their credits on the event
+
+  Scenario: Per-datetime credits persist
+    When I create an event with two datetime rows priced 1 and 3 credits
+    Then the stored occurrence_credit_prices are 1 and 3 in datetime order
+    And denormalized credit_price equals the primary/next slot's price
+
+  Scenario: Total credits shown on the form
+    When the datetime list has rows priced 2 and 5
+    Then the form shows a total of 7 credits for the list
 
   Scenario: Edit datetimes inplace
     When I edit an event that already has multiple datetimes
-    Then I see all values as editable rows
+    Then I see all values as editable rows including each row's credits
     And I can add or remove rows and save
+
+  Scenario: Range and two time slots generate a grid
+    When I set a start date, end date, and time slots 10:00 at 1 credit and 18:00 at 3 credits
+    Then the datetime list has one row per date × each time
+    And morning rows are priced 1 and evening rows are priced 3
+
+  Scenario: Changing the end date rebuilds from scratch
+    When a generated list exists and I have manually added an extra row
+    And I change the builder end date
+    Then the list is replaced by a fresh expansion
+    And the manually added row is gone
+
+  Scenario: Create prefills slots from partner open times
+    When I am on the new-event form and select a partner open 10:00–18:00 weekdays and closed Sunday
+    Then the builder shows a 10:00 time slot by default
+
+  Scenario: Closed weekdays omitted from expansion
+    When that partner is selected and I generate a range that includes Sunday with the default 10:00 slot
+    Then Sunday is not in the datetime list
+    And open weekdays in range are
 
   Scenario: Admin event list shows next upcoming datetime
     When I view the admin Events catalog for an event with multiple datetimes including a future occurrence

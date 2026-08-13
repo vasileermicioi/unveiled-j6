@@ -516,6 +516,43 @@ The system SHALL allow unauthenticated users to view public event detail pages. 
 - **THEN** credit cost and date/time chrome are omitted
 - **AND** membership or payment CTAs remain available as today
 
+### Requirement: Event detail checkout datetime dropdown
+On public event detail, when the viewer is booking-eligible and the event has two or more future datetimes, the checkout card SHALL show a native select of those datetimes (Europe/Berlin, active locale). Changing the selection SHALL update the credits shown (unit and qty × unit) and the bookable max qty for that slot price. The book/login CTA SHALL include the selected instant as `dateTime` (ISO). Guests and other non–booking-eligible viewers SHALL NOT see the dropdown or credit totals (existing chrome). When only one future datetime exists, the checkout card SHALL NOT show the dropdown and SHALL use that slot’s credits. Compact EventCards and map popups SHALL continue to show the next upcoming datetime and denormalized `credit_price`. DETAILS MAY continue to list all datetimes. `docs/product/features/event-discovery.feature` SHALL include scenarios titled `Dropdown changes credits` and `Guest checkout omits slot picker`.
+
+#### Scenario: Dropdown changes credits
+- **GIVEN** an upcoming event with a morning slot priced 1 and an evening slot priced 4
+- **AND** I am signed in as a booking-eligible member
+- **WHEN** I open `/events/:id` and choose the evening datetime
+- **THEN** the checkout total uses 4 credits per ticket
+
+#### Scenario: Guest checkout omits slot picker
+- **WHEN** a guest opens the same event
+- **THEN** the checkout card does not show a datetime dropdown or credit totals
+
+#### Scenario: Single future occurrence has no dropdown
+- **WHEN** a booking-eligible member opens an event with exactly one future datetime
+- **THEN** the checkout card does not show a datetime dropdown
+- **AND** the credit total uses that future slot’s price
+
+### Requirement: Discovery feature documents checkout dropdown
+`docs/product/features/event-discovery.feature` SHALL include a booking-eligible checkout dropdown scenario and SHALL keep guest omit-credits behavior. Compact cards SHALL continue to show next upcoming datetime and denormalized `credit_price` (no price range). Playwright in `e2e/specs/event-discovery.spec.ts` SHALL include tests titled exactly `Scenario: Dropdown changes credits` and `Scenario: Guest checkout omits slot picker`. The checkout datetime control SHALL be a native `<select>` asserted with `getByLabel` (`Datum und Uhrzeit` / `Date and time`). Guests SHALL NOT see the dropdown or credit totals. `docs/product/ui/ui-component-map.md` Event detail entry SHALL mention the eligible-member datetime select. DETAILS MAY continue to list all datetimes in a separate scenario.
+
+#### Scenario: Coverage traces checkout dropdown
+- **WHEN** the coverage matrix is updated for this feature
+- **THEN** it includes a row for the dropdown changing displayed credits (pass or explicit environment skip)
+- **AND** it includes a row for guest checkout omitting the slot picker
+- **AND** neither row uses `@skip-no-ui`
+
+#### Scenario: Dropdown changes credits
+- **GIVEN** an upcoming event with a morning slot priced 1 and an evening slot priced 4
+- **AND** I am signed in as a booking-eligible member
+- **WHEN** I open `/events/:id` and choose the evening datetime
+- **THEN** the checkout total uses 4 credits per ticket
+
+#### Scenario: Guest checkout omits slot picker
+- **WHEN** a guest opens the same event
+- **THEN** the checkout card does not show a datetime dropdown or credit totals
+
 ### Requirement: Public event detail gallery
 
 The public event detail page SHALL show an image gallery at the end of the page when the event has one or more gallery images. Activating a gallery photo SHALL open a slider that allows previous/next navigation through the gallery. When the event has zero gallery images, the public detail page SHALL omit the gallery section (no empty-state block). The gallery SHALL be visible without authentication on the same public `/:locale/events/:id` surface as the rest of the detail content. Gallery display SHALL NOT require Discover-featured membership when gallery images exist. Expanding Event JSON-LD / Open Graph to include all gallery images is out of scope for this requirement unless a later SEO change mandates it. Product Gherkin in `docs/product/features/event-discovery.feature` and the Event detail entry in `docs/product/ui/ui-component-map.md` SHALL describe the end-of-page gallery and slider. After demo seed has run, at least one upcoming featured event SHALL have multiple gallery images visible on its public detail page.
@@ -632,7 +669,7 @@ The system SHALL not expose a public full upcoming-events list equivalent to mem
 
 ### Requirement: Guest and member discovery behaviors are specified in Gherkin
 
-`docs/product/features/event-discovery.feature` SHALL specify guest Discover as a curated **featured** upcoming preview (not an automatic catalog slice), public event detail (unauthenticated access to `/:locale/events/:id`), guest path to full browse via signup/login **and** booking-eligible subscription, non-booking-eligible USER Discover access with redirect away from `/events`, booking-eligible USER Browse events → `/events`, and authenticated member feed/filter/saved/map behaviors aligned with `docs/product/sitemap/sitemap.md`. Guests SHALL NOT be specified as having a public full upcoming-events list equivalent to `/events`. Discover-to-browse navigation SHALL be consistent with the sitemap and with `static-pages.feature` / user journeys. Shipped Playwright titles for in-scope guest and featured/browse-gate scenarios SHALL match Gherkin `Scenario:` lines verbatim where the BDD contract requires it.
+`docs/product/features/event-discovery.feature` SHALL specify guest Discover as a curated **featured** upcoming preview (not an automatic catalog slice), public event detail (unauthenticated access to `/:locale/events/:id`), guest path to full browse via signup/login **and** booking-eligible subscription, non-booking-eligible USER Discover access with redirect away from `/events`, booking-eligible USER Browse events → `/events`, and authenticated member feed/filter/saved/map behaviors aligned with `docs/product/sitemap/sitemap.md`. Guests SHALL NOT be specified as having a public full upcoming-events list equivalent to `/events`. Discover-to-browse navigation SHALL be consistent with the sitemap and with `static-pages.feature` / user journeys. Shipped Playwright titles for in-scope guest and featured/browse-gate scenarios SHALL match Gherkin `Scenario:` lines verbatim where the BDD contract requires it. The feature file SHALL also specify the booking-eligible checkout datetime dropdown (two or more future occurrences) and that guests omit that dropdown and credit totals. Compact EventCard / map popup scenarios SHALL keep next upcoming datetime + denormalized `credit_price`.
 
 #### Scenario: Feature file matches public detail
 
@@ -654,6 +691,11 @@ The system SHALL not expose a public full upcoming-events list equivalent to mem
 
 - **WHEN** featured-discover step 04 completes
 - **THEN** `e2e/specs/event-discovery.spec.ts` (and related specs) includes coverage for public discovery preview, guest public detail, guest path to full browse, featured-only Discover, and browse/nav gate scenarios (or the coverage matrix lists a named deferral with owner)
+
+#### Scenario: Feature file documents checkout dropdown
+- **WHEN** a reader opens `event-discovery.feature`
+- **THEN** it includes `Dropdown changes credits` and `Guest checkout omits slot picker`
+- **AND** card/map scenarios still specify next upcoming datetime rather than a credit price range
 
 ### Requirement: Automated coverage for featured Discover and browse gate
 

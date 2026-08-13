@@ -1,4 +1,5 @@
 import {
+  futureOccurrences,
   getPartnerById,
   getPublicEventById,
   isBookingEligibleStatus,
@@ -15,6 +16,7 @@ import {
 import { NotFoundPage } from "../../../components/NotFoundPage";
 import { getAuthOptions, getSessionIfConfigured } from "../../../lib/auth";
 import { getCatalogDb } from "../../../lib/catalog-db";
+import { parseDateTimeParam } from "../../../lib/checkout-slot";
 import type { Locale } from "../../../lib/locale";
 import { isValidLocale, localizedPath } from "../../../lib/locale";
 import { parseReturnTo } from "../../../lib/post-auth-redirect";
@@ -93,10 +95,25 @@ export default createRoute(async (c) => {
     }
   }
 
+  const future = futureOccurrences(event.dateTimes, event.occurrenceCreditPrices);
+  const occurrences =
+    viewer.kind === "eligible"
+      ? future.map((occurrence) => ({
+          startsAtIso: occurrence.startsAt.toISOString(),
+          creditPrice: occurrence.creditPrice,
+          maxQty: maxBookableTickets({
+            viewerKind: "signed-in",
+            credits,
+            creditPrice: occurrence.creditPrice,
+            remainingCapacity: event.remainingCapacity,
+          }),
+        }))
+      : undefined;
+  const defaultSlot = occurrences?.[0];
   const maxQty = maxBookableTickets({
     viewerKind: viewer.kind === "guest" ? "guest" : "signed-in",
     credits,
-    creditPrice: event.creditPrice,
+    creditPrice: defaultSlot?.creditPrice ?? event.creditPrice,
     remainingCapacity: event.remainingCapacity,
   });
 
@@ -106,7 +123,16 @@ export default createRoute(async (c) => {
     viewer.kind === "guest"
       ? localizedPath(locale, "")
       : (safeReturnTo ?? localizedPath(locale, "events"));
-  const defaultQty = parseQtyParam(url.searchParams.get("qty") ?? undefined, maxQty);
+  const requestedDateTime = parseDateTimeParam(url.searchParams.get("dateTime") ?? undefined);
+  const defaultDateTimeIso = requestedDateTime
+    ? occurrences?.find((occurrence) => occurrence.startsAtIso === requestedDateTime.toISOString())
+        ?.startsAtIso
+    : defaultSlot?.startsAtIso;
+  const defaultQty = parseQtyParam(
+    url.searchParams.get("qty") ?? undefined,
+    occurrences?.find((occurrence) => occurrence.startsAtIso === defaultDateTimeIso)?.maxQty ??
+      maxQty,
+  );
 
   const [galleryRows, partner] = await Promise.all([
     listEventGalleryImages(db, eventId),
@@ -130,11 +156,13 @@ export default createRoute(async (c) => {
     <>
       <EventDetailPage
         closeHref={closeHref}
+        defaultDateTimeIso={defaultDateTimeIso}
         defaultQty={defaultQty}
         event={event}
         galleryImages={galleryImages}
         locale={locale}
         maxQty={maxQty}
+        occurrences={occurrences}
         partnerAttribution={{
           name: event.partnerName,
           logoUrl: partnerLogoUrl,

@@ -59,6 +59,22 @@ describe("ICS builder", () => {
     expect(ics).toContain("SUMMARY:Tonight Show");
     expect(ics).toContain("UID:booking-book-1@unveiled.berlin");
   });
+
+  test("DTSTART uses the booked occurrence instant, not a different catalog primary", () => {
+    const booked = new Date("2030-06-08T17:00:00.000Z");
+    const ics = buildEventIcs({
+      event: {
+        id: "evt-1",
+        title: "Tonight Show",
+        address: "Berlin",
+        dateTime: booked,
+        partnerName: "Partner",
+      },
+      bookingId: "book-1",
+    });
+    expect(ics).toContain(`DTSTART:${formatIcsUtc(booked)}`);
+    expect(ics).not.toContain(`DTSTART:${formatIcsUtc(new Date("2030-06-01T18:00:00.000Z"))}`);
+  });
 });
 
 describe("sendBookingConfirmation", () => {

@@ -835,6 +835,8 @@ describe("multi-datetime catalog writes", () => {
         later.toISOString(),
       ]);
       expect(created.dateTime.toISOString()).toBe(next.toISOString());
+      expect(created.occurrenceCreditPrices).toEqual([1, 1, 1]);
+      expect(created.creditPrice).toBe(1);
 
       await expect(
         createEvent(db, {
@@ -871,6 +873,98 @@ describe("multi-datetime catalog writes", () => {
         now,
       });
       expect(allPast.dateTime.toISOString()).toBe(past.toISOString());
+    } finally {
+      const leftover = await db.query.events.findMany({
+        where: (fields, { eq }) => eq(fields.partnerId, partner.id),
+      });
+      for (const row of leftover) {
+        await deleteEvent(db, row.id, { skipBucket: true });
+      }
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
+  test("create/update persist occurrence_credit_prices and sync primary credit_price", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const now = new Date("2026-07-09T12:00:00.000Z");
+    const partnerImage = await createTestImage();
+    const partner = await createPartner(db, {
+      name: `Occ Credits Partner ${suffix}`,
+      ...structuredLocationFromAddress("OccCredits Straße 1, Berlin"),
+      contactEmail: `occ-credits-${suffix}@example.com`,
+      logoPrebuilt: partnerImage,
+      skipUpload: true,
+    });
+
+    const past = new Date("2026-07-08T18:00:00.000Z");
+    const future = new Date("2026-07-12T18:00:00.000Z");
+
+    try {
+      const created = await createEvent(db, {
+        partnerId: partner.id,
+        title: `Occ Credits ${suffix}`,
+        description: "Description",
+        ...structuredLocationFromAddress("OccCredits Straße 1, Berlin"),
+        country: "DE",
+        city: "berlin",
+        zipCode: "10115",
+        category: "Theater",
+        eventType: "Performance",
+        dateTimes: [future, past],
+        occurrenceCreditPrices: [3, 1],
+        now,
+        creditPrice: 9,
+        secretCode: `OCC${suffix.slice(0, 5)}`,
+        imagePrebuilt: await createTestImage(),
+        skipUpload: true,
+      });
+
+      expect(created.dateTimes.map((d) => d.toISOString())).toEqual([
+        past.toISOString(),
+        future.toISOString(),
+      ]);
+      expect(created.occurrenceCreditPrices).toEqual([1, 3]);
+      expect(created.dateTime.toISOString()).toBe(future.toISOString());
+      expect(created.creditPrice).toBe(3);
+
+      await expect(
+        createEvent(db, {
+          partnerId: partner.id,
+          title: `Dup Occ ${suffix}`,
+          description: "Description",
+          ...structuredLocationFromAddress("OccCredits Straße 1, Berlin"),
+          country: "DE",
+          city: "berlin",
+          zipCode: "10115",
+          category: "Theater",
+          eventType: "Performance",
+          dateTimes: [future, future],
+          occurrenceCreditPrices: [1, 2],
+          now,
+          creditPrice: 1,
+          secretCode: `OCD${suffix.slice(0, 5)}`,
+          imagePrebuilt: await createTestImage(),
+          skipUpload: true,
+        }),
+      ).rejects.toMatchObject({ code: "DUPLICATE_OCCURRENCE_INSTANTS" });
+
+      const updated = await updateEvent(db, created.id, {
+        dateTimes: [past, future],
+        occurrenceCreditPrices: [2, 5],
+        now,
+      });
+      expect(updated.occurrenceCreditPrices).toEqual([2, 5]);
+      expect(updated.creditPrice).toBe(5);
+
+      const filled = await updateEvent(db, created.id, { creditPrice: 4 });
+      expect(filled.occurrenceCreditPrices).toEqual([4, 4]);
+      expect(filled.creditPrice).toBe(4);
     } finally {
       const leftover = await db.query.events.findMany({
         where: (fields, { eq }) => eq(fields.partnerId, partner.id),

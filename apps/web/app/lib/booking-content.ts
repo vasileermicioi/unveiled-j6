@@ -16,9 +16,12 @@ export type BookPageCopy = {
   errorInsufficientCredits: string;
   errorSoldOut: string;
   errorPastDue: string;
+  errorUnknownSlot: string;
+  errorPastSlot: string;
   errorGeneric: string;
   waitlistCta: string;
   support: string;
+  datetimeLabel: string;
 };
 
 export type BookConfirmCopy = {
@@ -61,9 +64,12 @@ const bookCopy: Record<Locale, BookPageCopy> = {
     errorInsufficientCredits: "Nicht genug Credits für diese Buchung.",
     errorSoldOut: "Nicht genug Restplätze für diese Buchung.",
     errorPastDue: "Credits sind eingefroren — bitte Zahlung aktualisieren.",
+    errorUnknownSlot: "Dieser Termin ist nicht verfügbar.",
+    errorPastSlot: "Dieser Termin liegt in der Vergangenheit.",
     errorGeneric: "Buchung fehlgeschlagen. Bitte erneut versuchen.",
     waitlistCta: "Auf die Warteliste",
     support: "support@unveiled.berlin",
+    datetimeLabel: "Datum und Uhrzeit",
   },
   en: {
     eyebrow: "Bookings",
@@ -81,9 +87,12 @@ const bookCopy: Record<Locale, BookPageCopy> = {
     errorInsufficientCredits: "Not enough credits for this booking.",
     errorSoldOut: "Not enough remaining capacity for this booking.",
     errorPastDue: "Credits are frozen — update your payment method.",
+    errorUnknownSlot: "That date and time is not available.",
+    errorPastSlot: "That date and time has already passed.",
     errorGeneric: "Booking failed. Please try again.",
     waitlistCta: "Join waitlist",
     support: "support@unveiled.berlin",
+    datetimeLabel: "Date and time",
   },
 };
 

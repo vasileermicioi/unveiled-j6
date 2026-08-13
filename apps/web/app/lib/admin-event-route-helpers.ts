@@ -6,7 +6,14 @@ import { type EventFormValues, eventDateTimesToFormRows } from "./admin-event-fo
 
 export type PartnerOption = Pick<
   Partner,
-  "id" | "name" | "street" | "houseNumber" | "addressLine2" | "zipCode"
+  | "id"
+  | "name"
+  | "street"
+  | "houseNumber"
+  | "addressLine2"
+  | "zipCode"
+  | "hasOpeningHours"
+  | "openingHours"
 >;
 
 export function toPartnerOptions(partners: Partner[]): PartnerOption[] {
@@ -17,6 +24,8 @@ export function toPartnerOptions(partners: Partner[]): PartnerOption[] {
     houseNumber: partner.houseNumber,
     addressLine2: partner.addressLine2,
     zipCode: partner.zipCode,
+    hasOpeningHours: partner.hasOpeningHours,
+    openingHours: partner.openingHours ?? null,
   }));
 }
 
@@ -91,6 +100,9 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     eventType: values.eventType,
     tags: values.tags,
     dateTimeRows: values.dateTimeRows,
+    rangeStart: values.rangeStart,
+    rangeEnd: values.rangeEnd,
+    rangeSlots: values.rangeSlots,
     timingMode: values.timingMode,
     creditPrice: values.creditPrice,
     totalCapacity: values.totalCapacity,
