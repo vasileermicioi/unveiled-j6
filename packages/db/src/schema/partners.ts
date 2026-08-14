@@ -21,6 +21,8 @@ export const partners = pgTable("partners", {
   openingHours: jsonb("opening_hours").$type<OpeningHoursWeek | null>(),
   /** Venue accessibility: `true` or `NULL` (unset). Distinct stored `false` is not used. */
   barrierFree: boolean("barrier_free"),
+  /** Optional free-text bank / payment details for future accounting. Empty → NULL. */
+  bankDetails: text("bank_details"),
   venueCheckInToken: text("venue_check_in_token").unique(),
   portalUserId: text("portal_user_id").references(() => users.id, { onDelete: "restrict" }),
   portalUserEmail: text("portal_user_email"),

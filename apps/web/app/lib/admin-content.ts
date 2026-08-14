@@ -406,6 +406,8 @@ export type AdminCopy = {
   replaceUnusedInventoryLabel: string;
   replaceUnusedInventoryHint: string;
   barrierFreeLabel: string;
+  bankDetailsLabel: string;
+  bankDetailsHint: string;
   languageIndependentLabel: string;
   languageIndependentHint: string;
   hasSubtitlesLabel: string;
@@ -463,6 +465,7 @@ export type AdminCopy = {
     series: string;
     subtitleLanguage: string;
     openingHours: string;
+    bankDetails: string;
   };
 };
 
@@ -895,6 +898,8 @@ const copy: Record<Locale, AdminCopy> = {
     replaceUnusedInventoryHint:
       "Löscht nur AVAILABLE-Einträge und speichert die neue Liste. Zugewiesene bleiben.",
     barrierFreeLabel: "Barrierefrei",
+    bankDetailsLabel: "Bankverbindung (optional)",
+    bankDetailsHint: "Für künftige Buchhaltung (IBAN, Kontoinhaber usw.).",
     languageIndependentLabel: "Sprachunabhängig",
     languageIndependentHint:
       "Für Events ohne gesprochene Sprache (z. B. Kunstausstellungen, Installationen).",
@@ -961,6 +966,7 @@ const copy: Record<Locale, AdminCopy> = {
         "Untertitelsprache ist erforderlich und muss ein gültiger ISO-639-1-Sprachcode sein.",
       openingHours:
         "Öffnungszeiten ungültig. Jeden Tag als geschlossen markieren oder Öffnungszeit vor Schlusszeit setzen.",
+      bankDetails: "Bankverbindung darf höchstens 2000 Zeichen haben.",
     },
   },
   en: {
@@ -1385,6 +1391,8 @@ const copy: Record<Locale, AdminCopy> = {
     replaceUnusedInventoryHint:
       "Deletes only AVAILABLE rows, then saves the new list. Allocated rows stay.",
     barrierFreeLabel: "Barrier-free",
+    bankDetailsLabel: "Bank details (optional)",
+    bankDetailsHint: "For future accounting (IBAN, account holder, etc.).",
     languageIndependentLabel: "Language-independent",
     languageIndependentHint:
       "For events with no spoken-language requirement (e.g. art exhibitions, installations).",
@@ -1446,6 +1454,7 @@ const copy: Record<Locale, AdminCopy> = {
         "Subtitle language is required and must be a valid ISO 639-1 language code.",
       openingHours:
         "Opening hours are invalid. Mark each day closed or set open time before close time.",
+      bankDetails: "Bank details must be 2000 characters or fewer.",
     },
   },
 };
@@ -1472,6 +1481,7 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   DUPLICATE_OCCURRENCE_INSTANTS: "dateTimes",
   INVALID_SUBTITLE_LANGUAGE: "subtitleLanguage",
   INVALID_OPENING_HOURS: "openingHours",
+  BANK_DETAILS_TOO_LONG: "bankDetails",
   EVENT_NOT_FOUND: "title",
   PARTNER_HAS_EVENTS: "name",
   PARTNER_NOT_FOUND: "partnerId",

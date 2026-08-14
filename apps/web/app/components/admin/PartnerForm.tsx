@@ -29,6 +29,7 @@ export type PartnerFormDefaults = {
   hasOpeningHours?: boolean;
   openingHoursDays?: PartnerOpeningHoursDaysForm;
   barrierFree?: boolean | null;
+  bankDetails?: string | null;
   currentLogoUrl?: string | null;
   currentLogoImageId?: string | null;
   currentLogoCredit?: string | null;
@@ -247,6 +248,19 @@ export function PartnerForm({
         ]}
         placeholder={copy.selectPlaceholder}
       />
+
+      <Surface className="flex w-full flex-col gap-1" variant="transparent">
+        <Label htmlFor="partner-bank-details">{copy.bankDetailsLabel}</Label>
+        <textarea
+          className="admin-native-textarea"
+          defaultValue={defaults?.bankDetails ?? ""}
+          id="partner-bank-details"
+          maxLength={2000}
+          name="bank_details"
+          rows={5}
+        />
+        <Description>{copy.bankDetailsHint}</Description>
+      </Surface>
 
       <Surface className="flex flex-col gap-3 sm:flex-row sm:items-center" variant="transparent">
         <Button className="button button--primary button--md sm:min-w-40" type="submit">

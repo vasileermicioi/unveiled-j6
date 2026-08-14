@@ -95,6 +95,8 @@ export type PartnerFormValues = {
   hasOpeningHours: boolean;
   openingHoursDays: PartnerOpeningHoursDaysForm;
   barrierFree: boolean | null;
+  /** Posted `bank_details`; empty string clears on save. */
+  bankDetails: string;
   logoUpload: Buffer | null;
   logoPrebuilt: PrebuiltImageVariantsInput | null;
   /** Posted `image_credit`; empty string clears on keep-file. */
@@ -187,6 +189,7 @@ export async function parsePartnerFormBody(body: ParsedBody): Promise<PartnerFor
     hasOpeningHours,
     openingHoursDays,
     barrierFree,
+    bankDetails: asString(body.bank_details)?.trim() ?? "",
     logoUpload,
     logoPrebuilt,
     logoCredit: asString(body.image_credit)?.trim() ?? "",

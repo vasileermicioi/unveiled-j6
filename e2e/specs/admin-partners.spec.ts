@@ -208,6 +208,46 @@ test.describe("admin-partners.feature", () => {
     await expect(page.getByLabel(/barrierefrei|barrier-free/i)).toHaveValue("off");
   });
 
+  test("Scenario: Set bank details on create", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const bankDetails = "IBAN DE89 3704 0044 0532 0130 00";
+    const partner = await createPartnerViaUI(page, locale, { bankDetails });
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await expect(page.getByLabel(/bankverbindung|bank details/i)).toHaveValue(bankDetails);
+  });
+
+  test("Scenario: Clear bank details on edit", async ({ page, locale }) => {
+    test.setTimeout(90_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const bankDetails = "IBAN DE89 3704 0044 0532 0130 00";
+    const partner = await createPartnerViaUI(page, locale, { bankDetails });
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await expect(page.getByLabel(/bankverbindung|bank details/i)).toHaveValue(bankDetails);
+    await page.getByLabel(/bankverbindung|bank details/i).fill("");
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`), { timeout: 60_000 });
+
+    await page.goto(`/${locale}/admin/partners`);
+    await page
+      .getByRole("row")
+      .filter({ hasText: partner.name })
+      .getByRole("link", { name: /bearbeiten|edit/i })
+      .click();
+    await expect(page.getByLabel(/bankverbindung|bank details/i)).toHaveValue("");
+  });
+
   test("Scenario: Partner logo credit without replacing the file", async ({ page, locale }) => {
     test.setTimeout(90_000);
     test.skip(!r2Configured(), "R2 vars not configured");

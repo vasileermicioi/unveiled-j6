@@ -176,6 +176,13 @@
       "when": 1786634358297,
       "tag": "0024_lying_doctor_doom",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1786691153858,
+      "tag": "0025_yielding_raider",
+      "breakpoints": true
     }
   ]
 }

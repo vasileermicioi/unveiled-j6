@@ -139,6 +139,7 @@ export const mockPartner: Partner = {
   hasOpeningHours: false,
   openingHours: null,
   barrierFree: null,
+  bankDetails: null,
   venueCheckInToken: null,
   portalUserId: null,
   portalUserEmail: null,

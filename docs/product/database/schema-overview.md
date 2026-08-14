@@ -82,6 +82,7 @@ Counters (`session_count`, `event_open_count`, `booking_count`, `waitlist_count`
 | `has_opening_hours` | boolean, not null, default `false` | When false, public surfaces MUST omit hours; `opening_hours` MUST be null. Public event detail DETAILS partner attribution lists hours only when true with a valid week. |
 | `opening_hours` | jsonb, nullable | Weekly schedule when enabled: keys `mon`…`sun`, each `{ "closed": true }` or `{ "open": "HH:MM", "close": "HH:MM" }` (24h, `open` strictly before `close`, same calendar day; no overnight). Wall times are Europe/Berlin local (no per-partner timezone column). Displayed Mon→Sun on public `/events/:id` DETAILS attribution only (not Discover cards/map). |
 | `barrier_free` | boolean, nullable | Venue accessibility (`true` or `NULL`). Public event detail DETAILS Accessibility / Barrierefreiheit reads this flag (`true` → Barrier-free / Barrierefrei; unset → Not specified / Keine Angabe). Admin sets it on the partner form, not on events. |
+| `bank_details` | text, nullable | Optional free-text bank / payment details (admin partner create/edit textarea). Trimmed on write; empty → `NULL`. Max 2000 characters. Admin-only — not shown on public event detail. Reserved for future accounting. |
 | `created_at` / `updated_at` | timestamptz | |
 
 ---

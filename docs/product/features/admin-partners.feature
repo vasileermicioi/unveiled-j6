@@ -60,6 +60,14 @@ Feature: Admin — Partner Management
     When I edit a partner and set barrier-free to No
     Then the partner is stored with barrier_free null
 
+  Scenario: Set bank details on create
+    When I create a partner and set bank details to "IBAN DE89 3704 0044 0532 0130 00"
+    Then the partner is stored with those bank details
+
+  Scenario: Clear bank details on edit
+    When I edit a partner and clear bank details
+    Then the partner is stored with empty bank details
+
   Scenario: Partner logo credit without replacing the file
     When I edit a partner, keep the logo, and set credit to "Logo: Venue"
     Then the stored logo image credit is "Logo: Venue"

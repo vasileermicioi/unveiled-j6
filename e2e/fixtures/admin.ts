@@ -43,6 +43,7 @@ export const adminLabels = {
   ticketType: "Ticket-Typ",
   codeMode: "Code-Modus",
   barrierFree: "Barrierefrei",
+  bankDetails: /bankverbindung|bank details/i,
   imageCredit: /^(bildnachweis|image credit)$/i,
   languages: /sprachen|languages/i,
   hasSubtitles: /untertitel|subtitles/i,
@@ -340,6 +341,7 @@ export type CreatePartnerOverrides = Partial<Omit<CreatedPartner, "composedAddre
   /** When true, do not attach a logo (for required-logo rejection tests). */
   skipLogo?: boolean;
   barrierFree?: "Ja" | "Nein" | "Yes" | "No";
+  bankDetails?: string;
   imageCredit?: string;
 };
 
@@ -403,6 +405,10 @@ export async function createPartnerViaUI(
 
   if (overrides.barrierFree) {
     await selectOptionByLabel(page, /barrierefrei|barrier-free/i, overrides.barrierFree);
+  }
+
+  if (overrides.bankDetails) {
+    await page.getByLabel(adminLabels.bankDetails).fill(overrides.bankDetails);
   }
 
   if (overrides.imageCredit) {

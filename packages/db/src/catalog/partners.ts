@@ -65,6 +65,8 @@ export type CreatePartnerInput = {
    * Venue accessibility. Omit stores `NULL`. `true` persists; `null`/`false` store `NULL`.
    */
   barrierFree?: boolean | null;
+  /** Optional bank details for future accounting. Empty/whitespace → NULL. */
+  bankDetails?: string | null;
   logoUpload?: Buffer | null;
   logoUrl?: string | null;
   logoPrebuilt?: PrebuiltImageVariantsInput | null;
@@ -89,6 +91,8 @@ export type UpdatePartnerInput = {
    * Venue accessibility. Omit leaves the existing value. `true` sets; `null`/`false` clear to `NULL`.
    */
   barrierFree?: boolean | null;
+  /** Optional bank details. Omit leaves existing; empty/whitespace clears to NULL. */
+  bankDetails?: string | null;
   logoUpload?: Buffer | null;
   logoUrl?: string | null;
   logoPrebuilt?: PrebuiltImageVariantsInput | null;
@@ -102,6 +106,40 @@ export type UpdatePartnerInput = {
  * Stored partner barrier-free is `true` or `NULL` only. `false` coerces to `NULL`
  * (admin No means unset). Omit on create stores NULL; omit on update leaves existing.
  */
+/** Max stored length after trim (IBAN, account holder, notes). */
+export const BANK_DETAILS_MAX_LENGTH = 2000;
+
+/**
+ * Optional bank-details textarea. Empty/whitespace → `NULL`.
+ * Omit (`undefined`) is for callers that should not touch the column.
+ */
+export function normalizeBankDetails(value: string | null | undefined): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  if (trimmed.length > BANK_DETAILS_MAX_LENGTH) {
+    throw new CatalogValidationError(
+      "BANK_DETAILS_TOO_LONG",
+      `bankDetails must be ${BANK_DETAILS_MAX_LENGTH} characters or fewer`,
+    );
+  }
+  return trimmed;
+}
+
+function resolvePartnerBankDetails(
+  input: string | null | undefined,
+  existing?: string | null,
+): string | null {
+  if (input === undefined) {
+    return existing ?? null;
+  }
+  return normalizeBankDetails(input);
+}
+
 function resolvePartnerBarrierFree(
   input: boolean | null | undefined,
   existing?: boolean | null,
@@ -289,6 +327,7 @@ export async function createPartner(db: Db, input: CreatePartnerInput): Promise<
         hasOpeningHours: opening.hasOpeningHours,
         openingHours: opening.openingHours,
         barrierFree: resolvePartnerBarrierFree(input.barrierFree),
+        bankDetails: resolvePartnerBankDetails(input.bankDetails),
         venueCheckInToken,
       })
       .returning();
@@ -429,6 +468,7 @@ export async function updatePartner(
       hasOpeningHours: nextOpening.hasOpeningHours,
       openingHours: nextOpening.openingHours,
       barrierFree: resolvePartnerBarrierFree(input.barrierFree, existing.barrierFree),
+      bankDetails: resolvePartnerBankDetails(input.bankDetails, existing.bankDetails),
       updatedAt: new Date(),
     })
     .where(eq(partners.id, partnerId))

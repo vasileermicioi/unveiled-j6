@@ -42,6 +42,7 @@ export const POST = createRoute(async (c) => {
       hasOpeningHours: hours.hasOpeningHours,
       openingHours: hours.openingHours,
       barrierFree: values.barrierFree,
+      bankDetails: values.bankDetails,
       logoUpload: values.logoUpload,
       logoPrebuilt: values.logoPrebuilt,
       logoCredit: values.logoCredit,
@@ -77,6 +78,7 @@ export const POST = createRoute(async (c) => {
                   hasOpeningHours: values.hasOpeningHours,
                   openingHoursDays: values.openingHoursDays,
                   barrierFree: values.barrierFree,
+                  bankDetails: values.bankDetails,
                   currentLogoCredit: values.logoCredit,
                 }
               : undefined

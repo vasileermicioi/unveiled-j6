@@ -123,6 +123,7 @@ export const POST = createRoute(async (c) => {
       hasOpeningHours: hours.hasOpeningHours,
       openingHours: hours.openingHours,
       barrierFree: values.barrierFree,
+      bankDetails: values.bankDetails,
       logoUpload: values.logoUpload,
       logoPrebuilt: values.logoPrebuilt,
       logoCredit: values.logoCredit,
@@ -150,6 +151,7 @@ export const POST = createRoute(async (c) => {
         openingHoursDays:
           values?.openingHoursDays ?? openingHoursWeekToFormDays(existing.openingHours),
         barrierFree: values?.barrierFree ?? existing.barrierFree,
+        bankDetails: values?.bankDetails ?? existing.bankDetails,
         currentLogoUrl: buildPartnerLogoUrl(existing.logoImageId),
         currentLogoImageId: existing.logoImageId,
         currentLogoCredit: values?.logoCredit ?? (await getImageCredit(db, existing.logoImageId)),
@@ -204,6 +206,7 @@ export default createRoute(async (c) => {
       hasOpeningHours: partner.hasOpeningHours,
       openingHoursDays: openingHoursWeekToFormDays(partner.openingHours),
       barrierFree: partner.barrierFree,
+      bankDetails: partner.bankDetails,
       currentLogoUrl: buildPartnerLogoUrl(partner.logoImageId),
       currentLogoImageId: partner.logoImageId,
       currentLogoCredit,
