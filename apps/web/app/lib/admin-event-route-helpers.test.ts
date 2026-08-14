@@ -22,6 +22,7 @@ function baseValues(overrides: Partial<EventFormValues> = {}): EventFormValues {
     timingMode: "TIME_SLOT",
     creditPrice: 2,
     totalCapacity: 15,
+    capacityMode: "SHARED",
     ticketType: "SECRET_CODE",
     secretCode: "JAZZ123",
     eventWebsiteUrl: null,
@@ -106,5 +107,24 @@ describe("formValuesToDefaults", () => {
   test("round-trips imageCredit onto currentImageCredit", () => {
     const defaults = formValuesToDefaults(baseValues({ imageCredit: "Photo: Ada" }));
     expect(defaults.currentImageCredit).toBe("Photo: Ada");
+  });
+
+  test("round-trips capacityMode and per-row capacities", () => {
+    const defaults = formValuesToDefaults(
+      baseValues({
+        capacityMode: "PER_OCCURRENCE",
+        totalCapacity: 10,
+        dateTimeRows: [
+          { date: "2026-08-01", time: "20:00", credits: "1", capacity: "4" },
+          { date: "2026-08-08", time: "21:00", credits: "3", capacity: "6" },
+        ],
+      }),
+    );
+    expect(defaults.capacityMode).toBe("PER_OCCURRENCE");
+    expect(defaults.totalCapacity).toBe(10);
+    expect(defaults.dateTimeRows).toEqual([
+      { date: "2026-08-01", time: "20:00", credits: "1", capacity: "4" },
+      { date: "2026-08-08", time: "21:00", credits: "3", capacity: "6" },
+    ]);
   });
 });

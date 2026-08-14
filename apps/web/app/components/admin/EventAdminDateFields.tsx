@@ -10,18 +10,25 @@ import {
   Surface,
   TextField,
 } from "@heroui/react";
-import { CatalogValidationError, type OpeningHoursWeek, type TimingMode } from "@unveiled/db";
+import {
+  type CapacityMode,
+  CatalogValidationError,
+  type OpeningHoursWeek,
+  type TimingMode,
+} from "@unveiled/db";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import {
+  DEFAULT_OCCURRENCE_CAPACITY,
   DEFAULT_RANGE_SLOT_TIME,
   DEFAULT_ROW_CREDITS,
   defaultRangeSlotsFromHours,
   expandOccurrencesFromRange,
-  hoursForRangeExpand,
   occurrencesToFormRows,
   type RangeBuilderSlotRow,
+  showsEventTimeInputs,
+  withDefaultOccurrenceCapacity,
 } from "../../lib/admin-event-form";
 import type { Locale } from "../../lib/locale";
 import type { EventDateTimeRow } from "./event-admin-types";
@@ -60,6 +67,9 @@ type EventAdminDateTimeListProps = {
   hasOpeningHours?: boolean;
   openingHours?: OpeningHoursWeek | null;
   timingMode?: TimingMode;
+  capacityMode?: CapacityMode;
+  defaultOccurrenceCapacity?: string;
+  inventoryTotal?: number | null;
   rangeStart?: string;
   rangeEnd?: string;
   rangeSlots?: RangeBuilderSlotRow[];
@@ -77,23 +87,37 @@ function getDefaultTimeValue(eventTime: string | undefined, defaultEmpty: boolea
 
 type RowState = EventDateTimeRow & { id: string };
 
-function createRow(date = "", time = DEFAULT_EVENT_TIME, credits = DEFAULT_ROW_CREDITS): RowState {
+function createRow(
+  date = "",
+  time = DEFAULT_EVENT_TIME,
+  credits = DEFAULT_ROW_CREDITS,
+  capacity = "",
+): RowState {
   return {
     id: crypto.randomUUID(),
     date,
     time,
     credits,
+    capacity,
   };
 }
 
-function normalizeInitialRows(rows: EventDateTimeRow[] | undefined): RowState[] {
+function normalizeInitialRows(
+  rows: EventDateTimeRow[] | undefined,
+  defaultCapacity: string,
+): RowState[] {
   if (rows && rows.length > 0) {
     return rows.map((row) =>
-      createRow(row.date, row.time || DEFAULT_EVENT_TIME, row.credits ?? DEFAULT_ROW_CREDITS),
+      createRow(
+        row.date,
+        row.time || DEFAULT_EVENT_TIME,
+        row.credits ?? DEFAULT_ROW_CREDITS,
+        row.capacity || defaultCapacity,
+      ),
     );
   }
 
-  return [createRow()];
+  return [createRow("", DEFAULT_EVENT_TIME, DEFAULT_ROW_CREDITS, defaultCapacity)];
 }
 
 function displayCreditTotal(rows: RowState[]): number {
@@ -104,6 +128,36 @@ function displayCreditTotal(rows: RowState[]): number {
     }
     return sum + parsed;
   }, 0);
+}
+
+function displayCapacityTotal(
+  capacityMode: CapacityMode,
+  rows: RowState[],
+  sharedTotal: string,
+): number {
+  if (capacityMode !== "PER_OCCURRENCE") {
+    const parsed = Number.parseInt(sharedTotal, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }
+
+  return rows.reduce((sum, row) => {
+    const parsed = Number.parseInt(row.capacity ?? "", 10);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return sum;
+    }
+    return sum + parsed;
+  }, 0);
+}
+
+function rowGridClass(showTimes: boolean, showCapacity: boolean): string {
+  const cols = 1 + (showTimes ? 1 : 0) + 1 + (showCapacity ? 1 : 0);
+  if (cols >= 4) {
+    return "grid min-w-0 flex-1 gap-4 sm:grid-cols-4";
+  }
+  if (cols === 3) {
+    return "grid min-w-0 flex-1 gap-4 sm:grid-cols-3";
+  }
+  return "grid min-w-0 flex-1 gap-4 sm:grid-cols-2";
 }
 
 export function EventAdminDateInput({
@@ -203,6 +257,37 @@ function EventAdminCreditInput({
   );
 }
 
+function EventAdminCapacityInput({
+  locale,
+  name,
+  value,
+  onChange,
+}: {
+  locale: Locale;
+  name: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const copy = getAdminCopy(locale);
+  const id = `admin-number-${name}`;
+
+  return (
+    <Surface className="admin-form__native-field w-full" variant="transparent">
+      <Label htmlFor={id}>{copy.capacityLabel}</Label>
+      <input
+        className="admin-native-number"
+        id={id}
+        min={0}
+        name={name}
+        onChange={(event) => onChange(event.target.value)}
+        step={1}
+        type="number"
+        value={value}
+      />
+    </Surface>
+  );
+}
+
 type SlotState = RangeBuilderSlotRow & { id: string };
 type BuilderErrorKind = "too_many" | "start_after_end" | null;
 
@@ -229,8 +314,13 @@ function slotCreditPrice(credits: string): number {
   return parsed;
 }
 
-function rowsFromOccurrences(occurrences: ReturnType<typeof occurrencesToFormRows>): RowState[] {
-  return occurrences.map((row) => createRow(row.date, row.time, row.credits));
+function rowsFromOccurrences(
+  occurrences: ReturnType<typeof occurrencesToFormRows>,
+  defaultCapacity: string,
+): RowState[] {
+  return withDefaultOccurrenceCapacity(occurrences, defaultCapacity).map((row) =>
+    createRow(row.date, row.time, row.credits, row.capacity),
+  );
 }
 
 export function EventAdminDateTimeList({
@@ -242,22 +332,31 @@ export function EventAdminDateTimeList({
   hasOpeningHours = false,
   openingHours = null,
   timingMode = "TIME_SLOT",
+  capacityMode = "SHARED",
+  defaultOccurrenceCapacity = DEFAULT_OCCURRENCE_CAPACITY,
+  inventoryTotal = null,
   rangeStart: initialRangeStart = "",
   rangeEnd: initialRangeEnd = "",
   rangeSlots: initialRangeSlots,
 }: EventAdminDateTimeListProps) {
   const copy = getAdminCopy(locale);
-  const [rows, setRows] = useState<RowState[]>(() => normalizeInitialRows(initialRows));
+  const showTimes = showsEventTimeInputs(timingMode);
+  const showCapacity = capacityMode === "PER_OCCURRENCE";
+  const [rows, setRows] = useState<RowState[]>(() =>
+    normalizeInitialRows(initialRows, defaultOccurrenceCapacity),
+  );
   const [startDate, setStartDate] = useState(initialRangeStart);
   const [endDate, setEndDate] = useState(initialRangeEnd);
   const [timeSlots, setTimeSlots] = useState<SlotState[]>(() =>
     normalizeInitialSlots(initialRangeSlots),
   );
   const [builderError, setBuilderError] = useState<BuilderErrorKind>(null);
+  const visibleSlots = showTimes ? timeSlots : timeSlots.slice(0, 1);
+  const firstSlot = timeSlots[0];
   const prevPartnerId = useRef(partnerId);
   const prevTimingMode = useRef(timingMode);
-
-  const expandHours = hoursForRangeExpand(hasOpeningHours, openingHours);
+  const defaultCapacityRef = useRef(defaultOccurrenceCapacity);
+  defaultCapacityRef.current = defaultOccurrenceCapacity;
 
   const applyRebuild = useCallback(
     (nextStart: string, nextEnd: string, nextSlots: SlotState[], mode: TimingMode) => {
@@ -285,13 +384,14 @@ export function EventAdminDateTimeList({
           endDate: nextEnd,
           slots: parsedSlots,
           timingMode: mode,
-          openingHours: expandHours,
         });
         if (occurrences.length === 0) {
           return;
         }
         setBuilderError(null);
-        setRows(rowsFromOccurrences(occurrencesToFormRows(occurrences)));
+        setRows(
+          rowsFromOccurrences(occurrencesToFormRows(occurrences), defaultCapacityRef.current),
+        );
       } catch (error) {
         if (error instanceof CatalogValidationError && error.code === "TOO_MANY_OCCURRENCES") {
           setBuilderError("too_many");
@@ -300,7 +400,7 @@ export function EventAdminDateTimeList({
         throw error;
       }
     },
-    [expandHours],
+    [],
   );
 
   useEffect(() => {
@@ -337,7 +437,10 @@ export function EventAdminDateTimeList({
   }, [applyRebuild, endDate, startDate, timeSlots, timingMode]);
 
   function addRow() {
-    setRows((current) => [...current, createRow()]);
+    setRows((current) => [
+      ...current,
+      createRow("", DEFAULT_EVENT_TIME, DEFAULT_ROW_CREDITS, defaultCapacityRef.current),
+    ]);
   }
 
   function removeRow(id: string) {
@@ -351,6 +454,10 @@ export function EventAdminDateTimeList({
 
   function updateCredits(id: string, credits: string) {
     setRows((current) => current.map((row) => (row.id === id ? { ...row, credits } : row)));
+  }
+
+  function updateCapacity(id: string, capacity: string) {
+    setRows((current) => current.map((row) => (row.id === id ? { ...row, capacity } : row)));
   }
 
   function updateStart(value: string) {
@@ -418,26 +525,48 @@ export function EventAdminDateTimeList({
             />
           </Surface>
         </Surface>
-        <Label className="admin-form__section-label">{copy.rangeTimeSlotsLabel}</Label>
-        <input name="range_slot_count" type="hidden" value={String(timeSlots.length)} />
-        {timeSlots.map((slot, index) => (
+        {showTimes ? (
+          <Label className="admin-form__section-label">{copy.rangeTimeSlotsLabel}</Label>
+        ) : null}
+        <input
+          name="range_slot_count"
+          type="hidden"
+          value={String(showTimes ? timeSlots.length : 1)}
+        />
+        {!showTimes && firstSlot ? (
+          <input
+            name="range_slot_time_0"
+            type="hidden"
+            value={firstSlot.time.trim() || DEFAULT_RANGE_SLOT_TIME}
+          />
+        ) : null}
+        {visibleSlots.map((slot, index) => (
           <Surface
             className="flex flex-col gap-3 sm:flex-row sm:items-end"
             key={slot.id}
             variant="transparent"
           >
-            <Surface className="grid min-w-0 flex-1 gap-4 sm:grid-cols-2" variant="transparent">
-              <Surface className="admin-form__native-time-field w-full" variant="transparent">
-                <Label htmlFor={`admin-time-range_slot_time_${index}`}>{copy.eventTimeLabel}</Label>
-                <input
-                  className="admin-native-time"
-                  id={`admin-time-range_slot_time_${index}`}
-                  name={`range_slot_time_${index}`}
-                  onChange={(event) => updateTimeSlot(slot.id, { time: event.target.value })}
-                  type="time"
-                  value={slot.time}
-                />
-              </Surface>
+            <Surface
+              className={
+                showTimes ? "grid min-w-0 flex-1 gap-4 sm:grid-cols-2" : "grid min-w-0 flex-1 gap-4"
+              }
+              variant="transparent"
+            >
+              {showTimes ? (
+                <Surface className="admin-form__native-time-field w-full" variant="transparent">
+                  <Label htmlFor={`admin-time-range_slot_time_${index}`}>
+                    {copy.eventTimeLabel}
+                  </Label>
+                  <input
+                    className="admin-native-time"
+                    id={`admin-time-range_slot_time_${index}`}
+                    name={`range_slot_time_${index}`}
+                    onChange={(event) => updateTimeSlot(slot.id, { time: event.target.value })}
+                    type="time"
+                    value={slot.time}
+                  />
+                </Surface>
+              ) : null}
               <EventAdminCreditInput
                 locale={locale}
                 name={`range_slot_credit_${index}`}
@@ -445,25 +574,28 @@ export function EventAdminDateTimeList({
                 value={slot.credits}
               />
             </Surface>
-            <Button
-              className="button button--secondary button--md shrink-0"
-              isDisabled={timeSlots.length <= 1}
-              onPress={() => removeTimeSlot(slot.id)}
-              type="button"
-            >
-              {copy.removeDateTimeLabel}
-            </Button>
+            {showTimes ? (
+              <Button
+                className="button button--secondary button--md shrink-0"
+                isDisabled={timeSlots.length <= 1}
+                onPress={() => removeTimeSlot(slot.id)}
+                type="button"
+              >
+                {copy.removeDateTimeLabel}
+              </Button>
+            ) : null}
           </Surface>
         ))}
-        <Button
-          className="button button--secondary button--md self-start"
-          onPress={addTimeSlot}
-          type="button"
-        >
-          {copy.addTimeSlotLabel}
-        </Button>
-        <Description>{copy.rangeRebuildHint}</Description>
-        {hasOpeningHours ? <Description>{copy.rangeClosedDaysHint}</Description> : null}
+        {showTimes ? (
+          <Button
+            className="button button--secondary button--md self-start"
+            onPress={addTimeSlot}
+            type="button"
+          >
+            {copy.addTimeSlotLabel}
+          </Button>
+        ) : null}
+        <Description>{showTimes ? copy.rangeRebuildHint : copy.rangeAllDayHint}</Description>
         {builderErrorMessage ? (
           <Alert status="danger">
             <Alert.Content>
@@ -482,24 +614,34 @@ export function EventAdminDateTimeList({
             key={row.id}
             variant="transparent"
           >
-            <Surface className="grid min-w-0 flex-1 gap-4 sm:grid-cols-3" variant="transparent">
+            <Surface className={rowGridClass(showTimes, showCapacity)} variant="transparent">
               <EventAdminDateInput
                 eventDate={row.date}
                 isRequired={isDateRequired && index === 0}
                 locale={locale}
                 name={`event_date_${index}`}
               />
-              <EventAdminTimeInput
-                eventTime={row.time}
-                locale={locale}
-                name={`event_time_${index}`}
-              />
+              {showTimes ? (
+                <EventAdminTimeInput
+                  eventTime={row.time}
+                  locale={locale}
+                  name={`event_time_${index}`}
+                />
+              ) : null}
               <EventAdminCreditInput
                 locale={locale}
                 name={`event_credit_${index}`}
                 onChange={(credits) => updateCredits(row.id, credits)}
                 value={row.credits}
               />
+              {showCapacity ? (
+                <EventAdminCapacityInput
+                  locale={locale}
+                  name={`event_capacity_${index}`}
+                  onChange={(capacity) => updateCapacity(row.id, capacity)}
+                  value={row.capacity ?? ""}
+                />
+              ) : null}
             </Surface>
             <Button
               className="button button--secondary button--md shrink-0"
@@ -519,6 +661,29 @@ export function EventAdminDateTimeList({
           {copy.addDateTimeLabel}
         </Button>
         <Paragraph>{copy.dateTimesTotalCreditsLabel(displayCreditTotal(rows))}</Paragraph>
+        <Paragraph
+          className={
+            inventoryTotal !== null &&
+            inventoryTotal !== displayCapacityTotal(capacityMode, rows, defaultOccurrenceCapacity)
+              ? "admin-form__total--mismatch"
+              : undefined
+          }
+        >
+          {copy.dateTimesTotalCapacityLabel(
+            displayCapacityTotal(capacityMode, rows, defaultOccurrenceCapacity),
+          )}
+        </Paragraph>
+        {inventoryTotal !== null ? (
+          <Paragraph
+            className={
+              inventoryTotal !== displayCapacityTotal(capacityMode, rows, defaultOccurrenceCapacity)
+                ? "admin-form__total--mismatch"
+                : undefined
+            }
+          >
+            {copy.dateTimesTotalInventoryLabel(inventoryTotal)}
+          </Paragraph>
+        ) : null}
       </Surface>
     </Surface>
   );

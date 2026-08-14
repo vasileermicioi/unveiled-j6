@@ -352,7 +352,7 @@ export type AdminCopy = {
   rangeTimeSlotsLabel: string;
   addTimeSlotLabel: string;
   rangeRebuildHint: string;
-  rangeClosedDaysHint: string;
+  rangeAllDayHint: string;
   rangeStartAfterEnd: string;
   tooManyOccurrences: string;
   timingModeLabel: string;
@@ -360,7 +360,13 @@ export type AdminCopy = {
   timingModeAllDay: string;
   creditPriceLabel: string;
   capacityLabel: string;
-  capacityFromInventoryHint: string;
+  capacityAllocationLabel: string;
+  capacityAllocationShared: string;
+  capacityAllocationPerDate: string;
+  capacityAllocationSharedHint: string;
+  capacityAllocationPerDateHint: string;
+  dateTimesTotalCapacityLabel: (total: number) => string;
+  dateTimesTotalInventoryLabel: (total: number) => string;
   ticketTypeLabel: string;
   ticketTypeSecretCode: string;
   ticketTypeVoucher: string;
@@ -824,12 +830,15 @@ const copy: Record<Locale, AdminCopy> = {
     addDateTimeLabel: "Termin hinzufügen",
     removeDateTimeLabel: "Entfernen",
     dateTimesTotalCreditsLabel: (total) => `Credits gesamt: ${total}`,
+    dateTimesTotalCapacityLabel: (total) => `Kapazität gesamt: ${total}`,
+    dateTimesTotalInventoryLabel: (total) => `Verfügbare Codes/Tickets: ${total}`,
     rangeBuilderLabel: "Aus Zeitraum erzeugen",
     rangeTimeSlotsLabel: "Zeitfenster",
     addTimeSlotLabel: "Zeitfenster hinzufügen",
     rangeRebuildHint:
       "Änderungen am Zeitraum oder an den Zeitfenstern erzeugen die Terminliste neu und verwerfen manuelles Hinzufügen/Entfernen.",
-    rangeClosedDaysHint: "Geschlossene Wochentage laut Partner-Öffnungszeiten werden übersprungen.",
+    rangeAllDayHint:
+      "Ganztägige Termine nutzen Mitternacht. Credits vom ersten Slot gelten für jedes Datum.",
     rangeStartAfterEnd: "Das Enddatum muss am oder nach dem Startdatum liegen.",
     tooManyOccurrences:
       "Ein Zeitraum darf höchstens 52 Termine erzeugen. Zeitraum verkürzen oder ein Zeitfenster entfernen.",
@@ -838,8 +847,11 @@ const copy: Record<Locale, AdminCopy> = {
     timingModeAllDay: "Ganztägig",
     creditPriceLabel: "Credits",
     capacityLabel: "Kapazität",
-    capacityFromInventoryHint:
-      "Die Kapazität kommt aus dem Inventar (Promo-Codes bzw. PDF-Tickets) — kein separates Kapazitätsfeld.",
+    capacityAllocationLabel: "Kapazitätsverteilung",
+    capacityAllocationShared: "Gemeinsam für alle Termine",
+    capacityAllocationPerDate: "Pro Termin",
+    capacityAllocationSharedHint: "Ein Kontingent für das gesamte Event.",
+    capacityAllocationPerDateHint: "Jeder Termin startet mit dieser Kapazität; pro Zeile änderbar.",
     ticketTypeLabel: "Ticket-Typ",
     ticketTypeSecretCode: "Secret Code",
     ticketTypeVoucher: "Voucher (Promo)",
@@ -1308,12 +1320,14 @@ const copy: Record<Locale, AdminCopy> = {
     addDateTimeLabel: "Add datetime",
     removeDateTimeLabel: "Remove",
     dateTimesTotalCreditsLabel: (total) => `Total credits: ${total}`,
+    dateTimesTotalCapacityLabel: (total) => `Total capacity: ${total}`,
+    dateTimesTotalInventoryLabel: (total) => `Available codes/tickets: ${total}`,
     rangeBuilderLabel: "Generate from date range",
     rangeTimeSlotsLabel: "Time slots",
     addTimeSlotLabel: "Add time slot",
     rangeRebuildHint:
       "Changing the range or time slots rebuilds the datetime list and discards manual add/remove.",
-    rangeClosedDaysHint: "Closed weekdays from the partner’s opening hours are skipped.",
+    rangeAllDayHint: "All-day dates use midnight. Credits from the first slot apply to each date.",
     rangeStartAfterEnd: "End date must be on or after start date.",
     tooManyOccurrences:
       "A range can create at most 52 datetimes. Narrow the dates or remove a time slot.",
@@ -1322,8 +1336,12 @@ const copy: Record<Locale, AdminCopy> = {
     timingModeAllDay: "All day",
     creditPriceLabel: "Credits",
     capacityLabel: "Capacity",
-    capacityFromInventoryHint:
-      "Capacity comes from inventory (promo codes or PDF tickets) — there is no separate capacity field.",
+    capacityAllocationLabel: "Capacity allocation",
+    capacityAllocationShared: "Shared across all dates",
+    capacityAllocationPerDate: "Per date",
+    capacityAllocationSharedHint: "One ticket pool for the whole event.",
+    capacityAllocationPerDateHint:
+      "Each date starts with this capacity; you can change it per row.",
     ticketTypeLabel: "Ticket type",
     ticketTypeSecretCode: "Secret code",
     ticketTypeVoucher: "Voucher (promo)",
@@ -1528,6 +1546,18 @@ export function mapCatalogErrorCode(
 
   if (code === "NEGATIVE_CREDIT_PRICE") {
     return adminCopy.fieldErrors.creditPrice;
+  }
+
+  if (code === "NEGATIVE_CAPACITY" || code === "OCCURRENCE_CAPACITY_LENGTH_MISMATCH") {
+    return locale === "de"
+      ? "Kapazität muss eine ganze Zahl ≥ 0 sein, mit einem Eintrag pro Termin."
+      : "Capacity must be a whole number ≥ 0, with one value per datetime.";
+  }
+
+  if (code === "CAPACITY_INVENTORY_MISMATCH") {
+    return locale === "de"
+      ? "Kapazität und Inventar stimmen nicht überein."
+      : "Capacity and inventory do not match.";
   }
 
   if (code === "DUPLICATE_OCCURRENCE_INSTANTS") {

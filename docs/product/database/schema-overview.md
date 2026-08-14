@@ -126,6 +126,8 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `tags` | text[] | |
 | `date_times` | timestamptz[], not null | Non-empty list of occurrence instants (ascending, duplicates removed on write). Check: `cardinality(date_times) >= 1`. Public/member detail lists all values; compact surfaces use `date_time`. |
 | `occurrence_credit_prices` | integer[], not null | Per-occurrence credits, same cardinality and order as `date_times`. Check: `cardinality` match + `0 <= ALL (occurrence_credit_prices)`. Backfilled from `credit_price`. |
+| `capacity_mode` | enum: `SHARED`, `PER_OCCURRENCE` | NOT NULL, default `SHARED`. `SHARED` fills `occurrence_capacities` from `total_capacity`; `PER_OCCURRENCE` derives `total_capacity` as the sum. Booking remaining stays event-level. |
+| `occurrence_capacities` | integer[], not null | Per-occurrence capacities, same cardinality and order as `date_times`. Check: `cardinality` match + `0 <= ALL (occurrence_capacities)`. Backfilled from `total_capacity`. |
 | `date_time` | timestamptz | **Denormalized primary/next** instant: next upcoming in `date_times` (or earliest when all past). Synced on every catalog write. Existing btree indexes remain on this column. Used for feed sort, cards, map popups, and admin list primary cell. Confirm / ICS / email / ticket card use `bookings.date_time`, not this column. |
 | `timing_mode` | enum: `TIME_SLOT`, `ALL_DAY` | |
 | `start_time_minutes` | integer (0–1439) | Derived/cached from primary `date_time` — recompute on write rather than trusting client input |
@@ -232,7 +234,7 @@ PDF voucher inventory for `VOUCHER_PDF` events (one row per downloadable ticket 
 | `booking_ticket_id` | FK → `booking_tickets.id`, nullable | Set when allocated |
 | `created_at` / `updated_at` | timestamptz | |
 
-For `VOUCHER_PROMO` / `VOUCHER_PDF`, admin does not set capacity separately — `total_capacity` is derived from inventory size (codes or PDF tickets). Bookable quantity remains `min(remaining_capacity, available_inventory)` as a safety bound.
+For `VOUCHER_PROMO` / `VOUCHER_PDF`, admin authors Capacity allocation and capacity like other ticket types. A successful save requires datetime-capacity total (`SHARED` pool or sum of `occurrence_capacities`) to equal inventory count (codes or PDF tickets); mismatch is rejected rather than overwriting posted capacity. Bookable quantity remains `min(remaining_capacity, available_inventory)` as a safety bound. `remaining_capacity` stays event-level — not per datetime.
 
 ### `bookings`
 

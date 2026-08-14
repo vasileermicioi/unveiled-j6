@@ -1,9 +1,10 @@
 "use client";
 
 import { Description, Label, Paragraph, Surface } from "@heroui/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import type { InventoryPreviewChange } from "../../lib/admin-voucher-inventory";
 import type { Locale } from "../../lib/locale";
 import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 
@@ -27,19 +28,26 @@ type PromoCodeInventoryFieldsProps = {
   locale: Locale;
   isEdit?: boolean;
   inventoryCounts?: { available: number; allocated: number } | null;
+  onInventoryPreviewChange?: (state: InventoryPreviewChange) => void;
 };
 
 export function PromoCodeInventoryFields({
   locale,
   isEdit = false,
   inventoryCounts = null,
+  onInventoryPreviewChange,
 }: PromoCodeInventoryFieldsProps) {
   const copy = getAdminCopy(locale);
   const [codes, setCodes] = useState<string[]>([]);
+  const [replaceUnused, setReplaceUnused] = useState(false);
   const fileInputId = "promo-codes-file";
   const pasteId = "promo-codes-paste";
 
   const sample = useMemo(() => codes.slice(0, PREVIEW_SAMPLE_LIMIT), [codes]);
+
+  useEffect(() => {
+    onInventoryPreviewChange?.({ incomingCount: codes.length, replaceUnused });
+  }, [codes.length, onInventoryPreviewChange, replaceUnused]);
 
   function applyText(text: string) {
     setCodes(parsePromoCodeLines(text));
@@ -111,6 +119,7 @@ export function PromoCodeInventoryFields({
             <NativePreferenceOption
               label={copy.replaceUnusedInventoryLabel}
               name="replace_unused_inventory"
+              onChange={(event) => setReplaceUnused(event.target.checked)}
               type="checkbox"
               value="on"
             />

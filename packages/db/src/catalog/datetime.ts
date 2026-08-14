@@ -113,11 +113,13 @@ export function tryNormalizeEventDateTimes(
 export type EventOccurrence = {
   startsAt: Date;
   creditPrice: number;
+  capacity?: number;
 };
 
 export type NormalizedEventOccurrences = {
   dateTimes: Date[];
   occurrenceCreditPrices: number[];
+  occurrenceCapacities?: number[];
   dateTime: Date;
   creditPrice: number;
 };
@@ -126,13 +128,19 @@ export type NormalizeOccurrencesFailureCode =
   | "EMPTY"
   | "DUPLICATE_INSTANT"
   | "LENGTH_MISMATCH"
-  | "NEGATIVE_CREDIT";
+  | "CAPACITY_LENGTH_MISMATCH"
+  | "NEGATIVE_CREDIT"
+  | "NEGATIVE_CAPACITY";
 
 export type NormalizeOccurrencesResult =
   | { ok: true; value: NormalizedEventOccurrences }
   | { ok: false; code: NormalizeOccurrencesFailureCode };
 
 function isValidCreditPrice(value: number): boolean {
+  return Number.isInteger(value) && value >= 0;
+}
+
+function isValidCapacity(value: number): boolean {
   return Number.isInteger(value) && value >= 0;
 }
 
@@ -201,6 +209,7 @@ export function futureOccurrences(
 
 /**
  * Pair occurrences, sort by instant, reject empty / duplicate instants / invalid credits.
+ * When `capacity` is present on any row it MUST be present and valid on every row.
  * Does **not** unique-merge — callers that need silent dedupe must use the legacy fill helper.
  */
 export function tryNormalizeEventOccurrences(
@@ -213,6 +222,8 @@ export function tryNormalizeEventOccurrences(
 
   const seen = new Set<number>();
   const paired: EventOccurrence[] = [];
+  let capacityPresence: "unknown" | "all" | "none" = "unknown";
+
   for (const occurrence of occurrences) {
     const ms = occurrence.startsAt.getTime();
     if (!Number.isFinite(ms)) {
@@ -220,6 +231,15 @@ export function tryNormalizeEventOccurrences(
     }
     if (!isValidCreditPrice(occurrence.creditPrice)) {
       return { ok: false, code: "NEGATIVE_CREDIT" };
+    }
+    const hasCapacity = occurrence.capacity !== undefined;
+    if (capacityPresence === "unknown") {
+      capacityPresence = hasCapacity ? "all" : "none";
+    } else if ((capacityPresence === "all") !== hasCapacity) {
+      return { ok: false, code: "CAPACITY_LENGTH_MISMATCH" };
+    }
+    if (hasCapacity && occurrence.capacity !== undefined && !isValidCapacity(occurrence.capacity)) {
+      return { ok: false, code: "NEGATIVE_CAPACITY" };
     }
     if (seen.has(ms)) {
       return { ok: false, code: "DUPLICATE_INSTANT" };
@@ -235,6 +255,10 @@ export function tryNormalizeEventOccurrences(
   paired.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const dateTimes = paired.map((occurrence) => occurrence.startsAt);
   const occurrenceCreditPrices = paired.map((occurrence) => occurrence.creditPrice);
+  const occurrenceCapacities =
+    capacityPresence === "all"
+      ? paired.map((occurrence) => occurrence.capacity ?? Number.NaN)
+      : undefined;
   const dateTime = primaryDateTimeFromList(dateTimes, now);
 
   return {
@@ -242,6 +266,7 @@ export function tryNormalizeEventOccurrences(
     value: {
       dateTimes,
       occurrenceCreditPrices,
+      ...(occurrenceCapacities ? { occurrenceCapacities } : {}),
       dateTime,
       creditPrice: primaryCreditFromLists(dateTimes, occurrenceCreditPrices, dateTime),
     },
@@ -293,6 +318,63 @@ export function tryFillOccurrenceCreditsFromPrice(
       creditPrice,
     },
   };
+}
+
+/**
+ * Pair dates + credits + capacities by index, then normalize. Credit or capacity
+ * length mismatch is rejected before pairing.
+ */
+export function tryNormalizePairedDateTimesCreditsAndCapacities(
+  dateTimes: Date[],
+  occurrenceCreditPrices: number[],
+  occurrenceCapacities: number[],
+  now: Date = new Date(),
+): NormalizeOccurrencesResult {
+  if (dateTimes.length !== occurrenceCreditPrices.length) {
+    return { ok: false, code: "LENGTH_MISMATCH" };
+  }
+  if (dateTimes.length !== occurrenceCapacities.length) {
+    return { ok: false, code: "CAPACITY_LENGTH_MISMATCH" };
+  }
+  return tryNormalizeEventOccurrences(
+    dateTimes.map((startsAt, index) => ({
+      startsAt,
+      creditPrice: occurrenceCreditPrices[index] ?? Number.NaN,
+      capacity: occurrenceCapacities[index],
+    })),
+    now,
+  );
+}
+
+/**
+ * Pair dates + capacities by index, fill every credit with `creditPrice`.
+ * Does **not** unique-merge.
+ */
+export function tryNormalizePairedDateTimesAndCapacities(
+  dateTimes: Date[],
+  creditPrice: number,
+  occurrenceCapacities: number[],
+  now: Date = new Date(),
+): NormalizeOccurrencesResult {
+  if (!isValidCreditPrice(creditPrice)) {
+    return { ok: false, code: "NEGATIVE_CREDIT" };
+  }
+  if (dateTimes.length !== occurrenceCapacities.length) {
+    return { ok: false, code: "CAPACITY_LENGTH_MISMATCH" };
+  }
+  return tryNormalizeEventOccurrences(
+    dateTimes.map((startsAt, index) => ({
+      startsAt,
+      creditPrice,
+      capacity: occurrenceCapacities[index],
+    })),
+    now,
+  );
+}
+
+/** SHARED fill: one capacity value repeated for every datetime. */
+export function fillOccurrenceCapacities(dateTimes: Date[], totalCapacity: number): number[] {
+  return dateTimes.map(() => totalCapacity);
 }
 
 /** Calendar date (YYYY-MM-DD) of `date` in Europe/Berlin. */

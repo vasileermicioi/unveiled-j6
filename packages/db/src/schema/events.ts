@@ -15,6 +15,7 @@ import { images } from "./images";
 import { partners } from "./partners";
 
 export const timingModeEnum = pgEnum("timing_mode", ["TIME_SLOT", "ALL_DAY"]);
+export const capacityModeEnum = pgEnum("capacity_mode", ["SHARED", "PER_OCCURRENCE"]);
 export const ticketTypeEnum = pgEnum("ticket_type", [
   "SECRET_CODE",
   "VOUCHER_PROMO",
@@ -61,6 +62,16 @@ export const events = pgTable(
     occurrenceCreditPrices: integer("occurrence_credit_prices").array().notNull(),
     /** Price of the primary/next instant in `dateTimes` / `occurrenceCreditPrices`. */
     creditPrice: integer("credit_price").notNull(),
+    /**
+     * `SHARED`: one ticket pool; `occurrenceCapacities` is filled with `totalCapacity`.
+     * `PER_OCCURRENCE`: `totalCapacity` is the sum of `occurrenceCapacities`.
+     */
+    capacityMode: capacityModeEnum("capacity_mode").notNull().default("SHARED"),
+    /**
+     * Per-occurrence capacities, same cardinality and order as `dateTimes`.
+     * Booking remaining stays event-level (`remainingCapacity`).
+     */
+    occurrenceCapacities: integer("occurrence_capacities").array().notNull(),
     totalCapacity: integer("total_capacity").notNull(),
     remainingCapacity: integer("remaining_capacity").notNull(),
     ticketType: ticketTypeEnum("ticket_type").notNull(),
@@ -90,6 +101,14 @@ export const events = pgTable(
       "events_occurrence_credit_prices_non_negative",
       sql`0 <= ALL (${table.occurrenceCreditPrices})`,
     ),
+    check(
+      "events_occurrence_capacities_cardinality",
+      sql`cardinality(${table.dateTimes}) = cardinality(${table.occurrenceCapacities})`,
+    ),
+    check(
+      "events_occurrence_capacities_non_negative",
+      sql`0 <= ALL (${table.occurrenceCapacities})`,
+    ),
     index("events_date_time_idx").on(table.dateTime),
     index("events_date_time_partner_id_idx").on(table.dateTime, table.partnerId),
     index("events_date_time_category_idx").on(table.dateTime, table.category),
@@ -99,4 +118,5 @@ export const events = pgTable(
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type TimingMode = (typeof timingModeEnum.enumValues)[number];
+export type CapacityMode = (typeof capacityModeEnum.enumValues)[number];
 export type TicketType = (typeof ticketTypeEnum.enumValues)[number];

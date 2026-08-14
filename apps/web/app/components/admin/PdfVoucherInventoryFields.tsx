@@ -4,6 +4,7 @@ import { Description, Label, Paragraph, Surface } from "@heroui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import type { InventoryPreviewChange } from "../../lib/admin-voucher-inventory";
 import type { Locale } from "../../lib/locale";
 import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 
@@ -139,6 +140,7 @@ type PdfVoucherInventoryFieldsProps = {
   eventId?: string | null;
   inventoryCounts?: { available: number; allocated: number } | null;
   uploadPath: string;
+  onInventoryPreviewChange?: (state: InventoryPreviewChange) => void;
 };
 
 export function PdfVoucherInventoryFields({
@@ -147,6 +149,7 @@ export function PdfVoucherInventoryFields({
   eventId = null,
   inventoryCounts = null,
   uploadPath,
+  onInventoryPreviewChange,
 }: PdfVoucherInventoryFieldsProps) {
   const copy = getAdminCopy(locale);
   const hiddenRef = useRef<HTMLInputElement | null>(null);
@@ -166,6 +169,7 @@ export function PdfVoucherInventoryFields({
   const [multiFileCount, setMultiFileCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replaceUnused, setReplaceUnused] = useState(false);
 
   const modeId = "voucher-pdf-import-mode";
   const fileInputId = "voucher-pdf-file";
@@ -419,6 +423,10 @@ export function PdfVoucherInventoryFields({
   const showZeroTickets =
     mode === "split" && hasMasterFile && skipParsed.ok && previews.length === 0;
 
+  useEffect(() => {
+    onInventoryPreviewChange?.({ incomingCount: ticketCount, replaceUnused });
+  }, [onInventoryPreviewChange, replaceUnused, ticketCount]);
+
   return (
     <Surface className="flex flex-col gap-3" variant="transparent">
       {isEdit && inventoryCounts ? (
@@ -542,6 +550,7 @@ export function PdfVoucherInventoryFields({
             <NativePreferenceOption
               label={copy.replaceUnusedInventoryLabel}
               name="replace_unused_inventory"
+              onChange={(event) => setReplaceUnused(event.target.checked)}
               type="checkbox"
               value="on"
             />

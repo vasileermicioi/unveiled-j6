@@ -117,6 +117,7 @@ describe("applyEventDefaults", () => {
       totalCapacity: 10,
       ticketType: "SECRET_CODE",
       timingMode: "TIME_SLOT",
+      capacityMode: "SHARED",
     });
   });
 });

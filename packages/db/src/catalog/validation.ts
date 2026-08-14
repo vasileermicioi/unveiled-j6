@@ -1,6 +1,6 @@
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 
-import type { TicketType, TimingMode } from "../schema/events";
+import type { CapacityMode, TicketType, TimingMode } from "../schema/events";
 import { CatalogValidationError } from "./errors";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -111,14 +111,17 @@ export function applyEventDefaults(input: {
   totalCapacity?: number | null;
   ticketType?: TicketType | null;
   timingMode?: TimingMode | null;
+  capacityMode?: CapacityMode | null;
 }): {
   totalCapacity: number;
   ticketType: TicketType;
   timingMode: TimingMode;
+  capacityMode: CapacityMode;
 } {
   return {
     totalCapacity: input.totalCapacity ?? 10,
     ticketType: input.ticketType ?? "SECRET_CODE",
     timingMode: input.timingMode ?? "TIME_SLOT",
+    capacityMode: input.capacityMode ?? "SHARED",
   };
 }

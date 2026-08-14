@@ -85,16 +85,16 @@ Admin create, edit, and clone event forms SHALL offer a range builder: an inclus
 - **AND** each row is priced 1 (first slot’s credits)
 
 ### Requirement: Partner opening hours default time slots
-On the **create** event form, when the admin selects a partner with `has_opening_hours` true and a valid week, the builder’s default time-slot rows SHALL be the distinct `open` times from open weekdays, sorted. Range expansion SHALL skip dates whose Berlin weekday is marked closed on that partner. When the partner has no published hours, the default time slot SHALL be 19:30 at 1 credit and every calendar day in range SHALL be included. On **edit**, changing partner SHALL NOT overwrite existing datetimes or builder fields.
+On the **create** event form, when the admin selects a partner with `has_opening_hours` true and a valid week, the builder’s default time-slot rows SHALL be the distinct `open` times from open weekdays, sorted. Range expansion SHALL emit every inclusive calendar day × each time slot (closed partner weekdays are not omitted). When the partner has no published hours, the default time slot SHALL be 19:30 at 1 credit. On **edit**, changing partner SHALL NOT overwrite existing datetimes or builder fields.
 
 #### Scenario: Create prefills slots from partner open times
 - **WHEN** I am on the new-event form and select a partner open 10:00–18:00 weekdays and closed Sunday
 - **THEN** the builder shows a 10:00 time slot by default
 
-#### Scenario: Closed weekdays omitted from expansion
+#### Scenario: Range includes closed partner weekdays
 - **WHEN** that partner is selected and I generate 2026-09-05 (Saturday) through 2026-09-07 (Monday) with the default 10:00 slot
-- **THEN** Sunday is not in the datetime list
-- **AND** Saturday and Monday are
+- **THEN** Sunday is in the datetime list
+- **AND** Saturday, Sunday, and Monday are
 
 #### Scenario: No published hours includes every calendar day
 - **WHEN** I select a partner with `has_opening_hours` false and generate 2026-09-05 through 2026-09-07 with the default 19:30 slot
@@ -564,7 +564,7 @@ BDD/Playwright SHALL cover admin add/remove datetime smoke on create or edit and
 - **WHEN** I am on the new-event form and select a partner open 10:00–18:00 weekdays and closed Sunday
 - **THEN** the builder shows a 10:00 time slot by default
 
-#### Scenario: Closed weekdays omitted from expansion
+#### Scenario: Range includes closed partner weekdays
 - **WHEN** that partner is selected and I generate a range that includes Sunday with the default 10:00 slot
-- **THEN** Sunday is not in the datetime list
-- **AND** open weekdays in range are
+- **THEN** Sunday is in the datetime list
+- **AND** every calendar day in the range is

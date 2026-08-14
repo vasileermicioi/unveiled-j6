@@ -975,4 +975,135 @@ describe("multi-datetime catalog writes", () => {
       await deletePartner(db, partner.id, { skipBucket: true });
     }
   });
+
+  test("create/update persist capacity_mode and occurrence_capacities", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const now = new Date("2026-07-09T12:00:00.000Z");
+    const partnerImage = await createTestImage();
+    const partner = await createPartner(db, {
+      name: `Occ Caps Partner ${suffix}`,
+      ...structuredLocationFromAddress("OccCaps Straße 1, Berlin"),
+      contactEmail: `occ-caps-${suffix}@example.com`,
+      logoPrebuilt: partnerImage,
+      skipUpload: true,
+    });
+
+    const past = new Date("2026-07-08T18:00:00.000Z");
+    const future = new Date("2026-07-12T18:00:00.000Z");
+
+    try {
+      const shared = await createEvent(db, {
+        partnerId: partner.id,
+        title: `Shared Caps ${suffix}`,
+        description: "Description",
+        ...structuredLocationFromAddress("OccCaps Straße 1, Berlin"),
+        country: "DE",
+        city: "berlin",
+        zipCode: "10115",
+        category: "Theater",
+        eventType: "Performance",
+        dateTimes: [future, past],
+        now,
+        creditPrice: 1,
+        capacityMode: "SHARED",
+        totalCapacity: 12,
+        secretCode: `SHC${suffix.slice(0, 5)}`,
+        imagePrebuilt: await createTestImage(),
+        skipUpload: true,
+      });
+
+      expect(shared.capacityMode).toBe("SHARED");
+      expect(shared.occurrenceCapacities).toEqual([12, 12]);
+      expect(shared.totalCapacity).toBe(12);
+
+      const omitted = await createEvent(db, {
+        partnerId: partner.id,
+        title: `Omitted Caps ${suffix}`,
+        description: "Description",
+        ...structuredLocationFromAddress("OccCaps Straße 1, Berlin"),
+        country: "DE",
+        city: "berlin",
+        zipCode: "10115",
+        category: "Theater",
+        eventType: "Performance",
+        dateTimes: [past, future],
+        now,
+        creditPrice: 1,
+        totalCapacity: 10,
+        secretCode: `OMC${suffix.slice(0, 5)}`,
+        imagePrebuilt: await createTestImage(),
+        skipUpload: true,
+      });
+
+      expect(omitted.capacityMode).toBe("SHARED");
+      expect(omitted.occurrenceCapacities).toEqual([10, 10]);
+      expect(omitted.totalCapacity).toBe(10);
+
+      const perDate = await createEvent(db, {
+        partnerId: partner.id,
+        title: `Per Date Caps ${suffix}`,
+        description: "Description",
+        ...structuredLocationFromAddress("OccCaps Straße 1, Berlin"),
+        country: "DE",
+        city: "berlin",
+        zipCode: "10115",
+        category: "Theater",
+        eventType: "Performance",
+        dateTimes: [future, past],
+        now,
+        creditPrice: 1,
+        capacityMode: "PER_OCCURRENCE",
+        occurrenceCapacities: [6, 4],
+        secretCode: `PDC${suffix.slice(0, 5)}`,
+        imagePrebuilt: await createTestImage(),
+        skipUpload: true,
+      });
+
+      expect(perDate.capacityMode).toBe("PER_OCCURRENCE");
+      expect(perDate.occurrenceCapacities).toEqual([4, 6]);
+      expect(perDate.totalCapacity).toBe(10);
+
+      const updated = await updateEvent(db, perDate.id, {
+        occurrenceCapacities: [5, 7],
+        now,
+      });
+      expect(updated.occurrenceCapacities).toEqual([5, 7]);
+      expect(updated.totalCapacity).toBe(12);
+
+      await expect(
+        createEvent(db, {
+          partnerId: partner.id,
+          title: `Per Date Missing ${suffix}`,
+          description: "Description",
+          ...structuredLocationFromAddress("OccCaps Straße 1, Berlin"),
+          country: "DE",
+          city: "berlin",
+          zipCode: "10115",
+          category: "Theater",
+          eventType: "Performance",
+          dateTimes: [past, future],
+          now,
+          creditPrice: 1,
+          capacityMode: "PER_OCCURRENCE",
+          secretCode: `PDM${suffix.slice(0, 5)}`,
+          imagePrebuilt: await createTestImage(),
+          skipUpload: true,
+        }),
+      ).rejects.toMatchObject({ code: "OCCURRENCE_CAPACITY_LENGTH_MISMATCH" });
+    } finally {
+      const leftover = await db.query.events.findMany({
+        where: (fields, { eq }) => eq(fields.partnerId, partner.id),
+      });
+      for (const row of leftover) {
+        await deleteEvent(db, row.id, { skipBucket: true });
+      }
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
 });

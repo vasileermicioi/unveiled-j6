@@ -16,12 +16,26 @@ const partners = [
   },
 ];
 
+const createHrefs = {
+  1: "/en/admin/events/new",
+  2: "/en/admin/events/new/dates",
+  3: "/en/admin/events/new/image",
+} as const;
+
+const editHrefs = {
+  1: "/en/admin/events/event-1/edit",
+  2: "/en/admin/events/event-1/edit/dates",
+  3: "/en/admin/events/event-1/edit/image",
+} as const;
+
 export const CreateStepper: Story = () => (
   <EventAdminForm
-    action="#"
+    action={createHrefs[1]}
     cancelHref="#"
     locale={storyLocale}
     partners={partners}
+    step={1}
+    stepHrefs={createHrefs}
     submitLabel="Anlegen"
   />
 );
@@ -29,7 +43,7 @@ CreateStepper.storyName = "EventAdminForm / Create stepper";
 
 export const EditStepper: Story = () => (
   <EventAdminForm
-    action="#"
+    action={editHrefs[1]}
     cancelHref="#"
     defaults={{
       partnerId: mockPartner.id,
@@ -44,7 +58,50 @@ export const EditStepper: Story = () => (
     isEdit
     locale={storyLocale}
     partners={partners}
+    step={1}
+    stepHrefs={editHrefs}
     submitLabel="Speichern"
   />
 );
 EditStepper.storyName = "EventAdminForm / Edit stepper";
+
+export const DateTicketsTimeSlot: Story = () => (
+  <EventAdminForm
+    action={createHrefs[2]}
+    cancelHref="#"
+    locale={storyLocale}
+    partners={partners}
+    step={2}
+    stepHrefs={createHrefs}
+    submitLabel="Anlegen"
+  />
+);
+DateTicketsTimeSlot.storyName = "EventAdminForm / Date & tickets time slot";
+
+export const DateTicketsAllDay: Story = () => (
+  <EventAdminForm
+    action={createHrefs[2]}
+    cancelHref="#"
+    defaults={{ timingMode: "ALL_DAY" }}
+    locale={storyLocale}
+    partners={partners}
+    step={2}
+    stepHrefs={createHrefs}
+    submitLabel="Anlegen"
+  />
+);
+DateTicketsAllDay.storyName = "EventAdminForm / Date & tickets all day";
+
+export const DateTicketsPerDate: Story = () => (
+  <EventAdminForm
+    action={createHrefs[2]}
+    cancelHref="#"
+    defaults={{ capacityMode: "PER_OCCURRENCE", totalCapacity: 8 }}
+    locale={storyLocale}
+    partners={partners}
+    step={2}
+    stepHrefs={createHrefs}
+    submitLabel="Anlegen"
+  />
+);
+DateTicketsPerDate.storyName = "EventAdminForm / Date & tickets per date";

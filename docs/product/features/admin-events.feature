@@ -1,5 +1,6 @@
 # Admin event catalog for the production MVP.
-# Dedicated SSR pages: /admin/events/new, /admin/events/:id/edit, etc. (see sitemap).
+# Dedicated SSR pages: /admin/events/new, /admin/events/new/dates, /admin/events/new/image,
+# /admin/events/:id/edit, /admin/events/:id/edit/dates, /admin/events/:id/edit/image (see sitemap).
 # Partner self-service event CRUD is post-MVP (features/post-mvp/). Admin retains
 # unrestricted cross-venue event management in MVP.
 # Event image = required file upload → five WebP variants (extras/image-uploads.md).
@@ -34,6 +35,39 @@ Feature: Admin — Event Management
     When the datetime list has rows priced 2 and 5
     Then the form shows a total of 7 credits for the list
 
+  Scenario: Timing mode is first on Date & tickets
+    When I open the new-event form and go to step 2
+    Then I see Timing mode before Capacity allocation, ticket type, and the datetime list
+
+  Scenario: All day hides time inputs
+    When I set Timing mode to All day
+    Then hour and minute inputs are hidden on the range builder and datetime rows
+    And date fields remain
+
+  Scenario: Time slot shows times
+    When I set Timing mode to Time slot
+    Then datetime rows and range slots show time inputs
+
+  Scenario: Shared capacity is one pool
+    When I create an event with Capacity allocation Shared across all dates and capacity 10 and two datetimes
+    Then the event's total capacity is 10
+    And datetime rows do not show a capacity input
+
+  Scenario: Per-date capacities persist
+    When I create an event with Capacity allocation Per date, default capacity 5, and two datetime rows set to 4 and 6
+    Then the stored occurrence_capacities are 4 and 6 in datetime order
+    And total capacity equals 10
+
+  Scenario: Range rebuild stamps default capacity
+    When Capacity allocation is Per date with capacity 8
+    And I generate a date range
+    Then each generated datetime row's capacity is 8
+
+  Scenario: Capacity and inventory totals mismatch
+    When I am creating a VOUCHER_PROMO event with datetime capacity total 10 and 7 codes previewed
+    Then the capacity and inventory totals are shown in danger styling
+    And submitting is rejected until they match
+
   Scenario: Edit datetimes inplace
     When I edit an event that already has multiple datetimes
     Then I see all values as editable rows including each row's credits
@@ -54,10 +88,10 @@ Feature: Admin — Event Management
     When I am on the new-event form and select a partner open 10:00–18:00 weekdays and closed Sunday
     Then the builder shows a 10:00 time slot by default
 
-  Scenario: Closed weekdays omitted from expansion
+  Scenario: Range includes closed partner weekdays
     When that partner is selected and I generate a range that includes Sunday with the default 10:00 slot
-    Then Sunday is not in the datetime list
-    And open weekdays in range are
+    Then Sunday is in the datetime list
+    And every calendar day in the range is
 
   Scenario: Admin event list shows next upcoming datetime
     When I view the admin Events catalog for an event with multiple datetimes including a future occurrence
@@ -99,16 +133,19 @@ Feature: Admin — Event Management
     When I am on new-event step 3
     Then I can submit the form
     And earlier steps' values are included in the POST
+    And the URL is "/:locale/admin/events/new/image"
 
   Scenario: Edit can jump to image
     When I open edit-event
     Then I can move to step 3 without posting
+    And the URL is "/:locale/admin/events/:id/edit/image"
     And saving posts the full form including unchanged dates and image id
 
   Scenario: Missing image returns to step 3
     When I create an event and submit without a primary image
     Then the form is rejected
     And the re-rendered form shows the image step
+    And the URL is the image create route
 
   Scenario: Failed create keeps event image for retry
     When I create an event with a processed image and the submit is rejected
@@ -149,26 +186,27 @@ Feature: Admin — Event Management
     Given I am creating or editing a VOUCHER_PROMO event
     When I select a text or CSV file (or paste codes)
     Then the UI previews one non-empty code per line
-    And there is no separate capacity field — total capacity equals the inventory code count
+    And available codes/tickets total equals that count
+    And submitting succeeds only when datetime capacity total equals that count
     And inventory rows are written only after a successful SSR form POST
 
   Scenario: Admin uploads a master PDF and previews tickets
     Given I am creating or editing a VOUCHER_PDF event
     When I choose split-one-file import, upload a PDF, and set pages to skip (comma/ranges) and pages per ticket
     Then the UI shows how many tickets the split produces (not a page-by-page list)
-    And there is no separate capacity field — total capacity equals the ticket count from the split
+    And submitting succeeds only when datetime capacity total equals that ticket count
     And confirming the form stores one AVAILABLE PDF inventory row per ticket
 
   Scenario: Admin uploads multiple PDF files as tickets
     Given I am creating or editing a VOUCHER_PDF event
     When I choose multiple-files import and select several PDF files
     Then the UI shows the ticket count equal to the number of files
-    And there is no separate capacity field — total capacity equals the number of files
+    And submitting succeeds only when datetime capacity total equals that file count
     And confirming the form stores one AVAILABLE PDF inventory row per file
 
   Scenario: Default values on creation
-    Given I create an event without specifying capacity, ticket type, or timing mode
-    Then it defaults to totalCapacity 10, ticketType "SECRET_CODE", timingMode "TIME_SLOT"
+    Given I create an event without specifying capacity, ticket type, timing mode, or capacity allocation
+    Then it defaults to totalCapacity 10, ticketType "SECRET_CODE", timingMode "TIME_SLOT", capacityMode "SHARED"
 
   Scenario: Clone event from catalog list
     When I open clone for an existing event, set a new date/time, and confirm
@@ -216,6 +254,7 @@ Feature: Admin — Event Management
     Given an event has some tickets already sold (remaining capacity less than total capacity)
     When I update its total capacity to a new value
     Then its remaining capacity is recalculated as max(0, newTotal - alreadySold)
+    # newTotal is the shared capacity number, or the sum of per-date capacities
 
   Scenario: Edit event details
     When I update an event's title, description, image, price, or redemption configuration

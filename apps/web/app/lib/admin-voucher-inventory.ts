@@ -2,11 +2,18 @@ import type { Db, TicketType, VoucherInventoryCounts, VoucherPdfInventoryItem } 
 import {
   applyVoucherInventory,
   assertVoucherInventoryPresent,
+  CatalogValidationError,
   getVoucherInventoryCounts,
   normalizePromoCodes,
 } from "@unveiled/db";
 
 import type { EventFormValues } from "./admin-event-form";
+import { parseOccurrenceCredit } from "./admin-event-form";
+
+export type InventoryPreviewChange = {
+  incomingCount: number;
+  replaceUnused: boolean;
+};
 
 export type VoucherInventoryFormPayload = {
   promoCodes: string[];
@@ -23,12 +30,14 @@ export function voucherPayloadFromFormValues(values: EventFormValues): VoucherIn
 }
 
 /**
- * Capacity for voucher ticket types is inventory-derived (not a separate admin field).
- * Returns null for SECRET_CODE (use form capacity) or when there is no inventory to derive from.
+ * Live and submit inventory count: create = incoming; edit append = available + allocated + incoming;
+ * edit replace unused = allocated + incoming; empty incoming on edit = available + allocated.
+ * Returns null for SECRET_CODE or when there is no inventory to derive from.
  */
-export function resolveVoucherDerivedCapacity(
+export function voucherInventoryDisplayCount(
   ticketType: TicketType,
-  payload: VoucherInventoryFormPayload,
+  incomingCount: number,
+  replaceUnused: boolean,
   existingCounts?: VoucherInventoryCounts | null,
 ): number | null {
   if (ticketType !== "VOUCHER_PROMO" && ticketType !== "VOUCHER_PDF") {
@@ -38,36 +47,71 @@ export function resolveVoucherDerivedCapacity(
   const bucket = ticketType === "VOUCHER_PROMO" ? existingCounts?.promo : existingCounts?.pdf;
   const allocated = bucket?.allocated ?? 0;
   const available = bucket?.available ?? 0;
-  const incoming =
-    ticketType === "VOUCHER_PROMO"
-      ? normalizePromoCodes(payload.promoCodes).length
-      : payload.pdfItems.length;
 
-  if (incoming > 0) {
-    if (payload.replaceUnused) {
-      return allocated + incoming;
+  if (incomingCount > 0) {
+    if (replaceUnused) {
+      return allocated + incomingCount;
     }
-    return available + allocated + incoming;
+    return available + allocated + incomingCount;
   }
 
   const existingTotal = available + allocated;
   return existingTotal > 0 ? existingTotal : null;
 }
 
-/** Overlay inventory-derived totalCapacity for VOUCHER_PROMO / VOUCHER_PDF. */
-export function withVoucherCapacityFromInventory(
+export function resolveVoucherDerivedCapacity(
+  ticketType: TicketType,
+  payload: VoucherInventoryFormPayload,
+  existingCounts?: VoucherInventoryCounts | null,
+): number | null {
+  const incoming =
+    ticketType === "VOUCHER_PROMO"
+      ? normalizePromoCodes(payload.promoCodes).length
+      : payload.pdfItems.length;
+
+  return voucherInventoryDisplayCount(ticketType, incoming, payload.replaceUnused, existingCounts);
+}
+
+export function datetimeCapacityTotal(values: EventFormValues): number {
+  if ((values.capacityMode ?? "SHARED") !== "PER_OCCURRENCE") {
+    return values.totalCapacity;
+  }
+
+  return values.dateTimeRows.reduce((sum, row) => {
+    if (!row.date.trim()) {
+      return sum;
+    }
+    const parsed = parseOccurrenceCredit(row.capacity ?? "");
+    if (parsed === null) {
+      return sum;
+    }
+    return sum + parsed;
+  }, 0);
+}
+
+export function assertCapacityMatchesInventory(
   values: EventFormValues,
   existingCounts?: VoucherInventoryCounts | null,
-): EventFormValues {
+): void {
+  if (values.ticketType !== "VOUCHER_PROMO" && values.ticketType !== "VOUCHER_PDF") {
+    return;
+  }
+
   const derived = resolveVoucherDerivedCapacity(
     values.ticketType,
     voucherPayloadFromFormValues(values),
     existingCounts,
   );
   if (derived == null) {
-    return values;
+    return;
   }
-  return { ...values, totalCapacity: derived };
+
+  if (derived !== datetimeCapacityTotal(values)) {
+    throw new CatalogValidationError(
+      "CAPACITY_INVENTORY_MISMATCH",
+      "Capacity and inventory do not match",
+    );
+  }
 }
 
 export async function assertVoucherInventoryForForm(

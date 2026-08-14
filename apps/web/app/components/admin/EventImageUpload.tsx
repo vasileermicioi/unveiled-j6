@@ -5,6 +5,7 @@ import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images/constants";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import { isWizardAdvanceSubmit } from "../../lib/admin-event-wizard";
 import type { Locale } from "../../lib/locale";
 
 import { AdminImageCreditField } from "./AdminImageCreditField";
@@ -88,6 +89,10 @@ export function EventImageUpload({
         return;
       }
       if (!form.querySelector(`#${CSS.escape(fileInputId)}`)) {
+        return;
+      }
+
+      if (isWizardAdvanceSubmit(event)) {
         return;
       }
 

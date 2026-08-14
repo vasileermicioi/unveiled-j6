@@ -34,6 +34,8 @@ function baseEvent(overrides: Partial<Event> = {}): Event {
     weekday: 2,
     occurrenceCreditPrices: [1],
     creditPrice: 1,
+    capacityMode: "SHARED",
+    occurrenceCapacities: [10],
     totalCapacity: 10,
     remainingCapacity: 10,
     ticketType: "SECRET_CODE",

@@ -1,10 +1,11 @@
-import type { EventOccurrence, OpeningHoursWeek, TicketType, TimingMode } from "@unveiled/db";
-import {
-  CatalogValidationError,
-  distinctOpenTimes,
-  isClosedOnBerlinYmd,
-  PostalValidationError,
+import type {
+  CapacityMode,
+  EventOccurrence,
+  OpeningHoursWeek,
+  TicketType,
+  TimingMode,
 } from "@unveiled/db";
+import { CatalogValidationError, distinctOpenTimes, PostalValidationError } from "@unveiled/db";
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { ImageValidationError } from "@unveiled/images/errors";
 
@@ -25,12 +26,19 @@ export type EventDateTimeRow = {
   time: string;
   /** Form string; parsed to an integer `>= 0` on submit. */
   credits: string;
+  /** Form string; parsed to an integer `>= 0` on submit when Per date. */
+  capacity?: string;
 };
 
 export const DEFAULT_ROW_CREDITS = "1";
 export const DEFAULT_RANGE_SLOT_TIME = "19:30";
+export const DEFAULT_OCCURRENCE_CAPACITY = "10";
 
 export const MAX_EVENT_DATE_TIME_ROWS = 52;
+
+export function showsEventTimeInputs(timingMode: TimingMode): boolean {
+  return timingMode !== "ALL_DAY";
+}
 
 export type EventFormStep = 1 | 2 | 3;
 
@@ -51,6 +59,9 @@ const SCHEDULE_CATALOG_CODES = new Set([
   "INVALID_REDEMPTION_CONFIG",
   "EMPTY_VOUCHER_INVENTORY",
   "DUPLICATE_VOUCHER_CODE",
+  "NEGATIVE_CAPACITY",
+  "OCCURRENCE_CAPACITY_LENGTH_MISMATCH",
+  "CAPACITY_INVENTORY_MISMATCH",
 ]);
 
 const SCHEDULE_REQUIRED_FIELDS = new Set([
@@ -62,6 +73,8 @@ const SCHEDULE_REQUIRED_FIELDS = new Set([
   "secretCode",
   "total_capacity",
   "totalCapacity",
+  "capacityMode",
+  "occurrenceCapacities",
   "event_website_url",
   "eventWebsiteUrl",
 ]);
@@ -140,6 +153,8 @@ export type EventFormValues = {
   timingMode: TimingMode;
   creditPrice: number;
   totalCapacity: number;
+  /** Default SHARED when omitted (legacy test fixtures / error re-renders). */
+  capacityMode?: CapacityMode;
   ticketType: TicketType;
   secretCode: string | null;
   eventWebsiteUrl: string | null;
@@ -357,6 +372,10 @@ function parseTimingMode(value: string | undefined): TimingMode {
   return value === "ALL_DAY" ? "ALL_DAY" : "TIME_SLOT";
 }
 
+function parseCapacityMode(value: string | undefined): CapacityMode {
+  return value === "PER_OCCURRENCE" ? "PER_OCCURRENCE" : "SHARED";
+}
+
 function parseTicketType(value: string | undefined): TicketType {
   if (value === "VOUCHER_PROMO" || value === "VOUCHER" || value === "VOUCHER_PDF") {
     // Legacy form posts "VOUCHER"; map to VOUCHER_PROMO.
@@ -457,6 +476,20 @@ function enumerateDatesInclusive(start: string, end: string): string[] {
   return dates;
 }
 
+/** Normalize browser `type="time"` values to `HH:MM`. */
+function normalizeBuilderTime(raw: string): string {
+  const trimmed = raw.trim();
+  const match = /^(\d{1,2}):([0-5]\d)(?::[0-5]\d)?$/.exec(trimmed);
+  if (!match) {
+    return trimmed;
+  }
+  const hour = Number(match[1]);
+  if (hour > 23) {
+    return trimmed;
+  }
+  return `${String(hour).padStart(2, "0")}:${match[2]}`;
+}
+
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function throwTooManyOccurrences(): never {
@@ -480,26 +513,17 @@ export function defaultRangeSlotsFromHours(
   return [{ time: DEFAULT_RANGE_SLOT_TIME, credits: DEFAULT_ROW_CREDITS }];
 }
 
-export function hoursForRangeExpand(
-  hasOpeningHours: boolean,
-  openingHours: OpeningHoursWeek | null | undefined,
-): OpeningHoursWeek | null {
-  if (!hasOpeningHours || openingHours == null) {
-    return null;
-  }
-  return openingHours;
-}
-
 export function expandOccurrencesFromRange(options: {
   startDate: string;
   endDate: string;
   slots: RangeOccurrenceSlot[];
   timingMode: TimingMode;
-  openingHours?: OpeningHoursWeek | null;
 }): EventOccurrence[] {
   const startDate = options.startDate.trim();
   const endDate = options.endDate.trim();
-  const slots = options.slots.filter((slot) => slot.time.trim().length > 0);
+  const slots = options.slots
+    .map((slot) => ({ ...slot, time: normalizeBuilderTime(slot.time) }))
+    .filter((slot) => slot.time.length > 0);
 
   if (!YMD_RE.test(startDate) || !YMD_RE.test(endDate) || slots.length === 0) {
     return [];
@@ -510,9 +534,6 @@ export function expandOccurrencesFromRange(options: {
   }
 
   const dates = enumerateDatesInclusive(startDate, endDate);
-  const hours = options.openingHours ?? null;
-  const openDates = hours ? dates.filter((ymd) => !isClosedOnBerlinYmd(hours, ymd)) : dates;
-
   const occurrences: EventOccurrence[] = [];
 
   if (options.timingMode === "ALL_DAY") {
@@ -520,17 +541,17 @@ export function expandOccurrencesFromRange(options: {
     if (!firstSlot) {
       return [];
     }
-    for (const ymd of openDates) {
+    for (const ymd of dates) {
       occurrences.push({
         startsAt: parseBerlinDateTime(ymd, null, "ALL_DAY"),
         creditPrice: firstSlot.creditPrice,
       });
     }
   } else {
-    for (const ymd of openDates) {
+    for (const ymd of dates) {
       for (const slot of slots) {
         occurrences.push({
-          startsAt: parseBerlinDateTime(ymd, slot.time.trim(), "TIME_SLOT"),
+          startsAt: parseBerlinDateTime(ymd, slot.time, "TIME_SLOT"),
           creditPrice: slot.creditPrice,
         });
       }
@@ -668,8 +689,8 @@ export function parseManualSeriesSlots(
 
 export type ParsedBody = Record<string, string | File | (string | File)[]>;
 
-function emptyDateTimeRow(credits = DEFAULT_ROW_CREDITS): EventDateTimeRow {
-  return { date: "", time: "", credits };
+function emptyDateTimeRow(credits = DEFAULT_ROW_CREDITS, capacity = ""): EventDateTimeRow {
+  return { date: "", time: "", credits, capacity };
 }
 
 function creditsForParsedRow(
@@ -686,6 +707,14 @@ function creditsForParsedRow(
     return legacyCredit;
   }
   return DEFAULT_ROW_CREDITS;
+}
+
+function capacityForParsedRow(
+  body: ParsedBody,
+  asString: (value: string | File | (string | File)[] | undefined) => string | undefined,
+  index: number,
+): string {
+  return asString(body[`event_capacity_${index}`])?.trim() ?? "";
 }
 
 export function parseEventDateTimeRows(
@@ -725,6 +754,7 @@ export function parseEventDateTimeRows(
         date: asString(body[`event_date_${index}`])?.trim() ?? "",
         time: asString(body[`event_time_${index}`])?.trim() ?? "",
         credits: creditsForParsedRow(body, asString, index, legacyCredit),
+        capacity: capacityForParsedRow(body, asString, index),
       });
     }
     return rows.length > 0 ? rows : [emptyDateTimeRow(legacyCredit ?? DEFAULT_ROW_CREDITS)];
@@ -736,6 +766,7 @@ export function parseEventDateTimeRows(
       date: asString(body.event_date)?.trim() ?? "",
       time: asString(body.event_time)?.trim() ?? "",
       credits: creditsForParsedRow(body, asString, 0, legacyCredit),
+      capacity: capacityForParsedRow(body, asString, 0),
     },
   ];
 }
@@ -743,6 +774,7 @@ export function parseEventDateTimeRows(
 export function dateTimesToFormRows(
   dateTimes: Date[],
   occurrenceCreditPrices?: number[],
+  occurrenceCapacities?: number[],
 ): EventDateTimeRow[] {
   if (dateTimes.length === 0) {
     return [emptyDateTimeRow()];
@@ -750,10 +782,12 @@ export function dateTimesToFormRows(
 
   return dateTimes.map((dateTime, index) => {
     const price = occurrenceCreditPrices?.[index];
+    const capacity = occurrenceCapacities?.[index];
     return {
       date: formatEventDateInput(dateTime),
       time: formatEventTimeInput(dateTime),
       credits: price !== undefined ? String(price) : DEFAULT_ROW_CREDITS,
+      capacity: capacity !== undefined ? String(capacity) : "",
     };
   });
 }
@@ -762,7 +796,18 @@ export function occurrencesToFormRows(occurrences: EventOccurrence[]): EventDate
   return dateTimesToFormRows(
     occurrences.map((occurrence) => occurrence.startsAt),
     occurrences.map((occurrence) => occurrence.creditPrice),
+    occurrences.map((occurrence) => occurrence.capacity).every((value) => value !== undefined)
+      ? occurrences.map((occurrence) => occurrence.capacity as number)
+      : undefined,
   );
+}
+
+/** Stamp the event-level default onto every row (range rebuild / add-row). */
+export function withDefaultOccurrenceCapacity(
+  rows: EventDateTimeRow[],
+  defaultCapacity: string,
+): EventDateTimeRow[] {
+  return rows.map((row) => ({ ...row, capacity: defaultCapacity }));
 }
 
 /** Prefill create/edit/clone datetime rows from the full occurrence lists. */
@@ -770,8 +815,13 @@ export function eventDateTimesToFormRows(event: {
   dateTimes: Date[];
   dateTime: Date;
   occurrenceCreditPrices?: number[];
+  occurrenceCapacities?: number[];
 }): EventDateTimeRow[] {
-  return dateTimesToFormRows(event.dateTimes, event.occurrenceCreditPrices);
+  return dateTimesToFormRows(
+    event.dateTimes,
+    event.occurrenceCreditPrices,
+    event.occurrenceCapacities,
+  );
 }
 
 export async function parseEventFormBody(
@@ -780,6 +830,7 @@ export async function parseEventFormBody(
   asFile: (value: string | File | (string | File)[] | undefined) => File | Blob | undefined,
 ): Promise<EventFormValues> {
   const timingMode = parseTimingMode(asString(body.timing_mode));
+  const capacityMode = parseCapacityMode(asString(body.capacity_mode));
   const imagePrebuilt = await parsePrebuiltImageVariants(body, asString, asFile);
   // Complete prebuilt wins; bare `imageId` (no variant Files) is a staged retry handle.
   const stagedImageId = imagePrebuilt ? null : asString(body.imageId)?.trim() || null;
@@ -824,6 +875,7 @@ export async function parseEventFormBody(
     timingMode,
     creditPrice: derivedCreditPrice(dateTimeRows),
     totalCapacity: parseInteger(asString(body.total_capacity), 10),
+    capacityMode,
     ticketType: parseTicketType(asString(body.ticket_type)),
     secretCode: asString(body.secret_code)?.trim() || null,
     eventWebsiteUrl: asString(body.event_website_url)?.trim() || null,
@@ -870,9 +922,23 @@ export function eventFormValuesToOccurrences(values: EventFormValues): EventOccu
     }
 
     const timeStr = row.time.trim() || null;
+    const perDate = (values.capacityMode ?? "SHARED") === "PER_OCCURRENCE";
+    let capacity: number | undefined;
+    if (perDate) {
+      const parsedCapacity = parseOccurrenceCredit(row.capacity ?? "");
+      if (parsedCapacity === null) {
+        throw new CatalogValidationError(
+          "NEGATIVE_CAPACITY",
+          "Each datetime row must have a whole-number capacity of 0 or more",
+        );
+      }
+      capacity = parsedCapacity;
+    }
+
     occurrences.push({
       startsAt: parseBerlinDateTime(row.date, timeStr, values.timingMode),
       creditPrice,
+      capacity,
     });
   }
 
@@ -890,11 +956,16 @@ export function eventFormValuesToOccurrences(values: EventFormValues): EventOccu
 export function eventFormValuesToOccurrenceLists(values: EventFormValues): {
   dateTimes: Date[];
   occurrenceCreditPrices: number[];
+  occurrenceCapacities?: number[];
 } {
   const occurrences = eventFormValuesToOccurrences(values);
+  const perDate = (values.capacityMode ?? "SHARED") === "PER_OCCURRENCE";
   return {
     dateTimes: occurrences.map((occurrence) => occurrence.startsAt),
     occurrenceCreditPrices: occurrences.map((occurrence) => occurrence.creditPrice),
+    occurrenceCapacities: perDate
+      ? occurrences.map((occurrence) => occurrence.capacity ?? 0)
+      : undefined,
   };
 }
 

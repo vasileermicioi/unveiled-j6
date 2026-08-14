@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 import { waitForPostLogin } from "./auth";
 import type { Locale } from "./base";
@@ -55,6 +55,20 @@ export const adminLabels = {
   wizardProgress: /schritt \d+ von \d+|step \d+ of \d+/i,
   addDateTime: /termin hinzufügen|add datetime/i,
   imageSection: /event-bild|event image/i,
+  timingMode: /^(zeitmodus|timing mode)\*?$/i,
+  timingModeTimeSlot: /^(zeitfenster|time slot)$/i,
+  timingModeAllDay: /^(ganztägig|all day)$/i,
+  capacityAllocation: /^(kapazitätsverteilung|capacity allocation)\*?$/i,
+  capacityAllocationShared: /gemeinsam für alle termine|shared across all dates/i,
+  capacityAllocationPerDate: /^(pro termin|per date)$/i,
+  /** Per-row capacity; not the required event-level `Kapazität*`. */
+  rowCapacity: /^(kapazität|capacity)$/i,
+  totalCredits: /credits gesamt:|total credits:/i,
+  totalCapacityLine: /kapazität gesamt:|total capacity:/i,
+  totalInventory: /verfügbare codes\/tickets:|available codes\/tickets:/i,
+  capacityInventoryMismatch:
+    /kapazität und inventar stimmen nicht überein|capacity and inventory do not match/i,
+  pasteCodes: /codes einfügen|paste codes/i,
 } as const;
 
 export type EventFormStep = 1 | 2 | 3;
@@ -69,9 +83,8 @@ export async function expectEventFormStep(page: Page, step: EventFormStep): Prom
   await expect(
     page.getByText(new RegExp(`schritt ${step} von 3|step ${step} of 3`, "i")),
   ).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole("button", { name: EVENT_FORM_STEP_NAMES[step] })).toHaveAttribute(
-    "aria-current",
-    "step",
+  await expect(page.getByRole("main").locator("[aria-current='step']")).toHaveText(
+    EVENT_FORM_STEP_NAMES[step],
   );
 }
 
@@ -81,12 +94,36 @@ export async function clickEventFormNext(page: Page, nextStep?: EventFormStep): 
   await next.click();
   if (nextStep != null) {
     await expectEventFormStep(page, nextStep);
+    if (nextStep === 2) {
+      await expect(page).toHaveURL(/\/admin\/events\/new\/dates/);
+    } else if (nextStep === 3) {
+      await expect(page).toHaveURL(/\/admin\/events\/new\/image/);
+    }
   }
 }
 
 export async function goToEventFormStep(page: Page, step: EventFormStep): Promise<void> {
-  await page.getByRole("main").getByRole("button", { name: EVENT_FORM_STEP_NAMES[step] }).click();
+  const scoped = page.getByRole("main");
+  const byName = EVENT_FORM_STEP_NAMES[step];
+  const link = scoped.getByRole("link", { name: byName });
+  if ((await link.count()) > 0) {
+    await link.click();
+  } else {
+    await scoped.getByRole("button", { name: byName }).click();
+  }
   await expectEventFormStep(page, step);
+}
+
+/** Layout assertion: `upper` appears above `lower` on the visible step. */
+export async function expectVisibleAbove(upper: Locator, lower: Locator): Promise<void> {
+  await expect(upper).toBeVisible({ timeout: 15_000 });
+  await expect(lower).toBeVisible({ timeout: 15_000 });
+  const upperBox = await upper.boundingBox();
+  const lowerBox = await lower.boundingBox();
+  if (!upperBox || !lowerBox) {
+    throw new Error("expectVisibleAbove: missing bounding box");
+  }
+  expect(upperBox.y).toBeLessThan(lowerBox.y);
 }
 
 /** Fill a native date/time field by accessible name (gap G7). */

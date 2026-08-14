@@ -1960,6 +1960,10 @@
     letter-spacing: -0.05em;
   }
 
+  .admin-form__total--mismatch {
+    color: var(--danger);
+  }
+
   .onboarding-form__options--stack {
     display: flex;
     flex-direction: column;

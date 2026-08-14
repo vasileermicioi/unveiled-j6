@@ -6,7 +6,7 @@ Phase 4 catalog persistence and image processing for partner venue records and e
 
 ### Requirement: Catalog persistence tables
 
-The `@unveiled/db` package SHALL define Drizzle schema and migrations for `public.images`, `public.partners`, and `public.events` matching the project schema docs (as updated for ticket redemption and the extensible location model), including FK from `events.image_id` → `images.id` (required), `partners.logo_image_id` → `images.id` (optional), and `events.partner_id` → `partners.id`. The schema SHALL include enums for image source, ticket type (`SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF`), and timing mode; SHALL NOT include a `secret_code_mode` enum/column; SHALL include required event location columns `country`, `city`, and `zip_code` and SHALL NOT include `events.neighborhood`; a check constraint `remaining_capacity >= 0` on `events`; a non-empty `date_times timestamptz[]` column with check `cardinality(date_times) >= 1`; a parallel `occurrence_credit_prices integer[]` column with checks `cardinality(date_times) = cardinality(occurrence_credit_prices)` and every element `>= 0`; a denormalized `date_time timestamptz` primary/next instant kept in sync with `date_times` on write; a denormalized `credit_price integer` equal to the `occurrence_credit_prices` element for that same primary instant; and indexes on `events(date_time)`, `(date_time, partner_id)`, and `(date_time, category)`. Voucher inventory and `booking_tickets` tables SHALL also be defined as part of the ticket-redemption schema work.
+The `@unveiled/db` package SHALL define Drizzle schema and migrations for `public.images`, `public.partners`, and `public.events` matching the project schema docs (as updated for ticket redemption and the extensible location model), including FK from `events.image_id` → `images.id` (required), `partners.logo_image_id` → `images.id` (optional), and `events.partner_id` → `partners.id`. The schema SHALL include enums for image source, ticket type (`SECRET_CODE` | `VOUCHER_PROMO` | `VOUCHER_PDF`), timing mode, and capacity mode (`SHARED` | `PER_OCCURRENCE`); SHALL NOT include a `secret_code_mode` enum/column; SHALL include required event location columns `country`, `city`, and `zip_code` and SHALL NOT include `events.neighborhood`; a check constraint `remaining_capacity >= 0` on `events`; a non-empty `date_times timestamptz[]` column with check `cardinality(date_times) >= 1`; a parallel `occurrence_credit_prices integer[]` column with checks `cardinality(date_times) = cardinality(occurrence_credit_prices)` and every element `>= 0`; a parallel `occurrence_capacities integer[]` column with checks `cardinality(date_times) = cardinality(occurrence_capacities)` and every element `>= 0`; a `capacity_mode` column NOT NULL default `SHARED`; a denormalized `date_time timestamptz` primary/next instant kept in sync with `date_times` on write; a denormalized `credit_price integer` equal to the `occurrence_credit_prices` element for that same primary instant; event-level `total_capacity` and `remaining_capacity`; and indexes on `events(date_time)`, `(date_time, partner_id)`, and `(date_time, category)`. Voucher inventory and `booking_tickets` tables SHALL also be defined as part of the ticket-redemption schema work.
 
 #### Scenario: Migration applies on empty catalog
 
@@ -44,6 +44,12 @@ The `@unveiled/db` package SHALL define Drizzle schema and migrations for `publi
 - **THEN** `events` has `occurrence_credit_prices` with the same cardinality as `date_times`
 - **AND** denormalized `credit_price` is retained
 
+#### Scenario: occurrence_capacities present after occurrence-capacities migration
+
+- **WHEN** the occurrence-capacities migration has been applied
+- **THEN** `events` has `capacity_mode` and `occurrence_capacities` with the same cardinality as `date_times`
+- **AND** event-level `total_capacity` and `remaining_capacity` are retained
+
 ### Requirement: events.date_times
 
 The `events` table SHALL store `date_times` as a non-empty array of `timestamptz` values. Catalog writes SHALL persist the list in ascending order with duplicate instants removed. The system SHALL migrate existing rows to a single-element array from the former sole `date_time` value. A database check constraint SHALL enforce `cardinality(date_times) >= 1`.
@@ -79,6 +85,45 @@ The `events` table SHALL store `occurrence_credit_prices` as a non-empty `intege
 - **WHEN** an insert or update would store an `occurrence_credit_prices` element below zero
 - **THEN** the database rejects the write
 
+### Requirement: events.capacity_mode
+
+The `events` table SHALL store `capacity_mode` as a NOT NULL enum (`SHARED` | `PER_OCCURRENCE`) with default `SHARED`. Existing rows SHALL backfill `SHARED`. `@unveiled/db` SHALL export type `CapacityMode`.
+
+#### Scenario: Legacy rows are shared
+
+- **WHEN** an existing event is backfilled
+- **THEN** `capacity_mode` is `SHARED`
+
+#### Scenario: Default on create when omitted
+
+- **WHEN** `createEvent` is called without `capacityMode`
+- **THEN** the stored `capacity_mode` is `SHARED`
+
+### Requirement: events.occurrence_capacities
+
+The `events` table SHALL store `occurrence_capacities` as a non-empty `integer[]` with the same cardinality as `date_times`. Each element SHALL be `>= 0`. Catalog writes SHALL persist capacities in the same order as the sorted `date_times` list. Existing rows SHALL backfill by repeating the event’s `total_capacity` once per `date_times` element (`array_fill(total_capacity, ARRAY[cardinality(date_times)])`). A database check constraint SHALL enforce `cardinality(date_times) = cardinality(occurrence_capacities)`. A database check constraint SHALL reject any element `< 0`. `total_capacity` and `remaining_capacity` SHALL remain event-level columns. Booking SHALL continue to use event-level remaining capacity.
+
+#### Scenario: Occurrence capacities present after migration
+
+- **WHEN** the occurrence-capacities migration has been applied
+- **THEN** every events row has `capacity_mode` and `occurrence_capacities` with the same length as `date_times`
+
+#### Scenario: Legacy rows fill from total_capacity
+
+- **WHEN** an existing event is backfilled
+- **THEN** `capacity_mode` is `SHARED`
+- **AND** each `occurrence_capacities` element equals that row’s `total_capacity`
+
+#### Scenario: Length mismatch rejected at database
+
+- **WHEN** a catalog write would store `date_times` and `occurrence_capacities` of different lengths
+- **THEN** the write is rejected
+
+#### Scenario: Negative capacity rejected at database
+
+- **WHEN** an insert or update would store an `occurrence_capacities` element below zero
+- **THEN** the database rejects the write
+
 ### Requirement: events.date_time denormalized primary
 
 `events.date_time` SHALL continue to equal the next upcoming instant in `date_times` relative to write-time `now` (minimum element `>= now`), or the earliest instant in `date_times` when all elements are past. Catalog create/update/clone SHALL recompute `date_time` whenever `date_times` is written. `events.credit_price` SHALL equal the `occurrence_credit_prices` element for that same primary instant. `start_time_minutes` and `weekday` SHALL continue to derive from that primary instant in Europe/Berlin.
@@ -101,7 +146,7 @@ The `events` table SHALL store `occurrence_credit_prices` as a non-empty `intege
 
 ### Requirement: Normalize paired occurrences
 
-Catalog create, update, and clone SHALL accept a list of occurrences `{ startsAt, creditPrice }` (or parallel `dateTimes` + `occurrenceCreditPrices`). The system SHALL sort by `startsAt` ascending, reject an empty list, and reject two occurrences that share the same instant. Credit prices SHALL be integers `>= 0`. When the caller supplies only `dateTimes` and a single `creditPrice`, the system SHALL unique-sort `dateTimes` (existing helper) and fill every credit with that price. `@unveiled/db` SHALL export `EventOccurrence` and a normalize helper (`tryNormalizeEventOccurrences` or equivalent) from the catalog datetime module.
+Catalog create, update, and clone SHALL accept a list of occurrences `{ startsAt, creditPrice, capacity }` (or parallel `dateTimes` + `occurrenceCreditPrices` + `occurrenceCapacities`). The system SHALL sort by `startsAt` ascending, reject an empty list, and reject two occurrences that share the same instant. Credit prices SHALL be integers `>= 0`. Capacities SHALL be integers `>= 0`. When the caller supplies only `dateTimes` and a single `creditPrice`, the system SHALL unique-sort `dateTimes` (existing helper) and fill every credit with that price. When capacities are omitted, the system SHALL fill every capacity from `totalCapacity` after the date list is known. `@unveiled/db` SHALL export `EventOccurrence` and a normalize helper (`tryNormalizeEventOccurrences` or equivalent) from the catalog datetime module.
 
 #### Scenario: Two prices persist in datetime order
 
@@ -130,6 +175,58 @@ Catalog create, update, and clone SHALL accept a list of occurrences `{ startsAt
 
 - **WHEN** a catalog write supplies an occurrence credit below zero
 - **THEN** the operation fails validation without writing rows
+
+#### Scenario: Two capacities persist in datetime order
+
+- **WHEN** `createEvent` is called with two distinct datetimes and two capacities on the paired path
+- **THEN** stored `occurrence_capacities` follow datetime-sorted order
+
+#### Scenario: Capacity length mismatch rejected at domain
+
+- **WHEN** a catalog write supplies `dateTimes` and `occurrenceCapacities` of different lengths on the paired path
+- **THEN** the operation fails validation with `OCCURRENCE_CAPACITY_LENGTH_MISMATCH` without writing rows
+
+### Requirement: Capacity mode catalog writes
+
+Catalog create, update, and clone SHALL accept optional `capacityMode` and `occurrenceCapacities` (or `capacity` on each `{ startsAt, creditPrice, capacity }` occurrence). When capacities are omitted, the system SHALL fill every element from `totalCapacity` (create default 10) and treat the event as `SHARED`. When `capacityMode` is `SHARED`, `total_capacity` SHALL be the caller-supplied (or existing) capacity and `occurrence_capacities` SHALL be filled with that value (posted per-row capacities in SHARED SHALL be ignored). When `capacityMode` is `PER_OCCURRENCE`, the caller SHALL supply `occurrenceCapacities` of equal length to the date list; `total_capacity` SHALL equal the sum of `occurrence_capacities` and that sum SHALL be `>= 1`. Create and clone SHALL set `remaining_capacity` equal to `total_capacity`. Update SHALL recalculate `remaining_capacity` with `recalculateRemainingCapacity` when the derived or posted total changes. Booking SHALL continue to use event-level remaining capacity.
+
+#### Scenario: Per-date capacities persist in datetime order
+
+- **WHEN** `createEvent` is called with `capacityMode` `PER_OCCURRENCE` and two distinct datetimes with capacities 4 and 6
+- **THEN** stored `occurrence_capacities` are 4 and 6 in datetime order
+- **AND** `total_capacity` equals 10
+
+#### Scenario: Shared mode fills the array
+
+- **WHEN** `createEvent` is called with `capacityMode` `SHARED` and `totalCapacity` 12 and two datetimes
+- **THEN** `occurrence_capacities` is `{12,12}`
+- **AND** `total_capacity` equals 12
+
+#### Scenario: Omitted capacities default to shared fill
+
+- **WHEN** `createEvent` is called with `totalCapacity` only (no `capacityMode`, no `occurrenceCapacities`)
+- **THEN** `capacity_mode` is `SHARED`
+- **AND** every `occurrence_capacities` element equals that `totalCapacity`
+
+#### Scenario: Per-occurrence without capacities rejected
+
+- **WHEN** a catalog write supplies `capacityMode` `PER_OCCURRENCE` without `occurrenceCapacities` of matching length
+- **THEN** the operation fails validation with `OCCURRENCE_CAPACITY_LENGTH_MISMATCH` without writing rows
+
+#### Scenario: Negative capacity rejected at domain
+
+- **WHEN** a catalog write supplies an occurrence capacity below zero
+- **THEN** the operation fails validation with `NEGATIVE_CAPACITY` without writing rows
+
+#### Scenario: Per-occurrence sum below one rejected
+
+- **WHEN** `createEvent` is called with `capacityMode` `PER_OCCURRENCE` and occurrence capacities that sum to 0
+- **THEN** the operation fails validation without writing rows
+
+#### Scenario: Remaining recalculates when derived total changes
+
+- **WHEN** `updateEvent` changes `PER_OCCURRENCE` capacities so the sum differs from the stored `total_capacity` on an event with tickets already sold
+- **THEN** `remaining_capacity` becomes `max(0, newTotal - soldCount)`
 
 ### Requirement: Event location fields
 
@@ -274,7 +371,7 @@ The catalog domain layer in `@unveiled/db` SHALL enforce partner validation and 
 
 ### Requirement: Event catalog domain rules
 
-The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature` (as aligned with ticket redemption and the extensible location model), including required image (upload buffer or remote URL path, exactly one source); required location via `street` / `house_number` / optional `address_line2` / `country` / `city` / `zip_code` with defaults `DE` / `berlin`, postal validation through `validatePostalCode`, and compose-on-write display `address` (no `neighborhood`); redemption configuration rules (`SECRET_CODE` requires `secretCode`; `VOUCHER_PROMO` requires `eventWebsiteUrl` and does not require event-level `promoCode`; `VOUCHER_PDF` does not require event-level promo/code fields); default capacity 10, ticket type `SECRET_CODE`, timing mode `TIME_SLOT` (no secret-code mode default); required non-empty `dateTimes: Date[]` on create (sorted unique on the legacy single-price path; paired with `occurrenceCreditPrices` when that array is supplied), with update/clone accepting the same list shape plus optional `occurrenceCreditPrices?: number[]`; computed `start_time_minutes` and `weekday` from the denormalized primary `date_time` in Europe/Berlin; denormalized `credit_price` from the primary occurrence’s credit; capacity recalculation when total capacity changes; and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8. Multi-slot series create (`createEventSeries` / series slot uniqueness) is not part of the catalog domain; reuse of catalog metadata for another occurrence SHALL use clone (see Requirement: Clone event). `createEvent` remains for blank creates.
+The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defaults, and derived fields from `docs/product/features/admin-events.feature` (as aligned with ticket redemption and the extensible location model), including required image (upload buffer or remote URL path, exactly one source); required location via `street` / `house_number` / optional `address_line2` / `country` / `city` / `zip_code` with defaults `DE` / `berlin`, postal validation through `validatePostalCode`, and compose-on-write display `address` (no `neighborhood`); redemption configuration rules (`SECRET_CODE` requires `secretCode`; `VOUCHER_PROMO` requires `eventWebsiteUrl` and does not require event-level `promoCode`; `VOUCHER_PDF` does not require event-level promo/code fields); default capacity 10, ticket type `SECRET_CODE`, timing mode `TIME_SLOT`, capacity mode `SHARED` (no secret-code mode default); required non-empty `dateTimes: Date[]` on create (sorted unique on the legacy single-price path; paired with `occurrenceCreditPrices` when that array is supplied), with update/clone accepting the same list shape plus optional `occurrenceCreditPrices?: number[]`, optional `capacityMode?: CapacityMode`, and optional `occurrenceCapacities?: number[]`; computed `start_time_minutes` and `weekday` from the denormalized primary `date_time` in Europe/Berlin; denormalized `credit_price` from the primary occurrence’s credit; capacity recalculation when total capacity changes (including when `PER_OCCURRENCE` sum changes the derived total); and synchronous replacement/deletion of event `images` rows and bucket objects per `docs/product/extras/image-uploads.md` §8. Multi-slot series create (`createEventSeries` / series slot uniqueness) is not part of the catalog domain; reuse of catalog metadata for another occurrence SHALL use clone (see Requirement: Clone event). `createEvent` remains for blank creates.
 
 #### Scenario: Missing event image rejected
 
@@ -340,9 +437,15 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 - **THEN** every stored `occurrence_credit_prices` element equals that `creditPrice`
 - **AND** denormalized `credit_price` equals that value
 
+#### Scenario: Update totalCapacity alone on SHARED fills all occurrence capacities
+
+- **WHEN** `updateEvent` is called with `totalCapacity` on a `SHARED` event and neither `dateTimes` nor `occurrenceCapacities`
+- **THEN** every stored `occurrence_capacities` element equals that `totalCapacity`
+- **AND** `total_capacity` equals that value
+
 ### Requirement: Clone event
 
-The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, structured location fields including composed address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, ticket type, secret code when `SECRET_CODE`, website URL, language/subtitle metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The clone SHALL NOT copy barrier-free accessibility (that value lives on the partner). The caller SHALL supply a non-empty `dateTimes` list (and any create-required redemption inventory for voucher types). The caller MAY supply `occurrenceCreditPrices` of equal length; when omitted, the clone SHALL unique-sort `dateTimes` and fill every credit from `source.creditPrice`. The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.
+The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, structured location fields including composed address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, capacity mode, ticket type, secret code when `SECRET_CODE`, website URL, language/subtitle metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The clone SHALL NOT copy barrier-free accessibility (that value lives on the partner). The caller SHALL supply a non-empty `dateTimes` list (and any create-required redemption inventory for voucher types). The caller MAY supply `occurrenceCreditPrices` of equal length; when omitted, the clone SHALL unique-sort `dateTimes` and fill every credit from `source.creditPrice`. The caller MAY supply `capacityMode` and `occurrenceCapacities`; when omitted, the clone SHALL copy `source.capacityMode` and SHALL copy `source.occurrenceCapacities` when the clone date list has the same length, or fill every capacity from `source.totalCapacity` when the copied mode is `SHARED`. When the copied mode is `PER_OCCURRENCE` and the clone date list length differs without a posted `occurrenceCapacities` array, the clone SHALL fail validation. The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.
 
 #### Scenario: Clone creates a distinct event
 
@@ -367,6 +470,13 @@ The catalog domain SHALL provide an ADMIN-facing clone operation that creates a 
 - **WHEN** `cloneEvent` is called
 - **THEN** the new event row has no `barrier_free` column/value
 - **AND** public detail accessibility for the clone still comes from the hosting partner
+
+#### Scenario: Clone copies capacity mode and array
+
+- **WHEN** `cloneEvent` is called for a `PER_OCCURRENCE` source with two capacities and a `dateTimes` list of the same length
+- **THEN** the clone stores the same `capacity_mode`
+- **AND** stored `occurrence_capacities` equal the source array
+- **AND** `remaining_capacity` equals `total_capacity`
 
 ### Requirement: Admin image upload on the application host
 
@@ -441,7 +551,7 @@ Admin event create and edit forms SHALL NOT expose a remote image URL text field
 
 ### Requirement: Admin event form select controls
 
-Admin event create/edit and clone forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, ticket type, secret-code mode, languages, and subtitle language where those fields appear. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged except that `target_age_groups` and `barrier_free` are no longer event form fields. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`). Series create forms SHALL NOT be documented or offered.
+Admin event create/edit and clone forms SHALL use native HTML `<select>` (or native checkbox groups for multi-value fields) for partner, category, event type, timing mode, capacity allocation, ticket type, languages, and subtitle language where those fields appear. HeroUI `Select` / `ListBox` SHALL NOT be required for those fields. SSR field names and validation remain unchanged except that `target_age_groups` and `barrier_free` are no longer event form fields. Native selects SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native select classes from `globals.css` (e.g. `.admin-native-select`). Series create forms SHALL NOT be documented or offered. Capacity allocation SHALL post `capacity_mode` (`SHARED` | `PER_OCCURRENCE`). Timing mode SHALL post `timing_mode`.
 
 #### Scenario: Partner field is a native select
 
@@ -470,6 +580,11 @@ Admin event create/edit and clone forms SHALL use native HTML `<select>` (or nat
 - **THEN** no barrier-free control is shown
 - **AND** create/update/clone do not write `events.barrier_free`
 
+#### Scenario: Capacity allocation is a native select
+
+- **WHEN** an admin opens Create Event, Edit Event, or Clone Event
+- **THEN** Capacity allocation is a native HTML select named `capacity_mode` associated with an accessible label
+
 ### Requirement: Optional accessibility and audience metadata without age groups
 
 The system SHALL allow admins to optionally set supported languages, language-independent, and subtitles when creating or editing an event. The system SHALL NOT collect or store barrier-free accessibility or target age groups on events. Barrier-free SHALL be stored only on the hosting partner. `docs/product/features/admin-events.feature` SHALL include a scenario titled `Optional audience metadata without barrier-free`. Playwright SHALL use that title verbatim.
@@ -483,23 +598,28 @@ The system SHALL allow admins to optionally set supported languages, language-in
 
 ### Requirement: Admin event numeric fields
 
-Admin event create/edit forms SHALL use native HTML `<input type="number">` for credit price and total capacity (and any shared admin number primitive). HeroUI `NumberField` SHALL NOT be required for those fields. Bounds and SSR field names remain unchanged (`credit_price`, `total_capacity`). Native number inputs SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native number classes from `globals.css` (e.g. `.admin-native-number`).
+Admin event create/edit/clone forms SHALL use native HTML `<input type="number">` for credit price, event capacity, and per-datetime capacity when Per date is selected. HeroUI `NumberField` SHALL NOT be used for those fields. Field names: `total_capacity`, `event_credit_${index}`, `event_capacity_${index}`. Native number inputs SHALL be associated with an accessible label and MAY be wrapped in HeroUI `Label` / `Surface` / `Field` chrome. Theme styling SHALL use shared admin native number classes from `globals.css` (e.g. `.admin-native-number`). Event-level `total_capacity` SHALL default to 10 with min 1. Per-datetime capacity SHALL be an integer `>= 0`.
 
 #### Scenario: Capacity is a native number input
 
 - **WHEN** an admin opens Create Event
-- **THEN** total capacity is a native number input with an accessible label and posts the existing field name on submit
+- **THEN** total capacity is a native number input with an accessible label and posts `total_capacity` on submit
 
 #### Scenario: Credit price is a native number input
 
-- **WHEN** an admin opens Create Event
-- **THEN** credit price is a native number input with an accessible label and posts the existing field name (`credit_price`) on submit
+- **WHEN** an admin opens Create Event and Timing mode is Time slot
+- **THEN** each datetime row’s credits field is a native number input named `event_credit_${index}` with an accessible label
+
+#### Scenario: Per-row capacity is a native number
+
+- **WHEN** Capacity allocation is Per date
+- **THEN** each datetime row’s capacity is a native number input named `event_capacity_${index}` with an accessible label
 
 #### Scenario: Numeric bounds and defaults unchanged
 
 - **WHEN** an admin creates an event without overriding numeric fields
-- **THEN** credit price defaults to at least 1 and total capacity defaults to 10 (matching existing product/parser defaults)
-- **AND** client-side min constraints remain ≥ 1 for both fields
+- **THEN** total capacity defaults to 10
+- **AND** client-side min for event-level capacity remains ≥ 1
 
 ### Requirement: Admin event languages multi-select
 
@@ -1125,7 +1245,7 @@ Events SHALL support `has_subtitles` (boolean, **not nullable**, default `false`
 
 ### Requirement: Admin event create and edit use a three-step form
 
-Admin create (`/:locale/admin/events/new`) and edit (`/:locale/admin/events/:id/edit`) SHALL present fields in three steps with visible progress: (1) general — partner, title, description, structured location, category, event type, tags, language metadata; (2) datetimes and tickets — occurrence list/range builder, timing mode, capacity when SECRET_CODE, ticket type and redemption inventory; (3) image — primary image upload (required on create; optional replace on edit). The system SHALL keep all fields in a single SSR `POST` form. Inactive steps SHALL remain in the document so their values submit. Clone SHALL remain a separate dates/inventory form.
+Admin create (`/:locale/admin/events/new`) and edit (`/:locale/admin/events/:id/edit`) SHALL present fields in three steps with visible progress: (1) general — partner, title, description, structured location, category, event type, tags, language metadata; (2) Date & tickets — Timing mode; then Capacity allocation and the capacity number (visible for every ticket type); then ticket type, secret code or voucher inventory; then the range builder and editable datetime list; then totals (credits, datetime capacity, and available codes/tickets for voucher types); (3) image — primary image upload (required on create; optional replace on edit). The system SHALL keep all fields in a single SSR `POST` form. Inactive steps SHALL remain in the document so their values submit. Clone SHALL remain a separate dates/inventory form but SHALL expose Timing mode and Capacity allocation as editable controls (not hidden-only fields) so All day vs Time slot and Shared vs Per date UI matches create/edit.
 
 #### Scenario: Create walks three steps
 
@@ -1151,6 +1271,77 @@ Admin create (`/:locale/admin/events/new`) and edit (`/:locale/admin/events/:id/
 - **THEN** the form is rejected
 - **AND** the re-rendered form shows the image step
 
+#### Scenario: Timing mode is first on Date & tickets
+
+- **WHEN** I open create or edit event and go to step 2
+- **THEN** Timing mode is shown before the datetime list and range builder
+
+#### Scenario: Capacity allocation follows Timing mode
+
+- **WHEN** I am on create or edit step 2
+- **THEN** Capacity allocation and the capacity number are shown after Timing mode and before ticket type
+
+#### Scenario: Datetime list is last on Date & tickets
+
+- **WHEN** I am on create or edit step 2
+- **THEN** the range builder and datetime rows are below ticket type and redemption fields
+- **AND** totals are below the datetime rows
+
+### Requirement: All day hides time inputs
+When `timing_mode` is `ALL_DAY`, admin create, edit, and clone datetime UIs SHALL hide every clock time input (range-builder slot times and per-row times) and SHALL hide additional time-slot rows beyond the first. Dates, per-row credits, and the first slot’s credits SHALL remain. Stored instants SHALL remain Europe/Berlin midnight for All day. When `timing_mode` is `TIME_SLOT`, date and time inputs SHALL both be shown. Hidden or unmounted time fields SHALL NOT be `required`.
+
+#### Scenario: All day keeps dates only
+- **WHEN** Timing mode is All day on create, edit, or clone
+- **THEN** I do not see hour/minute inputs on the range builder or datetime rows
+- **AND** I still see date fields and credits
+
+#### Scenario: Time slot shows times
+- **WHEN** Timing mode is Time slot
+- **THEN** range slots and datetime rows include time inputs
+
+### Requirement: Capacity allocation on Date & tickets
+
+Admin create, edit, and clone SHALL present a native Capacity allocation select (`SHARED` | `PER_OCCURRENCE`) and a native capacity number immediately after Timing mode. Labels SHALL be **Capacity allocation** / **Kapazitätsverteilung** with options **Shared across all dates** / **Gemeinsam für alle Termine** and **Per date** / **Pro Termin**, plus the locked hints in the parent guide. The capacity number SHALL be visible for `SECRET_CODE`, `VOUCHER_PROMO`, and `VOUCHER_PDF`. Default mode on create SHALL be `SHARED` with capacity 10.
+
+#### Scenario: Shared hides per-row capacity
+
+- **WHEN** Capacity allocation is Shared across all dates
+- **THEN** datetime rows do not show a capacity input
+- **AND** the capacity number is the event ticket pool
+
+#### Scenario: Per date shows per-row capacity with defaults
+
+- **WHEN** Capacity allocation is Per date and the capacity number is 8
+- **THEN** each datetime row shows a capacity input defaulting to 8
+- **AND** a range rebuild stamps 8 on generated rows
+
+#### Scenario: Changing the default does not rewrite edited rows
+
+- **WHEN** Capacity allocation is Per date and the admin has changed a row’s capacity
+- **THEN** editing the event-level capacity number does not change that row
+- **AND** adding a row or rebuilding from the range builder uses the current capacity number as the default
+
+### Requirement: Date & tickets totals and inventory match
+
+The Date & tickets step SHALL show a credits total, a datetime-capacity total, and — for voucher ticket types — an available codes/tickets total. When voucher inventory count does not equal datetime-capacity total, the capacity and inventory totals SHALL use theme danger styling (HeroUI `Alert` `status="danger"` or an equivalent theme class). Credits SHALL NOT be compared. Submit SHALL reject with `CAPACITY_INVENTORY_MISMATCH` and SHALL NOT overwrite posted capacity from inventory. `SECRET_CODE` events SHALL omit the inventory total and SHALL NOT emit that error.
+
+#### Scenario: Totals go danger when voucher inventory disagrees
+
+- **WHEN** datetime capacity total is 10 and the promo/PDF preview has 7 codes or tickets
+- **THEN** the capacity and inventory totals are shown in danger styling
+- **AND** submitting is rejected until they match
+
+#### Scenario: Secret code has no inventory total
+
+- **WHEN** ticket type is Secret code
+- **THEN** the form shows credits total and capacity total only
+
+#### Scenario: Voucher inventory present still required
+
+- **WHEN** ticket type is a voucher type and inventory is empty
+- **THEN** submit is rejected for missing inventory
+- **AND** the rejection is not `CAPACITY_INVENTORY_MISMATCH`
+
 ### Requirement: Event wizard BDD and docs
 `docs/product/features/admin-events.feature` SHALL include scenarios titled `Create walks three steps`, `Create submit is on the image step`, `Edit can jump to image`, and `Missing image returns to step 3`. Playwright in `e2e/specs/admin-events.spec.ts` SHALL use those titles verbatim. The Events entry in `docs/product/ui/ui-component-map.md` SHALL mention the three-step create/edit stepper. Sitemap paths SHALL remain `/admin/events/new` and `/admin/events/:id/edit`. Clone SHALL be documented as not using the stepper.
 
@@ -1161,3 +1352,84 @@ Admin create (`/:locale/admin/events/new`) and edit (`/:locale/admin/events/:id/
 #### Scenario: Clone is not a wizard
 - **WHEN** I open clone for an existing event
 - **THEN** I do not see the three-step progress chrome from create/edit
+
+### Requirement: Date & tickets BDD and docs
+
+`docs/product/features/admin-events.feature` SHALL include scenarios titled `Timing mode is first on Date & tickets`, `All day hides time inputs`, `Time slot shows times`, `Shared capacity is one pool`, `Per-date capacities persist`, `Range rebuild stamps default capacity`, and `Capacity and inventory totals mismatch`. Playwright in `e2e/specs/admin-events.spec.ts` SHALL use those titles verbatim. `Total credits shown on the form` and `Update an event's capacity` SHALL remain. Coverage-matrix rows SHALL exist for the new titles (pass or explicit R2/env skip). Canonical docs SHALL describe Date & tickets field order, All day hiding times, Shared vs Per date, per-row capacity, totals, `capacity_mode` / `occurrence_capacities`, and event-scoped booking remaining: `docs/product/ui/ui-component-map.md` (Events row), `docs/product/database/schema-overview.md`, `docs/product/extras/gaps-and-decisions.md`.
+
+#### Scenario: Timing mode is first on Date & tickets
+
+- **WHEN** I open the new-event form and go to step 2
+- **THEN** I see Timing mode before Capacity allocation, ticket type, and the datetime list
+
+#### Scenario: All day hides time inputs
+
+- **WHEN** I set Timing mode to All day
+- **THEN** hour and minute inputs are hidden on the range builder and datetime rows
+- **AND** date fields remain
+
+#### Scenario: Time slot shows times
+
+- **WHEN** I set Timing mode to Time slot
+- **THEN** datetime rows and range slots show time inputs
+
+#### Scenario: Shared capacity is one pool
+
+- **WHEN** I create an event with Capacity allocation Shared across all dates and capacity 10 and two datetimes
+- **THEN** the event’s total capacity is 10
+- **AND** datetime rows do not show a capacity input
+
+#### Scenario: Per-date capacities persist
+
+- **WHEN** I create an event with Capacity allocation Per date, default capacity 5, and two datetime rows set to 4 and 6
+- **THEN** the stored occurrence_capacities are 4 and 6 in datetime order
+- **AND** total capacity equals 10
+
+#### Scenario: Range rebuild stamps default capacity
+
+- **WHEN** Capacity allocation is Per date with capacity 8
+- **AND** I generate a date range
+- **THEN** each generated datetime row’s capacity is 8
+
+#### Scenario: Capacity and inventory totals mismatch
+
+- **WHEN** I am creating a VOUCHER_PROMO event with datetime capacity total 10 and 7 codes previewed
+- **THEN** the capacity and inventory totals are shown in danger styling
+- **AND** submitting is rejected until they match
+
+#### Scenario: Coverage lists Date & tickets scenarios
+
+- **WHEN** I read the admin-events coverage matrix
+- **THEN** it includes the Date & tickets scenario titles (pass or explicit environment skip)
+
+### Requirement: Voucher inventory no longer hides capacity
+
+Voucher create/edit SHALL still require promo or PDF inventory and SHALL still persist inventory only after SSR POST. The Date & tickets step SHALL show the capacity allocation controls. Total capacity SHALL equal inventory count on a successful save (enforced by mismatch reject), not by hiding the capacity field.
+
+#### Scenario: Admin uploads promo codes with preview
+
+- **WHEN** I select a text or CSV file (or paste codes)
+- **THEN** the UI previews one non-empty code per line
+- **AND** available codes/tickets total equals that count
+- **AND** submitting succeeds only when datetime capacity total equals that count
+
+#### Scenario: Admin uploads a master PDF and previews tickets
+
+- **WHEN** I choose split-one-file import and the UI shows a ticket count from the split
+- **THEN** submitting succeeds only when datetime capacity total equals that ticket count
+- **AND** there is a visible capacity allocation control
+
+#### Scenario: Admin uploads multiple PDF files as tickets
+
+- **WHEN** I choose multiple-files import and the UI shows a ticket count equal to the number of files
+- **THEN** submitting succeeds only when datetime capacity total equals that file count
+- **AND** there is a visible capacity allocation control
+
+### Requirement: Default values include capacity allocation
+
+Given an admin creates an event without specifying capacity, ticket type, timing mode, or capacity allocation, the system SHALL default to `totalCapacity` 10, `ticketType` `SECRET_CODE`, `timingMode` `TIME_SLOT`, and `capacityMode` `SHARED`.
+
+#### Scenario: Default values on creation
+
+- **WHEN** I create an event without specifying capacity, ticket type, timing mode, or capacity allocation
+- **THEN** it defaults to totalCapacity 10, ticketType "SECRET_CODE", timingMode "TIME_SLOT", capacityMode "SHARED"

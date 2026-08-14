@@ -1,4 +1,4 @@
-import { cloneEvent, getEventById } from "@unveiled/db";
+import { type CapacityMode, cloneEvent, getEventById } from "@unveiled/db";
 import { ensureImageVariantsUploaded } from "@unveiled/db/catalog/images";
 import { buildVariantUrl } from "@unveiled/images/urls";
 import type { Context } from "hono";
@@ -22,7 +22,10 @@ import {
   mapCatalogError,
   parseEventFormBodyFromRequest,
 } from "../../../../../lib/admin-route";
-import { voucherPayloadFromFormValues } from "../../../../../lib/admin-voucher-inventory";
+import {
+  assertCapacityMatchesInventory,
+  voucherPayloadFromFormValues,
+} from "../../../../../lib/admin-voucher-inventory";
 import { getAuthOptions } from "../../../../../lib/auth";
 import type { Locale } from "../../../../../lib/locale";
 import { localizedPath } from "../../../../../lib/locale";
@@ -44,6 +47,8 @@ function sourceFromEvent(
     partnerName: event.partnerName,
     ticketType: event.ticketType,
     timingMode: event.timingMode,
+    capacityMode: event.capacityMode,
+    totalCapacity: event.totalCapacity,
     dateTimeLabel: formatEventDateTime(event.dateTime, locale),
     imageUrl,
     dateTimeRows: eventDateTimesToFormRows(event),
@@ -56,7 +61,14 @@ function renderClonePage(
     locale: Locale;
     sourceEventId: string;
     source: CloneEventFormSource;
-    defaults?: { dateTimeRows?: EventDateTimeRow[] };
+    defaults?: {
+      dateTimeRows?: EventDateTimeRow[];
+      rangeStart?: string;
+      rangeEnd?: string;
+      rangeSlots?: { time: string; credits: string }[];
+      capacityMode?: CapacityMode;
+      totalCapacity?: number;
+    };
     error?: string | null;
   },
 ) {
@@ -123,16 +135,20 @@ export const POST = createRoute(async (c) => {
 
   try {
     const values = await parseEventFormBodyFromRequest(body);
-    // Prefer source ticket/timing — form posts hidden fields; ignore client tampering for inventory assert.
     values.ticketType = existing.ticketType;
-    values.timingMode = existing.timingMode;
 
-    const { dateTimes, occurrenceCreditPrices } = eventFormValuesToOccurrenceLists(values);
+    const { dateTimes, occurrenceCreditPrices, occurrenceCapacities } =
+      eventFormValuesToOccurrenceLists(values);
     const payload = voucherPayloadFromFormValues(values);
+    assertCapacityMatchesInventory(values);
 
     const cloned = await cloneEvent(db, eventId, {
       dateTimes,
       occurrenceCreditPrices,
+      timingMode: values.timingMode,
+      capacityMode: values.capacityMode ?? "SHARED",
+      totalCapacity: values.totalCapacity,
+      occurrenceCapacities,
       voucherInventory: {
         promoCodes: payload.promoCodes,
         pdfItems: payload.pdfItems,
@@ -147,6 +163,8 @@ export const POST = createRoute(async (c) => {
           rangeStart?: string;
           rangeEnd?: string;
           rangeSlots?: { time: string; credits: string }[];
+          capacityMode?: CapacityMode;
+          totalCapacity?: number;
         }
       | undefined;
     try {
@@ -156,6 +174,8 @@ export const POST = createRoute(async (c) => {
         rangeStart: values.rangeStart,
         rangeEnd: values.rangeEnd,
         rangeSlots: values.rangeSlots,
+        capacityMode: values.capacityMode,
+        totalCapacity: values.totalCapacity,
       };
     } catch {
       defaults = undefined;

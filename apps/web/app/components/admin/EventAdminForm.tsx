@@ -1,18 +1,16 @@
 "use client";
 
 import { Button, Form, Label, Link, ProgressBar, Surface } from "@heroui/react";
-import { useEffect, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { EventFormStep } from "../../lib/admin-event-form";
+import { EVENT_WIZARD_STEP_COUNT } from "../../lib/admin-event-wizard";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 
 import { AdminFormError } from "./AdminFormError";
 import { EventAdminBaseFields } from "./EventAdminBaseFields";
 import type { EventFormDefaults, PartnerOption } from "./event-admin-types";
-
-const EVENT_FORM_STEP_COUNT = 3;
 
 type EventAdminFormProps = {
   locale: Locale;
@@ -23,47 +21,9 @@ type EventAdminFormProps = {
   defaults?: EventFormDefaults;
   error?: string | null;
   isEdit?: boolean;
-  initialStep?: EventFormStep;
+  step: EventFormStep;
+  stepHrefs: Record<EventFormStep, string>;
 };
-
-function isFormControl(
-  el: Element,
-): el is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {
-  return (
-    el instanceof HTMLInputElement ||
-    el instanceof HTMLSelectElement ||
-    el instanceof HTMLTextAreaElement
-  );
-}
-
-function stepFromElement(el: Element): EventFormStep | null {
-  const section = el.closest("[data-event-form-step]");
-  const n = Number(section?.getAttribute("data-event-form-step"));
-  if (n === 1 || n === 2 || n === 3) {
-    return n;
-  }
-  return null;
-}
-
-function reportFirstInvalidInStep(form: HTMLFormElement, step: EventFormStep): boolean {
-  const section = form.querySelector(`[data-event-form-step="${step}"]`);
-  if (!section) {
-    return true;
-  }
-
-  const candidates = section.querySelectorAll("input, select, textarea");
-  for (const el of candidates) {
-    if (!isFormControl(el) || el.disabled || !el.willValidate) {
-      continue;
-    }
-    if (!el.checkValidity()) {
-      el.reportValidity();
-      return false;
-    }
-  }
-
-  return true;
-}
 
 export function EventAdminForm({
   locale,
@@ -74,16 +34,10 @@ export function EventAdminForm({
   defaults,
   error = null,
   isEdit = false,
-  initialStep = 1,
+  step,
+  stepHrefs,
 }: EventAdminFormProps) {
   const copy = getAdminCopy(locale);
-  const [step, setStep] = useState<EventFormStep>(initialStep);
-  const [maxReached, setMaxReached] = useState<EventFormStep>(initialStep);
-  const formRef = useRef<HTMLFormElement | null>(null);
-  const stepRef = useRef(step);
-  const pendingInvalidRef = useRef<HTMLElement | null>(null);
-
-  stepRef.current = step;
 
   const stepTitles: Record<EventFormStep, string> = {
     1: copy.wizardStepGeneral,
@@ -91,84 +45,23 @@ export function EventAdminForm({
     3: copy.wizardStepImage,
   };
 
-  function goToStep(next: EventFormStep) {
-    setStep(next);
-    setMaxReached((current) => (next > current ? next : current));
-  }
-
-  function goNext() {
-    const form = formRef.current;
-    if (!form) {
-      return;
-    }
-    if (!reportFirstInvalidInStep(form, step)) {
-      return;
-    }
-    if (step < EVENT_FORM_STEP_COUNT) {
-      goToStep((step + 1) as EventFormStep);
-    }
-  }
-
-  function bindForm(node: HTMLFormElement | null) {
-    formRef.current = node;
-  }
-
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) {
-      return;
-    }
-
-    const onInvalid = (event: Event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) {
-        return;
-      }
-      const owner = stepFromElement(target);
-      if (owner == null || owner === stepRef.current) {
-        return;
-      }
-      event.preventDefault();
-      if (!pendingInvalidRef.current) {
-        pendingInvalidRef.current = target;
-        setStep(owner);
-        setMaxReached((current) => (owner > current ? owner : current));
-      }
-    };
-
-    form.addEventListener("invalid", onInvalid, true);
-    return () => form.removeEventListener("invalid", onInvalid, true);
-  }, []);
-
-  useEffect(() => {
-    const pending = pendingInvalidRef.current;
-    if (!pending) {
-      return;
-    }
-    pendingInvalidRef.current = null;
-    if (isFormControl(pending) && stepFromElement(pending) === step) {
-      pending.reportValidity();
-    }
-  }, [step]);
-
   return (
     <Form
       action={action}
       className="admin-form flex flex-col gap-6"
       encType="multipart/form-data"
       method="post"
-      ref={bindForm}
     >
       {error ? <AdminFormError message={error} /> : null}
 
       <Surface className="flex flex-col gap-3" variant="transparent">
         <ProgressBar
-          aria-label={copy.wizardStepProgress(step, EVENT_FORM_STEP_COUNT)}
-          maxValue={EVENT_FORM_STEP_COUNT}
+          aria-label={copy.wizardStepProgress(step, EVENT_WIZARD_STEP_COUNT)}
+          maxValue={EVENT_WIZARD_STEP_COUNT}
           minValue={0}
           value={step}
         >
-          <Label>{copy.wizardStepProgress(step, EVENT_FORM_STEP_COUNT)}</Label>
+          <Label>{copy.wizardStepProgress(step, EVENT_WIZARD_STEP_COUNT)}</Label>
           <ProgressBar.Track>
             <ProgressBar.Fill />
           </ProgressBar.Track>
@@ -176,25 +69,49 @@ export function EventAdminForm({
         <Surface className="flex flex-wrap gap-2" variant="transparent">
           {([1, 2, 3] as const).map((n) => {
             const current = n === step;
-            const reachable = isEdit || n <= maxReached;
             const title = stepTitles[n];
+            const className = current
+              ? "button button--primary button--md"
+              : "button button--secondary button--md";
+
+            if (isEdit) {
+              return (
+                <Link
+                  aria-current={current ? "step" : undefined}
+                  className={className}
+                  href={stepHrefs[n]}
+                  key={n}
+                >
+                  {title}
+                </Link>
+              );
+            }
+
+            if (current) {
+              return (
+                <Button aria-current="step" className={className} key={n} type="button">
+                  {title}
+                </Button>
+              );
+            }
+
+            if (n < step) {
+              return (
+                <Button
+                  className={className}
+                  formAction={stepHrefs[n]}
+                  key={n}
+                  name="wizard_intent"
+                  type="submit"
+                  value="back"
+                >
+                  {title}
+                </Button>
+              );
+            }
+
             return (
-              <Button
-                aria-current={current ? "step" : undefined}
-                className={
-                  current
-                    ? "button button--primary button--md"
-                    : "button button--secondary button--md"
-                }
-                isDisabled={!reachable}
-                key={n}
-                onPress={() => {
-                  if (reachable) {
-                    setStep(n);
-                  }
-                }}
-                type="button"
-              >
+              <Button className={className} isDisabled key={n} type="button">
                 {title}
               </Button>
             );
@@ -215,23 +132,37 @@ export function EventAdminForm({
         {!isEdit && step > 1 ? (
           <Button
             className="button button--secondary button--md sm:min-w-40"
-            onPress={() => setStep((current) => (current - 1) as EventFormStep)}
-            type="button"
+            formAction={stepHrefs[(step - 1) as EventFormStep]}
+            name="wizard_intent"
+            type="submit"
+            value="back"
           >
             {copy.wizardBack}
           </Button>
         ) : null}
-        {!isEdit && step < EVENT_FORM_STEP_COUNT ? (
+        {!isEdit && step < EVENT_WIZARD_STEP_COUNT ? (
           <Button
             className="button button--primary button--md sm:min-w-40"
-            onPress={goNext}
-            type="button"
+            formAction={stepHrefs[(step + 1) as EventFormStep]}
+            name="wizard_intent"
+            type="submit"
+            value="next"
           >
             {copy.wizardNext}
           </Button>
         ) : null}
-        {isEdit || step === EVENT_FORM_STEP_COUNT ? (
+        {isEdit ? (
           <Button className="button button--primary button--md sm:min-w-40" type="submit">
+            {submitLabel}
+          </Button>
+        ) : null}
+        {!isEdit && step === EVENT_WIZARD_STEP_COUNT ? (
+          <Button
+            className="button button--primary button--md sm:min-w-40"
+            name="wizard_intent"
+            type="submit"
+            value="create"
+          >
             {submitLabel}
           </Button>
         ) : null}

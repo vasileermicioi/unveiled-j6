@@ -17,14 +17,23 @@ import {
 import type { Db } from "../index";
 import { composeDisplayAddress, validatePostalCode } from "../location";
 import { eventGalleryImages } from "../schema/event-gallery-images";
-import { type Event, events, type TicketType, type TimingMode } from "../schema/events";
+import {
+  type CapacityMode,
+  type Event,
+  events,
+  type TicketType,
+  type TimingMode,
+} from "../schema/events";
 import { featuredEvents } from "../schema/featured-events";
 import {
   deriveDateTimeFields,
+  fillOccurrenceCapacities,
   type NormalizedEventOccurrences,
   type NormalizeOccurrencesResult,
   tryFillOccurrenceCreditsFromPrice,
+  tryNormalizePairedDateTimesAndCapacities,
   tryNormalizePairedDateTimesAndCredits,
+  tryNormalizePairedDateTimesCreditsAndCapacities,
 } from "./datetime";
 import { CatalogValidationError } from "./errors";
 import { resolveEventSubtitles } from "./event-subtitles";
@@ -112,6 +121,13 @@ export type CreateEventInput = {
   timingMode?: TimingMode | null;
   creditPrice: number;
   totalCapacity?: number | null;
+  /** When omitted, defaults to `SHARED`. */
+  capacityMode?: CapacityMode | null;
+  /**
+   * Optional parallel capacities (same length as `dateTimes` before normalize).
+   * Required when `capacityMode` is `PER_OCCURRENCE`. Ignored in `SHARED` (filled from `totalCapacity`).
+   */
+  occurrenceCapacities?: number[];
   ticketType?: TicketType | null;
   secretCode?: string | null;
   eventWebsiteUrl?: string | null;
@@ -160,6 +176,13 @@ export type UpdateEventInput = {
   timingMode?: TimingMode | null;
   creditPrice?: number;
   totalCapacity?: number;
+  /** When omitted, keeps the stored mode. */
+  capacityMode?: CapacityMode | null;
+  /**
+   * Optional parallel capacities. Required when switching to or writing `PER_OCCURRENCE`.
+   * Ignored in `SHARED` (filled from `totalCapacity`).
+   */
+  occurrenceCapacities?: number[];
   ticketType?: TicketType | null;
   secretCode?: string | null;
   eventWebsiteUrl?: string | null;
@@ -181,6 +204,17 @@ export type CloneEventInput = {
   dateTimes: Date[];
   /** When omitted, unique-sort `dateTimes` and fill every credit from `source.creditPrice`. */
   occurrenceCreditPrices?: number[];
+  /** When omitted, copies `source.timingMode`. */
+  timingMode?: TimingMode;
+  /** When omitted, copies `source.capacityMode`. */
+  capacityMode?: CapacityMode;
+  /**
+   * When omitted and mode is `SHARED`, fill from `source.totalCapacity` (or posted `totalCapacity`).
+   * When omitted and mode is `PER_OCCURRENCE`, copy `source.occurrenceCapacities` (length must match).
+   */
+  occurrenceCapacities?: number[];
+  /** When omitted, copies `source.totalCapacity`. Used as the SHARED pool. */
+  totalCapacity?: number;
   now?: Date;
   voucherInventory?: VoucherInventoryPayload;
 };
@@ -543,16 +577,109 @@ function throwFromNormalize(result: NormalizeOccurrencesResult): NormalizedEvent
         "OCCURRENCE_LENGTH_MISMATCH",
         "dateTimes and occurrenceCreditPrices must have the same length",
       );
+    case "CAPACITY_LENGTH_MISMATCH":
+      throw new CatalogValidationError(
+        "OCCURRENCE_CAPACITY_LENGTH_MISMATCH",
+        "dateTimes and occurrenceCapacities must have the same length",
+      );
     case "NEGATIVE_CREDIT":
       throw new CatalogValidationError(
         "NEGATIVE_CREDIT_PRICE",
         "Credit prices must be integers >= 0",
       );
+    case "NEGATIVE_CAPACITY":
+      throw new CatalogValidationError(
+        "NEGATIVE_CAPACITY",
+        "Occurrence capacities must be integers >= 0",
+      );
   }
+}
+
+function requirePerOccurrenceCapacities(
+  dateTimes: Date[],
+  capacities: number[] | undefined,
+): number[] {
+  if (capacities === undefined || capacities.length !== dateTimes.length) {
+    throw new CatalogValidationError(
+      "OCCURRENCE_CAPACITY_LENGTH_MISMATCH",
+      "dateTimes and occurrenceCapacities must have the same length",
+    );
+  }
+  return capacities;
+}
+
+function sumOccurrenceCapacities(values: number[]): number {
+  return values.reduce((acc, value) => acc + value, 0);
+}
+
+type ResolvedCapacityAllocation = {
+  capacityMode: CapacityMode;
+  occurrenceCapacities: number[];
+  totalCapacity: number;
+};
+
+function resolveCapacityAllocation(
+  occurrences: NormalizedEventOccurrences,
+  input: {
+    capacityMode?: CapacityMode | null;
+    totalCapacity: number;
+  },
+  existing?: Pick<Event, "capacityMode" | "occurrenceCapacities">,
+): ResolvedCapacityAllocation {
+  const mode = input.capacityMode ?? existing?.capacityMode ?? "SHARED";
+
+  if (mode === "PER_OCCURRENCE") {
+    const capacities = requirePerOccurrenceCapacities(
+      occurrences.dateTimes,
+      occurrences.occurrenceCapacities ?? existing?.occurrenceCapacities,
+    );
+    const totalCapacity = sumOccurrenceCapacities(capacities);
+    if (totalCapacity < 1) {
+      throw new CatalogValidationError("REQUIRED_FIELD", "totalCapacity must be at least 1");
+    }
+    return {
+      capacityMode: "PER_OCCURRENCE",
+      occurrenceCapacities: capacities,
+      totalCapacity,
+    };
+  }
+
+  return {
+    capacityMode: "SHARED",
+    occurrenceCapacities: fillOccurrenceCapacities(occurrences.dateTimes, input.totalCapacity),
+    totalCapacity: input.totalCapacity,
+  };
 }
 
 function resolveCreateOccurrences(input: CreateEventInput): NormalizedEventOccurrences {
   const now = input.now ?? new Date();
+  const mode = input.capacityMode ?? "SHARED";
+  if (mode === "PER_OCCURRENCE") {
+    if (input.occurrenceCapacities === undefined) {
+      throw new CatalogValidationError(
+        "OCCURRENCE_CAPACITY_LENGTH_MISMATCH",
+        "dateTimes and occurrenceCapacities must have the same length",
+      );
+    }
+    if (input.occurrenceCreditPrices !== undefined) {
+      return throwFromNormalize(
+        tryNormalizePairedDateTimesCreditsAndCapacities(
+          input.dateTimes,
+          input.occurrenceCreditPrices,
+          input.occurrenceCapacities,
+          now,
+        ),
+      );
+    }
+    return throwFromNormalize(
+      tryNormalizePairedDateTimesAndCapacities(
+        input.dateTimes,
+        input.creditPrice,
+        input.occurrenceCapacities,
+        now,
+      ),
+    );
+  }
   if (input.occurrenceCreditPrices !== undefined) {
     return throwFromNormalize(
       tryNormalizePairedDateTimesAndCredits(input.dateTimes, input.occurrenceCreditPrices, now),
@@ -568,6 +695,52 @@ function resolveUpdateOccurrences(
   input: UpdateEventInput,
 ): NormalizedEventOccurrences {
   const now = input.now ?? new Date();
+  const mode = input.capacityMode ?? existing.capacityMode;
+  if (input.capacityMode === "PER_OCCURRENCE" && input.occurrenceCapacities === undefined) {
+    throw new CatalogValidationError(
+      "OCCURRENCE_CAPACITY_LENGTH_MISMATCH",
+      "dateTimes and occurrenceCapacities must have the same length",
+    );
+  }
+  const pairCapacities = mode === "PER_OCCURRENCE" && input.occurrenceCapacities !== undefined;
+  const dateTimes = input.dateTimes ?? existing.dateTimes;
+
+  if (pairCapacities) {
+    const capacities = input.occurrenceCapacities ?? [];
+    if (input.occurrenceCreditPrices !== undefined) {
+      return throwFromNormalize(
+        tryNormalizePairedDateTimesCreditsAndCapacities(
+          dateTimes,
+          input.occurrenceCreditPrices,
+          capacities,
+          now,
+        ),
+      );
+    }
+    if (input.dateTimes !== undefined) {
+      return throwFromNormalize(
+        tryNormalizePairedDateTimesAndCapacities(
+          input.dateTimes,
+          input.creditPrice ?? existing.creditPrice,
+          capacities,
+          now,
+        ),
+      );
+    }
+    const creditList =
+      input.creditPrice !== undefined
+        ? existing.dateTimes.map(() => input.creditPrice as number)
+        : existing.occurrenceCreditPrices;
+    return throwFromNormalize(
+      tryNormalizePairedDateTimesCreditsAndCapacities(
+        existing.dateTimes,
+        creditList,
+        capacities,
+        now,
+      ),
+    );
+  }
+
   if (input.occurrenceCreditPrices !== undefined) {
     return throwFromNormalize(
       tryNormalizePairedDateTimesAndCredits(
@@ -594,6 +767,7 @@ function resolveUpdateOccurrences(
   return {
     dateTimes: existing.dateTimes,
     occurrenceCreditPrices: existing.occurrenceCreditPrices,
+    occurrenceCapacities: existing.occurrenceCapacities,
     dateTime: existing.dateTime,
     creditPrice: existing.creditPrice,
   };
@@ -629,6 +803,10 @@ async function insertEventRow(
   });
 
   const occurrences = resolveCreateOccurrences(input);
+  const capacity = resolveCapacityAllocation(occurrences, {
+    capacityMode: input.capacityMode ?? defaults.capacityMode,
+    totalCapacity: defaults.totalCapacity,
+  });
   const derived = deriveDateTimeFields(occurrences.dateTime, defaults.timingMode);
   const subtitles = resolveEventSubtitles(input.hasSubtitles ?? false, input.subtitleLanguage);
 
@@ -657,8 +835,10 @@ async function insertEventRow(
       weekday: derived.weekday,
       occurrenceCreditPrices: occurrences.occurrenceCreditPrices,
       creditPrice: occurrences.creditPrice,
-      totalCapacity: defaults.totalCapacity,
-      remainingCapacity: defaults.totalCapacity,
+      capacityMode: capacity.capacityMode,
+      occurrenceCapacities: capacity.occurrenceCapacities,
+      totalCapacity: capacity.totalCapacity,
+      remainingCapacity: capacity.totalCapacity,
       ticketType: defaults.ticketType,
       secretCode: input.secretCode?.trim() || null,
       promoCode: null,
@@ -709,6 +889,7 @@ export async function cloneEvent(
   assertVoucherInventoryPresent(source.ticketType, voucherInventory, { mode: "create" });
 
   const partner = await resolvePartner(db, source.partnerId);
+  const capacityMode = input.capacityMode ?? source.capacityMode;
   const createInput: CreateEventInput = {
     partnerId: source.partnerId,
     title: source.title,
@@ -725,9 +906,13 @@ export async function cloneEvent(
     dateTimes: input.dateTimes,
     occurrenceCreditPrices: input.occurrenceCreditPrices,
     now: input.now,
-    timingMode: source.timingMode,
+    timingMode: input.timingMode ?? source.timingMode,
     creditPrice: source.creditPrice,
-    totalCapacity: source.totalCapacity,
+    totalCapacity: input.totalCapacity ?? source.totalCapacity,
+    capacityMode,
+    occurrenceCapacities:
+      input.occurrenceCapacities ??
+      (capacityMode === "PER_OCCURRENCE" ? source.occurrenceCapacities : undefined),
     ticketType: source.ticketType,
     secretCode: source.secretCode,
     eventWebsiteUrl: source.eventWebsiteUrl,
@@ -790,13 +975,21 @@ export async function updateEvent(
         weekday: existing.weekday,
       };
 
-  const nextTotalCapacity = input.totalCapacity ?? existing.totalCapacity;
+  const capacity = resolveCapacityAllocation(
+    nextOccurrences,
+    {
+      capacityMode: input.capacityMode,
+      totalCapacity: input.totalCapacity ?? existing.totalCapacity,
+    },
+    existing,
+  );
+  const nextTotalCapacity = capacity.totalCapacity;
   const nextRemainingCapacity =
-    input.totalCapacity !== undefined
+    nextTotalCapacity !== existing.totalCapacity
       ? recalculateRemainingCapacity(
           existing.totalCapacity,
           existing.remainingCapacity,
-          input.totalCapacity,
+          nextTotalCapacity,
         )
       : existing.remainingCapacity;
 
@@ -877,6 +1070,8 @@ export async function updateEvent(
       weekday: derived.weekday,
       occurrenceCreditPrices: nextOccurrences.occurrenceCreditPrices,
       creditPrice: nextOccurrences.creditPrice,
+      capacityMode: capacity.capacityMode,
+      occurrenceCapacities: capacity.occurrenceCapacities,
       totalCapacity: nextTotalCapacity,
       remainingCapacity: nextRemainingCapacity,
       ticketType,

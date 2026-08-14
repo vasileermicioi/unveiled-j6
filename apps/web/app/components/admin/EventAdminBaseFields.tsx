@@ -1,7 +1,7 @@
 "use client";
 
 import { Description, Input, Label, Surface, TextField } from "@heroui/react";
-import type { TicketType, TimingMode } from "@unveiled/db";
+import type { CapacityMode, TicketType, TimingMode } from "@unveiled/db";
 import { useId, useState } from "react";
 
 import CheckboxMultiSelect from "../../islands/CheckboxMultiSelect";
@@ -16,6 +16,8 @@ import {
   getEventTypeOptions,
 } from "../../lib/admin-content";
 import type { EventFormStep } from "../../lib/admin-event-form";
+import { DEFAULT_OCCURRENCE_CAPACITY } from "../../lib/admin-event-form";
+import { voucherInventoryDisplayCount } from "../../lib/admin-voucher-inventory";
 import { geocodeBerlinAddress } from "../../lib/geocode-berlin";
 import type { Locale } from "../../lib/locale";
 import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
@@ -56,8 +58,16 @@ function defaultTimingMode(defaults?: EventFormDefaults): TimingMode {
   return defaults?.timingMode ?? "TIME_SLOT";
 }
 
+function defaultCapacityMode(defaults?: EventFormDefaults): CapacityMode {
+  return defaults?.capacityMode ?? "SHARED";
+}
+
 function isTicketType(value: string): value is TicketType {
   return value === "SECRET_CODE" || value === "VOUCHER_PROMO" || value === "VOUCHER_PDF";
+}
+
+function isCapacityMode(value: string): value is CapacityMode {
+  return value === "SHARED" || value === "PER_OCCURRENCE";
 }
 
 function structuredAddressFingerprint(
@@ -86,6 +96,14 @@ export function EventAdminBaseFields({
   const descriptionHintId = useId();
   const [ticketType, setTicketType] = useState<TicketType>(defaultTicketType(defaults));
   const [timingMode, setTimingMode] = useState<TimingMode>(defaultTimingMode(defaults));
+  const [capacityMode, setCapacityMode] = useState<CapacityMode>(defaultCapacityMode(defaults));
+  const [totalCapacity, setTotalCapacity] = useState(
+    String(defaults?.totalCapacity ?? DEFAULT_OCCURRENCE_CAPACITY),
+  );
+  const [inventoryPreview, setInventoryPreview] = useState({
+    incomingCount: 0,
+    replaceUnused: false,
+  });
   const [selectedPartnerId, setSelectedPartnerId] = useState(defaults?.partnerId ?? "");
   const [street, setStreet] = useState(defaults?.street ?? "");
   const [houseNumber, setHouseNumber] = useState(defaults?.houseNumber ?? "");
@@ -183,14 +201,25 @@ export function EventAdminBaseFields({
     });
   }
 
+  const generalRequired = activeStep == null || activeStep === 1;
+  const datesRequired = activeStep == null || activeStep === 2;
   const selectedPartner = partners.find((partner) => partner.id === selectedPartnerId);
+  const inventoryTotal =
+    ticketType === "SECRET_CODE"
+      ? null
+      : (voucherInventoryDisplayCount(
+          ticketType,
+          inventoryPreview.incomingCount,
+          inventoryPreview.replaceUnused,
+          defaults?.inventoryCounts,
+        ) ?? 0);
 
   return (
     <>
       <Surface {...stepSurfaceProps(activeStep, 1)}>
         <AdminFormSelect
           defaultSelectedKey={defaults?.partnerId}
-          isRequired
+          isRequired={generalRequired}
           label={copy.partnerLabel}
           name="partner_id"
           onSelectionChange={(value) => {
@@ -202,7 +231,12 @@ export function EventAdminBaseFields({
           placeholder={copy.selectPlaceholder}
         />
 
-        <TextField defaultValue={defaults?.title} fullWidth isRequired name="title">
+        <TextField
+          defaultValue={defaults?.title}
+          fullWidth
+          isRequired={generalRequired}
+          name="title"
+        >
           <Label>{copy.titleLabel}</Label>
           <Input />
         </TextField>
@@ -216,7 +250,7 @@ export function EventAdminBaseFields({
             id={descriptionFieldId}
             initialMarkdown={defaults?.description ?? ""}
             name="description"
-            required
+            required={generalRequired}
           />
           <Description id={descriptionHintId}>{copy.descriptionMarkdownHint}</Description>
         </Surface>
@@ -261,7 +295,7 @@ export function EventAdminBaseFields({
                   void handleStructuredAddressBlur();
                 }}
                 onChange={(event) => setZipCode(event.currentTarget.value)}
-                required
+                required={generalRequired}
                 type="text"
                 value={zipCode}
               />
@@ -271,7 +305,7 @@ export function EventAdminBaseFields({
             <TextField
               key={`street-${addressRevision}`}
               fullWidth
-              isRequired
+              isRequired={generalRequired}
               name="street"
               value={street}
             >
@@ -287,7 +321,7 @@ export function EventAdminBaseFields({
             <TextField
               key={`house-number-${addressRevision}`}
               fullWidth
-              isRequired
+              isRequired={generalRequired}
               name="house_number"
               value={houseNumber}
             >
@@ -327,7 +361,7 @@ export function EventAdminBaseFields({
         <Surface className="grid gap-4 sm:grid-cols-2" variant="transparent">
           <AdminFormSelect
             defaultSelectedKey={defaults?.category}
-            isRequired
+            isRequired={generalRequired}
             label={copy.categoryLabel}
             name="category"
             options={categoryOptions}
@@ -335,7 +369,7 @@ export function EventAdminBaseFields({
           />
           <AdminFormSelect
             defaultSelectedKey={defaults?.eventType}
-            isRequired
+            isRequired={generalRequired}
             label={copy.eventTypeLabel}
             name="event_type"
             options={eventTypeOptions}
@@ -400,7 +434,7 @@ export function EventAdminBaseFields({
           {hasSubtitles ? (
             <AdminFormSelect
               defaultSelectedKey={defaults?.subtitleLanguage ?? undefined}
-              isRequired
+              isRequired={generalRequired}
               label={copy.subtitleLanguageLabel}
               name="subtitle_language"
               options={subtitleLanguageOptions}
@@ -411,22 +445,6 @@ export function EventAdminBaseFields({
       </Surface>
 
       <Surface {...stepSurfaceProps(activeStep, 2)}>
-        {includeDateTime ? (
-          <EventAdminDateTimeList
-            applyPartnerHours={!isEdit}
-            hasOpeningHours={selectedPartner?.hasOpeningHours ?? false}
-            isDateRequired
-            locale={locale}
-            openingHours={selectedPartner?.openingHours ?? null}
-            partnerId={selectedPartnerId}
-            rangeEnd={defaults?.rangeEnd}
-            rangeSlots={defaults?.rangeSlots}
-            rangeStart={defaults?.rangeStart}
-            rows={defaults?.dateTimeRows}
-            timingMode={timingMode}
-          />
-        ) : null}
-
         <AdminFormSelect
           defaultSelectedKey={timingMode}
           label={copy.timingModeLabel}
@@ -443,15 +461,34 @@ export function EventAdminBaseFields({
           placeholder={copy.selectPlaceholder}
         />
 
-        {ticketType === "SECRET_CODE" ? (
-          <AdminFormNumberField
-            defaultValue={defaults?.totalCapacity ?? 10}
-            isRequired
-            label={copy.capacityLabel}
-            minValue={1}
-            name="total_capacity"
-          />
-        ) : null}
+        <AdminFormSelect
+          defaultSelectedKey={capacityMode}
+          label={copy.capacityAllocationLabel}
+          name="capacity_mode"
+          onSelectionChange={(value) => {
+            if (typeof value === "string" && isCapacityMode(value)) {
+              setCapacityMode(value);
+            }
+          }}
+          options={[
+            { id: "SHARED", label: copy.capacityAllocationShared },
+            { id: "PER_OCCURRENCE", label: copy.capacityAllocationPerDate },
+          ]}
+          placeholder={copy.selectPlaceholder}
+        />
+        <Description>
+          {capacityMode === "PER_OCCURRENCE"
+            ? copy.capacityAllocationPerDateHint
+            : copy.capacityAllocationSharedHint}
+        </Description>
+        <AdminFormNumberField
+          isRequired={datesRequired}
+          label={copy.capacityLabel}
+          minValue={1}
+          name="total_capacity"
+          onChange={setTotalCapacity}
+          value={totalCapacity}
+        />
 
         <AdminFormSelect
           defaultSelectedKey={ticketType}
@@ -469,10 +506,6 @@ export function EventAdminBaseFields({
           ]}
           placeholder={copy.selectPlaceholder}
         />
-
-        {ticketType === "VOUCHER_PROMO" || ticketType === "VOUCHER_PDF" ? (
-          <Description>{copy.capacityFromInventoryHint}</Description>
-        ) : null}
 
         {ticketType === "SECRET_CODE" ? (
           <TextField defaultValue={defaults?.secretCode ?? undefined} fullWidth name="secret_code">
@@ -495,6 +528,7 @@ export function EventAdminBaseFields({
               inventoryCounts={defaults?.inventoryCounts?.promo ?? null}
               isEdit={isEdit}
               locale={locale}
+              onInventoryPreviewChange={setInventoryPreview}
             />
           </>
         ) : null}
@@ -505,7 +539,27 @@ export function EventAdminBaseFields({
             inventoryCounts={defaults?.inventoryCounts?.pdf ?? null}
             isEdit={isEdit}
             locale={locale}
+            onInventoryPreviewChange={setInventoryPreview}
             uploadPath={`/${locale}/admin/uploads/voucher-pdf`}
+          />
+        ) : null}
+
+        {includeDateTime ? (
+          <EventAdminDateTimeList
+            applyPartnerHours={!isEdit}
+            capacityMode={capacityMode}
+            defaultOccurrenceCapacity={totalCapacity}
+            hasOpeningHours={selectedPartner?.hasOpeningHours ?? false}
+            inventoryTotal={inventoryTotal}
+            isDateRequired={datesRequired}
+            locale={locale}
+            openingHours={selectedPartner?.openingHours ?? null}
+            partnerId={selectedPartnerId}
+            rangeEnd={defaults?.rangeEnd}
+            rangeSlots={defaults?.rangeSlots}
+            rangeStart={defaults?.rangeStart}
+            rows={defaults?.dateTimeRows}
+            timingMode={timingMode}
           />
         ) : null}
       </Surface>

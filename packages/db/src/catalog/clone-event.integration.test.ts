@@ -103,6 +103,8 @@ describe("cloneEvent integration", () => {
       expect(cloned.dateTime.getTime()).toBe(cloneDate.getTime());
       expect(cloned.totalCapacity).toBe(8);
       expect(cloned.remainingCapacity).toBe(8);
+      expect(cloned.capacityMode).toBe("SHARED");
+      expect(cloned.occurrenceCapacities).toEqual([8]);
       expect(cloned.languageIndependent).toBe(true);
       expect(cloned.languages).toBeNull();
       expect(cloned.hasSubtitles).toBe(true);
@@ -198,6 +200,65 @@ describe("cloneEvent integration", () => {
         [clonedId ?? "", voucherSource.id],
         [voucherSource.imageId, clonedImageId ?? ""],
       );
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
+  test("clone copies PER_OCCURRENCE capacity mode and array", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const partner = await createPartner(db, {
+      name: `Clone Cap Partner ${suffix}`,
+      ...structuredLocationFromAddress("Clonestraße 3, Berlin"),
+      contactEmail: `clone-cap-${suffix}@example.com`,
+      logoPrebuilt: createTestImagePrebuilt(),
+      skipUpload: true,
+    });
+
+    const dateA = new Date("2026-08-10T18:00:00.000Z");
+    const dateB = new Date("2026-08-11T18:00:00.000Z");
+    const source = await createEvent(db, {
+      partnerId: partner.id,
+      title: `Clone Cap Source ${suffix}`,
+      description: "Source description",
+      ...structuredLocationFromAddress("Clonestraße 3, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "Theater",
+      eventType: "Performance",
+      dateTimes: [dateA, dateB],
+      creditPrice: 2,
+      capacityMode: "PER_OCCURRENCE",
+      occurrenceCapacities: [4, 6],
+      secretCode: `CAP${suffix.slice(0, 5)}`,
+      imagePrebuilt: createTestImagePrebuilt(),
+      skipUpload: true,
+    });
+
+    const cloneA = new Date("2026-09-01T18:00:00.000Z");
+    const cloneB = new Date("2026-09-02T18:00:00.000Z");
+    let clonedId: string | undefined;
+
+    try {
+      expect(source.capacityMode).toBe("PER_OCCURRENCE");
+      expect(source.occurrenceCapacities).toEqual([4, 6]);
+      expect(source.totalCapacity).toBe(10);
+
+      const cloned = await cloneEvent(db, source.id, { dateTimes: [cloneA, cloneB] });
+      clonedId = cloned.id;
+
+      expect(cloned.capacityMode).toBe("PER_OCCURRENCE");
+      expect(cloned.occurrenceCapacities).toEqual([4, 6]);
+      expect(cloned.totalCapacity).toBe(10);
+      expect(cloned.remainingCapacity).toBe(10);
+    } finally {
+      await cleanupClonedEvents(db, [clonedId ?? "", source.id], [source.imageId]);
       await deletePartner(db, partner.id, { skipBucket: true });
     }
   });

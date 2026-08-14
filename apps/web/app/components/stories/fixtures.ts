@@ -100,6 +100,8 @@ export const mockEvent: Event = {
   weekday: 5,
   occurrenceCreditPrices: [2, 2],
   creditPrice: 2,
+  capacityMode: "SHARED",
+  occurrenceCapacities: [40, 40],
   totalCapacity: 40,
   remainingCapacity: 12,
   ticketType: "SECRET_CODE",

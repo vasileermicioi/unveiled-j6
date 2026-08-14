@@ -3,6 +3,18 @@ import type { CreateEventInput, UpdateEventInput } from "@unveiled/db";
 import type { EventFormValues } from "./admin-event-form";
 import { eventFormValuesToOccurrenceLists } from "./admin-event-form";
 
+function capacityFields(values: EventFormValues): {
+  capacityMode: EventFormValues["capacityMode"];
+  occurrenceCapacities?: number[];
+} {
+  const { occurrenceCapacities } = eventFormValuesToOccurrenceLists(values);
+  const capacityMode = values.capacityMode ?? "SHARED";
+  return {
+    capacityMode,
+    ...(capacityMode === "PER_OCCURRENCE" ? { occurrenceCapacities } : {}),
+  };
+}
+
 export function toCreateEventInput(values: EventFormValues, uploadedBy: string): CreateEventInput {
   const { dateTimes, occurrenceCreditPrices } = eventFormValuesToOccurrenceLists(values);
   return {
@@ -23,6 +35,7 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
     timingMode: values.timingMode,
     creditPrice: values.creditPrice,
     totalCapacity: values.totalCapacity,
+    ...capacityFields(values),
     ticketType: values.ticketType,
     secretCode: values.secretCode,
     eventWebsiteUrl: values.eventWebsiteUrl,
@@ -61,6 +74,7 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
     timingMode: values.timingMode,
     creditPrice: values.creditPrice,
     totalCapacity: values.totalCapacity,
+    ...capacityFields(values),
     ticketType: values.ticketType,
     secretCode: values.secretCode,
     eventWebsiteUrl: values.eventWebsiteUrl,

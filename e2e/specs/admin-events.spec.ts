@@ -13,6 +13,7 @@ import {
   expectEventFormStep,
   expectEventOnDiscover,
   expectPublicEventDetail,
+  expectVisibleAbove,
   fillCreditsNth,
   fillLabeledDateOrTime,
   fillNumberByLabel,
@@ -83,6 +84,21 @@ async function attachEventImageFile(page: Page): Promise<void> {
   await expect(page.getByText(/ausgewählt:|selected:/i).first()).toBeVisible({ timeout: 60_000 });
 }
 
+function uniquePromoCodes(count: number, suffix: string): string[] {
+  return Array.from({ length: count }, (_, index) => `E2E-${suffix}-${index + 1}`);
+}
+
+async function pastePromoCodes(page: Page, codes: string[]): Promise<void> {
+  await page.getByLabel(adminLabels.pasteCodes).fill(codes.join("\n"));
+}
+
+async function fillSecretIfPresent(page: Page, code: string): Promise<void> {
+  const secretField = page.getByRole("textbox", { name: adminLabels.secretCode, exact: true });
+  if ((await secretField.count()) > 0) {
+    await secretField.fill(code);
+  }
+}
+
 async function createVoucherPromoViaUI(
   page: Page,
   locale: "de" | "en",
@@ -107,9 +123,10 @@ async function createVoucherPromoViaUI(
   await selectOptionByLabel(page, adminLabels.eventType, "Performance");
   await clickEventFormNext(page, 2);
   await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(16));
+  await fillNumberByLabel(page, adminLabels.capacity, "2");
   await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);
   await fillTextbox(page, adminLabels.eventWebsite, "https://example.com/e2e-voucher");
-  await page.getByLabel(/codes einfügen|paste codes/i).fill(`CODE-A-${suffix}\nCODE-B-${suffix}`);
+  await page.getByLabel(adminLabels.pasteCodes).fill(`CODE-A-${suffix}\nCODE-B-${suffix}`);
   await clickEventFormNext(page, 3);
   await attachEventImageFile(page);
   await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
@@ -261,6 +278,186 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByText(/credits gesamt:\s*7|total credits:\s*7/i)).toBeVisible();
   });
 
+  test("Scenario: Timing mode is first on Date & tickets", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    await fillNewEventRequiredFields(
+      page,
+      locale,
+      partner.name,
+      `E2E Order ${uniqueSuffix()}`,
+      "Field order",
+    );
+    await clickEventFormNext(page, 2);
+    const timing = page.getByLabel(adminLabels.timingMode);
+    const allocation = page.getByLabel(adminLabels.capacityAllocation);
+    const ticketType = page.getByLabel(/^(ticket-typ|ticket type)\*?$/i);
+    const addDateTime = page.getByRole("button", { name: adminLabels.addDateTime });
+    await expectVisibleAbove(timing, allocation);
+    await expectVisibleAbove(allocation, ticketType);
+    await expectVisibleAbove(ticketType, addDateTime);
+  });
+
+  test("Scenario: All day hides time inputs", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    await fillNewEventRequiredFields(
+      page,
+      locale,
+      partner.name,
+      `E2E AllDay ${uniqueSuffix()}`,
+      "All day hides times",
+    );
+    await clickEventFormNext(page, 2);
+    await selectOptionByLabel(page, adminLabels.timingMode, adminLabels.timingModeAllDay);
+    await expect(page.getByLabel(adminLabels.eventTime)).toHaveCount(0);
+    await expect(datetimeDateFields(page).first()).toBeVisible();
+    await expect(page.getByLabel(adminLabels.rangeStart)).toBeVisible();
+  });
+
+  test("Scenario: Time slot shows times", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
+    const partner = await createPartnerViaUI(page, locale);
+    await fillNewEventRequiredFields(
+      page,
+      locale,
+      partner.name,
+      `E2E TimeSlot ${uniqueSuffix()}`,
+      "Time slot shows times",
+    );
+    await clickEventFormNext(page, 2);
+    await selectOptionByLabel(page, adminLabels.timingMode, adminLabels.timingModeTimeSlot);
+    await expect(page.getByLabel(adminLabels.eventTime).first()).toBeVisible();
+    await expect(datetimeDateFields(page).first()).toBeVisible();
+  });
+
+  test("Scenario: Shared capacity is one pool", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const suffix = uniqueSuffix();
+    const title = `E2E Shared Cap ${suffix}`;
+    await fillNewEventRequiredFields(page, locale, partner.name, title, `Shared ${suffix}`);
+    await clickEventFormNext(page, 2);
+    await selectOptionByLabel(
+      page,
+      adminLabels.capacityAllocation,
+      adminLabels.capacityAllocationShared,
+    );
+    await fillNumberByLabel(page, adminLabels.capacity, "10");
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(14), { nth: 0 });
+    await page.getByRole("button", { name: adminLabels.addDateTime }).click();
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(21), { nth: 1 });
+    await expect(page.getByLabel(adminLabels.rowCapacity)).toHaveCount(0);
+    await fillSecretIfPresent(page, `E2ESH${suffix.slice(0, 6).toUpperCase()}`);
+    await clickEventFormNext(page, 3);
+    await attachEventImageFile(page);
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    const row = page.getByRole("row").filter({ hasText: title });
+    await expect(row.getByText(/10\/10/)).toBeVisible({ timeout: 15_000 });
+    await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
+    await goToEventFormStep(page, 2);
+    await expect(page.getByLabel(adminLabels.rowCapacity)).toHaveCount(0);
+    await expect(page.getByLabel(adminLabels.capacityAllocation)).toHaveValue("SHARED");
+  });
+
+  test("Scenario: Per-date capacities persist", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const suffix = uniqueSuffix();
+    const title = `E2E PerDate ${suffix}`;
+    const firstDate = futureDateISO(14);
+    const secondDate = futureDateISO(21);
+    await fillNewEventRequiredFields(page, locale, partner.name, title, `Per date ${suffix}`);
+    await clickEventFormNext(page, 2);
+    await selectOptionByLabel(
+      page,
+      adminLabels.capacityAllocation,
+      adminLabels.capacityAllocationPerDate,
+    );
+    await fillNumberByLabel(page, adminLabels.capacity, "5");
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, firstDate, { nth: 0 });
+    await fillNumberByLabel(page, adminLabels.rowCapacity, "4", { nth: 0 });
+    await page.getByRole("button", { name: adminLabels.addDateTime }).click();
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, secondDate, { nth: 1 });
+    await fillNumberByLabel(page, adminLabels.rowCapacity, "6", { nth: 1 });
+    await fillSecretIfPresent(page, `E2EPD${suffix.slice(0, 6).toUpperCase()}`);
+    await clickEventFormNext(page, 3);
+    await attachEventImageFile(page);
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    const row = page.getByRole("row").filter({ hasText: title });
+    await expect(row.getByText(/10\/10/)).toBeVisible({ timeout: 15_000 });
+    await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
+    await goToEventFormStep(page, 2);
+    await expect(page.getByLabel(adminLabels.rowCapacity).nth(0)).toHaveValue("4");
+    await expect(page.getByLabel(adminLabels.rowCapacity).nth(1)).toHaveValue("6");
+    await expect(page.getByText(adminLabels.totalCapacityLine)).toContainText("10");
+  });
+
+  test("Scenario: Range rebuild stamps default capacity", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    await fillNewEventRequiredFields(
+      page,
+      locale,
+      partner.name,
+      `E2E Range Cap ${uniqueSuffix()}`,
+      "Range stamp",
+    );
+    await clickEventFormNext(page, 2);
+    await selectOptionByLabel(
+      page,
+      adminLabels.capacityAllocation,
+      adminLabels.capacityAllocationPerDate,
+    );
+    await fillNumberByLabel(page, adminLabels.capacity, "8");
+    const start = futureDateISO(14);
+    const end = futureDateISO(15);
+    await fillLabeledDateOrTime(page, adminLabels.rangeStart, start);
+    await fillLabeledDateOrTime(page, adminLabels.rangeEnd, end);
+    await expect(datetimeDateFields(page)).toHaveCount(2, { timeout: 10_000 });
+    const capacities = page.getByLabel(adminLabels.rowCapacity);
+    await expect(capacities).toHaveCount(2);
+    await expect(capacities.nth(0)).toHaveValue("8");
+    await expect(capacities.nth(1)).toHaveValue("8");
+  });
+
+  test("Scenario: Capacity and inventory totals mismatch", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const suffix = uniqueSuffix();
+    const title = `E2E Mismatch ${suffix}`;
+    const codes = uniquePromoCodes(7, suffix);
+    await fillNewEventRequiredFields(page, locale, partner.name, title, `Mismatch ${suffix}`);
+    await clickEventFormNext(page, 2);
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(16));
+    await fillNumberByLabel(page, adminLabels.capacity, "10");
+    await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);
+    await fillTextbox(page, adminLabels.eventWebsite, "https://example.com/e2e-mismatch");
+    await pastePromoCodes(page, codes);
+    await expect(page.getByText(adminLabels.totalCapacityLine)).toContainText("10");
+    await expect(page.getByText(adminLabels.totalInventory)).toContainText("7");
+    await clickEventFormNext(page, 3);
+    await attachEventImageFile(page);
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
+    await expect(page.getByText(adminLabels.capacityInventoryMismatch).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expectEventFormStep(page, 2);
+    await fillNumberByLabel(page, adminLabels.capacity, "7");
+    await pastePromoCodes(page, codes);
+    await clickEventFormNext(page, 3);
+    if ((await page.getByText(/ausgewählt:|selected:/i).count()) === 0) {
+      await attachEventImageFile(page);
+    }
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await expect(page.getByText(title).first()).toBeVisible({ timeout: 15_000 });
+  });
+
   test("Scenario: Range and two time slots generate a grid", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
@@ -329,10 +526,13 @@ test.describe("admin-events.feature", () => {
     });
   });
 
-  test("Scenario: Closed weekdays omitted from expansion", async ({ page, locale }) => {
+  test("Scenario: Range includes closed partner weekdays", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     const saturday = weekdayISO(6);
+    const sundayDate = new Date(`${saturday}T12:00:00`);
+    sundayDate.setDate(sundayDate.getDate() + 1);
+    const sunday = localISODate(sundayDate);
     const mondayDate = new Date(`${saturday}T12:00:00`);
     mondayDate.setDate(mondayDate.getDate() + 2);
     const monday = localISODate(mondayDate);
@@ -343,14 +543,15 @@ test.describe("admin-events.feature", () => {
         locale,
         partner.name,
         `E2E Closed ${uniqueSuffix()}`,
-        "Closed Sunday",
+        "Includes Sunday",
       );
       await clickEventFormNext(page, 2);
       await fillLabeledDateOrTime(page, adminLabels.rangeStart, saturday);
       await fillLabeledDateOrTime(page, adminLabels.rangeEnd, monday);
-      await expect(datetimeDateFields(page)).toHaveCount(2, { timeout: 10_000 });
+      await expect(datetimeDateFields(page)).toHaveCount(3, { timeout: 10_000 });
       await expect(datetimeDateFields(page).nth(0)).toHaveValue(saturday);
-      await expect(datetimeDateFields(page).nth(1)).toHaveValue(monday);
+      await expect(datetimeDateFields(page).nth(1)).toHaveValue(sunday);
+      await expect(datetimeDateFields(page).nth(2)).toHaveValue(monday);
     });
   });
 
@@ -417,7 +618,7 @@ test.describe("admin-events.feature", () => {
     await fillTextbox(page, adminLabels.secretCode, "NOIMG001");
     await clickEventFormNext(page, 3);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/image`));
     await expect(
       page.getByText(/event-bild ist erforderlich|event image is required/i).first(),
     ).toBeVisible({ timeout: 15_000 });
@@ -433,10 +634,12 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByText(adminLabels.imageSection).first()).not.toBeVisible();
 
     await clickEventFormNext(page, 2);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/dates`));
     await expect(page.getByRole("button", { name: adminLabels.addDateTime })).toBeVisible();
     await expect(page.getByText(adminLabels.imageSection).first()).not.toBeVisible();
 
     await clickEventFormNext(page, 3);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/image`));
     await expect(page.getByText(adminLabels.imageSection).first()).toBeVisible();
   });
 
@@ -452,6 +655,7 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("button", { name: /^anlegen$|^create$/i })).toHaveCount(0);
 
     await clickEventFormNext(page, 3);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/image`));
     await expect(page.getByRole("button", { name: /^anlegen$|^create$/i })).toBeVisible();
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
@@ -470,7 +674,9 @@ test.describe("admin-events.feature", () => {
     });
     await expectEventFormStep(page, 1);
     await goToEventFormStep(page, 3);
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/${event.eventId}/edit`));
+    await expect(page).toHaveURL(
+      new RegExp(`/${locale}/admin/events/${event.eventId}/edit/image/?$`),
+    );
     await expect(page.getByText(adminLabels.imageSection).first()).toBeVisible();
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
@@ -497,7 +703,7 @@ test.describe("admin-events.feature", () => {
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await clickEventFormNext(page, 3);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/image`));
     await expect(
       page.getByText(/event-bild ist erforderlich|event image is required/i).first(),
     ).toBeVisible({ timeout: 15_000 });
@@ -581,6 +787,40 @@ test.describe("admin-events.feature", () => {
     const event = await createEventViaUI(page, locale, { partnerName: partner.name });
     const row = page.getByRole("row").filter({ hasText: event.title });
     await expect(row.getByText(/10\/10/)).toBeVisible();
+    await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await goToEventFormStep(page, 2);
+    await expect(page.getByLabel(adminLabels.timingMode)).toHaveValue("TIME_SLOT");
+    await expect(page.getByLabel(adminLabels.capacityAllocation)).toHaveValue("SHARED");
+    await expect(page.getByLabel(adminLabels.capacity, { exact: true })).toHaveValue("10");
+  });
+
+  test("Scenario: Admin uploads promo codes with preview", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const suffix = uniqueSuffix();
+    const title = `E2E Promo Preview ${suffix}`;
+    const codes = uniquePromoCodes(10, suffix);
+    await fillNewEventRequiredFields(page, locale, partner.name, title, `Promo preview ${suffix}`);
+    await clickEventFormNext(page, 2);
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(16));
+    await fillNumberByLabel(page, adminLabels.capacity, "10");
+    await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);
+    await fillTextbox(page, adminLabels.eventWebsite, "https://example.com/e2e-promo");
+    await pastePromoCodes(page, codes);
+    await expect(
+      page.getByText(/10 codes bereit zum speichern|10 codes ready to save/i),
+    ).toBeVisible();
+    await expect(page.getByText(adminLabels.totalInventory)).toContainText("10");
+    await expect(page.getByText(adminLabels.totalCapacityLine)).toContainText("10");
+    await clickEventFormNext(page, 3);
+    await attachEventImageFile(page);
+    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await expect(page.getByRole("row").filter({ hasText: title })).toBeVisible({ timeout: 15_000 });
   });
 
   test("Scenario: Clone event from catalog list", async ({ page, locale }) => {

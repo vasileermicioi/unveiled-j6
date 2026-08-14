@@ -5,6 +5,7 @@ import {
   berlinTodayRange,
   creditPriceForOccurrence,
   deriveDateTimeFields,
+  fillOccurrenceCapacities,
   futureOccurrences,
   getBerlinCalendarDate,
   primaryDateTimeFromList,
@@ -12,7 +13,9 @@ import {
   tryFillOccurrenceCreditsFromPrice,
   tryNormalizeEventDateTimes,
   tryNormalizeEventOccurrences,
+  tryNormalizePairedDateTimesAndCapacities,
   tryNormalizePairedDateTimesAndCredits,
+  tryNormalizePairedDateTimesCreditsAndCapacities,
 } from "./datetime";
 
 describe("deriveDateTimeFields", () => {
@@ -164,6 +167,83 @@ describe("occurrence credit normalize helpers", () => {
       ok: false,
       code: "EMPTY",
     });
+  });
+});
+
+describe("occurrence capacity normalize helpers", () => {
+  const now = new Date("2026-07-09T12:00:00.000Z");
+  const past = new Date("2026-07-08T18:00:00.000Z");
+  const future = new Date("2026-07-11T18:00:00.000Z");
+
+  test("tryNormalizeEventOccurrences sorts and keeps paired capacities", () => {
+    const result = tryNormalizeEventOccurrences(
+      [
+        { startsAt: future, creditPrice: 3, capacity: 6 },
+        { startsAt: past, creditPrice: 1, capacity: 4 },
+      ],
+      now,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.value.dateTimes.map((d) => d.toISOString())).toEqual([
+      past.toISOString(),
+      future.toISOString(),
+    ]);
+    expect(result.value.occurrenceCapacities).toEqual([4, 6]);
+  });
+
+  test("tryNormalizeEventOccurrences rejects negative capacities", () => {
+    const result = tryNormalizeEventOccurrences(
+      [{ startsAt: future, creditPrice: 1, capacity: -1 }],
+      now,
+    );
+    expect(result).toEqual({ ok: false, code: "NEGATIVE_CAPACITY" });
+  });
+
+  test("tryNormalizeEventOccurrences rejects mixed capacity presence", () => {
+    const result = tryNormalizeEventOccurrences(
+      [
+        { startsAt: past, creditPrice: 1, capacity: 4 },
+        { startsAt: future, creditPrice: 1 },
+      ],
+      now,
+    );
+    expect(result).toEqual({ ok: false, code: "CAPACITY_LENGTH_MISMATCH" });
+  });
+
+  test("tryNormalizePairedDateTimesCreditsAndCapacities rejects capacity length mismatch", () => {
+    const result = tryNormalizePairedDateTimesCreditsAndCapacities(
+      [past, future],
+      [1, 1],
+      [4],
+      now,
+    );
+    expect(result).toEqual({ ok: false, code: "CAPACITY_LENGTH_MISMATCH" });
+  });
+
+  test("tryNormalizePairedDateTimesAndCapacities pairs capacities without unique-merge", () => {
+    const result = tryNormalizePairedDateTimesAndCapacities([future, past], 2, [6, 4], now);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.value.occurrenceCreditPrices).toEqual([2, 2]);
+    expect(result.value.occurrenceCapacities).toEqual([4, 6]);
+  });
+
+  test("legacy credit fill omits occurrenceCapacities for SHARED fill", () => {
+    const result = tryFillOccurrenceCreditsFromPrice([past, future], 2, now);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.value.occurrenceCapacities).toBeUndefined();
+  });
+
+  test("fillOccurrenceCapacities repeats totalCapacity for every datetime", () => {
+    expect(fillOccurrenceCapacities([past, future], 12)).toEqual([12, 12]);
   });
 });
 

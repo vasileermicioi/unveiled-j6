@@ -1,4 +1,5 @@
 import type {
+  CapacityMode,
   OpeningHoursWeek,
   TicketType,
   TimingMode,
@@ -10,6 +11,8 @@ export type EventDateTimeRow = {
   time: string;
   /** Form string; parsed to an integer `>= 0` on submit. */
   credits: string;
+  /** Form string; parsed to an integer `>= 0` on submit when Per date. */
+  capacity?: string;
 };
 
 export type EventFormDefaults = Partial<{
@@ -32,6 +35,7 @@ export type EventFormDefaults = Partial<{
   timingMode: TimingMode;
   creditPrice: number;
   totalCapacity: number;
+  capacityMode: CapacityMode;
   ticketType: TicketType;
   secretCode: string | null;
   eventWebsiteUrl: string | null;
