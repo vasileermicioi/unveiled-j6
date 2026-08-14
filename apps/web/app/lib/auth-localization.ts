@@ -4,6 +4,7 @@ import type { Locale } from "./locale";
 
 const germanAuthCopy = {
   alreadyHaveAnAccount: "Schon registriert?",
+  checkYourEmailTitle: "E-Mail prüfen",
   confirmPassword: "Passwort bestätigen",
   confirmPasswordPlaceholder: "Passwort bestätigen",
   continueWith: "Weiter mit {{provider}}",
@@ -24,6 +25,7 @@ const germanAuthCopy = {
   passwordResetSuccess: "Passwort erfolgreich zurückgesetzt",
   passwordsDoNotMatch: "Passwörter stimmen nicht überein",
   rememberYourPassword: "Passwort wieder eingefallen?",
+  resetLinkSentTo: "Wir haben einen Link zum Zurücksetzen an {{email}} geschickt",
   resetPassword: "Passwort zurücksetzen",
   sendResetLink: "Link senden",
   showPassword: "Passwort anzeigen",

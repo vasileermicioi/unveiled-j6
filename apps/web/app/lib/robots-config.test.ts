@@ -11,6 +11,7 @@ describe("robots-config", () => {
     const body = buildRobotsTxt();
 
     expect(body).toContain("Disallow: /*/onboarding/");
+    expect(body).toContain("Disallow: /*/reset-link-sent");
     expect(body).toContain("User-agent: *");
     expect(body).toContain("Allow: /");
     expect(body).toContain("Sitemap:");

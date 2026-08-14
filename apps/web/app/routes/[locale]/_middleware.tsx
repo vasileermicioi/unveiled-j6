@@ -4,7 +4,7 @@ import { createRoute } from "honox/factory";
 import { NotFoundPage } from "../../components/NotFoundPage";
 import { getAuthOptions, getSessionIfConfigured } from "../../lib/auth";
 import { evaluateAuthRedirect } from "../../lib/auth-middleware";
-import { isValidLocale, type Locale } from "../../lib/locale";
+import { collapseDuplicateLocalePrefix, isValidLocale, type Locale } from "../../lib/locale";
 import { evaluateOnboardingRedirect } from "../../lib/onboarding-middleware";
 
 export default createRoute(async (c, next) => {
@@ -21,6 +21,10 @@ export default createRoute(async (c, next) => {
 
   const url = new URL(c.req.url);
   const pathname = url.pathname;
+  const collapsedLocalePath = collapseDuplicateLocalePrefix(pathname, url.search);
+  if (collapsedLocalePath) {
+    return c.redirect(collapsedLocalePath, 302);
+  }
   const session = await getSessionIfConfigured(c);
   c.set("session", session);
   c.set("savedCount", 0);

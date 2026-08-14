@@ -52,6 +52,11 @@ describe("resolveAuthNavigatePath", () => {
     );
   });
 
+  test("prefixes locale onto reset-link-sent when auth base path is empty", () => {
+    expect(resolveAuthNavigatePath("/reset-link-sent", "en")).toBe("/en/reset-link-sent");
+    expect(resolveAuthNavigatePath("/reset-password", "de")).toBe("/de/reset-password");
+  });
+
   test("keeps already locale-scoped paths", () => {
     expect(resolveAuthNavigatePath("/de/auth/continue", "de")).toBe("/de/auth/continue");
     expect(resolveAuthNavigatePath("/de/events", "de")).toBe("/de/events");

@@ -25,7 +25,9 @@ export function AuthPageLayout({ locale, page, children }: AuthPageLayoutProps) 
       >
         <Surface className="flex flex-col gap-3" variant="transparent">
           <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
-          <Paragraph color="muted">{copy.description}</Paragraph>
+          {page === "resetLinkSent" ? null : (
+            <Paragraph color="muted">{copy.description}</Paragraph>
+          )}
         </Surface>
         {children}
       </Surface>

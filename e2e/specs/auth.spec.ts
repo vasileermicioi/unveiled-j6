@@ -222,8 +222,8 @@ test.describe("auth.feature", () => {
     await send.click();
     const response = await responsePromise;
     expect(response.ok()).toBeTruthy();
-    // UI may toast then redirect to login — either success copy or login landing is acceptable.
-    await expect(page).toHaveURL(new RegExp(`/${locale}/(forgot-password|login)`), {
+    // Library navigates to reset-link-sent after a successful request.
+    await expect(page).toHaveURL(new RegExp(`/${locale}/(forgot-password|login|reset-link-sent)`), {
       timeout: 15_000,
     });
   });

@@ -87,7 +87,46 @@ export function isLocaleRoot(pathname: string): boolean {
   return segments.length === 1 && Boolean(first && isValidLocale(first));
 }
 
-const AUTH_PATH_SEGMENTS = new Set(["login", "signup", "forgot-password", "reset-password"]);
+const AUTH_PATH_SEGMENTS = new Set([
+  "login",
+  "signup",
+  "forgot-password",
+  "reset-password",
+  "reset-link-sent",
+]);
+
+/** Redirect `/login` (library links with empty auth base path) to `/:locale/login`. */
+export function unprefixedAuthRedirectPath(
+  pathname: string,
+  search: string,
+  locale: Locale,
+): string | null {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length !== 1) {
+    return null;
+  }
+
+  const page = segments[0];
+  if (!page || !AUTH_PATH_SEGMENTS.has(page)) {
+    return null;
+  }
+
+  return `/${locale}/${page}${search}`;
+}
+
+/** Collapse `/en/en/reset-password` (Better Auth UI double-locale) to `/en/reset-password`. */
+export function collapseDuplicateLocalePrefix(pathname: string, search = ""): string | null {
+  const segments = pathname.split("/").filter(Boolean);
+  const first = segments[0];
+  const second = segments[1];
+  if (!first || !second || !isValidLocale(first) || !isValidLocale(second)) {
+    return null;
+  }
+
+  const rest = segments.slice(2);
+  const collapsed = rest.length > 0 ? `/${first}/${rest.join("/")}` : `/${first}`;
+  return `${collapsed}${search}`;
+}
 
 export function isAuthPage(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);

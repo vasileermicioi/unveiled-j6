@@ -121,7 +121,7 @@ Reuse existing components before inventing new ones: `PageHero`, `SectionCard`, 
 
 ### Auth page structure (Phase 2+)
 
-Login, signup, forgot-password, and reset-password follow a different pattern from marketing heroes:
+Login, signup, forgot-password, reset-link-sent, and reset-password follow a different pattern from marketing heroes:
 
 1. **Page chrome** — `AuthPageLayout`: localized `Heading` + `Paragraph` on yellow (no extra hero card).
 2. **Form card** — `@better-auth-ui/heroui` view inside a client island, `className="auth-form"`, **`Card variant="default"`** (white). Do **not** use `variant="secondary"` here — that variant is for inverted marketing panels only.

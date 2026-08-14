@@ -59,6 +59,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 | `/login` | — | `@better-auth-ui/heroui`; email/password + Google |
 | `/signup` | — | Registration → `USER`, onboarding incomplete |
 | `/forgot-password` | — | Reset request |
+| `/reset-link-sent` | — | Confirmation after reset request (`noindex`) |
 | `/reset-password` | — | Token-based reset (`noindex`) |
 | `/auth/callback/google` | — | Neon Auth OAuth callback |
 

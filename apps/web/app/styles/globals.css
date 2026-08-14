@@ -1972,6 +1972,13 @@
     display: none;
   }
 
+  .auth-form__confirm-message {
+    color: var(--foreground);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
   .auth-form .card__footer .link {
     color: var(--foreground);
     font-weight: 700;

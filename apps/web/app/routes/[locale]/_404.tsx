@@ -1,10 +1,16 @@
 import type { NotFoundHandler } from "hono";
 
 import { NotFoundPage } from "../../components/NotFoundPage";
-import { getRequestLocale } from "../../lib/locale";
+import { getRequestLocale, unprefixedAuthRedirectPath } from "../../lib/locale";
 
 const handler: NotFoundHandler = (c) => {
   const locale = getRequestLocale(c);
+  const url = new URL(c.req.url);
+  const authRedirect = unprefixedAuthRedirectPath(url.pathname, url.search, locale);
+  if (authRedirect) {
+    return c.redirect(authRedirect, 302);
+  }
+
   c.status(404);
   c.header("X-Robots-Tag", "noindex");
 

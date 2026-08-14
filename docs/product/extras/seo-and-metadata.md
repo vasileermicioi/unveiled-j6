@@ -8,7 +8,7 @@ SSR metadata for the production MVP. Aligns with [`sitemap/sitemap.md`](../sitem
 |---|---|---|
 | `/:locale` (Discover home), `/how-it-works`, `/faq`, `/membership`, `/impressum`, `/privacy`, `/terms` | ✅ Yes | Public marketing / legal |
 | `/discover` | — | **301** to `/:locale` — do not list separately in sitemap.xml |
-| `/login`, `/signup`, `/forgot-password`, `/reset-password` | ❌ `noindex` | Utility / token URLs |
+| `/login`, `/signup`, `/forgot-password`, `/reset-link-sent`, `/reset-password` | ❌ `noindex` | Utility / token URLs |
 | `/events` | ❌ `noindex` | **Member-gated** feed — not a public catalog list |
 | `/events/map`, `/saved` | ❌ `noindex` | Member-only |
 | `/events/:id` | ✅ Yes, **when bookable** | Public detail; long-tail SEO. Bookable = future `date_time` + `remaining_capacity > 0` |

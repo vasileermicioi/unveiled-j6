@@ -15,6 +15,7 @@ export const ROBOTS_DISALLOW_PATHS = [
   "/*/signup",
   "/*/forgot-password",
   "/*/reset-password",
+  "/*/reset-link-sent",
 ] as const;
 
 export function buildRobotsTxt(): string {

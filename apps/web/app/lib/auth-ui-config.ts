@@ -43,11 +43,13 @@ function buildSignupNameFields(locale: Locale): AdditionalField[] {
 }
 
 export function createAuthProviderConfig(locale: Locale) {
-  const authBase = `/${locale}`;
-
   return {
     basePaths: {
-      auth: authBase,
+      // AuthProvider.baseURL is already `origin/${locale}`. Forgot-password
+      // emails use getViewURL(baseURL, basePaths.auth, resetPassword) — a locale
+      // here would produce `/en/en/reset-password`. In-app links are `/login`
+      // etc. and get the locale from resolveAuthNavigatePath.
+      auth: "",
       settings: `/${locale}/profile`,
       organization: `/${locale}/organization`,
     },
@@ -57,6 +59,7 @@ export function createAuthProviderConfig(locale: Locale) {
         signUp: "signup",
         forgotPassword: "forgot-password",
         resetPassword: "reset-password",
+        resetLinkSent: "reset-link-sent",
         signOut: "sign-out",
         verifyEmail: "verify-email",
       },

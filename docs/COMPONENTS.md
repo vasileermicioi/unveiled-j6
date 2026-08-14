@@ -203,7 +203,7 @@ Props: `{ content: MembershipCheckoutContent }`
 
 ## Auth pages (Phase 2)
 
-Built with `@better-auth-ui/heroui` + `@better-auth-ui/react`. Routes: `[locale]/login`, `signup`, `forgot-password`, `reset-password`. See `design-tokens.md` § Auth page structure.
+Built with `@better-auth-ui/heroui` + `@better-auth-ui/react`. Routes: `[locale]/login`, `signup`, `forgot-password`, `reset-link-sent`, `reset-password`. See `design-tokens.md` § Auth page structure.
 
 ### `AuthPageLayout`
 
@@ -211,7 +211,7 @@ Built with `@better-auth-ui/heroui` + `@better-auth-ui/react`. Routes: `[locale]
 
 SSR shell: localized page title + description on yellow, slot for hydrated auth form. Does not duplicate library footer links.
 
-Props: `{ locale, page: "login" | "signup" | "forgotPassword" | "resetPassword", children }`
+Props: `{ locale, page: "login" | "signup" | "forgotPassword" | "resetPassword" | "resetLinkSent", children }`
 
 ### `AppAuthProvider`
 
@@ -228,6 +228,7 @@ Props: `{ locale, children }`
 | `AuthSignIn` | `SignIn` | `[locale]/login.tsx` |
 | `AuthSignUp` | `SignUp` | `[locale]/signup.tsx` |
 | `AuthForgotPassword` | `ForgotPassword` | `[locale]/forgot-password.tsx` |
+| `AuthResetLinkSent` | Custom confirmation card (no mail-provider CTA) | `[locale]/reset-link-sent.tsx` |
 | `AuthResetPassword` | `ResetPassword` | `[locale]/reset-password.tsx` |
 
 All pass `className="auth-form"` and `variant="default"`. Theme: `.auth-form` block in `globals.css`.

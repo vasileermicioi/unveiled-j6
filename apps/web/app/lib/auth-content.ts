@@ -1,6 +1,6 @@
 import type { Locale } from "./locale";
 
-export type AuthPageKey = "login" | "signup" | "forgotPassword" | "resetPassword";
+export type AuthPageKey = "login" | "signup" | "forgotPassword" | "resetPassword" | "resetLinkSent";
 
 type AuthPageCopy = {
   eyebrow: string;
@@ -30,6 +30,12 @@ const pageCopy: Record<Locale, Record<AuthPageKey, AuthPageCopy>> = {
       title: "Passwort zurücksetzen",
       description: "Wähle ein neues Passwort für dein Konto.",
     },
+    resetLinkSent: {
+      eyebrow: "Konto",
+      title: "E-Mail prüfen",
+      description:
+        "Falls ein Konto existiert, haben wir dir einen Link zum Zurücksetzen geschickt.",
+    },
   },
   en: {
     login: {
@@ -51,6 +57,11 @@ const pageCopy: Record<Locale, Record<AuthPageKey, AuthPageCopy>> = {
       eyebrow: "Account",
       title: "Reset password",
       description: "Choose a new password for your account.",
+    },
+    resetLinkSent: {
+      eyebrow: "Account",
+      title: "Check your email",
+      description: "If an account exists, we sent you a link to reset your password.",
     },
   },
 };
