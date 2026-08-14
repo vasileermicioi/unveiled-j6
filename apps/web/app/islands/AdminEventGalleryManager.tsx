@@ -19,9 +19,9 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Button, Link, Paragraph, Surface } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
-
 import { AdminImageCreditField } from "../components/admin/AdminImageCreditField";
 import { adminEventGalleryRemovePath } from "../components/admin/admin-tabs";
+import { imageAltWithCredit, imageCreditTitle } from "../lib/image-credit";
 import type { Locale } from "../lib/locale";
 
 function stopDragGesture(event: { stopPropagation: () => void }) {
@@ -40,6 +40,7 @@ export type AdminEventGalleryManagerCopy = {
   removeBulkAction: string;
   saveOrderAction: string;
   reorderHint: string;
+  capacityLabel: string;
 };
 
 export type AdminEventGalleryManagerProps = {
@@ -85,7 +86,7 @@ function SortableTile({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.imageId,
   });
-  const storedCredit = item.credit?.trim() || "";
+  const creditTitle = imageCreditTitle(creditValue);
 
   return (
     <Surface
@@ -123,10 +124,11 @@ function SortableTile({
       </label>
       {item.thumbnailUrl ? (
         <img
-          alt={item.label}
+          alt={imageAltWithCredit(item.label, creditValue)}
           className="admin-event-gallery__thumb"
           draggable={false}
           src={item.thumbnailUrl}
+          title={creditTitle}
         />
       ) : (
         <Surface
@@ -136,18 +138,19 @@ function SortableTile({
           <Paragraph size="sm">{item.label}</Paragraph>
         </Surface>
       )}
-      {storedCredit ? (
-        <Paragraph className="admin-event-gallery__credit" size="sm">
-          {storedCredit}
-        </Paragraph>
-      ) : null}
-      <Surface className="admin-event-gallery__credit-field" variant="transparent">
+      <Surface
+        className="admin-event-gallery__credit-field"
+        title={creditTitle}
+        variant="transparent"
+      >
         <AdminImageCreditField
+          compact
           defaultValue={creditValue}
           locale={locale}
           name={`image_credit_${item.imageId}`}
           onValueChange={(value) => onCreditChange(item.imageId, value)}
           stopDrag
+          title={creditTitle}
         />
       </Surface>
     </Surface>
@@ -218,29 +221,13 @@ export default function AdminEventGalleryManager({
         {items.map((item) => (
           <input key={item.imageId} name="imageIds" type="hidden" value={item.imageId} />
         ))}
-        <Surface
-          className="admin-event-gallery__toolbar flex flex-wrap items-center justify-between gap-3"
-          variant="transparent"
-        >
-          <Paragraph className="admin-event-gallery__hint">{copy.reorderHint}</Paragraph>
-          <Surface className="flex flex-wrap gap-3" variant="transparent">
-            <Button
-              className="button button--primary button--md"
-              isDisabled={!isDirty}
-              type="submit"
-            >
-              {copy.saveOrderAction}
-            </Button>
-            {removeHref ? (
-              <Link className="button button--secondary button--md" href={removeHref}>
-                {copy.removeBulkAction}
-              </Link>
-            ) : (
-              <Button className="button button--secondary button--md" isDisabled type="button">
-                {copy.removeBulkAction}
-              </Button>
-            )}
-          </Surface>
+        <Surface className="admin-event-gallery__intro" variant="transparent">
+          <Paragraph className="admin-event-gallery__count" size="sm">
+            {copy.capacityLabel}
+          </Paragraph>
+          <Paragraph className="admin-event-gallery__hint" size="sm">
+            {copy.reorderHint}
+          </Paragraph>
         </Surface>
 
         <DndContext collisionDetection={closestCenter} onDragEnd={onDragEnd} sensors={sensors}>
@@ -262,6 +249,21 @@ export default function AdminEventGalleryManager({
             </Surface>
           </SortableContext>
         </DndContext>
+
+        <Surface className="admin-event-gallery__actions" variant="transparent">
+          <Button className="button button--primary button--md" isDisabled={!isDirty} type="submit">
+            {copy.saveOrderAction}
+          </Button>
+          {removeHref ? (
+            <Link className="button button--secondary button--md" href={removeHref}>
+              {copy.removeBulkAction}
+            </Link>
+          ) : (
+            <Button className="button button--secondary button--md" isDisabled type="button">
+              {copy.removeBulkAction}
+            </Button>
+          )}
+        </Surface>
       </form>
     </Surface>
   );

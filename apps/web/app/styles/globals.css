@@ -932,13 +932,49 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0;
     width: 100%;
     max-width: none;
     min-width: 0;
-    padding-block: 0 0.75rem;
+    padding-block: 0;
     border: 2px solid var(--color-brand-dark);
     background-color: transparent;
+  }
+
+  .image-credit-photo {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .image-credit-note,
+  .image-credit-note.paragraph,
+  .image-credit-note[data-slot="paragraph"] {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    margin: 0;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    color: var(--color-brand-cream);
+    background-color: var(--color-brand-dark);
+    text-align: start;
+  }
+
+  .image-credit-photo--stacked {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .image-credit-photo--stacked .image-credit-note {
+    position: static;
+    width: 100%;
   }
 
   .event-detail--checkout__eyebrow {
@@ -977,6 +1013,11 @@
     align-items: flex-start;
     gap: 0.5rem;
     min-width: 0;
+  }
+
+  .event-detail--checkout__partner-logo-wrap {
+    width: 5.5rem;
+    flex-shrink: 0;
   }
 
   .event-detail--checkout__partner-logo {
@@ -1146,21 +1187,12 @@
     background-color: transparent;
   }
 
-  .event-detail--checkout__hero-credit,
-  .event-detail--checkout__partner-logo-credit,
-  .event-detail-gallery__credit {
-    margin: 0;
-    padding-inline: 0.75rem;
-    font-size: 0.8125rem;
-    font-weight: 400;
-    line-height: 1.4;
-    color: var(--muted);
-    text-align: center;
-  }
-
   .event-detail--checkout__partner-logo-credit {
-    text-align: start;
-    padding-inline: 0;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.625rem;
+    line-height: 1.25;
+    max-height: 2.6em;
+    overflow: hidden;
   }
 
   .event-detail--checkout__card {
@@ -1418,11 +1450,15 @@
     flex-direction: column;
     width: 100%;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0;
     justify-content: center;
     padding: 0;
     background: transparent;
     border: none;
+  }
+
+  .event-detail-gallery__photo {
+    max-height: min(82vh, 56rem);
   }
 
   .event-detail-gallery__full {
@@ -1498,35 +1534,42 @@
     gap: 1rem;
   }
 
+  .admin-event-gallery__save-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+    margin: 0;
+  }
+
+  .admin-event-gallery__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .admin-event-gallery__count,
   .admin-event-gallery__hint {
     margin: 0;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.45;
     color: var(--muted);
   }
 
-  .admin-event-gallery__save-form {
-    display: inline-flex;
-    margin: 0;
+  .admin-event-gallery__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
   .admin-event-gallery__grid,
   .admin-event-gallery__confirm-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 12.5rem));
+    justify-content: start;
     gap: 0.75rem;
-  }
-
-  @media (min-width: 640px) {
-    .admin-event-gallery__grid,
-    .admin-event-gallery__confirm-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .admin-event-gallery__grid,
-    .admin-event-gallery__confirm-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
+    width: 100%;
   }
 
   .admin-event-gallery__tile,
@@ -1554,6 +1597,11 @@
     outline-offset: -4px;
   }
 
+  .admin-event-gallery__thumb-wrap {
+    display: block;
+    width: 100%;
+  }
+
   .admin-event-gallery__thumb {
     display: block;
     width: 100%;
@@ -1567,6 +1615,54 @@
     justify-content: center;
     aspect-ratio: 1 / 1;
     padding: 0.75rem;
+  }
+
+  .admin-event-gallery__credit-field {
+    border-top: 2px solid var(--border);
+    background: var(--color-brand-cream);
+  }
+
+  .admin-event-gallery__credit-field .text-field,
+  .admin-event-gallery__credit-field .admin-image-credit-field--compact {
+    width: 100%;
+    gap: 0;
+  }
+
+  .admin-event-gallery__credit-field .label,
+  .admin-event-gallery__credit-field [data-slot="label"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .admin-event-gallery__credit-field .input,
+  .admin-event-gallery__credit-field [data-slot="input"] {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--color-brand-cream);
+    color: var(--color-brand-dark);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.3;
+    padding: 0.45rem 0.5rem;
+    text-overflow: ellipsis;
+  }
+
+  .admin-event-gallery__credit-field .input:focus,
+  .admin-event-gallery__credit-field .input[data-focused="true"],
+  .admin-event-gallery__credit-field [data-slot="input"]:focus,
+  .admin-event-gallery__credit-field [data-slot="input"][data-focused="true"] {
+    outline: 2px solid var(--color-brand-dark);
+    outline-offset: -2px;
   }
 
   .admin-event-gallery__select {

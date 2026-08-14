@@ -6,8 +6,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import { imageAltWithCredit, imageCreditTitle } from "../../lib/image-credit";
 import type { Locale } from "../../lib/locale";
 
+import { ImageCreditNote } from "../ImageCreditNote";
 import { AdminImageCreditField } from "./AdminImageCreditField";
 
 import {
@@ -32,6 +34,8 @@ export type AdminImageVariantGalleryProps = {
    * pages through all size variants. Used for multi-file gallery upload previews.
    */
   compact?: boolean;
+  /** Stored `images.credit` — thumbnail `title` + lightbox `alt`/`title` + footer. */
+  credit?: string | null;
 };
 
 type GalleryTile = {
@@ -65,6 +69,7 @@ export function AdminImageVariantGallery({
   imagePublicBaseUrl = null,
   label,
   compact = false,
+  credit = null,
 }: AdminImageVariantGalleryProps) {
   const copy = getAdminCopy(locale);
   const modalState = useOverlayState();
@@ -213,7 +218,12 @@ export function AdminImageVariantGallery({
               }}
               type="button"
             >
-              <img alt="" className="admin-image-variant-gallery__img" src={tile.src} />
+              <img
+                alt=""
+                className="admin-image-variant-gallery__img"
+                src={tile.src}
+                title={imageCreditTitle(credit)}
+              />
             </Button>
             <Description className="admin-image-variant-gallery__label">
               {compact ? heading : tile.label}
@@ -235,12 +245,19 @@ export function AdminImageVariantGallery({
                   {copy.imageVariantCloseHint}
                 </Paragraph>
                 <Surface className="event-detail-gallery__stage" variant="transparent">
-                  <img
-                    alt={active.label}
-                    className="event-detail-gallery__full"
-                    decoding="async"
-                    src={active.src}
-                  />
+                  <Surface
+                    className="image-credit-photo event-detail-gallery__photo"
+                    variant="transparent"
+                  >
+                    <img
+                      alt={imageAltWithCredit(active.label, credit)}
+                      className="event-detail-gallery__full"
+                      decoding="async"
+                      src={active.src}
+                      title={imageCreditTitle(credit)}
+                    />
+                    <ImageCreditNote className="event-detail-gallery__credit" credit={credit} />
+                  </Surface>
                 </Surface>
                 <Surface
                   className="event-detail-gallery__pager flex items-center justify-center gap-6"

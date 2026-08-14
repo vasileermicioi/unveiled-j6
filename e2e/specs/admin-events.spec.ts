@@ -1339,7 +1339,7 @@ test.describe("admin-events.feature", () => {
     await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery/?$`), {
       timeout: 90_000,
     });
-    await expect(page.getByText("Photo: Ada")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByDisplayValue("Photo: Ada")).toBeVisible({ timeout: 15_000 });
   });
 
   test("Scenario: Admin multi-upload gallery photos", async ({ page, locale }) => {

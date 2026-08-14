@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import { isWizardAdvanceSubmit } from "../../lib/admin-event-wizard";
+import { imageAltWithCredit, imageCreditTitle } from "../../lib/image-credit";
 import type { Locale } from "../../lib/locale";
 
 import { AdminImageCreditField } from "./AdminImageCreditField";
@@ -230,6 +231,7 @@ export function EventImageUpload({
       {showExistingGallery && stagedOrExistingImageId ? (
         <>
           <AdminImageVariantGallery
+            credit={currentCredit}
             imageId={stagedOrExistingImageId}
             imagePublicBaseUrl={imagePublicBaseUrl}
             locale={locale}
@@ -242,7 +244,11 @@ export function EventImageUpload({
       {/* Fallback single thumb only when gallery cannot resolve (no imageId/base). */}
       {!showExistingGallery && !singleProcessed && currentImageUrl ? (
         <Surface className="admin-form__image-preview" variant="transparent">
-          <img alt="" src={currentImageUrl} />
+          <img
+            alt={imageAltWithCredit("", currentCredit)}
+            src={currentImageUrl}
+            title={imageCreditTitle(currentCredit)}
+          />
         </Surface>
       ) : null}
 

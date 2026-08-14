@@ -1,6 +1,7 @@
 import { Button, Form, Link, Paragraph, Surface } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import { imageAltWithCredit, imageCreditTitle } from "../../lib/image-credit";
 import type { Locale } from "../../lib/locale";
 
 import type { AdminGalleryListItem } from "./AdminEventGalleryListPage";
@@ -59,9 +60,10 @@ export function AdminEventGalleryRemovePage({
                 variant="transparent"
               >
                 <img
-                  alt={copy.galleryPhotoLabel(index + 1)}
+                  alt={imageAltWithCredit(copy.galleryPhotoLabel(index + 1), image.credit)}
                   className="admin-event-gallery__thumb"
                   src={image.thumbnailUrl}
+                  title={imageCreditTitle(image.credit)}
                 />
               </Surface>
             ) : (

@@ -2,7 +2,9 @@ import { Button, Modal, Paragraph, Surface, useOverlayState } from "@heroui/reac
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
+import { ImageCreditNote } from "../components/ImageCreditNote";
 import { type EventDetailGalleryCopy, galleryPhotoAlt } from "../lib/event-detail-gallery-copy";
+import { imageAltWithCredit, imageCreditTitle } from "../lib/image-credit";
 import type { PublicEventGalleryImage } from "../lib/public-event-gallery";
 
 export type EventGallerySliderProps = {
@@ -71,10 +73,10 @@ export default function EventGallerySlider({ images, copy }: EventGallerySliderP
         variant="transparent"
       >
         {images.map((image, imageIndex) => {
-          const alt = galleryPhotoAlt(copy, imageIndex + 1);
+          const label = galleryPhotoAlt(copy, imageIndex + 1);
           return (
             <Button
-              aria-label={alt}
+              aria-label={label}
               className="event-detail-gallery__thumb-button"
               key={image.imageId}
               onPress={() => openAt(imageIndex)}
@@ -83,13 +85,14 @@ export default function EventGallerySlider({ images, copy }: EventGallerySliderP
               }}
             >
               <img
-                alt={alt}
+                alt={imageAltWithCredit(label, image.credit)}
                 className="event-detail-gallery__thumb"
                 decoding="async"
                 loading="lazy"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 src={image.thumbSrc}
                 srcSet={image.thumbSrcSet}
+                title={imageCreditTitle(image.credit)}
               />
             </Button>
           );
@@ -109,19 +112,24 @@ export default function EventGallerySlider({ images, copy }: EventGallerySliderP
                   {copy.closeLabel}
                 </Paragraph>
                 <Surface className="event-detail-gallery__stage" variant="transparent">
-                  <img
-                    alt={galleryPhotoAlt(copy, index + 1)}
-                    className="event-detail-gallery__full"
-                    decoding="async"
-                    sizes="(max-width: 1280px) 100vw, 1280px"
-                    src={active.fullSrc}
-                    srcSet={active.fullSrcSet}
-                  />
-                  {active.credit?.trim() ? (
-                    <Paragraph className="event-detail-gallery__credit" size="sm">
-                      {active.credit.trim()}
-                    </Paragraph>
-                  ) : null}
+                  <Surface
+                    className="image-credit-photo event-detail-gallery__photo"
+                    variant="transparent"
+                  >
+                    <img
+                      alt={imageAltWithCredit(galleryPhotoAlt(copy, index + 1), active.credit)}
+                      className="event-detail-gallery__full"
+                      decoding="async"
+                      sizes="(max-width: 1280px) 100vw, 1280px"
+                      src={active.fullSrc}
+                      srcSet={active.fullSrcSet}
+                      title={imageCreditTitle(active.credit)}
+                    />
+                    <ImageCreditNote
+                      className="event-detail-gallery__credit"
+                      credit={active.credit}
+                    />
+                  </Surface>
                 </Surface>
                 <Surface
                   className="event-detail-gallery__pager flex items-center justify-center gap-6"

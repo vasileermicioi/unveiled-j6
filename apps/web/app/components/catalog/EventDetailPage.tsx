@@ -12,10 +12,12 @@ import EventMap, { type EventMapMarker } from "../../islands/EventMap";
 import { isEventBookable } from "../../lib/catalog-mappers";
 import type { CheckoutOccurrence } from "../../lib/checkout-slot";
 import { getEventDetailGalleryCopy } from "../../lib/event-detail-gallery-copy";
+import { imageAltWithCredit, imageCreditTitle } from "../../lib/image-credit";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import { formatPartnerOpeningHoursLines } from "../../lib/partner-opening-hours-display";
 import type { PublicEventGalleryImage } from "../../lib/public-event-gallery";
+import { ImageCreditNote } from "../ImageCreditNote";
 import MarkdownContent from "../MarkdownContent";
 
 const META_ICON_SIZE = 14;
@@ -29,7 +31,7 @@ export type EventDetailPartnerAttribution = {
   openingHours?: OpeningHoursWeek | null;
   /** Venue accessibility; DETAILS Accessibility row. `null` → Not specified. */
   barrierFree?: boolean | null;
-  /** Partner logo credit; muted caption under the logo when non-empty. */
+  /** Partner logo credit; thumbnail `alt`/`title` when non-empty. */
   logoCredit?: string | null;
 };
 
@@ -47,7 +49,7 @@ type EventDetailPageProps = {
   defaultDateTimeIso?: string;
   /** Ordered gallery images; omit or empty → no gallery section. */
   galleryImages?: PublicEventGalleryImage[];
-  /** Caption under the primary hero when `images.credit` is non-empty. */
+  /** Caption footer + hero `alt`/`title` when `images.credit` is non-empty. */
   heroCredit?: string | null;
   /** Hosting partner name + optional logo for DETAILS-card attribution. */
   partnerAttribution?: EventDetailPartnerAttribution;
@@ -614,19 +616,21 @@ export function EventDetailPage({
         >
           {heroSrc ? (
             <Surface className="event-detail--checkout__hero min-w-0 w-full" variant="transparent">
-              <img
-                alt={event.title}
-                className="event-detail--checkout__hero-image"
-                decoding="async"
-                sizes="(max-width: 1023px) 100vw, 1280px"
-                src={heroSrc}
-                srcSet={heroSrcSet}
-              />
-              {heroCredit?.trim() ? (
-                <Paragraph className="event-detail--checkout__hero-credit" size="sm">
-                  {heroCredit.trim()}
-                </Paragraph>
-              ) : null}
+              <Surface className="image-credit-photo" variant="transparent">
+                <img
+                  alt={imageAltWithCredit(event.title, heroCredit)}
+                  className="event-detail--checkout__hero-image"
+                  decoding="async"
+                  sizes="(max-width: 1023px) 100vw, 1280px"
+                  src={heroSrc}
+                  srcSet={heroSrcSet}
+                  title={imageCreditTitle(heroCredit)}
+                />
+                <ImageCreditNote
+                  className="event-detail--checkout__hero-credit"
+                  credit={heroCredit}
+                />
+              </Surface>
             </Surface>
           ) : null}
           <Surface
@@ -665,17 +669,18 @@ export function EventDetailPage({
                   </Paragraph>
                   <Surface className="event-detail--checkout__partner-body" variant="transparent">
                     {partnerLogoUrl ? (
-                      <img
-                        alt={partnerName}
-                        className="event-detail--checkout__partner-logo"
-                        decoding="async"
-                        src={partnerLogoUrl}
-                      />
-                    ) : null}
-                    {partnerAttribution?.logoCredit?.trim() ? (
-                      <Paragraph className="event-detail--checkout__partner-logo-credit" size="sm">
-                        {partnerAttribution.logoCredit.trim()}
-                      </Paragraph>
+                      <Surface
+                        className="event-detail--checkout__partner-logo-wrap"
+                        variant="transparent"
+                      >
+                        <img
+                          alt={imageAltWithCredit(partnerName, partnerAttribution?.logoCredit)}
+                          className="event-detail--checkout__partner-logo"
+                          decoding="async"
+                          src={partnerLogoUrl}
+                          title={imageCreditTitle(partnerAttribution?.logoCredit)}
+                        />
+                      </Surface>
                     ) : null}
                     <Paragraph className="event-detail--checkout__partner-name">
                       {partnerName}

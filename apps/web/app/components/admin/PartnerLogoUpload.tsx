@@ -5,6 +5,7 @@ import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images/constants";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import { imageAltWithCredit, imageCreditTitle } from "../../lib/image-credit";
 import type { Locale } from "../../lib/locale";
 
 import { AdminImageCreditField } from "./AdminImageCreditField";
@@ -185,6 +186,7 @@ export function PartnerLogoUpload({
 
       {showExistingGallery ? (
         <AdminImageVariantGallery
+          credit={currentCredit}
           imageId={currentLogoImageId}
           imagePublicBaseUrl={imagePublicBaseUrl}
           locale={locale}
@@ -193,7 +195,11 @@ export function PartnerLogoUpload({
 
       {isEdit && !showExistingGallery && !processed && currentLogoUrl ? (
         <Surface className="admin-form__image-preview" variant="transparent">
-          <img alt="" src={currentLogoUrl} />
+          <img
+            alt={imageAltWithCredit("", currentCredit)}
+            src={currentLogoUrl}
+            title={imageCreditTitle(currentCredit)}
+          />
         </Surface>
       ) : null}
 

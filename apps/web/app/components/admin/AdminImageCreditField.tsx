@@ -12,6 +12,10 @@ export type AdminImageCreditFieldProps = {
   defaultValue?: string | null;
   /** Stop drag-to-reorder when the field lives on a sortable gallery tile. */
   stopDrag?: boolean;
+  /** Hide label/hint chrome — tile grids keep a single-line input. */
+  compact?: boolean;
+  /** Native `title` on the input (full credit when the field is narrow). */
+  title?: string;
   onValueChange?: (value: string) => void;
 };
 
@@ -25,6 +29,8 @@ export function AdminImageCreditField({
   name,
   defaultValue = "",
   stopDrag = false,
+  compact = false,
+  title,
   onValueChange,
 }: AdminImageCreditFieldProps) {
   const copy = getAdminCopy(locale);
@@ -37,7 +43,13 @@ export function AdminImageCreditField({
     : undefined;
 
   return (
-    <TextField defaultValue={defaultValue ?? ""} fullWidth name={name} {...dragHandlers}>
+    <TextField
+      className={compact ? "admin-image-credit-field--compact" : undefined}
+      defaultValue={defaultValue ?? ""}
+      fullWidth
+      name={name}
+      {...dragHandlers}
+    >
       <Label>{copy.imageCreditLabel}</Label>
       <Input
         maxLength={ADMIN_IMAGE_CREDIT_MAX_LENGTH}
@@ -45,8 +57,9 @@ export function AdminImageCreditField({
           const native = event.currentTarget as unknown as HTMLInputElement;
           onValueChange?.(native.value);
         }}
+        title={title || undefined}
       />
-      <Description>{copy.imageCreditHint}</Description>
+      {compact ? null : <Description>{copy.imageCreditHint}</Description>}
     </TextField>
   );
 }

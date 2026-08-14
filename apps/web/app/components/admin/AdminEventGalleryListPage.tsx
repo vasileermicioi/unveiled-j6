@@ -64,13 +64,13 @@ export function AdminEventGalleryListPage({
       title={copy.galleryTitle}
     >
       {error ? <AdminFormError message={error} /> : null}
-      <Paragraph>{copy.galleryCapacity(images.length)}</Paragraph>
 
       {images.length === 0 ? (
         <Paragraph>{copy.galleryEmpty}</Paragraph>
       ) : (
         <AdminEventGalleryManager
           copy={{
+            capacityLabel: copy.galleryCapacity(images.length),
             removeBulkAction: copy.galleryRemoveBulkAction,
             saveOrderAction: copy.gallerySaveOrderAction,
             reorderHint: copy.galleryReorderHint,
