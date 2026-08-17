@@ -25,4 +25,9 @@ describe("createAuthProviderConfig", () => {
       ),
     ).toBe("https://example.com/de/forgot-password");
   });
+
+  test("does not offer Google or other social providers", () => {
+    expect(createAuthProviderConfig("de").socialProviders).toEqual([]);
+    expect(createAuthProviderConfig("en").socialProviders).toEqual([]);
+  });
 });

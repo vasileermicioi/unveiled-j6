@@ -217,7 +217,7 @@ Props: `{ locale, page: "login" | "signup" | "forgotPassword" | "resetPassword" 
 
 **Path:** `components/AppAuthProvider.tsx`
 
-Wraps `@better-auth-ui/heroui` `AuthProvider` with locale-aware paths, Google OAuth, signup name fields, and DE form copy. Used inside auth islands only — not global.
+Wraps `@better-auth-ui/heroui` `AuthProvider` with locale-aware paths, signup name fields, and DE form copy. Used inside auth islands only — not global.
 
 Props: `{ locale, children }`
 

@@ -53,15 +53,24 @@ The system SHALL provide SSR pages at `/:locale/profile/data-export`, `/:locale/
 - **WHEN** a crawler or browser requests any of the GDPR HTML pages
 - **THEN** the response is marked `noindex`
 
-### Requirement: Automated browser coverage for auth flows
+### Requirement: Auth screens offer email/password only
+The system SHALL offer email/password sign-in and sign-up on `/:locale/login` and `/:locale/signup` and MUST NOT show a Google OAuth (or other social) control, including “Continue with Google” / “Weiter mit Google”. Page copy on those routes MUST NOT promise Google sign-in.
 
-Each implementable Gherkin scenario in `docs/product/features/auth.feature` SHALL have a Playwright test in `e2e/specs/auth.spec.ts` with a title matching the scenario line (or Scenario Outline plus example row). Google OAuth when CI cannot complete the provider flow SHALL use `test.skip` with an explicit reason. GDPR export/delete and admin-processed deletion SHALL pass once `gdpr-rights` ships, or use `test.skip` only with an explicit Neon Auth / env / harness reason naming the blocker (not “Phase 9 — not built”).
+#### Scenario: Auth screens do not offer Google
+- **WHEN** a guest opens `/:locale/login` or `/:locale/signup`
+- **THEN** email and password fields are available
+- **AND** no Google / social-login control is visible
+- **AND** the page description does not mention Google
+
+### Requirement: Automated browser coverage for auth flows
+Each implementable Gherkin scenario in `docs/product/features/auth.feature` SHALL have a Playwright test in `e2e/specs/auth.spec.ts` with a title matching the scenario line (or Scenario Outline plus example row). There is no Google OAuth skip: Google is not offered, so the suite MUST NOT `test.skip` Google provider limitations. The scenario `Auth screens do not offer Google` SHALL pass in CI without `test.skip`. GDPR export/delete and admin-processed deletion SHALL pass once `gdpr-rights` ships, or use `test.skip` only with an explicit Neon Auth / env / harness reason naming the blocker (not “Phase 9 — not built”).
 
 #### Scenario: Core auth loop is E2E-verified
 
 - **WHEN** `bun run test:e2e` executes `e2e/specs/auth.spec.ts`
-- **THEN** signup, login, logout, validation outlines, route protection, and role-based redirects are asserted
+- **THEN** signup, login, logout, validation outlines, route protection, role-based redirects, and the absence of Google/social login are asserted
 - **AND** any skipped scenario documents the blocker or deferral owner in the skip message
+- **AND** Google OAuth is not a valid skip reason
 
 #### Scenario: Credentials come from environment
 
@@ -79,21 +88,35 @@ Each implementable Gherkin scenario in `docs/product/features/auth.feature` SHAL
 - **WHEN** gdpr-rights step 03 completes
 - **THEN** the four GDPR scenarios in `auth.spec.ts` pass or skip only with Neon Auth / env / harness reasons
 
-### Requirement: Phase 4½ release gate
+#### Scenario: Auth screens do not offer Google is E2E-verified
 
-The authentication domain's Phase 4½ done-when criteria SHALL include Playwright coverage for all implementable `auth.feature` scenarios, with explicitly marked skips only for optional Google OAuth CI limitations (and any remaining named Neon Auth / harness blockers for GDPR if still present), and that suite SHALL run as part of the CI E2E job. GDPR flows are no longer deferred solely as “Phase 9.”
+- **WHEN** `Scenario: Auth screens do not offer Google` runs
+- **THEN** the test is not skipped
+- **AND** a guest opening `/:locale/login` and `/:locale/signup` sees email and password fields
+- **AND** no button or link named Google / Continue with Google / Weiter mit Google is visible
+- **AND** the page description does not mention Google
+
+### Requirement: Phase 4½ release gate
+The authentication domain's Phase 4½ done-when criteria SHALL include Playwright coverage for all implementable `auth.feature` scenarios. The authentication suite in CI SHALL NOT skip Google OAuth. Coverage matrix and `e2e/README.md` SHALL list the no-Google scenario as `pass`, not `deferred`. Remaining named skips are only Neon Auth / harness blockers for GDPR if still present, and that suite SHALL run as part of the CI E2E job. GDPR flows are no longer deferred solely as “Phase 9.”
 
 #### Scenario: Auth E2E is part of phase gate
 
 - **WHEN** Phase 4½ is declared complete
 - **THEN** `e2e/specs/auth.spec.ts` is included in the CI E2E job
 - **AND** every skip in that file cites the deferral owner or blocker in the skip message
+- **AND** no skip cites Google OAuth or a missing Google provider
 
 #### Scenario: Auth coverage remains env-driven
 
 - **WHEN** CI runs auth E2E
 - **THEN** credentials come from `E2E_USER_*` / `E2E_ADMIN_*` secrets (or disposable signup)
 - **AND** production passwords are never hardcoded in the spec file
+
+#### Scenario: No-Google coverage is pass not deferred
+
+- **WHEN** an implementer opens `docs/product/testing/coverage-matrix.md` and `e2e/README.md` after this change
+- **THEN** `Scenario: Auth screens do not offer Google` is listed as `pass`
+- **AND** former Google OAuth scenarios are absent (not `deferred`)
 
 ### Requirement: GDPR auth Playwright close-out
 

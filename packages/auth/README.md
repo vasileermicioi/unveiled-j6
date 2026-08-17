@@ -17,7 +17,7 @@ Starter state:
 - `profile.onboarding_complete = false`
 - `subscriptions.status = INACTIVE`, `plan = BASIC_BERLIN`
 
-Email/password signup and Google OAuth first login use the same path.
+Email/password signup first login uses the same path.
 
 ## Environment (consumed by `apps/web`, not this package)
 

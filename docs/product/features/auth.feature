@@ -5,11 +5,10 @@
 #   - The old app's `AuthView.tsx` (dead code) and non-distinct `SIGNUP` app-view are moot in the
 #     rewrite — every auth screen is now its own real route (`/login`, `/signup`, etc. — see
 #     sitemap/sitemap.md), so there's no "inline tab state vs. dead component" ambiguity to carry forward.
-#   - Only email/password auth existed ("Google/Apple planned later," never built). DECIDED: add Google
-#     OAuth via Neon Auth for this rewrite — low integration cost (configured directly in the Neon Auth
-#     project settings), meaningfully reduces signup friction. Apple sign-in is not added (no strong
-#     reason to prioritize it for a Berlin-only web product; revisit only if mobile-web Apple-ecosystem
-#     signup friction becomes a measured problem).
+#   - Only email/password auth existed in the old app ("Google/Apple planned later," never built).
+#     DECIDED for MVP: email/password only. Google is not offered because it is not implemented.
+#     Apple sign-in is not added (no strong reason to prioritize it for a Berlin-only web product;
+#     revisit only if mobile-web Apple-ecosystem signup friction becomes a measured problem).
 #   - DECIDED (new scope, required for a real product, not in the old app at all): self-service account
 #     deletion (GDPR right to erasure) and self-service data export (GDPR right to access/portability).
 #     See the scenarios below and `extras/authorization-matrix.md`.
@@ -99,17 +98,12 @@ Feature: Authentication
     When I try to visit the admin area
     Then I am redirected away to the area appropriate for my role
 
-  Scenario: Sign up or log in with Google
+  Scenario: Auth screens do not offer Google
     Given I am not signed in
-    When I authenticate via Google OAuth
-    Then a "USER" account is created if this is my first time (same starter state as email/password signup: 17 credits, subscription "INACTIVE", onboarding incomplete), or I am signed into my existing account if the email already matches one
-    And I am routed exactly as any other new/returning "USER" would be (onboarding if incomplete, events feed if complete)
-
-  Scenario: Social login never creates a PARTNER or ADMIN account
-    Given I authenticate via Google OAuth for the first time
-    Then the account created is always role "USER"
-    And "ADMIN" accounts remain exclusively provisioned out-of-band — never through self-service signup
-    And "PARTNER" accounts remain exclusively provisioned by admin portal-access (post-MVP) — never through self-service signup
+    When I open "/:locale/login" or "/:locale/signup"
+    Then email and password fields are available
+    And no Google / social-login control is visible
+    And the page description does not mention Google
 
   Scenario: Request a data export
     Given I am signed in

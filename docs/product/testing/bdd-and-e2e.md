@@ -87,8 +87,7 @@ Any other `page.locator` usage must be justified against this exception list in 
 | Area | Notes |
 |---|---|
 | Discover CTA → `/events` | Browse CTA goes to `signup?returnTo=/:locale/events`; onboarding finish still lands on `/membership`. Auto `returnTo` after onboarding → **named deferral** (post-MVP polish). |
-| `auth` / Google OAuth | Google OAuth scenarios remain `deferred` — Neon test provider; staging manual. |
-| GDPR Neon Auth disable | Export/delete Playwright exists; credential-reject after anonymize may skip when Auth plugins incomplete — ops cutover in `DEPLOYMENT.md`. |
+| `auth` / no Google | `Auth screens do not offer Google` is `pass` — email/password only; Google is not a valid skip. || GDPR Neon Auth disable | Export/delete Playwright exists; credential-reject after anonymize may skip when Auth plugins incomplete — ops cutover in `DEPLOYMENT.md`. |
 | Post-MVP | `admin-partners` portal/QR `@skip-no-ui` stubs — leave until post-MVP. |
 | Locator polish | `e2e/fixtures/onboarding.ts` `page.locator("label").filter` — proximity-adjacent; optional later cleanup. |
 

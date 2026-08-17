@@ -320,7 +320,7 @@ Phase 2 is complete when staging supports the full auth loop with route protecti
 Create a test member on staging:
 
 1. Open `https://<staging-host>/de/signup` (replace with staging URL from the table above).
-2. Register with email/password and first/last name, or use **Continue with Google** (Neon Auth provider must be enabled).
+2. Register with email/password and first/last name.
 3. After signup, confirm starter state in Neon Postgres (`public.users` + `public.subscriptions`):
    - `role = USER`
    - `credits = 17`
@@ -332,7 +332,7 @@ Document any shared staging demo credentials in [Demo accounts](#demo-accounts) 
 
 ### Admin account setup
 
-Every signup (email or Google) provisions `role = USER` with 17 credits. **There is no self-service admin signup.** To access `/admin/*`, promote an existing user in Postgres:
+Every signup (email/password) provisions `role = USER` with 17 credits. **There is no self-service admin signup.** To access `/admin/*`, promote an existing user in Postgres:
 
 ```sql
 UPDATE public.users
@@ -344,17 +344,9 @@ Then **sign out and sign in again** (or open `/de/auth/continue`) so the session
 
 **Staging/dev shortcut:** set `ADMIN_PROMOTE_EMAILS=your@email.com` in Workers `[vars]` / secrets or root `.env`. On the next session resolve, matching `USER` accounts are promoted to `ADMIN` automatically. Use only on non-production environments.
 
-### Google OAuth (Neon Auth)
+### Google OAuth (not offered)
 
-Google sign-in is configured in the **Neon Auth project dashboard**, not via app environment variables.
-
-1. Open the Neon project → **Auth** → **Providers**.
-2. Enable **Google** and paste your Google Cloud OAuth client ID and secret.
-3. Add authorized redirect URIs from the Neon Auth dashboard to your Google OAuth client (Neon shows the callback URL).
-4. Repeat for staging and production Neon branches/projects as needed.
-5. Verify on staging: `/de/login` and `/de/signup` show **Continue with Google**; completing OAuth creates or signs into a `USER` account with starter provisioning (17 credits, `INACTIVE` subscription).
-
-No `GOOGLE_*` env vars are required in `apps/web` — the proxy at `/api/auth/*` forwards OAuth flows to `AUTH_URL`.
+MVP login and signup are **email/password only**. The UI does not show Google / Continue with Google because Google OAuth is not implemented. Do not enable a Neon Auth Google provider for MVP. A leftover provider in the Neon dashboard is harmless if the app never shows the button. There are no `GOOGLE_*` app env vars. Re-adding Google is a new change.
 
 ### Client demo checklist
 
@@ -365,11 +357,10 @@ With `DATABASE_URL` and `AUTH_URL` set on staging:
 3. Email signup creates a session; navbar shows credits badge and logout
 4. Logout returns to guest navbar with login/signup links
 5. Forgot-password flow sends a reset email; reset-password completes
-6. Google OAuth sign-in works (Neon Auth provider configured)
-7. Unauthenticated `/de/events` (or `/en/profile`) → redirect to `/:locale/login`
-8. Signed-in USER visiting `/de/partner` or `/de/admin` → redirect to `/de`
-9. `/de` and `/en` load without browser console errors (guest and signed-in)
-10. `curl -s $SITE_URL/api/auth/get-session` returns Better Auth JSON, not HTML 404
+6. Unauthenticated `/de/events` (or `/en/profile`) → redirect to `/:locale/login`
+7. Signed-in USER visiting `/de/partner` or `/de/admin` → redirect to `/de`
+8. `/de` and `/en` load without browser console errors (guest and signed-in)
+9. `curl -s $SITE_URL/api/auth/get-session` returns Better Auth JSON, not HTML 404
 
 **Neon Auth setup:** Enable Neon Auth on the Postgres project; copy `AUTH_URL` from the Neon dashboard into Worker env.
 
@@ -401,7 +392,7 @@ Phase 3 is complete when staging supports the full four-step onboarding wizard, 
 
 Use a **new signup** or reset an existing test user (see [Repeat demo reset](#repeat-demo-reset) below).
 
-1. Open `https://<staging-host>/de/signup` and register a new USER (email/password or Google OAuth).
+1. Open `https://<staging-host>/de/signup` and register a new USER (email/password).
 2. After signup, confirm redirect to `/de/onboarding/age` (or current resumed step).
 3. **Step 1 — Age:** select an age group (e.g. `26-35`) and continue, **or** skip without selecting.
 4. **Step 2 — Interests:** select at least one interest and mood (optional: Other + free text); submit → `/de/onboarding/location`.
@@ -613,8 +604,7 @@ If required E2E secrets are empty, the e2e job fails early with a clear error (d
 
 | Area | Deferral / owner |
 |---|---|
-| GDPR export / delete / admin deletion (`auth.spec.ts`) | Phase 9 |
-| Google OAuth signup/login (`auth.spec.ts`) | Manual staging + Neon Google provider; not automatable in headless CI without a test OAuth client |
+| GDPR export / delete / admin deletion (`auth.spec.ts`) | Named skip only with Neon Auth / env / harness reasons |
 | Partner portal access / QR regenerate (`admin-partners.spec.ts`) | Phase 8 / no Phase 4 admin UI |
 | Image upload when R2 secrets missing | Conditional skip — provision optional R2 secrets to enable |
 | PARTNER post-login routing | No demo PARTNER seed credentials |
@@ -720,7 +710,7 @@ Spot-check vs `docs/product/sitemap/sitemap.md` (2026-07-11):
 | Guest `/events` → login with `returnTo` | Aligned |
 | Guests have no public full feed | Aligned |
 
-**Named deferrals** (do not block Phase 6): see `.dev-plan/current-iteration/spec-alignment-parent-guide.md` — Google OAuth/GDPR e2e → Phase 8; onboarding finish ignores `returnTo` (lands on `/membership`) → Phase 8; typography utility polish → Phase 8; booking/credits/waitlist/profile/admin-users e2e → Phases 6–8; partner portal/QR → post-MVP.
+**Named deferrals** (do not block Phase 6): see `.dev-plan/current-iteration/spec-alignment-parent-guide.md` — GDPR e2e env/harness skips → ops cutover; onboarding finish ignores `returnTo` (lands on `/membership`) → Phase 8; typography utility polish → Phase 8; booking/credits/waitlist/profile/admin-users e2e → Phases 6–8; partner portal/QR → post-MVP. Google OAuth is not a current skip (email/password only).
 
 ### Phase 5.5 demo script
 
@@ -991,7 +981,7 @@ bun run stories
 Use before promoting a production Workers host (replace staging origin with production).
 
 1. **Neon Postgres** — Production branch/project; ensure production `DATABASE_URL` is a **Build** variable so `bun run build` migrates schema; decide empty vs curated catalog (prefer curated seed or admin-created venues — avoid demo-only junk).
-2. **Neon Auth** — Production `AUTH_URL`; add production origin to **trusted domains** (exact URL, no trailing slash); configure Google OAuth if offering social login; enable Admin plugin + `user.deleteUser` for GDPR disable paths.
+2. **Neon Auth** — Production `AUTH_URL`; add production origin to **trusted domains** (exact URL, no trailing slash); enable Admin plugin + `user.deleteUser` for GDPR disable paths. MVP auth is email/password only — do not require Google OAuth.
 3. **Worker secrets / vars** — `DATABASE_URL`, `AUTH_URL`, `SITE_URL` (production origin); six public R2 vars + `IMAGE_PUBLIC_BASE_URL`; `S3_PRIVATE_BUCKET` (+ optional `S3_PRIVATE_*`); Stripe **live** keys + `STRIPE_PRICE_ID_BASIC_BERLIN` + webhook secret; `RESEND_API_KEY` + `DAILY_CODES_FROM_EMAIL` (verified domain); optional `SENTRY_DSN`. Prefer secrets over committed `[vars]` for credentials.
 4. **Stripe** — Live mode Checkout + Customer Portal (cancel at period end); webhook endpoint → `https://<prod>/api/webhooks/stripe` with events: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted` (see [Stripe webhook setup](#stripe-webhook-setup-dashboard--local)).
 5. **R2** — Production public catalog bucket + public read base URL; separate **private** assets bucket (`S3_PRIVATE_BUCKET`, no public access); CORS if needed for uploads; backfill `vouchers/` if migrating from a shared public bucket.
@@ -1014,7 +1004,7 @@ With `DATABASE_URL` and `AUTH_URL` set:
 4. Email signup with valid data creates a session; `public.users` row has `credits=17`, `role=USER`, and profile names when provided
 5. Invalid signup (bad email, password under 6 chars, empty name) shows client-side validation errors
 6. Forgot-password form submits via Neon Auth; reset-password reads the `token` query param
-7. Google OAuth button visible on login/signup (requires Neon Auth provider config)
+7. Login/signup show email/password only (no Google / Continue with Google control)
 
 ## Phase 2 step 04 verification
 

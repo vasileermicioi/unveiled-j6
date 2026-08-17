@@ -1,5 +1,4 @@
 import type { AdditionalField } from "@better-auth-ui/core";
-import type { SocialProvider } from "better-auth/social-providers";
 import { getAuthLocalization } from "./auth-localization";
 import type { Locale } from "./locale";
 
@@ -70,7 +69,7 @@ export function createAuthProviderConfig(locale: Locale) {
     },
     // Locale-relative: AuthProvider baseURL is `origin/${locale}` (see AppAuthProvider).
     redirectTo: "/auth/continue",
-    socialProviders: ["google"] as SocialProvider[],
+    socialProviders: [],
     emailAndPassword: {
       enabled: true,
       forgotPassword: true,

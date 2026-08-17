@@ -29,7 +29,7 @@ Env vars and third-party services for the production MVP. Partner-portal-only fl
 | `DAILY_CODES_FROM_EMAIL` (Cloud Functions param) | From-address for daily code emails | Keep |
 | — (new) | Neon Postgres connection | `DATABASE_URL` |
 | — (new) | Neon Auth / Better Auth backend (decided: use Neon Auth instead of a standalone auth library — see below) | `AUTH_URL` — Neon-provided Better Auth API URL; HonoX `/api/auth/*` forwards requests to this target |
-| — (new) | Google OAuth (decided: `features/auth.feature`) | No app env vars — configured directly in the Neon Auth project settings (shared test credentials out of the box, swap in real Google OAuth credentials there for production) |
+| — (new) | Google OAuth | **Not a current product auth method** (optional future). No app env vars. MVP is email/password only — do not enable Google for signup/login. A leftover Neon Auth provider is harmless if the UI does not offer it. |
 | — (new) | Stripe (decided: `features/credits-subscription.feature`) | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_BASIC_BERLIN` |
 | — (new) | S3-compatible image storage (decided: `extras/image-uploads.md`) | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `IMAGE_PUBLIC_BASE_URL` — set in repo-root `.env` for local dev (see `.env.example`) and on the staging host; `S3_ENDPOINT` is the R2 account host only (no bucket suffix), `IMAGE_PUBLIC_BASE_URL` is the public R2.dev or custom domain URL |
 | — (new) | Private assets bucket (voucher PDFs; decided: private-assets-bucket) | `S3_PRIVATE_BUCKET` (**required** for private helpers) plus optional `S3_PRIVATE_ENDPOINT` / `S3_PRIVATE_REGION` / `S3_PRIVATE_ACCESS_KEY_ID` / `S3_PRIVATE_SECRET_ACCESS_KEY` (unset fields fall back to public `S3_*`). Bucket must **not** have public access or an app-used CDN/custom domain — bytes are delivered only via auth-checked backend routes (e.g. member `voucher.pdf`), never via `IMAGE_PUBLIC_BASE_URL` |
@@ -78,7 +78,7 @@ Do **not** rely on `subscription_schedule.*` events — they are not handled. Op
 
 ## Google OAuth
 
-**New for the rewrite** (decided in `features/auth.feature`): Google sign-in/signup via Neon Auth's built-in social-provider support, alongside email/password — configured in the Neon Auth project settings, not app code. Creates a `USER` account on first login exactly like a normal signup (17 starter credits, `INACTIVE` subscription, onboarding incomplete). Never used to create `PARTNER`/`ADMIN` accounts.
+**Not a current product auth method.** MVP login and signup are email/password only (`features/auth.feature`). Google is not offered because it is not implemented. There are no app env vars for Google. A leftover Google provider in the Neon Auth dashboard is harmless if the app never shows the button. Re-adding Google is a new change, not a revert of hiding the UI. Apple remains out.
 
 ## Legal / compliance
 

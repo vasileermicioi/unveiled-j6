@@ -276,12 +276,15 @@ test.describe("auth.feature", () => {
     await expect(page).toHaveURL(new RegExp(`/${locale}/?$`));
   });
 
-  test("Scenario: Sign up or log in with Google", async () => {
-    test.skip(true, "Google OAuth — requires Neon test provider; verify manually on staging");
-  });
-
-  test("Scenario: Social login never creates a PARTNER or ADMIN account", async () => {
-    test.skip(true, "Google OAuth — requires Neon test provider; verify manually on staging");
+  test("Scenario: Auth screens do not offer Google", async ({ page, locale }) => {
+    for (const path of ["login", "signup"] as const) {
+      await page.goto(`/${locale}/${path}`);
+      await expect(page.getByLabel(/e-?mail/i)).toBeVisible();
+      await expect(page.getByLabel(/^passwort$|^password$/i)).toBeVisible();
+      await expect(page.getByRole("button", { name: /google/i })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: /google/i })).toHaveCount(0);
+      await expect(page.getByText(/google/i)).toHaveCount(0);
+    }
   });
 
   test("Scenario: Request a data export", async ({ page, locale }) => {

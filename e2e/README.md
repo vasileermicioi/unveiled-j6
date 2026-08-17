@@ -188,8 +188,6 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | Scenario | Spec | Reason / owner |
 |---|---|---|
 | Post-login routing — PARTNER | `auth.spec.ts` | No demo PARTNER credentials in seed; admin-provisioned only |
-| Sign up or log in with Google | `auth.spec.ts` | Google OAuth — Neon test provider; verify manually on staging |
-| Social login never creates PARTNER/ADMIN | `auth.spec.ts` | Same OAuth blocker |
 | GDPR deletion credential reject (conditional) | `auth.spec.ts` | Named skip only when `public.users` is anonymized but Neon Auth `delete-user` / admin `remove-user` still allows login — enable Auth plugins per `DEPLOYMENT.md` |
 | Regenerate venue check-in QR token | `admin-partners.spec.ts` | post-MVP — no admin UI (domain helper only) |
 | Portal access (create / exists / email) | `admin-partners.spec.ts` | post-MVP — portal access UI not built |
@@ -214,6 +212,6 @@ Cookie consent storage key: `unveiled:cookie-consent` (localStorage).
 
 - On `main`, `.github/workflows/deploy-staging.yml` runs **quality → e2e → deploy**. E2E uses `SITE_URL=http://localhost:3000` and `CI=true` so `webServer` starts `bun run dev`.
 - Required GitHub secrets and Phase 4½ operator docs: `apps/web/DEPLOYMENT.md` § Phase 4½ — Testing foundation.
-- Google OAuth scenarios may require `test.skip` with an explicit reason when Neon test credentials are unavailable.
+- Auth screens are email/password only. Do not `test.skip` Google OAuth — Google is not offered.
 - Admin image-upload scenarios need R2 env vars; default CI/local target is `bun run dev`. Pointing Playwright at Workers preview/staging is supported when secrets and `SITE_URL` are set.
 - Event **clone:** admins duplicate via `/:locale/admin/events/:id/clone` (list/edit Clone entry). Series create is removed — do not navigate to `/admin/events/series/new`. Voucher clones require new inventory (not copied from source).

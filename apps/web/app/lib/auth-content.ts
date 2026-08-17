@@ -13,7 +13,7 @@ const pageCopy: Record<Locale, Record<AuthPageKey, AuthPageCopy>> = {
     login: {
       eyebrow: "Willkommen zurück",
       title: "Anmelden",
-      description: "Melde dich mit E-Mail und Passwort oder Google an.",
+      description: "Melde dich mit E-Mail und Passwort an.",
     },
     signup: {
       eyebrow: "Loslegen",
@@ -41,7 +41,7 @@ const pageCopy: Record<Locale, Record<AuthPageKey, AuthPageCopy>> = {
     login: {
       eyebrow: "Welcome back",
       title: "Sign in",
-      description: "Sign in with email and password or continue with Google.",
+      description: "Sign in with email and password.",
     },
     signup: {
       eyebrow: "Get started",

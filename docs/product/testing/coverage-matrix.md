@@ -127,8 +127,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `auth.feature` | Log out | `e2e/specs/auth.spec.ts` · `Scenario: Log out` | `pass` |  |
 | `auth.feature` | Route protection for authenticated-only areas | `e2e/specs/auth.spec.ts` · `Scenario: Route protection for authenticated-only areas` | `pass` |  |
 | `auth.feature` | Route protection by role | `e2e/specs/auth.spec.ts` · `Scenario: Route protection by role` | `pass` |  |
-| `auth.feature` | Sign up or log in with Google | `e2e/specs/auth.spec.ts` · `Scenario: Sign up or log in with Google` | `deferred` | Google OAuth — Neon test provider; staging manual |
-| `auth.feature` | Social login never creates a PARTNER or ADMIN account | `e2e/specs/auth.spec.ts` · `Scenario: Social login never creates a PARTNER or ADMIN account` | `deferred` | Google OAuth — Neon test provider; staging manual |
+| `auth.feature` | Auth screens do not offer Google | `e2e/specs/auth.spec.ts` · `Scenario: Auth screens do not offer Google` | `pass` | Guest login/signup; no Google/social control |
 | `auth.feature` | Request a data export | `e2e/specs/auth.spec.ts` · `Scenario: Request a data export` | `pass` | Needs `DATABASE_URL`; on-demand JSON download |
 | `auth.feature` | Request account deletion | `e2e/specs/auth.spec.ts` · `Scenario: Request account deletion` | `pass` | Disposable member; may skip credential check if Neon Auth disable incomplete |
 | `auth.feature` | Account deletion is distinct from subscription cancellation | `e2e/specs/auth.spec.ts` · `Scenario: Account deletion is distinct from subscription cancellation` | `pass` | Cancel-alone vs delete; no fake Stripe ids on delete path |
@@ -294,7 +293,6 @@ All 11 top-level MVP `docs/product/features/*.feature` files are mapped above to
 
 | Scenario | Status | Owner / reason |
 |---|---|---|
-| Google OAuth (+ social never creates PARTNER/ADMIN) | `deferred` | Neon test provider; staging manual |
 | Stripe Checkout activation | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
 | Monthly renewal / no rollover | `skip` | Billing package + webhook tests |
 | Booking confirmation email | `skip` | No inbox harness; staging Resend |

@@ -181,7 +181,7 @@ cd apps/web && bun add @better-auth-ui/heroui@latest @better-auth-ui/react@lates
 - Use **`@better-auth-ui/heroui`** components on auth pages — inherits HeroUI Uber theme reskin
 - Use **`@better-auth-ui/react`** hooks for session/state; client base path is `/api/auth`
 - Do **not** install `@better-auth-ui/shadcn` or add shadcn/ui for auth
-- Google OAuth: configured in Neon Auth project settings, not app env vars
+- MVP auth UI is email/password only (no Google/social providers)
 - On first signup: `role=USER`, 17 credits, `INACTIVE` subscription, `onboarding_complete=false`
 - `public.users.id` stores the Better Auth user id from the session API (same as Neon Auth user id)
 

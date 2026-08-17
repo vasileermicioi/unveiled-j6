@@ -2,7 +2,7 @@
 #         adjustUserCredits, toggleUserFreeze, createAdminTicket).
 #
 # DECIDED (unchanged from earlier project guidance): no `/admin/users/new` — member accounts remain
-# exclusively self-service via signup (email/password or Google, see auth.feature); admin never
+# exclusively self-service via signup (email/password, see auth.feature); admin never
 # creates a member account directly. Admin DOES gain a real account-deletion capability as part of the
 # GDPR work in auth.feature ("Admin can process account deletion on a member's behalf") — this is a
 # support-assisted version of the member's own self-service deletion, not a general-purpose delete.
