@@ -10,7 +10,7 @@ import type { Locale } from "./locale";
 export type OpeningHoursDisplayLine = {
   dayKey: OpeningHoursDayKey;
   dayLabel: string;
-  /** Open–close range or closed label for the active locale. */
+  /** Open–close range for the active locale. */
   hoursLabel: string;
 };
 
@@ -35,17 +35,13 @@ const DAY_LABELS: Record<Locale, Record<OpeningHoursDayKey, string>> = {
   },
 };
 
-function closedLabel(locale: Locale): string {
-  return locale === "de" ? "Geschlossen" : "Closed";
-}
-
 function formatOpenClose(open: string, close: string): string {
   return `${open} – ${close}`;
 }
 
 /**
- * Build Mon→Sun display lines for public event detail.
- * Returns null when hours should be omitted (disabled, null, or malformed).
+ * Build Mon→Sun working-day lines for public event detail.
+ * Returns null when hours should be omitted (disabled, null, malformed, or every day closed).
  */
 export function formatPartnerOpeningHoursLines(
   hasOpeningHours: boolean,
@@ -64,19 +60,20 @@ export function formatPartnerOpeningHoursLines(
   }
 
   const dayLabels = DAY_LABELS[locale];
-  const closed = closedLabel(locale);
+  const lines: OpeningHoursDisplayLine[] = [];
 
-  return OPENING_HOURS_DAY_KEYS.map((dayKey) => {
+  for (const dayKey of OPENING_HOURS_DAY_KEYS) {
     const day = week[dayKey];
-    const hoursLabel =
-      "closed" in day && day.closed === true
-        ? closed
-        : formatOpenClose("open" in day ? day.open : "", "close" in day ? day.close : "");
+    if (!("open" in day)) {
+      continue;
+    }
 
-    return {
+    lines.push({
       dayKey,
       dayLabel: dayLabels[dayKey],
-      hoursLabel,
-    };
-  });
+      hoursLabel: formatOpenClose(day.open, day.close),
+    });
+  }
+
+  return lines.length === 0 ? null : lines;
 }

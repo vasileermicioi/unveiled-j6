@@ -104,7 +104,8 @@ Feature: Event Discovery
     Given I am not signed in
     And that partner has opening hours enabled with a valid weekly schedule
     When I open that event's public detail URL ("/events/:id")
-    Then the DETAILS attribution area also lists the weekday hours (including closed days)
+    Then the DETAILS attribution area lists the open weekday hours
+    And closed weekdays are not listed
 
   Scenario: Hours omitted when disabled
     Given I am not signed in
@@ -163,7 +164,21 @@ Feature: Event Discovery
     Given I am signed in as a booking-eligible member
     When I open the same valid upcoming event detail URL ("/events/:id")
     Then the summary card shows ticket quantity controls and total credits
-    And DETAILS includes date/time chrome
+    And DETAILS includes Date chrome (calendar date; clock time omitted when partner opening hours are visible)
+
+  Scenario: Eligible member Date is date-only when partner has hours
+    Given the hosting partner has opening hours enabled with at least one open weekday
+    And I am signed in as a booking-eligible member
+    When I open "/events/:id"
+    Then DETAILS Date lists occurrence dates without clock times
+    And partner working-day hours remain visible in the attribution area
+
+  Scenario: Eligible member Date keeps time when partner has no hours
+    Given the hosting partner has has_opening_hours false
+    And I am signed in as a booking-eligible member
+    When I open "/events/:id"
+    Then DETAILS Date lists date and time
+    And no opening-hours list is shown
 
   Scenario: Dropdown changes credits
     Given an upcoming event with a morning slot priced 1 and an evening slot priced 4

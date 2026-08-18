@@ -57,6 +57,15 @@ async function loginMember(page: Page, locale: Locale): Promise<void> {
   await activateMemberForBooking(user.email);
 }
 
+/** DETAILS Date MetaCell via Date/Datum label → label-row → cell (parent walks). */
+function detailsDateCell(page: Page) {
+  return page
+    .getByText(/^datum$|^date$/i)
+    .first()
+    .locator("..")
+    .locator("..");
+}
+
 /** Berlin calendar YYYY-MM-DD for `daysFromToday` (can be negative). */
 function berlinYmd(daysFromToday: number): string {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -193,15 +202,15 @@ test.describe("event-discovery.feature", () => {
         });
         await expect(page.getByText(/^details$/i).first()).toBeVisible();
         await expect(page.getByText(partnerName, { exact: true })).toBeVisible();
-        // Locale weekday labels + sample open/closed rows (proximity — not CSS hashes).
+        // Working days only (proximity — not CSS hashes). Closed Wed/Sun must be absent.
         if (locale === "de") {
           await expect(page.getByText(/Montag:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
-          await expect(page.getByText(/Mittwoch:\s*Geschlossen/)).toBeVisible();
-          await expect(page.getByText(/Sonntag:\s*Geschlossen/)).toBeVisible();
+          await expect(page.getByText(/Mittwoch:\s*Geschlossen/)).toHaveCount(0);
+          await expect(page.getByText(/Sonntag:\s*Geschlossen/)).toHaveCount(0);
         } else {
           await expect(page.getByText(/Monday:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
-          await expect(page.getByText(/Wednesday:\s*Closed/)).toBeVisible();
-          await expect(page.getByText(/Sunday:\s*Closed/)).toBeVisible();
+          await expect(page.getByText(/Wednesday:\s*Closed/)).toHaveCount(0);
+          await expect(page.getByText(/Sunday:\s*Closed/)).toHaveCount(0);
         }
       });
     });
@@ -218,6 +227,53 @@ test.describe("event-discovery.feature", () => {
           timeout: 15_000,
         });
         await expect(page.getByText(partnerName, { exact: true })).toBeVisible();
+        await expect(page.getByText(/Montag:\s*|Monday:\s*/)).toHaveCount(0);
+        await expect(page.getByText(/10:00\s*[–-]\s*18:00/)).toHaveCount(0);
+      });
+    });
+
+    test("Scenario: Eligible member Date is date-only when partner has hours", async ({
+      page,
+      locale,
+    }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member + resolve event");
+      const eventId = await getEventIdByTitle(TITLES.tonight);
+      const partnerName = partnerNameForSeedTitle(TITLES.tonight);
+
+      await loginMember(page, locale);
+      await withPartnerOpeningHours(partnerName, E2E_SAMPLE_OPENING_HOURS, async () => {
+        await page.goto(`/${locale}/events/${eventId}`);
+        await expect(page.getByRole("heading", { level: 1, name: TITLES.tonight })).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByText(/^details$/i).first()).toBeVisible();
+        await expect(page.getByText(/^datum$|^date$/i).first()).toBeVisible();
+        await expect(detailsDateCell(page).getByText(/\d{1,2}:\d{2}/)).toHaveCount(0);
+        if (locale === "de") {
+          await expect(page.getByText(/Montag:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
+        } else {
+          await expect(page.getByText(/Monday:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
+        }
+      });
+    });
+
+    test("Scenario: Eligible member Date keeps time when partner has no hours", async ({
+      page,
+      locale,
+    }) => {
+      test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member + resolve event");
+      const eventId = await getEventIdByTitle(TITLES.tonight);
+      const partnerName = partnerNameForSeedTitle(TITLES.tonight);
+
+      await loginMember(page, locale);
+      await withPartnerOpeningHours(partnerName, null, async () => {
+        await page.goto(`/${locale}/events/${eventId}`);
+        await expect(page.getByRole("heading", { level: 1, name: TITLES.tonight })).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByText(/^details$/i).first()).toBeVisible();
+        await expect(page.getByText(/^datum$|^date$/i).first()).toBeVisible();
+        await expect(detailsDateCell(page).getByText(/\d{1,2}:\d{2}/)).toBeVisible();
         await expect(page.getByText(/Montag:\s*|Monday:\s*/)).toHaveCount(0);
         await expect(page.getByText(/10:00\s*[–-]\s*18:00/)).toHaveCount(0);
       });

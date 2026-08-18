@@ -12,6 +12,10 @@ import EventMap, { type EventMapMarker } from "../../islands/EventMap";
 import { isEventBookable } from "../../lib/catalog-mappers";
 import type { CheckoutOccurrence } from "../../lib/checkout-slot";
 import { getEventDetailGalleryCopy } from "../../lib/event-detail-gallery-copy";
+import {
+  formatEventDateTime,
+  formatEventDetailWhenLines,
+} from "../../lib/event-detail-when-display";
 import { imageAltWithCredit, imageCreditTitle } from "../../lib/image-credit";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
@@ -26,7 +30,7 @@ export type EventDetailPartnerAttribution = {
   name: string;
   /** Public logo variant URL; omit or empty → name-only strip (no broken img). */
   logoUrl?: string;
-  /** When true with a valid week, DETAILS lists Mon→Sun hours under name/logo. */
+  /** When true with a valid week, DETAILS lists working-day hours under name/logo. */
   hasOpeningHours?: boolean;
   openingHours?: OpeningHoursWeek | null;
   /** Venue accessibility; DETAILS Accessibility row. `null` → Not specified. */
@@ -60,27 +64,6 @@ export type EventDetailViewer =
   | { kind: "eligible" }
   | { kind: "membership_required" }
   | { kind: "past_due" };
-
-function formatEventDateTime(dateTime: Date, locale: Locale): string {
-  return new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Berlin",
-  }).format(dateTime);
-}
-
-/** Ascending list for DETAILS; next upcoming emphasized via denormalized primary. */
-function sortedEventDateTimes(dateTimes: Date[]): Date[] {
-  return [...dateTimes].sort((a, b) => a.getTime() - b.getTime());
-}
-
-function isSameInstant(a: Date, b: Date): boolean {
-  return a.getTime() === b.getTime();
-}
 
 function soldOutMessage(locale: Locale): string {
   return locale === "de" ? "Dieses Event ist ausverkauft." : "This event is sold out.";
@@ -271,13 +254,15 @@ function DateTimesMetaCell({
   dateTimes,
   nextDateTime,
   locale,
+  includeTime,
 }: {
   label: string;
   dateTimes: Date[];
   nextDateTime: Date;
   locale: Locale;
+  includeTime: boolean;
 }) {
-  const ordered = sortedEventDateTimes(dateTimes.length > 0 ? dateTimes : [nextDateTime]);
+  const lines = formatEventDetailWhenLines(dateTimes, nextDateTime, locale, { includeTime });
 
   return (
     <Surface className="event-detail--checkout__meta-cell" variant="transparent">
@@ -293,23 +278,20 @@ function DateTimesMetaCell({
         </Paragraph>
       </Surface>
       <Surface className="event-detail--checkout__meta-datetimes" variant="transparent">
-        {ordered.map((dateTime) => {
-          const isNext = isSameInstant(dateTime, nextDateTime);
-          return (
-            <Paragraph
-              className={
-                isNext
-                  ? "event-detail--checkout__meta-value event-detail--checkout__meta-value--next"
-                  : "event-detail--checkout__meta-value"
-              }
-              color={isNext ? undefined : "muted"}
-              key={dateTime.toISOString()}
-              size="sm"
-            >
-              {formatEventDateTime(dateTime, locale)}
-            </Paragraph>
-          );
-        })}
+        {lines.map((line) => (
+          <Paragraph
+            className={
+              line.isNext
+                ? "event-detail--checkout__meta-value event-detail--checkout__meta-value--next"
+                : "event-detail--checkout__meta-value"
+            }
+            color={line.isNext ? undefined : "muted"}
+            key={line.key}
+            size="sm"
+          >
+            {line.label}
+          </Paragraph>
+        ))}
       </Surface>
     </Surface>
   );
@@ -708,6 +690,7 @@ export function EventDetailPage({
                 {showMemberBookingChrome ? (
                   <DateTimesMetaCell
                     dateTimes={event.dateTimes}
+                    includeTime={partnerHoursLines == null}
                     label={metadataLabel("when", locale)}
                     locale={locale}
                     nextDateTime={event.dateTime}

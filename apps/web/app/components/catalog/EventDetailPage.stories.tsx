@@ -182,7 +182,10 @@ export const PartnerNameOnly: Story = () => (
 PartnerNameOnly.storyName = "EventDetailPage / Partner name only";
 PartnerNameOnly.meta = wideMeta;
 
-/** DETAILS partner attribution with weekly opening hours. */
+/**
+ * DETAILS partner attribution with weekly opening hours (guest).
+ * Fixture still includes closed Wed/Sun; display lists working days only.
+ */
 export const PartnerWithOpeningHours: Story = () => (
   <EventDetailPage
     closeHref={`/${storyLocale}`}
@@ -195,6 +198,37 @@ export const PartnerWithOpeningHours: Story = () => (
 );
 PartnerWithOpeningHours.storyName = "EventDetailPage / Partner with opening hours";
 PartnerWithOpeningHours.meta = wideMeta;
+
+/** Eligible + hours: Date is date-only; two same-day slots collapse; checkout select keeps times. */
+export const EligiblePartnerWithOpeningHours: Story = () => {
+  const sameDayMorning = new Date("2026-08-15T19:00:00+02:00");
+  const sameDayEvening = new Date("2026-08-15T21:00:00+02:00");
+  const laterDay = new Date("2026-08-22T19:00:00+02:00");
+
+  return (
+    <EventDetailPage
+      closeHref={`/${storyLocale}/events`}
+      event={{
+        ...mockEvent,
+        dateTime: sameDayMorning,
+        dateTimes: [sameDayMorning, sameDayEvening, laterDay],
+        occurrenceCreditPrices: [2, 2, 2],
+        occurrenceCapacities: [40, 40, 40],
+      }}
+      locale={storyLocale}
+      maxQty={8}
+      occurrences={[
+        { startsAtIso: sameDayMorning.toISOString(), creditPrice: 2, maxQty: 8 },
+        { startsAtIso: sameDayEvening.toISOString(), creditPrice: 2, maxQty: 8 },
+        { startsAtIso: laterDay.toISOString(), creditPrice: 2, maxQty: 8 },
+      ]}
+      partnerAttribution={storyPartnerAttributionWithHours}
+      viewer={{ kind: "eligible" }}
+    />
+  );
+};
+EligiblePartnerWithOpeningHours.storyName = "EventDetailPage / Eligible partner with opening hours";
+EligiblePartnerWithOpeningHours.meta = wideMeta;
 
 /** Empty gallery prop (default) — section omitted. */
 export const WithoutGallery: Story = () => (

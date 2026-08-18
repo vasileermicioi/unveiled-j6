@@ -16,6 +16,18 @@ function fullWeek(overrides?: Partial<OpeningHoursWeek>): OpeningHoursWeek {
   return { ...base, ...overrides };
 }
 
+function allClosedWeek(): OpeningHoursWeek {
+  return {
+    mon: { closed: true },
+    tue: { closed: true },
+    wed: { closed: true },
+    thu: { closed: true },
+    fri: { closed: true },
+    sat: { closed: true },
+    sun: { closed: true },
+  };
+}
+
 describe("formatPartnerOpeningHoursLines", () => {
   test("returns null when hours disabled", () => {
     expect(formatPartnerOpeningHoursLines(false, fullWeek(), "en")).toBeNull();
@@ -35,33 +47,30 @@ describe("formatPartnerOpeningHoursLines", () => {
     ).toBeNull();
   });
 
-  test("formats Mon→Sun with EN labels", () => {
+  test("returns null when every weekday is closed", () => {
+    expect(formatPartnerOpeningHoursLines(true, allClosedWeek(), "en")).toBeNull();
+  });
+
+  test("formats open days only with EN labels in Mon→Sun order", () => {
     const lines = formatPartnerOpeningHoursLines(true, fullWeek(), "en");
     expect(lines).not.toBeNull();
-    expect(lines?.map((line) => line.dayKey)).toEqual([
-      "mon",
-      "tue",
-      "wed",
-      "thu",
-      "fri",
-      "sat",
-      "sun",
-    ]);
+    expect(lines?.map((line) => line.dayKey)).toEqual(["mon", "wed", "fri", "sat"]);
     expect(lines?.[0]).toEqual({
       dayKey: "mon",
       dayLabel: "Monday",
       hoursLabel: "10:00 – 18:00",
     });
-    expect(lines?.[1]).toEqual({
-      dayKey: "tue",
-      dayLabel: "Tuesday",
-      hoursLabel: "Closed",
-    });
+    expect(lines?.some((line) => line.hoursLabel === "Closed")).toBe(false);
   });
 
-  test("formats closed label in DE", () => {
+  test("formats open days only with DE labels", () => {
     const lines = formatPartnerOpeningHoursLines(true, fullWeek(), "de");
-    expect(lines?.[1]?.hoursLabel).toBe("Geschlossen");
-    expect(lines?.[0]?.dayLabel).toBe("Montag");
+    expect(lines?.map((line) => line.dayKey)).toEqual(["mon", "wed", "fri", "sat"]);
+    expect(lines?.[0]).toEqual({
+      dayKey: "mon",
+      dayLabel: "Montag",
+      hoursLabel: "10:00 – 18:00",
+    });
+    expect(lines?.some((line) => line.hoursLabel === "Geschlossen")).toBe(false);
   });
 });

@@ -310,10 +310,10 @@ test.describe("admin-partners.feature", () => {
     });
     if (locale === "de") {
       await expect(page.getByText(/Montag:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
-      await expect(page.getByText(/Dienstag:\s*Geschlossen/)).toBeVisible();
+      await expect(page.getByText(/Dienstag:\s*Geschlossen/)).toHaveCount(0);
     } else {
       await expect(page.getByText(/Monday:\s*10:00\s*[–-]\s*18:00/)).toBeVisible();
-      await expect(page.getByText(/Tuesday:\s*Closed/)).toBeVisible();
+      await expect(page.getByText(/Tuesday:\s*Closed/)).toHaveCount(0);
     }
   });
 
