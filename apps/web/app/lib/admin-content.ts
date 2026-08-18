@@ -172,8 +172,12 @@ export type AdminCopy = {
   featuredAddSubmit: string;
   featuredRemoveAction: string;
   featuredRemoveTitle: string;
-  featuredRemoveBody: (title: string, date: string) => string;
+  featuredRemoveBody: string;
   featuredRemoveConfirm: string;
+  featuredReorderHint: string;
+  featuredSaveOrderAction: string;
+  featuredSelectLabel: (title: string) => string;
+  featuredRemoveBulkAction: string;
   featuredPartnersTitle: string;
   featuredPartnersSubtitle: string;
   featuredPartnersEmpty: string;
@@ -638,9 +642,14 @@ const copy: Record<Locale, AdminCopy> = {
     featuredAddSubmit: "Zur Featured-Liste",
     featuredRemoveAction: "Entfernen",
     featuredRemoveTitle: "Aus Featured entfernen",
-    featuredRemoveBody: (title, date) =>
-      `„${title}" (${date}) aus der Featured-Liste entfernen? Das Event bleibt im Katalog unter Events erhalten.`,
+    featuredRemoveBody:
+      "Ausgewählte Events aus der Featured-Liste entfernen? Die Events bleiben im Katalog unter Events erhalten.",
     featuredRemoveConfirm: "Aus Featured entfernen",
+    featuredReorderHint:
+      "Zum Sortieren ziehen, dann Reihenfolge speichern. Events auswählen, dann entfernen.",
+    featuredSaveOrderAction: "Reihenfolge speichern",
+    featuredSelectLabel: (title) => `„${title}" auswählen`,
+    featuredRemoveBulkAction: "Auswahl entfernen",
     featuredPartnersTitle: "Empfohlene Partner",
     featuredPartnersSubtitle: "Kuratiere die Partnerorte-Liste für Discover.",
     featuredPartnersEmpty:
@@ -1136,9 +1145,13 @@ const copy: Record<Locale, AdminCopy> = {
     featuredAddSubmit: "Add to featured",
     featuredRemoveAction: "Remove",
     featuredRemoveTitle: "Remove from featured",
-    featuredRemoveBody: (title, date) =>
-      `Remove “${title}” (${date}) from the featured list? The event stays in the catalog under Events.`,
+    featuredRemoveBody:
+      "Remove the selected events from the featured list? The events stay in the catalog under Events.",
     featuredRemoveConfirm: "Remove from featured",
+    featuredReorderHint: "Drag to reorder, then save order. Select events, then remove.",
+    featuredSaveOrderAction: "Save order",
+    featuredSelectLabel: (title) => `Select “${title}”`,
+    featuredRemoveBulkAction: "Remove selected",
     featuredPartnersTitle: "Featured partners",
     featuredPartnersSubtitle: "Curate the Partner venues list shown on Discover.",
     featuredPartnersEmpty: "No featured partners yet. Add catalog partners via search.",
@@ -1598,6 +1611,12 @@ export function mapCatalogErrorCode(
     return locale === "de"
       ? "Die Galerie-Reihenfolge ist ungültig. Bitte lade die Seite neu und versuche es erneut."
       : "That gallery order is invalid. Reload the page and try again.";
+  }
+
+  if (code === "FEATURED_EVENTS_REORDER_INVALID") {
+    return locale === "de"
+      ? "Die Featured-Event-Reihenfolge ist ungültig. Bitte lade die Seite neu und versuche es erneut."
+      : "That featured events order is invalid. Reload the page and try again.";
   }
 
   if (code === "FEATURED_PARTNERS_REORDER_INVALID") {

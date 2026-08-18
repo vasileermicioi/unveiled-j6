@@ -1,21 +1,39 @@
-import { Link, Surface } from "@heroui/react";
+import { Link, Paragraph, Surface } from "@heroui/react";
 import type { FeaturedEventRow } from "@unveiled/db";
 
+import AdminFeaturedEventsManager from "../../islands/AdminFeaturedEventsManager";
 import { getAdminCopy } from "../../lib/admin-content";
+import { formatEventDateTimeWithCount } from "../../lib/admin-event-form";
 import type { Locale } from "../../lib/locale";
 
-import { AdminFeaturedTable } from "./AdminFeaturedTable";
+import { AdminFormError } from "./AdminFormError";
 import { AdminPageShell } from "./AdminPageShell";
-import { adminFeaturedAddPath } from "./admin-tabs";
+import { adminFeaturedAddPath, adminFeaturedPath } from "./admin-tabs";
 
 type AdminFeaturedListPageProps = {
   locale: Locale;
   events: FeaturedEventRow[];
   imageUrls: Record<string, string | undefined>;
+  error?: string | null;
 };
 
-export function AdminFeaturedListPage({ locale, events, imageUrls }: AdminFeaturedListPageProps) {
+export function AdminFeaturedListPage({
+  locale,
+  events,
+  imageUrls,
+  error,
+}: AdminFeaturedListPageProps) {
   const copy = getAdminCopy(locale);
+  const listHref = adminFeaturedPath(locale);
+
+  const managerItems = events.map((event) => ({
+    eventId: event.id,
+    title: event.title,
+    partnerName: event.partnerName,
+    dateLabel: formatEventDateTimeWithCount(event.dateTime, locale, event.dateTimes?.length ?? 1),
+    thumbnailUrl: imageUrls[event.id] ?? null,
+    selectLabel: copy.featuredSelectLabel(event.title),
+  }));
 
   return (
     <AdminPageShell
@@ -30,7 +48,28 @@ export function AdminFeaturedListPage({ locale, events, imageUrls }: AdminFeatur
       subtitle={copy.featuredSubtitle}
       title={copy.featuredTitle}
     >
-      <AdminFeaturedTable events={events} imageUrls={imageUrls} locale={locale} />
+      {error ? <AdminFormError message={error} /> : null}
+
+      {events.length === 0 ? (
+        <Paragraph color="muted">{copy.featuredEmpty}</Paragraph>
+      ) : (
+        <AdminFeaturedEventsManager
+          copy={{
+            reorderHint: copy.featuredReorderHint,
+            saveOrderAction: copy.featuredSaveOrderAction,
+            removeBulkAction: copy.featuredRemoveBulkAction,
+            listLabel: copy.featuredTitle,
+            tableLogo: copy.tableLogo,
+            tableTitle: copy.tableTitle,
+            tablePartner: copy.tablePartner,
+            tableDate: copy.tableDate,
+            imagePlaceholderLabel: copy.imagePlaceholderLabel,
+          }}
+          items={managerItems}
+          locale={locale}
+          reorderAction={listHref}
+        />
+      )}
     </AdminPageShell>
   );
 }

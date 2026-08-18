@@ -1276,6 +1276,11 @@ test.describe("admin-events.feature", () => {
     await galleryLink.click();
     await expect(page).toHaveURL(new RegExp(`/admin/events/${event.eventId}/gallery`));
     await expect(page.getByRole("heading", { name: /event-galerie|event gallery/i })).toBeVisible();
+
+    await page.goto(`/${locale}/admin/featured`);
+    await expect(
+      page.getByRole("link", { name: /galerie-fotos verwalten|manage gallery photos/i }),
+    ).toHaveCount(0);
   });
 
   test("Scenario: Event primary credit on create", async ({ page, locale }) => {
@@ -1471,6 +1476,86 @@ test.describe("admin-events.feature", () => {
     ).toBeVisible();
   });
 
+  test("Scenario: Admin reorders featured events by drag and drop", async ({ page, locale }) => {
+    test.setTimeout(120_000);
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const eventA = await createEventViaUI(page, locale, { partnerName: partner.name });
+    const eventB = await createEventViaUI(page, locale, { partnerName: partner.name });
+
+    for (const event of [eventA, eventB]) {
+      await navigateAdminTab(page, locale, "featured");
+      await page.getByRole("link", { name: /event hinzufügen|add event/i }).click();
+      await page.goto(`/${locale}/admin/featured/add?title=${encodeURIComponent(event.title)}`);
+      const addRow = page.getByRole("row").filter({ hasText: event.title });
+      await expect(addRow).toBeVisible({ timeout: 15_000 });
+      await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
+      await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), {
+        timeout: 30_000,
+      });
+    }
+
+    const rowA = page.locator(".admin-featured-events__row").filter({ hasText: eventA.title });
+    const rowB = page.locator(".admin-featured-events__row").filter({ hasText: eventB.title });
+    await expect(rowA).toBeVisible({ timeout: 15_000 });
+    await expect(rowB).toBeVisible({ timeout: 15_000 });
+
+    const titleLocators = page.locator(
+      ".admin-featured-events__row .admin-featured-events__cell-title",
+    );
+    const titlesBefore = (await titleLocators.allTextContents()).map((text) => text.trim());
+    const indexABefore = titlesBefore.indexOf(eventA.title);
+    const indexBBefore = titlesBefore.indexOf(eventB.title);
+    expect(indexABefore).toBeGreaterThanOrEqual(0);
+    expect(indexBBefore).toBeGreaterThanOrEqual(0);
+
+    const saveOrder = page.getByRole("button", { name: /reihenfolge speichern|save order/i });
+    await expect(saveOrder).toBeVisible();
+    await expect(saveOrder).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: /auswahl entfernen|remove selected/i }),
+    ).toBeVisible();
+
+    const boxA = await rowA.boundingBox();
+    const boxB = await rowB.boundingBox();
+    expect(boxA).toBeTruthy();
+    expect(boxB).toBeTruthy();
+    if (!boxA || !boxB) {
+      return;
+    }
+
+    await page.mouse.move(boxA.x + boxA.width / 2, boxA.y + boxA.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(boxB.x + boxB.width / 2, boxB.y + boxB.height / 2, { steps: 12 });
+    await page.mouse.up();
+
+    await expect(saveOrder).toBeEnabled({ timeout: 10_000 });
+    const titlesAfterDrag = (await titleLocators.allTextContents()).map((text) => text.trim());
+    const indexAAfterDrag = titlesAfterDrag.indexOf(eventA.title);
+    const indexBAfterDrag = titlesAfterDrag.indexOf(eventB.title);
+    expect(indexAAfterDrag).toBeGreaterThanOrEqual(0);
+    expect(indexBAfterDrag).toBeGreaterThanOrEqual(0);
+    expect(indexAAfterDrag < indexBAfterDrag).not.toBe(indexABefore < indexBBefore);
+
+    await saveOrder.click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), {
+      timeout: 30_000,
+    });
+
+    await page.reload();
+    await expect(
+      page.locator(".admin-featured-events__row").filter({ hasText: eventA.title }),
+    ).toBeVisible({ timeout: 15_000 });
+    const titlesAfterReload = (
+      await page
+        .locator(".admin-featured-events__row .admin-featured-events__cell-title")
+        .allTextContents()
+    ).map((text) => text.trim());
+    const indexAAfterReload = titlesAfterReload.indexOf(eventA.title);
+    const indexBAfterReload = titlesAfterReload.indexOf(eventB.title);
+    expect(indexAAfterReload < indexBAfterReload).toBe(indexAAfterDrag < indexBAfterDrag);
+  });
+
   test("Scenario: Admin remove from featured keeps catalog event", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
@@ -1490,17 +1575,30 @@ test.describe("admin-events.feature", () => {
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), { timeout: 30_000 });
     await expect(page.getByText(event.title)).toBeVisible();
 
-    const featuredRow = page.getByRole("row").filter({ hasText: event.title });
+    const featuredRow = page
+      .locator(".admin-featured-events__row")
+      .filter({ hasText: event.title });
+    await expect(featuredRow).toBeVisible({ timeout: 15_000 });
     const featuredThumb = featuredRow.locator("img").first();
     await expect(featuredThumb).toBeVisible({ timeout: 15_000 });
     await expect(featuredThumb).toHaveAttribute("src", /small-320\.webp(?:\?|$)/);
-    await featuredRow.getByRole("link", { name: /entfernen|remove/i }).click();
-    await expect(page).toHaveURL(/\/admin\/featured\/.+\/remove/);
+    await expect(
+      page.getByRole("link", { name: /galerie-fotos verwalten|manage gallery photos/i }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: /reihenfolge speichern|save order/i }),
+    ).toBeVisible();
+
+    await featuredRow.locator(".admin-featured-events__checkbox").check({ force: true });
+    await page.getByRole("link", { name: /auswahl entfernen|remove selected/i }).click();
+    await expect(page).toHaveURL(/\/admin\/featured\/remove/);
     await page
       .getByRole("button", { name: /aus featured entfernen|remove from featured/i })
       .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), { timeout: 30_000 });
-    await expect(page.getByRole("row").filter({ hasText: event.title })).toHaveCount(0);
+    await expect(
+      page.locator(".admin-featured-events__row").filter({ hasText: event.title }),
+    ).toHaveCount(0);
 
     await page.goto(`/${locale}/discover`);
     await expect(page.getByText(event.title)).toHaveCount(0);

@@ -129,9 +129,9 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin/events/:id/gallery/remove` | ✅ | ADMIN | Remove one or many gallery photos (confirm) |
 | `/admin/events/:id/delete` | ✅ | ADMIN | Delete confirmation |
 | `/admin/events/:id/codes` | ✅ | ADMIN | Export redemption codes (CSV) |
-| `/admin/featured` | ✅ | ADMIN | Featured events list (tab label **Featured events** / **Empfohlene Events**) |
+| `/admin/featured` | ✅ | ADMIN | Featured events list (drag reorder + Save order POST; checkbox bulk remove; tab label **Featured events** / **Empfohlene Events**) |
 | `/admin/featured/add?title=&partner=&language=&sort=&dir=` | ✅ | ADMIN | Search and add featured event (title/partner/language filters; language matches spoken or subtitle; column sort; Languages + Subtitles columns; Reset filters; default last-created) |
-| `/admin/featured/:eventId/remove` | ✅ | ADMIN | Remove from featured (catalog event kept) |
+| `/admin/featured/remove?eventIds=` | ✅ | ADMIN | Remove one or many from featured (catalog events kept) |
 | `/admin/featured-partners` | ✅ | ADMIN | Featured partners grid (drag reorder + Save order; tab label **Featured partners** / **Empfohlene Partner**) |
 | `/admin/featured-partners/add?q=` | ✅ | ADMIN | Search and add featured partner |
 | `/admin/featured-partners/remove?partnerIds=` | ✅ | ADMIN | Remove one or many from featured (catalog partners kept) |

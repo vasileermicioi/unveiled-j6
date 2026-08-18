@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, max, type SQL } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, max, type SQL } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { type Event, events } from "../schema/events";
@@ -7,6 +7,9 @@ import { CatalogValidationError } from "./errors";
 import { getEventById, type ListEventsOptions, listEvents } from "./events";
 
 export type FeaturedEventRow = Event & { sortOrder: number };
+
+/** Temp offset for reorder writes (admin curated lists stay small). */
+const FEATURED_EVENTS_REORDER_TEMP_BASE = 10_000;
 
 export type ListFeaturedEventsOptions = {
   upcomingOnly?: boolean;
@@ -89,5 +92,77 @@ export async function addFeaturedEvent(db: Db, eventId: string): Promise<Feature
 }
 
 export async function removeFeaturedEvent(db: Db, eventId: string): Promise<void> {
-  await db.delete(featuredEvents).where(eq(featuredEvents.eventId, eventId));
+  await removeFeaturedEvents(db, [eventId]);
+}
+
+/**
+ * Remove featured membership for the given events. Underlying `events` rows are kept.
+ */
+export async function removeFeaturedEvents(db: Db, eventIds: string[]): Promise<void> {
+  if (eventIds.length === 0) {
+    return;
+  }
+  const uniqueIds = [...new Set(eventIds)];
+  await db.delete(featuredEvents).where(inArray(featuredEvents.eventId, uniqueIds));
+}
+
+/**
+ * Persist a new featured-events order. `orderedEventIds` must be a permutation of
+ * the current featured set (same ids, same length). Writes `sort_order` as 0..n-1.
+ */
+export async function reorderFeaturedEvents(
+  db: Db,
+  orderedEventIds: string[],
+): Promise<FeaturedEventRow[]> {
+  const existing = await listFeaturedEvents(db);
+  const existingIds = existing.map((row) => row.id);
+
+  if (orderedEventIds.length === 0 && existingIds.length === 0) {
+    return [];
+  }
+
+  const uniqueOrdered = [...new Set(orderedEventIds)];
+  if (
+    uniqueOrdered.length !== orderedEventIds.length ||
+    uniqueOrdered.length !== existingIds.length
+  ) {
+    throw new CatalogValidationError(
+      "FEATURED_EVENTS_REORDER_INVALID",
+      "Featured events reorder must include each current event id exactly once",
+    );
+  }
+
+  const existingSet = new Set(existingIds);
+  for (const eventId of uniqueOrdered) {
+    if (!existingSet.has(eventId)) {
+      throw new CatalogValidationError(
+        "FEATURED_EVENTS_REORDER_INVALID",
+        `Event ${eventId} is not on the featured events list`,
+      );
+    }
+  }
+
+  for (let i = 0; i < uniqueOrdered.length; i += 1) {
+    const eventId = uniqueOrdered[i];
+    if (!eventId) {
+      continue;
+    }
+    await db
+      .update(featuredEvents)
+      .set({ sortOrder: FEATURED_EVENTS_REORDER_TEMP_BASE + i })
+      .where(eq(featuredEvents.eventId, eventId));
+  }
+
+  for (let i = 0; i < uniqueOrdered.length; i += 1) {
+    const eventId = uniqueOrdered[i];
+    if (!eventId) {
+      continue;
+    }
+    await db
+      .update(featuredEvents)
+      .set({ sortOrder: i })
+      .where(eq(featuredEvents.eventId, eventId));
+  }
+
+  return listFeaturedEvents(db);
 }

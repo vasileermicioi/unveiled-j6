@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createDb } from "@unveiled/db";
+import { createDb, type Db } from "@unveiled/db";
 import { eq } from "drizzle-orm";
 import { featuredEvents } from "../schema/featured-events";
 import { CatalogValidationError } from "./errors";
@@ -8,6 +8,8 @@ import {
   addFeaturedEvent,
   listFeaturedEvents,
   removeFeaturedEvent,
+  removeFeaturedEvents,
+  reorderFeaturedEvents,
   searchEventsNotFeatured,
 } from "./featured-events";
 import { createPartner, deletePartner } from "./partners";
@@ -18,6 +20,29 @@ const databaseUrl = process.env.DATABASE_URL;
 
 async function createTestImage() {
   return createTestImagePrebuilt();
+}
+
+async function createTestEvent(
+  db: Db,
+  partnerId: string,
+  options: { title: string; secretCode: string; dateTime: Date },
+) {
+  return createEvent(db, {
+    partnerId,
+    title: options.title,
+    description: "Description",
+    ...structuredLocationFromAddress("Reorderstraße 1, Berlin"),
+    country: "DE",
+    city: "berlin",
+    zipCode: "10115",
+    category: "Theater",
+    eventType: "Performance",
+    dateTimes: [options.dateTime],
+    creditPrice: 1,
+    secretCode: options.secretCode,
+    imagePrebuilt: await createTestImage(),
+    skipUpload: true,
+  });
 }
 
 describe("featured events integration", () => {
@@ -188,6 +213,86 @@ describe("featured events integration", () => {
         .where(eq(featuredEvents.eventId, event.id));
       expect(featuredRows).toHaveLength(0);
     } finally {
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
+  test("reorder permutes sort_order; invalid set rejected; bulk remove keeps events", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const partner = await createPartner(db, {
+      name: `Reorder Partner ${suffix}`,
+      ...structuredLocationFromAddress("Reorderstraße 1, Berlin"),
+      contactEmail: `reorder-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    const first = await createTestEvent(db, partner.id, {
+      title: `Reorder Event A ${suffix}`,
+      secretCode: `RA${suffix.slice(0, 6)}`,
+      dateTime: new Date("2026-08-20T18:00:00.000Z"),
+    });
+    const second = await createTestEvent(db, partner.id, {
+      title: `Reorder Event B ${suffix}`,
+      secretCode: `RB${suffix.slice(0, 6)}`,
+      dateTime: new Date("2026-08-21T18:00:00.000Z"),
+    });
+    const third = await createTestEvent(db, partner.id, {
+      title: `Reorder Event C ${suffix}`,
+      secretCode: `RC${suffix.slice(0, 6)}`,
+      dateTime: new Date("2026-08-22T18:00:00.000Z"),
+    });
+
+    try {
+      await addFeaturedEvent(db, first.id);
+      await addFeaturedEvent(db, second.id);
+      await addFeaturedEvent(db, third.id);
+
+      // Shared DBs may already have other featured events — preserve them in the permutation.
+      const existingOthers = (await listFeaturedEvents(db))
+        .map((row) => row.id)
+        .filter((id) => id !== first.id && id !== second.id && id !== third.id);
+      const nextOrder = [third.id, first.id, second.id, ...existingOthers];
+      const reordered = await reorderFeaturedEvents(db, nextOrder);
+      expect(reordered.map((row) => row.id).slice(0, 3)).toEqual([third.id, first.id, second.id]);
+      expect(reordered.slice(0, 3).map((row) => row.sortOrder)).toEqual([0, 1, 2]);
+
+      const orderBeforeInvalid = (await listFeaturedEvents(db)).map((row) => ({
+        id: row.id,
+        sortOrder: row.sortOrder,
+      }));
+
+      let invalidError: unknown;
+      try {
+        await reorderFeaturedEvents(db, [first.id, second.id]);
+      } catch (error) {
+        invalidError = error;
+      }
+      expect(invalidError).toBeInstanceOf(CatalogValidationError);
+      expect((invalidError as CatalogValidationError).code).toBe("FEATURED_EVENTS_REORDER_INVALID");
+      expect(
+        (await listFeaturedEvents(db)).map((row) => ({ id: row.id, sortOrder: row.sortOrder })),
+      ).toEqual(orderBeforeInvalid);
+
+      await removeFeaturedEvents(db, [first.id, third.id]);
+      const remainingIds = (await listFeaturedEvents(db)).map((row) => row.id);
+      expect(remainingIds).toContain(second.id);
+      expect(remainingIds).not.toContain(first.id);
+      expect(remainingIds).not.toContain(third.id);
+
+      expect(await getEventById(db, first.id)).not.toBeNull();
+      expect(await getEventById(db, third.id)).not.toBeNull();
+    } finally {
+      await removeFeaturedEvents(db, [first.id, second.id, third.id]);
+      await deleteEvent(db, first.id, { skipBucket: true });
+      await deleteEvent(db, second.id, { skipBucket: true });
+      await deleteEvent(db, third.id, { skipBucket: true });
       await deletePartner(db, partner.id, { skipBucket: true });
     }
   });

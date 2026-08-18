@@ -377,14 +377,15 @@ Feature: Admin — Event Management
     Given an existing catalog event that is not on the featured list
     When I open the Events list ("/:locale/admin/events") or that event's edit page
     Then I see a path to manage that event's gallery photos
-    And the Featured list MAY also offer a convenience gallery shortcut
+    And the Featured events list does not offer a gallery-manage shortcut
     And gallery manage is not required on the create-event form
 
   Scenario: List featured events
     When I open the Featured events tab ("/:locale/admin/featured")
     Then I see the current featured list ordered by sort_order
     And each row shows at least a primary-image thumbnail (or placeholder), title, partner, and date/time
-    And a missing or broken thumbnail does not block gallery or remove actions
+    And when the list is non-empty I see Save order and Remove selected
+    And a missing or broken thumbnail does not block select or remove
 
   Scenario: Add by searching existing events
     When I search on the featured add page ("/:locale/admin/featured/add") with title, partner, and/or language filters
@@ -394,9 +395,17 @@ Feature: Admin — Event Management
     And submitting add creates a featured row for that event
     And I am redirected to the featured list
 
+  Scenario: Admin reorders featured events by drag and drop
+    Given at least two events are on the Featured list
+    When I drag a featured event row to a new position
+    And I save the order ("Save order" / "Reihenfolge speichern")
+    Then the new order is saved (sort_order) and shown after reload
+
   Scenario: Admin remove from featured keeps catalog event
     Given an upcoming event is on the Featured list
-    When I confirm remove on "/:locale/admin/featured/:eventId/remove"
+    When I select that event on the list
+    And I open remove confirm ("/:locale/admin/featured/remove?eventIds=")
+    And I confirm remove
     Then the event disappears from the featured list
     And Discover no longer lists it
     And the event remains available in "/:locale/admin/events"

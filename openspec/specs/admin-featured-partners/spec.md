@@ -37,7 +37,7 @@ The admin app SHALL expose a **Featured partners** tab and SSR pages under `/:lo
 
 ### Requirement: Featured events admin tab label
 
-The admin tab that routes to `/:locale/admin/featured` SHALL be labeled **Featured events** (EN) / **Empfohlene Events** (DE), not the bare label **Featured** / **Empfohlen**. Routes under `/admin/featured*` remain the featured-events surfaces (including gallery entry from the featured-events list).
+The admin tab that routes to `/:locale/admin/featured` SHALL be labeled **Featured events** (EN) / **Empfohlene Events** (DE), not the bare label **Featured** / **Empfohlen**. Routes under `/admin/featured*` remain the featured-events surfaces. Gallery manage is not an entry point from this tab.
 
 #### Scenario: Featured events tab label
 

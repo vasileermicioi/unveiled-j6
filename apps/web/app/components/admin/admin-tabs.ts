@@ -64,8 +64,20 @@ export function adminFeaturedAddPath(locale: Locale): string {
   return localizedPath(locale, "admin/featured/add");
 }
 
-export function adminFeaturedRemovePath(locale: Locale, eventId: string): string {
+export function adminFeaturedEventRemovePath(locale: Locale, eventId: string): string {
   return localizedPath(locale, `admin/featured/${eventId}/remove`);
+}
+
+export function adminFeaturedRemovePath(locale: Locale, eventIds?: string[]): string {
+  const base = localizedPath(locale, "admin/featured/remove");
+  if (!eventIds?.length) {
+    return base;
+  }
+  const params = new URLSearchParams();
+  for (const eventId of eventIds) {
+    params.append("eventIds", eventId);
+  }
+  return `${base}?${params.toString()}`;
 }
 
 export function adminFeaturedPartnersPath(locale: Locale): string {

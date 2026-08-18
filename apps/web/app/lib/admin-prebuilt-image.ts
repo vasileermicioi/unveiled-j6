@@ -208,6 +208,36 @@ export function parseFeaturedPartnerIdsFromQuery(values: string | string[] | und
   return parseIdListFromQuery(values);
 }
 
+/**
+ * Parses repeated (or single) `eventIds` form fields into a de-duplicated string list.
+ */
+export function parseFeaturedEventIds(body: ParsedBody, asString: AsString): string[] {
+  const raw = body.eventIds;
+  if (raw === undefined) {
+    return [];
+  }
+
+  const values = Array.isArray(raw) ? raw : [raw];
+  const ids: string[] = [];
+  const seen = new Set<string>();
+
+  for (const value of values) {
+    const id = asString(value)?.trim();
+    if (!id || seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    ids.push(id);
+  }
+
+  return ids;
+}
+
+/** Parses `eventIds` from a query string (repeated keys and/or comma-separated). */
+export function parseFeaturedEventIdsFromQuery(values: string | string[] | undefined): string[] {
+  return parseIdListFromQuery(values);
+}
+
 function parseIdListFromQuery(values: string | string[] | undefined): string[] {
   if (values === undefined) {
     return [];

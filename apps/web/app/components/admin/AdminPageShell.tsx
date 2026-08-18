@@ -89,6 +89,7 @@ export {
   adminEventGalleryRemovePath,
   adminEventsPath,
   adminFeaturedAddPath,
+  adminFeaturedEventRemovePath,
   adminFeaturedPartnersAddPath,
   adminFeaturedPartnersPath,
   adminFeaturedPartnersRemovePath,

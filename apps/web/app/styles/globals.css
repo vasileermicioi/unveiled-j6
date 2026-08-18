@@ -1856,6 +1856,104 @@
     outline-offset: 2px;
   }
 
+  /* Admin featured events manager (table-equivalent sortable rows) */
+  .admin-featured-events {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .admin-featured-events__hint {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .admin-featured-events__save-form {
+    display: inline-flex;
+    margin: 0;
+  }
+
+  .admin-featured-events__list {
+    overflow-x: auto;
+  }
+
+  .admin-featured-events__header,
+  .admin-featured-events__row {
+    display: grid;
+    grid-template-columns: 2.5rem 3.5rem minmax(8rem, 2fr) minmax(6rem, 1.25fr) minmax(8rem, 1.25fr);
+    gap: 0.75rem;
+    align-items: center;
+    min-width: 40rem;
+  }
+
+  .admin-featured-events__header {
+    padding: 0 0.75rem 0.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .admin-featured-events__header-cell {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .admin-featured-events__row {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: 0;
+    background: var(--color-brand-cream);
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+  }
+
+  .admin-featured-events__row + .admin-featured-events__row {
+    margin-top: 0.5rem;
+  }
+
+  .admin-featured-events__row--dragging {
+    z-index: 2;
+    cursor: grabbing;
+    opacity: 0.92;
+  }
+
+  .admin-featured-events__row--selected {
+    border-color: var(--color-brand-dark);
+    outline: 2px solid var(--color-brand-yellow);
+    outline-offset: -4px;
+  }
+
+  .admin-featured-events__select {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .admin-featured-events__checkbox {
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0;
+    accent-color: var(--color-brand-yellow);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .admin-featured-events__checkbox:focus-visible {
+    outline: 2px solid var(--color-brand-dark);
+    outline-offset: 2px;
+  }
+
+  .admin-featured-events__cell,
+  .admin-featured-events__cell-title {
+    margin: 0;
+  }
+
+  .admin-featured-events__cell-title {
+    font-weight: 600;
+  }
+
   .event-card-preview__header {
     padding: 0;
   }
