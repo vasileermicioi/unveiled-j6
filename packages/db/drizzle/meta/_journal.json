@@ -183,6 +183,13 @@
       "when": 1786691153858,
       "tag": "0025_yielding_raider",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1787234704854,
+      "tag": "0026_event_subtitle_languages",
+      "breakpoints": true
     }
   ]
 }

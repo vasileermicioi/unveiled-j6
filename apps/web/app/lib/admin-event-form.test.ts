@@ -286,7 +286,7 @@ describe("admin-event-form helpers", () => {
         languageIndependent: false,
         languages: null,
         hasSubtitles: false,
-        subtitleLanguage: null,
+        subtitleLanguages: null,
         lat: null,
         lng: null,
         imageUpload: null,
@@ -324,7 +324,7 @@ describe("admin-event-form helpers", () => {
         languageIndependent: false,
         languages: null,
         hasSubtitles: false,
-        subtitleLanguage: null,
+        subtitleLanguages: null,
         lat: null,
         lng: null,
         imageUpload: null,
@@ -364,7 +364,7 @@ describe("admin-event-form helpers", () => {
       languageIndependent: false,
       languages: null,
       hasSubtitles: false,
-      subtitleLanguage: null,
+      subtitleLanguages: null,
       lat: null,
       lng: null,
       imageUpload: null,
@@ -649,7 +649,7 @@ describe("admin-event-form helpers", () => {
     expect(values.languages).toBeNull();
   });
 
-  test("parseEventFormBody keeps subtitle language when subtitles on", async () => {
+  test("parseEventFormBody extracts subtitle languages array when subtitles on", async () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
@@ -669,7 +669,7 @@ describe("admin-event-form helpers", () => {
         ticket_type: "SECRET_CODE",
         secret_code: "FILM1",
         has_subtitles: "on",
-        subtitle_language: "EN",
+        subtitle_languages: ["DE", "EN"],
         language_independent: "on",
       },
       asString,
@@ -677,11 +677,100 @@ describe("admin-event-form helpers", () => {
     );
 
     expect(values.hasSubtitles).toBe(true);
-    expect(values.subtitleLanguage).toBe("EN");
+    expect(values.subtitleLanguages).toEqual(["DE", "EN"]);
     expect(values.languageIndependent).toBe(true);
   });
 
-  test("parseEventFormBody clears subtitle language when subtitles off", async () => {
+  test("parseEventFormBody wraps a lone subtitle_languages string", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Film Night",
+        description: "With English subs",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
+        zip_code: "10115",
+        category: "Film",
+        event_type: "Screening",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "1",
+        total_capacity: "20",
+        ticket_type: "SECRET_CODE",
+        secret_code: "FILM1",
+        has_subtitles: "on",
+        subtitle_languages: "EN",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.hasSubtitles).toBe(true);
+    expect(values.subtitleLanguages).toEqual(["EN"]);
+  });
+
+  test("parseEventFormBody keeps empty subtitle list when on and none posted", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Film Night",
+        description: "Missing subtitle codes",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
+        zip_code: "10115",
+        category: "Film",
+        event_type: "Screening",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "1",
+        total_capacity: "20",
+        ticket_type: "SECRET_CODE",
+        secret_code: "FILM1",
+        has_subtitles: "on",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.hasSubtitles).toBe(true);
+    expect(values.subtitleLanguages).toEqual([]);
+  });
+
+  test("parseEventFormBody ignores legacy subtitle_language POST field", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Film Night",
+        description: "Legacy field only",
+        street: "Main St",
+        house_number: "1",
+        address_line2: "",
+        zip_code: "10115",
+        category: "Film",
+        event_type: "Screening",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        timing_mode: "TIME_SLOT",
+        credit_price: "1",
+        total_capacity: "20",
+        ticket_type: "SECRET_CODE",
+        secret_code: "FILM1",
+        has_subtitles: "on",
+        subtitle_language: "EN",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.hasSubtitles).toBe(true);
+    expect(values.subtitleLanguages).toEqual([]);
+  });
+
+  test("parseEventFormBody clears subtitle languages when subtitles off", async () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
@@ -700,14 +789,14 @@ describe("admin-event-form helpers", () => {
         total_capacity: "20",
         ticket_type: "SECRET_CODE",
         secret_code: "TALK1",
-        subtitle_language: "EN",
+        subtitle_languages: ["EN"],
       },
       asString,
       asFile,
     );
 
     expect(values.hasSubtitles).toBe(false);
-    expect(values.subtitleLanguage).toBeNull();
+    expect(values.subtitleLanguages).toBeNull();
   });
 
   test("parseSeriesSlots expands builder weekdays", () => {
@@ -997,7 +1086,7 @@ describe("expandOccurrencesFromRange", () => {
         languageIndependent: false,
         languages: null,
         hasSubtitles: false,
-        subtitleLanguage: null,
+        subtitleLanguages: null,
         lat: null,
         lng: null,
         imageUpload: null,

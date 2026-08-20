@@ -45,7 +45,7 @@ function baseEvent(overrides: Partial<Event> = {}): Event {
     languageIndependent: false,
     languages: null,
     hasSubtitles: false,
-    subtitleLanguage: null,
+    subtitleLanguages: null,
     lat: null,
     lng: null,
     createdAt: new Date(),

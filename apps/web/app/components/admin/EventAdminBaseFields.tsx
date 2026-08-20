@@ -432,14 +432,21 @@ export function EventAdminBaseFields({
             <Description>{copy.hasSubtitlesHint}</Description>
           </Surface>
           {hasSubtitles ? (
-            <AdminFormSelect
-              defaultSelectedKey={defaults?.subtitleLanguage ?? undefined}
-              isRequired={generalRequired}
-              label={copy.subtitleLanguageLabel}
-              name="subtitle_language"
-              options={subtitleLanguageOptions}
-              placeholder={copy.selectPlaceholder}
-            />
+            <Surface className="flex w-full flex-col gap-1" variant="transparent">
+              <Label>{copy.subtitleLanguageLabel}</Label>
+              <CheckboxMultiSelect
+                enableSearch
+                filterPlaceholder={copy.subtitleLanguagesSearchPlaceholder}
+                initialVisibleCount={LANGUAGE_MULTI_SELECT_INITIAL_VISIBLE}
+                name="subtitle_languages"
+                options={subtitleLanguageOptions.map((option) => ({
+                  value: option.id,
+                  label: option.label,
+                }))}
+                searchHint={copy.subtitleLanguagesSearchHint}
+                selected={defaults?.subtitleLanguages ?? []}
+              />
+            </Surface>
           ) : null}
         </Surface>
       </Surface>

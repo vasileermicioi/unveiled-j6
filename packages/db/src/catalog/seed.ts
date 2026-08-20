@@ -183,7 +183,7 @@ async function seedDemoVoucherRedemptionEvents(
     stagedImageId: sharedImageId,
     languages: ["de", "en"],
     hasSubtitles: true,
-    subtitleLanguage: "EN",
+    subtitleLanguages: ["EN"],
     skipUpload: options.skipBucket,
   });
   await appendPromoCodes(db, promoEvent.id, [...DEMO_PROMO_CODES]);

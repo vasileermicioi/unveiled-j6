@@ -52,7 +52,7 @@ Full detail: [`design-tokens.md`](./design-tokens.md).
 Prefer **native** HTML controls for choice, numeric, date, and file fields when a native control exists.
 
 - **Single-value choice** → native HTML `<select>` (admin via `AdminFormSelect`; Discover filters likewise).
-- **Multi-value allowlists** (onboarding preferences, admin event languages) → native **checkbox multi-select** (`CheckboxMultiSelect` island; optional client-side search filter). Native HTML `<select multiple>` is **not** the preferred pattern for new multi-value admin fields.
+- **Multi-value allowlists** (onboarding preferences, admin event spoken languages, admin event subtitle languages) → native **checkbox multi-select** (`CheckboxMultiSelect` island; optional client-side search filter). Native HTML `<select multiple>` is **not** the preferred pattern for new multi-value admin fields.
 - Other natives: `input` of type `checkbox|radio|number|date|time|file`, and `textarea`.
 
 Do **not** use HeroUI `Select`, `NumberField`, `Checkbox`, `Radio`, or `Switch` for those fields in new work.

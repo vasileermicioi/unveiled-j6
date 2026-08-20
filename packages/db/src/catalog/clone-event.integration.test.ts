@@ -74,7 +74,7 @@ describe("cloneEvent integration", () => {
       secretCode: `SRC${suffix.slice(0, 5)}`,
       languageIndependent: true,
       hasSubtitles: true,
-      subtitleLanguage: "EN",
+      subtitleLanguages: ["DE", "EN"],
       imagePrebuilt: createTestImagePrebuilt(),
       skipUpload: true,
     });
@@ -108,7 +108,7 @@ describe("cloneEvent integration", () => {
       expect(cloned.languageIndependent).toBe(true);
       expect(cloned.languages).toBeNull();
       expect(cloned.hasSubtitles).toBe(true);
-      expect(cloned.subtitleLanguage).toBe("EN");
+      expect(cloned.subtitleLanguages).toEqual(["DE", "EN"]);
 
       const galleryIds = await listEventGalleryImageIds(db, cloned.id);
       expect(galleryIds).toEqual([galleryId]);

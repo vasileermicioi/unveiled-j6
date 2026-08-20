@@ -47,7 +47,8 @@ export const adminLabels = {
   imageCredit: /^(bildnachweis|image credit)$/i,
   languages: /sprachen|languages/i,
   hasSubtitles: /untertitel|subtitles/i,
-  subtitleLanguage: /untertitelsprache|subtitle language/i,
+  subtitleLanguage: /^untertitelsprachen$|^subtitle languages$/i,
+  subtitleLanguagesSearch: /untertitelsprachen suchen|search subtitle languages/i,
   wizardStepGeneral: /^(allgemein|general)$/i,
   wizardStepDateTickets: /^(datum & tickets|date & tickets)$/i,
   wizardStepImage: /^(bild|image)$/i,
@@ -243,6 +244,32 @@ export async function navigateAdminTab(page: Page, locale: Locale, tab: AdminTab
 /** Native checkbox multi-select: check an option by its accessible name. */
 export async function checkOptionByName(page: Page, name: string | RegExp): Promise<void> {
   const checkbox = page.getByRole("checkbox", { name });
+  await expect(checkbox).toBeVisible({ timeout: 10_000 });
+  await checkbox.check();
+}
+
+function subtitleOptionName(code: string): RegExp {
+  const normalized = code.trim().toUpperCase();
+  if (normalized === "EN") {
+    return /englisch|english/i;
+  }
+  if (normalized === "DE") {
+    return /deutsch|german/i;
+  }
+  return new RegExp(normalized, "i");
+}
+
+/** Check a subtitle-language checkbox inside the Subtitle languages group (not spoken languages). */
+export async function checkSubtitleLanguageViaUI(page: Page, code: string): Promise<void> {
+  const optionName = subtitleOptionName(code);
+  const search = page.getByPlaceholder(adminLabels.subtitleLanguagesSearch);
+  await expect(search).toBeVisible({ timeout: 10_000 });
+  const group = search.locator("..").locator("..");
+  let checkbox = group.getByRole("checkbox", { name: optionName });
+  if ((await checkbox.count()) === 0 || !(await checkbox.first().isVisible())) {
+    await search.fill(code);
+  }
+  checkbox = group.getByRole("checkbox", { name: optionName });
   await expect(checkbox).toBeVisible({ timeout: 10_000 });
   await checkbox.check();
 }
@@ -501,8 +528,8 @@ export type CreateEventOverrides = {
   skipImage?: boolean;
   language?: string | RegExp;
   hasSubtitles?: boolean;
-  /** Native select value (allowlisted code, e.g. `EN`). Defaults to `EN` when hasSubtitles. */
-  subtitleLanguage?: string;
+  /** ISO 639-1 codes to check in the subtitle multi-select. Defaults to `["EN"]` when hasSubtitles. */
+  subtitleLanguages?: string[];
   imageCredit?: string;
 };
 
@@ -543,12 +570,10 @@ export async function createEventViaUI(
   }
   if (overrides.hasSubtitles) {
     await page.getByRole("checkbox", { name: adminLabels.hasSubtitles }).check();
-    const subtitleCode = overrides.subtitleLanguage ?? "EN";
-    await selectOptionByLabel(
-      page,
-      adminLabels.subtitleLanguage,
-      subtitleCode === "EN" ? /englisch|english/i : new RegExp(subtitleCode, "i"),
-    );
+    const subtitleCodes = overrides.subtitleLanguages ?? ["EN"];
+    for (const code of subtitleCodes) {
+      await checkSubtitleLanguageViaUI(page, code);
+    }
   }
 
   await clickEventFormNext(page, 2);

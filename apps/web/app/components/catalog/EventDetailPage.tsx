@@ -711,10 +711,12 @@ export function EventDetailPage({
                     value={event.languages.join(", ")}
                   />
                 ) : null}
-                {event.hasSubtitles && event.subtitleLanguage ? (
+                {event.hasSubtitles &&
+                event.subtitleLanguages &&
+                event.subtitleLanguages.length > 0 ? (
                   <MetaCell
                     label={metadataLabel("subtitles", locale)}
-                    value={event.subtitleLanguage}
+                    value={event.subtitleLanguages.join(", ")}
                   />
                 ) : null}
                 <MetaCell label={metadataLabel("type", locale)} value={event.eventType} />

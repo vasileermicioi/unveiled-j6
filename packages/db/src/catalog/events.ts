@@ -75,7 +75,7 @@ export type ListEventsOptions = {
   partner?: string;
   /**
    * Language code filter: matches spoken `languages` (case-insensitive) or
-   * `subtitle_language` (case-insensitive). Empty/omitted = no language filter.
+   * `subtitle_languages` (case-insensitive). Empty/omitted = no language filter.
    */
   language?: string;
   partnerId?: string;
@@ -134,7 +134,7 @@ export type CreateEventInput = {
   languageIndependent?: boolean;
   languages?: string[] | null;
   hasSubtitles?: boolean;
-  subtitleLanguage?: string | null;
+  subtitleLanguages?: string[] | null;
   lat?: string | null;
   lng?: string | null;
   uploadedBy?: string | null;
@@ -189,7 +189,7 @@ export type UpdateEventInput = {
   languageIndependent?: boolean;
   languages?: string[] | null;
   hasSubtitles?: boolean;
-  subtitleLanguage?: string | null;
+  subtitleLanguages?: string[] | null;
   lat?: string | null;
   lng?: string | null;
   uploadedBy?: string | null;
@@ -321,7 +321,7 @@ function eventPartnerNameCondition(partner?: string): SQL | undefined {
 }
 
 /**
- * Match spoken languages array or subtitle language (case-insensitive).
+ * Match spoken languages array or any subtitle language (case-insensitive).
  * Does not auto-include language-independent events — those only match via subtitle.
  */
 function eventLanguageFilterCondition(language?: string): SQL | undefined {
@@ -332,7 +332,7 @@ function eventLanguageFilterCondition(language?: string): SQL | undefined {
   const lower = code.toLowerCase();
   return or(
     sql`exists (select 1 from unnest(${events.languages}) as lang where lower(lang) = ${lower})`,
-    sql`lower(${events.subtitleLanguage}) = ${lower}`,
+    sql`exists (select 1 from unnest(${events.subtitleLanguages}) as sub where lower(sub) = ${lower})`,
   );
 }
 
@@ -808,7 +808,7 @@ async function insertEventRow(
     totalCapacity: defaults.totalCapacity,
   });
   const derived = deriveDateTimeFields(occurrences.dateTime, defaults.timingMode);
-  const subtitles = resolveEventSubtitles(input.hasSubtitles ?? false, input.subtitleLanguage);
+  const subtitles = resolveEventSubtitles(input.hasSubtitles ?? false, input.subtitleLanguages);
 
   const inserted = await db
     .insert(events)
@@ -846,7 +846,7 @@ async function insertEventRow(
       languageIndependent: input.languageIndependent ?? false,
       languages: resolveEventLanguages(input.languageIndependent ?? false, input.languages),
       hasSubtitles: subtitles.hasSubtitles,
-      subtitleLanguage: subtitles.subtitleLanguage,
+      subtitleLanguages: subtitles.subtitleLanguages,
       lat: input.lat ?? null,
       lng: input.lng ?? null,
     })
@@ -919,7 +919,7 @@ export async function cloneEvent(
     languageIndependent: source.languageIndependent,
     languages: source.languages,
     hasSubtitles: source.hasSubtitles,
-    subtitleLanguage: source.subtitleLanguage,
+    subtitleLanguages: source.subtitleLanguages,
     lat: source.lat,
     lng: source.lng,
   };
@@ -1032,9 +1032,9 @@ export async function updateEvent(
 
   const nextHasSubtitles =
     input.hasSubtitles !== undefined ? input.hasSubtitles : existing.hasSubtitles;
-  const nextSubtitleLanguage =
-    input.subtitleLanguage !== undefined ? input.subtitleLanguage : existing.subtitleLanguage;
-  const subtitles = resolveEventSubtitles(nextHasSubtitles, nextSubtitleLanguage);
+  const nextSubtitleLanguages =
+    input.subtitleLanguages !== undefined ? input.subtitleLanguages : existing.subtitleLanguages;
+  const subtitles = resolveEventSubtitles(nextHasSubtitles, nextSubtitleLanguages);
 
   const updated = await db
     .update(events)
@@ -1093,7 +1093,7 @@ export async function updateEvent(
         input.languages !== undefined ? input.languages : existing.languages,
       ),
       hasSubtitles: subtitles.hasSubtitles,
-      subtitleLanguage: subtitles.subtitleLanguage,
+      subtitleLanguages: subtitles.subtitleLanguages,
       lat: input.lat !== undefined ? input.lat : existing.lat,
       lng: input.lng !== undefined ? input.lng : existing.lng,
       updatedAt: new Date(),

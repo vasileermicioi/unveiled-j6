@@ -72,7 +72,7 @@ export async function getSoldOutWaitlistEventId(): Promise<string> {
       secretCode: "WAITLIST26",
       languages: ["de", "en"],
       hasSubtitles: false,
-      subtitleLanguage: null,
+      subtitleLanguages: null,
       lat: template.lat,
       lng: template.lng,
     })

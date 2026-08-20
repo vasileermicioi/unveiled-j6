@@ -242,7 +242,7 @@ export async function createPricedSlotEvent(options?: {
       secretCode: `SLOT${Date.now().toString(36).slice(-6).toUpperCase()}`,
       languages: ["de", "en"],
       hasSubtitles: false,
-      subtitleLanguage: null,
+      subtitleLanguages: null,
       lat: template.lat,
       lng: template.lng,
     })

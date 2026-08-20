@@ -32,7 +32,7 @@ function baseValues(overrides: Partial<EventFormValues> = {}): EventFormValues {
     languageIndependent: false,
     languages: null,
     hasSubtitles: false,
-    subtitleLanguage: null,
+    subtitleLanguages: null,
     lat: null,
     lng: null,
     imageUpload: null,

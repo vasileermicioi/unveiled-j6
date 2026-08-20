@@ -273,9 +273,9 @@ Feature: Event Discovery
     And it indicates the event is language-independent (or omits languages rather than showing an empty list)
 
   Scenario: Detail shows subtitles when present
-    When a guest or member opens an event detail page with has_subtitles true and a subtitle language
+    When a guest or member opens an event detail page with has_subtitles true and one or more subtitle languages
     Then the DETAILS metadata includes a subtitles row that indicates subtitles are available
-    And the subtitle language is shown
+    And each stored subtitle language is shown
 
   Scenario: Detail omits subtitles when absent
     When a guest or member opens an event detail page with has_subtitles false

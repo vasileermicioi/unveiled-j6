@@ -44,7 +44,7 @@ export type EventFormDefaults = Partial<{
   languageIndependent: boolean;
   languages: string[] | null;
   hasSubtitles: boolean;
-  subtitleLanguage: string | null;
+  subtitleLanguages: string[] | null;
   lat: string | null;
   lng: string | null;
   currentImageUrl: string | null;

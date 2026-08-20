@@ -111,7 +111,7 @@ export const mockEvent: Event = {
   languageIndependent: false,
   languages: ["DE", "EN"],
   hasSubtitles: false,
-  subtitleLanguage: null,
+  subtitleLanguages: null,
   lat: "52.5025",
   lng: "13.3275",
   createdAt: storyNow,

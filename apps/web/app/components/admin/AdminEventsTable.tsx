@@ -62,10 +62,11 @@ function formatSpokenLanguages(event: Event, locale: Locale, independentLabel: s
 }
 
 function formatSubtitleLanguage(event: Event, locale: Locale): string {
-  if (!event.hasSubtitles || !event.subtitleLanguage) {
+  const codes = event.subtitleLanguages ?? [];
+  if (!event.hasSubtitles || codes.length === 0) {
     return "—";
   }
-  return formatAdminLanguageCode(locale, event.subtitleLanguage);
+  return codes.map((code) => formatAdminLanguageCode(locale, code)).join(", ");
 }
 
 export function AdminEventsTable({

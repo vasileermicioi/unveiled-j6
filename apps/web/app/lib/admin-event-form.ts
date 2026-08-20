@@ -164,7 +164,7 @@ export type EventFormValues = {
   languageIndependent: boolean;
   languages: string[] | null;
   hasSubtitles: boolean;
-  subtitleLanguage: string | null;
+  subtitleLanguages: string[] | null;
   lat: string | null;
   lng: string | null;
   imageUpload: Buffer | null;
@@ -848,8 +848,8 @@ export async function parseEventFormBody(
     ? []
     : parseBodyStringArrayField(body, "languages", asString);
   const hasSubtitles = asString(body.has_subtitles) === "on";
-  const subtitleLanguageRaw = asString(body.subtitle_language)?.trim() || null;
-  const subtitleLanguage = hasSubtitles ? subtitleLanguageRaw : null;
+  const postedSubtitleLanguages = parseBodyStringArrayField(body, "subtitle_languages", asString);
+  const subtitleLanguages = hasSubtitles ? postedSubtitleLanguages : null;
   const imageUrl = asString(body.image_url)?.trim() || null;
 
   const dateTimeRows = parseEventDateTimeRows(body, asString);
@@ -885,7 +885,7 @@ export async function parseEventFormBody(
     languageIndependent,
     languages: languages.length > 0 ? languages : null,
     hasSubtitles,
-    subtitleLanguage,
+    subtitleLanguages,
     lat: asString(body.lat)?.trim() || null,
     lng: asString(body.lng)?.trim() || null,
     imageUpload,

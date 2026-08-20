@@ -284,21 +284,21 @@ Feature: Admin — Event Management
     Then the languages multi-select is shown again
     And I may select zero or more languages as today
 
-  Scenario: Check Subtitles reveals language select
+  Scenario: Check Subtitles reveals language multi-select
     When I open create or edit event
     And I check Subtitles
-    Then a native subtitle language select with the full ISO 639-1 language list is shown and required
+    Then a searchable subtitle-languages checkbox multi-select with the full ISO 639-1 list is shown and at least one language is required
 
-  Scenario: Save event with Subtitles and language
-    When I create an event with Subtitles checked and a subtitle language selected
-    Then the saved event has has_subtitles true and the chosen subtitle_language
-    And the public detail DETAILS metadata shows subtitles availability and that language
+  Scenario: Save event with Subtitles and multiple languages
+    When I create an event with Subtitles checked and DE plus EN selected
+    Then the saved event has has_subtitles true and subtitle_languages containing DE and EN
+    And the public detail DETAILS metadata shows subtitles availability and those languages
 
   Scenario: Subtitles controls available when language-independent
     When I open create or edit event
     And I check Language-independent
     Then the Subtitles checkbox remains available
-    And checking Subtitles still shows the subtitle language select
+    And checking Subtitles still shows the subtitle-languages checkbox multi-select
 
   Scenario: Languages multi-select with search
     When I open create or edit event

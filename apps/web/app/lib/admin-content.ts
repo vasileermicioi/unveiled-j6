@@ -1,4 +1,4 @@
-import { EVENT_TYPES, INTERESTS } from "@unveiled/auth/constants";
+import { EVENT_TYPES, FEATURED_PREFERRED_LANGUAGES, INTERESTS } from "@unveiled/auth/constants";
 import { listIso6391LanguageCodes } from "@unveiled/db";
 import type { CatalogErrorCode } from "@unveiled/db/catalog/errors";
 
@@ -417,6 +417,8 @@ export type AdminCopy = {
   hasSubtitlesLabel: string;
   hasSubtitlesHint: string;
   subtitleLanguageLabel: string;
+  subtitleLanguagesSearchPlaceholder: string;
+  subtitleLanguagesSearchHint: string;
   selectPlaceholder: string;
   optionYes: string;
   optionNo: string;
@@ -914,8 +916,11 @@ const copy: Record<Locale, AdminCopy> = {
       "Für Events ohne gesprochene Sprache (z. B. Kunstausstellungen, Installationen).",
     hasSubtitlesLabel: "Untertitel",
     hasSubtitlesHint:
-      "Unabhängig von gesprochenen Sprachen. Eine Sprache aus der vollständigen Liste wählen.",
-    subtitleLanguageLabel: "Untertitelsprache",
+      "Unabhängig von gesprochenen Sprachen. Eine oder mehrere Sprachen aus der vollständigen Liste wählen.",
+    subtitleLanguageLabel: "Untertitelsprachen",
+    subtitleLanguagesSearchPlaceholder: "Untertitelsprachen suchen",
+    subtitleLanguagesSearchHint:
+      "Nur häufige Sprachen sind angezeigt. Nutze die Suche, um weitere zu finden und auszuwählen.",
     selectPlaceholder: "Auswählen…",
     optionYes: "Ja",
     optionNo: "Nein",
@@ -972,7 +977,7 @@ const copy: Record<Locale, AdminCopy> = {
       redemption: "Redemption-Konfiguration unvollständig.",
       series: "Mindestens ein gültiger Slot erforderlich.",
       subtitleLanguage:
-        "Untertitelsprache ist erforderlich und muss ein gültiger ISO-639-1-Sprachcode sein.",
+        "Mindestens eine Untertitelsprache ist erforderlich und muss ein gültiger ISO-639-1-Sprachcode sein.",
       openingHours:
         "Öffnungszeiten ungültig. Jeden Tag als geschlossen markieren oder Öffnungszeit vor Schlusszeit setzen.",
       bankDetails: "Bankverbindung darf höchstens 2000 Zeichen haben.",
@@ -1410,8 +1415,12 @@ const copy: Record<Locale, AdminCopy> = {
     languageIndependentHint:
       "For events with no spoken-language requirement (e.g. art exhibitions, installations).",
     hasSubtitlesLabel: "Subtitles",
-    hasSubtitlesHint: "Independent of spoken languages. Choose one language from the full list.",
-    subtitleLanguageLabel: "Subtitle language",
+    hasSubtitlesHint:
+      "Independent of spoken languages. Choose one or more languages from the full list.",
+    subtitleLanguageLabel: "Subtitle languages",
+    subtitleLanguagesSearchPlaceholder: "Search subtitle languages",
+    subtitleLanguagesSearchHint:
+      "Only common languages are shown. Use search to find and select others.",
     selectPlaceholder: "Select…",
     optionYes: "Yes",
     optionNo: "No",
@@ -1464,7 +1473,7 @@ const copy: Record<Locale, AdminCopy> = {
       redemption: "Redemption configuration is incomplete.",
       series: "At least one valid slot is required.",
       subtitleLanguage:
-        "Subtitle language is required and must be a valid ISO 639-1 language code.",
+        "At least one subtitle language is required and must be a valid ISO 639-1 language code.",
       openingHours:
         "Opening hours are invalid. Mark each day closed or set open time before close time.",
       bankDetails: "Bank details must be 2000 characters or fewer.",
@@ -1657,9 +1666,9 @@ export function getEventLanguageOptions(locale: Locale): AdminSelectOption[] {
 }
 
 /**
- * Full ISO 639-1 language list for subtitle-language native `<select>`.
- * DE + EN first; remaining codes A–Z by locale display label (not the spoken-event 29).
- * Collapses any remaining same-label pairs to a single option.
+ * Full ISO 639-1 language list for subtitle-language checkbox multi-select.
+ * Featured Berlin-common codes first; remaining codes A–Z by locale display label
+ * (not limited to the spoken-event allowlist). Collapses remaining same-label pairs.
  */
 export function getEventSubtitleLanguageOptions(locale: Locale): AdminSelectOption[] {
   const intlLocale = locale === "de" ? "de" : "en";
@@ -1675,11 +1684,15 @@ export function getEventSubtitleLanguageOptions(locale: Locale): AdminSelectOpti
     seenLabels.add(labelKey);
     options.push({ id: code, label });
   }
-  const pinned = options.filter((option) => option.id === "DE" || option.id === "EN");
+  const featuredSet = new Set<string>(FEATURED_PREFERRED_LANGUAGES);
+  const featured = FEATURED_PREFERRED_LANGUAGES.flatMap((code) => {
+    const option = options.find((entry) => entry.id === code);
+    return option ? [option] : [];
+  });
   const rest = options
-    .filter((option) => option.id !== "DE" && option.id !== "EN")
+    .filter((option) => !featuredSet.has(option.id))
     .sort((a, b) => a.label.localeCompare(b.label, intlLocale, { sensitivity: "base" }));
-  return [...pinned, ...rest];
+  return [...featured, ...rest];
 }
 
 export function getEventCategoryOptions(locale: Locale): AdminSelectOption[] {

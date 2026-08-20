@@ -18,7 +18,7 @@ export const CollapsedPreview: Story = () => (
       totalCapacity: 40,
       languages: ["DE", "EN"],
       hasSubtitles: true,
-      subtitleLanguage: "EN",
+      subtitleLanguages: ["DE", "EN"],
     }}
     includeDateTime={false}
     locale={storyLocale}

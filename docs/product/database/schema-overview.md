@@ -144,7 +144,7 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `language_independent` | boolean, **not nullable**, default `false` | When true, the event has no spoken-language requirement; `languages` MUST be null. Language filters treat these events as matching every language value. |
 | `languages` | text[], nullable | Spoken-language codes when not language-independent; null/empty means unset / none selected for language-specific events |
 | `has_subtitles` | boolean, **not nullable**, default `false` | When true, the event has subtitles; independent of spoken `languages` / `language_independent`. |
-| `subtitle_language` | text, nullable | Single ISO 639-1 language code (uppercase alpha-2, e.g. `DE`, `EN`, `SW`) when `has_subtitles` is true — broader than spoken-event `EVENT_LANGUAGES`; MUST be null when `has_subtitles` is false. |
+| `subtitle_languages` | text[], nullable | Unique uppercase ISO 639-1 codes (e.g. `{DE,EN,SW}`) when `has_subtitles` is true — broader than spoken-event `EVENT_LANGUAGES`; MUST be null when `has_subtitles` is false. |
 | `lat`, `lng` | numeric, nullable | System-derived from **structured** geocode (`street` + `house_number` + `zip_code`; `address_line2` excluded) for map display only — not admin-authored. Null when geocode soft-fails; MUST NOT store invented default-center coordinates |
 | ~~`map_zoom`~~ | — | **Decided cut:** admin zoom authoring removed; maps use a UI default zoom. Column dropped. |
 | `created_at` / `updated_at` | timestamptz | |

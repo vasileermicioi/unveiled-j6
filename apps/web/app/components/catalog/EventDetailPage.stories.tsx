@@ -265,7 +265,7 @@ WithGallery.meta = wideMeta;
 export const WithSubtitles: Story = () => (
   <EventDetailPage
     closeHref={`/${storyLocale}`}
-    event={{ ...mockEvent, hasSubtitles: true, subtitleLanguage: "EN" }}
+    event={{ ...mockEvent, hasSubtitles: true, subtitleLanguages: ["DE", "EN"] }}
     locale={storyLocale}
     maxQty={3}
     partnerAttribution={storyPartnerAttribution}

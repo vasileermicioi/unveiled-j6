@@ -81,10 +81,10 @@ export const events = pgTable(
     eventWebsiteUrl: text("event_website_url"),
     languageIndependent: boolean("language_independent").notNull().default(false),
     languages: text("languages").array(),
-    /** When true, `subtitle_language` MUST be an allowlisted code; when false, language is null. */
+    /** When true, `subtitle_languages` MUST be a non-empty ISO 639-1 list; when false, languages are null. */
     hasSubtitles: boolean("has_subtitles").notNull().default(false),
-    /** Single subtitle language code (same allowlist as spoken event languages); null when off. */
-    subtitleLanguage: text("subtitle_language"),
+    /** Unique uppercase ISO 639-1 codes when on (broader than spoken `EVENT_LANGUAGES`); null when off. */
+    subtitleLanguages: text("subtitle_languages").array(),
     lat: numeric("lat"),
     lng: numeric("lng"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),

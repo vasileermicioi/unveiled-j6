@@ -1061,7 +1061,7 @@ test.describe("admin-events.feature", () => {
     });
   });
 
-  test("Scenario: Check Subtitles reveals language select", async ({ page, locale }) => {
+  test("Scenario: Check Subtitles reveals language multi-select", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured — create partner needs logo");
     const partner = await createPartnerViaUI(page, locale);
     await page.goto(`/${locale}/admin/events/new`);
@@ -1071,27 +1071,26 @@ test.describe("admin-events.feature", () => {
     await page.waitForLoadState("networkidle");
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
     await expect(page.getByRole("checkbox", { name: adminLabels.hasSubtitles })).toBeVisible();
-    await expect(page.getByLabel(adminLabels.subtitleLanguage)).toHaveCount(0);
+    await expect(page.getByPlaceholder(adminLabels.subtitleLanguagesSearch)).toHaveCount(0);
     await page.getByRole("checkbox", { name: adminLabels.hasSubtitles }).check();
-    const subtitleSelect = page.getByLabel(adminLabels.subtitleLanguage);
-    await expect(subtitleSelect).toBeVisible();
-    // Full ISO 639-1 list (far broader than the spoken-event 29).
-    const optionCount = await subtitleSelect.locator("option").count();
-    expect(optionCount).toBeGreaterThan(100);
-    await expect(subtitleSelect.locator("option", { hasText: /swahili/i })).toHaveCount(1);
-    await expect(
-      subtitleSelect.locator("option", { hasText: /isländisch|icelandic/i }),
-    ).toHaveCount(1);
+    const subtitleSearch = page.getByPlaceholder(adminLabels.subtitleLanguagesSearch);
+    await expect(page.getByText(adminLabels.subtitleLanguage)).toBeVisible();
+    await expect(subtitleSearch).toBeVisible();
+    await expect(page.getByLabel(adminLabels.subtitleLanguage)).toHaveCount(0);
+    await subtitleSearch.fill("SW");
+    await expect(page.getByRole("checkbox", { name: /swahili/i })).toBeVisible();
+    await subtitleSearch.fill("IS");
+    await expect(page.getByRole("checkbox", { name: /isländisch|icelandic/i })).toBeVisible();
   });
 
-  test("Scenario: Save event with Subtitles and language", async ({ page, locale }) => {
+  test("Scenario: Save event with Subtitles and multiple languages", async ({ page, locale }) => {
     test.setTimeout(90_000);
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
     const event = await createEventViaUI(page, locale, {
       partnerName: partner.name,
       hasSubtitles: true,
-      subtitleLanguage: "EN",
+      subtitleLanguages: ["DE", "EN"],
     });
     await page.goto(event.detailPath);
     await expect(page.getByRole("heading", { name: event.title })).toBeVisible();
@@ -1099,7 +1098,7 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByText(/^untertitel$|^subtitles$/i).first()).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByText(/^EN$/).first()).toBeVisible();
+    await expect(page.getByText(/DE,\s*EN|EN,\s*DE/).first()).toBeVisible();
   });
 
   test("Scenario: Subtitles controls available when language-independent", async ({
@@ -1117,7 +1116,8 @@ test.describe("admin-events.feature", () => {
     await page.getByRole("checkbox", { name: /sprachunabhängig|language-independent/i }).check();
     await expect(page.getByRole("checkbox", { name: adminLabels.hasSubtitles })).toBeVisible();
     await page.getByRole("checkbox", { name: adminLabels.hasSubtitles }).check();
-    await expect(page.getByLabel(adminLabels.subtitleLanguage)).toBeVisible();
+    await expect(page.getByPlaceholder(adminLabels.subtitleLanguagesSearch)).toBeVisible();
+    await expect(page.getByText(adminLabels.subtitleLanguage)).toBeVisible();
   });
 
   test("Scenario: Languages multi-select with search", async ({ page, locale }) => {

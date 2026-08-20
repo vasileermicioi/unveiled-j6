@@ -1,6 +1,6 @@
 {
-  "id": "e88436b4-8a52-4d8c-ad99-1444cbdb33c2",
-  "prevId": "0fba2330-6fb1-4509-97e6-d8edde9acf83",
+  "id": "95e5e240-792c-45bd-b815-0098442bf3b8",
+  "prevId": "e88436b4-8a52-4d8c-ad99-1444cbdb33c2",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -997,9 +997,9 @@
           "notNull": true,
           "default": false
         },
-        "subtitle_language": {
-          "name": "subtitle_language",
-          "type": "text",
+        "subtitle_languages": {
+          "name": "subtitle_languages",
+          "type": "text[]",
           "primaryKey": false,
           "notNull": false
         },
