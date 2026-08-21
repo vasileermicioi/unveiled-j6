@@ -24,11 +24,7 @@ import {
   formValuesToDefaults,
   toPartnerOptions,
 } from "./admin-event-route-helpers";
-import {
-  type EventWizardTarget,
-  eventWizardStepPath,
-  parseWizardIntent,
-} from "./admin-event-wizard";
+import { type EventWizardTarget, parseWizardIntent } from "./admin-event-wizard";
 import { renderAdminPage } from "./admin-render";
 import { mapCatalogError, type ParsedBody, parseEventFormBodyFromRequest } from "./admin-route";
 import {
@@ -87,10 +83,6 @@ function notFound(c: Context, locale: Locale) {
 }
 
 export async function getEventCreateWizard(c: Context, locale: Locale, step: EventFormStep) {
-  if (step !== 1) {
-    return c.redirect(eventWizardStepPath(locale, { kind: "new" }, 1), 302);
-  }
-
   const { db } = getAuthOptions();
   const partners = await listPartners(db, { limit: 1000 });
   return renderWizard(c, {

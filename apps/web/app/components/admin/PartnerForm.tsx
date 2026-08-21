@@ -2,9 +2,16 @@
 
 import { Button, Description, Form, Input, Label, Link, Surface, TextField } from "@heroui/react";
 import { OPENING_HOURS_DAY_KEYS, type OpeningHoursDayKey } from "@unveiled/db";
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import {
+  draftFieldValue,
+  draftFieldValues,
+  FORM_DRAFT_APPLIED_EVENT,
+  type FormDraftAppliedDetail,
+  type FormDraftFields,
+} from "../../lib/form-draft";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import {
@@ -15,6 +22,7 @@ import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 
 import { AdminFormError } from "./AdminFormError";
 import { AdminFormSelect } from "./AdminFormSelect";
+import { FormDraftPersistence } from "./FormDraftPersistence";
 import { PartnerLogoUpload } from "./PartnerLogoUpload";
 
 export type PartnerFormDefaults = {
@@ -41,10 +49,28 @@ type PartnerFormProps = {
   action: string;
   submitLabel: string;
   cancelHref: string;
+  formId: string;
   defaults?: PartnerFormDefaults;
   error?: string | null;
   isEdit?: boolean;
 };
+
+function openingHoursDaysFromDraft(
+  fields: FormDraftFields,
+  fallback: PartnerOpeningHoursDaysForm,
+): PartnerOpeningHoursDaysForm {
+  const days = emptyOpeningHoursDaysForm(true);
+  for (const day of OPENING_HOURS_DAY_KEYS) {
+    const open = draftFieldValue(fields, `open_${day}`);
+    const close = draftFieldValue(fields, `close_${day}`);
+    days[day] = {
+      closed: draftFieldValues(fields, `closed_${day}`).includes("on"),
+      open: open ?? fallback[day].open,
+      close: close ?? fallback[day].close,
+    };
+  }
+  return days;
+}
 
 function OpeningHoursDayRow({
   day,
@@ -112,21 +138,44 @@ export function PartnerForm({
   action,
   submitLabel,
   cancelHref,
+  formId,
   defaults,
   error = null,
   isEdit = false,
 }: PartnerFormProps) {
   const copy = getAdminCopy(locale);
   const [hasOpeningHours, setHasOpeningHours] = useState(Boolean(defaults?.hasOpeningHours));
-  const openingHoursDays = defaults?.openingHoursDays ?? emptyOpeningHoursDaysForm(true);
+  const [openingHoursDays, setOpeningHoursDays] = useState(
+    () => defaults?.openingHoursDays ?? emptyOpeningHoursDaysForm(true),
+  );
+  const [hoursEpoch, setHoursEpoch] = useState(0);
+
+  useLayoutEffect(() => {
+    function onApplied(event: Event) {
+      const detail = (event as CustomEvent<FormDraftAppliedDetail>).detail;
+      if (!detail?.fields) {
+        return;
+      }
+      setHasOpeningHours(draftFieldValues(detail.fields, "has_opening_hours").includes("on"));
+      setOpeningHoursDays((current) => openingHoursDaysFromDraft(detail.fields, current));
+      setHoursEpoch((current) => current + 1);
+    }
+
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, []);
 
   return (
     <Form
       action={action}
       className="admin-form flex flex-col gap-6"
+      data-form-draft-id={formId}
       encType="multipart/form-data"
       method="post"
     >
+      <FormDraftPersistence formId={formId} locale={locale} seedIfEmpty={Boolean(error)} />
       {error ? <AdminFormError message={error} /> : null}
 
       <TextField defaultValue={defaults?.name} fullWidth isRequired name="name">
@@ -230,7 +279,7 @@ export function PartnerForm({
                 day={day}
                 dayLabel={copy.openingHoursDayLabels[day]}
                 defaults={openingHoursDays[day]}
-                key={day}
+                key={`${day}-${hoursEpoch}`}
                 openLabel={copy.openingHoursOpenLabel}
               />
             ))}

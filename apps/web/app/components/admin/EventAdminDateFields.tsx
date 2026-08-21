@@ -16,7 +16,7 @@ import {
   type OpeningHoursWeek,
   type TimingMode,
 } from "@unveiled/db";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import {
@@ -25,11 +25,18 @@ import {
   DEFAULT_ROW_CREDITS,
   defaultRangeSlotsFromHours,
   expandOccurrencesFromRange,
+  MAX_EVENT_DATE_TIME_ROWS,
   occurrencesToFormRows,
   type RangeBuilderSlotRow,
   showsEventTimeInputs,
   withDefaultOccurrenceCapacity,
 } from "../../lib/admin-event-form";
+import {
+  draftFieldValue,
+  FORM_DRAFT_APPLIED_EVENT,
+  type FormDraftAppliedDetail,
+  type FormDraftFields,
+} from "../../lib/form-draft";
 import type { Locale } from "../../lib/locale";
 import type { EventDateTimeRow } from "./event-admin-types";
 
@@ -306,6 +313,53 @@ function normalizeInitialSlots(slots: RangeBuilderSlotRow[] | undefined): SlotSt
   return [createSlot()];
 }
 
+function parseDraftCount(raw: string | undefined, fallback: number, max: number): number {
+  const parsed = Number.parseInt(raw ?? "", 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+  return Math.min(parsed, max);
+}
+
+function rowsAndSlotsFromDraft(
+  fields: FormDraftFields,
+  defaultCapacity: string,
+): { rows: RowState[]; startDate: string; endDate: string; slots: SlotState[] } {
+  const rowCount = parseDraftCount(
+    draftFieldValue(fields, "datetime_count"),
+    1,
+    MAX_EVENT_DATE_TIME_ROWS,
+  );
+  const rows = Array.from({ length: rowCount }, (_, index) =>
+    createRow(
+      draftFieldValue(fields, `event_date_${index}`) ?? "",
+      draftFieldValue(fields, `event_time_${index}`) || DEFAULT_EVENT_TIME,
+      draftFieldValue(fields, `event_credit_${index}`) || DEFAULT_ROW_CREDITS,
+      draftFieldValue(fields, `event_capacity_${index}`) || defaultCapacity,
+    ),
+  );
+  const slotCount = parseDraftCount(
+    draftFieldValue(fields, "range_slot_count"),
+    1,
+    MAX_EVENT_DATE_TIME_ROWS,
+  );
+  const slots = Array.from({ length: slotCount }, (_, index) =>
+    createSlot(
+      draftFieldValue(fields, `range_slot_time_${index}`) || DEFAULT_RANGE_SLOT_TIME,
+      draftFieldValue(fields, `range_slot_credit_${index}`) || DEFAULT_ROW_CREDITS,
+    ),
+  );
+  return {
+    rows:
+      rows.length > 0
+        ? rows
+        : [createRow("", DEFAULT_EVENT_TIME, DEFAULT_ROW_CREDITS, defaultCapacity)],
+    startDate: draftFieldValue(fields, "range_start") ?? "",
+    endDate: draftFieldValue(fields, "range_end") ?? "",
+    slots: slots.length > 0 ? slots : [createSlot()],
+  };
+}
+
 function slotCreditPrice(credits: string): number {
   const parsed = Number.parseInt(credits, 10);
   if (!Number.isFinite(parsed) || parsed < 0) {
@@ -355,6 +409,7 @@ export function EventAdminDateTimeList({
   const firstSlot = timeSlots[0];
   const prevPartnerId = useRef(partnerId);
   const prevTimingMode = useRef(timingMode);
+  const skipNextTimingRebuildRef = useRef(false);
   const defaultCapacityRef = useRef(defaultOccurrenceCapacity);
   defaultCapacityRef.current = defaultOccurrenceCapacity;
 
@@ -433,8 +488,33 @@ export function EventAdminDateTimeList({
       return;
     }
     prevTimingMode.current = timingMode;
+    if (skipNextTimingRebuildRef.current) {
+      skipNextTimingRebuildRef.current = false;
+      return;
+    }
     applyRebuild(startDate, endDate, timeSlots, timingMode);
   }, [applyRebuild, endDate, startDate, timeSlots, timingMode]);
+
+  useLayoutEffect(() => {
+    function onApplied(event: Event) {
+      const detail = (event as CustomEvent<FormDraftAppliedDetail>).detail;
+      if (!detail?.fields) {
+        return;
+      }
+      const restored = rowsAndSlotsFromDraft(detail.fields, defaultCapacityRef.current);
+      skipNextTimingRebuildRef.current = true;
+      prevTimingMode.current = timingMode;
+      setStartDate(restored.startDate);
+      setEndDate(restored.endDate);
+      setTimeSlots(restored.slots);
+      setRows(restored.rows);
+    }
+
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, [timingMode]);
 
   function addRow() {
     setRows((current) => [

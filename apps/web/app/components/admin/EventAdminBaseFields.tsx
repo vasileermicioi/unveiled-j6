@@ -2,7 +2,7 @@
 
 import { Description, Input, Label, Surface, TextField } from "@heroui/react";
 import type { CapacityMode, TicketType, TimingMode } from "@unveiled/db";
-import { useId, useState } from "react";
+import { useId, useLayoutEffect, useState } from "react";
 
 import CheckboxMultiSelect from "../../islands/CheckboxMultiSelect";
 import { LANGUAGE_MULTI_SELECT_INITIAL_VISIBLE } from "../../islands/LanguageMultiSelect";
@@ -18,6 +18,12 @@ import {
 import type { EventFormStep } from "../../lib/admin-event-form";
 import { DEFAULT_OCCURRENCE_CAPACITY } from "../../lib/admin-event-form";
 import { voucherInventoryDisplayCount } from "../../lib/admin-voucher-inventory";
+import {
+  draftFieldValue,
+  draftFieldValues,
+  FORM_DRAFT_APPLIED_EVENT,
+  type FormDraftAppliedDetail,
+} from "../../lib/form-draft";
 import { geocodeBerlinAddress } from "../../lib/geocode-berlin";
 import type { Locale } from "../../lib/locale";
 import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
@@ -126,6 +132,66 @@ export function EventAdminBaseFields({
     defaults?.languageIndependent ?? false,
   );
   const [hasSubtitles, setHasSubtitles] = useState(defaults?.hasSubtitles ?? false);
+
+  useLayoutEffect(() => {
+    function onApplied(event: Event) {
+      const fields = (event as CustomEvent<FormDraftAppliedDetail>).detail?.fields;
+      if (!fields) {
+        return;
+      }
+      setLanguageIndependent(draftFieldValues(fields, "language_independent").includes("on"));
+      setHasSubtitles(draftFieldValues(fields, "has_subtitles").includes("on"));
+      const streetValue = draftFieldValue(fields, "street");
+      if (streetValue !== undefined) {
+        setStreet(streetValue);
+      }
+      const houseValue = draftFieldValue(fields, "house_number");
+      if (houseValue !== undefined) {
+        setHouseNumber(houseValue);
+      }
+      const line2 = draftFieldValue(fields, "address_line2");
+      if (line2 !== undefined) {
+        setAddressLine2(line2);
+      }
+      const zip = draftFieldValue(fields, "zip_code");
+      if (zip !== undefined) {
+        setZipCode(zip);
+      }
+      const partner = draftFieldValue(fields, "partner_id");
+      if (partner !== undefined) {
+        setSelectedPartnerId(partner);
+      }
+      const ticket = draftFieldValue(fields, "ticket_type");
+      if (ticket && isTicketType(ticket)) {
+        setTicketType(ticket);
+      }
+      const timing = draftFieldValue(fields, "timing_mode");
+      if (timing === "ALL_DAY" || timing === "TIME_SLOT") {
+        setTimingMode(timing);
+      }
+      const capacity = draftFieldValue(fields, "capacity_mode");
+      if (capacity && isCapacityMode(capacity)) {
+        setCapacityMode(capacity);
+      }
+      const total = draftFieldValue(fields, "total_capacity");
+      if (total !== undefined) {
+        setTotalCapacity(total);
+      }
+      const lat = draftFieldValue(fields, "lat");
+      const lng = draftFieldValue(fields, "lng");
+      if (lat !== undefined) {
+        setExternalLat(lat || null);
+      }
+      if (lng !== undefined) {
+        setExternalLng(lng || null);
+      }
+    }
+
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, []);
 
   async function applyAddressGeocode(fields: {
     street: string;

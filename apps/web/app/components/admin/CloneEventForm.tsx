@@ -2,13 +2,18 @@
 
 import { Button, Description, Form, Heading, Link, Paragraph, Surface } from "@heroui/react";
 import type { CapacityMode, TicketType, TimingMode } from "@unveiled/db";
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 import PdfVoucherInventoryIsland from "../../islands/PdfVoucherInventoryIsland";
 import PromoCodeInventoryIsland from "../../islands/PromoCodeInventoryIsland";
 import { getAdminCopy } from "../../lib/admin-content";
 import { DEFAULT_OCCURRENCE_CAPACITY } from "../../lib/admin-event-form";
 import { voucherInventoryDisplayCount } from "../../lib/admin-voucher-inventory";
+import {
+  draftFieldValue,
+  FORM_DRAFT_APPLIED_EVENT,
+  type FormDraftAppliedDetail,
+} from "../../lib/form-draft";
 import type { Locale } from "../../lib/locale";
 
 import { AdminFormError } from "./AdminFormError";
@@ -16,6 +21,7 @@ import { AdminFormNumberField } from "./AdminFormNumberField";
 import { AdminFormSelect } from "./AdminFormSelect";
 import { EventAdminDateTimeList } from "./EventAdminDateFields";
 import type { EventDateTimeRow } from "./event-admin-types";
+import { FormDraftPersistence } from "./FormDraftPersistence";
 
 /** Island props must be JSON-serializable — no Date objects. */
 export type CloneEventFormSource = {
@@ -72,6 +78,7 @@ export function CloneEventForm({
   error = null,
 }: CloneEventFormProps) {
   const copy = getAdminCopy(locale);
+  const draftFormId = `admin-event-clone:${source.id}`;
   const [timingMode, setTimingMode] = useState<TimingMode>(source.timingMode);
   const [capacityMode, setCapacityMode] = useState<CapacityMode>(
     defaults?.capacityMode ?? source.capacityMode,
@@ -94,13 +101,41 @@ export function CloneEventForm({
       ) ?? 0)
     : null;
 
+  useLayoutEffect(() => {
+    function onApplied(event: Event) {
+      const detail = (event as CustomEvent<FormDraftAppliedDetail>).detail;
+      if (!detail?.fields) {
+        return;
+      }
+      const timing = draftFieldValue(detail.fields, "timing_mode");
+      if (timing === "ALL_DAY" || timing === "TIME_SLOT") {
+        setTimingMode(timing);
+      }
+      const capacity = draftFieldValue(detail.fields, "capacity_mode");
+      if (capacity === "SHARED" || capacity === "PER_OCCURRENCE") {
+        setCapacityMode(capacity);
+      }
+      const total = draftFieldValue(detail.fields, "total_capacity");
+      if (total !== undefined) {
+        setTotalCapacity(total);
+      }
+    }
+
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, []);
+
   return (
     <Form
       action={action}
       className="admin-form flex flex-col gap-6"
+      data-form-draft-id={draftFormId}
       encType="multipart/form-data"
       method="post"
     >
+      <FormDraftPersistence formId={draftFormId} locale={locale} seedIfEmpty={Boolean(error)} />
       {error ? <AdminFormError message={error} /> : null}
 
       <input name="ticket_type" type="hidden" value={source.ticketType} />

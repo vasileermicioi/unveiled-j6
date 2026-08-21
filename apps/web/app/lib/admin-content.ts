@@ -298,6 +298,8 @@ export type AdminCopy = {
   wizardStepProgress: (current: number, total: number) => string;
   wizardNext: string;
   wizardBack: string;
+  draftRestored: string;
+  discardDraft: string;
   nameLabel: string;
   emailLabel: string;
   addressLabel: string;
@@ -783,6 +785,8 @@ const copy: Record<Locale, AdminCopy> = {
     wizardStepProgress: (current, total) => `Schritt ${current} von ${total}`,
     wizardNext: "Weiter",
     wizardBack: "Zurück",
+    draftRestored: "Nicht gespeicherter Entwurf wiederhergestellt",
+    discardDraft: "Entwurf verwerfen",
     nameLabel: "Name",
     emailLabel: "Kontakt-E-Mail",
     addressLabel: "Adresse",
@@ -1284,6 +1288,8 @@ const copy: Record<Locale, AdminCopy> = {
     wizardStepProgress: (current, total) => `Step ${current} of ${total}`,
     wizardNext: "Next",
     wizardBack: "Back",
+    draftRestored: "Unsaved draft restored",
+    discardDraft: "Discard draft",
     nameLabel: "Name",
     emailLabel: "Contact email",
     addressLabel: "Address",

@@ -2,9 +2,14 @@
 
 import { Description, Input, Paragraph, Surface } from "@heroui/react";
 import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images/constants";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import {
+  draftFieldValue,
+  FORM_DRAFT_APPLIED_EVENT,
+  type FormDraftAppliedDetail,
+} from "../../lib/form-draft";
 import { imageAltWithCredit, imageCreditTitle } from "../../lib/image-credit";
 import type { Locale } from "../../lib/locale";
 
@@ -16,6 +21,7 @@ import {
   mapClientImageError,
   type ProcessedAdminUpload,
   processAdminImageFiles,
+  processedUploadFromDraftFields,
 } from "./admin-image-variants";
 
 export type PartnerLogoUploadProps = {
@@ -58,6 +64,7 @@ export function PartnerLogoUpload({
   const [status, setStatus] = useState<"idle" | "processing" | "ready" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
+  const [restoredCredit, setRestoredCredit] = useState<string | null>(null);
   const processingRef = useRef(false);
   const processedRef = useRef<ProcessedAdminUpload | null>(null);
   const statusRef = useRef(status);
@@ -69,6 +76,29 @@ export function PartnerLogoUpload({
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
+
+  useLayoutEffect(() => {
+    function onApplied(event: Event) {
+      const detail = (event as CustomEvent<FormDraftAppliedDetail>).detail;
+      const form = document.getElementById(fileInputId)?.closest("form") ?? null;
+      if (!detail?.fields || !form || detail.form !== form) {
+        return;
+      }
+      const restored = processedUploadFromDraftFields(detail.fields);
+      if (!restored || !hasCompleteVariants(restored)) {
+        return;
+      }
+      setProcessed(restored);
+      setStatus("ready");
+      setErrorMessage(null);
+      setRestoredCredit(draftFieldValue(detail.fields, "image_credit") ?? "");
+    }
+
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, [fileInputId]);
 
   useEffect(() => {
     const onSubmit = (event: Event) => {
@@ -166,6 +196,7 @@ export function PartnerLogoUpload({
       setProcessed(first);
       setStatus("ready");
       setErrorMessage(null);
+      setRestoredCredit(null);
     } catch (error) {
       setProcessed(null);
       setStatus("error");
@@ -229,7 +260,7 @@ export function PartnerLogoUpload({
         </>
       ) : null}
       <AdminImageCreditField
-        defaultValue={processed ? "" : (currentCredit ?? "")}
+        defaultValue={processed ? (restoredCredit ?? "") : (currentCredit ?? "")}
         key={processed ? `new-${processed.imageId}` : (currentLogoImageId ?? "empty")}
         locale={locale}
         name="image_credit"

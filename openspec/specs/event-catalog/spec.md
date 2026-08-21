@@ -1320,6 +1320,85 @@ Admin create (`/:locale/admin/events/new`) and edit (`/:locale/admin/events/:id/
 - **THEN** the range builder and datetime rows are below ticket type and redemption fields
 - **AND** totals are below the datetime rows
 
+### Requirement: Event wizard restores unsaved drafts
+
+Admin event create and edit wizards SHALL persist in-progress field values in browser `localStorage` (not cookies) keyed per create-session or event id, restore them after a refresh or step URL change, and clear them after a successful create or save POST. Raw `File` inputs SHALL NOT be stored. Create GET on `/:locale/admin/events/new/dates` and `/:locale/admin/events/new/image` SHALL render those steps (no redirect to step 1) so a restored draft can populate the form. A visible restore notice SHALL offer Discard draft.
+
+#### Scenario: Refresh on an edit step keeps unsaved title
+
+- **WHEN** an admin changes the title on `/:locale/admin/events/:id/edit` and refreshes
+- **THEN** the title field still shows the unsaved value
+- **AND** a discard control is available
+
+#### Scenario: Edit step link keeps unsaved dates
+
+- **WHEN** an admin changes a datetime row on step 2, then follows the General step link
+- **THEN** returning to Date & tickets still shows the unsaved datetime row
+
+#### Scenario: Successful save clears the draft
+
+- **WHEN** an admin saves the event successfully
+- **THEN** reopening the edit form shows database values, not the previous unsaved draft
+
+#### Scenario: Create dates GET does not bounce to step 1
+
+- **WHEN** an admin opens `/:locale/admin/events/new/dates` after having filled General (draft stored)
+- **THEN** the page renders Date & tickets instead of redirecting to General
+
+#### Scenario: Discard draft reloads server values
+
+- **WHEN** an admin has a restored draft on create or edit and activates Discard draft
+- **THEN** the stored draft is removed
+- **AND** the form shows server-rendered values (database on edit, empty/defaults on create)
+
+#### Scenario: File inputs are not stored
+
+- **WHEN** an admin selects a primary image file on the Image step and a draft is saved
+- **THEN** the stored draft does not contain raw file bytes
+- **AND** already-staged image id fields that exist as named non-file inputs MAY be restored
+
+### Requirement: Catalog add/edit forms restore unsaved drafts
+
+Admin partner create/edit, event clone, and event gallery add SHALL use the same browser `localStorage` draft helper as the event wizard: restore after refresh, skip raw `File` inputs, show Discard, and clear on successful save POST. Form ids SHALL be unique per resource and intent (`admin-partner:new`, `admin-partner:{id}`, `admin-event-clone:{sourceId}`, `admin-event-gallery-add:{eventId}`). Named non-file fields that already exist in the form (including staged image ids, image credits, and pasted promo-code text) MAY be restored. Search, delete-confirm, freeze/refund/adjust-credits, comp-ticket, featured-add search, and member profile/onboarding forms SHALL NOT opt in.
+
+#### Scenario: Refresh on new partner keeps the name
+
+- **WHEN** an admin types a partner name on `/:locale/admin/partners/new` and refreshes
+- **THEN** the name field still shows the unsaved value
+- **AND** a discard control is available
+
+#### Scenario: Refresh on partner edit keeps unsaved fields
+
+- **WHEN** an admin changes a partner field on `/:locale/admin/partners/:id/edit` and refreshes
+- **THEN** that field still shows the unsaved value
+
+#### Scenario: Clone refresh keeps edited datetimes
+
+- **WHEN** an admin changes clone datetimes and refreshes
+- **THEN** the clone form still shows those unsaved datetimes
+
+#### Scenario: Gallery add refresh keeps photo credit
+
+- **WHEN** an admin enters a photo credit on `/:locale/admin/events/:id/gallery/add` after staging images as named hidden fields and refreshes
+- **THEN** the credit field still shows the unsaved value
+
+#### Scenario: Successful catalog save clears the draft
+
+- **WHEN** an admin successfully creates or updates a partner, clones an event, or adds gallery images
+- **THEN** reopening that same form shows server-rendered values, not the previous unsaved draft
+
+#### Scenario: File inputs are not stored on catalog forms
+
+- **WHEN** an admin selects a partner logo, gallery image, or voucher PDF file and a draft is saved
+- **THEN** the stored draft does not contain raw file bytes
+- **AND** already-staged image id and credit fields that exist as named non-file inputs MAY be restored
+
+#### Scenario: Discard draft reloads server values
+
+- **WHEN** an admin has a restored draft on partner, clone, or gallery add and activates Discard draft
+- **THEN** the stored draft is removed
+- **AND** the form shows server-rendered values (database on edit, empty/defaults on create)
+
 ### Requirement: All day hides time inputs
 When `timing_mode` is `ALL_DAY`, admin create, edit, and clone datetime UIs SHALL hide every clock time input (range-builder slot times and per-row times) and SHALL hide additional time-slot rows beyond the first. Dates, per-row credits, and the first slot’s credits SHALL remain. Stored instants SHALL remain Europe/Berlin midnight for All day. When `timing_mode` is `TIME_SLOT`, date and time inputs SHALL both be shown. Hidden or unmounted time fields SHALL NOT be `required`.
 

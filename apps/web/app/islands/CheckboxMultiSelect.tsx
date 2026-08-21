@@ -1,5 +1,13 @@
 import { Description, Label, Surface } from "@heroui/react";
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+
+import {
+  draftFieldValues,
+  FORM_DRAFT_APPLIED_EVENT,
+  type FormDraftAppliedDetail,
+  type FormDraftFields,
+  lastAppliedDraftFields,
+} from "../lib/form-draft";
 
 export type CheckboxMultiSelectOption = {
   value: string;
@@ -39,6 +47,14 @@ function matchesFilter(option: CheckboxMultiSelectOption, filter: string): boole
   );
 }
 
+function selectedFromDraft(
+  fields: FormDraftFields,
+  name: string,
+  allowlist: Set<string>,
+): string[] {
+  return draftFieldValues(fields, name).filter((value) => allowlist.has(value));
+}
+
 /**
  * Native-checkbox multi-select for SSR form POST array fields.
  * Optional client-side search; selected values stay mounted (and POST) even when filtered out.
@@ -53,11 +69,43 @@ export default function CheckboxMultiSelect({
   initialVisibleCount,
   optionsClassName = "checkbox-multi-select__options checkbox-multi-select__options--grid-three onboarding-form__options onboarding-form__options--grid-three",
 }: CheckboxMultiSelectProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const allowlist = useMemo(() => new Set(options.map((option) => option.value)), [options]);
   const [filter, setFilter] = useState("");
-  const [selectedValues, setSelectedValues] = useState(() => {
-    const allowlist = new Set(options.map((option) => option.value));
-    return selected.filter((value) => allowlist.has(value));
-  });
+  const [selectedValues, setSelectedValues] = useState(() =>
+    selected.filter((value) => allowlist.has(value)),
+  );
+
+  useLayoutEffect(() => {
+    function applyFields(fields: FormDraftFields) {
+      setSelectedValues(selectedFromDraft(fields, name, allowlist));
+    }
+
+    function onApplied(event: Event) {
+      const detail = (event as CustomEvent<FormDraftAppliedDetail>).detail;
+      if (!detail?.fields) {
+        return;
+      }
+      const form = rootRef.current?.closest("form");
+      if (form && detail.form !== form) {
+        return;
+      }
+      applyFields(detail.fields);
+    }
+
+    const form = rootRef.current?.closest("form");
+    if (form) {
+      const stored = lastAppliedDraftFields(form);
+      if (stored && name in stored) {
+        applyFields(stored);
+      }
+    }
+
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, [allowlist, name]);
 
   const selectedSet = useMemo(() => new Set(selectedValues), [selectedValues]);
   const selectedOptions = options.filter((option) => selectedSet.has(option.value));
@@ -100,6 +148,7 @@ export default function CheckboxMultiSelect({
   return (
     <Surface
       className="checkbox-multi-select onboarding-form__language-select flex flex-col gap-4"
+      ref={rootRef}
       variant="transparent"
     >
       {enableSearch ? (

@@ -305,11 +305,13 @@ export function AdminImageVariantGallerySummary({
   locale,
   processedList,
   includeCreditFields = false,
+  creditDefaults,
 }: {
   locale: Locale;
   processedList: ProcessedAdminUpload[];
   /** Gallery add: one `image_credit_{index}` field per processed file. */
   includeCreditFields?: boolean;
+  creditDefaults?: readonly (string | undefined)[];
 }) {
   const copy = getAdminCopy(locale);
   if (processedList.length === 0) {
@@ -325,7 +327,11 @@ export function AdminImageVariantGallerySummary({
       <Surface className="flex flex-col gap-3" variant="transparent">
         <AdminImageVariantGallery locale={locale} processed={only} />
         {includeCreditFields ? (
-          <AdminImageCreditField locale={locale} name="image_credit_0" />
+          <AdminImageCreditField
+            defaultValue={creditDefaults?.[0] ?? ""}
+            locale={locale}
+            name="image_credit_0"
+          />
         ) : null}
       </Surface>
     );
@@ -344,7 +350,11 @@ export function AdminImageVariantGallerySummary({
               processed={item}
             />
             {includeCreditFields ? (
-              <AdminImageCreditField locale={locale} name={`image_credit_${index}`} />
+              <AdminImageCreditField
+                defaultValue={creditDefaults?.[index] ?? ""}
+                locale={locale}
+                name={`image_credit_${index}`}
+              />
             ) : null}
           </Surface>
         ))}

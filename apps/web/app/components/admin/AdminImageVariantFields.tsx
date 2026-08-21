@@ -8,12 +8,10 @@ import {
   type ProcessedAdminUpload,
   VARIANT_FILENAMES,
   type VariantFilename,
+  variantBase64FieldName,
 } from "./admin-image-variants";
 
-/** Multipart companion field: base64 WebP bytes when programmatic file inputs are stripped. */
-export function variantBase64FieldName(fieldPrefix: string, filename: VariantFilename): string {
-  return `${fieldPrefix}${filename}__b64`;
-}
+export { variantBase64FieldName };
 
 type VariantFileFieldProps = {
   filename: VariantFilename;

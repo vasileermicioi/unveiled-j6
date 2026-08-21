@@ -1,10 +1,15 @@
 "use client";
 
 import { Description, Label, Paragraph, Surface } from "@heroui/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { InventoryPreviewChange } from "../../lib/admin-voucher-inventory";
+import {
+  draftFieldValue,
+  FORM_DRAFT_APPLIED_EVENT,
+  type FormDraftAppliedDetail,
+} from "../../lib/form-draft";
 import type { Locale } from "../../lib/locale";
 import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 
@@ -48,6 +53,36 @@ export function PromoCodeInventoryFields({
   useEffect(() => {
     onInventoryPreviewChange?.({ incomingCount: codes.length, replaceUnused });
   }, [codes.length, onInventoryPreviewChange, replaceUnused]);
+
+  useLayoutEffect(() => {
+    function onApplied(event: Event) {
+      const detail = (event as CustomEvent<FormDraftAppliedDetail>).detail;
+      if (!detail?.fields) {
+        return;
+      }
+      const jsonRaw = draftFieldValue(detail.fields, "promo_codes_json");
+      if (jsonRaw) {
+        try {
+          const parsed: unknown = JSON.parse(jsonRaw);
+          if (Array.isArray(parsed) && parsed.every((entry) => typeof entry === "string")) {
+            setCodes(parsed);
+            return;
+          }
+        } catch {
+          // Fall through to paste text.
+        }
+      }
+      const paste = draftFieldValue(detail.fields, "promo_codes_paste");
+      if (paste !== undefined) {
+        setCodes(parsePromoCodeLines(paste));
+      }
+    }
+
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, []);
 
   function applyText(text: string) {
     setCodes(parsePromoCodeLines(text));

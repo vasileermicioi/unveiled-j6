@@ -1,10 +1,15 @@
 "use client";
 
 import { Description, Label, Paragraph, Surface } from "@heroui/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { InventoryPreviewChange } from "../../lib/admin-voucher-inventory";
+import {
+  draftFieldValue,
+  FORM_DRAFT_APPLIED_EVENT,
+  type FormDraftAppliedDetail,
+} from "../../lib/form-draft";
 import type { Locale } from "../../lib/locale";
 import { NativePreferenceOption } from "../onboarding/NativePreferenceOption";
 
@@ -15,6 +20,38 @@ export type StagedVoucherPdf = {
 };
 
 export type PdfImportMode = "split" | "files";
+
+function parseStagedVoucherPdfs(raw: string): StagedVoucherPdf[] | null {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+    const items: StagedVoucherPdf[] = [];
+    for (const entry of parsed) {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+      const record = entry as {
+        objectKey?: unknown;
+        originalFilename?: unknown;
+        pageLabel?: unknown;
+      };
+      if (typeof record.objectKey !== "string" || !record.objectKey.trim()) {
+        return null;
+      }
+      items.push({
+        objectKey: record.objectKey,
+        originalFilename:
+          typeof record.originalFilename === "string" ? record.originalFilename : null,
+        pageLabel: typeof record.pageLabel === "string" ? record.pageLabel : null,
+      });
+    }
+    return items;
+  } catch {
+    return null;
+  }
+}
 
 type TicketPreview = {
   index: number;
@@ -70,7 +107,6 @@ export function parseSkipPageSpec(spec: string): ParseSkipPageSpecResult {
   return { ok: true, pages };
 }
 
-/** Collapse 1-based page lists into labels like `p.4-6,8`. */
 export function formatPageLabel(pages: readonly number[]): string {
   const first = pages[0];
   if (first === undefined) {
@@ -170,6 +206,8 @@ export function PdfVoucherInventoryFields({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replaceUnused, setReplaceUnused] = useState(false);
+  const [restoredStagedCount, setRestoredStagedCount] = useState(0);
+  const skipPreviewClearOnMount = useRef(true);
 
   const modeId = "voucher-pdf-import-mode";
   const fileInputId = "voucher-pdf-file";
@@ -190,7 +228,12 @@ export function PdfVoucherInventoryFields({
 
   useEffect(() => {
     previewsRef.current = previews;
+    if (skipPreviewClearOnMount.current) {
+      skipPreviewClearOnMount.current = false;
+      return;
+    }
     stagedRef.current = [];
+    setRestoredStagedCount(0);
     if (hiddenRef.current) {
       hiddenRef.current.value = "[]";
     }
@@ -198,6 +241,7 @@ export function PdfVoucherInventoryFields({
 
   const clearStaged = useCallback(() => {
     stagedRef.current = [];
+    setRestoredStagedCount(0);
     if (hiddenRef.current) {
       hiddenRef.current.value = "[]";
     }
@@ -214,6 +258,33 @@ export function PdfVoucherInventoryFields({
     setError(null);
     clearStaged();
   }, [clearStaged]);
+
+  useLayoutEffect(() => {
+    function onApplied(event: Event) {
+      const detail = (event as CustomEvent<FormDraftAppliedDetail>).detail;
+      if (!detail?.fields) {
+        return;
+      }
+      const raw = draftFieldValue(detail.fields, "voucher_pdfs_json");
+      if (!raw) {
+        return;
+      }
+      const staged = parseStagedVoucherPdfs(raw);
+      if (!staged || staged.length === 0) {
+        return;
+      }
+      stagedRef.current = staged;
+      if (hiddenRef.current) {
+        hiddenRef.current.value = JSON.stringify(staged);
+      }
+      setRestoredStagedCount(staged.length);
+    }
+
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, []);
 
   const uploadBlob = useCallback(
     async (
@@ -419,7 +490,12 @@ export function PdfVoucherInventoryFields({
     }
   }
 
-  const ticketCount = mode === "files" ? multiFileCount : previews.length;
+  const ticketCount =
+    restoredStagedCount > 0
+      ? restoredStagedCount
+      : mode === "files"
+        ? multiFileCount
+        : previews.length;
   const showZeroTickets =
     mode === "split" && hasMasterFile && skipParsed.ok && previews.length === 0;
 

@@ -2,10 +2,15 @@
 
 import { Description, Input, Label, Paragraph, Surface } from "@heroui/react";
 import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images/constants";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import { isWizardAdvanceSubmit } from "../../lib/admin-event-wizard";
+import {
+  draftFieldValue,
+  FORM_DRAFT_APPLIED_EVENT,
+  type FormDraftAppliedDetail,
+} from "../../lib/form-draft";
 import { imageAltWithCredit, imageCreditTitle } from "../../lib/image-credit";
 import type { Locale } from "../../lib/locale";
 
@@ -20,6 +25,8 @@ import {
   mapClientImageError,
   type ProcessedAdminUpload,
   processAdminImageFiles,
+  processedGalleryUploadsFromDraftFields,
+  processedUploadFromDraftFields,
 } from "./admin-image-variants";
 
 export type EventImageUploadProps = {
@@ -66,10 +73,12 @@ export function EventImageUpload({
   const [status, setStatus] = useState<"idle" | "processing" | "ready" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
+  const [restoredCredits, setRestoredCredits] = useState<string[]>([]);
   const processingRef = useRef(false);
   const processedListRef = useRef<ProcessedAdminUpload[]>([]);
   const statusRef = useRef(status);
   const currentImageIdRef = useRef(currentImageId);
+  const multipleRef = useRef(multiple);
 
   useEffect(() => {
     processedListRef.current = processedList;
@@ -82,6 +91,49 @@ export function EventImageUpload({
   useEffect(() => {
     currentImageIdRef.current = currentImageId;
   }, [currentImageId]);
+
+  useEffect(() => {
+    multipleRef.current = multiple;
+  }, [multiple]);
+
+  useLayoutEffect(() => {
+    function onApplied(event: Event) {
+      const detail = (event as CustomEvent<FormDraftAppliedDetail>).detail;
+      const form = document.getElementById(fileInputId)?.closest("form") ?? null;
+      if (!detail?.fields || !form || detail.form !== form) {
+        return;
+      }
+      if (multipleRef.current) {
+        const list = processedGalleryUploadsFromDraftFields(detail.fields).filter(
+          hasCompleteVariants,
+        );
+        if (list.length === 0) {
+          return;
+        }
+        setProcessedList(list);
+        setStatus("ready");
+        setErrorMessage(null);
+        setSelectedLabel(copy.gallerySelectedFilesLabel(list.length));
+        setRestoredCredits(
+          list.map((_, index) => draftFieldValue(detail.fields, `image_credit_${index}`) ?? ""),
+        );
+        return;
+      }
+      const single = processedUploadFromDraftFields(detail.fields);
+      if (!single || !hasCompleteVariants(single)) {
+        return;
+      }
+      setProcessedList([single]);
+      setStatus("ready");
+      setErrorMessage(null);
+      setRestoredCredits([draftFieldValue(detail.fields, "image_credit") ?? ""]);
+    }
+
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, [copy.gallerySelectedFilesLabel, fileInputId]);
 
   useEffect(() => {
     const onSubmit = (event: Event) => {
@@ -199,6 +251,7 @@ export function EventImageUpload({
       setProcessedList(complete);
       setStatus("ready");
       setErrorMessage(null);
+      setRestoredCredits([]);
       if (multiple) {
         setSelectedLabel(copy.gallerySelectedFilesLabel(complete.length));
       }
@@ -279,6 +332,7 @@ export function EventImageUpload({
       {multiple && processedList.length > 0 ? (
         <>
           <AdminImageVariantGallerySummary
+            creditDefaults={restoredCredits}
             includeCreditFields
             locale={locale}
             processedList={processedList}
@@ -294,7 +348,7 @@ export function EventImageUpload({
       ) : null}
       {!multiple ? (
         <AdminImageCreditField
-          defaultValue={singleProcessed ? "" : (currentCredit ?? "")}
+          defaultValue={singleProcessed ? (restoredCredits[0] ?? "") : (currentCredit ?? "")}
           key={
             singleProcessed
               ? `new-${singleProcessed.imageId}`

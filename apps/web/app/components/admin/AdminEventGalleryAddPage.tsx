@@ -1,5 +1,6 @@
 import { Button, Form, Link, Surface } from "@heroui/react";
 import EventImageUpload from "../../islands/EventImageUpload";
+import FormDraftPersistence from "../../islands/FormDraftPersistence";
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
 
@@ -26,6 +27,7 @@ export function AdminEventGalleryAddPage({
 }: AdminEventGalleryAddPageProps) {
   const copy = getAdminCopy(locale);
   const galleryHref = adminEventGalleryPath(locale, eventId);
+  const draftFormId = `admin-event-gallery-add:${eventId}`;
 
   return (
     <AdminPageShell
@@ -42,10 +44,12 @@ export function AdminEventGalleryAddPage({
       {error ? <AdminFormError message={error} /> : null}
       <Form
         action={adminEventGalleryAddPath(locale, eventId)}
-        className="flex flex-col gap-6"
+        className="admin-form flex flex-col gap-6"
+        data-form-draft-id={draftFormId}
         encType="multipart/form-data"
         method="post"
       >
+        <FormDraftPersistence formId={draftFormId} locale={locale} seedIfEmpty={Boolean(error)} />
         <EventImageUpload
           locale={locale}
           multiple

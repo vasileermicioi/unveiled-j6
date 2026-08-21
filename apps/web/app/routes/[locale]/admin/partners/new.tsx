@@ -84,6 +84,7 @@ export const POST = createRoute(async (c) => {
               : undefined
           }
           error={mapCatalogError(error, guard.locale)}
+          formId="admin-partner:new"
           locale={guard.locale}
           submitLabel={copy.create}
         />
@@ -117,6 +118,7 @@ export default createRoute(async (c) => {
       <PartnerForm
         action={`/${guard.locale}/admin/partners/new`}
         cancelHref={partnerListPath(guard.locale)}
+        formId="admin-partner:new"
         locale={guard.locale}
         submitLabel={copy.create}
       />

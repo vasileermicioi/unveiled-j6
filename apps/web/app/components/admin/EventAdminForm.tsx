@@ -11,6 +11,7 @@ import { localizedPath } from "../../lib/locale";
 import { AdminFormError } from "./AdminFormError";
 import { EventAdminBaseFields } from "./EventAdminBaseFields";
 import type { EventFormDefaults, PartnerOption } from "./event-admin-types";
+import { FormDraftPersistence } from "./FormDraftPersistence";
 
 type EventAdminFormProps = {
   locale: Locale;
@@ -23,6 +24,7 @@ type EventAdminFormProps = {
   isEdit?: boolean;
   step: EventFormStep;
   stepHrefs: Record<EventFormStep, string>;
+  formId?: string;
 };
 
 export function EventAdminForm({
@@ -36,8 +38,11 @@ export function EventAdminForm({
   isEdit = false,
   step,
   stepHrefs,
+  formId,
 }: EventAdminFormProps) {
   const copy = getAdminCopy(locale);
+  const draftFormId =
+    formId ?? (isEdit && defaults?.eventId ? `admin-event:${defaults.eventId}` : "admin-event:new");
 
   const stepTitles: Record<EventFormStep, string> = {
     1: copy.wizardStepGeneral,
@@ -49,9 +54,16 @@ export function EventAdminForm({
     <Form
       action={action}
       className="admin-form flex flex-col gap-6"
+      data-form-draft-id={draftFormId}
       encType="multipart/form-data"
       method="post"
     >
+      <FormDraftPersistence
+        discardHref={stepHrefs[1]}
+        formId={draftFormId}
+        locale={locale}
+        seedIfEmpty={Boolean(error)}
+      />
       {error ? <AdminFormError message={error} /> : null}
 
       <Surface className="flex flex-col gap-3" variant="transparent">
@@ -100,6 +112,7 @@ export function EventAdminForm({
                 <Button
                   className={className}
                   formAction={stepHrefs[n]}
+                  formNoValidate
                   key={n}
                   name="wizard_intent"
                   type="submit"
@@ -133,6 +146,7 @@ export function EventAdminForm({
           <Button
             className="button button--secondary button--md sm:min-w-40"
             formAction={stepHrefs[(step - 1) as EventFormStep]}
+            formNoValidate
             name="wizard_intent"
             type="submit"
             value="back"

@@ -8,6 +8,10 @@ export type EventWizardIntent = "next" | "back" | "create" | "save";
 
 export type EventWizardTarget = { kind: "new" } | { kind: "edit"; eventId: string };
 
+export function eventAdminFormDraftId(target: EventWizardTarget): string {
+  return target.kind === "edit" ? `admin-event:${target.eventId}` : "admin-event:new";
+}
+
 export function eventWizardStepPath(
   locale: Locale,
   target: EventWizardTarget,

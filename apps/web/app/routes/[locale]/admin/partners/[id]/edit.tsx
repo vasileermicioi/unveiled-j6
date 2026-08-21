@@ -65,6 +65,7 @@ function renderEditPage(
         cancelHref={partnerListPath(options.locale)}
         defaults={options.defaults}
         error={options.error ?? null}
+        formId={`admin-partner:${options.partnerId}`}
         isEdit
         locale={options.locale}
         submitLabel={copy.save}

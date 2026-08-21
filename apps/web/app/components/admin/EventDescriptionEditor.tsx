@@ -6,7 +6,15 @@
  * `name="description"` textarea sync. See design-system.md § Form controls.
  */
 import { Surface } from "@heroui/react";
-import { type ComponentType, useEffect, useId, useRef, useState } from "react";
+import { type ComponentType, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+
+import {
+  draftFieldValue,
+  FORM_DRAFT_APPLIED_EVENT,
+  FORM_DRAFT_FLUSH_EVENT,
+  type FormDraftAppliedDetail,
+  type FormDraftFlushDetail,
+} from "../../lib/form-draft";
 
 export type EventDescriptionEditorProps = {
   initialMarkdown?: string;
@@ -35,9 +43,13 @@ export function EventDescriptionEditor({
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const [markdown, setMarkdown] = useState(initialMarkdown);
+  const [editorEpoch, setEditorEpoch] = useState(0);
   const [MdxEditor, setMdxEditor] = useState<ComponentType<EventDescriptionMdxProps> | null>(null);
   /** MDXEditor reads `markdown` only on mount — capture seed when the editor first loads. */
   const editorSeedRef = useRef<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const markdownRef = useRef(markdown);
+  markdownRef.current = markdown;
 
   useEffect(() => {
     let cancelled = false;
@@ -51,6 +63,47 @@ export function EventDescriptionEditor({
     };
   }, []);
 
+  useLayoutEffect(() => {
+    function formForEditor(): HTMLFormElement | null {
+      const textarea = textareaRef.current;
+      if (!textarea) {
+        return null;
+      }
+      return textarea.form ?? textarea.closest("form");
+    }
+
+    function onFlush(event: Event) {
+      const detail = (event as CustomEvent<FormDraftFlushDetail>).detail;
+      const form = formForEditor();
+      if (!detail?.form || form !== detail.form || !textareaRef.current) {
+        return;
+      }
+      textareaRef.current.value = markdownRef.current;
+    }
+
+    function onApplied(event: Event) {
+      const detail = (event as CustomEvent<FormDraftAppliedDetail>).detail;
+      const form = formForEditor();
+      if (!detail?.form || form !== detail.form) {
+        return;
+      }
+      const next = draftFieldValue(detail.fields, name);
+      if (next === undefined) {
+        return;
+      }
+      setMarkdown(next);
+      editorSeedRef.current = null;
+      setEditorEpoch((current) => current + 1);
+    }
+
+    document.addEventListener(FORM_DRAFT_FLUSH_EVENT, onFlush);
+    document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    return () => {
+      document.removeEventListener(FORM_DRAFT_FLUSH_EVENT, onFlush);
+      document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
+    };
+  }, [name]);
+
   if (MdxEditor && editorSeedRef.current === null) {
     editorSeedRef.current = markdown;
   }
@@ -61,6 +114,7 @@ export function EventDescriptionEditor({
         <MdxEditor
           className="admin-event-description-editor__mdx"
           contentEditableClassName="admin-event-description-editor__content"
+          key={editorEpoch}
           markdown={editorSeedRef.current}
           onChange={setMarkdown}
         />
@@ -78,6 +132,7 @@ export function EventDescriptionEditor({
         onChange={(event) => {
           setMarkdown(event.target.value);
         }}
+        ref={textareaRef}
         required={required}
         rows={MdxEditor ? 2 : 8}
         value={markdown}

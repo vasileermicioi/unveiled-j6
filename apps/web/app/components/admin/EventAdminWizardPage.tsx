@@ -3,7 +3,11 @@ import { Link, Surface } from "@heroui/react";
 import EventAdminForm from "../../islands/EventAdminForm";
 import { getAdminCopy } from "../../lib/admin-content";
 import type { EventFormStep } from "../../lib/admin-event-form";
-import { type EventWizardTarget, eventWizardStepHrefs } from "../../lib/admin-event-wizard";
+import {
+  type EventWizardTarget,
+  eventAdminFormDraftId,
+  eventWizardStepHrefs,
+} from "../../lib/admin-event-wizard";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import { AdminPageShell, adminEventGalleryPath, adminEventsPath } from "./AdminPageShell";
@@ -62,6 +66,7 @@ export function EventAdminWizardPage({
         cancelHref={eventListPath(locale)}
         defaults={defaults}
         error={error}
+        formId={eventAdminFormDraftId(target)}
         isEdit={isEdit}
         locale={locale}
         partners={partners}

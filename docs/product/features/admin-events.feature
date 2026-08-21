@@ -141,6 +141,22 @@ Feature: Admin — Event Management
     And the URL is "/:locale/admin/events/:id/edit/image"
     And saving posts the full form including unchanged dates and image id
 
+  Scenario: Refresh keeps unsaved event edits
+    When I change a field on create or edit event and refresh
+    Then the unsaved value is still in the field
+    And I can discard the draft to reload saved or empty values
+    And discard on create returns to step 1
+
+  Scenario: Edit steps keep unsaved edits
+    When I edit a field on one wizard step and open another step URL
+    Then returning to the first step still shows the unsaved value
+    And create GET "/:locale/admin/events/new/dates" stays on Date & tickets (does not redirect to step 1)
+    And Back from Date & tickets does not trigger date validation
+
+  Scenario: Successful event save clears draft
+    When I save the event successfully and reopen edit
+    Then I see persisted database values, not the discarded in-progress draft
+
   Scenario: Missing image returns to step 3
     When I create an event and submit without a primary image
     Then the form is rejected

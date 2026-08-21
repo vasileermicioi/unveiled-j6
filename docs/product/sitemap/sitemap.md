@@ -117,9 +117,9 @@ See `ui/app-shell.md` for header/footer detail.
 |---|---|---|---|
 | `/admin` | ✅ | ADMIN | Dashboard |
 | `/admin/events?title=&partner=&language=&sort=&dir=&page=` | ✅ | ADMIN | Event list (title/partner/language filters; language matches spoken or subtitle; column sort; default last-created desc; Reset filters; Languages + Subtitles columns) |
-| `/admin/events/new` | ✅ | ADMIN | Create event step 1 General |
-| `/admin/events/new/dates` | ✅ | ADMIN | Create event step 2 Date & tickets (POST from step 1 Next; GET redirects to `/new`) |
-| `/admin/events/new/image` | ✅ | ADMIN | Create event step 3 Image (final create POST) |
+| `/admin/events/new` | ✅ | ADMIN | Create event step 1 General (unsaved fields restore from `localStorage`) |
+| `/admin/events/new/dates` | ✅ | ADMIN | Create event step 2 Date & tickets (POST from step 1 Next; GET renders this step, no redirect to `/new`; `localStorage` drafts can restore) |
+| `/admin/events/new/image` | ✅ | ADMIN | Create event step 3 Image (final create POST; GET renders this step, no redirect to `/new`; `localStorage` drafts can restore) |
 | `/admin/events/:id/clone` | ✅ | ADMIN | Clone event (new date/time; voucher inventory not copied; not the create/edit stepper) |
 | `/admin/events/:id/edit` | ✅ | ADMIN | Edit event step 1 General (Save from this page) |
 | `/admin/events/:id/edit/dates` | ✅ | ADMIN | Edit event step 2 Date & tickets |

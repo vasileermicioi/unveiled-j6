@@ -1,6 +1,18 @@
 import { describe, expect, test } from "bun:test";
 
-import { eventWizardStepHrefs, eventWizardStepPath, parseWizardIntent } from "./admin-event-wizard";
+import {
+  eventAdminFormDraftId,
+  eventWizardStepHrefs,
+  eventWizardStepPath,
+  parseWizardIntent,
+} from "./admin-event-wizard";
+
+describe("eventAdminFormDraftId", () => {
+  test("keys create and edit drafts separately", () => {
+    expect(eventAdminFormDraftId({ kind: "new" })).toBe("admin-event:new");
+    expect(eventAdminFormDraftId({ kind: "edit", eventId: "abc" })).toBe("admin-event:abc");
+  });
+});
 
 describe("eventWizardStepPath", () => {
   test("maps create and edit steps onto dedicated URLs", () => {

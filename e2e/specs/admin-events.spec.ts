@@ -99,6 +99,35 @@ async function fillSecretIfPresent(page: Page, code: string): Promise<void> {
   }
 }
 
+const FORM_DRAFT_KEY_PREFIX = "unveiled:form-draft:v1:";
+
+function formDraftStorageKey(formId: string): string {
+  return `${FORM_DRAFT_KEY_PREFIX}${formId}`;
+}
+
+async function waitForFormDraft(page: Page, formId: string): Promise<void> {
+  await page.waitForFunction(
+    (key) => Boolean(window.localStorage.getItem(key)),
+    formDraftStorageKey(formId),
+  );
+}
+
+function draftRestoredBanner(page: Page) {
+  return page.getByText(/nicht gespeicherter entwurf wiederhergestellt|unsaved draft restored/i);
+}
+
+function discardDraftButton(page: Page) {
+  return page.getByRole("button", { name: /entwurf verwerfen|discard draft/i });
+}
+
+async function openNewEventForm(page: Page, locale: "de" | "en"): Promise<void> {
+  await page.goto(`/${locale}/admin/events/new`);
+  await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.waitForLoadState("networkidle");
+}
+
 async function createVoucherPromoViaUI(
   page: Page,
   locale: "de" | "en",
@@ -687,6 +716,92 @@ test.describe("admin-events.feature", () => {
     });
     await goToEventFormStep(page, 2);
     await expect(datetimeDateFields(page).first()).toBeVisible();
+  });
+
+  test("Scenario: Refresh keeps unsaved event edits", async ({ page, locale }) => {
+    const title = `Draft Refresh ${uniqueSuffix()}`;
+    await openNewEventForm(page, locale);
+    await fillTextbox(page, adminLabels.title, title);
+    await waitForFormDraft(page, "admin-event:new");
+
+    await page.reload();
+    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("textbox", { name: adminLabels.title, exact: true })).toHaveValue(
+      title,
+      { timeout: 15_000 },
+    );
+    await expect(draftRestoredBanner(page)).toBeVisible({ timeout: 15_000 });
+
+    await page.goto(`/${locale}/admin/events/new/dates`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/dates/?$`));
+    await expect(draftRestoredBanner(page)).toBeVisible({ timeout: 15_000 });
+    await discardDraftButton(page).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/?$`));
+    await expectEventFormStep(page, 1);
+    await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("textbox", { name: adminLabels.title, exact: true })).toHaveValue(
+      "",
+      { timeout: 15_000 },
+    );
+    await expect(draftRestoredBanner(page)).toHaveCount(0);
+  });
+
+  test("Scenario: Edit steps keep unsaved edits", async ({ page, locale }) => {
+    const title = `Draft Steps ${uniqueSuffix()}`;
+    await openNewEventForm(page, locale);
+    await fillTextbox(page, adminLabels.title, title);
+    await waitForFormDraft(page, "admin-event:new");
+
+    await page.goto(`/${locale}/admin/events/new/dates`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/dates/?$`));
+    await expectEventFormStep(page, 2);
+    await page.getByRole("button", { name: adminLabels.wizardBack }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/?$`));
+    await expectEventFormStep(page, 1);
+
+    await page.goto(`/${locale}/admin/events/new`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/?$`));
+    await expectEventFormStep(page, 1);
+    await expect(page.getByRole("textbox", { name: adminLabels.title, exact: true })).toHaveValue(
+      title,
+      { timeout: 15_000 },
+    );
+  });
+
+  test("Scenario: Successful event save clears draft", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const originalTitle = `Draft Save Orig ${uniqueSuffix()}`;
+    const unsavedTitle = `UnsavedNeverSaved ${uniqueSuffix()}`;
+    const savedTitle = `Draft Save Kept ${uniqueSuffix()}`;
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      title: originalTitle,
+    });
+
+    await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await fillTextbox(page, adminLabels.title, unsavedTitle);
+    await waitForFormDraft(page, `admin-event:${event.eventId}`);
+    await fillTextbox(page, adminLabels.title, savedTitle);
+    await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+
+    await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
+    await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("textbox", { name: adminLabels.title, exact: true })).toHaveValue(
+      savedTitle,
+      { timeout: 15_000 },
+    );
+    await expect(draftRestoredBanner(page)).toHaveCount(0);
   });
 
   test("Scenario: Missing image returns to step 3", async ({ page, locale }) => {

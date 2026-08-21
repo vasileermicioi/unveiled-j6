@@ -184,6 +184,25 @@
     box-shadow: none;
   }
 
+  /* Alerts sit on white cards — HeroUI default is surface fill + large radius, so
+     they disappear. Match neo-brutalist bordered chrome; keep status colors on
+     indicator/title. */
+  .alert {
+    align-items: center;
+    border: 2px solid var(--border);
+    border-radius: 0;
+    box-shadow: none;
+    background-color: var(--surface-secondary);
+    padding-inline: 1rem;
+    padding-block: 0.75rem;
+  }
+
+  .alert__title {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+  }
+
   .button,
   .link.button {
     border-radius: 0;
@@ -284,6 +303,11 @@
   .link.button.button--md {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
+  }
+
+  .alert .button,
+  .alert .link.button {
+    flex-shrink: 0;
   }
 
   .button--full-width,

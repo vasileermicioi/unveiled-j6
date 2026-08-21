@@ -61,6 +61,8 @@ Keep HeroUI for text fields (`TextField` / `TextArea`), buttons, labels, and lay
 
 **Exceptions (keep non-native):** admin image upload / Pica processing UI; `EventGeoPicker` / map islands; admin event description **MDXEditor** (`EventDescriptionEditor` island — still submits Markdown via SSR form field `description`); `@better-auth-ui/*` auth chrome.
 
+**Unsaved drafts:** SSR create and edit forms persist unsaved named fields in `localStorage` via `apps/web/app/lib/form-draft.ts` (`FormDraftPersistence`): restore after refresh, skip raw `File` inputs (staged ids, credits, and hidden JSON MAY restore), clear on successful persist POST, and offer Discard (reloads server values). Search, delete-confirm, freeze/refund/adjust-credits, comp-ticket, featured add search, Better Auth, and member onboarding/profile forms are exempt.
+
 Preference allowlist keys stay locale-invariant; user-visible option labels come from locale copy (`onboarding-content.ts`).
 
 ## Related docs

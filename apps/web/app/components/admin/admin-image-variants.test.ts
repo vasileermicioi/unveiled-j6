@@ -6,7 +6,10 @@ import {
   hasCompleteVariants,
   mapClientImageError,
   type ProcessedAdminUpload,
+  processedGalleryUploadsFromDraftFields,
+  processedUploadFromDraftFields,
   VARIANT_FILENAMES,
+  variantBase64FieldName,
 } from "./admin-image-variants";
 
 const copy = {
@@ -68,5 +71,62 @@ describe("hasCompleteVariants", () => {
     const processed = emptyProcessed();
     processed.variants["small-320.webp"] = new Blob([], { type: "image/webp" });
     expect(hasCompleteVariants(processed)).toBe(false);
+  });
+});
+
+describe("processedUploadFromDraftFields", () => {
+  test("rebuilds a complete hidden set", () => {
+    const source = emptyProcessed();
+    const fields: Record<string, string | string[]> = {
+      imageId: source.imageId,
+      claimedWidth: String(source.claimedWidth),
+      claimedHeight: String(source.claimedHeight),
+    };
+    for (const filename of VARIANT_FILENAMES) {
+      fields[variantBase64FieldName("", filename)] = source.variantsBase64[filename];
+    }
+
+    const restored = processedUploadFromDraftFields(fields);
+    expect(restored?.imageId).toBe("img-1");
+    expect(restored?.claimedWidth).toBe(100);
+    expect(restored?.variantsBase64["small-320.webp"]).toBe("eA==");
+    expect(restored?.variants["small-320.webp"] instanceof Blob).toBe(true);
+  });
+
+  test("returns null when a variant b64 is missing", () => {
+    expect(
+      processedUploadFromDraftFields({
+        imageId: "img-1",
+        claimedWidth: "100",
+        claimedHeight: "50",
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("processedGalleryUploadsFromDraftFields", () => {
+  test("rebuilds indexed gallery sets", () => {
+    const source = emptyProcessed();
+    const fields: Record<string, string | string[]> = {
+      galleryCount: "1",
+      "gallery[0].imageId": source.imageId,
+      "gallery[0].claimedWidth": String(source.claimedWidth),
+      "gallery[0].claimedHeight": String(source.claimedHeight),
+    };
+    for (const filename of VARIANT_FILENAMES) {
+      fields[variantBase64FieldName("gallery[0].", filename)] = source.variantsBase64[filename];
+    }
+    const restored = processedGalleryUploadsFromDraftFields(fields);
+    expect(restored).toHaveLength(1);
+    expect(restored[0]?.imageId).toBe("img-1");
+  });
+
+  test("returns empty when any gallery item is incomplete", () => {
+    expect(
+      processedGalleryUploadsFromDraftFields({
+        galleryCount: "2",
+        "gallery[0].imageId": "img-1",
+      }),
+    ).toEqual([]);
   });
 });

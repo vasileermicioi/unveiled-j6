@@ -104,6 +104,100 @@ export async function processAdminImageBlob(
   return await toProcessedUpload(generated, options.sourceFileName ?? "remote-image");
 }
 
+/** Multipart companion field: base64 WebP bytes when programmatic file inputs are stripped. */
+export function variantBase64FieldName(fieldPrefix: string, filename: VariantFilename): string {
+  return `${fieldPrefix}${filename}__b64`;
+}
+
+function draftFieldString(
+  fields: Record<string, string | string[]>,
+  name: string,
+): string | undefined {
+  const value = fields[name];
+  if (value === undefined) {
+    return undefined;
+  }
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function base64ToWebpBlob(base64: string): Blob | null {
+  try {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    if (bytes.byteLength === 0) {
+      return null;
+    }
+    return new Blob([bytes], { type: "image/webp" });
+  } catch {
+    return null;
+  }
+}
+
+/** Rebuild a processed upload from named hidden draft fields. Incomplete sets return null. */
+export function processedUploadFromDraftFields(
+  fields: Record<string, string | string[]>,
+  fieldPrefix = "",
+): ProcessedAdminUpload | null {
+  const imageId = draftFieldString(fields, `${fieldPrefix}imageId`)?.trim();
+  const widthRaw = draftFieldString(fields, `${fieldPrefix}claimedWidth`);
+  const heightRaw = draftFieldString(fields, `${fieldPrefix}claimedHeight`);
+  if (!imageId || widthRaw === undefined || heightRaw === undefined) {
+    return null;
+  }
+  const claimedWidth = Number(widthRaw);
+  const claimedHeight = Number(heightRaw);
+  if (!Number.isFinite(claimedWidth) || !Number.isFinite(claimedHeight)) {
+    return null;
+  }
+
+  const variants = {} as Record<VariantFilename, Blob>;
+  const variantsBase64 = {} as Record<VariantFilename, string>;
+  for (const filename of VARIANT_FILENAMES) {
+    const encoded = draftFieldString(fields, variantBase64FieldName(fieldPrefix, filename));
+    if (!encoded?.trim()) {
+      return null;
+    }
+    const blob = base64ToWebpBlob(encoded);
+    if (!blob) {
+      return null;
+    }
+    variants[filename] = blob;
+    variantsBase64[filename] = encoded;
+  }
+
+  return {
+    imageId,
+    claimedWidth,
+    claimedHeight,
+    variants,
+    variantsBase64,
+    sourceFileName: "draft-restore",
+  };
+}
+
+/** Rebuild gallery prebuilt sets from `galleryCount` + `gallery[i].*` hidden fields. */
+export function processedGalleryUploadsFromDraftFields(
+  fields: Record<string, string | string[]>,
+): ProcessedAdminUpload[] {
+  const countRaw = draftFieldString(fields, "galleryCount");
+  const count = Number(countRaw);
+  if (!Number.isInteger(count) || count < 1) {
+    return [];
+  }
+  const result: ProcessedAdminUpload[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const item = processedUploadFromDraftFields(fields, `gallery[${index}].`);
+    if (!item) {
+      return [];
+    }
+    result.push(item);
+  }
+  return result;
+}
+
 export function assignBlobToFileInput(input: HTMLInputElement, filename: string, blob: Blob): void {
   const file = new File([blob], filename, { type: blob.type || "image/webp" });
   const transfer = new DataTransfer();

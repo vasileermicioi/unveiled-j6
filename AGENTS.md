@@ -103,6 +103,7 @@ bun run test:e2e     # Playwright
 12. **Partner scoping** — when partner portal ships (post-MVP), every partner query/write filtered by session `partnerId`; never trust client-supplied `partnerId`.
 13. **BDD / Playwright** — Gherkin under `docs/product/features/` is behavioral SoT; proximity/layout selectors only — see [`docs/product/testing/bdd-and-e2e.md`](docs/product/testing/bdd-and-e2e.md).
 14. **Native-first form controls** — prefer native HTML controls (`select`, `input` of type `checkbox|radio|number|date|time|file`, `textarea`) for choice, numeric, date, and file fields when a native control exists. Do **not** use HeroUI `Select`, `NumberField`, `Checkbox`, `Radio`, or `Switch` for those fields except documented exceptions (admin image/Pica UI, map/geo pickers, `@better-auth-ui/*`). HeroUI remains for text fields, buttons, labels, and layout. Theme native controls via `globals.css` (e.g. `.admin-native-select`, `.admin-native-number`).
+15. **SSR add/edit form drafts** — every SSR create/update form MUST persist unsaved named field values in `localStorage` via the shared helper [`apps/web/app/lib/form-draft.ts`](apps/web/app/lib/form-draft.ts) (`FormDraftPersistence`). Use a unique `formId` per resource and intent. Restore on load/refresh; skip `type=file` and `wizard_intent`; clear on successful persist POST; offer Discard. Exempt: search, delete-confirm, freeze/refund/adjust-credits, comp-ticket, featured add search, Better Auth, member onboarding/profile.
 
 ---
 
@@ -274,6 +275,7 @@ See also the charter and [`docs/product/product/vision-and-domains.md`](docs/pro
 | Raw HTML tags in UI | HeroUI primitives or compositions built from them |
 | Hard offset drop shadows | No shadows — flat bordered surfaces via theme |
 | Treating archived OpenSpec paths as SoT | Use `docs/product/` + `IMPLEMENTATION-PLAN.mvp.md` |
+| Refresh loses admin form values | Mount `FormDraftPersistence` (`form-draft.ts`); drafts are `localStorage`, not cookies or a DB table |
 
 ---
 
