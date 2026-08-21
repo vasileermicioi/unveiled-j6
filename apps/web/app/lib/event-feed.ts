@@ -1,4 +1,4 @@
-import { MEMBER_FEED_PAGE_SIZE } from "@unveiled/db";
+import { MEMBER_FEED_PAGE_SIZE, mapLegacyEventCategory } from "@unveiled/db";
 
 export type EventFeedQuery = {
   title?: string;
@@ -26,13 +26,22 @@ function parseDateParam(value: string | null): string | undefined {
   return trimmed;
 }
 
+/** One-release INTERESTS / fixture aliases → allowlisted keys. Unknown values stay exact. */
+function parseCategoryParam(value: string | null): string | undefined {
+  const trimmed = parseOptionalParam(value);
+  if (!trimmed) {
+    return undefined;
+  }
+  return mapLegacyEventCategory(trimmed) ?? trimmed;
+}
+
 export function parseEventFeedQuery(url: URL): EventFeedQuery {
   const rawPage = Number.parseInt(url.searchParams.get("page") ?? "1", 10);
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
 
   return {
     title: parseOptionalParam(url.searchParams.get("title")),
-    category: parseOptionalParam(url.searchParams.get("category")),
+    category: parseCategoryParam(url.searchParams.get("category")),
     partnerId: parseOptionalParam(url.searchParams.get("partnerId")),
     from: parseDateParam(url.searchParams.get("from")),
     to: parseDateParam(url.searchParams.get("to")),

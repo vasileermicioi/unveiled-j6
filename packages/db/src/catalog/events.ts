@@ -42,6 +42,7 @@ import {
   resolveUpdatedEventCopyFields,
 } from "./event-copy";
 import { resolveEventSubtitles } from "./event-subtitles";
+import { assertEventCategory, assertEventType } from "./event-taxonomy";
 import { resolveEventLanguages } from "./language-filter";
 import { getPartnerById } from "./partners";
 import {
@@ -844,8 +845,8 @@ async function insertEventRow(
       city: location.city,
       zipCode: location.zipCode,
       imageId,
-      category: requireNonEmpty(input.category, "category"),
-      eventType: requireNonEmpty(input.eventType, "eventType"),
+      category: assertEventCategory(input.category),
+      eventType: assertEventType(input.eventType),
       tags: input.tags ?? [],
       dateTimes: occurrences.dateTimes,
       dateTime: occurrences.dateTime,
@@ -1087,13 +1088,9 @@ export async function updateEvent(
       zipCode: location.zipCode,
       imageId,
       category:
-        input.category !== undefined
-          ? requireNonEmpty(input.category, "category")
-          : existing.category,
+        input.category !== undefined ? assertEventCategory(input.category) : existing.category,
       eventType:
-        input.eventType !== undefined
-          ? requireNonEmpty(input.eventType, "eventType")
-          : existing.eventType,
+        input.eventType !== undefined ? assertEventType(input.eventType) : existing.eventType,
       tags: input.tags ?? existing.tags,
       dateTimes: nextOccurrences.dateTimes,
       dateTime: nextOccurrences.dateTime,

@@ -54,7 +54,7 @@ export const EditStepper: Story = () => (
       street: mockPartner.street,
       houseNumber: mockPartner.houseNumber,
       zipCode: mockPartner.zipCode,
-      category: "music",
+      category: "live_music_venue",
       currentImageId: "00000000-0000-4000-8000-000000000001",
     }}
     isEdit

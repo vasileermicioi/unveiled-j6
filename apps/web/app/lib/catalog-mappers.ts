@@ -1,4 +1,4 @@
-import { type Event, type Partner, resolveEventCopy } from "@unveiled/db";
+import { type Event, getEventCategoryLabel, type Partner, resolveEventCopy } from "@unveiled/db";
 import { buildVariantUrl } from "@unveiled/images/urls";
 import type { EventCardItem } from "@unveiled/ui";
 
@@ -14,7 +14,7 @@ export function toEventCardItem(event: Event, locale: Locale): EventCardItem {
     creditPrice: event.creditPrice,
     remainingCapacity: event.remainingCapacity,
     ticketType: event.ticketType,
-    category: event.category,
+    category: getEventCategoryLabel(locale, event.category),
     imageId: event.imageId,
   };
 }

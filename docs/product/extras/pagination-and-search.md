@@ -24,7 +24,7 @@ Consistent names across every list route, so a developer only learns this once:
 | `page` | 1-indexed page number. Omitted or `1` = first page. | `?page=3` |
 | `q` | Free-text search term | `?q=hoffmann` |
 | `sort` | Sort column, optionally prefixed `-` for descending | `?sort=-createdAt` |
-| (route-specific filters) | e.g. `category`, `partnerId`, `from`, `to`, `status`, `eventId` — already named per-domain in `sitemap/sitemap.md` and the feature files | `?category=Theater` |
+| (route-specific filters) | e.g. `category`, `partnerId`, `from`, `to`, `status`, `eventId` — already named per-domain in `sitemap/sitemap.md` and the feature files | `?category=theater` (legacy INTERESTS values such as `Theater` still alias for one release) |
 
 Fixed page size per list (no `pageSize` param exposed to users — avoids letting a scraper request an absurdly large page). Recommended defaults, tunable per list without needing user-facing config:
 

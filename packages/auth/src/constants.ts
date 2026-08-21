@@ -12,16 +12,6 @@ export const INTERESTS = [
 ] as const;
 /** Max trimmed length for `profile.interests_other` when interest `Other` is selected. */
 export const INTERESTS_OTHER_MAX_LENGTH = 100;
-export const EVENT_TYPES = [
-  "Performance",
-  "Concert",
-  "Tour",
-  "Talk",
-  "Workshop",
-  "Screening",
-  "Reading",
-  "Other",
-] as const;
 export const MOODS = ["Leicht", "Experimentell", "Klassisch", "Politisch", "Fam"] as const;
 export const TIMING_OPTIONS = ["After Work", "Weekend", "Day"] as const;
 export const WEEKDAYS = [
@@ -89,7 +79,6 @@ export const FEATURED_PREFERRED_LANGUAGES = [
 export const EVENT_LANGUAGES = PREFERRED_LANGUAGES;
 
 export type AgeGroup = (typeof AGE_GROUPS)[number];
-export type EventType = (typeof EVENT_TYPES)[number];
 export type PreferredLanguage = (typeof PREFERRED_LANGUAGES)[number];
 export type FeaturedPreferredLanguage = (typeof FEATURED_PREFERRED_LANGUAGES)[number];
 export type EventLanguage = PreferredLanguage;

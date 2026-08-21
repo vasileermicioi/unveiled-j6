@@ -9,6 +9,7 @@ import {
 
 import { parseLegacyAddress } from "../location";
 import { berlinInclusiveDateRange, getBerlinCalendarDate } from "./datetime";
+import { mapLegacyEventCategory, mapLegacyEventType } from "./event-taxonomy";
 import type { CreateEventInput } from "./events";
 import fixtureJson from "./fixtures/abundo-berlin-demo.json";
 import type { CreatePartnerInput } from "./partners";
@@ -299,8 +300,8 @@ function buildDemoCatalog(fixture: AbundoFixture): DemoCatalogEntry[] {
           country: "DE",
           city: "berlin",
           zipCode: eventZip,
-          category: event.category,
-          eventType: event.eventType,
+          category: mapLegacyEventCategory(event.category) ?? event.category,
+          eventType: mapLegacyEventType(event.eventType) ?? event.eventType,
           tags: event.tags,
           dateTimes: [berlinDaysFromToday(event.daysFromToday, event.hour, event.minute)],
           creditPrice: event.creditPrice,

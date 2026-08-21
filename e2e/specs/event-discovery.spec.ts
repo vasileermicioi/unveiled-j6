@@ -677,15 +677,39 @@ test.describe("event-discovery.feature", () => {
     await loginMember(page, locale);
     const from = berlinYmd(0);
     const to = berlinYmd(30);
-    // GET filter form contract (same as selecting category + Apply)
-    await page.goto(
-      `/${locale}/events?category=Ausstellung&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
-    );
-    await expect(page).toHaveURL(/category=Ausstellung/);
+    await page.goto(`/${locale}/events`);
+    await page.getByLabel(/von|from/i).fill(from);
+    await page.getByLabel(/bis|until/i).fill(to);
+    const categorySelect = page.getByLabel(/kategorie|category/i);
+    // "Theater" is the DE and EN taxonomy label for key `theater` (upcoming demo: theaterFuture).
+    await categorySelect.selectOption({ label: "Theater" });
+    await page.getByRole("button", { name: /anwenden|apply/i }).click();
+    await expect(page).toHaveURL(/category=theater/);
 
-    await expect(page.getByText(TITLES.ausstellung)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText(TITLES.tonight)).toHaveCount(0);
-    await expect(page.getByText(TITLES.konzert)).toHaveCount(0);
+    await expect(page.getByText(TITLES.theaterFuture)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(TITLES.localeCopyDe)).toHaveCount(0);
+    await expect(page.getByText(TITLES.ausstellung)).toHaveCount(0);
+  });
+
+  test("Scenario: Category filter lists venue types", async ({ page, locale }) => {
+    await loginMember(page, locale);
+    await page.goto(`/${locale}/events`);
+    const categorySelect = page.getByLabel(/kategorie|category/i);
+    await expect(categorySelect).toBeVisible();
+    const optionTexts = (await categorySelect.locator("option").allTextContents()).map((text) =>
+      text.trim(),
+    );
+    const cinemaLabel = locale === "de" ? "Kino" : "Cinema";
+    const hallLabel = locale === "de" ? "Ausstellungshalle" : "Exhibition hall";
+    const operaLabel = locale === "de" ? "Oper / Opernhaus" : "Opera / opera house";
+    expect(optionTexts).toContain(cinemaLabel);
+    expect(optionTexts).toContain(hallLabel);
+    expect(optionTexts).toContain(operaLabel);
+    expect(optionTexts).not.toContain("Other");
+    expect(optionTexts).not.toContain("Talk/Lesung");
+    expect(optionTexts).not.toContain("Tanz/Performance");
+    expect(optionTexts).not.toContain("Ausstellung");
+    expect(optionTexts).not.toContain("Konzert");
   });
 
   test("Scenario: Event name filter control", async ({ page, locale }) => {
@@ -809,7 +833,7 @@ test.describe("event-discovery.feature", () => {
       .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/map`));
     await expect(page).toHaveURL(/title=/);
-    await expect(page).toHaveURL(/category=Theater/);
+    await expect(page).toHaveURL(/category=theater/);
     await expect(page).toHaveURL(/from=/);
 
     // Ensure consent is accepted for MapLibre (init script + live update)
@@ -833,7 +857,7 @@ test.describe("event-discovery.feature", () => {
     });
     await expect(listTab).toBeVisible();
     await expect(listTab).toHaveAttribute("href", /title=/);
-    await expect(listTab).toHaveAttribute("href", /category=Theater/);
+    await expect(listTab).toHaveAttribute("href", /category=theater/);
     await expect(page.getByText(/filtern|filters/i).first()).toBeVisible();
     await expect(page.getByLabel(/eventname|event name/i)).toBeVisible();
     await expect(page.getByText(TITLES.ausstellung)).toHaveCount(0);

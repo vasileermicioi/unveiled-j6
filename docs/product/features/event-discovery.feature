@@ -271,7 +271,14 @@ Feature: Event Discovery
   Scenario: Filter by category
     Given I am viewing the events feed as a booking-eligible member
     When I select a category filter
-    Then only events matching that category are shown
+    Then only events matching that category key are shown
+    And the visible options are venue-category labels (e.g. Kino / Cinema), not onboarding interest chips
+
+  Scenario: Category filter lists venue types
+    Given I am viewing the events feed as a booking-eligible member
+    When I open the category filter
+    Then the options include taxonomy locale labels (e.g. Kino / Cinema, Ausstellungshalle / Exhibition hall)
+    And the options do not include onboarding-only interest ids (Other, Talk/Lesung, Tanz/Performance, Ausstellung, Konzert)
 
   Scenario: Language-independent events match any language filter
     # Forward-compatible: member feed filters today are category/partner/date only.

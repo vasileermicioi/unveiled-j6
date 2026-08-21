@@ -5,9 +5,14 @@ import { mockEventCardItem } from "../stories/fixtures";
 
 import { EventFeedPage } from "./EventFeedPage";
 
-const categoryOptions = [
-  { id: "Theater", label: "Theater" },
-  { id: "Konzert", label: "Konzert" },
+const categoryOptionsEn = [
+  { id: "theater", label: "Theater" },
+  { id: "live_music_venue", label: "Live music venue" },
+];
+
+const categoryOptionsDe = [
+  { id: "theater", label: "Theater" },
+  { id: "live_music_venue", label: "Live-Musik-Venue" },
 ];
 
 const partnerOptions = [
@@ -16,7 +21,7 @@ const partnerOptions = [
 ];
 
 const emptyQuery: EventFeedQuery = {
-  category: "Kino",
+  category: "cinema",
   partnerId: undefined,
   from: "2099-01-01",
   to: "2099-01-02",
@@ -33,7 +38,7 @@ const populatedQuery: EventFeedQuery = {
 
 export const EmptyNoResults: Story = () => (
   <EventFeedPage
-    categoryOptions={categoryOptions}
+    categoryOptions={categoryOptionsEn}
     events={[]}
     locale="en"
     minDate="2026-08-03"
@@ -48,7 +53,7 @@ EmptyNoResults.storyName = "EventFeedPage / Empty — no results";
 
 export const PopulatedInactiveSub: Story = () => (
   <EventFeedPage
-    categoryOptions={categoryOptions}
+    categoryOptions={categoryOptionsEn}
     events={[mockEventCardItem]}
     locale="en"
     minDate="2026-08-03"
@@ -63,7 +68,7 @@ PopulatedInactiveSub.storyName = "EventFeedPage / Populated — inactive subscri
 
 export const EmptyNoResultsDe: Story = () => (
   <EventFeedPage
-    categoryOptions={categoryOptions}
+    categoryOptions={categoryOptionsDe}
     events={[]}
     locale="de"
     minDate="2026-08-03"

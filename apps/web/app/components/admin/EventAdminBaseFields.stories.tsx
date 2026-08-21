@@ -16,7 +16,7 @@ export const CollapsedPreview: Story = () => (
       country: "DE",
       city: "berlin",
       zipCode: mockPartner.zipCode,
-      category: "music",
+      category: "live_music_venue",
       totalCapacity: 40,
       languages: ["DE", "EN"],
       hasSubtitles: true,

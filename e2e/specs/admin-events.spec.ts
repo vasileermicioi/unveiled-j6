@@ -55,7 +55,7 @@ async function fillNewEventRequiredFields(
     zipCode: "10115",
   });
   await selectOptionByLabel(page, adminLabels.category, "Theater");
-  await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+  await selectOptionByLabel(page, adminLabels.eventType, adminLabels.eventTypeTheaterPlay);
 }
 
 function datetimeDateFields(page: Page) {
@@ -148,7 +148,7 @@ async function createVoucherPromoViaUI(
     zipCode: "10115",
   });
   await selectOptionByLabel(page, adminLabels.category, "Theater");
-  await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+  await selectOptionByLabel(page, adminLabels.eventType, adminLabels.eventTypeTheaterPlay);
   await clickEventFormNext(page, 2);
   await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(16));
   await fillNumberByLabel(page, adminLabels.capacity, "2");
@@ -670,7 +670,7 @@ test.describe("admin-events.feature", () => {
       zipCode: "10115",
     });
     await selectOptionByLabel(page, adminLabels.category, "Theater");
-    await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+    await selectOptionByLabel(page, adminLabels.eventType, adminLabels.eventTypeTheaterPlay);
     await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await fillTextbox(page, adminLabels.secretCode, "NOIMG001");
@@ -870,7 +870,7 @@ test.describe("admin-events.feature", () => {
       zipCode: "10115",
     });
     await selectOptionByLabel(page, adminLabels.category, "Theater");
-    await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+    await selectOptionByLabel(page, adminLabels.eventType, adminLabels.eventTypeTheaterPlay);
     await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await clickEventFormNext(page, 3);
@@ -897,7 +897,7 @@ test.describe("admin-events.feature", () => {
       zipCode: "10115",
     });
     await selectOptionByLabel(page, adminLabels.category, "Theater");
-    await selectOptionByLabel(page, adminLabels.eventType, "Performance");
+    await selectOptionByLabel(page, adminLabels.eventType, adminLabels.eventTypeTheaterPlay);
     await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);

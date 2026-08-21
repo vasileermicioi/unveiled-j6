@@ -443,6 +443,107 @@ The catalog domain layer in `@unveiled/db` SHALL enforce event validation, defau
 - **THEN** every stored `occurrence_capacities` element equals that `totalCapacity`
 - **AND** `total_capacity` equals that value
 
+### Requirement: Event category and type are allowlisted keys
+
+`events.category` and `events.event_type` SHALL be locale-invariant keys from the product taxonomy (`EVENT_CATEGORIES` and `EVENT_TYPES` in `.dev-plan/current-iteration/04-event-taxonomy-parent-guide.md`). Catalog create and update SHALL reject unknown keys (`INVALID_EVENT_CATEGORY` / `INVALID_EVENT_TYPE`). A migration SHALL map legacy member-interest category strings and the previous event-type strings (and known fixture spellings `Music`, `music`, `Art`, `Film`, `Talk`) to the new keys and SHALL fail if any other distinct value remains. Member onboarding `INTERESTS` SHALL NOT change. Admin category and event-type option lists SHALL emit the new keys (and locale labels) so create/update forms remain submittable.
+
+#### Scenario: Create rejects an unknown category
+
+- **WHEN** `createEvent` is called with `category = "Music"`
+- **THEN** the call is rejected with `INVALID_EVENT_CATEGORY`
+
+#### Scenario: Create rejects an unknown event type
+
+- **WHEN** `createEvent` is called with `eventType = "Performance"`
+- **THEN** the call is rejected with `INVALID_EVENT_TYPE`
+
+#### Scenario: Create accepts an allowlisted pair
+
+- **WHEN** `createEvent` is called with `category = "theater"` and `eventType = "theater_play"`
+- **THEN** the event is persisted with those keys
+
+#### Scenario: Legacy Theater category becomes theater
+
+- **WHEN** the migration runs for a row with `category = "Theater"` and `event_type = "Performance"`
+- **THEN** the row has `category = "theater"` and `event_type = "theater_play"`
+
+#### Scenario: Fixture spellings are remapped
+
+- **WHEN** the migration runs for rows with `category` in `Music`, `music`, `Art`, `Film`, `Talk`
+- **THEN** those rows have `category` `live_music_venue`, `live_music_venue`, `kunsthalle`, `cinema`, `literature_house` respectively
+
+#### Scenario: Unmapped values fail the migration
+
+- **WHEN** the migration runs and a distinct `category` or `event_type` is neither an allowlisted key nor a mapped legacy value
+- **THEN** the migration fails rather than leaving the illegal string stored
+
+#### Scenario: Onboarding interests are unchanged
+
+- **WHEN** a member opens onboarding interests
+- **THEN** the allowlist is still the existing `INTERESTS` values including `Other`
+
+### Requirement: Category and type display use locale labels
+
+Public and member surfaces SHALL NOT show raw taxonomy keys. EventCard category chip and public detail category eyebrow SHALL show the locale label for the stored category key (`cinema` → German “Kino”, English “Cinema”). Public detail DETAILS type SHALL show the locale label for the stored event-type key. Admin category and event-type selects SHALL show the same labels as option text (option values remain the keys). Unknown stored values MAY fall back to the raw string rather than failing the page.
+
+#### Scenario: German detail shows Kino for cinema
+
+- **WHEN** a guest opens `/de/events/:id` for an event with `category = "cinema"`
+- **THEN** the category eyebrow is "Kino"
+
+#### Scenario: English detail shows Cinema for cinema
+
+- **WHEN** a guest opens `/en/events/:id` for an event with `category = "cinema"`
+- **THEN** the category eyebrow is "Cinema"
+
+#### Scenario: EventCard chip shows the locale label
+
+- **WHEN** a member views an EventCard for an event with `category = "cinema"` on `/de/events` (or Discover / saved)
+- **THEN** the category chip text is "Kino"
+- **AND** the chip does not show `cinema`
+
+#### Scenario: German detail type uses the locale label
+
+- **WHEN** a guest opens `/de/events/:id` for an event with `event_type = "theater_play"`
+- **THEN** the DETAILS type value is the German type label (not `theater_play`)
+
+#### Scenario: Admin selects show locale labels
+
+- **WHEN** an admin opens create or edit event on General
+- **THEN** category and event-type options display locale labels
+- **AND** submitted values are the taxonomy keys
+
+### Requirement: Schema documents allowlisted category and type
+
+`docs/product/database/schema-overview.md` SHALL describe `events.category` and `events.event_type` as allowlisted locale-invariant keys from `EVENT_CATEGORIES` and `EVENT_TYPES` in `@unveiled/db` (module `event-taxonomy.ts`), not free-form strings. The overview SHALL note that DE/EN labels live next to those constants in code and that member onboarding `INTERESTS` is a separate list. `docs/product/extras/gaps-and-decisions.md` SHALL record that event category is not member interests. `docs/product/extras/content-i18n-inventory.md` SHALL document category/type labels with the admin-content maps (`getEventCategoryLabel` / `getEventTypeLabel`), not `INTERESTS`. `docs/product/ui/ui-component-map.md` SHALL state that the EventCard category badge, public-detail category eyebrow, DETAILS type, and feed/admin category selects show taxonomy locale labels.
+
+#### Scenario: Schema overview is not free-form
+
+- **WHEN** an implementer reads the events table in `schema-overview.md`
+- **THEN** category and event_type are documented as taxonomy keys with DE/EN labels in code
+- **AND** the free-form / “consider enum later” wording is gone
+- **AND** member `INTERESTS` is documented as a separate onboarding list
+
+#### Scenario: Gaps log separates category from interests
+
+- **WHEN** a reader opens `gaps-and-decisions.md`
+- **THEN** a current-state row states that event category is not member onboarding interests
+
+### Requirement: Demo seed stores allowlisted taxonomy keys
+
+Demo catalog seed fixtures (`packages/db/src/catalog/fixtures/abundo-berlin-demo.json` and Abundo fetch `GENRE_TO_CATEGORY` / `CATEGORY_EVENT_TYPE`) SHALL emit parent-guide keys (`theater`, `cinema`, `theater_play`, …). Product seed JSON SHALL NOT store leftover `eventType: "Performance"` or INTERESTS category ids (`Theater`, `Ausstellung`, `Kino`, …). `seed.ts` and `seed-pagination-data.ts` SHALL keep using allowlisted keys. Member `INTERESTS` SHALL remain unchanged.
+
+#### Scenario: Abundo fixture has no Performance type
+
+- **WHEN** an implementer greps `eventType: "Performance"` under `packages/db/src/catalog`
+- **THEN** there are no matches in product seed JSON or seed TypeScript that insert events
+
+#### Scenario: Re-fetching Abundo writes keys
+
+- **WHEN** `scripts/fetch-abundo-seed.ts` maps a genre to category and a default event type
+- **THEN** the written `category` and `eventType` are allowlisted taxonomy keys
+- **AND** `createEvent` would accept them without `INVALID_EVENT_CATEGORY` / `INVALID_EVENT_TYPE`
+
 ### Requirement: Clone event
 
 The catalog domain SHALL provide an ADMIN-facing clone operation that creates a new event row from an existing source event. The clone SHALL copy catalog metadata (title, description, partner, structured location fields including composed address, zip/location fields, category/type/tags, credit price, total capacity, timing mode, capacity mode, ticket type, secret code when `SECRET_CODE`, website URL, language/subtitle metadata, primary image id) and SHALL set `remaining_capacity` equal to `total_capacity`. The clone SHALL NOT copy barrier-free accessibility (that value lives on the partner). The caller SHALL supply a non-empty `dateTimes` list (and any create-required redemption inventory for voucher types). The caller MAY supply `occurrenceCreditPrices` of equal length; when omitted, the clone SHALL unique-sort `dateTimes` and fill every credit from `source.creditPrice`. The caller MAY supply `capacityMode` and `occurrenceCapacities`; when omitted, the clone SHALL copy `source.capacityMode` and SHALL copy `source.occurrenceCapacities` when the clone date list has the same length, or fill every capacity from `source.totalCapacity` when the copied mode is `SHARED`. When the copied mode is `PER_OCCURRENCE` and the clone date list length differs without a posted `occurrenceCapacities` array, the clone SHALL fail validation. The clone SHALL copy gallery join rows to the new event when the source has gallery images. The clone SHALL NOT copy bookings, waitlist entries, featured membership, or voucher inventory rows from the source.

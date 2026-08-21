@@ -14,7 +14,7 @@ export const sampleEventAvailable: EventCardItem = {
   creditPrice: 2,
   remainingCapacity: 12,
   ticketType: "SECRET_CODE",
-  category: "Music",
+  category: "Live music venue",
   imageId: mockImageId,
 };
 

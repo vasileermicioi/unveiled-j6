@@ -125,7 +125,7 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `zip_code` | text, not null | Postal code; for `(DE, berlin)` must be a valid Berlin PLZ (5-digit + membership ranges **10115–14199**). Replaces legacy `neighborhood`. |
 | `address` | text, not null | **Composed on write** from structured fields — public LOCATION and list displays use this string; admins author structured fields, not free-text `address` |
 | `image_id` | uuid, FK → `images.id`, **not nullable** | **Was `image_url` (text)** — replaced by a real image with generated size variants; see `extras/image-uploads.md`. Stays required, matching today's `image` field being non-optional on event create/edit (`features/admin-events.feature`) |
-| `category`, `event_type` | text | Free-form strings today — consider enum/lookup table if the category list is meant to be fixed |
+| `category`, `event_type` | text | Allowlisted locale-invariant keys from `EVENT_CATEGORIES` / `EVENT_TYPES` in `packages/db/src/catalog/event-taxonomy.ts` (not Postgres enums). DE/EN labels live next to those constants; UI selects and cards render the label for `/:locale`. Member onboarding `INTERESTS` is a **separate** list — event category is not member interests. |
 | `tags` | text[] | |
 | `date_times` | timestamptz[], not null | Non-empty list of occurrence instants (ascending, duplicates removed on write). Check: `cardinality(date_times) >= 1`. Public/member detail lists all values; compact surfaces use `date_time`. |
 | `occurrence_credit_prices` | integer[], not null | Per-occurrence credits, same cardinality and order as `date_times`. Check: `cardinality` match + `0 <= ALL (occurrence_credit_prices)`. Backfilled from `credit_price`. |

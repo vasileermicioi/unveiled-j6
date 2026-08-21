@@ -3,6 +3,15 @@ import type { Story } from "@ladle/react";
 import { EventCard } from "./EventCard";
 import { sampleEventAvailable, sampleEventSoldOut } from "./stories/event-fixtures";
 
+const sampleEventAvailableDe = {
+  ...sampleEventAvailable,
+  category: "Live-Musik-Venue",
+};
+const sampleEventSoldOutDe = {
+  ...sampleEventSoldOut,
+  category: "Live-Musik-Venue",
+};
+
 export const HoverPreview: Story = () => (
   <EventCard
     className="event-card--hover-preview"
@@ -19,7 +28,7 @@ export const GuestDiscover: Story = () => (
 GuestDiscover.storyName = "EventCard / Guest — Discover";
 
 export const GuestDiscoverDe: Story = () => (
-  <EventCard event={sampleEventAvailable} locale="de" viewer={{ kind: "guest" }} />
+  <EventCard event={sampleEventAvailableDe} locale="de" viewer={{ kind: "guest" }} />
 );
 GuestDiscoverDe.storyName = "EventCard / Guest — Entdecken (de)";
 
@@ -29,7 +38,7 @@ export const GuestWaitlist: Story = () => (
 GuestWaitlist.storyName = "EventCard / Guest — Waitlist";
 
 export const GuestWaitlistDe: Story = () => (
-  <EventCard event={sampleEventSoldOut} locale="de" viewer={{ kind: "guest" }} />
+  <EventCard event={sampleEventSoldOutDe} locale="de" viewer={{ kind: "guest" }} />
 );
 GuestWaitlistDe.storyName = "EventCard / Guest — Warteliste (de)";
 
@@ -44,7 +53,7 @@ MemberWaitlist.storyName = "EventCard / Member — Waitlist";
 
 export const MemberWaitlistDe: Story = () => (
   <EventCard
-    event={sampleEventSoldOut}
+    event={sampleEventSoldOutDe}
     locale="de"
     viewer={{ kind: "member", subscriptionActive: true }}
   />
@@ -62,7 +71,7 @@ MemberInactiveDiscover.storyName = "EventCard / Member inactive — Discover (no
 
 export const MemberInactiveDiscoverDe: Story = () => (
   <EventCard
-    event={sampleEventAvailable}
+    event={sampleEventAvailableDe}
     locale="de"
     viewer={{ kind: "member", subscriptionActive: false }}
   />
@@ -80,7 +89,7 @@ MemberDiscover.storyName = "EventCard / Member — Discover";
 
 export const MemberDiscoverDe: Story = () => (
   <EventCard
-    event={sampleEventAvailable}
+    event={sampleEventAvailableDe}
     locale="de"
     viewer={{ kind: "member", subscriptionActive: true }}
   />
@@ -113,7 +122,7 @@ export const MemberSavedOnDe: Story = () => (
   <EventCard
     bookmarkFormAction="/de/events/sample/unsave"
     bookmarkReturnTo="/de/saved"
-    event={sampleEventAvailable}
+    event={sampleEventAvailableDe}
     locale="de"
     viewer={{ kind: "member", saved: true, subscriptionActive: true }}
   />

@@ -118,8 +118,8 @@ export const ErrorState: Story = () => {
 ErrorState.storyName = "EventMap / Error";
 
 const storyCategoryOptions = [
-  { id: "Theater", label: "Theater" },
-  { id: "Kino", label: "Kino" },
+  { id: "theater", label: "Theater" },
+  { id: "cinema", label: "Cinema" },
 ];
 const storyPartnerOptions = [{ id: "partner-1", label: "Sample Partner" }];
 
@@ -132,7 +132,7 @@ export const MarkersPageChrome: Story = () => (
     minDate="2026-08-03"
     partnerOptions={storyPartnerOptions}
     query={{
-      category: "Theater",
+      category: "theater",
       partnerId: undefined,
       from: undefined,
       to: undefined,
@@ -151,7 +151,7 @@ export const EmptyFiltered: Story = () => (
     minDate="2026-08-03"
     partnerOptions={storyPartnerOptions}
     query={{
-      category: "Kino",
+      category: "cinema",
       partnerId: undefined,
       from: "2099-01-01",
       to: "2099-01-02",

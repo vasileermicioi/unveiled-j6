@@ -5,6 +5,7 @@ export * from "./errors";
 export * from "./event-copy";
 export * from "./event-gallery-images";
 export * from "./event-subtitles";
+export * from "./event-taxonomy";
 export * from "./events";
 export * from "./featured-events";
 export * from "./featured-partners";

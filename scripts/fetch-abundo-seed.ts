@@ -39,53 +39,53 @@ function isExcludedDemoEvent(slug: string, title: string): boolean {
 }
 
 const GENRE_TO_CATEGORY: Record<string, string> = {
-  Theater: "Theater",
-  Theatre: "Theater",
-  Play: "Theater",
-  Oper: "Theater",
-  Opera: "Theater",
-  Musical: "Theater",
-  Musiktheater: "Theater",
-  Improvisationstheater: "Theater",
-  Show: "Theater",
-  Varieté: "Theater",
-  Circus: "Theater",
-  Zirkus: "Theater",
-  Kino: "Kino",
-  Cinema: "Kino",
-  Film: "Kino",
-  Movie: "Kino",
-  Ausstellung: "Ausstellung",
-  Exhibition: "Ausstellung",
-  Museum: "Museum",
-  Konzert: "Konzert",
-  Concert: "Konzert",
-  "Klassische Musik": "Konzert",
-  "Classical Music": "Konzert",
-  Jazz: "Konzert",
-  Comedy: "Comedy",
-  "Stand Up": "Comedy",
-  Kabarett: "Comedy",
-  Tanz: "Tanz/Performance",
-  Dance: "Tanz/Performance",
-  Performance: "Tanz/Performance",
-  Talk: "Talk/Lesung",
-  Talkshow: "Talk/Lesung",
-  Lesung: "Talk/Lesung",
-  Reading: "Talk/Lesung",
-  "Live Podcast": "Talk/Lesung",
-  "Poetry Slam": "Talk/Lesung",
+  Theater: "theater",
+  Theatre: "theater",
+  Play: "theater",
+  Oper: "theater",
+  Opera: "theater",
+  Musical: "theater",
+  Musiktheater: "theater",
+  Improvisationstheater: "theater",
+  Show: "theater",
+  Varieté: "theater",
+  Circus: "theater",
+  Zirkus: "theater",
+  Kino: "cinema",
+  Cinema: "cinema",
+  Film: "cinema",
+  Movie: "cinema",
+  Ausstellung: "exhibition_hall",
+  Exhibition: "exhibition_hall",
+  Museum: "museum",
+  Konzert: "live_music_venue",
+  Concert: "live_music_venue",
+  "Klassische Musik": "live_music_venue",
+  "Classical Music": "live_music_venue",
+  Jazz: "live_music_venue",
+  Comedy: "comedy_club",
+  "Stand Up": "comedy_club",
+  Kabarett: "comedy_club",
+  Tanz: "dance_venue",
+  Dance: "dance_venue",
+  Performance: "dance_venue",
+  Talk: "literature_house",
+  Talkshow: "literature_house",
+  Lesung: "literature_house",
+  Reading: "literature_house",
+  "Live Podcast": "literature_house",
+  "Poetry Slam": "literature_house",
 };
 
 const CATEGORY_EVENT_TYPE: Record<string, string> = {
-  Theater: "Performance",
-  Kino: "Screening",
-  Museum: "Other",
-  Ausstellung: "Other",
-  Konzert: "Concert",
-  "Talk/Lesung": "Talk",
-  Comedy: "Performance",
-  "Tanz/Performance": "Performance",
+  theater: "theater_play",
+  cinema: "film_screening",
+  museum: "special_event",
+  exhibition_hall: "special_event",
+  live_music_venue: "concert",
+  literature_house: "talk_lecture",
+  comedy_club: "theater_play",
+  dance_venue: "theater_play",
 };
 
 /** Extra Commons/Wikipedia search queries for venues with weak default hits. */
@@ -286,7 +286,7 @@ function mapCategory(tagIds: string[], tagsById: Map<string, Tag>): string {
     const mapped = GENRE_TO_CATEGORY[de] || GENRE_TO_CATEGORY[en];
     if (mapped) return mapped;
   }
-  return "Theater";
+  return "theater";
 }
 
 function mapTags(tagIds: string[], tagsById: Map<string, Tag>): string[] {
@@ -620,13 +620,13 @@ async function main() {
   const venuesUsed = new Set<string>();
 
   const requiredCategories = [
-    "Theater",
-    "Kino",
-    "Ausstellung",
-    "Konzert",
-    "Comedy",
-    "Tanz/Performance",
-    "Talk/Lesung",
+    "theater",
+    "cinema",
+    "exhibition_hall",
+    "live_music_venue",
+    "comedy_club",
+    "dance_venue",
+    "literature_house",
   ];
 
   for (const want of requiredCategories) {
@@ -738,7 +738,7 @@ async function main() {
     }
 
     const category = mapCategory(detail.event_tag_ids, tagsById);
-    const eventType = CATEGORY_EVENT_TYPE[category] ?? "Other";
+    const eventType = CATEGORY_EVENT_TYPE[category] ?? "special_event";
 
     events.push({
       slug: detail.slug,
@@ -753,7 +753,7 @@ async function main() {
       tags: mapTags(detail.event_tag_ids, tagsById),
       imagePath: eventRel,
       imageSourceUrl: eventImage.sourceUrl,
-      creditPrice: category === "Ausstellung" || category === "Museum" ? 1 : 2,
+      creditPrice: category === "exhibition_hall" || category === "museum" ? 1 : 2,
       secretCode: secretCodeFromSlug(detail.slug),
       languages: ["de", "en"],
       lat,
@@ -774,7 +774,10 @@ async function main() {
   const byCategory = (cat: string) => events.find((e) => e.category === cat && !e.seedRole);
 
   const tonight =
-    byCategory("Theater") || byCategory("Konzert") || byCategory("Tanz/Performance") || events[0];
+    byCategory("theater") ||
+    byCategory("live_music_venue") ||
+    byCategory("dance_venue") ||
+    events[0];
   if (!tonight) throw new Error("No events available to assign tonight role");
   tonight.seedRole = "tonight";
   tonight.daysFromToday = 0;
@@ -783,7 +786,7 @@ async function main() {
   tonight.title = `Tonight: ${tonight.title.replace(/^Tonight:\s*/i, "")}`;
 
   const past =
-    events.find((e) => e !== tonight && e.category === "Theater") ||
+    events.find((e) => e !== tonight && e.category === "theater") ||
     events.find((e) => e !== tonight) ||
     tonight;
   if (past !== tonight) {
@@ -795,7 +798,7 @@ async function main() {
   }
 
   const theaterFuture =
-    events.find((e) => !e.seedRole && e.category === "Theater") || events.find((e) => !e.seedRole);
+    events.find((e) => !e.seedRole && e.category === "theater") || events.find((e) => !e.seedRole);
   if (!theaterFuture) throw new Error("No events available to assign theaterFuture role");
   theaterFuture.seedRole = "theaterFuture";
   theaterFuture.daysFromToday = 8;
@@ -803,8 +806,8 @@ async function main() {
   theaterFuture.minute = 30;
 
   const ausstellung =
-    events.find((e) => !e.seedRole && e.category === "Ausstellung") ||
-    events.find((e) => !e.seedRole && e.category === "Museum");
+    events.find((e) => !e.seedRole && e.category === "exhibition_hall") ||
+    events.find((e) => !e.seedRole && e.category === "museum");
   if (ausstellung) {
     ausstellung.seedRole = "ausstellung";
     ausstellung.daysFromToday = 14;
@@ -812,7 +815,7 @@ async function main() {
     ausstellung.minute = 0;
   }
 
-  const konzert = events.find((e) => !e.seedRole && e.category === "Konzert");
+  const konzert = events.find((e) => !e.seedRole && e.category === "live_music_venue");
   if (konzert) {
     konzert.seedRole = "konzert";
     konzert.daysFromToday = 17;
@@ -822,7 +825,7 @@ async function main() {
 
   const soldOut =
     events.find((e) => !e.seedRole && e.partnerKey === tonight.partnerKey) ||
-    events.find((e) => !e.seedRole && e.category === "Theater") ||
+    events.find((e) => !e.seedRole && e.category === "theater") ||
     events.find((e) => !e.seedRole);
   if (soldOut) {
     soldOut.seedRole = "soldOutWaitlist";
@@ -844,8 +847,8 @@ async function main() {
     soldOut.lng = tonight.lng;
     soldOut.imagePath = tonight.imagePath;
     soldOut.imageSourceUrl = tonight.imageSourceUrl;
-    soldOut.category = "Theater";
-    soldOut.eventType = "Performance";
+    soldOut.category = "theater";
+    soldOut.eventType = "theater_play";
     soldOut.tags = ["waitlist", "sold-out", "demo"];
     soldOut.sourceUrl = "https://abundolive.de/event/berlin/waitlist_demo_night";
   }

@@ -4,10 +4,16 @@ import type { EventFeedQuery } from "../../lib/event-feed";
 
 import { EventFeedFilters } from "./EventFeedFilters";
 
-const categoryOptions = [
-  { id: "Theater", label: "Theater" },
-  { id: "Konzert", label: "Konzert" },
-  { id: "Ausstellung", label: "Ausstellung" },
+const categoryOptionsEn = [
+  { id: "theater", label: "Theater" },
+  { id: "live_music_venue", label: "Live music venue" },
+  { id: "exhibition_hall", label: "Exhibition hall" },
+];
+
+const categoryOptionsDe = [
+  { id: "theater", label: "Theater" },
+  { id: "live_music_venue", label: "Live-Musik-Venue" },
+  { id: "exhibition_hall", label: "Ausstellungshalle" },
 ];
 
 const partnerOptions = [
@@ -28,7 +34,7 @@ const defaultQuery: EventFeedQuery = {
 
 const filteredQuery: EventFeedQuery = {
   title: undefined,
-  category: "Theater",
+  category: "theater",
   partnerId: "partner-volks",
   from: "2026-08-10",
   to: "2026-08-20",
@@ -47,7 +53,7 @@ const titleFilteredQuery: EventFeedQuery = {
 export const DefaultUpcomingScope: Story = () => (
   <EventFeedFilters
     action="/en/events"
-    categoryOptions={categoryOptions}
+    categoryOptions={categoryOptionsEn}
     locale="en"
     minDate={minDate}
     partnerOptions={partnerOptions}
@@ -59,7 +65,7 @@ DefaultUpcomingScope.storyName = "EventFeedFilters / Default — upcoming scope"
 export const FiltersApplied: Story = () => (
   <EventFeedFilters
     action="/en/events"
-    categoryOptions={categoryOptions}
+    categoryOptions={categoryOptionsEn}
     locale="en"
     minDate={minDate}
     partnerOptions={partnerOptions}
@@ -71,7 +77,7 @@ FiltersApplied.storyName = "EventFeedFilters / Filters applied";
 export const TitleFilterApplied: Story = () => (
   <EventFeedFilters
     action="/en/events"
-    categoryOptions={categoryOptions}
+    categoryOptions={categoryOptionsEn}
     locale="en"
     minDate={minDate}
     partnerOptions={partnerOptions}
@@ -83,7 +89,7 @@ TitleFilterApplied.storyName = "EventFeedFilters / Title filter applied";
 export const DefaultUpcomingScopeDe: Story = () => (
   <EventFeedFilters
     action="/de/events"
-    categoryOptions={categoryOptions}
+    categoryOptions={categoryOptionsDe}
     locale="de"
     minDate={minDate}
     partnerOptions={partnerOptions}

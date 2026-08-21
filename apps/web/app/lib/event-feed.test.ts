@@ -28,12 +28,44 @@ describe("event-feed helpers", () => {
     );
     expect(query).toEqual({
       title: "Jazz",
-      category: "Theater",
+      category: "theater",
       partnerId: "abc",
       from: "2026-07-09",
       to: "2026-07-10",
       page: 2,
     });
+  });
+
+  test("parseEventFeedQuery aliases legacy INTERESTS category ids", () => {
+    const aliases: Array<[string, string]> = [
+      ["Theater", "theater"],
+      ["Kino", "cinema"],
+      ["Museum", "museum"],
+      ["Ausstellung", "exhibition_hall"],
+      ["Konzert", "live_music_venue"],
+      ["Talk/Lesung", "literature_house"],
+      ["Comedy", "comedy_club"],
+      ["Tanz/Performance", "dance_venue"],
+      ["Other", "cultural_center"],
+    ];
+    for (const [legacy, key] of aliases) {
+      const url = new URL("https://example.com/en/events");
+      url.searchParams.set("category", legacy);
+      expect(parseEventFeedQuery(url).category).toBe(key);
+    }
+  });
+
+  test("parseEventFeedQuery leaves allowlisted keys and unknown values unchanged", () => {
+    expect(
+      parseEventFeedQuery(new URL("https://example.com/en/events?category=theater")).category,
+    ).toBe("theater");
+    expect(
+      parseEventFeedQuery(new URL("https://example.com/en/events?category=NotARealCategory"))
+        .category,
+    ).toBe("NotARealCategory");
+    expect(
+      parseEventFeedQuery(new URL("https://example.com/en/events?category=THEATER")).category,
+    ).toBe("THEATER");
   });
 
   test("parseEventFeedQuery trims title and omits whitespace-only title", () => {
@@ -80,7 +112,7 @@ describe("event-feed helpers", () => {
       new URL("https://example.com/en/events?title=Jazz&category=Theater&page=99"),
     );
     expect(eventFeedPageRedirectPath("/en/events", query, 30)).toBe(
-      "/en/events?title=Jazz&category=Theater&page=2",
+      "/en/events?title=Jazz&category=theater&page=2",
     );
     expect(
       eventFeedPageRedirectPath(

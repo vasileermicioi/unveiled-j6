@@ -32,6 +32,8 @@ export const adminLabels = {
   zipCode: "PLZ*",
   category: "Kategorie*",
   eventType: "Event-Typ*",
+  /** Visible option text for `theater_play` (DE and EN labels). */
+  eventTypeTheaterPlay: /theateraufführung \/ schauspiel|theater performance \/ play/i,
   eventDate: /^(datum|date)\*?$/i,
   eventTime: /^(uhrzeit|time)\*?$/i,
   rangeStart: /^(startdatum|start date)\*?$/i,
@@ -601,7 +603,11 @@ export async function createEventViaUI(
     zipCode: overrides.zipCode ?? "10115",
   });
   await selectOptionByLabel(page, adminLabels.category, overrides.category ?? "Theater");
-  await selectOptionByLabel(page, adminLabels.eventType, overrides.eventType ?? "Performance");
+  await selectOptionByLabel(
+    page,
+    adminLabels.eventType,
+    overrides.eventType ?? adminLabels.eventTypeTheaterPlay,
+  );
 
   if (overrides.language) {
     await checkOptionByName(page, overrides.language);

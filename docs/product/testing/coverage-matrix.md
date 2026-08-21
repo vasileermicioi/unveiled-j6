@@ -205,7 +205,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Guest path to full browse requires signup or login | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest path to full browse requires signup or login` | `pass` |  |
 | `event-discovery.feature` | Default feed shows all upcoming events soonest first | `e2e/specs/event-discovery.spec.ts` · `Scenario: Default feed shows all upcoming events soonest first` | `pass` |  |
 | `event-discovery.feature` | Events with invalid or past dates are hidden | `e2e/specs/event-discovery.spec.ts` · `Scenario: Events with invalid or past dates are hidden` | `pass` |  |
-| `event-discovery.feature` | Filter by category | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by category` | `pass` |  |
+| `event-discovery.feature` | Filter by category | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by category` | `pass` | Locale label `Theater` via `getByLabel`; URL `category=theater`; `TITLES.theaterFuture` visible |
+| `event-discovery.feature` | Category filter lists venue types | `e2e/specs/event-discovery.spec.ts` · `Scenario: Category filter lists venue types` | `pass` | Taxonomy labels present; INTERESTS-only option texts absent |
 | `event-discovery.feature` | Event name filter control | `e2e/specs/event-discovery.spec.ts` · `Scenario: Event name filter control` | `pass` | Event name field visible with partner/date controls; date `min` = Berlin today |
 | `event-discovery.feature` | Filter by event name | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by event name` | `pass` | Title substring via GET `title` |
 | `event-discovery.feature` | Filter by English title on /de | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by English title on /de` | `pass` | Needs `DATABASE_URL`; `title=Unveiled-EN-Copy` on `/de/events`; card shows German title |

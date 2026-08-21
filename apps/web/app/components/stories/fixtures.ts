@@ -94,8 +94,8 @@ export const mockEvent: Event = {
   city: "berlin",
   zipCode: "10585",
   imageId: mockImageId,
-  category: "Music",
-  eventType: "Live",
+  category: "live_music_venue",
+  eventType: "live_set",
   tags: ["jazz", "poetry"],
   dateTimes: [storyNow, storyLater],
   dateTime: storyNow,
@@ -166,7 +166,7 @@ export const mockEventCardItem: EventCardItem = {
   creditPrice: mockEvent.creditPrice,
   remainingCapacity: mockEvent.remainingCapacity,
   ticketType: mockEvent.ticketType,
-  category: mockEvent.category,
+  category: "Live music venue",
   imageId: mockEvent.imageId,
 };
 

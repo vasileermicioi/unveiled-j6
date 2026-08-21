@@ -1,9 +1,15 @@
-import { EVENT_TYPES, FEATURED_PREFERRED_LANGUAGES, INTERESTS } from "@unveiled/auth/constants";
-import { listIso6391LanguageCodes } from "@unveiled/db";
+import { FEATURED_PREFERRED_LANGUAGES } from "@unveiled/auth/constants";
+import {
+  EVENT_CATEGORIES,
+  EVENT_TYPES,
+  getEventCategoryLabel,
+  getEventTypeLabel,
+  listIso6391LanguageCodes,
+} from "@unveiled/db";
 import type { CatalogErrorCode } from "@unveiled/db/catalog/errors";
 
 import type { Locale } from "./locale";
-import { getInterestLabel, getPreferredLanguageOptions } from "./onboarding-content";
+import { getPreferredLanguageOptions } from "./onboarding-content";
 
 export const ADMIN_LIST_PAGE_SIZE = 25;
 export const ADMIN_PARTNERS_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE;
@@ -1532,6 +1538,8 @@ const catalogErrorMessages: Partial<Record<CatalogErrorCode, keyof AdminCopy["fi
   NEGATIVE_CREDIT_PRICE: "creditPrice",
   DUPLICATE_OCCURRENCE_INSTANTS: "dateTimes",
   INVALID_SUBTITLE_LANGUAGE: "subtitleLanguage",
+  INVALID_EVENT_CATEGORY: "category",
+  INVALID_EVENT_TYPE: "eventType",
   INVALID_OPENING_HOURS: "openingHours",
   BANK_DETAILS_TOO_LONG: "bankDetails",
   EVENT_NOT_FOUND: "title",
@@ -1726,39 +1734,16 @@ export function getEventSubtitleLanguageOptions(locale: Locale): AdminSelectOpti
 }
 
 export function getEventCategoryOptions(locale: Locale): AdminSelectOption[] {
-  return INTERESTS.map((id) => ({
+  return EVENT_CATEGORIES.map((id) => ({
     id,
-    label: getInterestLabel(locale, id),
+    label: getEventCategoryLabel(locale, id),
   }));
 }
-
-const eventTypeLabels: Record<Locale, Record<(typeof EVENT_TYPES)[number], string>> = {
-  de: {
-    Performance: "Performance",
-    Concert: "Konzert",
-    Tour: "Tour",
-    Talk: "Talk",
-    Workshop: "Workshop",
-    Screening: "Vorführung",
-    Reading: "Lesung",
-    Other: "Sonstiges",
-  },
-  en: {
-    Performance: "Performance",
-    Concert: "Concert",
-    Tour: "Tour",
-    Talk: "Talk",
-    Workshop: "Workshop",
-    Screening: "Screening",
-    Reading: "Reading",
-    Other: "Other",
-  },
-};
 
 export function getEventTypeOptions(locale: Locale): AdminSelectOption[] {
   return EVENT_TYPES.map((id) => ({
     id,
-    label: eventTypeLabels[locale][id],
+    label: getEventTypeLabel(locale, id),
   }));
 }
 

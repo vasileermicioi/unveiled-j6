@@ -1,5 +1,11 @@
 import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
-import { type Event, type OpeningHoursWeek, resolveEventCopy } from "@unveiled/db";
+import {
+  type Event,
+  getEventCategoryLabel,
+  getEventTypeLabel,
+  type OpeningHoursWeek,
+  resolveEventCopy,
+} from "@unveiled/db";
 import { buildDetailHeroSrc, buildDetailHeroSrcSet } from "@unveiled/ui";
 import { Calendar } from "lucide-react";
 
@@ -552,7 +558,9 @@ export function EventDetailPage({
             className="event-detail--checkout__identity flex min-w-0 flex-col gap-5"
             variant="transparent"
           >
-            <Paragraph className="event-detail--checkout__eyebrow">{event.category}</Paragraph>
+            <Paragraph className="event-detail--checkout__eyebrow">
+              {getEventCategoryLabel(locale, event.category)}
+            </Paragraph>
             <Heading className="event-detail--checkout__title" level={1}>
               {eventCopy.title}
             </Heading>
@@ -720,7 +728,10 @@ export function EventDetailPage({
                     value={event.subtitleLanguages.join(", ")}
                   />
                 ) : null}
-                <MetaCell label={metadataLabel("type", locale)} value={event.eventType} />
+                <MetaCell
+                  label={metadataLabel("type", locale)}
+                  value={getEventTypeLabel(locale, event.eventType)}
+                />
               </Surface>
             </Surface>
           </Card.Content>
