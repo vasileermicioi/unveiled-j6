@@ -1,11 +1,13 @@
-import type { Event, Partner } from "@unveiled/db";
+import { type Event, type Partner, resolveEventCopy } from "@unveiled/db";
 import { buildVariantUrl } from "@unveiled/images/urls";
 import type { EventCardItem } from "@unveiled/ui";
 
-export function toEventCardItem(event: Event): EventCardItem {
+import type { Locale } from "./locale";
+
+export function toEventCardItem(event: Event, locale: Locale): EventCardItem {
   return {
     id: event.id,
-    title: event.title,
+    title: resolveEventCopy(event, locale).title,
     partnerName: event.partnerName,
     dateTime: event.dateTime,
     zipCode: event.zipCode,

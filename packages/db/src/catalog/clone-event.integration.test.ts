@@ -62,6 +62,10 @@ describe("cloneEvent integration", () => {
       partnerId: partner.id,
       title: `Clone Source ${suffix}`,
       description: "Source description",
+      titleDe: `Clone Source ${suffix}`,
+      titleEn: `Clone Source EN ${suffix}`,
+      descriptionDe: "Source description",
+      descriptionEn: "Source description EN",
       ...structuredLocationFromAddress("Clonestraße 1, Berlin"),
       country: "DE",
       city: "berlin",
@@ -96,6 +100,11 @@ describe("cloneEvent integration", () => {
 
       expect(cloned.id).not.toBe(source.id);
       expect(cloned.title).toBe(source.title);
+      expect(cloned.titleDe).toBe(source.titleDe);
+      expect(cloned.titleEn).toBe(source.titleEn);
+      expect(cloned.descriptionDe).toBe(source.descriptionDe);
+      expect(cloned.descriptionEn).toBe(source.descriptionEn);
+      expect(cloned.titleEn).toBe(`Clone Source EN ${suffix}`);
       expect(cloned.partnerId).toBe(source.partnerId);
       expect(cloned.partnerName).toBe(source.partnerName);
       expect(cloned.imageId).toBe(source.imageId);

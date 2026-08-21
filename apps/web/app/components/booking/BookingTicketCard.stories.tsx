@@ -17,6 +17,8 @@ import { BookingTicketCard } from "./BookingTicketCard";
 const eventSummary = {
   id: mockEvent.id,
   title: mockEvent.title,
+  titleDe: mockEvent.titleDe,
+  titleEn: mockEvent.titleEn,
   partnerName: mockEvent.partnerName,
   dateTime: mockEvent.dateTime,
   address: mockEvent.address,

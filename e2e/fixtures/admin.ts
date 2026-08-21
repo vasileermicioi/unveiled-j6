@@ -25,8 +25,10 @@ export const adminLabels = {
   houseNumber: "Hausnummer*",
   addressLine2: "Adresszusatz (optional)",
   partner: "Partner*",
-  title: "Titel*",
-  description: "Beschreibung*",
+  titleDe: /titel \(de\)|title \(de\)/i,
+  titleEn: /titel \(en\)|title \(en\)/i,
+  descriptionDe: /beschreibung \(de\)|description \(de\)/i,
+  descriptionEn: /beschreibung \(en\)|description \(en\)/i,
   zipCode: "PLZ*",
   category: "Kategorie*",
   eventType: "Event-Typ*",
@@ -335,10 +337,19 @@ export async function fillCreditsNth(page: Page, nth: number, value: string): Pr
 
 export async function fillTextbox(
   page: Page,
-  accessibleName: string,
+  accessibleName: string | RegExp,
   value: string,
 ): Promise<void> {
-  const field = page.getByRole("textbox", { name: accessibleName, exact: true });
+  const field =
+    typeof accessibleName === "string"
+      ? page.getByRole("textbox", { name: accessibleName, exact: true })
+      : page.getByRole("textbox", { name: accessibleName });
+  // Hidden MDX sync textarea is clipped 1px — still the labeled POST field.
+  if (!(await field.isVisible())) {
+    await field.fill(value, { force: true });
+    await expect(field).toHaveValue(value, { timeout: 5_000 });
+    return;
+  }
   await expect(field).toBeVisible({ timeout: 15_000 });
   // Client islands can remount once after hydration and wipe an early fill — retry once.
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -350,6 +361,24 @@ export async function fillTextbox(
     await page.waitForTimeout(250);
   }
   await expect(field).toHaveValue(value, { timeout: 5_000 });
+}
+
+/** Fill DE then EN title + Markdown description (defaults copy the same string to both locales). */
+export async function fillEventCopyFields(
+  page: Page,
+  title: string,
+  description: string,
+  overrides: {
+    titleDe?: string;
+    titleEn?: string;
+    descriptionDe?: string;
+    descriptionEn?: string;
+  } = {},
+): Promise<void> {
+  await fillTextbox(page, adminLabels.titleDe, overrides.titleDe ?? title);
+  await fillTextbox(page, adminLabels.descriptionDe, overrides.descriptionDe ?? description);
+  await fillTextbox(page, adminLabels.titleEn, overrides.titleEn ?? title);
+  await fillTextbox(page, adminLabels.descriptionEn, overrides.descriptionEn ?? description);
 }
 
 export type CreatedPartner = {
@@ -509,8 +538,12 @@ export type CreatedEvent = {
 
 export type CreateEventOverrides = {
   title?: string;
+  titleDe?: string;
+  titleEn?: string;
   partnerName: string;
   description?: string;
+  descriptionDe?: string;
+  descriptionEn?: string;
   street?: string;
   houseNumber?: string;
   addressLine2?: string;
@@ -539,7 +572,12 @@ export async function createEventViaUI(
   overrides: CreateEventOverrides,
 ): Promise<CreatedEvent> {
   const suffix = uniqueSuffix();
-  const title = overrides.title ?? `E2E Event ${suffix}`;
+  const titleDe = overrides.titleDe ?? overrides.title ?? `E2E Event ${suffix}`;
+  const titleEn = overrides.titleEn ?? titleDe;
+  const descriptionDe =
+    overrides.descriptionDe ?? overrides.description ?? `E2E description ${suffix}`;
+  const descriptionEn = overrides.descriptionEn ?? descriptionDe;
+  const title = titleDe;
   const imagePath = overrides.skipImage ? undefined : (overrides.imagePath ?? SAMPLE_EVENT_IMAGE);
 
   await page.goto(`/${locale}/admin/events/new`);
@@ -548,12 +586,12 @@ export async function createEventViaUI(
   });
   await page.waitForLoadState("networkidle");
   await selectOptionByLabel(page, adminLabels.partner, overrides.partnerName);
-  await fillTextbox(page, adminLabels.title, title);
-  await fillTextbox(
-    page,
-    adminLabels.description,
-    overrides.description ?? `E2E description ${suffix}`,
-  );
+  await fillEventCopyFields(page, titleDe, descriptionDe, {
+    titleDe,
+    titleEn,
+    descriptionDe,
+    descriptionEn,
+  });
   const street = overrides.street ?? `E2E Straße ${suffix}`;
   const houseNumber = overrides.houseNumber ?? "1";
   await fillStructuredLocation(page, {

@@ -14,12 +14,22 @@ Feature: Admin — Event Management
     Given I am signed in as "ADMIN"
 
   Scenario: Create a single event
-    When I create a new event with a title, partner, per-datetime credit prices, capacity, description, image, Berlin zip code, and one or more dateTimes
+    When I create a new event with German and English titles and Markdown descriptions, partner, per-datetime credit prices, capacity, image, Berlin zip code, and one or more dateTimes
     Then the event is added to the catalog
     And its remaining capacity defaults to its total capacity
     And its startTimeMinutes and weekday are computed from its primary/next dateTime
-    # description is Markdown source (MDXEditor-assisted); other required fields unchanged
+    # descriptions are Markdown source (two MDXEditor instances, DE then EN); other required fields unchanged
     # Admin create/edit/clone forms present an editable datetime list (add/remove inplace) with credits per row
+
+  Scenario: Create event with DE and EN titles
+    When I create an event with both locale titles and both locale descriptions
+    Then the event is added to the catalog
+    And "/de" and "/en" public detail show the matching titles
+
+  Scenario: Create rejects empty English title
+    When I submit create or edit with a German title and an empty English title
+    Then the event is not saved
+    # Domain REQUIRED_FIELD — packages/db event-copy.unit.test.ts; no Playwright (wizard + R2)
 
   Scenario: Add and remove datetimes on create
     When I am on the new-event form
@@ -110,9 +120,9 @@ Feature: Admin — Event Management
     And no neighborhood / Kiez select is shown
 
   Scenario: Admin authors Markdown description
-    When I create or edit an event and enter Markdown in the description editor
-    Then the event is saved with that Markdown source
-    And guests see rendered Markdown on the public event detail page
+    When I create or edit an event and enter Markdown in the German and English description editors
+    Then the event is saved with that Markdown source for both locales
+    And guests see locale-resolved rendered Markdown on the public event detail page
 
   Scenario: Supply the event image as a direct upload
     When I create or edit an event and upload an image file
@@ -273,9 +283,9 @@ Feature: Admin — Event Management
     # newTotal is the shared capacity number, or the sum of per-date capacities
 
   Scenario: Edit event details
-    When I update an event's title, description, image, price, or redemption configuration
+    When I update an event's German and English titles, descriptions, image, price, or redemption configuration
     Then the changes are saved and reflected in the feed
-    # description remains Markdown source; the editor is initialized from stored Markdown
+    # descriptions remain Markdown source; both editors are initialized from stored locale Markdown
 
   Scenario: Delete an event
     When I delete an event

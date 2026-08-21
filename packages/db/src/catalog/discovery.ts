@@ -1,9 +1,10 @@
-import { and, asc, count, eq, gte, ilike, inArray, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { type Event, events } from "../schema/events";
 import { savedEvents } from "../schema/saved-events";
 import { type BerlinDayRange, berlinInclusiveDateRange, getBerlinCalendarDate } from "./datetime";
+import { eventTitleLocaleIlike } from "./event-copy";
 
 export const MEMBER_FEED_PAGE_SIZE = 24;
 
@@ -11,7 +12,7 @@ export const MEMBER_FEED_PAGE_SIZE = 24;
 export const MEMBER_FEED_MAP_MAX = 500;
 
 export type MemberFeedFilters = {
-  /** Case-insensitive substring match on `events.title`. */
+  /** Case-insensitive substring match on `title_de` or `title_en`. */
   title?: string;
   /** One or more categories (OR). Single string still accepted. */
   category?: string | string[];
@@ -126,7 +127,10 @@ function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
 
   const title = filters.title?.trim();
   if (title) {
-    conditions.push(ilike(events.title, `%${escapeIlikePattern(title)}%`));
+    const titleCondition = eventTitleLocaleIlike(`%${escapeIlikePattern(title)}%`);
+    if (titleCondition) {
+      conditions.push(titleCondition);
+    }
   }
 
   const categories = normalizeFilterList(filters.category);

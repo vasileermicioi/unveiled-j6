@@ -3,6 +3,7 @@ import {
   getEventById,
   getVoucherInventoryCounts,
   listPartners,
+  resolveEventCopy,
   updateEvent,
 } from "@unveiled/db";
 import { ensureImageVariantsUploaded, getImageCredit } from "@unveiled/db/catalog/images";
@@ -236,7 +237,7 @@ export async function postEventEditWizard(
         locale,
         event: {
           id: updated.id,
-          title: updated.title,
+          title: resolveEventCopy(updated, locale).title,
           address: updated.address,
           dateTime: updated.dateTime,
           partnerName: updated.partnerName,

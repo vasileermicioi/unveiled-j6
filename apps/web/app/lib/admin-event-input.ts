@@ -19,8 +19,10 @@ export function toCreateEventInput(values: EventFormValues, uploadedBy: string):
   const { dateTimes, occurrenceCreditPrices } = eventFormValuesToOccurrenceLists(values);
   return {
     partnerId: values.partnerId,
-    title: values.title,
-    description: values.description,
+    titleDe: values.titleDe,
+    titleEn: values.titleEn,
+    descriptionDe: values.descriptionDe,
+    descriptionEn: values.descriptionEn,
     street: values.street,
     houseNumber: values.houseNumber,
     addressLine2: values.addressLine2,
@@ -58,8 +60,10 @@ export function toUpdateEventInput(values: EventFormValues, uploadedBy: string):
   const { dateTimes, occurrenceCreditPrices } = eventFormValuesToOccurrenceLists(values);
   return {
     partnerId: values.partnerId,
-    title: values.title,
-    description: values.description,
+    titleDe: values.titleDe,
+    titleEn: values.titleEn,
+    descriptionDe: values.descriptionDe,
+    descriptionEn: values.descriptionEn,
     street: values.street,
     houseNumber: values.houseNumber,
     addressLine2: values.addressLine2,
@@ -101,8 +105,10 @@ export function toSeriesCreateInput(
   // Series forms omit datetime rows — do not call eventFormValuesToDateTimes.
   return {
     partnerId: values.partnerId,
-    title: values.title,
-    description: values.description,
+    titleDe: values.titleDe,
+    titleEn: values.titleEn,
+    descriptionDe: values.descriptionDe,
+    descriptionEn: values.descriptionEn,
     street: values.street,
     houseNumber: values.houseNumber,
     addressLine2: values.addressLine2,

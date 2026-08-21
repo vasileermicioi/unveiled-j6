@@ -72,8 +72,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         zip_code: "10115",
@@ -108,8 +110,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -132,7 +136,10 @@ describe("admin-event-form helpers", () => {
     );
 
     expect(values.partnerId).toBe("partner-1");
-    expect(values.title).toBe("Jazz Night");
+    expect(values.titleDe).toBe("Jazz Night");
+    expect(values.titleEn).toBe("Jazz Night");
+    expect(values.descriptionDe).toBe("Live set");
+    expect(values.descriptionEn).toBe("Live set");
     expect(values.zipCode).toBe("10115");
     expect(values.country).toBe("DE");
     expect(values.city).toBe("berlin");
@@ -153,12 +160,70 @@ describe("admin-event-form helpers", () => {
     expect(values.imageCredit).toBe("");
   });
 
+  test("parseEventFormBody extracts locale title and description fields", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title_de: "Konzert",
+        title_en: "Concert",
+        description_de: "Auf Deutsch",
+        description_en: "In English",
+        street: "Main St",
+        house_number: "1",
+        zip_code: "10115",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        ticket_type: "SECRET_CODE",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.titleDe).toBe("Konzert");
+    expect(values.titleEn).toBe("Concert");
+    expect(values.descriptionDe).toBe("Auf Deutsch");
+    expect(values.descriptionEn).toBe("In English");
+  });
+
+  test("parseEventFormBody ignores legacy title and description POST fields", async () => {
+    const values = await parseEventFormBody(
+      {
+        partner_id: "partner-1",
+        title: "Legacy Title",
+        description: "Legacy description",
+        title_de: "Konzert",
+        title_en: "Concert",
+        description_de: "Auf Deutsch",
+        description_en: "In English",
+        street: "Main St",
+        house_number: "1",
+        zip_code: "10115",
+        category: "Music",
+        event_type: "Concert",
+        event_date: "2026-08-01",
+        event_time: "20:00",
+        ticket_type: "SECRET_CODE",
+      },
+      asString,
+      asFile,
+    );
+
+    expect(values.titleDe).toBe("Konzert");
+    expect(values.titleEn).toBe("Concert");
+    expect(values.descriptionDe).toBe("Auf Deutsch");
+    expect(values.descriptionEn).toBe("In English");
+  });
+
   test("parseEventFormBody extracts image_credit and omits to empty string", async () => {
     const credited = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         zip_code: "10115",
@@ -182,8 +247,10 @@ describe("admin-event-form helpers", () => {
     const omitted = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         zip_code: "10115",
@@ -206,8 +273,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         zip_code: "10115",
@@ -261,8 +330,10 @@ describe("admin-event-form helpers", () => {
     expect(() =>
       eventFormValuesToDateTimes({
         partnerId: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        titleDe: "Jazz Night",
+        titleEn: "Jazz Night",
+        descriptionDe: "Live set",
+        descriptionEn: "Live set",
         street: "Main St",
         houseNumber: "1",
         addressLine2: null,
@@ -302,8 +373,10 @@ describe("admin-event-form helpers", () => {
     expect(() =>
       eventFormValuesToOccurrences({
         partnerId: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        titleDe: "Jazz Night",
+        titleEn: "Jazz Night",
+        descriptionDe: "Live set",
+        descriptionEn: "Live set",
         street: "Main St",
         houseNumber: "1",
         addressLine2: null,
@@ -339,8 +412,10 @@ describe("admin-event-form helpers", () => {
   test("toCreateEventInput and toUpdateEventInput pass paired occurrence credits", () => {
     const values = {
       partnerId: "partner-1",
-      title: "Jazz Night",
-      description: "Live set",
+      titleDe: "Jazz Night",
+      titleEn: "Jazz Night",
+      descriptionDe: "Live set",
+      descriptionEn: "Live set",
       street: "Main St",
       houseNumber: "1",
       addressLine2: null,
@@ -375,6 +450,11 @@ describe("admin-event-form helpers", () => {
     };
 
     const created = toCreateEventInput(values, "admin-1");
+    expect(created.titleDe).toBe("Jazz Night");
+    expect(created.titleEn).toBe("Jazz Night");
+    expect(created.descriptionDe).toBe("Live set");
+    expect(created.descriptionEn).toBe("Live set");
+    expect(created.title).toBeUndefined();
     expect(created.occurrenceCreditPrices).toEqual([1, 3]);
     expect(created.dateTimes).toHaveLength(2);
     expect(created.creditPrice).toBe(1);
@@ -388,8 +468,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Promo Night",
-        description: "Codes",
+        title_de: "Promo Night",
+        title_en: "Promo Night",
+        description_de: "Codes",
+        description_en: "Codes",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -422,8 +504,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -446,8 +530,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -470,8 +556,10 @@ describe("admin-event-form helpers", () => {
   test("parseEventFormBody prefers complete prebuilt variants over raw image", async () => {
     const body: Record<string, string | File> = {
       partner_id: "partner-1",
-      title: "Jazz Night",
-      description: "Live set",
+      title_de: "Jazz Night",
+      title_en: "Jazz Night",
+      description_de: "Live set",
+      description_en: "Live set",
       street: "Main St",
       house_number: "1",
       address_line2: "",
@@ -500,8 +588,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -528,8 +618,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -561,8 +653,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -593,8 +687,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -623,8 +719,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Silent Walk",
-        description: "No spoken language",
+        title_de: "Silent Walk",
+        title_en: "Silent Walk",
+        description_de: "No spoken language",
+        description_en: "No spoken language",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -653,8 +751,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Film Night",
-        description: "With English subs",
+        title_de: "Film Night",
+        title_en: "Film Night",
+        description_de: "With English subs",
+        description_en: "With English subs",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -685,8 +785,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Film Night",
-        description: "With English subs",
+        title_de: "Film Night",
+        title_en: "Film Night",
+        description_de: "With English subs",
+        description_en: "With English subs",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -715,8 +817,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Film Night",
-        description: "Missing subtitle codes",
+        title_de: "Film Night",
+        title_en: "Film Night",
+        description_de: "Missing subtitle codes",
+        description_en: "Missing subtitle codes",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -744,8 +848,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Film Night",
-        description: "Legacy field only",
+        title_de: "Film Night",
+        title_en: "Film Night",
+        description_de: "Legacy field only",
+        description_en: "Legacy field only",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -774,8 +880,10 @@ describe("admin-event-form helpers", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "No Subs",
-        description: "Plain talk",
+        title_de: "No Subs",
+        title_en: "No Subs",
+        description_de: "Plain talk",
+        description_en: "Plain talk",
         street: "Main St",
         house_number: "1",
         address_line2: "",
@@ -1064,8 +1172,10 @@ describe("expandOccurrencesFromRange", () => {
     try {
       eventFormValuesToOccurrences({
         partnerId: "partner-1",
-        title: "Cap",
-        description: "x",
+        titleDe: "Cap",
+        titleEn: "Cap",
+        descriptionDe: "x",
+        descriptionEn: "x",
         street: "Main",
         houseNumber: "1",
         addressLine2: null,
@@ -1108,8 +1218,10 @@ describe("capacity allocation parse", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         zip_code: "10115",
@@ -1143,8 +1255,10 @@ describe("capacity allocation parse", () => {
     const values = await parseEventFormBody(
       {
         partner_id: "partner-1",
-        title: "Jazz Night",
-        description: "Live set",
+        title_de: "Jazz Night",
+        title_en: "Jazz Night",
+        description_de: "Live set",
+        description_en: "Live set",
         street: "Main St",
         house_number: "1",
         zip_code: "10115",

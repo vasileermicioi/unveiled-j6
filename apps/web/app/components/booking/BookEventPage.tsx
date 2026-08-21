@@ -1,5 +1,5 @@
 import { Alert, Button, Card, Form, Input, Link, Paragraph, Surface } from "@heroui/react";
-import type { Event } from "@unveiled/db";
+import { type Event, resolveEventCopy } from "@unveiled/db";
 
 import BookSlotFields from "../../islands/BookSlotFields";
 import type { BookPageCopy } from "../../lib/booking-content";
@@ -44,6 +44,7 @@ export function BookEventPage({
   const eventHref = localizedPath(locale, `events/${event.id}`);
   const action = localizedPath(locale, `events/${event.id}/book`);
   const waitlistHref = `${localizedPath(locale, `events/${event.id}/waitlist`)}?qty=${encodeURIComponent(defaultTickets)}`;
+  const eventTitle = resolveEventCopy(event, locale).title;
   const selected = occurrences.find((occurrence) => occurrence.startsAtIso === slotDateTimeIso);
   const unitPrice = selected?.creditPrice ?? occurrences[0]?.creditPrice ?? event.creditPrice;
   const slotIso = selected?.startsAtIso ?? occurrences[0]?.startsAtIso ?? slotDateTimeIso;
@@ -90,7 +91,7 @@ export function BookEventPage({
       variant="transparent"
     >
       <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
-      <Paragraph>{copy.subtitle(event.title)}</Paragraph>
+      <Paragraph>{copy.subtitle(eventTitle)}</Paragraph>
       <Paragraph>
         {event.partnerName}
         {availableCredits != null

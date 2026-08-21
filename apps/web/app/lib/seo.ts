@@ -1,4 +1,4 @@
-import type { Event } from "@unveiled/db";
+import { type Event, resolveEventCopy } from "@unveiled/db";
 import { buildVariantUrl } from "@unveiled/images/urls";
 
 import type {
@@ -126,6 +126,7 @@ function truncateDescription(text: string, maxLength = 160): string {
 
 export function eventDetailPageMeta(
   event: Event,
+  locale: Locale,
   referenceDate: Date = new Date(),
 ): {
   title: string;
@@ -133,8 +134,9 @@ export function eventDetailPageMeta(
   ogImage?: string;
   robots?: string;
 } {
-  const title = `${event.title} at ${event.partnerName}`;
-  const description = truncateDescription(markdownToPlainText(event.description));
+  const copy = resolveEventCopy(event, locale);
+  const title = `${copy.title} at ${event.partnerName}`;
+  const description = truncateDescription(markdownToPlainText(copy.description));
   let ogImage: string | undefined;
 
   try {
@@ -171,7 +173,7 @@ export type EventJsonLd = {
   };
 };
 
-export function buildEventJsonLd(event: Event): EventJsonLd {
+export function buildEventJsonLd(event: Event, locale: Locale): EventJsonLd {
   let image = "";
   try {
     image = buildVariantUrl(event.imageId, "hero-1920.webp");
@@ -179,12 +181,14 @@ export function buildEventJsonLd(event: Event): EventJsonLd {
     image = getDefaultOgImage();
   }
 
+  const copy = resolveEventCopy(event, locale);
+
   return {
     "@context": "https://schema.org",
     "@type": "Event",
-    name: event.title,
+    name: copy.title,
     startDate: event.dateTime.toISOString(),
-    description: markdownToPlainText(event.description),
+    description: markdownToPlainText(copy.description),
     image,
     location: {
       "@type": "Place",

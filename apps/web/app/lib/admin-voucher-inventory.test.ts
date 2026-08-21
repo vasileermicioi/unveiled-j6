@@ -81,8 +81,10 @@ describe("resolveVoucherDerivedCapacity", () => {
 function voucherForm(overrides: Partial<EventFormValues> = {}): EventFormValues {
   return {
     partnerId: "partner-1",
-    title: "Jazz Night",
-    description: "Live set",
+    titleDe: "Jazz Night",
+    titleEn: "Jazz Night",
+    descriptionDe: "Live set",
+    descriptionEn: "Live set",
     street: "Main St",
     houseNumber: "1",
     addressLine2: null,

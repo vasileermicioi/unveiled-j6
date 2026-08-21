@@ -114,7 +114,9 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `id` | text/uuid, PK | |
 | `partner_id` | text/uuid, FK → `partners.id` | |
 | `partner_name` | text | **Denormalized** from `partners.name` — kept in sync on partner rename in the old app. Recommend either (a) keeping the denormalization with an app-layer sync step, or (b) dropping it and always joining `partners` — Postgres makes the join cheap, so (b) is likely simpler now |
-| `title`, `description` | text | `description` is **Markdown at rest** (GFM on public detail via `MarkdownContent`; authored in admin via MDXEditor). Plain text remains valid Markdown. No separate HTML column. |
+| `title`, `description` | text, not null | **Canonical DE copies** of `title_de` / `description_de`, denormalized on catalog write. `description` is **Markdown at rest** (GFM on public detail via `MarkdownContent`; authored in admin via two MDXEditor instances). Plain text remains valid Markdown. No separate HTML column. Public/member surfaces resolve copy via `resolveEventCopy` for `/:locale`. ICS, admin list/table, and booking ledger MAY still read canonical `title`. |
+| `title_de`, `title_en` | text, not null | Localized event titles. Create/update require both non-empty (trimmed). Title search (`title=`) matches either column (case-insensitive OR). |
+| `description_de`, `description_en` | text, not null | Localized event descriptions (Markdown at rest, same pipeline as canonical `description`). Create/update require both non-empty. |
 | `street` | text, not null | Required structured street name |
 | `house_number` | text, not null | Required house number |
 | `address_line2` | text, nullable | Optional unit/floor/entrance; excluded from structured geocode |

@@ -135,8 +135,10 @@ export type RangeOccurrenceSlot = {
 
 export type EventFormValues = {
   partnerId: string;
-  title: string;
-  description: string;
+  titleDe: string;
+  titleEn: string;
+  descriptionDe: string;
+  descriptionEn: string;
   street: string;
   houseNumber: string;
   addressLine2: string | null;
@@ -857,8 +859,10 @@ export async function parseEventFormBody(
 
   return {
     partnerId: asString(body.partner_id)?.trim() ?? "",
-    title: asString(body.title)?.trim() ?? "",
-    description: asString(body.description)?.trim() ?? "",
+    titleDe: asString(body.title_de)?.trim() ?? "",
+    titleEn: asString(body.title_en)?.trim() ?? "",
+    descriptionDe: asString(body.description_de)?.trim() ?? "",
+    descriptionEn: asString(body.description_en)?.trim() ?? "",
     street: asString(body.street)?.trim() ?? "",
     houseNumber: asString(body.house_number)?.trim() ?? "",
     addressLine2: asString(body.address_line2)?.trim() || null,

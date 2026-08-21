@@ -2,6 +2,7 @@ export * from "./active-event";
 export * from "./datetime";
 export * from "./discovery";
 export * from "./errors";
+export * from "./event-copy";
 export * from "./event-gallery-images";
 export * from "./event-subtitles";
 export * from "./events";

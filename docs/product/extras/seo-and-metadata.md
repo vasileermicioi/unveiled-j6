@@ -24,8 +24,8 @@ SSR metadata for the production MVP. Aligns with [`sitemap/sitemap.md`](../sitem
 
 Every indexable page needs SSR (initial HTML):
 
-- `<title>` — unique. Pattern: `{Page} — Unveiled Berlin`; events: `{Event title} at {Partner name} — Unveiled Berlin`
-- `<meta name="description">` — unique ~150–160 chars; events from event description (truncated)
+- `<title>` — unique. Pattern: `{Page} — Unveiled Berlin`; events: `{resolved title} at {Partner name} — Unveiled Berlin` where resolved title is the locale copy for that URL (`title_en` on `/en/events/:id`, `title_de` on `/de/events/:id`, then the other locale, then canonical)
+- `<meta name="description">` — unique ~150–160 chars; events from the **locale-resolved** Markdown description (plain-text extract, truncated)
 - `<link rel="canonical">` — self URL including locale
 - Open Graph + Twitter Card (`twitter:card` = `summary_large_image`)
   - Pages without a page-specific image use the site-wide fallback `/og-default-v2.png` (PNG 1200×630, brand yellow `#FAFF86`). The Unveiled wordmark fits entirely inside the **center 630×630** so a 1:1 crop (Telegram and similar) stays legible. Change the filename when the artwork changes so crawlers refetch.
@@ -35,13 +35,13 @@ Every indexable page needs SSR (initial HTML):
 
 ## 3. Locale, canonical, hreflang
 
-- Each locale version is canonical for itself (`/de/...` and `/en/...`)
+- Each locale version is canonical for itself (`/de/...` and `/en/...`). Event title, meta description, and JSON-LD follow that page locale.
 - Reciprocal `hreflang` de / en / `x-default` → `de`
 - Never list bare `/` as canonical or in sitemap.xml (302 only)
 
 ## 4. Structured data (JSON-LD)
 
-- **Event detail:** `schema.org/Event` — name, startDate, location, image (`hero-1920`), description, organizer. Do not fabricate EUR `offers.price` from credits.
+- **Event detail:** `schema.org/Event` — `name` and `description` from locale-resolved copy for that URL, startDate, location, image (`hero-1920`), organizer. Do not fabricate EUR `offers.price` from credits. Each locale URL’s body, document title, meta description, and JSON-LD MUST match that locale (`hreflang` points at the other URL; it is not an excuse to serve the same copy on both).
 - **Organization** on Discover home (optional but recommended).
 - **FAQPage** on `/faq`.
 

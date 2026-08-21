@@ -36,6 +36,11 @@ import {
   tryNormalizePairedDateTimesCreditsAndCapacities,
 } from "./datetime";
 import { CatalogValidationError } from "./errors";
+import {
+  eventTitleLocaleIlike,
+  resolveEventCopyFields,
+  resolveUpdatedEventCopyFields,
+} from "./event-copy";
 import { resolveEventSubtitles } from "./event-subtitles";
 import { resolveEventLanguages } from "./language-filter";
 import { getPartnerById } from "./partners";
@@ -69,7 +74,7 @@ export type ListEventsOptions = {
   offset?: number;
   /** Combined title/partner substring search (featured-add and legacy). */
   q?: string;
-  /** Case-insensitive substring filter on event title (admin events list). */
+  /** Case-insensitive substring filter on `title_de` or `title_en` (admin events list). */
   title?: string;
   /** Case-insensitive substring filter on denormalized partner name. */
   partner?: string;
@@ -88,8 +93,13 @@ export type ListEventsOptions = {
 
 export type CreateEventInput = {
   partnerId: string;
-  title: string;
-  description: string;
+  /** Legacy single-field posts; ignored when locale fields are set. */
+  title?: string | null;
+  description?: string | null;
+  titleDe?: string | null;
+  titleEn?: string | null;
+  descriptionDe?: string | null;
+  descriptionEn?: string | null;
   street: string;
   houseNumber: string;
   addressLine2?: string | null;
@@ -145,6 +155,10 @@ export type UpdateEventInput = {
   partnerId?: string;
   title?: string;
   description?: string;
+  titleDe?: string | null;
+  titleEn?: string | null;
+  descriptionDe?: string | null;
+  descriptionEn?: string | null;
   street?: string;
   houseNumber?: string;
   addressLine2?: string | null;
@@ -301,7 +315,7 @@ function eventSearchCondition(q?: string): SQL | undefined {
   }
 
   const pattern = `%${search}%`;
-  return or(ilike(events.title, pattern), ilike(events.partnerName, pattern));
+  return or(eventTitleLocaleIlike(pattern), ilike(events.partnerName, pattern));
 }
 
 function eventTitleCondition(title?: string): SQL | undefined {
@@ -309,7 +323,7 @@ function eventTitleCondition(title?: string): SQL | undefined {
   if (!search) {
     return undefined;
   }
-  return ilike(events.title, `%${search}%`);
+  return eventTitleLocaleIlike(`%${search}%`);
 }
 
 function eventPartnerNameCondition(partner?: string): SQL | undefined {
@@ -809,14 +823,19 @@ async function insertEventRow(
   });
   const derived = deriveDateTimeFields(occurrences.dateTime, defaults.timingMode);
   const subtitles = resolveEventSubtitles(input.hasSubtitles ?? false, input.subtitleLanguages);
+  const copy = resolveEventCopyFields(input);
 
   const inserted = await db
     .insert(events)
     .values({
       partnerId: input.partnerId,
       partnerName,
-      title: requireNonEmpty(input.title, "title"),
-      description: requireNonEmpty(input.description, "description"),
+      title: copy.title,
+      titleDe: copy.titleDe,
+      titleEn: copy.titleEn,
+      description: copy.description,
+      descriptionDe: copy.descriptionDe,
+      descriptionEn: copy.descriptionEn,
       address,
       street,
       houseNumber,
@@ -894,6 +913,10 @@ export async function cloneEvent(
     partnerId: source.partnerId,
     title: source.title,
     description: source.description,
+    titleDe: source.titleDe,
+    titleEn: source.titleEn,
+    descriptionDe: source.descriptionDe,
+    descriptionEn: source.descriptionEn,
     street: source.street,
     houseNumber: source.houseNumber,
     addressLine2: source.addressLine2,
@@ -1035,17 +1058,26 @@ export async function updateEvent(
   const nextSubtitleLanguages =
     input.subtitleLanguages !== undefined ? input.subtitleLanguages : existing.subtitleLanguages;
   const subtitles = resolveEventSubtitles(nextHasSubtitles, nextSubtitleLanguages);
+  const copy = resolveUpdatedEventCopyFields(input, {
+    title: existing.title,
+    description: existing.description,
+    titleDe: existing.titleDe,
+    titleEn: existing.titleEn,
+    descriptionDe: existing.descriptionDe,
+    descriptionEn: existing.descriptionEn,
+  });
 
   const updated = await db
     .update(events)
     .set({
       partnerId,
       partnerName: partner.name,
-      title: input.title !== undefined ? requireNonEmpty(input.title, "title") : existing.title,
-      description:
-        input.description !== undefined
-          ? requireNonEmpty(input.description, "description")
-          : existing.description,
+      title: copy.title,
+      titleDe: copy.titleDe,
+      titleEn: copy.titleEn,
+      description: copy.description,
+      descriptionDe: copy.descriptionDe,
+      descriptionEn: copy.descriptionEn,
       address: nextAddress,
       street: nextStreet,
       houseNumber: nextHouseNumber,

@@ -17,7 +17,9 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 
 | Feature file | Scenario title | Playwright | Status | Notes |
 |---|---|---|---|---|
-| `admin-events.feature` | Create a single event | `e2e/specs/admin-events.spec.ts` · `Scenario: Create a single event` | `pass` | Fills Berlin PLZ `10115`; asserts zip on public detail |
+| `admin-events.feature` | Create a single event | `e2e/specs/admin-events.spec.ts` · `Scenario: Create a single event` | `pass` | Fills Berlin PLZ `10115`; asserts zip on public detail; fills DE+EN title/description |
+| `admin-events.feature` | Create event with DE and EN titles | `e2e/specs/admin-events.spec.ts` · `Scenario: Create event with DE and EN titles` | `pass` | R2 / `E2E_ADMIN_*` env-skip; distinct DE/EN titles; `/de` and `/en` public headings |
+| `admin-events.feature` | Create rejects empty English title | — | `pass` | Gherkin-only; `packages/db` `event-copy.unit.test.ts` `REQUIRED_FIELD` (no Playwright — wizard + R2) |
 | `admin-events.feature` | Add and remove datetimes on create | `e2e/specs/admin-events.spec.ts` · `Scenario: Add and remove datetimes on create` | `pass` | R2 env-skip; per-row credits via `getByLabel`; unskipped (multi-datetime UI shipped) |
 | `admin-events.feature` | Per-datetime credits persist | `e2e/specs/admin-events.spec.ts` · `Scenario: Per-datetime credits persist` | `pass` | R2 env-skip; edit form shows 1 then 3 |
 | `admin-events.feature` | Total credits shown on the form | `e2e/specs/admin-events.spec.ts` · `Scenario: Total credits shown on the form` | `pass` | R2 env-skip (partner create); live island total |
@@ -175,6 +177,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Guest sees featured partners only | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees featured partners only` | `pass` | Needs `DATABASE_URL`; `ensureDemoFeaturedPartnersSplit` |
 | `event-discovery.feature` | Empty featured partners hides Partner venues | — | `skip` | Deferred — owner: featured-partners step 03; clearing all featured partners on shared staging DB risks parallel Discover tests |
 | `event-discovery.feature` | Guest can view public event detail without authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest can view public event detail without authentication` | `pass` |  |
+| `event-discovery.feature` | Guest sees English title on /en | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees English title on /en` | `pass` | Needs `DATABASE_URL`; seeded `localeCopyDe` / `localeCopyEn`; identity h1 |
+| `event-discovery.feature` | Guest sees German title on /de | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees German title on /de` | `pass` | Needs `DATABASE_URL`; same bilingual seed; identity h1 |
 | `event-discovery.feature` | Dropdown changes credits | `e2e/specs/event-discovery.spec.ts` · `Scenario: Dropdown changes credits` | `pass` | Needs `DATABASE_URL`; `createPricedSlotEvent` morning 1 / evening 4 |
 | `event-discovery.feature` | Guest checkout omits slot picker | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest checkout omits slot picker` | `pass` | Needs `DATABASE_URL`; no datetime select, no credit totals |
 | `event-discovery.feature` | Detail shows subtitles when present | `e2e/specs/event-discovery.spec.ts` · `Scenario: Detail shows subtitles when present` | `pass` | Needs `DATABASE_URL` + reseeded demo promo event (`has_subtitles`, one or more codes); also covered by admin-events save scenario |
@@ -204,6 +208,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Filter by category | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by category` | `pass` |  |
 | `event-discovery.feature` | Event name filter control | `e2e/specs/event-discovery.spec.ts` · `Scenario: Event name filter control` | `pass` | Event name field visible with partner/date controls; date `min` = Berlin today |
 | `event-discovery.feature` | Filter by event name | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by event name` | `pass` | Title substring via GET `title` |
+| `event-discovery.feature` | Filter by English title on /de | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by English title on /de` | `pass` | Needs `DATABASE_URL`; `title=Unveiled-EN-Copy` on `/de/events`; card shows German title |
 | `event-discovery.feature` | Filter by partner (venue) | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by partner (venue)` | `pass` |  |
 | `event-discovery.feature` | Filter by custom date range | `e2e/specs/event-discovery.spec.ts` · `Scenario: Filter by custom date range` | `pass` | Inclusive Berlin days; future-only / today floor |
 | `event-discovery.feature` | Reset filters | `e2e/specs/event-discovery.spec.ts` · `Scenario: Reset filters` | `pass` | Clears title + category + partner + dates |

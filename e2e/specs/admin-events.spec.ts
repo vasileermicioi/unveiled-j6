@@ -15,6 +15,7 @@ import {
   expectPublicEventDetail,
   expectVisibleAbove,
   fillCreditsNth,
+  fillEventCopyFields,
   fillLabeledDateOrTime,
   fillNumberByLabel,
   fillStructuredLocation,
@@ -47,8 +48,7 @@ async function fillNewEventRequiredFields(
   });
   await page.waitForLoadState("networkidle");
   await selectOptionByLabel(page, adminLabels.partner, partnerName);
-  await fillTextbox(page, adminLabels.title, title);
-  await fillTextbox(page, adminLabels.description, description);
+  await fillEventCopyFields(page, title, description);
   await fillStructuredLocation(page, {
     street: `Multi Straße ${title.slice(-8)}`,
     houseNumber: "3",
@@ -141,8 +141,7 @@ async function createVoucherPromoViaUI(
   });
   await page.waitForLoadState("networkidle");
   await selectOptionByLabel(page, adminLabels.partner, partnerName);
-  await fillTextbox(page, adminLabels.title, title);
-  await fillTextbox(page, adminLabels.description, `Voucher clone source ${suffix}`);
+  await fillEventCopyFields(page, title, `Voucher clone source ${suffix}`);
   await fillStructuredLocation(page, {
     street: `Voucher Straße ${suffix}`,
     houseNumber: "7",
@@ -195,6 +194,37 @@ test.describe("admin-events.feature", () => {
     await expectEventOnDiscover(page, locale, event.title, partner.name);
     await expectPublicEventDetail(page, locale, event);
     await expect(page.getByText(/10115/)).toBeVisible();
+  });
+
+  test("Scenario: Create event with DE and EN titles", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const suffix = uniqueSuffix();
+    const titleDe = `E2E DE ${suffix}`;
+    const titleEn = `E2E EN ${suffix}`;
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      titleDe,
+      titleEn,
+      descriptionDe: `DE Beschreibung ${suffix}`,
+      descriptionEn: `EN description ${suffix}`,
+    });
+
+    const row = page.getByRole("row").filter({ hasText: titleDe });
+    await expect(row).toBeVisible({ timeout: 15_000 });
+
+    await page.context().clearCookies();
+    await page.goto(`/de/events/${event.eventId}`);
+    await expect(page.getByRole("heading", { level: 1, name: titleDe })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(titleEn, { exact: true })).toHaveCount(0);
+
+    await page.goto(`/en/events/${event.eventId}`);
+    await expect(page.getByRole("heading", { level: 1, name: titleEn })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(titleDe, { exact: true })).toHaveCount(0);
   });
 
   test("Scenario: Add and remove datetimes on create", async ({ page, locale }) => {
@@ -633,8 +663,7 @@ test.describe("admin-events.feature", () => {
     });
     await page.waitForLoadState("networkidle");
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await fillTextbox(page, adminLabels.title, `No Image ${uniqueSuffix()}`);
-    await fillTextbox(page, adminLabels.description, "Missing image");
+    await fillEventCopyFields(page, `No Image ${uniqueSuffix()}`, "Missing image");
     await fillStructuredLocation(page, {
       street: "Teststraße",
       houseNumber: "1",
@@ -721,17 +750,17 @@ test.describe("admin-events.feature", () => {
   test("Scenario: Refresh keeps unsaved event edits", async ({ page, locale }) => {
     const title = `Draft Refresh ${uniqueSuffix()}`;
     await openNewEventForm(page, locale);
-    await fillTextbox(page, adminLabels.title, title);
+    await fillTextbox(page, adminLabels.titleDe, title);
+    await fillTextbox(page, adminLabels.titleEn, title);
     await waitForFormDraft(page, "admin-event:new");
 
     await page.reload();
     await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByRole("textbox", { name: adminLabels.title, exact: true })).toHaveValue(
-      title,
-      { timeout: 15_000 },
-    );
+    await expect(page.getByRole("textbox", { name: adminLabels.titleDe })).toHaveValue(title, {
+      timeout: 15_000,
+    });
     await expect(draftRestoredBanner(page)).toBeVisible({ timeout: 15_000 });
 
     await page.goto(`/${locale}/admin/events/new/dates`);
@@ -743,17 +772,17 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("heading", { name: /event anlegen|create event/i })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByRole("textbox", { name: adminLabels.title, exact: true })).toHaveValue(
-      "",
-      { timeout: 15_000 },
-    );
+    await expect(page.getByRole("textbox", { name: adminLabels.titleDe })).toHaveValue("", {
+      timeout: 15_000,
+    });
     await expect(draftRestoredBanner(page)).toHaveCount(0);
   });
 
   test("Scenario: Edit steps keep unsaved edits", async ({ page, locale }) => {
     const title = `Draft Steps ${uniqueSuffix()}`;
     await openNewEventForm(page, locale);
-    await fillTextbox(page, adminLabels.title, title);
+    await fillTextbox(page, adminLabels.titleDe, title);
+    await fillTextbox(page, adminLabels.titleEn, title);
     await waitForFormDraft(page, "admin-event:new");
 
     await page.goto(`/${locale}/admin/events/new/dates`);
@@ -766,10 +795,9 @@ test.describe("admin-events.feature", () => {
     await page.goto(`/${locale}/admin/events/new`);
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/?$`));
     await expectEventFormStep(page, 1);
-    await expect(page.getByRole("textbox", { name: adminLabels.title, exact: true })).toHaveValue(
-      title,
-      { timeout: 15_000 },
-    );
+    await expect(page.getByRole("textbox", { name: adminLabels.titleDe })).toHaveValue(title, {
+      timeout: 15_000,
+    });
   });
 
   test("Scenario: Successful event save clears draft", async ({ page, locale }) => {
@@ -787,9 +815,11 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
       timeout: 15_000,
     });
-    await fillTextbox(page, adminLabels.title, unsavedTitle);
+    await fillTextbox(page, adminLabels.titleDe, unsavedTitle);
+    await fillTextbox(page, adminLabels.titleEn, unsavedTitle);
     await waitForFormDraft(page, `admin-event:${event.eventId}`);
-    await fillTextbox(page, adminLabels.title, savedTitle);
+    await fillTextbox(page, adminLabels.titleDe, savedTitle);
+    await fillTextbox(page, adminLabels.titleEn, savedTitle);
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
 
@@ -797,10 +827,9 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByRole("textbox", { name: adminLabels.title, exact: true })).toHaveValue(
-      savedTitle,
-      { timeout: 15_000 },
-    );
+    await expect(page.getByRole("textbox", { name: adminLabels.titleDe })).toHaveValue(savedTitle, {
+      timeout: 15_000,
+    });
     await expect(draftRestoredBanner(page)).toHaveCount(0);
   });
 
@@ -834,8 +863,7 @@ test.describe("admin-events.feature", () => {
     const partner = await createPartnerViaUI(page, locale);
     await page.goto(`/${locale}/admin/events/new`);
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await fillTextbox(page, adminLabels.title, `No Secret ${uniqueSuffix()}`);
-    await fillTextbox(page, adminLabels.description, "Missing secret");
+    await fillEventCopyFields(page, `No Secret ${uniqueSuffix()}`, "Missing secret");
     await fillStructuredLocation(page, {
       street: "Teststraße",
       houseNumber: "1",
@@ -862,8 +890,7 @@ test.describe("admin-events.feature", () => {
     const partner = await createPartnerViaUI(page, locale);
     await page.goto(`/${locale}/admin/events/new`);
     await selectOptionByLabel(page, adminLabels.partner, partner.name);
-    await fillTextbox(page, adminLabels.title, `No Website ${uniqueSuffix()}`);
-    await fillTextbox(page, adminLabels.description, "Missing website");
+    await fillEventCopyFields(page, `No Website ${uniqueSuffix()}`, "Missing website");
     await fillStructuredLocation(page, {
       street: "Teststraße",
       houseNumber: "1",
@@ -1135,8 +1162,7 @@ test.describe("admin-events.feature", () => {
     const row = page.getByRole("row").filter({ hasText: event.title });
     await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
     const updatedTitle = `Edited ${uniqueSuffix()}`;
-    await fillTextbox(page, adminLabels.title, updatedTitle);
-    await fillTextbox(page, adminLabels.description, "Updated description for E2E");
+    await fillEventCopyFields(page, updatedTitle, "Updated description for E2E");
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`));
 

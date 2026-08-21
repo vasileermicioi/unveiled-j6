@@ -7,6 +7,7 @@ import {
   getPublicEventById,
   isBookingEligibleStatus,
   maxBookableTickets,
+  resolveEventCopy,
 } from "@unveiled/db";
 import { sendBookingConfirmation } from "@unveiled/email";
 import { createRoute } from "honox/factory";
@@ -377,7 +378,7 @@ export const POST = createRoute(async (c) => {
         toEmail: session.user.email,
         event: {
           id: event.id,
-          title: event.title,
+          title: resolveEventCopy(event, locale).title,
           address: event.address,
           dateTime: result.booking.dateTime,
           partnerName: event.partnerName,

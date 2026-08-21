@@ -86,6 +86,18 @@ Feature: Event Discovery
     And booking, waitlist, and save mutations remain on authenticated routes
     And the detail page does not create bookings or ledger entries
 
+  Scenario: Guest sees English title on /en
+    Given I am not signed in
+    And a seeded event has distinct German and English titles
+    When I open "/en/events/:id" as a guest
+    Then I see the event's English title
+
+  Scenario: Guest sees German title on /de
+    Given I am not signed in
+    And a seeded event has distinct German and English titles
+    When I open "/de/events/:id" as a guest
+    Then I see the event's German title
+
   Scenario: Large viewport uses two primary rows
     Given I am not signed in
     When I open a valid upcoming event detail URL ("/events/:id")
@@ -290,6 +302,13 @@ Feature: Event Discovery
     Given I am viewing the events feed as a booking-eligible member
     When I enter an event name filter and apply
     Then only events whose title matches the filter are shown
+    # Title filter matches title_de or title_en (case-insensitive)
+
+  Scenario: Filter by English title on /de
+    Given I am viewing the events feed as a booking-eligible member on "/de/events"
+    When I apply an event-name filter that matches only the English title
+    Then the event is included in the feed
+    And the EventCard title shown is the German title
 
   Scenario: Filter by partner (venue)
     Given I am viewing the events feed as a booking-eligible member

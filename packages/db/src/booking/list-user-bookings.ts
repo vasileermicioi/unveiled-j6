@@ -10,6 +10,8 @@ export const BOOKINGS_PAGE_SIZE = 20;
 export type UserBookingEventSummary = {
   id: string;
   title: string;
+  titleDe: string;
+  titleEn: string;
   partnerName: string;
   dateTime: Date;
   address: string;
@@ -58,6 +60,8 @@ export async function listUserBookings(
         booking: bookings,
         eventId: events.id,
         eventTitle: events.title,
+        eventTitleDe: events.titleDe,
+        eventTitleEn: events.titleEn,
         eventPartnerName: events.partnerName,
         eventDateTime: events.dateTime,
         eventAddress: events.address,
@@ -94,6 +98,8 @@ export async function listUserBookings(
       event: {
         id: row.eventId,
         title: row.eventTitle,
+        titleDe: row.eventTitleDe,
+        titleEn: row.eventTitleEn,
         partnerName: row.eventPartnerName,
         dateTime: row.eventDateTime,
         address: row.eventAddress,

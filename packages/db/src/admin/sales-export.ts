@@ -5,6 +5,7 @@ import {
   berlinInclusiveDateRange,
   getBerlinCalendarDate,
 } from "../catalog/datetime";
+import { eventTitleLocaleIlike } from "../catalog/event-copy";
 import type { Db } from "../index";
 import { bookings } from "../schema/bookings";
 import { events } from "../schema/events";
@@ -191,7 +192,10 @@ export async function listSalesByEvent(
   const conditions: SQL[] = [];
   const title = options.title?.trim();
   if (title) {
-    conditions.push(ilike(events.title, `%${title}%`));
+    const titleCondition = eventTitleLocaleIlike(`%${title}%`);
+    if (titleCondition) {
+      conditions.push(titleCondition);
+    }
   }
   const partner = options.partner?.trim();
   if (partner) {

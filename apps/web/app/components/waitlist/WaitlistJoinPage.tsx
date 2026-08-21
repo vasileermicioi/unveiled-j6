@@ -1,5 +1,5 @@
 import { Alert, Button, Card, Form, Link, Paragraph, Surface } from "@heroui/react";
-import type { Event } from "@unveiled/db";
+import { type Event, resolveEventCopy } from "@unveiled/db";
 
 import TicketCountSelect from "../../islands/TicketCountSelect";
 import type { Locale } from "../../lib/locale";
@@ -40,6 +40,7 @@ export function WaitlistJoinPage({
 }: WaitlistJoinPageProps) {
   const eventHref = localizedPath(locale, `events/${event.id}`);
   const action = localizedPath(locale, `events/${event.id}/waitlist`);
+  const eventTitle = resolveEventCopy(event, locale).title;
 
   if (view === "status" && entryId) {
     return (
@@ -51,7 +52,7 @@ export function WaitlistJoinPage({
         <Paragraph>{created ? copy.confirmCreated : copy.confirmExisting}</Paragraph>
         <Card>
           <Card.Content className="flex flex-col gap-3">
-            <Paragraph>{event.title}</Paragraph>
+            <Paragraph>{eventTitle}</Paragraph>
             <Paragraph>{copy.statusLabel}</Paragraph>
             {queuePosition != null ? (
               <Paragraph>{copy.positionLabel(queuePosition)}</Paragraph>
@@ -80,7 +81,7 @@ export function WaitlistJoinPage({
       variant="transparent"
     >
       <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
-      <Paragraph>{copy.subtitle(event.title)}</Paragraph>
+      <Paragraph>{copy.subtitle(eventTitle)}</Paragraph>
       <Paragraph>
         {event.partnerName} · {event.creditPrice}{" "}
         {locale === "de" ? "Credit / Ticket" : "credit / ticket"}

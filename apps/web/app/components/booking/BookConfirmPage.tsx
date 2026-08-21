@@ -1,5 +1,5 @@
 import { Link, Paragraph, Surface } from "@heroui/react";
-import type { Booking, BookingTicket, Event } from "@unveiled/db";
+import { type Booking, type BookingTicket, type Event, resolveEventCopy } from "@unveiled/db";
 
 import type { BookConfirmCopy } from "../../lib/booking-content";
 import type { Locale } from "../../lib/locale";
@@ -25,6 +25,7 @@ export function BookConfirmPage({
   icsHref,
 }: BookConfirmPageProps) {
   const eventHref = localizedPath(locale, `events/${event.id}`);
+  const eventTitle = resolveEventCopy(event, locale).title;
 
   return (
     <Surface
@@ -33,7 +34,7 @@ export function BookConfirmPage({
     >
       <PageSectionHeader eyebrow={copy.eyebrow} headline={copy.title} />
       <Paragraph>{copy.subtitle}</Paragraph>
-      <Paragraph>{event.title}</Paragraph>
+      <Paragraph>{eventTitle}</Paragraph>
       <Paragraph>
         {event.partnerName} · {copy.ticketsLabel(booking.ticketsCount)}
       </Paragraph>

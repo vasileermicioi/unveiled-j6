@@ -122,7 +122,7 @@ The system SHALL attach redemption info to each confirmed booking according to t
 - **THEN** the booking is rejected with a typed booking error and no credits, capacity, inventory, or ledger changes occur
 
 ### Requirement: Booking confirmation surfaces and email
-The system SHALL expose SSR pages at `/:locale/events/:id/book` (GET form + POST mutation) and `/:locale/events/:id/book/confirm`, communicate the “SECURE RSVP // NO REFUNDS” policy at booking, and SHALL send a Resend confirmation email with redemption info and an `.ics` attachment after a successful booking commit. Email send failure SHALL NOT roll back the booking. After booking, the confirm page SHALL present per-ticket redemptions from `booking_tickets`: members can copy textual redemption codes when present, reveal/hide those codes (masked by default), download PDF vouchers when applicable, download an `.ics` calendar file, and see support contact. Confirm page time chrome, ICS `DTSTART`, booking ticket card datetime, and confirmation-email “when” fields SHALL use `bookings.date_time`, not the event’s next upcoming datetime. The book GET/POST SHALL parse `dateTime` / `date_time`, re-validate the slot, and show that slot’s unit price.
+The system SHALL expose SSR pages at `/:locale/events/:id/book` (GET form + POST mutation) and `/:locale/events/:id/book/confirm`, communicate the “SECURE RSVP // NO REFUNDS” policy at booking, and SHALL send a Resend confirmation email with redemption info and an `.ics` attachment after a successful booking commit. Email send failure SHALL NOT roll back the booking. After booking, the confirm page SHALL present per-ticket redemptions from `booking_tickets`: members can copy textual redemption codes when present, reveal/hide those codes (masked by default), download PDF vouchers when applicable, download an `.ics` calendar file, and see support contact. Confirm page time chrome, ICS `DTSTART`, booking ticket card datetime, and confirmation-email “when” fields SHALL use `bookings.date_time`, not the event’s next upcoming datetime. The book GET/POST SHALL parse `dateTime` / `date_time`, re-validate the slot, and show that slot’s unit price. Book, confirm, and ticket-card chrome SHALL show the event title resolved for the page `/:locale` (requested locale → other locale → canonical). Booking-confirmation email SHALL use that same resolved title for the email `locale` already passed to the renderer. ICS `SUMMARY` MAY keep canonical `title`.
 
 #### Scenario: Post-booking actions
 - **WHEN** a booking is confirmed
@@ -140,6 +140,15 @@ The system SHALL expose SSR pages at `/:locale/events/:id/book` (GET form + POST
 #### Scenario: No member self-cancel
 - **WHEN** a member views book or confirm surfaces
 - **THEN** no member-facing action exists to cancel the booking or request a refund
+
+#### Scenario: Book page shows locale title
+- **WHEN** a member opens `/en/events/:id/book` for an event with `title_en = "Concert"` and `title_de = "Konzert"`
+- **THEN** the book chrome title is "Concert"
+
+#### Scenario: Confirmation email uses locale title
+- **WHEN** a booking confirmation email is sent with locale `en` for that same event
+- **THEN** the subject and body use "Concert"
+- **AND** the ICS attachment MAY still use canonical `title`
 
 ### Requirement: Member selects a datetime slot when booking
 When an event has two or more future datetimes, a booking-eligible member SHALL select one future occurrence before confirming. The booking SHALL store that instant on `bookings.date_time`. Credits charged SHALL be that occurrence’s `occurrence_credit_prices` value times ticket count. Capacity and voucher inventory checks SHALL remain at event level. The system SHALL reject a datetime that is not on the event or that is in the past (`UNKNOWN_SLOT` / `PAST_SLOT`) with no credits, capacity, inventory, or ledger changes. Confirm page time chrome, ICS `DTSTART`, booking ticket card datetime, and confirmation-email “when” fields SHALL use `bookings.date_time`. Waitlist promotion and admin complimentary tickets MAY omit `dateTime`; the booking domain SHALL then persist the next upcoming occurrence (or the denormalized primary when every occurrence is past). Idempotent retry of the same `(user_id, idempotency_key)` SHALL return the original booking and SHALL ignore a mismatched posted datetime. `docs/product/features/booking.feature` SHALL describe this slot selection (not event-scoped booking) and SHALL include a scenario titled `Book a priced datetime slot`.
@@ -209,7 +218,7 @@ The Phase 6 requirement that sold-out bookings reject without a waitlist offer i
 - **THEN** no booking or credit ledger mutation occurs for that attempt
 
 ### Requirement: My Tickets list
-The system SHALL provide an authenticated, paginated SSR `/bookings` list of the member’s bookings ordered by most recent, with empty state and redemption-oriented ticket presentation that lists per-ticket redemptions from `booking_tickets` (masked codes with reveal, PDF download when applicable). Page size SHALL be 20. Pagination SHALL use GET `?page=` with SSR links and SHALL work without client-only fetching. The list SHALL NOT offer member self-cancel or refund actions. Bookings pages SHALL remain `robots: noindex`.
+The system SHALL provide an authenticated, paginated SSR `/bookings` list of the member’s bookings ordered by most recent, with empty state and redemption-oriented ticket presentation that lists per-ticket redemptions from `booking_tickets` (masked codes with reveal, PDF download when applicable). Page size SHALL be 20. Pagination SHALL use GET `?page=` with SSR links and SHALL work without client-only fetching. The list SHALL NOT offer member self-cancel or refund actions. Bookings pages SHALL remain `robots: noindex`. Each ticket card SHALL show the event title resolved for the page `/:locale`.
 
 #### Scenario: Member views tickets
 - **WHEN** a signed-in member with at least one booking visits `/bookings`
@@ -222,6 +231,10 @@ The system SHALL provide an authenticated, paginated SSR `/bookings` list of the
 #### Scenario: My Tickets is read-only for members
 - **WHEN** a member views `/bookings`
 - **THEN** no member-facing action exists to cancel a booking or request a refund
+
+#### Scenario: Ticket card title follows page locale
+- **WHEN** a member opens `/en/bookings` for a booking whose event has `title_en = "Concert"` and `title_de = "Konzert"`
+- **THEN** the ticket card title is "Concert"
 
 ### Requirement: My Tickets navigation
 The system SHALL expose a signed-in member navigation link labeled per locale inventory (`Meine Tickets` / `My Tickets`) that routes to `/:locale/bookings`.

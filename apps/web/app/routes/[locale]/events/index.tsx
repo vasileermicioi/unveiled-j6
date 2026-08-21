@@ -65,7 +65,7 @@ export default createRoute(async (c) => {
   return c.render(
     <EventFeedPage
       categoryOptions={getEventCategoryOptions(guard.locale)}
-      events={feed.items.map(toEventCardItem)}
+      events={feed.items.map((event) => toEventCardItem(event, guard.locale))}
       locale={guard.locale}
       minDate={minDate}
       partnerOptions={partners.map((partner) => ({

@@ -49,7 +49,13 @@ export async function getSoldOutWaitlistEventId(): Promise<string> {
       partnerId: partner.id,
       partnerName: partner.name,
       title: SOLD_OUT_WAITLIST_TITLE,
+      titleDe: SOLD_OUT_WAITLIST_TITLE,
+      titleEn: SOLD_OUT_WAITLIST_TITLE,
       description:
+        "Seed sold-out event for waitlist demos — join waitlist, then raise capacity in admin edit to auto-promote.",
+      descriptionDe:
+        "Seed sold-out event for waitlist demos — join waitlist, then raise capacity in admin edit to auto-promote.",
+      descriptionEn:
         "Seed sold-out event for waitlist demos — join waitlist, then raise capacity in admin edit to auto-promote.",
       address: partner.address || "Berlin",
       country: "DE",

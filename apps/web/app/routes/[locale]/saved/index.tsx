@@ -29,7 +29,7 @@ export default createRoute(async (c) => {
 
   return c.render(
     <SavedEventsPage
-      events={savedEvents.map(toEventCardItem)}
+      events={savedEvents.map((event) => toEventCardItem(event, guard.locale))}
       locale={guard.locale}
       subscriptionActive={subscriptionActive}
     />,

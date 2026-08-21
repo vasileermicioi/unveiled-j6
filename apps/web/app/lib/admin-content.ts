@@ -322,7 +322,11 @@ export type AdminCopy = {
   imageVariantCloseHint: string;
   partnerLabel: string;
   titleLabel: string;
+  titleLabelDe: string;
+  titleLabelEn: string;
   descriptionLabel: string;
+  descriptionLabelDe: string;
+  descriptionLabelEn: string;
   descriptionMarkdownHint: string;
   zipCodeLabel: string;
   zipCodeHint: string;
@@ -462,7 +466,11 @@ export type AdminCopy = {
     imageCredit: string;
     partnerId: string;
     title: string;
+    titleDe: string;
+    titleEn: string;
     description: string;
+    descriptionDe: string;
+    descriptionEn: string;
     zipCode: string;
     category: string;
     eventType: string;
@@ -814,7 +822,11 @@ const copy: Record<Locale, AdminCopy> = {
     imageVariantCloseHint: "Zum Schließen Esc drücken oder außerhalb klicken",
     partnerLabel: "Partner",
     titleLabel: "Titel",
+    titleLabelDe: "Titel (DE)",
+    titleLabelEn: "Titel (EN)",
     descriptionLabel: "Beschreibung",
+    descriptionLabelDe: "Beschreibung (DE)",
+    descriptionLabelEn: "Beschreibung (EN)",
     descriptionMarkdownHint:
       "Markdown wird unterstützt (Überschriften, Listen, Links, Hervorhebung).",
     zipCodeLabel: "PLZ",
@@ -971,7 +983,11 @@ const copy: Record<Locale, AdminCopy> = {
       imageCredit: "Bildnachweis darf höchstens 200 Zeichen haben.",
       partnerId: "Partner ist erforderlich.",
       title: "Titel ist erforderlich.",
+      titleDe: "Deutscher Titel ist erforderlich.",
+      titleEn: "Englischer Titel ist erforderlich.",
       description: "Beschreibung ist erforderlich.",
+      descriptionDe: "Deutsche Beschreibung ist erforderlich.",
+      descriptionEn: "Englische Beschreibung ist erforderlich.",
       zipCode: "Gültige Berliner PLZ ist erforderlich.",
       category: "Kategorie ist erforderlich.",
       eventType: "Event-Typ ist erforderlich.",
@@ -1317,7 +1333,11 @@ const copy: Record<Locale, AdminCopy> = {
     imageVariantCloseHint: "Press Escape or click outside to close",
     partnerLabel: "Partner",
     titleLabel: "Title",
+    titleLabelDe: "Title (DE)",
+    titleLabelEn: "Title (EN)",
     descriptionLabel: "Description",
+    descriptionLabelDe: "Description (DE)",
+    descriptionLabelEn: "Description (EN)",
     descriptionMarkdownHint: "Markdown is supported (headings, lists, links, emphasis).",
     zipCodeLabel: "Zip code",
     zipCodeHint: "Must be a Berlin zip code.",
@@ -1469,7 +1489,11 @@ const copy: Record<Locale, AdminCopy> = {
       imageCredit: "Image credit must be 200 characters or fewer.",
       partnerId: "Partner is required.",
       title: "Title is required.",
+      titleDe: "German title is required.",
+      titleEn: "English title is required.",
       description: "Description is required.",
+      descriptionDe: "German description is required.",
+      descriptionEn: "English description is required.",
       zipCode: "A valid Berlin zip code is required.",
       category: "Category is required.",
       eventType: "Event type is required.",

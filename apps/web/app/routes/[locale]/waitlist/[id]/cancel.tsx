@@ -1,4 +1,9 @@
-import { cancelWaitlistEntry, getPublicEventById, isWaitlistError } from "@unveiled/db";
+import {
+  cancelWaitlistEntry,
+  getPublicEventById,
+  isWaitlistError,
+  resolveEventCopy,
+} from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { NotFoundPage } from "../../../../components/NotFoundPage";
@@ -50,7 +55,7 @@ export default createRoute(async (c) => {
 
   const catalogDb = getCatalogDb();
   const event = catalogDb ? await getPublicEventById(catalogDb, entry.eventId) : null;
-  const eventTitle = event?.title ?? entry.eventId;
+  const eventTitle = event ? resolveEventCopy(event, locale).title : entry.eventId;
 
   if (entry.status !== "WAITING") {
     return c.render(
@@ -120,7 +125,7 @@ export const POST = createRoute(async (c) => {
 
   const catalogDb = getCatalogDb();
   const event = catalogDb ? await getPublicEventById(catalogDb, entry.eventId) : null;
-  const eventTitle = event?.title ?? entry.eventId;
+  const eventTitle = event ? resolveEventCopy(event, locale).title : entry.eventId;
 
   try {
     await cancelWaitlistEntry(db, {

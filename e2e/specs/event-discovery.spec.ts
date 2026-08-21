@@ -149,6 +149,28 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByText(/^format$|^event type$/i).first()).toBeVisible();
   });
 
+  test("Scenario: Guest sees English title on /en", async ({ page }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded bilingual event");
+    await page.context().clearCookies();
+    const eventId = await getEventIdByTitle(TITLES.localeCopyDe);
+    await page.goto(`/en/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1, name: TITLES.localeCopyEn })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(TITLES.localeCopyDe)).toHaveCount(0);
+  });
+
+  test("Scenario: Guest sees German title on /de", async ({ page }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded bilingual event");
+    await page.context().clearCookies();
+    const eventId = await getEventIdByTitle(TITLES.localeCopyDe);
+    await page.goto(`/de/events/${eventId}`);
+    await expect(page.getByRole("heading", { level: 1, name: TITLES.localeCopyDe })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(TITLES.localeCopyEn)).toHaveCount(0);
+  });
+
   test("Scenario: Large viewport uses two primary rows", async ({ page, locale }) => {
     await page.context().clearCookies();
     if (hasDatabaseUrl()) {
@@ -693,6 +715,19 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByText(TITLES.ausstellung)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(TITLES.tonight)).toHaveCount(0);
     await expect(page.getByText(TITLES.konzert)).toHaveCount(0);
+  });
+
+  test("Scenario: Filter by English title on /de", async ({ page }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve seeded bilingual event");
+    await loginMember(page, "de");
+    const from = berlinYmd(0);
+    const to = berlinYmd(30);
+    await page.goto(
+      `/de/events?title=${encodeURIComponent("Unveiled-EN-Copy")}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    );
+    await expect(page).toHaveURL(/title=/);
+    await expect(page.getByText(TITLES.localeCopyDe)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(TITLES.localeCopyEn)).toHaveCount(0);
   });
 
   test("Scenario: Filter by partner (venue)", async ({ page, locale }) => {

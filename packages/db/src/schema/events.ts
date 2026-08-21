@@ -30,8 +30,20 @@ export const events = pgTable(
       .notNull()
       .references(() => partners.id, { onDelete: "restrict" }),
     partnerName: text("partner_name").notNull(),
+    /**
+     * Canonical title — DE write-time copy of `title_de`.
+     * Public/member copy uses `resolveEventCopy`. ICS, admin tables, and ledger MAY still read this.
+     */
     title: text("title").notNull(),
+    titleDe: text("title_de").notNull(),
+    titleEn: text("title_en").notNull(),
+    /**
+     * Canonical description — DE write-time copy of `description_de`.
+     * Markdown at rest (same as locale description columns).
+     */
     description: text("description").notNull(),
+    descriptionDe: text("description_de").notNull(),
+    descriptionEn: text("description_en").notNull(),
     address: text("address").notNull(),
     street: text("street").notNull(),
     houseNumber: text("house_number").notNull(),

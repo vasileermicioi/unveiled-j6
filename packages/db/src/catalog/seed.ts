@@ -229,6 +229,60 @@ async function seedDemoVoucherRedemptionEvents(
   await appendVoucherPdfs(db, pdfEvent.id, pdfItems);
 }
 
+async function seedDemoLocaleCopyEvent(
+  db: Db,
+  partnerId: string,
+  options: { skipBucket?: boolean } = {},
+): Promise<void> {
+  const imagePrebuilt = readDemoSeedPrebuilt(DEMO_VOUCHER_EVENT_IMAGE_PATH, "locale copy demo");
+  const stagedImageId = await persistPrebuiltImage(db, imagePrebuilt, {
+    skipUpload: options.skipBucket,
+  });
+  await sleep(SEED_IMAGE_PAUSE_MS);
+  const dateTime = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000);
+
+  await createEvent(db, {
+    partnerId,
+    titleDe: DEMO_DISCOVERY_TITLES.localeCopyDe,
+    titleEn: DEMO_DISCOVERY_TITLES.localeCopyEn,
+    descriptionDe: "DE-Copy Beschreibung",
+    descriptionEn: "EN-Copy description",
+    street: "Demo Straße",
+    houseNumber: "3",
+    country: "DE",
+    city: "berlin",
+    zipCode: "10115",
+    category: "Konzert",
+    eventType: "Concert",
+    tags: ["demo", "locale-copy"],
+    dateTimes: [dateTime],
+    creditPrice: 2,
+    totalCapacity: 20,
+    ticketType: "SECRET_CODE",
+    secretCode: "LOCALECOPY",
+    stagedImageId,
+    languages: ["de", "en"],
+    skipUpload: options.skipBucket,
+  });
+}
+
+/** Idempotent: add the bilingual demo event on existing catalogs that predate this seed. */
+async function ensureDemoLocaleCopyEvent(
+  db: Db,
+  options: { skipBucket?: boolean } = {},
+): Promise<void> {
+  const existing = await listEvents(db, { q: DEMO_DISCOVERY_TITLES.localeCopyDe, limit: 25 });
+  if (existing.some((event) => event.title === DEMO_DISCOVERY_TITLES.localeCopyDe)) {
+    return;
+  }
+  const partnerRows = await listPartners(db, { limit: 1 });
+  const partnerId = partnerRows[0]?.id;
+  if (!partnerId) {
+    return;
+  }
+  await seedDemoLocaleCopyEvent(db, partnerId, options);
+}
+
 export async function runDemoSeed(
   db: Db,
   options: { force?: boolean; skipBucket?: boolean } = {},
@@ -236,6 +290,7 @@ export async function runDemoSeed(
   if (options.force) {
     await resetCatalogData(db, { skipBucket: options.skipBucket });
   } else if (!(await shouldRunDemoSeed(db))) {
+    await ensureDemoLocaleCopyEvent(db, { skipBucket: options.skipBucket });
     return "skipped";
   }
 
@@ -288,6 +343,9 @@ export async function runDemoSeed(
   const voucherPartnerId = createdPartners[0]?.id;
   if (voucherPartnerId) {
     await seedDemoVoucherRedemptionEvents(db, voucherPartnerId, {
+      skipBucket: options.skipBucket,
+    });
+    await seedDemoLocaleCopyEvent(db, voucherPartnerId, {
       skipBucket: options.skipBucket,
     });
   }

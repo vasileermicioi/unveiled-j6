@@ -488,6 +488,41 @@ The system SHALL render `/events/:id` for guests without requiring login, using 
 - **WHEN** a guest opens a valid upcoming event detail URL
 - **THEN** event content and the checkout summary card render without login and gated actions require authentication
 
+### Requirement: Public event copy follows URL locale
+
+Public event detail, EventCards, map popups, Discover featured, saved list, waitlist join/cancel chrome, and event SEO/JSON-LD SHALL display `title_*` and `description_*` for the active `/:locale` (fallback: other locale, then canonical). Description SHALL be locale-resolved on public detail and in SEO/JSON-LD only (cards and map popups show title). `/de/events/:id` and `/en/events/:id` MAY show different title/description for the same event. Each locale URL’s HTML body, document title, meta description, and JSON-LD `name` / `description` MUST match that locale. Document title SHALL be `{resolved title} at {partner} — Unveiled Berlin`. Meta description and JSON-LD `description` SHALL remain a plain-text extract of the **resolved** Markdown description (existing truncate). `hreflang` already points at the other locale URL and SHALL NOT be used as an excuse to serve the same body copy on both URLs.
+
+#### Scenario: Guest sees English title on /en
+
+- **WHEN** a guest opens `/en/events/:id` for an event with `title_en = "Concert"` and `title_de = "Konzert"`
+- **THEN** the identity title is "Concert"
+
+#### Scenario: Guest sees German title on /de
+
+- **WHEN** a guest opens `/de/events/:id` for that same event
+- **THEN** the identity title is "Konzert"
+
+#### Scenario: English detail uses English description
+
+- **WHEN** a guest opens `/en/events/:id` for an event with distinct `description_en` and `description_de`
+- **THEN** the identity description is the English Markdown (GFM-rendered)
+- **AND** the page meta description and JSON-LD `description` are derived from that English Markdown
+
+#### Scenario: EventCard title follows feed locale
+
+- **WHEN** a member opens `/en/events` (or Discover / saved) for an event with `title_en = "Concert"` and `title_de = "Konzert"`
+- **THEN** the EventCard title is "Concert"
+
+#### Scenario: Map popup title follows map locale
+
+- **WHEN** a member opens `/en/events/map` for that same event
+- **THEN** the map popup title is "Concert"
+
+#### Scenario: Document title matches page locale
+
+- **WHEN** a guest opens `/en/events/:id` for an event titled "Concert" at partner "Venue"
+- **THEN** the document title contains "Concert at Venue"
+
 ### Requirement: Public event detail for guests
 
 The system SHALL allow unauthenticated users to view public event detail pages. The system SHALL NOT display membership credit price or event date/time on that page to guests (or other non–booking-eligible viewers). Booking-eligible members SHALL continue to see credit price and date/time needed to book. When date chrome is shown, DETAILS / summary date presentation SHALL list **all** event datetimes formatted in Europe/Berlin and SHALL emphasize the **next upcoming** datetime (denormalized primary `date_time`). Visibility SHALL be decided from the SSR session + membership eligibility used for booking CTAs (not a client-only hide). Structured data / Open Graph MAY still include a single `startDate` equal to the next upcoming datetime for crawlers.
@@ -1029,3 +1064,44 @@ Public event detail SHALL show `images.credit` as a caption under the primary he
 #### Scenario: Cards omit credit
 - **WHEN** I view Discover or the member feed
 - **THEN** event cards do not show image credit
+
+### Requirement: Docs and e2e cover locale event copy
+
+`docs/product/features/event-discovery.feature` SHALL include scenarios titled `Guest sees English title on /en` and `Guest sees German title on /de`. Playwright in `e2e/specs/event-discovery.spec.ts` SHALL use those titles verbatim (`test("Scenario: …")`). Those scenarios SHALL assert the public identity heading shows the English title on `/en/events/:id` and the German title on `/de/events/:id` for the same event with distinct `title_en` and `title_de`. Playwright SHALL use proximity/layout selectors only (`docs/product/testing/bdd-and-e2e.md`); the system SHALL NOT add `data-testid` for these scenarios.
+
+`docs/product/extras/seo-and-metadata.md` SHALL state that event document `<title>`, meta description, and JSON-LD `name` / `description` follow the page locale (resolved copy for that URL). `docs/product/ui/ui-component-map.md` SHALL state that Event detail identity title + Markdown description and EventCard title are locale-resolved for `/:locale`. `docs/product/database/schema-overview.md` SHALL document `title_de` / `title_en` / `description_de` / `description_en` plus canonical DE sync and title-search OR. Coverage-matrix rows SHALL map the new Gherkin titles to Playwright (`pass` when `DATABASE_URL` is set, or a named env skip — never “UI not built”).
+
+Seed/demo data SHALL include at least one upcoming event whose German and English titles are **distinct non-empty** strings so these scenarios can assert locale without colliding with `DEMO_DISCOVERY_TITLES.tonight` (and other identical-string demo titles that existing tests still look up on both locales).
+
+#### Scenario: Guest sees English title on /en
+
+- **WHEN** I open `/en/events/:id` as a guest
+- **THEN** I see the event's English title
+
+#### Scenario: Guest sees German title on /de
+
+- **WHEN** I open `/de/events/:id` as a guest
+- **THEN** I see the event's German title
+
+#### Scenario: SEO docs state locale-resolved event meta
+
+- **WHEN** a reader opens `docs/product/extras/seo-and-metadata.md`
+- **THEN** event `<title>` and meta description are specified as following the page locale
+
+#### Scenario: Schema overview documents four locale columns
+
+- **WHEN** a reader opens `docs/product/database/schema-overview.md`
+- **THEN** `title_de` / `title_en` / `description_de` / `description_en` are documented as required text
+- **AND** canonical `title` / `description` are documented as DE write-time copies
+- **AND** title search is documented as matching either locale column
+
+### Requirement: Feed title filter matches either locale
+
+Product Gherkin MAY include a scenario that a booking-eligible member on `/de/events` filtering `title=` by a substring unique to `title_en` still sees that event. If included, Playwright SHALL use the Gherkin title verbatim. Domain title ILIKE already ORs both locale columns (step 01); this requirement is documentation and e2e only.
+
+#### Scenario: Filter by English title on /de
+
+- **WHEN** a booking-eligible member on `/de/events` applies an event-name filter that matches only `title_en`
+- **THEN** the event is included in the feed
+- **AND** the EventCard title shown is the German title
+

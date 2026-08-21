@@ -51,8 +51,10 @@ export function eventToFormDefaults(
 
   return {
     partnerId: event.partnerId,
-    title: event.title,
-    description: event.description,
+    titleDe: event.titleDe,
+    titleEn: event.titleEn,
+    descriptionDe: event.descriptionDe,
+    descriptionEn: event.descriptionEn,
     street: event.street,
     houseNumber: event.houseNumber,
     addressLine2: event.addressLine2,
@@ -90,8 +92,10 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
 
   return {
     partnerId: values.partnerId,
-    title: values.title,
-    description: values.description,
+    titleDe: values.titleDe,
+    titleEn: values.titleEn,
+    descriptionDe: values.descriptionDe,
+    descriptionEn: values.descriptionEn,
     street: values.street,
     houseNumber: values.houseNumber,
     addressLine2: values.addressLine2,

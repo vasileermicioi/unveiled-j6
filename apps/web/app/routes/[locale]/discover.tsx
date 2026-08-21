@@ -42,7 +42,7 @@ export default createRoute(async (c) => {
         listFeaturedPartners(db, { limit: 8 }),
       ]);
 
-      events = featuredEvents.map(toEventCardItem);
+      events = featuredEvents.map((event) => toEventCardItem(event, locale));
       partners = partnerRows.map(toDiscoverPartnerTile);
     } catch (error) {
       console.error("discover catalog fetch failed", error);

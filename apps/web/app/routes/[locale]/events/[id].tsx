@@ -157,8 +157,8 @@ export default createRoute(async (c) => {
     }
   }
 
-  const meta = eventDetailPageMeta(event);
-  const jsonLd = buildEventJsonLd(event);
+  const meta = eventDetailPageMeta(event, locale);
+  const jsonLd = buildEventJsonLd(event, locale);
 
   return c.render(
     <>

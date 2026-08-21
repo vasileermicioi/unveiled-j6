@@ -6,8 +6,10 @@ export const CollapsedPreview: Story = () => (
   <EventAdminBaseFields
     defaults={{
       partnerId: mockPartner.id,
-      title: "Poetry & Jazz Night",
-      description: "An evening of spoken word and live jazz.",
+      titleDe: "Poetry & Jazz Night",
+      titleEn: "Poetry and Jazz Evening",
+      descriptionDe: "Ein Abend mit Spoken Word und Live-Jazz.",
+      descriptionEn: "An evening of spoken word and live jazz.",
       street: mockPartner.street,
       houseNumber: mockPartner.houseNumber,
       addressLine2: mockPartner.addressLine2,

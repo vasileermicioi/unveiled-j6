@@ -17,8 +17,10 @@ export type EventDateTimeRow = {
 
 export type EventFormDefaults = Partial<{
   partnerId: string;
-  title: string;
-  description: string;
+  titleDe: string;
+  titleEn: string;
+  descriptionDe: string;
+  descriptionEn: string;
   street: string;
   houseNumber: string;
   addressLine2: string | null;

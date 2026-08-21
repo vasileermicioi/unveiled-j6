@@ -97,9 +97,12 @@ export function EventAdminBaseFields({
   const subtitleLanguageOptions = getEventSubtitleLanguageOptions(locale);
   const categoryOptions = getEventCategoryOptions(locale);
   const eventTypeOptions = getEventTypeOptions(locale);
-  const descriptionFieldId = useId();
-  const descriptionLabelId = useId();
-  const descriptionHintId = useId();
+  const descriptionDeFieldId = useId();
+  const descriptionDeLabelId = useId();
+  const descriptionDeHintId = useId();
+  const descriptionEnFieldId = useId();
+  const descriptionEnLabelId = useId();
+  const descriptionEnHintId = useId();
   const [ticketType, setTicketType] = useState<TicketType>(defaultTicketType(defaults));
   const [timingMode, setTimingMode] = useState<TimingMode>(defaultTimingMode(defaults));
   const [capacityMode, setCapacityMode] = useState<CapacityMode>(defaultCapacityMode(defaults));
@@ -298,27 +301,50 @@ export function EventAdminBaseFields({
         />
 
         <TextField
-          defaultValue={defaults?.title}
+          defaultValue={defaults?.titleDe}
           fullWidth
           isRequired={generalRequired}
-          name="title"
+          name="title_de"
         >
-          <Label>{copy.titleLabel}</Label>
+          <Label>{copy.titleLabelDe}</Label>
           <Input />
         </TextField>
 
-        {/* Description: MDXEditor exception; SSR POST still submits native name="description". */}
+        {/* Description: MDXEditor exception; SSR POST still submits native name="description_de". */}
         <Surface className="flex flex-col gap-2" variant="transparent">
-          <Label id={descriptionLabelId}>{copy.descriptionLabel}</Label>
+          <Label id={descriptionDeLabelId}>{copy.descriptionLabelDe}</Label>
           <EventDescriptionEditor
-            aria-describedby={descriptionHintId}
-            aria-labelledby={descriptionLabelId}
-            id={descriptionFieldId}
-            initialMarkdown={defaults?.description ?? ""}
-            name="description"
+            aria-describedby={descriptionDeHintId}
+            aria-labelledby={descriptionDeLabelId}
+            id={descriptionDeFieldId}
+            initialMarkdown={defaults?.descriptionDe ?? ""}
+            name="description_de"
             required={generalRequired}
           />
-          <Description id={descriptionHintId}>{copy.descriptionMarkdownHint}</Description>
+          <Description id={descriptionDeHintId}>{copy.descriptionMarkdownHint}</Description>
+        </Surface>
+
+        <TextField
+          defaultValue={defaults?.titleEn}
+          fullWidth
+          isRequired={generalRequired}
+          name="title_en"
+        >
+          <Label>{copy.titleLabelEn}</Label>
+          <Input />
+        </TextField>
+
+        <Surface className="flex flex-col gap-2" variant="transparent">
+          <Label id={descriptionEnLabelId}>{copy.descriptionLabelEn}</Label>
+          <EventDescriptionEditor
+            aria-describedby={descriptionEnHintId}
+            aria-labelledby={descriptionEnLabelId}
+            id={descriptionEnFieldId}
+            initialMarkdown={defaults?.descriptionEn ?? ""}
+            name="description_en"
+            required={generalRequired}
+          />
+          <Description id={descriptionEnHintId}>{copy.descriptionMarkdownHint}</Description>
         </Surface>
 
         <Surface className="grid gap-4 lg:grid-cols-2 lg:items-start" variant="transparent">

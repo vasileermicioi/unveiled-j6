@@ -1,5 +1,5 @@
 import { Card, Heading, Link, Paragraph, Surface } from "@heroui/react";
-import type { Event, OpeningHoursWeek } from "@unveiled/db";
+import { type Event, type OpeningHoursWeek, resolveEventCopy } from "@unveiled/db";
 import { buildDetailHeroSrc, buildDetailHeroSrcSet } from "@unveiled/ui";
 import { Calendar } from "lucide-react";
 
@@ -187,7 +187,7 @@ function parseCoord(value: string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function eventDetailMarkers(event: Event, locale: Locale): EventMapMarker[] {
+function eventDetailMarkers(event: Event, locale: Locale, title: string): EventMapMarker[] {
   const lat = parseCoord(event.lat);
   const lng = parseCoord(event.lng);
   if (lat == null || lng == null) {
@@ -197,7 +197,7 @@ function eventDetailMarkers(event: Event, locale: Locale): EventMapMarker[] {
   return [
     {
       id: event.id,
-      title: event.title,
+      title,
       partnerName: event.partnerName,
       address: event.address,
       dateTimeLabel: formatEventDateTime(event.dateTime, locale),
@@ -494,10 +494,11 @@ export function EventDetailPage({
   heroCredit = null,
   partnerAttribution,
 }: EventDetailPageProps) {
+  const eventCopy = resolveEventCopy(event, locale);
   const bookable = isEventBookable(event);
   const isPast = event.dateTime <= new Date();
   const isSoldOut = event.remainingCapacity <= 0 && !isPast;
-  const mapMarkers = eventDetailMarkers(event, locale);
+  const mapMarkers = eventDetailMarkers(event, locale, eventCopy.title);
   const resolvedCloseHref = closeHref ?? localizedPath(locale, "");
   const galleryCopy = getEventDetailGalleryCopy(locale);
   const partnerName = partnerAttribution?.name ?? event.partnerName;
@@ -553,7 +554,7 @@ export function EventDetailPage({
           >
             <Paragraph className="event-detail--checkout__eyebrow">{event.category}</Paragraph>
             <Heading className="event-detail--checkout__title" level={1}>
-              {event.title}
+              {eventCopy.title}
             </Heading>
             <Surface className="event-detail--checkout__rule" variant="transparent">
               <Paragraph className="sr-only">—</Paragraph>
@@ -600,7 +601,7 @@ export function EventDetailPage({
             <Surface className="event-detail--checkout__hero min-w-0 w-full" variant="transparent">
               <Surface className="image-credit-photo" variant="transparent">
                 <img
-                  alt={imageAltWithCredit(event.title, heroCredit)}
+                  alt={imageAltWithCredit(eventCopy.title, heroCredit)}
                   className="event-detail--checkout__hero-image"
                   decoding="async"
                   sizes="(max-width: 1023px) 100vw, 1280px"
@@ -621,7 +622,7 @@ export function EventDetailPage({
           >
             <MarkdownContent
               className="event-detail--checkout__description"
-              markdown={event.description}
+              markdown={eventCopy.description}
             />
           </Surface>
         </Surface>

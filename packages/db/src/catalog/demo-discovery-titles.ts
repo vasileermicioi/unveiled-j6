@@ -26,6 +26,9 @@ export const DEMO_DISCOVERY_TITLES = {
   ausstellung: titleForRole("ausstellung", "Abundo Ausstellung Demo"),
   konzert: titleForRole("konzert", "Abundo Konzert Demo"),
   soldOutWaitlist: titleForRole("soldOutWaitlist", "Sold Out: Waitlist Demo Night"),
+  /** Additive SECRET_CODE titles with distinct DE vs EN copy for locale e2e. */
+  localeCopyDe: "Konzertabend: Unveiled-DE-Copy",
+  localeCopyEn: "Concert Night: Unveiled-EN-Copy",
   /** Additive seed titles for ticket-redemption demos (not in Abundo fixture roles). */
   voucherPromo: "Demo: Promo Code Inventory Night",
   voucherPdf: "Demo: PDF Voucher Inventory Night",

@@ -1,5 +1,11 @@
 import { Card, Chip, Heading, Link, Paragraph, Surface } from "@heroui/react";
-import type { Booking, BookingStatus, BookingTicket, UserBookingEventSummary } from "@unveiled/db";
+import {
+  type Booking,
+  type BookingStatus,
+  type BookingTicket,
+  resolveEventCopy,
+  type UserBookingEventSummary,
+} from "@unveiled/db";
 
 import type { BookConfirmCopy } from "../../lib/booking-content";
 import type { MyTicketsCopy } from "../../lib/bookings-content";
@@ -68,6 +74,15 @@ export function BookingTicketCard({
     locale,
     `events/${event.id}/book/confirm?booking=${encodeURIComponent(booking.id)}`,
   );
+  const eventTitle = resolveEventCopy(
+    {
+      title: event.title,
+      description: "",
+      titleDe: event.titleDe,
+      titleEn: event.titleEn,
+    },
+    locale,
+  ).title;
 
   return (
     <Card>
@@ -76,7 +91,7 @@ export function BookingTicketCard({
           className="flex w-full flex-wrap items-center justify-between gap-2"
           variant="transparent"
         >
-          <Heading level={3}>{event.title}</Heading>
+          <Heading level={3}>{eventTitle}</Heading>
           {booking.status !== "CONFIRMED" ? (
             <Chip size="sm" variant="tertiary">
               <Chip.Label>{statusLabel(booking.status, listCopy)}</Chip.Label>

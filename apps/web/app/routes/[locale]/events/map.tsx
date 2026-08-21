@@ -1,4 +1,9 @@
-import { getBerlinCalendarDate, listMemberFeedEvents, listPartners } from "@unveiled/db";
+import {
+  getBerlinCalendarDate,
+  listMemberFeedEvents,
+  listPartners,
+  resolveEventCopy,
+} from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { EventMapPage } from "../../../components/discovery/EventMapPage";
@@ -78,7 +83,7 @@ export default createRoute(async (c) => {
 
     markers.push({
       id: event.id,
-      title: event.title,
+      title: resolveEventCopy(event, guard.locale).title,
       partnerName: event.partnerName,
       address: event.address,
       dateTimeLabel: formatMapDateTime(event.dateTime, guard.locale),
