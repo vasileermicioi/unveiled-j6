@@ -38,6 +38,13 @@ export async function skipAgeStep(page: Page, locale: Locale = "de"): Promise<vo
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding/interests`), { timeout: 15_000 });
 }
 
+export async function completeAgeStepBlank(page: Page, locale: Locale = "de"): Promise<void> {
+  await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding/age`));
+  await page.getByRole("button", { name: /weiter|next/i }).click();
+  await expect(page.getByText(/bitte prüfe|please check/i)).toHaveCount(0);
+  await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding/interests`), { timeout: 15_000 });
+}
+
 export async function completeInterestsStep(page: Page, locale: Locale = "de"): Promise<void> {
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding/interests`));
   await selectOption(page, "Theater");

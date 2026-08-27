@@ -73,9 +73,9 @@ export function parseAgePayload(body: ParsedBody): AgeStepPayload {
     return { skip: true };
   }
 
-  const ageGroup = asString(body.age_group);
+  const ageGroup = asString(body.age_group)?.trim();
   if (!ageGroup) {
-    throw new OnboardingValidationError("invalid_age_payload", "age_group or skip is required");
+    return { skip: true };
   }
 
   return { age_group: ageGroup as AgeGroup };

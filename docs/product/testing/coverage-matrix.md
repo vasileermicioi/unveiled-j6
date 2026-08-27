@@ -223,6 +223,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `onboarding.feature` | Non-USER roles skip onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Non-USER roles skip onboarding` | `pass` |  |
 | `onboarding.feature` | Already-onboarded users skip onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Already-onboarded users skip onboarding` | `pass` | Redirect may be `/events` or `/discover` by booking eligibility |
 | `onboarding.feature` | Step 1 — age group (skippable) | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 1 — age group (skippable)` | `pass` |  |
+| `onboarding.feature` | Step 1 — Next without an age group | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 1 — Next without an age group` | `pass` | Empty Next advances; no validation error |
 | `onboarding.feature` | Step 2 — interests and moods | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 2 — interests and moods` | `pass` | Asserts Other / Sonstiges visibility; Other+text submit covered by auth unit tests |
 | `onboarding.feature` | Step 2 — interests and moods optional | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 2 — interests and moods optional` | `pass` | Empty interests/moods advance |
 | `onboarding.feature` | Step 3 — zip under Germany/Berlin | `e2e/specs/onboarding.spec.ts` · `Scenario: Step 3 — zip under Germany/Berlin` | `pass` | Germany/Berlin prefilled; optional Berlin PLZ; blank Next OK; invalid non-empty zip rejected; no travel distance |

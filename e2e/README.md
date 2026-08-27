@@ -173,7 +173,7 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 |---|---|---|
 | `specs/static-pages.spec.ts` | `static-pages.feature` | 9 scenarios; declining consent asserts fallback + no OSM tiles on public `/events/:id` |
 | `specs/auth.spec.ts` | `auth.feature` | Core auth + outlines; see skip inventory below |
-| `specs/onboarding.spec.ts` | `onboarding.feature` | 8 scenarios; fresh signup per mutating test |
+| `specs/onboarding.spec.ts` | `onboarding.feature` | 12 scenarios; fresh signup per mutating test |
 | `specs/admin-partners.spec.ts` | `admin-partners.feature` | Partner CRUD; portal/QR scenarios skipped (post-MVP) |
 | `specs/admin-events.spec.ts` | `admin-events.feature` | Event CRUD + public home (Discover) / `/events/:id`; image tests need R2 |
 | `specs/admin-users.spec.ts` | `admin-users.feature` | Membership HQ list/detail + adjust/freeze/comp; needs `E2E_ADMIN_*` + `DATABASE_URL` |

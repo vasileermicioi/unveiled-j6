@@ -220,8 +220,8 @@ export function validateOnboardingStepPayload(
         return {};
       }
 
-      if (!("age_group" in payload)) {
-        throw new OnboardingValidationError("invalid_age_payload", "age_group or skip is required");
+      if (!("age_group" in payload) || !payload.age_group) {
+        return {};
       }
 
       if (!AGE_GROUPS.includes(payload.age_group)) {

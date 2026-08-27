@@ -189,6 +189,12 @@ describe("validateOnboardingStepPayload", () => {
     expect(validateOnboardingStepPayload("age", { skip: true })).toEqual({});
   });
 
+  test("rejects invalid age group", () => {
+    expect(() =>
+      validateOnboardingStepPayload("age", { age_group: "under-18" as "18-25" }),
+    ).toThrow(OnboardingValidationError);
+  });
+
   test("accepts empty timing preferences", () => {
     expect(
       validateOnboardingStepPayload("timing", {

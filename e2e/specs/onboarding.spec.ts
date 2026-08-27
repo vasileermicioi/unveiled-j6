@@ -2,6 +2,7 @@ import { loginAsAdmin, logout, signupFreshUser } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
 import {
   completeAgeStep,
+  completeAgeStepBlank,
   completeInterestsStep,
   completeInterestsStepBlank,
   completeLocationStep,
@@ -59,6 +60,11 @@ test.describe("onboarding.feature", () => {
     await expect(page.getByText("50+")).toBeVisible();
     await expect(page.getByRole("button", { name: /überspringen|skip/i })).toBeVisible();
     await completeAgeStep(page, locale, "26-35");
+  });
+
+  test("Scenario: Step 1 — Next without an age group", async ({ page, locale }) => {
+    await signupFreshUser(page, locale);
+    await completeAgeStepBlank(page, locale);
   });
 
   test("Scenario: Step 2 — interests and moods", async ({ page, locale }) => {

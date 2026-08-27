@@ -40,6 +40,12 @@ Feature: Onboarding
     Then my selection is stored
     But I may also skip this step without selecting an age group
 
+  Scenario: Step 1 — Next without an age group
+    Given I am on onboarding step 1
+    When I submit Next without selecting an age group
+    Then I advance to the next step
+    And I am not shown a validation error
+
   Scenario: Step 2 — interests and moods
     Given I am on onboarding step 2
     Then I can multi-select interests via native checkbox from: Theater, Kino, Museum, Ausstellung, Konzert, Talk/Lesung, Comedy, Tanz/Performance, Other
