@@ -23,6 +23,8 @@ export type SendResendEmailInput = {
   html: string;
   text: string;
   attachments?: ResendAttachment[];
+  /** Optional Resend `Idempotency-Key` (e.g. Stripe invoice id). */
+  idempotencyKey?: string;
   fetchImpl?: (
     input: string,
     init?: {
@@ -51,6 +53,7 @@ export async function sendResendEmail(input: SendResendEmailInput): Promise<Send
     headers: {
       Authorization: `Bearer ${input.apiKey}`,
       "Content-Type": "application/json",
+      ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
     },
     body: JSON.stringify({
       from: input.from,

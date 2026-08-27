@@ -152,6 +152,27 @@ Bilingual Impressum / Privacy / Terms module for `LegalPage`. Footer links: `foo
 
 Chrome: eyebrow `Rechtliches` / `Legal`. Section model: `id`, `title`, `body: string[]`. Body uses foreground color (not muted). See `docs/product/ui/static-pages-content.md` § Legal pages.
 
+## Transactional emails — subscription invoice
+
+Not a `translations.ts` key table. Verbatim DE/EN copy lives in `packages/email/src/subscription-invoice.ts` (`buildSubscriptionInvoiceContent`). Sent via Resend after the first paid subscription invoice (`invoice.paid` + `billing_reason` `subscription_create` only). From-address is `DAILY_CODES_FROM_EMAIL`. `{SITE_URL}` is the public origin with no trailing slash; links are `{SITE_URL}/{locale}/…`. Credits do **not** roll over.
+
+| | DE | EN |
+|---|---|---|
+| Subject | Deine Unveiled Berlin Rechnung | Your Unveiled Berlin invoice |
+| Lead | Deine Unveiled Berlin Mitgliedschaft ist aktiv. | Your Unveiled Berlin membership is active. |
+| Plan | Abo: Basic Berlin — 29€/Monat | Plan: Basic Berlin — 29€/month |
+| Credits | Credits: 17 pro Monat (ungenutzte Credits verfallen) | Credits: 17 per month (unused credits do not roll over) |
+| Attachment | Deine Rechnung ist als PDF angehängt. | Your invoice is attached as a PDF. |
+| Next steps heading | Nächste Schritte: | What to do next: |
+| 1. Events | Events entdecken: `{SITE_URL}/de/events` | Browse events: `{SITE_URL}/en/events` |
+| 2. Book / My Tickets | Mit Credits buchen — Tickets und Einlassdetails findest du unter Meine Tickets: `{SITE_URL}/de/bookings` | Book with your credits — tickets and door details land in My Tickets: `{SITE_URL}/en/bookings` |
+| 3. Billing | Abrechnung verwalten: `{SITE_URL}/de/profile/billing` | Manage billing: `{SITE_URL}/en/profile/billing` |
+| 4. How it works | So funktioniert's: `{SITE_URL}/de/how-it-works` | How it works: `{SITE_URL}/en/how-it-works` |
+| 5. FAQ | FAQ: `{SITE_URL}/de/faq` | FAQ: `{SITE_URL}/en/faq` |
+| Support | Support: support@unveiled.berlin | Support: support@unveiled.berlin |
+
+HTML is a paragraph-equivalent of the same content with anchor tags on each URL and `mailto:support@unveiled.berlin`.
+
 ## Content not captured in `translations.ts` (extract manually from components if needed)
 
 - Landing page hero/marketing copy (inline in `App.tsx`)

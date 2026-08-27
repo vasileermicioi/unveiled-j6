@@ -101,6 +101,88 @@ describe("Stripe payload helpers", () => {
   });
 });
 
+describe("applyStripeEvent invoice.paid credit rules", () => {
+  test("subscription_create is ignored so first payment does not double-refill", async () => {
+    const result = await applyStripeEvent(
+      {} as never,
+      {
+        id: "evt_create",
+        object: "event",
+        type: "invoice.paid",
+        data: {
+          object: {
+            id: "in_create",
+            object: "invoice",
+            billing_reason: "subscription_create",
+          },
+        },
+      } as unknown as Stripe.Event,
+    );
+
+    expect(result).toEqual({ handled: false, action: "ignored_invoice_paid_reason" });
+  });
+
+  test("subscription_cycle still refills via applyStripeEvent", async () => {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      console.warn("Skipping invoice.paid cycle refill test (DATABASE_URL unset)");
+      return;
+    }
+
+    const httpDb = createDb(databaseUrl);
+    const txDb = createTxDb(databaseUrl);
+    const userId = `billing-cycle-${crypto.randomUUID()}`;
+    const stripeSubscriptionId = `sub_${userId}`;
+
+    try {
+      await httpDb.insert(users).values({
+        id: userId,
+        email: `${userId}@example.com`,
+        emailVerified: true,
+        credits: 4,
+      });
+      await httpDb.insert(subscriptions).values({
+        userId,
+        status: "ACTIVE",
+        plan: "Basic Berlin",
+        stripeSubscriptionId,
+        stripeCustomerId: `cus_${userId}`,
+      });
+
+      const result = await applyStripeEvent(txDb, {
+        id: "evt_cycle",
+        object: "event",
+        type: "invoice.paid",
+        data: {
+          object: {
+            id: "in_cycle",
+            object: "invoice",
+            billing_reason: "subscription_cycle",
+            customer: `cus_${userId}`,
+            parent: {
+              type: "subscription_details",
+              subscription_details: { subscription: stripeSubscriptionId },
+              quote_details: null,
+            },
+            lines: { object: "list", data: [], has_more: false, url: "" },
+          },
+        },
+      } as unknown as Stripe.Event);
+
+      expect(result).toEqual({ handled: true, action: "renewal_refilled" });
+      const after = await httpDb.query.users.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
+      });
+      expect(after?.credits).toBe(MONTHLY_CREDIT_ALLOWANCE);
+    } finally {
+      await httpDb.delete(creditLedger).where(eq(creditLedger.userId, userId));
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await httpDb.delete(users).where(eq(users.id, userId));
+      await txDb.pool.end().catch(() => undefined);
+    }
+  });
+});
+
 describe("createBillingPortalSession", () => {
   test("calls billingPortal.sessions.create with customer and return_url", async () => {
     const create = async (params: Stripe.BillingPortal.SessionCreateParams) => {

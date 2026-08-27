@@ -28,6 +28,7 @@ Delivery plan: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](../../.dev-plan/IMPLEMEN
 | `PAUSED` subscription status cut (never reached by any real flow); `CANCELLED_PENDING` kept (now genuinely used by real cancellation) | `database/schema-overview.md` |
 | Ledger types `PURCHASE` and `REFERRAL_BONUS` cut (no à la carte credit purchases or referral program planned — see non-goals); `EXPIRY` and `REFUND` are now real, produced types | `database/schema-overview.md`, `product/vision-and-domains.md` |
 | Admin manual credit refund is a distinct, explicit action, decoupled from booking cancellation (which never auto-refunds) | `features/credits-subscription.feature`, `features/booking.feature` |
+| First paid subscription invoice (`invoice.paid` + `billing_reason` `subscription_create`) sends a branded Unveiled Resend email with the Stripe invoice PDF attached (DE/EN, `SITE_URL` links, credits do not roll over). Renewal / `subscription_cycle` invoices do **not** send this email. Operators MUST disable Stripe Dashboard customer invoice/receipt emails in test and live so members are not double-mailed | `features/credits-subscription.feature`, `extras/integrations-and-config.md`, `extras/content-i18n-inventory.md`, `apps/web/DEPLOYMENT.md` |
 
 ## Waitlist
 

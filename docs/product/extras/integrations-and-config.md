@@ -25,8 +25,8 @@ Env vars and third-party services for the production MVP. Partner-portal-only fl
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase | Removed |
 | `VITE_FIREBASE_APP_ID` | Firebase | Removed |
 | `VITE_SENTRY_DSN` | Sentry (optional; wasn't even in `.env.example`) | Keep — `SENTRY_DSN` |
-| `RESEND_API_KEY` (Cloud Functions secret) | Daily partner passcode emails via Resend | Keep — same purpose, now a HonoX server-side env var |
-| `DAILY_CODES_FROM_EMAIL` (Cloud Functions param) | From-address for daily code emails | Keep |
+| `RESEND_API_KEY` (Cloud Functions secret) | Daily partner passcode emails via Resend | Keep — same integration; also booking confirmation, waitlist promotion, and first-paid-subscription invoice emails |
+| `DAILY_CODES_FROM_EMAIL` (Cloud Functions param) | From-address for daily code emails | Keep — also From-address for booking confirmation, waitlist promotion, and subscription invoice emails |
 | — (new) | Neon Postgres connection | `DATABASE_URL` |
 | — (new) | Neon Auth / Better Auth backend (decided: use Neon Auth instead of a standalone auth library — see below) | `AUTH_URL` — Neon-provided Better Auth API URL; HonoX `/api/auth/*` forwards requests to this target |
 | — (new) | Google OAuth | **Not a current product auth method** (optional future). No app env vars. MVP is email/password only — do not enable Google for signup/login. A leftover Neon Auth provider is harmless if the UI does not offer it. |
@@ -45,7 +45,7 @@ Env vars and third-party services for the production MVP. Partner-portal-only fl
 | **Firebase Hosting** | Frontend deploy | Replace with whatever host runs the HonoX SSR app |
 | **Google Maps** (`@react-google-maps/api`) | Event map | **Decided:** replace with **MapLibre GL JS** + **OpenStreetMap** raster/vector tiles — no Google API key, no `@react-google-maps/api`. Isolate as a small client-hydrated island (see `ui/ui-component-map.md`); include required OSM attribution. Cookie consent gates loading third-party tile requests (Phase 5) |
 | **Sentry** (`@sentry/cloudflare`) | Error tracking (server/Workers) | Optional `SENTRY_DSN`; PII-free; ungated by cookie consent. Client `@sentry/react` not required for MVP polish. |
-| **Resend** | Daily partner passcode emails (raw `fetch`, no SDK used) | Keep — same integration, ported to a server route/cron. **Expanded scope for the rewrite:** also used for booking confirmation emails (new, decided: `features/booking.feature`) and waitlist promotion emails (`features/waitlist.feature`) — the old app sent neither, both were purely in-app notifications. Password reset emails (`features/auth.feature`) are sent by Neon Auth's own email hook, which can also be wired to Resend rather than introducing a second email provider |
+| **Resend** | Daily partner passcode emails (raw `fetch`, no SDK used) | Keep — same integration, ported to a server route/cron. **Expanded scope for the rewrite:** also used for booking confirmation emails (new, decided: `features/booking.feature`), waitlist promotion emails (`features/waitlist.feature`), and the first-paid-subscription invoice email with the Stripe invoice PDF attached (`features/credits-subscription.feature`, `invoice.paid` + `billing_reason` `subscription_create` only — not renewals). The old app sent none of these (booking/waitlist were in-app only; invoices did not exist). Password reset emails (`features/auth.feature`) are sent by Neon Auth's own email hook, which can also be wired to Resend rather than introducing a second email provider |
 | **TanStack React Query** | Lightly used (one query in `AdminPanel`) | Optional in an SSR-only app — most data now loads server-side; keep only if specific islands need client-side refetching |
 
 ## Cloud Functions → HonoX mapping
@@ -69,7 +69,7 @@ Env vars and third-party services for the production MVP. Partner-portal-only fl
 | Event | Purpose |
 |---|---|
 | `checkout.session.completed` | First activation after Checkout |
-| `invoice.paid` | Monthly renewal credit refill (`subscription_cycle`) |
+| `invoice.paid` | Split by `billing_reason`: `subscription_cycle` → monthly credit refill only; `subscription_create` → Unveiled invoice email with Stripe PDF (no second `SUBSCRIPTION_REFILL` — activation refill stays on `checkout.session.completed`) |
 | `invoice.payment_failed` | → `PAST_DUE` |
 | `customer.subscription.updated` | Status / cancel-at-period-end sync |
 | `customer.subscription.deleted` | → `INACTIVE` + credit expiry |

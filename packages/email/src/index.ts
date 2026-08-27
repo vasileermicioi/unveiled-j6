@@ -27,9 +27,19 @@ export {
   sendBookingConfirmation,
 } from "./send-booking-confirmation";
 export {
+  type SendSubscriptionInvoiceInput,
+  sendSubscriptionInvoice,
+} from "./send-subscription-invoice";
+export {
   type SendWaitlistPromotionInput,
   sendWaitlistPromotion,
 } from "./send-waitlist-promotion";
+export {
+  type BuildSubscriptionInvoiceInput,
+  buildSubscriptionInvoiceContent,
+  type SubscriptionInvoiceContent,
+  type SubscriptionInvoiceLocale,
+} from "./subscription-invoice";
 export {
   type BuildWaitlistPromotionInput,
   buildWaitlistPromotionContent,

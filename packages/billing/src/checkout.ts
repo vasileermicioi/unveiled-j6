@@ -3,11 +3,14 @@ import type Stripe from "stripe";
 export const BASIC_BERLIN_PLAN = "Basic Berlin";
 export const MONTHLY_CREDIT_ALLOWANCE = 17;
 
+export type CheckoutLocale = "de" | "en";
+
 export type CreateCheckoutSessionInput = {
   stripe: Stripe;
   priceId: string;
   userId: string;
   customerEmail: string;
+  locale: CheckoutLocale;
   stripeCustomerId?: string | null;
   successUrl: string;
   cancelUrl: string;
@@ -20,7 +23,16 @@ export type CreateCheckoutSessionInput = {
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInput,
 ): Promise<Stripe.Checkout.Session> {
-  const { stripe, priceId, userId, customerEmail, stripeCustomerId, successUrl, cancelUrl } = input;
+  const {
+    stripe,
+    priceId,
+    userId,
+    customerEmail,
+    locale,
+    stripeCustomerId,
+    successUrl,
+    cancelUrl,
+  } = input;
 
   const customerFields: Pick<Stripe.Checkout.SessionCreateParams, "customer" | "customer_email"> =
     stripeCustomerId ? { customer: stripeCustomerId } : { customer_email: customerEmail };
@@ -33,7 +45,7 @@ export async function createCheckoutSession(
     client_reference_id: userId,
     metadata: { userId },
     subscription_data: {
-      metadata: { userId },
+      metadata: { userId, locale },
     },
     ...customerFields,
   });

@@ -137,7 +137,7 @@ Locally, root `.env` supplies the same vars (`bun --env-file=.env` on `db:migrat
 | `STRIPE_WEBHOOK_SECRET` | 6+ | Webhook signing secret |
 | `STRIPE_PRICE_ID_BASIC_BERLIN` | 6+ | Basic Berlin price id |
 | `RESEND_API_KEY` | 6+ | Resend API key |
-| `DAILY_CODES_FROM_EMAIL` | 6+ | Verified From address |
+| `DAILY_CODES_FROM_EMAIL` | 6+ | Verified From address (booking, waitlist, daily codes, subscription invoice) |
 
 **Never commit credentials in `wrangler.toml` `[vars]`.** Deploy uploads that block as dashboard **Plaintext** (readable in the UI). Use dashboard **Secrets** or `bun run secrets:workers` (reads gitignored root `.env`). `keep_vars` keeps dashboard-only plaintext vars across deploys; encrypted Secrets already survive deploy.
 
@@ -196,7 +196,7 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 | `STRIPE_WEBHOOK_SECRET` | **Yes (Phase 6 staging+)** | 6+ | Stripe webhook signing secret |
 | `STRIPE_PRICE_ID_BASIC_BERLIN` | **Yes (Phase 6 staging+)** | 6+ | Stripe price ID for Basic Berlin plan |
 | `RESEND_API_KEY` | **Yes (Phase 6 staging+)** | 6+ | Resend API key for transactional email |
-| `DAILY_CODES_FROM_EMAIL` | **Yes (Phase 6 staging+)** | 6+ | Sender address for booking confirmation + daily code emails |
+| `DAILY_CODES_FROM_EMAIL` | **Yes (Phase 6 staging+)** | 6+ | Sender address for booking confirmation, waitlist, daily codes, and subscription invoice emails |
 | `SENTRY_DSN` | — | 8+ (optional) | Server-side Sentry via `@sentry/cloudflare` — PII-free; app boots when unset. Not gated by cookie consent. |
 
 ### Cloudflare R2 (Phase 4)
@@ -763,7 +763,7 @@ Handler: `packages/billing/src/webhooks.ts` via `POST /api/webhooks/stripe`.
 | Event | Purpose |
 |---|---|
 | `checkout.session.completed` | Activate membership + credits after Checkout (**required** for subscribe) |
-| `invoice.paid` | Credit refill on subscription renewals (`subscription_cycle` only) |
+| `invoice.paid` | Split by `billing_reason`: `subscription_cycle` → credit refill on renewals; `subscription_create` → Unveiled invoice email with Stripe PDF (no second refill) |
 | `invoice.payment_failed` | Mark subscription `PAST_DUE` |
 | `customer.subscription.updated` | Sync status / cancel-at-period-end / period end |
 | `customer.subscription.deleted` | Tear down canceled subscription → `INACTIVE` + credit expiry |
@@ -772,7 +772,13 @@ Handler: `packages/billing/src/webhooks.ts` via `POST /api/webhooks/stripe`.
 
 **Staging / production:** Stripe Dashboard → Developers → Webhooks → Add endpoint → URL `https://<host>/api/webhooks/stripe` → select the five events above → copy that endpoint’s signing secret into Workers as `STRIPE_WEBHOOK_SECRET`. Use **test** mode + test keys on staging; **live** mode + live keys + a live-mode webhook on production.
 
-### Demo accounts / subscription notes
+#### Disable Stripe customer invoice/receipt emails (test + live)
+
+Unveiled Resend is the product receipt (Stripe invoice PDF attached). If Dashboard customer emails stay on, members get **two** invoices.
+
+In **both** the test-mode and live-mode Stripe Dashboards: Settings → Billing emails / Customer emails — turn **off** customer-facing invoices, receipts, and successful-payment emails. Exact labels may shift; the intent is no Stripe-hosted invoice/receipt to the member. Do **not** change webhook event selection for this.
+
+#### Demo accounts / subscription notes
 
 1. **Inactive member (Checkout)** — fresh signup → onboarding → lands on `/:locale/membership` with `INACTIVE` + 17 starter credits; use test card to activate.
 2. **Active member (booking-only demos)** — after webhook activation, or seed `subscriptions.status = 'ACTIVE'` + credits for local Playwright (`e2e/fixtures/billing.ts`). Prefer Checkout on staging for the client script.
@@ -782,11 +788,12 @@ Handler: `packages/billing/src/webhooks.ts` via `POST /api/webhooks/stripe`.
 
 1. Sign up → complete onboarding → `/membership` shows checkout CTA.
 2. Start Checkout → pay with `4242…` → webhook sets `ACTIVE` and refills credits to 17.
-3. Open a seeded upcoming event → **Tickets buchen** → confirm booking.
-4. Confirm page shows redemption code + copy + `.ics` download; `/bookings` lists the ticket.
-5. In Resend dashboard, confirm booking email with `.ics` attachment (when `RESEND_*` set).
-6. **Ticket redemption (after `seed:demo -- --reset`):** book a `SECRET_CODE` seed event → codes masked on confirm / My Tickets → reveal/hide works; book **Demo: Promo Code Inventory Night** ×2 → two masked promo rows; book **Demo: PDF Voucher Inventory Night** ×2 → two PDF downloads succeed while logged in (guest denied). Or create one admin event per type and stock inventory manually.
-7. **Stop** — do not start Phase 7 (waitlist / profile billing) in this release. Email PDF attachments remain out of scope (in-app download only).
+3. In Resend dashboard, confirm the subscription invoice email with a PDF named `invoice-*.pdf` (when `RESEND_*` set).
+4. Open a seeded upcoming event → **Tickets buchen** → confirm booking.
+5. Confirm page shows redemption code + copy + `.ics` download; `/bookings` lists the ticket.
+6. In Resend dashboard, confirm booking email with `.ics` attachment (when `RESEND_*` set).
+7. **Ticket redemption (after `seed:demo -- --reset`):** book a `SECRET_CODE` seed event → codes masked on confirm / My Tickets → reveal/hide works; book **Demo: Promo Code Inventory Night** ×2 → two masked promo rows; book **Demo: PDF Voucher Inventory Night** ×2 → two PDF downloads succeed while logged in (guest denied). Or create one admin event per type and stock inventory manually.
+8. **Stop** — do not start Phase 7 (waitlist / profile billing) in this release. Event **voucher** PDF attachments remain out of scope for email (in-app download only).
 
 ### Playwright (Phase 6)
 
@@ -983,9 +990,9 @@ Use before promoting a production Workers host (replace staging origin with prod
 1. **Neon Postgres** — Production branch/project; ensure production `DATABASE_URL` is a **Build** variable so `bun run build` migrates schema; decide empty vs curated catalog (prefer curated seed or admin-created venues — avoid demo-only junk).
 2. **Neon Auth** — Production `AUTH_URL`; add production origin to **trusted domains** (exact URL, no trailing slash); enable Admin plugin + `user.deleteUser` for GDPR disable paths. MVP auth is email/password only — do not require Google OAuth.
 3. **Worker secrets / vars** — `DATABASE_URL`, `AUTH_URL`, `SITE_URL` (production origin); six public R2 vars + `IMAGE_PUBLIC_BASE_URL`; `S3_PRIVATE_BUCKET` (+ optional `S3_PRIVATE_*`); Stripe **live** keys + `STRIPE_PRICE_ID_BASIC_BERLIN` + webhook secret; `RESEND_API_KEY` + `DAILY_CODES_FROM_EMAIL` (verified domain); optional `SENTRY_DSN`. Prefer secrets over committed `[vars]` for credentials.
-4. **Stripe** — Live mode Checkout + Customer Portal (cancel at period end); webhook endpoint → `https://<prod>/api/webhooks/stripe` with events: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted` (see [Stripe webhook setup](#stripe-webhook-setup-dashboard--local)).
+4. **Stripe** — Live mode Checkout + Customer Portal (cancel at period end); webhook endpoint → `https://<prod>/api/webhooks/stripe` with events: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted` (see [Stripe webhook setup](#stripe-webhook-setup-dashboard--local)). Turn **off** live-mode customer invoice/receipt emails (see [Disable Stripe customer invoice/receipt emails](#disable-stripe-customer-invoicereceipt-emails-test--live)).
 5. **R2** — Production public catalog bucket + public read base URL; separate **private** assets bucket (`S3_PRIVATE_BUCKET`, no public access); CORS if needed for uploads; backfill `vouchers/` if migrating from a shared public bucket.
-6. **Resend** — Domain/from verification; send a booking confirmation on staging/prod smoke.
+6. **Resend** — Domain/from verification; send a booking confirmation and a first-paid-subscription invoice (PDF) on staging/prod smoke. Confirm Stripe customer invoice/receipt emails are off in live mode.
 7. **DNS / Cloudflare** — Custom domain route to Worker; TLS; confirm `SITE_URL` matches browser origin (Auth + Stripe return URLs).
 8. **Admin provisioning** — Create ADMIN out-of-band (SQL promote or Neon Auth admin). **Do not** set `ADMIN_PROMOTE_EMAILS` on production.
 9. **Sentry** — Optional; create project, set `SENTRY_DSN`, redeploy; confirm boot without DSN still works.

@@ -157,6 +157,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `booking.feature` | Members cannot self-cancel or self-refund | `e2e/specs/booking.spec.ts` · `Scenario: Members cannot self-cancel or self-refund` | `pass` |  |
 | `credits-subscription.feature` | New signups start inactive with starter credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: New signups start inactive with starter credits` | `pass` |  |
 | `credits-subscription.feature` | Activating a subscription via real Stripe Checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Activating a subscription via real Stripe Checkout` | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
+| `credits-subscription.feature` | Subscription invoice email after first successful payment | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Subscription invoice email after first successful payment` | `skip` | No inbox harness; staging Resend checklist; unit tests in `@unveiled/email`, `@unveiled/billing`, `apps/web/app/lib/subscription-invoice-email.test.ts` |
 | `credits-subscription.feature` | Checkout blocked while frozen | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Checkout blocked while frozen` | `pass` | Seeds `UNPAID` |
 | `credits-subscription.feature` | Already-active member revisits checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Already-active member revisits checkout` | `pass` |  |
 | `credits-subscription.feature` | Failed payment marks the account past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Failed payment marks the account past due` | `pass` | Seeds `PAST_DUE` + book gate; full Stripe fail = staging webhook |
@@ -306,6 +307,7 @@ All 11 top-level MVP `docs/product/features/*.feature` files are mapped above to
 | Scenario | Status | Owner / reason |
 |---|---|---|
 | Stripe Checkout activation | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
+| Subscription invoice email after first successful payment | `skip` | No inbox harness; staging Resend |
 | Monthly renewal / no rollover | `skip` | Billing package + webhook tests |
 | Booking confirmation email | `skip` | No inbox harness; staging Resend |
 | Idempotent retry / waitlist queue order | `skip` | Covered by package integration tests |

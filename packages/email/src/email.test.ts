@@ -3,9 +3,11 @@ import { describe, expect, test } from "bun:test";
 import {
   buildBookingConfirmationContent,
   buildEventIcs,
+  buildSubscriptionInvoiceContent,
   buildWaitlistPromotionContent,
   formatIcsUtc,
   sendBookingConfirmation,
+  sendSubscriptionInvoice,
   sendWaitlistPromotion,
 } from "./index";
 
@@ -197,5 +199,140 @@ describe("sendWaitlistPromotion", () => {
     };
     expect(body.subject).toContain("Waitlist");
     expect(body.attachments[0]?.filename).toBe("event.ics");
+  });
+});
+
+const INVOICE_SITE_URL = "https://example.test";
+
+const EN_INVOICE_LINKS = [
+  `${INVOICE_SITE_URL}/en/events`,
+  `${INVOICE_SITE_URL}/en/bookings`,
+  `${INVOICE_SITE_URL}/en/profile/billing`,
+  `${INVOICE_SITE_URL}/en/how-it-works`,
+  `${INVOICE_SITE_URL}/en/faq`,
+] as const;
+
+const DE_INVOICE_LINKS = [
+  `${INVOICE_SITE_URL}/de/events`,
+  `${INVOICE_SITE_URL}/de/bookings`,
+  `${INVOICE_SITE_URL}/de/profile/billing`,
+  `${INVOICE_SITE_URL}/de/how-it-works`,
+  `${INVOICE_SITE_URL}/de/faq`,
+] as const;
+
+describe("subscription invoice content", () => {
+  test("builds EN invoice with instructions and site links", () => {
+    const content = buildSubscriptionInvoiceContent({
+      locale: "en",
+      siteUrl: INVOICE_SITE_URL,
+    });
+
+    expect(content.subject).toBe("Your Unveiled Berlin invoice");
+
+    for (const body of [content.text, content.html]) {
+      expect(body).toContain("membership is active");
+      expect(body).toContain("Basic Berlin");
+      expect(body).toContain("29€/month");
+      expect(body).toContain("17 per month");
+      expect(body).toContain("unused credits do not roll over");
+      expect(body).toContain("Your invoice is attached as a PDF.");
+      expect(body).toContain("support@unveiled.berlin");
+      for (const link of EN_INVOICE_LINKS) {
+        expect(body).toContain(link);
+      }
+    }
+
+    expect(content.html).toContain(`href="${EN_INVOICE_LINKS[0]}"`);
+    expect(content.html).toContain('href="mailto:support@unveiled.berlin"');
+  });
+
+  test("builds DE invoice with instructions and site links", () => {
+    const content = buildSubscriptionInvoiceContent({
+      locale: "de",
+      siteUrl: INVOICE_SITE_URL,
+    });
+
+    expect(content.subject).toBe("Deine Unveiled Berlin Rechnung");
+
+    for (const body of [content.text, content.html]) {
+      expect(body).toContain("Mitgliedschaft ist aktiv");
+      expect(body).toContain("Basic Berlin");
+      expect(body).toContain("29€/Monat");
+      expect(body).toContain("17 pro Monat");
+      expect(body).toContain("ungenutzte Credits verfallen");
+      expect(body).toContain("Deine Rechnung ist als PDF angehängt.");
+      expect(body).toContain("support@unveiled.berlin");
+      for (const link of DE_INVOICE_LINKS) {
+        expect(body).toContain(link);
+      }
+    }
+
+    expect(content.html).toContain(`href="${DE_INVOICE_LINKS[0]}"`);
+    expect(content.html).toContain('href="mailto:support@unveiled.berlin"');
+  });
+});
+
+describe("sendSubscriptionInvoice", () => {
+  test("posts to Resend with caller-supplied PDF without live network", async () => {
+    const pdfBase64 = "JVBERi0xLjQK";
+    const calls: Array<{ url: string; body: string }> = [];
+    const result = await sendSubscriptionInvoice({
+      apiKey: "re_test",
+      from: "codes@unveiled.berlin",
+      toEmail: "member@example.com",
+      locale: "en",
+      siteUrl: INVOICE_SITE_URL,
+      pdfBase64,
+      pdfFilename: "invoice-in_test.pdf",
+      fetchImpl: async (url, init) => {
+        calls.push({ url, body: String(init?.body ?? "") });
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ id: "email_invoice" }),
+        };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.id).toBe("email_invoice");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe("https://api.resend.com/emails");
+    const body = JSON.parse(calls[0]?.body ?? "{}") as {
+      attachments: Array<{ filename: string; content: string; content_type?: string }>;
+      subject: string;
+      to: string[];
+    };
+    expect(body.subject).toBe("Your Unveiled Berlin invoice");
+    expect(body.to).toEqual(["member@example.com"]);
+    expect(body.attachments).toHaveLength(1);
+    expect(body.attachments[0]?.filename).toBe("invoice-in_test.pdf");
+    expect(body.attachments[0]?.content).toBe(pdfBase64);
+    expect(body.attachments[0]?.content_type).toBe("application/pdf");
+  });
+
+  test("forwards Idempotency-Key when provided", async () => {
+    const headers: Array<Record<string, string> | undefined> = [];
+    const result = await sendSubscriptionInvoice({
+      apiKey: "re_test",
+      from: "codes@unveiled.berlin",
+      toEmail: "member@example.com",
+      locale: "en",
+      siteUrl: INVOICE_SITE_URL,
+      pdfBase64: "JVBERi0xLjQK",
+      pdfFilename: "invoice-in_test.pdf",
+      idempotencyKey: "in_test",
+      fetchImpl: async (_url, init) => {
+        headers.push(init?.headers);
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ id: "email_idem" }),
+        };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(headers[0]?.["Idempotency-Key"]).toBe("in_test");
   });
 });

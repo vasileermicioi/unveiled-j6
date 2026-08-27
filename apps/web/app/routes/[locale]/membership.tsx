@@ -97,6 +97,7 @@ export const POST = createRoute(async (c) => {
       priceId,
       userId,
       customerEmail: session.user.email,
+      locale,
       stripeCustomerId: subscription?.stripeCustomerId,
       successUrl: `${siteUrl}/${locale}/events?checkout=success`,
       cancelUrl: `${siteUrl}/${locale}/membership?checkout=cancelled`,

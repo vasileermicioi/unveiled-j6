@@ -68,6 +68,13 @@ test.describe("credits-subscription.feature", () => {
     await expect(page).toHaveURL(/stripe\.com/);
   });
 
+  test("Scenario: Subscription invoice email after first successful payment", async () => {
+    test.skip(
+      true,
+      "No email capture harness in Playwright; assert via Resend dashboard on staging smoke (DEPLOYMENT.md Phase 6)",
+    );
+  });
+
   test("Scenario: Checkout blocked while frozen", async ({ page, locale }) => {
     test.skip(!hasDatabaseUrl(), "DATABASE_URL required to seed UNPAID");
 

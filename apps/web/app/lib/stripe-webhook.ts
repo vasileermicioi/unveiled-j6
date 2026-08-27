@@ -8,6 +8,7 @@
  * - STRIPE_PUBLISHABLE_KEY (reserved for future client use)
  * - SITE_URL
  * - DATABASE_URL
+ * - RESEND_API_KEY / DAILY_CODES_FROM_EMAIL (invoice email; skip if unset)
  */
 import { applyStripeEvent, constructStripeEvent, createStripeClient } from "@unveiled/billing";
 import { createTxDb } from "@unveiled/db";
@@ -15,6 +16,11 @@ import type { Context } from "hono";
 import type Stripe from "stripe";
 
 import { type RuntimeEnv, resolveEnvVarFromContext } from "./runtime-env";
+import { getSiteUrl } from "./site-config";
+import {
+  lookupMemberByStripeSubscriptionId as lookupInvoiceEmailMember,
+  maybeSendSubscriptionInvoiceEmail,
+} from "./subscription-invoice-email";
 
 export async function stripeWebhookHandler(c: Context<{ Bindings: RuntimeEnv }>) {
   const secretKey = resolveEnvVarFromContext(c, "STRIPE_SECRET_KEY");
@@ -43,7 +49,24 @@ export async function stripeWebhookHandler(c: Context<{ Bindings: RuntimeEnv }>)
   const db = createTxDb(databaseUrl);
   try {
     const result = await applyStripeEvent(db, event, { stripe });
-    return c.json({ received: true, ...result }, 200);
+    try {
+      const invoiceEmail = await maybeSendSubscriptionInvoiceEmail({
+        event,
+        stripe,
+        apiKey: resolveEnvVarFromContext(c, "RESEND_API_KEY"),
+        from: resolveEnvVarFromContext(c, "DAILY_CODES_FROM_EMAIL"),
+        siteUrl: getSiteUrl(),
+        lookupMemberByStripeSubscriptionId: (stripeSubscriptionId) =>
+          lookupInvoiceEmailMember(db, stripeSubscriptionId),
+      });
+      if (invoiceEmail.status === "retry") {
+        return c.json({ received: true, ...result, invoiceEmail }, 500);
+      }
+      return c.json({ received: true, ...result, invoiceEmail }, 200);
+    } catch (error) {
+      console.error("subscription invoice email threw after apply", error);
+      return c.json({ received: true, ...result, error: "Invoice email send failed" }, 500);
+    }
   } catch (error) {
     console.error("stripe webhook apply failed", error);
     return c.json({ error: "Webhook handler failed" }, 500);

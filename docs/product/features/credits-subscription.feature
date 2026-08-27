@@ -21,6 +21,10 @@
 #     — no à la carte credit purchases, no referral program). EXPIRY is now a real, used type (monthly
 #     forfeiture + cancellation forfeiture). REFUND is kept as a real, used type (admin support gesture,
 #     decoupled from booking cancellation — see booking.feature).
+#   - First successful subscription payment: DECIDED: send a branded Unveiled transactional email via
+#     Resend with the Stripe invoice PDF attached (`invoice.paid` + `billing_reason` `subscription_create`
+#     only). Renewal / `subscription_cycle` invoices do not send this email. Operators MUST disable Stripe
+#     Dashboard customer invoice/receipt emails in test and live so members are not double-mailed.
 
 Feature: Credits and Subscription
   As a member
@@ -42,6 +46,13 @@ Feature: Credits and Subscription
     And my subscription status becomes "ACTIVE"
     And a "SUBSCRIPTION_REFILL" ledger entry of +17 credits is recorded
     And I am routed to the events feed
+
+  Scenario: Subscription invoice email after first successful payment
+    When I complete Stripe Checkout successfully for the Basic Berlin plan
+    And Stripe reports the first subscription invoice as paid
+    Then I receive an email with the Stripe invoice PDF attached
+    And the email includes basic instructions and links to events, My Tickets, billing, how-it-works, FAQ, and support
+    And unused credits are described as not rolling over
 
   Scenario: Checkout blocked while frozen
     Given my subscription status is "UNPAID" (frozen by an admin)

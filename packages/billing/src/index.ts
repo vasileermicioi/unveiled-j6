@@ -33,7 +33,7 @@
 
 export type { CancelSubscriptionAtPeriodEndInput } from "./cancel-subscription";
 export { cancelSubscriptionAtPeriodEnd } from "./cancel-subscription";
-export type { CreateCheckoutSessionInput } from "./checkout";
+export type { CheckoutLocale, CreateCheckoutSessionInput } from "./checkout";
 export {
   BASIC_BERLIN_PLAN,
   createCheckoutSession,
@@ -46,6 +46,13 @@ export {
   isFreezeMemberError,
   unfreezeMember,
 } from "./freeze-member";
+export type {
+  DownloadStripeInvoicePdfInput,
+  DownloadStripeInvoicePdfReason,
+  DownloadStripeInvoicePdfResult,
+  InvoicePdfFetchImpl,
+} from "./invoice-pdf";
+export { downloadStripeInvoicePdf } from "./invoice-pdf";
 export type { BillingPackageId } from "./package-id";
 export { BILLING_PACKAGE } from "./package-id";
 export type { CreateBillingPortalSessionInput } from "./portal";

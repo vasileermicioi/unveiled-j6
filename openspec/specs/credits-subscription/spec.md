@@ -16,11 +16,15 @@ The system SHALL persist credit movements in `public.credit_ledger` with `user_i
 - **THEN** its `type` is one of `SUBSCRIPTION_REFILL`, `BOOKING`, `EXPIRY`, `REFUND`, or `ADMIN_ADJUST` (not `PURCHASE` or `REFERRAL_BONUS`)
 
 ### Requirement: Real Stripe Checkout activation
-The system SHALL start a Stripe Checkout Session for the Basic Berlin price when a signed-in member with a non-frozen, non-active subscription submits the membership checkout action, and SHALL activate the subscription only after a verified Stripe webhook confirms success. Checkout Session creation SHALL omit `payment_method_types` so Stripe dynamic payment methods apply. Activation SHALL set subscription status to `ACTIVE`, record a `SUBSCRIPTION_REFILL` ledger entry of +17, set the member credit balance to exactly 17 (forfeiting any prior balance via `EXPIRY` when needed), store Stripe customer/subscription identifiers, and allow the member to proceed to the events feed after Checkout return.
+The system SHALL start a Stripe Checkout Session for the Basic Berlin price when a signed-in member with a non-frozen, non-active subscription submits the membership checkout action, and SHALL activate the subscription only after a verified Stripe webhook confirms success. Checkout Session creation SHALL omit `payment_method_types` so Stripe dynamic payment methods apply. Activation SHALL set subscription status to `ACTIVE`, record a `SUBSCRIPTION_REFILL` ledger entry of +17, set the member credit balance to exactly 17 (forfeiting any prior balance via `EXPIRY` when needed), store Stripe customer/subscription identifiers, and allow the member to proceed to the events feed after Checkout return. Checkout SHALL copy the membership page locale (`de` | `en`) into `subscription_data.metadata.locale` (in addition to existing `userId` metadata) so the invoice email can be localized without a request URL.
 
 #### Scenario: Activating a subscription via real Stripe Checkout
 - **WHEN** Checkout completes successfully and `checkout.session.completed` (or an equivalent confirmed subscription event) is verified
 - **THEN** subscription status becomes `ACTIVE`, a `SUBSCRIPTION_REFILL` ledger entry of +17 is recorded, and the member can proceed to the events feed
+
+#### Scenario: Checkout stores locale for invoice email
+- **WHEN** a member starts Checkout from `/{locale}/membership`
+- **THEN** the Stripe subscription metadata includes `locale` equal to that route locale
 
 #### Scenario: Checkout blocked while frozen
 - **WHEN** subscription status is `UNPAID`
@@ -181,3 +185,110 @@ The membership page SHALL present plan benefits as a vertical list inside the sa
 #### Scenario: Same presentation after subscribe
 - **WHEN** an `ACTIVE` member views `/:locale/membership`
 - **THEN** the benefits list remains a vertical icon-bullet stack inside the single membership card (not a three-column perk card strip and not a second benefits-only card)
+
+### Requirement: Subscription invoice email content
+The system SHALL be able to build and send a transactional membership invoice email in `de` or `en` via the existing Resend client (`@unveiled/email`), with a single PDF attachment supplied by the caller. The body SHALL include basic next-step instructions and absolute links derived from `SITE_URL` (no trailing slash) plus the email locale. Unused credits SHALL be described as not rolling over. HTML SHALL be simple escaped markup (not HeroUI). Send helpers SHALL return Resend success/failure and MUST NOT throw on HTTP errors.
+
+EN subject SHALL be `Your Unveiled Berlin invoice`. DE subject SHALL be `Deine Unveiled Berlin Rechnung`.
+
+EN text SHALL be (one sentence per line, blank line between blocks; `{SITE_URL}` is the caller-supplied origin):
+
+```
+Your Unveiled Berlin membership is active.
+
+Plan: Basic Berlin — 29€/month
+Credits: 17 per month (unused credits do not roll over)
+
+Your invoice is attached as a PDF.
+
+What to do next:
+1. Browse events: {SITE_URL}/en/events
+2. Book with your credits — tickets and door details land in My Tickets: {SITE_URL}/en/bookings
+3. Manage billing: {SITE_URL}/en/profile/billing
+4. How it works: {SITE_URL}/en/how-it-works
+5. FAQ: {SITE_URL}/en/faq
+
+Support: support@unveiled.berlin
+```
+
+DE text SHALL be:
+
+```
+Deine Unveiled Berlin Mitgliedschaft ist aktiv.
+
+Abo: Basic Berlin — 29€/Monat
+Credits: 17 pro Monat (ungenutzte Credits verfallen)
+
+Deine Rechnung ist als PDF angehängt.
+
+Nächste Schritte:
+1. Events entdecken: {SITE_URL}/de/events
+2. Mit Credits buchen — Tickets und Einlassdetails findest du unter Meine Tickets: {SITE_URL}/de/bookings
+3. Abrechnung verwalten: {SITE_URL}/de/profile/billing
+4. So funktioniert's: {SITE_URL}/de/how-it-works
+5. FAQ: {SITE_URL}/de/faq
+
+Support: support@unveiled.berlin
+```
+
+HTML SHALL be a paragraph-equivalent of the same content with anchor tags on each URL and `mailto:support@unveiled.berlin`.
+
+#### Scenario: EN invoice email includes instructions and site links
+- **WHEN** invoice email content is built with locale `en` and `siteUrl` `https://example.test`
+- **THEN** the subject is `Your Unveiled Berlin invoice`
+- **AND** the text and HTML mention that membership is active, plan **Basic Berlin** at **29€/month**, **17 credits** per month, and that unused credits do not roll over
+- **AND** they include links `https://example.test/en/events`, `https://example.test/en/bookings`, `https://example.test/en/profile/billing`, `https://example.test/en/how-it-works`, `https://example.test/en/faq`
+- **AND** they include `support@unveiled.berlin`
+- **AND** they state that the invoice PDF is attached
+
+#### Scenario: DE invoice email includes instructions and site links
+- **WHEN** invoice email content is built with locale `de` and `siteUrl` `https://example.test`
+- **THEN** the subject is `Deine Unveiled Berlin Rechnung`
+- **AND** the text and HTML mention that the membership is active, plan **Basic Berlin** at **29€/Monat**, **17 Credits** pro Monat, and that unused credits do not roll over (`ungenutzte Credits verfallen` / equivalent no-rollover wording)
+- **AND** they include links `https://example.test/de/events`, `https://example.test/de/bookings`, `https://example.test/de/profile/billing`, `https://example.test/de/how-it-works`, `https://example.test/de/faq`
+- **AND** they include `support@unveiled.berlin`
+- **AND** they state that the invoice PDF is attached
+
+#### Scenario: Send attaches the caller-supplied PDF
+- **WHEN** `sendSubscriptionInvoice` is called with base64 PDF bytes and filename `invoice-in_test.pdf`
+- **THEN** the Resend payload includes one attachment with that filename, those bytes, and content type `application/pdf`
+- **AND** no Stripe API is called from `@unveiled/email`
+
+### Requirement: Invoice PDF email after successful first subscription payment
+The system SHALL, after a verified Stripe `invoice.paid` event whose `billing_reason` is `subscription_create`, download the invoice PDF from Stripe (`invoice.invoice_pdf` on a finalized invoice; always use a freshly retrieved URL) and send the subscription invoice email from `@unveiled/email` with that PDF attached. The send SHALL NOT run for `subscription_cycle` or other billing reasons. Credit ledger and subscription status updates SHALL continue to use the existing `applyStripeEvent` path unchanged. A successful send SHALL be recorded on the Stripe invoice (metadata) so webhook retries do not send a second email. Missing Resend configuration SHALL skip the email and MUST NOT fail activation. Missing `invoice_pdf` SHALL skip and log. Transient download or Resend failures MAY return a 5xx so Stripe retries. Membership Checkout SHALL store the UI locale on Stripe subscription metadata for this email.
+
+#### Scenario: First paid subscription invoice emails the Stripe PDF
+- **WHEN** Stripe delivers a verified `invoice.paid` event with `billing_reason` `subscription_create` and a finalized invoice PDF
+- **AND** `RESEND_API_KEY` and `DAILY_CODES_FROM_EMAIL` are set
+- **THEN** the member receives one email whose attachment is the Stripe invoice PDF
+- **AND** the body uses `SITE_URL` locale links from step 01
+- **AND** subscription activation / credit refill behavior is unchanged from the existing Checkout + webhook path
+
+#### Scenario: Renewal invoices do not send this email
+- **WHEN** Stripe delivers `invoice.paid` with `billing_reason` `subscription_cycle`
+- **THEN** credits refill as today
+- **AND** the subscription invoice email is not sent
+
+#### Scenario: Webhook retry does not duplicate the email
+- **WHEN** the same paid first invoice is delivered again after a successful send
+- **THEN** the system does not send a second email
+
+#### Scenario: Resend unset skips email without failing billing
+- **WHEN** the first invoice is paid but Resend env is unset
+- **THEN** the webhook does not send mail
+- **AND** subscription/ledger application still succeeds
+
+### Requirement: Subscription invoice email is specified and operable
+Product Gherkin, integrations extras, i18n inventory, decisions log, coverage matrix, and `DEPLOYMENT.md` SHALL describe the first-paid-subscription invoice email (Stripe PDF attachment, `SITE_URL` links, DE/EN copy, post-apply send, no renewal send). Staging operators SHALL be told to disable Stripe Dashboard customer invoice/receipt emails to avoid duplicates. Playwright MAY skip inbox assertion with an explicit no-harness reason; unit tests remain the default proof.
+
+#### Scenario: Subscription invoice email after first successful payment
+- **WHEN** I complete Stripe Checkout successfully for the Basic Berlin plan
+- **AND** Stripe reports the first subscription invoice as paid
+- **THEN** I receive an email with the Stripe invoice PDF attached
+- **AND** the email includes basic instructions and links to events, My Tickets, billing, how-it-works, FAQ, and support
+- **AND** unused credits are described as not rolling over
+
+#### Scenario: Operator docs mention invoice email and Stripe Dashboard overlap
+- **WHEN** an operator follows `DEPLOYMENT.md` for Stripe + Resend
+- **THEN** they can confirm the invoice email on a test Checkout
+- **AND** they are instructed to turn off Stripe-hosted customer invoice/receipt emails in the Dashboard
