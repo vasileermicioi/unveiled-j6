@@ -28,6 +28,8 @@ describe("listSalesByEvent (integration)", () => {
     const db = createDb(databaseUrl);
     const suffix = crypto.randomUUID();
     const userId = `sales-user-${suffix}`;
+    const usedUserId = `sales-used-${suffix}`;
+    const outsideUserId = `sales-out-${suffix}`;
     const partnerImage = await createTestImagePrebuilt();
     const eventImageA = await createTestImagePrebuilt();
     const eventImageB = await createTestImagePrebuilt();
@@ -84,13 +86,29 @@ describe("listSalesByEvent (integration)", () => {
     expect(inPeriod.getTime()).toBeLessThan(range.end.getTime());
 
     try {
-      await db.insert(users).values({
-        id: userId,
-        email: `${userId}@example.com`,
-        emailVerified: true,
-        credits: 50,
-        role: "USER",
-      });
+      await db.insert(users).values([
+        {
+          id: userId,
+          email: `${userId}@example.com`,
+          emailVerified: true,
+          credits: 50,
+          role: "USER",
+        },
+        {
+          id: usedUserId,
+          email: `${usedUserId}@example.com`,
+          emailVerified: true,
+          credits: 50,
+          role: "USER",
+        },
+        {
+          id: outsideUserId,
+          email: `${outsideUserId}@example.com`,
+          emailVerified: true,
+          credits: 50,
+          role: "USER",
+        },
+      ]);
 
       await db.insert(bookings).values([
         {
@@ -106,7 +124,7 @@ describe("listSalesByEvent (integration)", () => {
           updatedAt: inPeriod,
         },
         {
-          userId,
+          userId: usedUserId,
           eventId: eventA.id,
           partnerId: partner.id,
           dateTime: eventA.dateTime,
@@ -142,7 +160,7 @@ describe("listSalesByEvent (integration)", () => {
           updatedAt: inPeriod,
         },
         {
-          userId,
+          userId: outsideUserId,
           eventId: eventA.id,
           partnerId: partner.id,
           dateTime: eventA.dateTime,
@@ -196,7 +214,11 @@ describe("listSalesByEvent (integration)", () => {
       expect(csv).toContain(",3\n");
     } finally {
       await db.delete(bookings).where(eq(bookings.userId, userId));
+      await db.delete(bookings).where(eq(bookings.userId, usedUserId));
+      await db.delete(bookings).where(eq(bookings.userId, outsideUserId));
       await db.delete(users).where(eq(users.id, userId));
+      await db.delete(users).where(eq(users.id, usedUserId));
+      await db.delete(users).where(eq(users.id, outsideUserId));
       await deleteEvent(db, eventA.id);
       await deleteEvent(db, eventB.id);
       await deletePartner(db, partner.id);

@@ -1,18 +1,16 @@
 "use client";
 
-import { Button, Label, Link, Paragraph, Surface } from "@heroui/react";
+import { Label, Link, Paragraph, Surface } from "@heroui/react";
 import { useMemo, useState } from "react";
 
 import {
   type CheckoutOccurrence,
-  clampQty,
   formatOccurrenceLabel,
+  occurrenceIsBooked,
   resolveSelectedOccurrence,
-  withQtyAndDateTimeQuery,
+  withDateTimeQuery,
 } from "../lib/checkout-slot";
 import type { Locale } from "../lib/locale";
-
-const MIN_QTY = 1;
 
 export type CheckoutPrimaryAction =
   | { type: "book"; bookPath: string; label: string }
@@ -27,37 +25,33 @@ export type CheckoutSecondaryAction = {
 export type EventDetailCheckoutCardProps = {
   locale: Locale;
   creditPrice: number;
-  /** Inclusive upper bound for +/− controls (eligible: credits ∩ capacity). */
-  maxQty: number;
-  ticketsLabel: string;
   totalLabel: string;
   noticeText: string | null;
   policyText: string;
+  /** Eligible-member chrome: datetime select (when ≥2 slots) + one-ticket credit total. */
   showTicketControls: boolean;
   /** Credit total row — booking-eligible members only; guests omit pricing chrome. */
   showCreditTotal?: boolean;
-  defaultQty?: number;
   statusMessage?: string | null;
   primaryAction: CheckoutPrimaryAction | null;
   secondaryAction?: CheckoutSecondaryAction | null;
-  decreaseAriaLabel: string;
-  increaseAriaLabel: string;
   /** Future occurrences for eligible members. Omit for guests. */
   occurrences?: CheckoutOccurrence[];
   defaultDateTimeIso?: string;
   datetimeLabel?: string;
+  /** Active booked occurrence ISOs for the eligible member; overlay is per selected hour. */
+  bookedOccurrenceIsos?: string[];
+  alreadyBookedMessage?: string;
+  myTicketsHref?: string;
+  myTicketsLabel?: string;
 };
 
-function resolvePrimaryHref(
-  action: CheckoutPrimaryAction,
-  qty: number,
-  dateTimeIso?: string,
-): string {
+function resolvePrimaryHref(action: CheckoutPrimaryAction, dateTimeIso?: string): string {
   if (action.type === "book") {
-    return withQtyAndDateTimeQuery(action.bookPath, qty, dateTimeIso);
+    return withDateTimeQuery(action.bookPath, dateTimeIso);
   }
   if (action.type === "login") {
-    const returnTo = withQtyAndDateTimeQuery(action.returnPath, qty);
+    const returnTo = withDateTimeQuery(action.returnPath);
     return `${action.loginPath}?returnTo=${encodeURIComponent(returnTo)}`;
   }
   return action.href;
@@ -70,37 +64,45 @@ function formatCreditsTotal(total: number): string {
 export default function EventDetailCheckoutCard({
   locale,
   creditPrice,
-  maxQty,
-  ticketsLabel,
   totalLabel,
   noticeText,
   policyText,
   showTicketControls,
   showCreditTotal = false,
-  defaultQty = 1,
   statusMessage = null,
   primaryAction,
   secondaryAction = null,
-  decreaseAriaLabel,
-  increaseAriaLabel,
   occurrences = [],
   defaultDateTimeIso,
   datetimeLabel,
+  bookedOccurrenceIsos = [],
+  alreadyBookedMessage,
+  myTicketsHref,
+  myTicketsLabel,
 }: EventDetailCheckoutCardProps) {
   const [selectedIso, setSelectedIso] = useState(
     () => resolveSelectedOccurrence(occurrences, defaultDateTimeIso)?.startsAtIso,
   );
   const selected = resolveSelectedOccurrence(occurrences, selectedIso ?? defaultDateTimeIso);
   const slotPrice = selected?.creditPrice ?? creditPrice;
-  const slotMaxQty = selected?.maxQty ?? maxQty;
-  const [qty, setQty] = useState(() => clampQty(defaultQty, slotMaxQty));
-  const clampedQty = clampQty(qty, slotMaxQty);
-  const total = clampedQty * slotPrice;
+  const total = slotPrice;
   const dateTimeIso = selected?.startsAtIso;
-  const primaryHref = primaryAction
-    ? resolvePrimaryHref(primaryAction, clampedQty, dateTimeIso)
+  const overlayAlreadyBooked =
+    showTicketControls &&
+    alreadyBookedMessage != null &&
+    myTicketsHref != null &&
+    myTicketsLabel != null &&
+    occurrenceIsBooked(dateTimeIso, bookedOccurrenceIsos);
+  const overlayPrimaryAction: CheckoutPrimaryAction | null = overlayAlreadyBooked
+    ? { type: "link", href: myTicketsHref, label: myTicketsLabel }
+    : primaryAction;
+  const overlaySecondaryAction = overlayAlreadyBooked ? null : secondaryAction;
+  const overlayNoticeText = overlayAlreadyBooked ? null : noticeText;
+  const overlayStatusMessage = overlayAlreadyBooked ? alreadyBookedMessage : statusMessage;
+  const overlayShowCreditTotal = overlayAlreadyBooked ? false : showCreditTotal;
+  const primaryHref = overlayPrimaryAction
+    ? resolvePrimaryHref(overlayPrimaryAction, dateTimeIso)
     : null;
-  const increaseDisabled = slotMaxQty < MIN_QTY || clampedQty >= slotMaxQty;
   const showDatetimeSelect = occurrences.length >= 2;
   const datetimeSelectId = "event-detail-checkout-datetime";
 
@@ -127,12 +129,7 @@ export default function EventDetailCheckoutCard({
                 className="event-feed-filters__select"
                 id={datetimeSelectId}
                 onChange={(event) => {
-                  const nextIso = event.currentTarget.value;
-                  setSelectedIso(nextIso);
-                  const next = resolveSelectedOccurrence(occurrences, nextIso);
-                  if (next) {
-                    setQty((current) => clampQty(current, next.maxQty));
-                  }
+                  setSelectedIso(event.currentTarget.value);
                 }}
                 value={selected?.startsAtIso ?? options[0]?.startsAtIso}
               >
@@ -144,31 +141,7 @@ export default function EventDetailCheckoutCard({
               </select>
             </Surface>
           ) : null}
-          <Surface className="event-detail--checkout__row" variant="transparent">
-            <Paragraph className="event-detail--checkout__row-label">{ticketsLabel}</Paragraph>
-            <Surface className="event-detail--checkout__qty" variant="transparent">
-              <Button
-                aria-label={decreaseAriaLabel}
-                className="event-detail--checkout__qty-btn"
-                isDisabled={clampedQty <= MIN_QTY}
-                onPress={() => setQty((current) => clampQty(current - 1, slotMaxQty))}
-                type="button"
-              >
-                −
-              </Button>
-              <Paragraph className="event-detail--checkout__qty-value">{clampedQty}</Paragraph>
-              <Button
-                aria-label={increaseAriaLabel}
-                className="event-detail--checkout__qty-btn"
-                isDisabled={increaseDisabled}
-                onPress={() => setQty((current) => clampQty(current + 1, slotMaxQty))}
-                type="button"
-              >
-                +
-              </Button>
-            </Surface>
-          </Surface>
-          {showCreditTotal ? (
+          {overlayShowCreditTotal ? (
             <>
               <Surface className="event-detail--checkout__divider" variant="transparent">
                 <Paragraph className="sr-only">—</Paragraph>
@@ -184,31 +157,31 @@ export default function EventDetailCheckoutCard({
         </>
       ) : null}
 
-      {statusMessage ? (
-        <Paragraph className="event-detail--checkout__status">{statusMessage}</Paragraph>
+      {overlayStatusMessage ? (
+        <Paragraph className="event-detail--checkout__status">{overlayStatusMessage}</Paragraph>
       ) : null}
 
-      {noticeText ? (
+      {overlayNoticeText ? (
         <Surface className="event-detail--checkout__notice" variant="transparent">
-          <Paragraph className="event-detail--checkout__notice-text">{noticeText}</Paragraph>
+          <Paragraph className="event-detail--checkout__notice-text">{overlayNoticeText}</Paragraph>
         </Surface>
       ) : null}
 
-      {primaryHref && primaryAction ? (
+      {primaryHref && overlayPrimaryAction ? (
         <Link
           className="button button--primary button--md event-detail--checkout__cta"
           href={primaryHref}
         >
-          {primaryAction.label}
+          {overlayPrimaryAction.label}
         </Link>
       ) : null}
 
-      {secondaryAction ? (
+      {overlaySecondaryAction ? (
         <Link
           className="button button--secondary button--md event-detail--checkout__cta"
-          href={secondaryAction.href}
+          href={overlaySecondaryAction.href}
         >
-          {secondaryAction.label}
+          {overlaySecondaryAction.label}
         </Link>
       ) : null}
 

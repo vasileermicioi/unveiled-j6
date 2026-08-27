@@ -10,9 +10,9 @@
  *
  * Never mark PROMOTED before booking succeeds. Retries are safe via the idempotency key.
  *
- * Queue: WAITING entries ordered by created_at ASC. Entries whose requestedQty does not
- * fit remaining capacity are left WAITING without skipped_once; later smaller requests
- * may still be attempted (earliest eligible whose qty fits).
+ * Queue: WAITING entries ordered by created_at ASC. Promotion always books one
+ * ticket, so an entry fits when remaining capacity is at least 1. Historical
+ * `requested_qty > 1` does not skip the entry when a single seat is free.
  */
 import { asc, eq } from "drizzle-orm";
 
@@ -54,11 +54,6 @@ export async function processWaitlistForEvent(
   for (const entry of waiting) {
     if (remaining <= 0) {
       return { promoted, skippedEntryIds, stoppedReason: "CAPACITY" };
-    }
-
-    // Qty does not fit yet — leave WAITING, do not set skipped_once; try later entries.
-    if (entry.requestedQty > remaining) {
-      continue;
     }
 
     const outcome = await promoteWaitlistEntry(db, entry.id);

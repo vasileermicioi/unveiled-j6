@@ -2,6 +2,8 @@ import {
   addFeaturedEvent,
   addFeaturedPartner,
   berlinInclusiveDateRange,
+  bookings,
+  bookingTickets,
   CatalogValidationError,
   createDb,
   ensureVoucherInventoryAvailable,
@@ -21,6 +23,8 @@ import {
   removeFeaturedPartner,
 } from "@unveiled/db";
 import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
+
+import { getUserIdByEmail } from "./billing";
 
 /**
  * Resolve a demo partner id for GET `partnerId=` filters.
@@ -240,6 +244,8 @@ export async function createPricedSlotEvent(options?: {
       weekday: morning.getDay(),
       occurrenceCreditPrices: [morningPrice, eveningPrice],
       creditPrice: morningPrice,
+      capacityMode: "SHARED",
+      occurrenceCapacities: [20, 20],
       totalCapacity: 20,
       remainingCapacity: 20,
       ticketType: "SECRET_CODE",
@@ -476,4 +482,43 @@ export async function withGalleryImageCredit(
   } finally {
     await db.update(images).set({ credit: previous }).where(eq(images.id, first.imageId));
   }
+}
+
+/**
+ * Insert a historical CONFIRMED booking with tickets_count > 1 (cannot be created via checkout).
+ * Used for grandfathered multi-ticket display on My Tickets.
+ */
+export async function seedGrandfatheredPromoBooking(email: string, title: string): Promise<void> {
+  const db = createDb(requireDatabaseUrl());
+  const userId = await getUserIdByEmail(email);
+  const eventId = await getEventIdByTitle(title);
+  const event = await getEventById(db, eventId);
+  if (!event) {
+    throw new Error(`Event not found: ${title}`);
+  }
+
+  const [booking] = await db
+    .insert(bookings)
+    .values({
+      userId,
+      eventId: event.id,
+      partnerId: event.partnerId,
+      ticketsCount: 2,
+      totalCredits: event.creditPrice * 2,
+      dateTime: event.dateTime,
+      status: "CONFIRMED",
+      redemptionType: "VOUCHER_PROMO",
+      redemptionInfo: "E2E-GRANDFATHER-1",
+      idempotencyKey: `e2e-grandfather-${crypto.randomUUID()}`,
+    })
+    .returning();
+
+  if (!booking) {
+    throw new Error("Failed to insert grandfathered promo booking");
+  }
+
+  await db.insert(bookingTickets).values([
+    { bookingId: booking.id, ordinal: 1, redemptionCode: "E2E-GRANDFATHER-1" },
+    { bookingId: booking.id, ordinal: 2, redemptionCode: "E2E-GRANDFATHER-2" },
+  ]);
 }

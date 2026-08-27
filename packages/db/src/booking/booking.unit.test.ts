@@ -66,16 +66,16 @@ describe("booking eligibility", () => {
     expect(() => assertBookingEligible("PAST_DUE")).toThrow(BookingError);
   });
 
-  test("assertValidTicketCount allows integers >= 1 including above 3", () => {
+  test("assertValidTicketCount requires exactly 1", () => {
     expect(() => assertValidTicketCount(1)).not.toThrow();
-    expect(() => assertValidTicketCount(4)).not.toThrow();
+    expect(() => assertValidTicketCount(4)).toThrow(BookingError);
     expect(() => assertValidTicketCount(0)).toThrow(BookingError);
     expect(() => assertValidTicketCount(1.5)).toThrow(BookingError);
   });
 });
 
 describe("maxBookableTickets", () => {
-  test("guest preview capped at 3", () => {
+  test("guest preview is 0 or 1 (no cap of 3)", () => {
     expect(
       maxBookableTickets({
         viewerKind: "guest",
@@ -83,10 +83,18 @@ describe("maxBookableTickets", () => {
         creditPrice: 1,
         remainingCapacity: 50,
       }),
-    ).toBe(3);
+    ).toBe(1);
+    expect(
+      maxBookableTickets({
+        viewerKind: "guest",
+        credits: 100,
+        creditPrice: 1,
+        remainingCapacity: 0,
+      }),
+    ).toBe(0);
   });
 
-  test("signed-in follows credits and capacity", () => {
+  test("signed-in follows credits and capacity then clamps to 1", () => {
     expect(
       maxBookableTickets({
         viewerKind: "signed-in",
@@ -94,7 +102,7 @@ describe("maxBookableTickets", () => {
         creditPrice: 2,
         remainingCapacity: 10,
       }),
-    ).toBe(8);
+    ).toBe(1);
   });
 
   test("signed-in respects available inventory when provided", () => {
@@ -106,7 +114,7 @@ describe("maxBookableTickets", () => {
         remainingCapacity: 10,
         availableInventory: 3,
       }),
-    ).toBe(3);
+    ).toBe(1);
   });
 
   test("signed-in zero credits yields 0", () => {
@@ -128,7 +136,7 @@ describe("maxBookableTickets", () => {
         creditPrice: 0,
         remainingCapacity: 6,
       }),
-    ).toBe(6);
+    ).toBe(1);
   });
 
   test("signed-in creditPrice <= 0 still respects inventory", () => {
@@ -140,26 +148,35 @@ describe("maxBookableTickets", () => {
         remainingCapacity: 6,
         availableInventory: 2,
       }),
-    ).toBe(2);
+    ).toBe(1);
+    expect(
+      maxBookableTickets({
+        viewerKind: "signed-in",
+        credits: 17,
+        creditPrice: 0,
+        remainingCapacity: 6,
+        availableInventory: 0,
+      }),
+    ).toBe(0);
   });
 
   test("signed-in max follows selected slot price 3 vs 1", () => {
     expect(
       maxBookableTickets({
         viewerKind: "signed-in",
-        credits: 6,
+        credits: 2,
         creditPrice: 1,
         remainingCapacity: 10,
       }),
-    ).toBe(6);
+    ).toBe(1);
     expect(
       maxBookableTickets({
         viewerKind: "signed-in",
-        credits: 6,
+        credits: 2,
         creditPrice: 3,
         remainingCapacity: 10,
       }),
-    ).toBe(2);
+    ).toBe(0);
   });
 });
 

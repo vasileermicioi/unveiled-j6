@@ -247,7 +247,7 @@ For `VOUCHER_PROMO` / `VOUCHER_PDF`, admin authors Capacity allocation and capac
 | `user_id` | FK → `users.id` | |
 | `event_id` | FK → `events.id` | |
 | `partner_id` | FK → `partners.id` | **Denormalized** from `events.partner_id` — kept for fast partner-scoped guest-list queries. Worth keeping in Postgres too (or replace with an indexed join — measure query cost first) |
-| `tickets_count` | integer | Member max = `min(floor(credits ÷ creditPrice), remainingCapacity)` (and voucher inventory when applicable); not a universal hard max of 3 |
+| `tickets_count` | integer | New writes are always `1` (member purchase, waitlist promotion, admin comp). Grandfathered rows with `tickets_count > 1` remain; My Tickets still lists one `booking_tickets` row per ordinal. |
 | `total_credits` | integer | Snapshot of price paid, independent of later price changes |
 | `status` | enum: `CONFIRMED`, `WAITLIST`, `CANCELLED`, `USED` | |
 | `redemption_type` | enum: `SECRET_CODE`, `VOUCHER_PROMO`, `VOUCHER_PDF`, nullable | Same enum as `events.ticket_type` |
@@ -350,6 +350,7 @@ erDiagram
 - `users.credits >= 0`
 - `credit_ledger.idempotency_key` unique (where not null)
 - `bookings (user_id, idempotency_key)` unique — replaces the old deterministic-ID trick
+- `bookings (user_id, event_id, date_time)` **partial unique** WHERE `status IN ('CONFIRMED', 'USED')` — one active ticket per occurrence instant
 - Foreign keys with `ON DELETE RESTRICT` (or `CASCADE` only where deletion should genuinely cascade, e.g. deleting a partner probably should NOT cascade-delete its historical bookings)
 - `events.image_id` / `partners.logo_image_id` → `images.id`: `ON DELETE RESTRICT` (deleting an event/partner is what triggers deleting its image, not the other way around — see `extras/image-uploads.md` §8 for the app-level cleanup sequencing)
 - `event_gallery_images.event_id` → `events.id`: `ON DELETE CASCADE`; `event_gallery_images.image_id` → `images.id`: `ON DELETE RESTRICT` (event delete / gallery remove deletes unreferenced gallery images at the app layer after join rows are gone)

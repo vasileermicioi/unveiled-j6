@@ -1,4 +1,4 @@
-import type { Locale } from "./locale";
+import { type Locale, localizedPath } from "./locale";
 
 export type BookPageCopy = {
   eyebrow: string;
@@ -140,6 +140,30 @@ const confirmCopy: Record<Locale, BookConfirmCopy> = {
     openVoucher: "Open partner website",
   },
 };
+
+export type AlreadyBookedCopy = {
+  message: string;
+  myTicketsLabel: string;
+};
+
+const alreadyBookedCopy: Record<Locale, AlreadyBookedCopy> = {
+  de: {
+    message: "Du hast das bereits gebucht. Du kannst es unter Meine Tickets nachschauen.",
+    myTicketsLabel: "Meine Tickets",
+  },
+  en: {
+    message: "You've already booked this. You can check it in My Tickets.",
+    myTicketsLabel: "My Tickets",
+  },
+};
+
+export function getAlreadyBookedCopy(locale: Locale): AlreadyBookedCopy {
+  return alreadyBookedCopy[locale];
+}
+
+export function alreadyBookedTicketsPath(locale: Locale): string {
+  return localizedPath(locale, "bookings");
+}
 
 export function getBookPageCopy(locale: Locale): BookPageCopy {
   return bookCopy[locale];

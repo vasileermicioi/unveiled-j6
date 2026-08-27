@@ -15,6 +15,10 @@
 #     Cancellation and refunding are DECIDED to be decoupled: cancelling a booking frees capacity but
 #     never auto-refunds credits (preserves the no-refund policy); a refund, if warranted, is a separate
 #     explicit admin action (see credits-subscription.feature's "Admin issues a manual credit refund").
+#   - One ticket per occurrence: a booking-eligible member holds at most one CONFIRMED/USED ticket
+#     per event datetime. New writes persist tickets_count = 1. Reopening a held hour shows locked
+#     already-booked copy and a My Tickets link (not a second checkout). Grandfathered tickets_count > 1
+#     still display as multiple booking_tickets rows.
 #   - The old app never emailed a booking confirmation — redemption info only ever appeared in-app
 #     (BookingModal's success step). DECIDED: send a real confirmation email on every successful booking
 #     (normal, comp ticket, and waitlist-promotion path alike), containing the same redemption info shown
@@ -32,8 +36,8 @@ Feature: Event Booking
   Background:
     Given I am viewing an event's booking panel
     And guests and non–booking-eligible viewers do not see ticket quantity on public event detail
-    And booking-eligible members may select up to min(floor(credits ÷ selected occurrence creditPrice), remainingCapacity) tickets on detail and book (creditPrice ≤ 0 → capacity-only)
-    And a successful booking is not limited by a universal hard max of 3 when credits and capacity allow a higher count
+    And booking-eligible members book exactly one ticket per occurrence (no quantity stepper)
+    And a second active booking for the same user, event, and datetime is rejected
 
   Scenario: Booking requires authentication
     Given I am not signed in
@@ -45,20 +49,32 @@ Feature: Event Booking
     When I try to book an event
     Then I am redirected to the membership checkout page
 
-  Scenario: Member ticket quantity follows credits and capacity
+  Scenario: Member cannot select more than one ticket
     Given I am signed in with an "ACTIVE" subscription
-    And I have enough credits and the event has remaining capacity for more than 3 tickets
-    When I view the event detail checkout panel
-    Then I may select a ticket count greater than 3
+    When I view the event detail checkout panel or book page
+    Then I cannot increase quantity above one ticket
+
+  Scenario: Reopening a booked single-slot event
+    Given I am a booking-eligible member with a CONFIRMED booking for a single-occurrence event
+    When I open that event's detail or book page
+    Then I see the already-booked message
+    And I can follow My Tickets to /:locale/bookings
+    And I do not see a control to confirm another booking
+
+  Scenario: Booked hour on a multi-hour event
+    Given I have a CONFIRMED booking for the morning occurrence only
+    When I open the event with that morning datetime selected
+    Then I see the already-booked message and My Tickets link
+    And I can select the evening occurrence and book one ticket there
 
   Scenario: Successful booking
     Given I am signed in with an "ACTIVE" subscription
-    And the event has enough remaining capacity for my requested ticket count
-    And I have enough credits to cover the selected occurrence creditPrice × ticket count
+    And the event has remaining capacity of at least 1
+    And I have enough credits to cover the selected occurrence creditPrice × 1
     When I confirm the booking
-    Then a confirmed booking is created for me against the event and the selected datetime
-    And my credits are decremented by that occurrence's creditPrice × ticket count
-    And the event's remaining capacity is decremented by the ticket count
+    Then a confirmed booking is created for me against the event and the selected datetime with tickets_count 1
+    And my credits are decremented by that occurrence's creditPrice × 1
+    And the event's remaining capacity is decremented by 1
     And a negative-amount ledger entry of type "BOOKING" is recorded
     And I receive redemption info appropriate to the event's ticket type
 
@@ -67,9 +83,9 @@ Feature: Event Booking
     And the event has multiple future datetimes with different credit prices
     And the event has enough remaining capacity and I have enough credits
     When I select a non-primary future datetime and confirm the booking
-    Then a confirmed booking is stored with that date_time
-    And credits deducted equal that occurrence's price times ticket count
-    And remaining capacity decreases by the ticket count (event-level)
+    Then a confirmed booking is stored with that date_time and tickets_count 1
+    And credits deducted equal that occurrence's price times 1
+    And remaining capacity decreases by 1 (event-level)
     And confirmation surfaces use the booked datetime for calendar/ICS display
 
   Scenario Outline: Redemption info by ticket type
@@ -86,18 +102,18 @@ Feature: Event Booking
 
   Scenario: Booking fails — insufficient voucher inventory
     Given the event's ticket type is "VOUCHER_PROMO" or "VOUCHER_PDF"
-    And available voucher inventory is less than my requested ticket count
+    And available voucher inventory is less than 1
     When I attempt to confirm the booking
     Then the booking is rejected with an "insufficient voucher inventory" error
     And no credits, capacity, inventory, or ledger changes occur
 
   Scenario: Sold out — automatic waitlist offer
-    Given the event's remaining capacity is less than my requested ticket count
+    Given the event's remaining capacity is 0
     When I try to book
     Then I am offered to join the waitlist instead of booking
 
   Scenario: Booking fails — insufficient credits
-    Given I do not have enough credits to cover creditPrice × ticket count
+    Given I do not have enough credits to cover creditPrice × 1
     When I attempt to confirm the booking
     Then the booking is rejected with an "insufficient credits" error
     And no credits, capacity, or ledger changes occur

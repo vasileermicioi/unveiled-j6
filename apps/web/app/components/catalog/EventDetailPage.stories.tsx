@@ -67,7 +67,7 @@ export const Guest: Story = () => (
     closeHref={`/${storyLocale}`}
     event={mockEvent}
     locale={storyLocale}
-    maxQty={3}
+    maxQty={1}
     partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "guest" }}
   />
@@ -75,23 +75,23 @@ export const Guest: Story = () => (
 Guest.storyName = "EventDetailPage / Guest";
 Guest.meta = wideMeta;
 
-/** Eligible member: credit total + date visible; qty max = credits ∩ capacity (example 8). */
+/** Eligible member: credit total + date visible; no quantity stepper (one ticket). */
 export const Eligible: Story = () => (
   <EventDetailPage
     closeHref={`/${storyLocale}/events`}
     event={mockEvent}
     locale={storyLocale}
-    maxQty={8}
+    maxQty={1}
     occurrences={[
       {
         startsAtIso: mockEvent.dateTimes[0]?.toISOString() ?? mockEvent.dateTime.toISOString(),
         creditPrice: 1,
-        maxQty: 8,
+        maxQty: 1,
       },
       {
         startsAtIso: mockEvent.dateTimes[1]?.toISOString() ?? mockEvent.dateTime.toISOString(),
         creditPrice: 4,
-        maxQty: 3,
+        maxQty: 0,
       },
     ]}
     partnerAttribution={storyPartnerAttribution}
@@ -100,6 +100,43 @@ export const Eligible: Story = () => (
 );
 Eligible.storyName = "EventDetailPage / Eligible";
 Eligible.meta = wideMeta;
+
+const alreadyBookedMorning = new Date("2030-09-01T08:00:00.000Z");
+const alreadyBookedEvening = new Date("2030-09-01T17:00:00.000Z");
+const alreadyBookedEvent = {
+  ...mockEvent,
+  dateTime: alreadyBookedMorning,
+  dateTimes: [alreadyBookedMorning, alreadyBookedEvening],
+  occurrenceCreditPrices: [1, 4],
+};
+
+/** Eligible member: morning already booked; evening stays bookable via datetime select. */
+export const AlreadyBookedHour: Story = () => (
+  <EventDetailPage
+    bookedOccurrenceIsos={[alreadyBookedMorning.toISOString()]}
+    closeHref={`/${storyLocale}/events`}
+    defaultDateTimeIso={alreadyBookedMorning.toISOString()}
+    event={alreadyBookedEvent}
+    locale={storyLocale}
+    maxQty={1}
+    occurrences={[
+      {
+        startsAtIso: alreadyBookedMorning.toISOString(),
+        creditPrice: 1,
+        maxQty: 1,
+      },
+      {
+        startsAtIso: alreadyBookedEvening.toISOString(),
+        creditPrice: 4,
+        maxQty: 1,
+      },
+    ]}
+    partnerAttribution={storyPartnerAttribution}
+    viewer={{ kind: "eligible" }}
+  />
+);
+AlreadyBookedHour.storyName = "EventDetailPage / Already booked hour";
+AlreadyBookedHour.meta = wideMeta;
 
 export const SoldOut: Story = () => (
   <EventDetailPage
@@ -160,7 +197,7 @@ export const MultiDateTimesEligible: Story = () => (
     closeHref={`/${storyLocale}/events`}
     event={mockEvent}
     locale={storyLocale}
-    maxQty={6}
+    maxQty={1}
     partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "eligible" }}
   />
@@ -174,7 +211,7 @@ export const PartnerNameOnly: Story = () => (
     closeHref={`/${storyLocale}`}
     event={mockEvent}
     locale={storyLocale}
-    maxQty={3}
+    maxQty={1}
     partnerAttribution={{ name: mockPartner.name }}
     viewer={{ kind: "guest" }}
   />
@@ -191,7 +228,7 @@ export const PartnerWithOpeningHours: Story = () => (
     closeHref={`/${storyLocale}`}
     event={mockEvent}
     locale={storyLocale}
-    maxQty={3}
+    maxQty={1}
     partnerAttribution={storyPartnerAttributionWithHours}
     viewer={{ kind: "guest" }}
   />
@@ -216,11 +253,11 @@ export const EligiblePartnerWithOpeningHours: Story = () => {
         occurrenceCapacities: [40, 40, 40],
       }}
       locale={storyLocale}
-      maxQty={8}
+      maxQty={1}
       occurrences={[
-        { startsAtIso: sameDayMorning.toISOString(), creditPrice: 2, maxQty: 8 },
-        { startsAtIso: sameDayEvening.toISOString(), creditPrice: 2, maxQty: 8 },
-        { startsAtIso: laterDay.toISOString(), creditPrice: 2, maxQty: 8 },
+        { startsAtIso: sameDayMorning.toISOString(), creditPrice: 2, maxQty: 1 },
+        { startsAtIso: sameDayEvening.toISOString(), creditPrice: 2, maxQty: 1 },
+        { startsAtIso: laterDay.toISOString(), creditPrice: 2, maxQty: 1 },
       ]}
       partnerAttribution={storyPartnerAttributionWithHours}
       viewer={{ kind: "eligible" }}
@@ -237,7 +274,7 @@ export const WithoutGallery: Story = () => (
     event={mockEvent}
     galleryImages={[]}
     locale={storyLocale}
-    maxQty={3}
+    maxQty={1}
     partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "guest" }}
   />
@@ -253,7 +290,7 @@ export const WithGallery: Story = () => (
     galleryImages={storyGalleryImages}
     heroCredit="Photo: Ada"
     locale={storyLocale}
-    maxQty={3}
+    maxQty={1}
     partnerAttribution={{ ...storyPartnerAttribution, logoCredit: "Logo: Venue" }}
     viewer={{ kind: "guest" }}
   />
@@ -267,7 +304,7 @@ export const WithSubtitles: Story = () => (
     closeHref={`/${storyLocale}`}
     event={{ ...mockEvent, hasSubtitles: true, subtitleLanguages: ["DE", "EN"] }}
     locale={storyLocale}
-    maxQty={3}
+    maxQty={1}
     partnerAttribution={storyPartnerAttribution}
     viewer={{ kind: "guest" }}
   />

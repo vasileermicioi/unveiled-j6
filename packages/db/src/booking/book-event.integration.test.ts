@@ -16,6 +16,7 @@ import {
   events,
   eventVoucherCodes,
   eventVoucherPdfs,
+  listActiveBookedOccurrenceInstants,
   listBookingTickets,
   purgeBookingTicketsForBookings,
   subscriptions,
@@ -52,6 +53,8 @@ describe("bookEvent", () => {
     const txDb = createTxDb(databaseUrl);
     const suffix = crypto.randomUUID();
     const userId = `book-test-${suffix}`;
+    const shortCreditsUserId = `book-short-${suffix}`;
+    const soldOutUserId = `book-sold-${suffix}`;
     const partnerImage = await createTestImage();
     const eventImage = await createTestImage();
 
@@ -82,17 +85,31 @@ describe("bookEvent", () => {
     });
 
     try {
-      await httpDb.insert(users).values({
-        id: userId,
-        email: `${userId}@example.com`,
-        emailVerified: true,
-        credits: 5,
-      });
-      await httpDb.insert(subscriptions).values({
-        userId,
-        status: "ACTIVE",
-        plan: "Basic Berlin",
-      });
+      await httpDb.insert(users).values([
+        {
+          id: userId,
+          email: `${userId}@example.com`,
+          emailVerified: true,
+          credits: 5,
+        },
+        {
+          id: shortCreditsUserId,
+          email: `${shortCreditsUserId}@example.com`,
+          emailVerified: true,
+          credits: 1,
+        },
+        {
+          id: soldOutUserId,
+          email: `${soldOutUserId}@example.com`,
+          emailVerified: true,
+          credits: 20,
+        },
+      ]);
+      await httpDb.insert(subscriptions).values([
+        { userId, status: "ACTIVE", plan: "Basic Berlin" },
+        { userId: shortCreditsUserId, status: "ACTIVE", plan: "Basic Berlin" },
+        { userId: soldOutUserId, status: "ACTIVE", plan: "Basic Berlin" },
+      ]);
 
       const idempotencyKey = `idem-${suffix}`;
       const first = await bookEvent(txDb, {
@@ -149,9 +166,9 @@ describe("bookEvent", () => {
       let insufficientCode: string | undefined;
       try {
         await bookEvent(txDb, {
-          userId,
+          userId: shortCreditsUserId,
           eventId: event.id,
-          ticketsCount: 2,
+          ticketsCount: 1,
           idempotencyKey: `idem-short-${suffix}`,
         });
       } catch (error) {
@@ -164,15 +181,14 @@ describe("bookEvent", () => {
       });
       expect(capacityUnchanged?.remainingCapacity).toBe(2);
 
-      await httpDb.update(users).set({ credits: 20 }).where(eq(users.id, userId));
-      await httpDb.update(events).set({ remainingCapacity: 1 }).where(eq(events.id, event.id));
+      await httpDb.update(events).set({ remainingCapacity: 0 }).where(eq(events.id, event.id));
 
       let soldOutCode: string | undefined;
       try {
         await bookEvent(txDb, {
-          userId,
+          userId: soldOutUserId,
           eventId: event.id,
-          ticketsCount: 2,
+          ticketsCount: 1,
           idempotencyKey: `idem-sold-${suffix}`,
         });
       } catch (error) {
@@ -199,38 +215,58 @@ describe("bookEvent", () => {
       expect(pastDueCode).toBe("PAST_DUE");
     } finally {
       await cleanupUserBookings(httpDb, userId);
+      await cleanupUserBookings(httpDb, shortCreditsUserId);
+      await cleanupUserBookings(httpDb, soldOutUserId);
       await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, shortCreditsUserId));
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, soldOutUserId));
       await httpDb.delete(users).where(eq(users.id, userId));
+      await httpDb.delete(users).where(eq(users.id, shortCreditsUserId));
+      await httpDb.delete(users).where(eq(users.id, soldOutUserId));
       await deleteEvent(httpDb, event.id, { skipBucket: true });
       await deletePartner(httpDb, partner.id, { skipBucket: true });
       await txDb.pool.end().catch(() => undefined);
     }
   });
 
-  test("books more than 3 tickets when credits and capacity allow", async () => {
+  test("rejects ticket count other than 1 without opening a transaction", async () => {
+    await expect(
+      bookEvent({} as ReturnType<typeof createTxDb>, {
+        userId: "u1",
+        eventId: "00000000-0000-0000-0000-000000000001",
+        ticketsCount: 4,
+        idempotencyKey: "idem-qty4",
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_TICKET_COUNT" });
+  });
+
+  test("rejects a second active booking for the same hour and allows a different hour", async () => {
     if (!databaseUrl) {
-      console.warn("Skipping bookEvent qty>3 integration test (DATABASE_URL unset)");
+      console.warn("Skipping bookEvent uniqueness integration test (DATABASE_URL unset)");
       return;
     }
 
     const httpDb = createDb(databaseUrl);
     const txDb = createTxDb(databaseUrl);
     const suffix = crypto.randomUUID();
-    const userId = `book-qty4-${suffix}`;
+    const userId = `book-uniq-${suffix}`;
     const partnerImage = await createTestImage();
     const eventImage = await createTestImage();
+    const morning = new Date(Date.now() + 86_400_000);
+    morning.setUTCHours(8, 0, 0, 0);
+    const evening = new Date(morning.getTime() + 10 * 3_600_000);
 
     const partner = await createPartner(httpDb, {
-      name: `Booking Qty Venue ${suffix.slice(0, 8)}`,
+      name: `Booking Uniq Venue ${suffix.slice(0, 8)}`,
       ...structuredLocationFromAddress("Teststraße 9, Berlin"),
-      contactEmail: `book-qty4-${suffix}@example.com`,
+      contactEmail: `book-uniq-${suffix}@example.com`,
       logoPrebuilt: partnerImage,
       skipUpload: true,
     });
 
     const event = await createEvent(httpDb, {
       partnerId: partner.id,
-      title: `Booking Qty Event ${suffix.slice(0, 8)}`,
+      title: `Booking Uniq Event ${suffix.slice(0, 8)}`,
       description: "Description",
       ...structuredLocationFromAddress("Teststraße 9, Berlin"),
       country: "DE",
@@ -238,10 +274,11 @@ describe("bookEvent", () => {
       zipCode: "10115",
       category: "theater",
       eventType: "theater_play",
-      dateTimes: [new Date(Date.now() + 86_400_000)],
-      creditPrice: 2,
+      dateTimes: [morning, evening],
+      occurrenceCreditPrices: [1, 3],
+      creditPrice: 1,
       totalCapacity: 10,
-      secretCode: "QTY4TEST",
+      secretCode: "UNIQTEST",
       imagePrebuilt: eventImage,
       skipUpload: true,
     });
@@ -251,7 +288,7 @@ describe("bookEvent", () => {
         id: userId,
         email: `${userId}@example.com`,
         emailVerified: true,
-        credits: 17,
+        credits: 20,
       });
       await httpDb.insert(subscriptions).values({
         userId,
@@ -259,29 +296,85 @@ describe("bookEvent", () => {
         plan: "Basic Berlin",
       });
 
-      const result = await bookEvent(txDb, {
+      const first = await bookEvent(txDb, {
         userId,
         eventId: event.id,
-        ticketsCount: 4,
-        idempotencyKey: `idem-qty4-${suffix}`,
+        ticketsCount: 1,
+        dateTime: morning,
+        idempotencyKey: `idem-uniq-am-${suffix}`,
       });
-      expect(result.created).toBe(true);
-      expect(result.booking.ticketsCount).toBe(4);
-      expect(result.booking.totalCredits).toBe(8);
+      expect(first.created).toBe(true);
+      expect(first.booking.ticketsCount).toBe(1);
 
-      const tickets = await listBookingTickets(httpDb, result.booking.id);
-      expect(tickets).toHaveLength(4);
-      expect(tickets.every((ticket) => ticket.redemptionCode === "QTY4TEST")).toBe(true);
-
-      const afterBook = await httpDb.query.users.findFirst({
+      const creditsAfterFirst = await httpDb.query.users.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
       });
-      expect(afterBook?.credits).toBe(9);
-
-      const eventAfter = await httpDb.query.events.findFirst({
+      expect(creditsAfterFirst?.credits).toBe(19);
+      const capacityAfterFirst = await httpDb.query.events.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, event.id),
       });
-      expect(eventAfter?.remainingCapacity).toBe(6);
+      expect(capacityAfterFirst?.remainingCapacity).toBe(9);
+
+      let alreadyCode: string | undefined;
+      try {
+        await bookEvent(txDb, {
+          userId,
+          eventId: event.id,
+          ticketsCount: 1,
+          dateTime: morning,
+          idempotencyKey: `idem-uniq-am-2-${suffix}`,
+        });
+      } catch (error) {
+        alreadyCode = error instanceof Error ? (error as { code?: string }).code : undefined;
+      }
+      expect(alreadyCode).toBe("ALREADY_BOOKED");
+
+      const creditsAfterReject = await httpDb.query.users.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
+      });
+      expect(creditsAfterReject?.credits).toBe(19);
+      const capacityAfterReject = await httpDb.query.events.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, event.id),
+      });
+      expect(capacityAfterReject?.remainingCapacity).toBe(9);
+
+      const secondHour = await bookEvent(txDb, {
+        userId,
+        eventId: event.id,
+        ticketsCount: 1,
+        dateTime: evening,
+        idempotencyKey: `idem-uniq-pm-${suffix}`,
+      });
+      expect(secondHour.created).toBe(true);
+      expect(secondHour.booking.ticketsCount).toBe(1);
+      expect(secondHour.booking.dateTime.getTime()).toBe(evening.getTime());
+
+      const instants = await listActiveBookedOccurrenceInstants(httpDb, userId, event.id);
+      expect(instants.map((value) => value.getTime()).sort()).toEqual(
+        [morning.getTime(), evening.getTime()].sort(),
+      );
+
+      await httpDb
+        .update(bookings)
+        .set({ status: "CANCELLED", cancelledAt: new Date(), cancellationReason: "test" })
+        .where(eq(bookings.id, secondHour.booking.id));
+
+      const instantsAfterCancel = await listActiveBookedOccurrenceInstants(
+        httpDb,
+        userId,
+        event.id,
+      );
+      expect(instantsAfterCancel.map((value) => value.getTime())).toEqual([morning.getTime()]);
+
+      const rebookEvening = await bookEvent(txDb, {
+        userId,
+        eventId: event.id,
+        ticketsCount: 1,
+        dateTime: evening,
+        idempotencyKey: `idem-uniq-pm-rebook-${suffix}`,
+      });
+      expect(rebookEvening.created).toBe(true);
+      expect(rebookEvening.booking.ticketsCount).toBe(1);
     } finally {
       await cleanupUserBookings(httpDb, userId);
       await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
@@ -354,7 +447,7 @@ describe("bookEvent", () => {
       const booked = await bookEvent(txDb, {
         userId,
         eventId: event.id,
-        ticketsCount: 2,
+        ticketsCount: 1,
         idempotencyKey,
       });
       expect(booked.created).toBe(true);
@@ -362,20 +455,18 @@ describe("bookEvent", () => {
       expect(booked.booking.redemptionUrl).toBe("https://example.com/promo");
 
       const tickets = await listBookingTickets(httpDb, booked.booking.id);
-      expect(tickets).toHaveLength(2);
-      expect(new Set(tickets.map((ticket) => ticket.redemptionCode)).size).toBe(2);
+      expect(tickets).toHaveLength(1);
 
       const allocated = await httpDb
         .select()
         .from(eventVoucherCodes)
         .where(eq(eventVoucherCodes.eventId, event.id));
-      expect(allocated.every((row) => row.status === "ALLOCATED")).toBe(true);
-      expect(allocated.every((row) => row.bookingTicketId != null)).toBe(true);
+      expect(allocated.filter((row) => row.status === "ALLOCATED")).toHaveLength(1);
 
       const retry = await bookEvent(txDb, {
         userId,
         eventId: event.id,
-        ticketsCount: 2,
+        ticketsCount: 1,
         idempotencyKey,
       });
       expect(retry.created).toBe(false);
@@ -383,12 +474,32 @@ describe("bookEvent", () => {
         .select()
         .from(eventVoucherCodes)
         .where(eq(eventVoucherCodes.eventId, event.id));
-      expect(allocatedAfterRetry.filter((row) => row.status === "ALLOCATED")).toHaveLength(2);
+      expect(allocatedAfterRetry.filter((row) => row.status === "ALLOCATED")).toHaveLength(1);
+
+      const otherUserId = `book-promo-b-${suffix}`;
+      await httpDb.insert(users).values({
+        id: otherUserId,
+        email: `${otherUserId}@example.com`,
+        emailVerified: true,
+        credits: 20,
+      });
+      await httpDb.insert(subscriptions).values({
+        userId: otherUserId,
+        status: "ACTIVE",
+        plan: "Basic Berlin",
+      });
+
+      await httpDb.delete(eventVoucherCodes).where(eq(eventVoucherCodes.eventId, event.id));
+      await httpDb
+        .insert(eventVoucherCodes)
+        .values([
+          { eventId: event.id, code: `PROMO-GONE-${suffix.slice(0, 8)}`, status: "ALLOCATED" },
+        ]);
 
       let inventoryCode: string | undefined;
       try {
         await bookEvent(txDb, {
-          userId,
+          userId: otherUserId,
           eventId: event.id,
           ticketsCount: 1,
           idempotencyKey: `idem-promo-short-${suffix}`,
@@ -401,16 +512,19 @@ describe("bookEvent", () => {
       const userAfterFail = await httpDb.query.users.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
       });
-      expect(userAfterFail?.credits).toBe(18);
+      expect(userAfterFail?.credits).toBe(19);
       const eventAfterFail = await httpDb.query.events.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, event.id),
       });
-      expect(eventAfterFail?.remainingCapacity).toBe(8);
+      expect(eventAfterFail?.remainingCapacity).toBe(9);
     } finally {
       await cleanupUserBookings(httpDb, userId);
+      await cleanupUserBookings(httpDb, `book-promo-b-${suffix}`);
       await httpDb.delete(eventVoucherCodes).where(eq(eventVoucherCodes.eventId, event.id));
       await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, `book-promo-b-${suffix}`));
       await httpDb.delete(users).where(eq(users.id, userId));
+      await httpDb.delete(users).where(eq(users.id, `book-promo-b-${suffix}`));
       await deleteEvent(httpDb, event.id, { skipBucket: true });
       await deletePartner(httpDb, partner.id, { skipBucket: true });
       await txDb.pool.end().catch(() => undefined);
@@ -490,7 +604,7 @@ describe("bookEvent", () => {
       const booked = await bookEvent(txDb, {
         userId,
         eventId: event.id,
-        ticketsCount: 2,
+        ticketsCount: 1,
         idempotencyKey: `idem-pdf-${suffix}`,
       });
       expect(booked.created).toBe(true);
@@ -498,16 +612,14 @@ describe("bookEvent", () => {
       expect(["1", "2"]).toContain(booked.booking.redemptionInfo);
 
       const tickets = await listBookingTickets(httpDb, booked.booking.id);
-      expect(tickets).toHaveLength(2);
-      expect(new Set(tickets.map((ticket) => ticket.voucherPdfId))).toEqual(
-        new Set([pdfA?.id, pdfB?.id]),
-      );
+      expect(tickets).toHaveLength(1);
+      expect([pdfA?.id, pdfB?.id]).toContain(tickets[0]?.voucherPdfId);
 
       const inventory = await httpDb
         .select()
         .from(eventVoucherPdfs)
         .where(eq(eventVoucherPdfs.eventId, event.id));
-      expect(inventory.every((row) => row.status === "ALLOCATED")).toBe(true);
+      expect(inventory.filter((row) => row.status === "ALLOCATED")).toHaveLength(1);
     } finally {
       await cleanupUserBookings(httpDb, userId);
       await httpDb.delete(eventVoucherPdfs).where(eq(eventVoucherPdfs.eventId, event.id));
@@ -581,48 +693,51 @@ describe("bookEvent", () => {
       const eveningBook = await bookEvent(txDb, {
         userId,
         eventId: event.id,
-        ticketsCount: 2,
+        ticketsCount: 1,
         dateTime: evening,
         idempotencyKey: `idem-slot-evening-${suffix}`,
       });
       expect(eveningBook.created).toBe(true);
       expect(eveningBook.booking.dateTime.getTime()).toBe(evening.getTime());
-      expect(eveningBook.booking.totalCredits).toBe(6);
+      expect(eveningBook.booking.totalCredits).toBe(3);
 
       const afterEvening = await httpDb.query.users.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
       });
-      expect(afterEvening?.credits).toBe(14);
+      expect(afterEvening?.credits).toBe(17);
       const eventAfterEvening = await httpDb.query.events.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, event.id),
       });
-      expect(eventAfterEvening?.remainingCapacity).toBe(8);
+      expect(eventAfterEvening?.remainingCapacity).toBe(9);
 
       const morningBook = await bookEvent(txDb, {
         userId,
         eventId: event.id,
-        ticketsCount: 2,
+        ticketsCount: 1,
         dateTime: morning,
         idempotencyKey: `idem-slot-morning-${suffix}`,
       });
       expect(morningBook.created).toBe(true);
       expect(morningBook.booking.dateTime.getTime()).toBe(morning.getTime());
-      expect(morningBook.booking.totalCredits).toBe(2);
+      expect(morningBook.booking.totalCredits).toBe(1);
 
       const afterMorning = await httpDb.query.users.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
       });
-      expect(afterMorning?.credits).toBe(12);
+      expect(afterMorning?.credits).toBe(16);
 
-      const omitted = await bookEvent(txDb, {
-        userId,
-        eventId: event.id,
-        ticketsCount: 1,
-        idempotencyKey: `idem-slot-omit-${suffix}`,
-      });
-      expect(omitted.created).toBe(true);
-      expect(omitted.booking.dateTime.getTime()).toBe(morning.getTime());
-      expect(omitted.booking.totalCredits).toBe(1);
+      let omittedCode: string | undefined;
+      try {
+        await bookEvent(txDb, {
+          userId,
+          eventId: event.id,
+          ticketsCount: 1,
+          idempotencyKey: `idem-slot-omit-${suffix}`,
+        });
+      } catch (error) {
+        omittedCode = error instanceof Error ? (error as { code?: string }).code : undefined;
+      }
+      expect(omittedCode).toBe("ALREADY_BOOKED");
 
       let unknownCode: string | undefined;
       try {
@@ -689,7 +804,7 @@ describe("bookEvent", () => {
       const retry = await bookEvent(txDb, {
         userId,
         eventId: event.id,
-        ticketsCount: 2,
+        ticketsCount: 1,
         dateTime: morning,
         idempotencyKey: `idem-slot-evening-${suffix}`,
       });
@@ -700,7 +815,7 @@ describe("bookEvent", () => {
       const creditsAfterRetry = await httpDb.query.users.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
       });
-      expect(creditsAfterRetry?.credits).toBe(11);
+      expect(creditsAfterRetry?.credits).toBe(16);
     } finally {
       await cleanupUserBookings(httpDb, userId);
       await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));

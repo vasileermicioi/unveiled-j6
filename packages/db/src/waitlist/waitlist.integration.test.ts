@@ -4,6 +4,7 @@ import { createTestImagePrebuilt } from "../catalog/test-image";
 import { structuredLocationFromAddress } from "../catalog/test-location";
 
 import {
+  bookEvent,
   bookings,
   cancelWaitlistEntry,
   createDb,
@@ -113,7 +114,7 @@ describe("waitlist domain", () => {
       const dup = await joinWaitlist(httpDb, {
         userId: userA,
         eventId: event.id,
-        requestedQty: 2,
+        requestedQty: 1,
       });
       expect(dup.created).toBe(false);
       expect(dup.entry.id).toBe(first.entry.id);
@@ -133,7 +134,7 @@ describe("waitlist domain", () => {
       const joinC = await joinWaitlist(httpDb, {
         userId: userC,
         eventId: event.id,
-        requestedQty: 2,
+        requestedQty: 1,
       });
       expect(joinB.created).toBe(true);
       expect(joinC.created).toBe(true);
@@ -218,7 +219,7 @@ describe("waitlist domain", () => {
       const joinD = await joinWaitlist(httpDb, {
         userId: userD,
         eventId: event.id,
-        requestedQty: 2,
+        requestedQty: 1,
       });
       const joinE = await joinWaitlist(httpDb, {
         userId: userE,
@@ -240,9 +241,8 @@ describe("waitlist domain", () => {
       const afterE = await httpDb.query.waitlistEntries.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, joinE.entry.id),
       });
-      expect(afterD?.status).toBe("WAITING");
-      expect(afterD?.skippedOnce).toBe(false);
-      expect(afterE?.status).toBe("PROMOTED");
+      expect(afterD?.status).toBe("PROMOTED");
+      expect(afterE?.status).toBe("WAITING");
     } finally {
       const allUsers = [userA, userB, userC, userSkip, `wait-d-${suffix}`, `wait-e-${suffix}`];
       const eventBookingIds = (
@@ -277,5 +277,104 @@ describe("waitlist domain", () => {
         userId: "nobody",
       }),
     ).rejects.toBeInstanceOf(WaitlistError);
+  });
+
+  test("promotion skips ALREADY_BOOKED and leaves the entry WAITING", async () => {
+    if (!databaseUrl) {
+      console.warn("Skipping waitlist already-booked skip test (DATABASE_URL unset)");
+      return;
+    }
+
+    const httpDb = createDb(databaseUrl);
+    const txDb = createTxDb(databaseUrl);
+    const suffix = crypto.randomUUID();
+    const userId = `wait-held-${suffix}`;
+    const partnerImage = await createTestImage();
+    const eventImage = await createTestImage();
+
+    const partner = await createPartner(httpDb, {
+      name: `Waitlist Held Venue ${suffix.slice(0, 8)}`,
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      contactEmail: `wait-held-${suffix}@example.com`,
+      logoPrebuilt: partnerImage,
+      skipUpload: true,
+    });
+
+    const event = await createEvent(httpDb, {
+      partnerId: partner.id,
+      title: `Waitlist Held Event ${suffix.slice(0, 8)}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "theater",
+      eventType: "theater_play",
+      dateTimes: [new Date(Date.now() + 86_400_000)],
+      creditPrice: 1,
+      totalCapacity: 2,
+      secretCode: "HELDTEST",
+      imagePrebuilt: eventImage,
+      skipUpload: true,
+    });
+
+    try {
+      await httpDb.insert(users).values({
+        id: userId,
+        email: `${userId}@example.com`,
+        emailVerified: true,
+        credits: 10,
+      });
+      await httpDb.insert(subscriptions).values({
+        userId,
+        status: "ACTIVE",
+        plan: "Basic Berlin",
+      });
+
+      await bookEvent(txDb, {
+        userId,
+        eventId: event.id,
+        ticketsCount: 1,
+        idempotencyKey: `held-book-${suffix}`,
+      });
+
+      const join = await joinWaitlist(httpDb, {
+        userId,
+        eventId: event.id,
+        requestedQty: 1,
+      });
+      expect(join.created).toBe(true);
+
+      await httpDb
+        .update(events)
+        .set({ remainingCapacity: 1, updatedAt: new Date() })
+        .where(eq(events.id, event.id));
+
+      const processed = await processWaitlistForEvent(txDb, event.id);
+      expect(processed.promoted).toHaveLength(0);
+      expect(processed.skippedEntryIds).toContain(join.entry.id);
+
+      const after = await httpDb.query.waitlistEntries.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, join.entry.id),
+      });
+      expect(after?.status).toBe("WAITING");
+      expect(after?.skippedOnce).toBe(true);
+
+      const userBookings = await httpDb.select().from(bookings).where(eq(bookings.userId, userId));
+      expect(userBookings.filter((row) => row.status === "CONFIRMED")).toHaveLength(1);
+    } finally {
+      const bookingIds = (
+        await httpDb.select({ id: bookings.id }).from(bookings).where(eq(bookings.userId, userId))
+      ).map((row) => row.id);
+      await purgeBookingTicketsForBookings(httpDb, bookingIds);
+      await httpDb.delete(creditLedger).where(eq(creditLedger.userId, userId));
+      await httpDb.delete(bookings).where(eq(bookings.userId, userId));
+      await httpDb.delete(waitlistEntries).where(eq(waitlistEntries.eventId, event.id));
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await httpDb.delete(users).where(eq(users.id, userId));
+      await deleteEvent(httpDb, event.id, { skipBucket: true });
+      await deletePartner(httpDb, partner.id, { skipBucket: true });
+      await txDb.pool.end().catch(() => undefined);
+    }
   });
 });

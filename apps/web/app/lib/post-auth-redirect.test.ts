@@ -23,7 +23,7 @@ function createSession(overrides: Partial<AppSession["user"]> = {}): AppSession 
 describe("post-auth-redirect", () => {
   test("parseReturnTo accepts same-locale paths and rejects open redirects", () => {
     expect(parseReturnTo("/de/events", "de")).toBe("/de/events");
-    expect(parseReturnTo("/de/events/abc/book?qty=1", "de")).toBe("/de/events/abc/book?qty=1");
+    expect(parseReturnTo("/de/events/abc/book", "de")).toBe("/de/events/abc/book");
     expect(parseReturnTo("https://evil.example", "de")).toBeNull();
     expect(parseReturnTo("//evil.example", "de")).toBeNull();
     expect(parseReturnTo("/en/events", "de")).toBeNull();
@@ -37,9 +37,9 @@ describe("post-auth-redirect", () => {
   });
 
   test("parseReturnTo unwraps nested auth/continue returnTo to the destination", () => {
-    expect(
-      parseReturnTo("/en/auth/continue?returnTo=%2Fen%2Fevents%2Fabc%2Fbook%3Fqty%3D1", "en"),
-    ).toBe("/en/events/abc/book?qty=1");
+    expect(parseReturnTo("/en/auth/continue?returnTo=%2Fen%2Fevents%2Fabc%2Fbook", "en")).toBe(
+      "/en/events/abc/book",
+    );
   });
 
   test("buildAuthContinueUrl preserves returnTo", () => {

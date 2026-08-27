@@ -66,7 +66,6 @@ function renderPage(
     events: { id: string; label: string }[];
     error?: string | null;
     defaultEventId?: string;
-    defaultTickets?: string;
   },
 ) {
   const copy = getAdminCopy(options.locale);
@@ -75,7 +74,6 @@ function renderPage(
     <AdminCompTicketForm
       action={adminUserCompTicketPath(options.locale, options.userId)}
       defaultEventId={options.defaultEventId}
-      defaultTickets={options.defaultTickets}
       error={options.error}
       events={options.events}
       locale={options.locale}
@@ -118,8 +116,6 @@ export const POST = createRoute(async (c) => {
   const events = await loadEventOptions(guard.locale);
   const body = (await c.req.parseBody()) as Record<string, string | File | (string | File)[]>;
   const eventId = asString(body.eventId).trim();
-  const ticketsRaw = asString(body.ticketsCount).trim() || "1";
-  const ticketsCount = Number.parseInt(ticketsRaw, 10);
   const idempotencyKey = `admin-comp:${userId}:${eventId}:${crypto.randomUUID()}`;
 
   try {
@@ -127,7 +123,6 @@ export const POST = createRoute(async (c) => {
       await createCompTicket(txDb, {
         userId,
         eventId,
-        ticketsCount: Number.isFinite(ticketsCount) ? ticketsCount : 1,
         idempotencyKey,
         adminUserId: guard.session.user.id,
       });
@@ -141,7 +136,6 @@ export const POST = createRoute(async (c) => {
       events,
       error: mapAdminOpsError(error, guard.locale),
       defaultEventId: eventId,
-      defaultTickets: ticketsRaw,
     });
   }
 });

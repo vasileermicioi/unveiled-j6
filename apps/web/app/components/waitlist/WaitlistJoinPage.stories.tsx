@@ -8,13 +8,7 @@ const copy = getWaitlistJoinCopy(storyLocale);
 const entryId = "00000000-0000-4000-8000-000000000020";
 
 export const Form: Story = () => (
-  <WaitlistJoinPage
-    copy={copy}
-    defaultTickets="1"
-    event={mockSoldOutEvent}
-    locale={storyLocale}
-    view="form"
-  />
+  <WaitlistJoinPage copy={copy} event={mockSoldOutEvent} locale={storyLocale} view="form" />
 );
 Form.storyName = "WaitlistJoinPage / Form";
 
@@ -40,7 +34,7 @@ export const StatusExisting: Story = () => (
     event={mockSoldOutEvent}
     locale={storyLocale}
     queuePosition={2}
-    requestedQty={2}
+    requestedQty={1}
     view="status"
   />
 );

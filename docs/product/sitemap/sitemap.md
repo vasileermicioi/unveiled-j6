@@ -82,7 +82,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 | `/events` | ✅ | USER, booking-eligible | Member discovery feed (filters + pagination). Guests → auth redirect; non-active `USER` → **302** `/discover`. **Not** a public guest list. |
 | `/events?category=&partnerId=&from=&to=&page=` | ✅ | USER, booking-eligible | Filtered + paginated feed (GET query params, SSR) |
 | `/events/map?category=&partnerId=&from=&to=&page=` | ✅ | USER, booking-eligible | Map view — same filters + pagination as list; same audience gate as `/events` |
-| `/events/:id/book` | ✅ | USER, ACTIVE subscription | Booking form (ticket quantity) |
+| `/events/:id/book` | ✅ | USER, ACTIVE subscription | One ticket for the selected hour; already-booked message + My Tickets when that hour is held |
 | `/events/:id/book/confirm` | ✅ | USER | Confirmation / redemption code / ICS |
 | `/events/:id/waitlist` | ✅ | USER | Join waitlist when sold out |
 | `/waitlist/:id/cancel` | ✅ | USER | Cancel own waitlist entry |

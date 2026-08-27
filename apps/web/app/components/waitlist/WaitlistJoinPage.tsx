@@ -1,7 +1,6 @@
 import { Alert, Button, Card, Form, Link, Paragraph, Surface } from "@heroui/react";
 import { type Event, resolveEventCopy } from "@unveiled/db";
 
-import TicketCountSelect from "../../islands/TicketCountSelect";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import type { WaitlistJoinCopy } from "../../lib/waitlist-content";
@@ -14,15 +13,12 @@ export type WaitlistJoinPageProps = {
   event: Event;
   copy: WaitlistJoinCopy;
   view: WaitlistJoinView;
-  defaultTickets?: string;
   errorMessage?: string | null;
   /** Present when view === "status" */
   entryId?: string;
   created?: boolean;
   requestedQty?: number;
   queuePosition?: number | null;
-  /** Inclusive upper bound for ticket Select (credit-aware; capacity ignored when sold out). */
-  maxQty?: number;
 };
 
 export function WaitlistJoinPage({
@@ -30,13 +26,11 @@ export function WaitlistJoinPage({
   event,
   copy,
   view,
-  defaultTickets = "1",
   errorMessage,
   entryId,
   created = true,
   requestedQty,
   queuePosition,
-  maxQty = 3,
 }: WaitlistJoinPageProps) {
   const eventHref = localizedPath(locale, `events/${event.id}`);
   const action = localizedPath(locale, `events/${event.id}/waitlist`);
@@ -98,12 +92,6 @@ export function WaitlistJoinPage({
       <Card>
         <Card.Content className="flex flex-col gap-6">
           <Form action={action} className="flex flex-col gap-6" method="post">
-            <TicketCountSelect
-              defaultValue={defaultTickets}
-              label={copy.ticketsLabel}
-              maxQty={maxQty}
-              name="requestedQty"
-            />
             <Button className="button button--primary button--md" type="submit">
               {copy.submit}
             </Button>

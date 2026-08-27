@@ -173,6 +173,15 @@ Not a `translations.ts` key table. Verbatim DE/EN copy lives in `packages/email/
 
 HTML is a paragraph-equivalent of the same content with anchor tags on each URL and `mailto:support@unveiled.berlin`.
 
+## Booking checkout — already booked
+
+Not a `translations.ts` key. Verbatim DE/EN copy lives in `apps/web/app/lib/booking-content.ts` (`getAlreadyBookedCopy`). Shown on public event detail (selected hour) and `/events/:id/book` when a booking-eligible member already holds that occurrence as `CONFIRMED` or `USED`. My Tickets href is `/:locale/bookings`.
+
+| | DE | EN |
+|---|---|---|
+| Message | Du hast das bereits gebucht. Du kannst es unter Meine Tickets nachschauen. | You've already booked this. You can check it in My Tickets. |
+| Link | Meine Tickets | My Tickets |
+
 ## Content not captured in `translations.ts` (extract manually from components if needed)
 
 - Landing page hero/marketing copy (inline in `App.tsx`)

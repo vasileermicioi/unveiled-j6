@@ -28,7 +28,7 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <SSRProvider>
-      <Surface className="flex min-h-screen flex-col" variant="transparent">
+      <Surface className="site-shell flex min-h-screen flex-col" variant="transparent">
         <AppNavbar
           canBrowseEvents={canBrowseEvents}
           locale={locale}

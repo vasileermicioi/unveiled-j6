@@ -3,7 +3,6 @@ import {
   getWaitlistQueuePosition,
   isWaitlistError,
   joinWaitlist,
-  maxBookableTickets,
 } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
@@ -18,35 +17,6 @@ import { getWaitlistJoinCopy } from "../../../../lib/waitlist-content";
 
 function getLocaleParam(value: string | undefined): Locale {
   return value && isValidLocale(value) ? value : "de";
-}
-
-/**
- * Waitlist is typically used when remaining capacity is 0, so capacity must not
- * collapse the Select to empty — bind by credits only in that case.
- */
-function computeWaitlistMaxQty(
-  credits: number,
-  creditPrice: number,
-  remainingCapacity: number,
-): number {
-  const capacityBound = remainingCapacity > 0 ? remainingCapacity : Number.MAX_SAFE_INTEGER;
-  return Math.max(
-    1,
-    maxBookableTickets({
-      viewerKind: "signed-in",
-      credits,
-      creditPrice,
-      remainingCapacity: capacityBound,
-    }),
-  );
-}
-
-function parseQtyParam(raw: string | undefined, maxQty: number): string {
-  const n = Number.parseInt(raw ?? "1", 10);
-  if (!Number.isFinite(n) || n < 1) {
-    return "1";
-  }
-  return String(Math.min(n, maxQty));
 }
 
 export default createRoute(async (c) => {
@@ -120,33 +90,12 @@ export default createRoute(async (c) => {
     );
   }
 
-  const { db: authDb } = getAuthOptions();
-  const user = await authDb.query.users.findFirst({
-    where: (fields, { eq }) => eq(fields.id, session.user.id),
+  return c.render(<WaitlistJoinPage copy={copy} event={event} locale={locale} view="form" />, {
+    locale,
+    title: copy.title,
+    robots: "noindex",
+    canonicalPath: waitlistPath,
   });
-  const maxQty = computeWaitlistMaxQty(
-    user?.credits ?? 0,
-    event.creditPrice,
-    event.remainingCapacity,
-  );
-  const defaultTickets = parseQtyParam(c.req.query("qty"), maxQty);
-
-  return c.render(
-    <WaitlistJoinPage
-      copy={copy}
-      defaultTickets={defaultTickets}
-      event={event}
-      locale={locale}
-      maxQty={maxQty}
-      view="form"
-    />,
-    {
-      locale,
-      title: copy.title,
-      robots: "noindex",
-      canonicalPath: waitlistPath,
-    },
-  );
 });
 
 export const POST = createRoute(async (c) => {
@@ -179,23 +128,10 @@ export const POST = createRoute(async (c) => {
     });
   }
 
-  const { db: authDb } = getAuthOptions();
-  const user = await authDb.query.users.findFirst({
-    where: (fields, { eq }) => eq(fields.id, session.user.id),
-  });
-  const maxQty = computeWaitlistMaxQty(
-    user?.credits ?? 0,
-    event.creditPrice,
-    event.remainingCapacity,
-  );
-
   const form = await c.req.parseBody();
   const qtyRaw = typeof form.requestedQty === "string" ? form.requestedQty : "1";
   const requestedQty = Number.parseInt(qtyRaw, 10);
-  const defaultTickets = parseQtyParam(
-    Number.isFinite(requestedQty) ? String(requestedQty) : "1",
-    maxQty,
-  );
+  const { db: authDb } = getAuthOptions();
 
   try {
     const result = await joinWaitlist(authDb, {
@@ -232,11 +168,9 @@ export const POST = createRoute(async (c) => {
     return c.render(
       <WaitlistJoinPage
         copy={copy}
-        defaultTickets={defaultTickets}
         errorMessage={errorMessage}
         event={event}
         locale={locale}
-        maxQty={maxQty}
         view="form"
       />,
       {

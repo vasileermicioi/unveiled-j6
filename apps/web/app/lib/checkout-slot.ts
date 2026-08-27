@@ -6,28 +6,25 @@ export type CheckoutOccurrence = {
   maxQty: number;
 };
 
-const MIN_QTY = 1;
-
 /** SSR hidden POST field; the book island updates this when the slot select changes. */
 export const BOOK_DATE_TIME_INPUT_ID = "book-date-time";
 
-export function clampQty(value: number, maxQty: number): number {
-  if (!Number.isFinite(value)) {
-    return MIN_QTY;
-  }
-  if (maxQty < MIN_QTY) {
-    return MIN_QTY;
-  }
-  return Math.min(maxQty, Math.max(MIN_QTY, Math.trunc(value)));
-}
-
-export function withQtyAndDateTimeQuery(path: string, qty: number, dateTimeIso?: string): string {
+export function withDateTimeQuery(path: string, dateTimeIso?: string): string {
   const url = new URL(path, "https://unveiled.local");
-  url.searchParams.set("qty", String(qty));
   if (dateTimeIso) {
     url.searchParams.set("dateTime", dateTimeIso);
   }
   return `${url.pathname}${url.search}`;
+}
+
+export function occurrenceIsBooked(
+  startsAtIso: string | undefined,
+  bookedOccurrenceIsos: readonly string[],
+): boolean {
+  if (!startsAtIso) {
+    return false;
+  }
+  return bookedOccurrenceIsos.includes(startsAtIso);
 }
 
 export function resolveSelectedOccurrence(

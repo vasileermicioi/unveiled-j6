@@ -270,6 +270,7 @@
     height: 4rem;
     width: 100%;
     padding: 0;
+    overflow: visible;
     border-bottom-width: 4px;
     border-bottom-style: solid;
     border-bottom-color: var(--border);
@@ -278,6 +279,13 @@
     font-size: inherit;
     font-weight: inherit;
     text-align: inherit;
+  }
+
+  /* HeroUI `.surface { position: relative }` would become the containing block for a
+     portaled account dropdown (position:absolute + viewport coords) — after scroll the
+     menu paints at the top of the document, off-screen. Keep the shell out of that. */
+  .surface.site-shell {
+    position: static;
   }
 
   @media (min-width: 768px) {
@@ -398,7 +406,7 @@
 
   .dropdown__popover.site-account-menu__popover,
   .site-account-menu__popover.dropdown__popover {
-    z-index: 60;
+    z-index: 80;
     min-width: 14rem;
     max-width: 20rem;
     border: 2px solid var(--border);
@@ -2863,14 +2871,20 @@
     min-width: 16rem;
   }
 
-  /* Admin overlays: instant show/hide — no enter/exit animation lag */
+  /* Admin overlays: instant show/hide — no enter/exit animation lag.
+     Do not zero `transform` on `.dropdown__popover`: React Aria uses it for placement. */
   .drawer__content[data-entering="true"],
-  .drawer__content[data-exiting="true"],
+  .drawer__content[data-exiting="true"] {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+
   .dropdown__popover[data-entering="true"],
   .dropdown__popover[data-exiting="true"] {
     animation: none !important;
     transition: none !important;
-    transform: none !important;
     will-change: auto !important;
   }
 
@@ -3640,4 +3654,16 @@
       color: var(--foreground);
     }
   }
+}
+
+/*
+ * Unlayered: event cards set `z-index: 2` unlayered on hover. A layered popover
+ * z-index cannot compete, and a portaled `position:absolute` menu is placed with
+ * viewport coords against `.surface { position: relative }` — off-screen after
+ * scroll. Pin to the viewport above the header (z-50) and cards.
+ */
+.dropdown__popover.site-account-menu__popover,
+.site-account-menu__popover.dropdown__popover {
+  position: fixed !important;
+  z-index: 80;
 }

@@ -140,6 +140,9 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `auth.feature` | Admin can process account deletion on a member's behalf | `e2e/specs/auth.spec.ts` · `Scenario: Admin can process account deletion on a member's behalf` | `pass` | Needs `E2E_ADMIN_*`; may skip credential check if Neon Auth admin remove incomplete |
 | `booking.feature` | Booking requires authentication | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires authentication` | `pass` | Needs `DATABASE_URL` for seeded event id |
 | `booking.feature` | Booking requires an active subscription | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires an active subscription` | `pass` |  |
+| `booking.feature` | Member cannot select more than one ticket | `e2e/specs/booking.spec.ts` · `Scenario: Member cannot select more than one ticket` | `pass` | Needs `DATABASE_URL`; no qty control; credit total = one slot |
+| `booking.feature` | Reopening a booked single-slot event | `e2e/specs/booking.spec.ts` · `Scenario: Reopening a booked single-slot event` | `pass` | Needs `DATABASE_URL`; detail + book already-booked copy |
+| `booking.feature` | Booked hour on a multi-hour event | `e2e/specs/booking.spec.ts` · `Scenario: Booked hour on a multi-hour event` | `pass` | Needs `DATABASE_URL`; `createPricedSlotEvent`; evening still books |
 | `booking.feature` | Successful booking | `e2e/specs/booking.spec.ts` · `Scenario: Successful booking` | `pass` | Seeds ACTIVE via billing fixture |
 | `booking.feature` | Book a priced datetime slot | `e2e/specs/booking.spec.ts` · `Scenario: Book a priced datetime slot` | `pass` | Needs `DATABASE_URL`; evening slot 4 credits; confirm time + ledger |
 | `booking.feature` | Redemption info by ticket type | `e2e/specs/booking.spec.ts` · outline rows SECRET / VOUCHER_PROMO / VOUCHER_PDF | `pass` | Seed titles; PDF row skips without `S3_PRIVATE_BUCKET` |
@@ -149,7 +152,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `booking.feature` | Booking fails — subscription frozen (past due) | `e2e/specs/booking.spec.ts` · `Scenario: Booking fails — subscription frozen (past due)` | `pass` |  |
 | `booking.feature` | Idempotent retry | `e2e/specs/booking.spec.ts` · `Scenario: Idempotent retry` | `skip` | Covered by `book-event.integration.test` |
 | `booking.feature` | Post-booking actions | `e2e/specs/booking.spec.ts` · `Scenario: Post-booking actions` | `pass` | Mask/reveal + copy + ICS + My Tickets |
-| `booking.feature` | Multi-ticket promo codes are listed separately | `e2e/specs/booking.spec.ts` · `Scenario: Multi-ticket promo codes are listed separately` | `pass` | Needs seeded promo inventory |
+| `booking.feature` | Multi-ticket promo codes are listed separately | `e2e/specs/booking.spec.ts` · `Scenario: Multi-ticket promo codes are listed separately` | `pass` | Grandfathered `tickets_count > 1` fixture (not checkout qty) |
 | `booking.feature` | PDF voucher download is ownership-gated | `e2e/specs/booking.spec.ts` · `Scenario: PDF voucher download is ownership-gated` | `pass` | Skips without `S3_PRIVATE_BUCKET` (private-bucket named skip) |
 | `booking.feature` | Booking confirmation email | `e2e/specs/booking.spec.ts` · `Scenario: Booking confirmation email` | `skip` | Staging Resend checklist — no inbox harness |
 | `booking.feature` | Admin cancels a confirmed booking | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels a confirmed booking` | `pass` | Needs `E2E_ADMIN_*`; no credit refund on cancel; restock covered in domain tests |
@@ -181,6 +184,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Guest sees English title on /en | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees English title on /en` | `pass` | Needs `DATABASE_URL`; seeded `localeCopyDe` / `localeCopyEn`; identity h1 |
 | `event-discovery.feature` | Guest sees German title on /de | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees German title on /de` | `pass` | Needs `DATABASE_URL`; same bilingual seed; identity h1 |
 | `event-discovery.feature` | Dropdown changes credits | `e2e/specs/event-discovery.spec.ts` · `Scenario: Dropdown changes credits` | `pass` | Needs `DATABASE_URL`; `createPricedSlotEvent` morning 1 / evening 4 |
+| `event-discovery.feature` | Booking-eligible member sees credits and date on event detail | `e2e/specs/event-discovery.spec.ts` · `Scenario: Booking-eligible member sees credits and date on event detail` | `pass` | Needs `DATABASE_URL`; one-ticket credit total; no quantity stepper |
 | `event-discovery.feature` | Guest checkout omits slot picker | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest checkout omits slot picker` | `pass` | Needs `DATABASE_URL`; no datetime select, no credit totals |
 | `event-discovery.feature` | Detail shows subtitles when present | `e2e/specs/event-discovery.spec.ts` · `Scenario: Detail shows subtitles when present` | `pass` | Needs `DATABASE_URL` + reseeded demo promo event (`has_subtitles`, one or more codes); also covered by admin-events save scenario |
 | `event-discovery.feature` | Detail omits subtitles when absent | `e2e/specs/event-discovery.spec.ts` · `Scenario: Detail omits subtitles when absent` | `pass` | Needs `DATABASE_URL`; seeded tonight has no subtitles |

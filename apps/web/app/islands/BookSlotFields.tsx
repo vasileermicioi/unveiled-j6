@@ -6,20 +6,16 @@ import { useMemo, useState } from "react";
 import {
   BOOK_DATE_TIME_INPUT_ID,
   type CheckoutOccurrence,
-  clampQty,
   formatOccurrenceLabel,
   formatSlotUnitPrice,
   resolveSelectedOccurrence,
 } from "../lib/checkout-slot";
 import type { Locale } from "../lib/locale";
-import TicketCountSelect from "./TicketCountSelect";
 
 export type BookSlotFieldsProps = {
   locale: Locale;
   occurrences: CheckoutOccurrence[];
   defaultDateTimeIso?: string;
-  defaultTickets: string;
-  ticketsLabel: string;
   datetimeLabel: string;
 };
 
@@ -37,19 +33,15 @@ export default function BookSlotFields({
   locale,
   occurrences,
   defaultDateTimeIso,
-  defaultTickets,
-  ticketsLabel,
   datetimeLabel,
 }: BookSlotFieldsProps) {
   const [selectedIso, setSelectedIso] = useState(
     () => resolveSelectedOccurrence(occurrences, defaultDateTimeIso)?.startsAtIso,
   );
   const selected = resolveSelectedOccurrence(occurrences, selectedIso ?? defaultDateTimeIso);
-  const slotMaxQty = selected?.maxQty ?? 1;
   const slotPrice = selected?.creditPrice ?? 0;
   const showSelect = occurrences.length >= 2;
   const datetimeSelectId = "book-slot-datetime";
-  const initialTickets = String(clampQty(Number.parseInt(defaultTickets, 10), slotMaxQty));
 
   const options = useMemo(
     () =>
@@ -90,13 +82,6 @@ export default function BookSlotFields({
           </select>
         </Surface>
       ) : null}
-      <TicketCountSelect
-        defaultValue={initialTickets}
-        key={`${selected?.startsAtIso ?? "slot"}-${slotMaxQty}`}
-        label={ticketsLabel}
-        maxQty={slotMaxQty}
-        name="ticketsCount"
-      />
     </Surface>
   );
 }

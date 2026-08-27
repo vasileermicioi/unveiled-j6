@@ -38,8 +38,8 @@ describe("buildDefaultAuthContinuePath", () => {
 describe("buildAuthUiContinuePath", () => {
   test("builds locale-relative continue for AuthProvider / OAuth callbackURL", () => {
     expect(buildAuthUiContinuePath()).toBe("/auth/continue");
-    expect(buildAuthUiContinuePath("/en/events/abc/book?qty=1")).toBe(
-      "/auth/continue?returnTo=%2Fen%2Fevents%2Fabc%2Fbook%3Fqty%3D1",
+    expect(buildAuthUiContinuePath("/en/events/abc/book")).toBe(
+      "/auth/continue?returnTo=%2Fen%2Fevents%2Fabc%2Fbook",
     );
   });
 });

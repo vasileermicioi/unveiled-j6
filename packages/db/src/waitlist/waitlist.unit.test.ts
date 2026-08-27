@@ -32,5 +32,13 @@ describe("waitlist helpers", () => {
         requestedQty: 1.5,
       }),
     ).rejects.toMatchObject({ code: "INVALID_QTY" });
+
+    await expect(
+      joinWaitlist(fakeDb, {
+        userId: "u1",
+        eventId: "00000000-0000-0000-0000-000000000001",
+        requestedQty: 4,
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_QTY" });
   });
 });

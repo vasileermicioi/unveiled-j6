@@ -20,6 +20,27 @@ The system SHALL persist event bookings in `public.bookings` with a generated pr
 - **THEN** every existing booking has `date_time` equal to that event’s denormalized `date_time`
 - **AND** the column is NOT NULL
 
+### Requirement: One active booking per occurrence
+The system SHALL allow at most one `CONFIRMED` or `USED` booking row per `(user_id, event_id, date_time)`. `date_time` is the booked occurrence instant. `CANCELLED` rows SHALL NOT participate in this uniqueness. A second purchase, waitlist promotion, or admin comp for an already-held active occurrence SHALL fail with `ALREADY_BOOKED` and SHALL NOT mutate credits, capacity, inventory, or ledger. A member MAY hold one ticket on each distinct occurrence of a multi-datetime event. New bookings SHALL persist `tickets_count = 1`. The system SHALL expose a read of the occurrence instants a member already holds as `CONFIRMED` or `USED` for a given event (for later checkout UI).
+
+#### Scenario: Second ticket for the same hour is rejected
+- **WHEN** a member already has a `CONFIRMED` booking for an event occurrence
+- **AND** they submit another booking for that same occurrence
+- **THEN** the system rejects with `ALREADY_BOOKED` and no credits, capacity, or ledger change
+
+#### Scenario: Different hour on the same event is allowed
+- **WHEN** a member has a `CONFIRMED` booking for a morning occurrence
+- **AND** they book the evening occurrence of the same event
+- **THEN** a second confirmed booking is created with `tickets_count = 1` and that evening `date_time`
+
+#### Scenario: Cancelled hour can be booked again
+- **WHEN** the member’s only booking for that occurrence is `CANCELLED`
+- **THEN** a new confirmed booking for that occurrence is allowed
+
+#### Scenario: Active booked instants are queryable
+- **WHEN** a member has `CONFIRMED` or `USED` bookings for two hours of an event and a `CANCELLED` hour of the same event
+- **THEN** listing that member’s active booked instants for the event returns only the `CONFIRMED` and `USED` `date_time` values
+
 ### Requirement: Transactional database access
 The system SHALL provide a Drizzle-capable database client that supports multi-statement transactions and row locking for the booking path, exported from `@unveiled/db` alongside the existing neon-http client.
 
@@ -32,16 +53,16 @@ The system SHALL provide a Drizzle-capable database client that supports multi-s
 - **THEN** it MAY continue to use the existing `createDb` neon-http factory
 
 ### Requirement: Atomic booking transaction
-The system SHALL create purchase bookings only through a single Postgres transaction that locks the event row, verifies subscription eligibility and capacity and credits, allocates per-ticket redemption artifacts (`booking_tickets` plus voucher inventory when applicable), decrements capacity and credits, writes a `CONFIRMED` booking including `bookings.date_time`, and writes a negative `BOOKING` ledger entry (unless `skipCreditCharge`). Credits charged SHALL be the **selected occurrence** credit price × ticket count (not always denormalized `events.credit_price`, except that denormalized `credit_price` equals the primary occurrence and is used when that slot is selected or when the caller omits a slot and the next upcoming occurrence is primary). The Booking domain SHALL be the only writer of purchase bookings and `BOOKING` ledger rows. Ticket count shape validation SHALL require an integer ≥ 1 and SHALL NOT impose a hard upper bound of 3; remaining capacity, credit balance, and (for voucher types) available inventory remain authoritative rejection reasons. Idempotent retry of the same `(user_id, idempotency_key)` SHALL return the original booking without re-allocating inventory or mutating credits/capacity, and SHALL ignore a mismatched posted datetime.
+The system SHALL create purchase bookings only through a single Postgres transaction that locks the event row, verifies subscription eligibility and capacity and credits, allocates per-ticket redemption artifacts (`booking_tickets` plus voucher inventory when applicable), decrements capacity and credits, writes a `CONFIRMED` booking including `bookings.date_time`, and writes a negative `BOOKING` ledger entry (unless `skipCreditCharge`). Credits charged SHALL be the **selected occurrence** credit price × **1**. Ticket count validation SHALL require the integer `1` (not merely ≥ 1). The transaction SHALL reject a second active booking for the same user + event + resolved `date_time` (`ALREADY_BOOKED`). The Booking domain SHALL be the only writer of purchase bookings and `BOOKING` ledger rows. Remaining capacity, credit balance, and (for voucher types) available inventory remain authoritative rejection reasons alongside uniqueness and ticket-count validation. Idempotent retry of the same `(user_id, idempotency_key)` SHALL return the original booking without re-allocating inventory or mutating credits/capacity, and SHALL ignore a mismatched posted datetime. Idempotent retry SHALL run **before** the uniqueness check.
 
 #### Scenario: Successful booking
-- **WHEN** I confirm the booking for a selected future datetime
-- **THEN** a confirmed booking is created for me against the event and that datetime
-- **AND** my credits are decremented by that slot’s creditPrice × ticket count
-- **AND** the event’s remaining capacity is decremented by the ticket count
+- **WHEN** I confirm the booking for a selected future datetime I do not already hold
+- **THEN** a confirmed booking is created with `tickets_count = 1` against the event and that datetime
+- **AND** my credits are decremented by that slot’s creditPrice
+- **AND** the event’s remaining capacity is decremented by 1
 
 #### Scenario: Booking fails — insufficient credits
-- **WHEN** credits are insufficient for the selected occurrence `creditPrice × ticket count`
+- **WHEN** credits are insufficient for the selected occurrence `creditPrice × 1`
 - **THEN** the booking is rejected and no credits, capacity, or ledger changes occur
 
 #### Scenario: Idempotent retry
@@ -49,40 +70,53 @@ The system SHALL create purchase bookings only through a single Postgres transac
 - **THEN** no duplicate booking or credit/capacity change occurs and the original redemption info is returned
 - **AND** voucher inventory is not allocated a second time
 
+#### Scenario: Ticket quantity other than one is rejected
+- **WHEN** a booking is requested with a ticket count other than 1
+- **THEN** the booking is rejected without mutating credits, capacity, or ledger
+
 #### Scenario: Ticket quantity shape invalid
 - **WHEN** a booking is requested with a non-integer ticket count or a count less than 1
 - **THEN** the booking is rejected without mutating credits, capacity, or ledger
 
 #### Scenario: Ticket quantity above three still bookable
-- **WHEN** an eligible member confirms a booking for more than 3 tickets and capacity and credits are sufficient
-- **THEN** a confirmed booking is created and credits and capacity decrease accordingly
+- **WHEN** an eligible member confirms a booking for more than 3 tickets
+- **THEN** the booking is rejected with `INVALID_TICKET_COUNT` and no credits, capacity, or ledger changes occur
 
 ### Requirement: Ticket count selection bounds
-For guests viewing the public event detail checkout affordance, the system SHALL allow selecting a ticket count from 1 through 3 (preview only; booking remains auth-gated). For signed-in members on detail and book surfaces, the maximum selectable ticket count SHALL be the minimum of (a) floor(available credits ÷ **selected occurrence** creditPrice), (b) the event’s remaining capacity, and (c) when provided for voucher-type events, available voucher inventory count (with creditPrice ≤ 0 treated as capacity/inventory-only). Changing the selected future datetime SHALL recompute this maximum and clamp the quantity. The booking transaction SHALL accept any integer ticket count ≥ 1 that passes capacity, credit, and inventory checks and SHALL NOT reject solely because the count is greater than 3.
+The system SHALL NOT offer a ticket-quantity stepper or select on public event detail, `/events/:id/book`, waitlist join, or admin comp. Bookable quantity for a new write is exactly one ticket when the member can afford the selected occurrence price, remaining capacity is at least 1, and (for voucher types) at least one inventory item is available; otherwise the member cannot book. Guests continue to omit quantity and credit totals. Changing the selected future datetime SHALL recompute the one-ticket credit total from that slot’s price. The booking transaction SHALL reject any ticket count other than the integer `1`.
+
+#### Scenario: Eligible checkout has no quantity stepper
+- **WHEN** a booking-eligible member views a bookable event detail page
+- **THEN** there is no control to increase ticket count above 1
+- **AND** the credit total equals the selected occurrence price
 
 #### Scenario: Guest preview capped at three
 - **WHEN** a guest views a bookable event detail page
-- **THEN** the ticket quantity control does not exceed 3
+- **THEN** there is no ticket-quantity control (guests omit quantity; there is no preview cap of 3)
 
 #### Scenario: Member max follows credits and capacity
 - **WHEN** a signed-in member with 17 credits views a bookable event priced at 2 credits with remaining capacity 10
-- **THEN** the maximum selectable ticket count is 8
+- **THEN** the bookable quantity is 1 (not 8)
+
+#### Scenario: Member cannot book when they cannot afford one ticket
+- **WHEN** a signed-in member with 1 credit views a bookable event priced at 2 credits with remaining capacity 10
+- **THEN** the bookable quantity for that occurrence is 0
 
 #### Scenario: Member max uses the selected slot price
-- **WHEN** a signed-in member with 6 credits views an event with a 1-credit slot and a 3-credit slot, remaining capacity 10
-- **THEN** the maximum selectable ticket count is 6 on the 1-credit slot
-- **AND** the maximum selectable ticket count is 2 on the 3-credit slot
+- **WHEN** a signed-in member with 2 credits views an event with a 1-credit slot and a 3-credit slot, remaining capacity 10
+- **THEN** the 1-credit slot is bookable (quantity 1)
+- **AND** the 3-credit slot is not bookable (quantity 0)
 
 #### Scenario: Member max also respects voucher inventory
-- **WHEN** a signed-in member views a `VOUCHER_PROMO` event with remaining capacity 10, enough credits for 8 tickets, and only 3 `AVAILABLE` promo codes
-- **THEN** the maximum selectable ticket count is 3
+- **WHEN** a signed-in member views a `VOUCHER_PROMO` event with remaining capacity 10, enough credits for the slot, and 0 `AVAILABLE` promo codes
+- **THEN** the bookable quantity is 0
 
 #### Scenario: Booking succeeds above former hard cap
 - **WHEN** an eligible member confirms a booking for 4 tickets and capacity and credits are sufficient
-- **THEN** the booking is created and credits/capacity decrease accordingly
+- **THEN** the booking is rejected (`INVALID_TICKET_COUNT`) and credits/capacity are unchanged
 
 #### Scenario: Capacity still enforced
-- **WHEN** the requested ticket count exceeds remaining capacity
+- **WHEN** remaining capacity is 0
 - **THEN** the booking is rejected and no credits, capacity, or ledger changes occur
 
 ### Requirement: Subscription gate inside booking
@@ -151,13 +185,13 @@ The system SHALL expose SSR pages at `/:locale/events/:id/book` (GET form + POST
 - **AND** the ICS attachment MAY still use canonical `title`
 
 ### Requirement: Member selects a datetime slot when booking
-When an event has two or more future datetimes, a booking-eligible member SHALL select one future occurrence before confirming. The booking SHALL store that instant on `bookings.date_time`. Credits charged SHALL be that occurrence’s `occurrence_credit_prices` value times ticket count. Capacity and voucher inventory checks SHALL remain at event level. The system SHALL reject a datetime that is not on the event or that is in the past (`UNKNOWN_SLOT` / `PAST_SLOT`) with no credits, capacity, inventory, or ledger changes. Confirm page time chrome, ICS `DTSTART`, booking ticket card datetime, and confirmation-email “when” fields SHALL use `bookings.date_time`. Waitlist promotion and admin complimentary tickets MAY omit `dateTime`; the booking domain SHALL then persist the next upcoming occurrence (or the denormalized primary when every occurrence is past). Idempotent retry of the same `(user_id, idempotency_key)` SHALL return the original booking and SHALL ignore a mismatched posted datetime. `docs/product/features/booking.feature` SHALL describe this slot selection (not event-scoped booking) and SHALL include a scenario titled `Book a priced datetime slot`.
+When an event has two or more future datetimes, a booking-eligible member SHALL select one future occurrence before confirming. The booking SHALL store that instant on `bookings.date_time`. Credits charged SHALL be that occurrence’s `occurrence_credit_prices` value × **1**. Capacity and voucher inventory checks SHALL remain at event level. The system SHALL reject a datetime that is not on the event or that is in the past (`UNKNOWN_SLOT` / `PAST_SLOT`) with no credits, capacity, inventory, or ledger changes. Confirm page time chrome, ICS `DTSTART`, booking ticket card datetime, and confirmation-email “when” fields SHALL use `bookings.date_time`. Waitlist promotion and admin complimentary tickets MAY omit `dateTime`; the booking domain SHALL then persist the next upcoming occurrence (or the denormalized primary when every occurrence is past). Idempotent retry of the same `(user_id, idempotency_key)` SHALL return the original booking and SHALL ignore a mismatched posted datetime. `docs/product/features/booking.feature` SHALL describe this slot selection (not event-scoped booking) and SHALL include a scenario titled `Book a priced datetime slot`.
 
 #### Scenario: Successful booking of a priced slot
-- **WHEN** a member selects a future datetime priced 3 credits and books 2 tickets
-- **THEN** a confirmed booking is stored with that `date_time`
-- **AND** 6 credits are deducted
-- **AND** remaining capacity decreases by 2
+- **WHEN** a member selects a future datetime priced 3 credits and books
+- **THEN** a confirmed booking is stored with that `date_time` and `tickets_count = 1`
+- **AND** 3 credits are deducted
+- **AND** remaining capacity decreases by 1
 
 #### Scenario: Unknown or past slot rejected
 - **WHEN** the posted datetime is missing from `date_times` or is in the past
@@ -176,10 +210,10 @@ When an event has two or more future datetimes, a booking-eligible member SHALL 
 #### Scenario: Waitlist promotion defaults to next upcoming
 - **WHEN** waitlist promotion calls `bookEvent` without a `dateTime`
 - **THEN** the created booking stores the event’s next upcoming occurrence
-- **AND** credits charged equal that occurrence’s price times the requested ticket count
+- **AND** credits charged equal that occurrence’s price × 1
 
 ### Requirement: Booking feature documents slot selection
-`docs/product/features/booking.feature` SHALL describe datetime selection on event detail / book, charging the selected occurrence’s credits, event-level capacity, and confirm/ICS/email using `bookings.date_time`. The old “no datetime slot selection” / “without a slot selection step” / “next upcoming datetime for calendar/ICS” wording SHALL be removed. Playwright in `e2e/specs/booking.spec.ts` SHALL include a test titled exactly `Scenario: Book a priced datetime slot`. `docs/product/database/schema-overview.md` SHALL list `bookings.date_time` (`timestamptz NOT NULL`, booked occurrence) and SHALL NOT list denormalized `events.date_time` as the ICS/email calendar source. `docs/product/extras/gaps-and-decisions.md` SHALL NOT say MVP booking remains event-scoped. Capacity and voucher inventory SHALL remain documented as event-level.
+`docs/product/features/booking.feature` SHALL describe datetime selection on event detail / book, charging the selected occurrence’s credits × **1**, event-level capacity decrement of **1**, and confirm/ICS/email using `bookings.date_time`. The old “no datetime slot selection” / “without a slot selection step” / “next upcoming datetime for calendar/ICS” wording SHALL be removed. Playwright in `e2e/specs/booking.spec.ts` SHALL include a test titled exactly `Scenario: Book a priced datetime slot`. `docs/product/database/schema-overview.md` SHALL list `bookings.date_time` (`timestamptz NOT NULL`, booked occurrence) and SHALL NOT list denormalized `events.date_time` as the ICS/email calendar source. `docs/product/extras/gaps-and-decisions.md` SHALL NOT say MVP booking remains event-scoped. Capacity and voucher inventory SHALL remain documented as event-level.
 
 #### Scenario: Coverage traces slot booking
 - **WHEN** the coverage matrix is updated for this feature
@@ -191,15 +225,16 @@ When an event has two or more future datetimes, a booking-eligible member SHALL 
 - **AND** the event has multiple future datetimes with different credit prices
 - **AND** the event has enough remaining capacity and I have enough credits
 - **WHEN** I select a non-primary future datetime and confirm the booking
-- **THEN** a confirmed booking is stored with that `date_time`
-- **AND** credits deducted equal that occurrence’s price times ticket count
-- **AND** remaining capacity decreases by the ticket count (event-level)
+- **THEN** a confirmed booking is stored with that `date_time` and `tickets_count = 1`
+- **AND** credits deducted equal that occurrence’s price times 1
+- **AND** remaining capacity decreases by 1 (event-level)
 - **AND** confirmation surfaces use the booked datetime for calendar/ICS display
 
 #### Scenario: Successful booking Gherkin is slot-aware
 - **WHEN** a reader opens the Successful booking scenario in `booking.feature`
 - **THEN** it does not say the booking is event-scoped or that there is no datetime slot selection
-- **AND** credits charged are the selected occurrence price × ticket count
+- **AND** credits charged are the selected occurrence price × 1
+- **AND** remaining capacity decreases by 1
 
 #### Scenario: Post-booking calendar uses booked datetime
 - **WHEN** a reader opens the Post-booking actions scenario in `booking.feature`
@@ -303,50 +338,105 @@ The system SHALL implement Playwright coverage for `booking.feature` scenarios `
 - **WHEN** Ladle is started after this change
 - **THEN** the admin cancel booking confirm story renders without runtime errors
 
+### Requirement: Already-booked checkout messaging
+When a booking-eligible member views `/events/:id` or `/events/:id/book` and the selected (or only) future occurrence is one they already hold as `CONFIRMED` or `USED`, the system SHALL NOT show a confirm-booking form or book CTA for that occurrence. It SHALL show this copy verbatim — DE: `Du hast das bereits gebucht. Du kannst es unter Meine Tickets nachschauen.` EN: `You've already booked this. You can check it in My Tickets.` — and a link labeled `Meine Tickets` / `My Tickets` to `/:locale/bookings`. If the event has other future occurrences the member does not hold, those hours SHALL remain selectable and bookable. A POST that loses the race (`ALREADY_BOOKED`) SHALL render the same message and link rather than a generic booking error. Guests, past-due members, and membership-required viewers SHALL NOT receive already-booked treatment. For a booking-eligible member, a selected hour that is already held SHALL take priority over sold-out / waitlist chrome for that hour (past events still show past chrome, not already-booked). `docs/product/features/booking.feature` SHALL include scenarios titled `Reopening a booked single-slot event` and `Booked hour on a multi-hour event`. Playwright in `e2e/specs/booking.spec.ts` SHALL use those titles verbatim and SHALL cover detail and book (single-slot reopen) plus multi-hour booked vs other hour.
+
+#### Scenario: Reopening a booked single-slot event
+- **WHEN** I am a booking-eligible member with a `CONFIRMED` booking for a single-occurrence event
+- **AND** I open that event’s detail or book page
+- **THEN** I see the already-booked message
+- **AND** I can follow My Tickets to `/:locale/bookings`
+- **AND** I do not see a control to confirm another booking
+
+#### Scenario: Booked hour on a multi-hour event
+- **WHEN** I have a `CONFIRMED` booking for the morning occurrence only
+- **AND** I open the event with that morning datetime selected
+- **THEN** I see the already-booked message and My Tickets link
+- **AND** I can select the evening occurrence and book one ticket there
+
+#### Scenario: Book POST race shows already-booked copy
+- **WHEN** I submit a booking POST for an occurrence I already hold as `CONFIRMED` or `USED`
+- **THEN** I see the already-booked message and My Tickets link
+- **AND** I do not see a generic booking-failed error
+- **AND** I do not see a confirm-booking submit control
+
+#### Scenario: Already-booked beats waitlist for the selected hour
+- **WHEN** the event is sold out
+- **AND** I already hold the selected future occurrence as `CONFIRMED` or `USED`
+- **THEN** I see the already-booked message and My Tickets link
+- **AND** I do not see a waitlist join CTA for that selected hour
+
 ### Requirement: Detail page does not charge credits
-The public event detail page SHALL NOT create bookings or ledger entries. Ticket quantity controls on detail, if shown, SHALL only influence navigation into the existing SSR booking or auth `returnTo` flow. When a datetime slot is selected, the primary book or login CTA SHALL include that occurrence as a `dateTime` query param (ISO instant) alongside `qty`. Credit deduction for purchases SHALL continue to occur only through the Booking domain on the dedicated `/:locale/events/:id/book` SSR form POST (or equivalent booking-domain writers such as waitlist promotion / admin comp — not from detail).
+The public event detail page SHALL NOT create bookings or ledger entries. Ticket-quantity steppers or selects SHALL NOT appear on detail. When a datetime slot is selected and that slot is **not** already held by the booking-eligible member, the primary book or login CTA SHALL include that occurrence as a `dateTime` query param (ISO instant). When the selected slot **is** already held (`CONFIRMED` or `USED`), detail SHALL omit the book CTA (and waitlist CTA) and SHALL NOT deep-link to a confirm form for that hour. A `qty` query, if present, SHALL be `1` or omitted. Credit deduction for purchases SHALL continue to occur only through the Booking domain on the dedicated `/:locale/events/:id/book` SSR form POST (or equivalent booking-domain writers such as waitlist promotion / admin comp — not from detail).
 
 #### Scenario: Guest quantity does not book
-- **WHEN** a guest changes ticket quantity on event detail
-- **THEN** no booking row is created
+- **WHEN** a guest views event detail
+- **THEN** no ticket-quantity stepper or select is shown
+- **AND** no booking row is created
 - **AND** continuing requires authentication before any credit charge
 
 #### Scenario: Eligible member quantity only deep-links
-- **WHEN** an eligible member adjusts ticket quantity on event detail and follows the primary book CTA
-- **THEN** they navigate to `/:locale/events/:id/book` (optionally with a quantity query and a `dateTime` query)
+- **WHEN** an eligible member follows the primary book CTA from event detail for an hour they do not already hold
+- **THEN** they navigate to `/:locale/events/:id/book` (optionally with a `dateTime` query and `qty=1` or no `qty`)
 - **AND** no booking or ledger write occurs until the book page SSR POST succeeds
 
-### Requirement: Product Gherkin ticket bounds
+#### Scenario: Already-held hour has no book deep-link
+- **WHEN** an eligible member views event detail with a selected occurrence they already hold
+- **THEN** no book or waitlist CTA is shown for that hour
+- **AND** no booking or ledger write occurs
 
-`docs/product/features/booking.feature` SHALL document guest preview max 3 and member max = `min(floor(credits ÷ selected occurrence creditPrice), remainingCapacity)` (and voucher inventory when applicable), and SHALL NOT require a universal hard max of 3 for successful bookings when credits and capacity allow a higher count. Capacity and credit rejection scenarios remain authoritative. Playwright covering ticket quantity on detail/book SHALL align with these bounds (guest + disabled at 3; eligible member can select more than 3 when seeded credits and capacity allow). Changing the selected future datetime SHALL be specified as recomputing that maximum.
+### Requirement: Product Gherkin ticket bounds
+`docs/product/features/booking.feature` SHALL document one ticket per occurrence on member checkout (no quantity stepper or select). It SHALL NOT document a guest preview max of 3, a member max of `min(floor(credits ÷ creditPrice), remainingCapacity)` as a selectable count, or Playwright that selects more than 3 tickets. Capacity and credit rejection scenarios remain authoritative for **one** ticket. Playwright covering checkout SHALL assert there is no control to increase ticket count. Changing the selected future datetime SHALL recompute the one-ticket credit total from that slot’s price.
 
 #### Scenario: Feature file matches server and UI
-
 - **WHEN** an implementer reads `booking.feature` after this feature ships
-- **THEN** background/scenarios describe credit- and capacity-aware limits for members using the selected occurrence price
-- **AND** they do not state that every successful booking must use a ticket count between 1 and 3 inclusive as a hard universal cap
+- **THEN** background/scenarios describe one ticket per occurrence for members using the selected occurrence price
+- **AND** they do not state that members may select a ticket count greater than 3
+- **AND** they do not state that every successful booking uses a 1–3 hard universal cap as the product rule — the product rule is qty 1
 
-#### Scenario: Guest preview still capped at three in BDD
-
+#### Scenario: Guest preview has no quantity control
 - **WHEN** a guest views a bookable event detail checkout affordance under Playwright
-- **THEN** the ticket quantity control does not exceed 3 (e.g. increment disabled at 3)
+- **THEN** there is no ticket-quantity control (no guest preview cap of 3)
 
-#### Scenario: Eligible member can select above three in BDD
+#### Scenario: Eligible member cannot select above one in BDD
+- **WHEN** a seeded ACTIVE member with sufficient credits views a bookable event
+- **THEN** Playwright cannot increase ticket count above 1 on detail or book surfaces
 
-- **WHEN** a seeded ACTIVE member with sufficient credits views a bookable event with remaining capacity allowing more than 3 tickets
-- **THEN** Playwright can select a ticket count greater than 3 on detail or book surfaces
+### Requirement: Canonical Gherkin matches one-ticket behavior
+`docs/product/features/booking.feature` SHALL describe one ticket per occurrence, `ALREADY_BOOKED` rejection, and the already-booked checkout message. It SHALL NOT require a ticket-quantity control or allow selecting more than one ticket on member checkout. Background SHALL NOT say members may select up to `min(floor(credits ÷ price), remainingCapacity)` tickets or that a successful booking is not limited by a hard max of 3. Successful booking, priced-slot, sold-out, insufficient-credits, and insufficient-voucher scenarios SHALL use ticket count **1** (credits × 1, capacity − 1). Playwright `e2e/specs/booking.spec.ts` test titles SHALL match those `Scenario:` lines verbatim. Coverage-matrix rows SHALL map the new titles (`pass` when `DATABASE_URL` is set; never `@skip-no-ui` for already-booked UI). `docs/product/database/schema-overview.md` SHALL document `tickets_count = 1` on new writes and the partial unique index on active `(user_id, event_id, date_time)`. `docs/product/extras/content-i18n-inventory.md` SHALL include the locked already-booked DE/EN copy. `docs/product/sitemap/sitemap.md` SHALL note one-ticket book + already-booked when the hour is held. `docs/product/ui/ui-component-map.md` and `docs/product/extras/gaps-and-decisions.md` SHALL NOT describe a member qty stepper. Grandfathered `tickets_count > 1` display (`Multi-ticket promo codes are listed separately`) SHALL remain.
+
+#### Scenario: Member cannot select more than one ticket
+- **WHEN** I view the event detail checkout panel or book page as a booking-eligible member
+- **THEN** I cannot increase quantity above one ticket
+- **AND** Playwright uses the title `Scenario: Member cannot select more than one ticket`
+
+#### Scenario: Reopening a booked single-slot event
+- **WHEN** I am a booking-eligible member with a `CONFIRMED` booking for a single-occurrence event
+- **AND** I open that event’s detail or book page
+- **THEN** I see the already-booked message
+- **AND** I can follow My Tickets to `/:locale/bookings`
+- **AND** I do not see a control to confirm another booking
+- **AND** Playwright uses that Gherkin title verbatim
+
+#### Scenario: Booked hour on a multi-hour event
+- **WHEN** I have a `CONFIRMED` booking for the morning occurrence only
+- **AND** I open the event with that morning datetime selected
+- **THEN** I see the already-booked message and My Tickets link
+- **AND** I can select the evening occurrence and book one ticket there
+- **AND** Playwright uses that Gherkin title verbatim
 
 ### Requirement: Booking quantity uses native select
-Book and waitlist ticket-quantity fields SHALL use a native HTML `<select>` (or native number input) bound to the SSR form field name, not a HeroUI Select that depends on client hydration for visibility. Quantity bounds and booking-domain validation remain unchanged.
+Book, waitlist join, and admin comp SHALL NOT present a ticket-quantity stepper or select. Those forms SHALL persist quantity 1 (hidden field or omitted field with server default 1). Datetime choice, when two or more future occurrences exist, SHALL remain a native HTML `<select>`.
 
 #### Scenario: Book page ticket count is a native select
 - **WHEN** a booking-eligible member opens `/:locale/events/:id/book`
-- **THEN** the ticket quantity control is a native `<select>` (or native number input) with a visible label
-- **AND** submitting the form posts the selected quantity under the existing field name
+- **THEN** there is no ticket-quantity control (no native select and no stepper)
+- **AND** submitting the form books exactly one ticket
 
 #### Scenario: Waitlist join quantity matches book pattern
-- **WHEN** a member opens the waitlist join form that collects ticket quantity
-- **THEN** the quantity control uses the same native select/input pattern as the book form
+- **WHEN** a member opens the waitlist join form
+- **THEN** there is no ticket-quantity control
+- **AND** the created entry has `requested_qty = 1`
 
 ### Requirement: Product Gherkin redemption matches inventory model
 

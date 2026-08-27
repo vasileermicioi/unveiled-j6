@@ -24,12 +24,13 @@ Feature: Event Waitlist
 
   Background:
     Given I am signed in as a "USER"
-    And an event's remaining capacity is less than my requested ticket count
+    And an event's remaining capacity is 0
 
   Scenario: Join the waitlist
-    When I choose to join the waitlist with a requested ticket count
-    Then a waitlist entry is created for me with status "WAITING"
+    When I choose to join the waitlist
+    Then a waitlist entry is created for me with status "WAITING" and requested_qty 1
     And I see a waitlist confirmation
+    And the join form has no ticket-quantity control
 
   Scenario: Joining the waitlist requires authentication
     Given I am not signed in
@@ -50,11 +51,11 @@ Feature: Event Waitlist
 
   Scenario: Automatic promotion when capacity frees up
     Given I am on the waitlist for an event with status "WAITING"
-    And I am the earliest-queued "WAITING" entry whose requested ticket count fits the newly freed capacity
+    And I am the earliest-queued "WAITING" entry whose one-ticket request fits the newly freed capacity
     And a confirmed booking for that event is cancelled by an admin, or an admin increases the event's total capacity
     When the system processes the freed capacity
-    Then the system attempts to book my requested ticket count on my behalf, through the same transaction as a normal booking (re-checking my subscription status and credit balance at this moment)
-    And on success my waitlist entry becomes "PROMOTED" and a "CONFIRMED" booking is created for me with the same redemption info a normal booking would produce
+    Then the system attempts to book one ticket on my behalf, through the same transaction as a normal booking (re-checking my subscription status and credit balance at this moment)
+    And on success my waitlist entry becomes "PROMOTED" and a "CONFIRMED" booking is created for me with tickets_count 1 and the same redemption info a normal booking would produce
     And I am notified by email that I've been promoted, with my redemption details
 
   Scenario: Promotion is skipped if I'm no longer eligible

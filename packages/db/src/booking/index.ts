@@ -20,6 +20,7 @@ export {
   getOwnedBookingTicketPdf,
   type OwnedBookingTicketPdf,
 } from "./get-owned-booking-ticket-pdf";
+export { listActiveBookedOccurrenceInstants } from "./list-active-booked-occurrence-instants";
 export {
   BOOKINGS_PAGE_SIZE,
   type ListUserBookingsInput,

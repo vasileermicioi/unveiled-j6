@@ -45,6 +45,7 @@ describe("admin capacity ops (integration)", () => {
     const adminId = `cap-admin-${suffix}`;
     const memberId = `cap-member-${suffix}`;
     const waiterId = `cap-waiter-${suffix}`;
+    const soldOutMemberId = `cap-sold-${suffix}`;
     const partnerImage = await createTestImage();
     const eventImage = await createTestImage();
     const compImage = await createTestImage();
@@ -98,11 +99,19 @@ describe("admin capacity ops (integration)", () => {
           credits: 10,
           role: "USER",
         },
+        {
+          id: soldOutMemberId,
+          email: `${soldOutMemberId}@example.com`,
+          emailVerified: true,
+          credits: 10,
+          role: "USER",
+        },
       ]);
 
       await httpDb.insert(subscriptions).values([
         { userId: memberId, status: "ACTIVE", plan: "Basic Berlin" },
         { userId: waiterId, status: "ACTIVE", plan: "Basic Berlin" },
+        { userId: soldOutMemberId, status: "ACTIVE", plan: "Basic Berlin" },
       ]);
 
       const booked = await bookEvent(txDb, {
@@ -285,7 +294,7 @@ describe("admin capacity ops (integration)", () => {
 
         await expect(
           createCompTicket(txDb, {
-            userId: memberId,
+            userId: soldOutMemberId,
             eventId: compEvent.id,
             idempotencyKey: `comp-sold-${suffix}`,
             adminUserId: adminId,
@@ -314,12 +323,15 @@ describe("admin capacity ops (integration)", () => {
       await httpDb.delete(bookings).where(eq(bookings.eventId, event.id));
       await httpDb.delete(creditLedger).where(eq(creditLedger.userId, memberId));
       await httpDb.delete(creditLedger).where(eq(creditLedger.userId, waiterId));
+      await httpDb.delete(creditLedger).where(eq(creditLedger.userId, soldOutMemberId));
       await httpDb.delete(creditLedger).where(eq(creditLedger.userId, `cap-manual-${suffix}`));
       await httpDb.delete(subscriptions).where(eq(subscriptions.userId, memberId));
       await httpDb.delete(subscriptions).where(eq(subscriptions.userId, waiterId));
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, soldOutMemberId));
       await httpDb.delete(subscriptions).where(eq(subscriptions.userId, `cap-manual-${suffix}`));
       await httpDb.delete(users).where(eq(users.id, memberId));
       await httpDb.delete(users).where(eq(users.id, waiterId));
+      await httpDb.delete(users).where(eq(users.id, soldOutMemberId));
       await httpDb.delete(users).where(eq(users.id, `cap-manual-${suffix}`));
       await httpDb.delete(users).where(eq(users.id, adminId));
       await deleteEvent(httpDb, event.id, { skipBucket: true });
@@ -400,7 +412,7 @@ describe("admin capacity ops (integration)", () => {
       const booked = await bookEvent(txDb, {
         userId: memberId,
         eventId: event.id,
-        ticketsCount: 2,
+        ticketsCount: 1,
         idempotencyKey: `restock-book-${suffix}`,
       });
 
@@ -408,7 +420,7 @@ describe("admin capacity ops (integration)", () => {
         .select()
         .from(eventVoucherCodes)
         .where(eq(eventVoucherCodes.eventId, event.id));
-      expect(beforeCancel.every((row) => row.status === "ALLOCATED")).toBe(true);
+      expect(beforeCancel.filter((row) => row.status === "ALLOCATED")).toHaveLength(1);
 
       const cancelled = await cancelBookingAsAdmin(txDb, {
         bookingId: booked.booking.id,
@@ -433,7 +445,7 @@ describe("admin capacity ops (integration)", () => {
       const memberAfter = await httpDb.query.users.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, memberId),
       });
-      expect(memberAfter?.credits).toBe(8);
+      expect(memberAfter?.credits).toBe(9);
     } finally {
       const bookingIds = (
         await httpDb

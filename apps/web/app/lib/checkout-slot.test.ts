@@ -1,38 +1,37 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  clampQty,
   firstFormString,
   formatOccurrenceLabel,
   formatSlotUnitPrice,
+  occurrenceIsBooked,
   parseDateTimeParam,
   resolveSelectedOccurrence,
-  withQtyAndDateTimeQuery,
+  withDateTimeQuery,
 } from "./checkout-slot";
 
 const morning = {
   startsAtIso: "2030-09-01T08:00:00.000Z",
   creditPrice: 1,
-  maxQty: 6,
+  maxQty: 1,
 };
 const evening = {
   startsAtIso: "2030-09-01T17:00:00.000Z",
   creditPrice: 3,
-  maxQty: 2,
+  maxQty: 1,
 };
 
 describe("checkout-slot helpers", () => {
-  test("withQtyAndDateTimeQuery includes qty and dateTime", () => {
-    const href = withQtyAndDateTimeQuery("/en/events/abc/book", 2, evening.startsAtIso);
+  test("withDateTimeQuery includes dateTime and omits qty", () => {
+    const href = withDateTimeQuery("/en/events/abc/book", evening.startsAtIso);
     const parsed = new URL(href, "https://unveiled.local");
     expect(parsed.pathname).toBe("/en/events/abc/book");
-    expect(parsed.searchParams.get("qty")).toBe("2");
+    expect(parsed.searchParams.get("qty")).toBeNull();
     expect(parsed.searchParams.get("dateTime")).toBe(evening.startsAtIso);
   });
 
-  test("clampQty drops when switching from price 1 max 6 to price 3 max 2", () => {
-    expect(clampQty(5, evening.maxQty)).toBe(2);
-    expect(clampQty(1, evening.maxQty)).toBe(1);
+  test("withDateTimeQuery omits search when no datetime", () => {
+    expect(withDateTimeQuery("/en/events/abc/book")).toBe("/en/events/abc/book");
   });
 
   test("resolveSelectedOccurrence defaults to soonest then honors ISO match", () => {
@@ -55,6 +54,13 @@ describe("checkout-slot helpers", () => {
   test("formatSlotUnitPrice is serializable copy", () => {
     expect(formatSlotUnitPrice(1, "de")).toBe("1 Credit pro Ticket");
     expect(formatSlotUnitPrice(4, "en")).toBe("4 credits per ticket");
+  });
+
+  test("occurrenceIsBooked matches exact ISO strings only", () => {
+    expect(occurrenceIsBooked(morning.startsAtIso, [morning.startsAtIso])).toBe(true);
+    expect(occurrenceIsBooked(evening.startsAtIso, [morning.startsAtIso])).toBe(false);
+    expect(occurrenceIsBooked(undefined, [morning.startsAtIso])).toBe(false);
+    expect(occurrenceIsBooked(morning.startsAtIso, [])).toBe(false);
   });
 
   test("firstFormString reads duplicate POST fields", () => {

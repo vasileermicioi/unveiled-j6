@@ -13,24 +13,27 @@ export type MaxBookableTicketsInput = {
 };
 
 /**
- * UX upper bound for ticket quantity controls.
+ * UX upper bound for whether one ticket can be booked (0 or 1).
  * Server booking still enforces capacity, credits, and inventory authoritatively.
  */
 export function maxBookableTickets(input: MaxBookableTicketsInput): number {
-  if (input.viewerKind === "guest") {
-    return 3;
-  }
-
   const capacity = Math.max(0, Math.trunc(input.remainingCapacity));
   const inventoryCap =
     input.availableInventory == null
       ? Number.POSITIVE_INFINITY
       : Math.max(0, Math.trunc(input.availableInventory));
 
-  if (input.creditPrice <= 0) {
-    return Math.max(0, Math.min(capacity, inventoryCap));
-  }
+  const uncapped =
+    input.viewerKind === "guest" || input.creditPrice <= 0
+      ? Math.max(0, Math.min(capacity, inventoryCap))
+      : Math.max(
+          0,
+          Math.min(
+            Math.floor(Math.max(0, input.credits) / input.creditPrice),
+            capacity,
+            inventoryCap,
+          ),
+        );
 
-  const affordable = Math.floor(Math.max(0, input.credits) / input.creditPrice);
-  return Math.max(0, Math.min(affordable, capacity, inventoryCap));
+  return Math.min(1, uncapped);
 }

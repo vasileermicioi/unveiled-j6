@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -48,6 +49,9 @@ export const bookings = pgTable(
   },
   (table) => [
     uniqueIndex("bookings_user_id_idempotency_key_uidx").on(table.userId, table.idempotencyKey),
+    uniqueIndex("bookings_user_event_datetime_active_uidx")
+      .on(table.userId, table.eventId, table.dateTime)
+      .where(sql`${table.status} IN ('CONFIRMED', 'USED')`),
     index("bookings_user_id_created_at_idx").on(table.userId, table.createdAt),
     index("bookings_partner_id_created_at_idx").on(table.partnerId, table.createdAt),
     index("bookings_event_id_idx").on(table.eventId),

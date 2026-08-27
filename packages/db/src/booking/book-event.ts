@@ -34,6 +34,37 @@ function bookingLedgerKey(userId: string, idempotencyKey: string): string {
   return `booking:${userId}:${idempotencyKey}`;
 }
 
+const ACTIVE_OCCURRENCE_UIDX = "bookings_user_event_datetime_active_uidx";
+
+function isActiveOccurrenceUniqueViolation(error: unknown): boolean {
+  let current: unknown = error;
+  for (let depth = 0; depth < 6 && current; depth += 1) {
+    if (typeof current !== "object") {
+      return false;
+    }
+    const record = current as {
+      code?: unknown;
+      message?: unknown;
+      constraint?: unknown;
+      detail?: unknown;
+      cause?: unknown;
+    };
+    const code = record.code != null ? String(record.code) : "";
+    const message = record.message != null ? String(record.message) : "";
+    const constraint = record.constraint != null ? String(record.constraint) : "";
+    const detail = record.detail != null ? String(record.detail) : "";
+    const mentionsIndex =
+      message.includes(ACTIVE_OCCURRENCE_UIDX) ||
+      constraint.includes(ACTIVE_OCCURRENCE_UIDX) ||
+      detail.includes(ACTIVE_OCCURRENCE_UIDX);
+    if ((code === "23505" || message.includes("duplicate key")) && mentionsIndex) {
+      return true;
+    }
+    current = record.cause;
+  }
+  return false;
+}
+
 function canonicalOccurrenceInstant(event: Event, dateTime: Date): Date | undefined {
   const targetMs = dateTime.getTime();
   return event.dateTimes.find((value) => value.getTime() === targetMs);
@@ -107,10 +138,6 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
     });
     assertBookingEligible(subscription?.status);
 
-    if (event.remainingCapacity < input.ticketsCount) {
-      throw new BookingError("SOLD_OUT", "Not enough remaining capacity for this booking");
-    }
-
     const now = new Date();
     const slotDateTime = resolveBookingSlot(event, input.dateTime, now);
     const slotPrice = creditPriceForOccurrence(
@@ -120,6 +147,23 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
     );
     if (slotPrice === null) {
       throw new BookingError("UNKNOWN_SLOT", "Datetime is not an occurrence of this event");
+    }
+
+    const existingActive = await tx.query.bookings.findFirst({
+      where: (fields, { and, eq: eqOp, inArray: inArr }) =>
+        and(
+          eqOp(fields.userId, input.userId),
+          eqOp(fields.eventId, event.id),
+          eqOp(fields.dateTime, slotDateTime),
+          inArr(fields.status, ["CONFIRMED", "USED"]),
+        ),
+    });
+    if (existingActive) {
+      throw new BookingError("ALREADY_BOOKED", "You already have a ticket for this occurrence");
+    }
+
+    if (event.remainingCapacity < input.ticketsCount) {
+      throw new BookingError("SOLD_OUT", "Not enough remaining capacity for this booking");
     }
 
     const totalCredits = slotPrice * input.ticketsCount;
@@ -151,24 +195,33 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
         .where(eq(users.id, user.id));
     }
 
-    const [booking] = await tx
-      .insert(bookings)
-      .values({
-        userId: input.userId,
-        eventId: event.id,
-        partnerId: event.partnerId,
-        ticketsCount: input.ticketsCount,
-        totalCredits: skipCharge ? 0 : totalCredits,
-        dateTime: slotDateTime,
-        status: "CONFIRMED",
-        redemptionType: allocation.summary.redemptionType,
-        redemptionInfo: allocation.summary.redemptionInfo,
-        redemptionUrl: allocation.summary.redemptionUrl,
-        idempotencyKey,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning();
+    let booking: Booking | undefined;
+    try {
+      const inserted = await tx
+        .insert(bookings)
+        .values({
+          userId: input.userId,
+          eventId: event.id,
+          partnerId: event.partnerId,
+          ticketsCount: input.ticketsCount,
+          totalCredits: skipCharge ? 0 : totalCredits,
+          dateTime: slotDateTime,
+          status: "CONFIRMED",
+          redemptionType: allocation.summary.redemptionType,
+          redemptionInfo: allocation.summary.redemptionInfo,
+          redemptionUrl: allocation.summary.redemptionUrl,
+          idempotencyKey,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning();
+      booking = inserted[0];
+    } catch (error) {
+      if (isActiveOccurrenceUniqueViolation(error)) {
+        throw new BookingError("ALREADY_BOOKED", "You already have a ticket for this occurrence");
+      }
+      throw error;
+    }
 
     if (!booking) {
       throw new BookingError("EVENT_NOT_FOUND", "Failed to insert booking");

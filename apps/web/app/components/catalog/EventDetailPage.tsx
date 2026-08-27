@@ -15,6 +15,7 @@ import EventDetailCheckoutCard, {
 } from "../../islands/EventDetailCheckoutCard";
 import EventGallerySlider from "../../islands/EventGallerySlider";
 import EventMap, { type EventMapMarker } from "../../islands/EventMap";
+import { alreadyBookedTicketsPath, getAlreadyBookedCopy } from "../../lib/booking-content";
 import { isEventBookable } from "../../lib/catalog-mappers";
 import type { CheckoutOccurrence } from "../../lib/checkout-slot";
 import { getEventDetailGalleryCopy } from "../../lib/event-detail-gallery-copy";
@@ -51,12 +52,13 @@ type EventDetailPageProps = {
   viewer?: EventDetailViewer;
   /** Close control target — Discover for guests, feed/`returnTo` for members. */
   closeHref?: string;
-  defaultQty?: number;
-  /** Inclusive qty max for checkout controls (eligible members: credits ∩ capacity). */
+  /** Inclusive qty max (0 or 1) for whether the selected slot is bookable. */
   maxQty?: number;
   /** Future priced slots for eligible members; omit for guests. */
   occurrences?: CheckoutOccurrence[];
   defaultDateTimeIso?: string;
+  /** Active booked occurrence ISOs (eligible members only). */
+  bookedOccurrenceIsos?: string[];
   /** Ordered gallery images; omit or empty → no gallery section. */
   galleryImages?: PublicEventGalleryImage[];
   /** Caption footer + hero `alt`/`title` when `images.credit` is non-empty. */
@@ -125,10 +127,6 @@ function pastDueLabel(locale: Locale): string {
   return locale === "de" ? "Zahlung aktualisieren" : "Update payment";
 }
 
-function ticketsLabel(locale: Locale): string {
-  return locale === "de" ? "Tickets" : "Tickets";
-}
-
 function datetimeLabel(locale: Locale): string {
   return locale === "de" ? "Datum und Uhrzeit" : "Date and time";
 }
@@ -175,14 +173,6 @@ function locationLabel(locale: Locale): string {
 
 function detailsLabel(locale: Locale): string {
   return locale === "de" ? "Details" : "Details";
-}
-
-function decreaseAriaLabel(locale: Locale): string {
-  return locale === "de" ? "Ticket weniger" : "Decrease tickets";
-}
-
-function increaseAriaLabel(locale: Locale): string {
-  return locale === "de" ? "Ticket mehr" : "Increase tickets";
 }
 
 function parseCoord(value: string | null | undefined): number | null {
@@ -492,10 +482,10 @@ export function EventDetailPage({
   locale,
   viewer = { kind: "guest" },
   closeHref,
-  defaultQty = 1,
-  maxQty = 3,
+  maxQty: _maxQty = 1,
   occurrences,
   defaultDateTimeIso,
+  bookedOccurrenceIsos,
   galleryImages = [],
   heroCredit = null,
   partnerAttribution,
@@ -532,6 +522,7 @@ export function EventDetailPage({
     viewer,
   });
   const showMemberBookingChrome = viewer.kind === "eligible";
+  const alreadyBooked = getAlreadyBookedCopy(locale);
 
   return (
     <Surface
@@ -579,14 +570,14 @@ export function EventDetailPage({
 
           <Surface className="event-detail--checkout__checkout min-w-0" variant="transparent">
             <EventDetailCheckoutCard
+              alreadyBookedMessage={alreadyBooked.message}
+              bookedOccurrenceIsos={bookedOccurrenceIsos}
               datetimeLabel={datetimeLabel(locale)}
-              decreaseAriaLabel={decreaseAriaLabel(locale)}
               defaultDateTimeIso={defaultDateTimeIso}
-              defaultQty={defaultQty}
-              increaseAriaLabel={increaseAriaLabel(locale)}
               locale={locale}
               creditPrice={occurrences?.[0]?.creditPrice ?? event.creditPrice}
-              maxQty={occurrences?.[0]?.maxQty ?? maxQty}
+              myTicketsHref={alreadyBookedTicketsPath(locale)}
+              myTicketsLabel={alreadyBooked.myTicketsLabel}
               noticeText={checkout.noticeText}
               occurrences={showMemberBookingChrome ? occurrences : undefined}
               policyText={policyText()}
@@ -595,7 +586,6 @@ export function EventDetailPage({
               showCreditTotal={showMemberBookingChrome}
               showTicketControls={checkout.showTicketControls}
               statusMessage={checkout.statusMessage}
-              ticketsLabel={ticketsLabel(locale)}
               totalLabel={totalLabel(locale)}
             />
           </Surface>

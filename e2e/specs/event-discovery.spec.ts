@@ -11,6 +11,7 @@ import {
   ensureDemoEventGallery,
   ensureDemoFeaturedPartnersSplit,
   ensureDemoFeaturedSplit,
+  ensureEventHasCapacity,
   getEventIdByTitle,
   getPartnerIdByName,
   withEventPrimaryCredit,
@@ -134,9 +135,7 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
     // Checkout summary card: guest unlock CTA; tickets/credits gated for non–eligible
     await expect(page.getByText(/^tickets$/i)).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /ticket mehr|increase tickets/i })).toHaveCount(
-      0,
-    );
+    await expect(page.getByLabel(/anzahl tickets|ticket count/i)).toHaveCount(0);
     await expect(page.getByText(/^gesamt$|^total$/i)).toHaveCount(0);
     await expect(page.getByText(/\d+\s*CREDITS?/i)).toHaveCount(0);
     await expect(
@@ -367,7 +366,7 @@ test.describe("event-discovery.feature", () => {
     await expect(page.getByText(/^untertitel$|^subtitles$/i)).toHaveCount(0);
   });
 
-  test("Scenario: Booking-eligible member sees tickets, credits and date on event detail", async ({
+  test("Scenario: Booking-eligible member sees credits and date on event detail", async ({
     page,
     locale,
   }) => {
@@ -377,12 +376,11 @@ test.describe("event-discovery.feature", () => {
     await completeOnboardingWizard(page, locale);
     await activateMemberForBooking(user.email, 17);
 
-    const eventId = await getEventIdByTitle(TITLES.tonight);
+    const eventId = await ensureEventHasCapacity(TITLES.theaterFuture, 5);
     await page.goto(`/${locale}/events/${eventId}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
 
-    await expect(page.getByText(/^tickets$/i).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /ticket mehr|increase tickets/i })).toBeVisible();
+    await expect(page.getByLabel(/anzahl tickets|ticket count/i)).toHaveCount(0);
     await expect(page.getByText(/^gesamt$|^total$/i).first()).toBeVisible();
     await expect(page.getByText(/\d+\s*CREDITS?/i).first()).toBeVisible();
     await expect(page.getByText(/^datum$|^date$/i).first()).toBeVisible();

@@ -8,11 +8,10 @@ export const Form: Story = () => (
   <BookEventPage
     availableCredits={12}
     copy={getBookPageCopy(storyLocale)}
-    defaultTickets="1"
     event={mockEvent}
     idempotencyKey="story-book-key"
     locale={storyLocale}
-    maxQty={6}
+    maxQty={1}
     view="form"
   />
 );
@@ -28,3 +27,36 @@ export const PastDue: Story = () => (
   />
 );
 PastDue.storyName = "BookEventPage / Past due";
+
+const alreadyBookedMorning = new Date("2030-09-01T08:00:00.000Z");
+const alreadyBookedEvening = new Date("2030-09-01T17:00:00.000Z");
+const alreadyBookedEvent = {
+  ...mockEvent,
+  dateTime: alreadyBookedMorning,
+  dateTimes: [alreadyBookedMorning, alreadyBookedEvening],
+  occurrenceCreditPrices: [1, 4],
+};
+
+export const AlreadyBooked: Story = () => (
+  <BookEventPage
+    copy={getBookPageCopy(storyLocale)}
+    event={alreadyBookedEvent}
+    idempotencyKey="story-book-key"
+    locale={storyLocale}
+    occurrences={[
+      {
+        startsAtIso: alreadyBookedMorning.toISOString(),
+        creditPrice: 1,
+        maxQty: 1,
+      },
+      {
+        startsAtIso: alreadyBookedEvening.toISOString(),
+        creditPrice: 4,
+        maxQty: 1,
+      },
+    ]}
+    slotDateTimeIso={alreadyBookedMorning.toISOString()}
+    view="already_booked"
+  />
+);
+AlreadyBooked.storyName = "BookEventPage / Already booked";

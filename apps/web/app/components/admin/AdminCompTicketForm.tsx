@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Form, Input, Label, Link, Paragraph, Surface, TextField } from "@heroui/react";
+import { Button, Form, Link, Paragraph, Surface } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import type { Locale } from "../../lib/locale";
@@ -22,7 +22,6 @@ type AdminCompTicketFormProps = {
   events: CompTicketEventOption[];
   error?: string | null;
   defaultEventId?: string;
-  defaultTickets?: string;
 };
 
 export function AdminCompTicketForm({
@@ -33,7 +32,6 @@ export function AdminCompTicketForm({
   events,
   error,
   defaultEventId = "",
-  defaultTickets = "1",
 }: AdminCompTicketFormProps) {
   const copy = getAdminCopy(locale);
   const cancelHref = adminUserDetailPath(locale, userId);
@@ -62,10 +60,6 @@ export function AdminCompTicketForm({
             options={events}
             placeholder={copy.selectPlaceholder}
           />
-          <TextField defaultValue={defaultTickets} fullWidth name="ticketsCount">
-            <Label>{copy.compTicketTicketsLabel}</Label>
-            <Input inputMode="numeric" type="text" />
-          </TextField>
           <Surface
             className="flex flex-col gap-3 sm:flex-row sm:items-center"
             variant="transparent"

@@ -20,6 +20,7 @@ const SKIP_BOOKING_CODES = new Set([
   "USER_NOT_FOUND",
   "UNKNOWN_SLOT",
   "PAST_SLOT",
+  "ALREADY_BOOKED",
 ]);
 
 export type PromoteOutcome =
@@ -56,7 +57,7 @@ export async function promoteWaitlistEntry(db: TxDb, entryId: string): Promise<P
     const booking = await bookEvent(db, {
       userId: entry.userId,
       eventId: entry.eventId,
-      ticketsCount: entry.requestedQty,
+      ticketsCount: 1,
       idempotencyKey: waitlistPromoteIdempotencyKey(entry.id),
     });
 

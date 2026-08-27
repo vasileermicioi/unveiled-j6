@@ -5,26 +5,57 @@ Waitlist entry persistence, domain promotion via the atomic booking transaction,
 ## Requirements
 
 ### Requirement: Waitlist entry persistence
-The system SHALL persist waitlist entries in `public.waitlist_entries` with status `WAITING`, `PROMOTED`, or `CANCELLED`, requested ticket quantity, and `skipped_once` for ineligible promotion attempts. The system SHALL enforce at most one `WAITING` row per `(user_id, event_id)` via a partial unique index (or equivalent DB constraint).
+The system SHALL persist waitlist entries in `public.waitlist_entries` with status `WAITING`, `PROMOTED`, or `CANCELLED`, requested ticket quantity of **1** on new joins, and `skipped_once` for ineligible promotion attempts. The system SHALL enforce at most one `WAITING` row per `(user_id, event_id)` via a partial unique index (or equivalent DB constraint).
 
 #### Scenario: Join creates WAITING entry
-- **WHEN** an authenticated member joins the waitlist for an event with a requested quantity
-- **THEN** a `WAITING` entry is stored for that user and event with `skipped_once = false`
+- **WHEN** an authenticated member joins the waitlist for an event
+- **THEN** a `WAITING` entry is stored for that user and event with `requested_qty = 1` and `skipped_once = false`
 
 #### Scenario: Duplicate WAITING prevented
 - **WHEN** the member already has a `WAITING` entry for the same event
 - **THEN** no second `WAITING` row is created and the existing entry is returned
 
+### Requirement: Waitlist requested quantity is one
+Joining the waitlist SHALL persist `requested_qty = 1`. Promotion SHALL call the atomic booking transaction with ticket count `1`. If booking returns `ALREADY_BOOKED`, the entry SHALL remain `WAITING` and `skipped_once` SHALL be set (same skip path as ineligible subscription / insufficient credits). Duplicate WAITING join per user+event is unchanged.
+
+#### Scenario: Join the waitlist
+- **WHEN** I choose to join the waitlist
+- **THEN** a waitlist entry is created with `requested_qty = 1` and status `WAITING`
+
+#### Scenario: Promotion skipped when the slot is already held
+- **WHEN** promotion would book an occurrence the member already holds as `CONFIRMED` or `USED`
+- **THEN** the entry remains `WAITING` with `skipped_once` true and no second booking is created
+
+#### Scenario: Join quantity other than one is rejected
+- **WHEN** waitlist join is requested with a quantity other than 1
+- **THEN** the join is rejected and no waitlist row is written
+
+### Requirement: Canonical waitlist Gherkin is qty one
+`docs/product/features/waitlist.feature` SHALL describe join with `requested_qty = 1` and SHALL NOT require a “requested ticket count” picker. Background SHALL treat sold-out as remaining capacity 0 (not “less than my requested ticket count”). Promotion SHALL attempt to book one ticket through the same atomic booking transaction. Existing Playwright `Scenario:` titles in `e2e/specs/waitlist.spec.ts` SHALL stay unless a Gherkin `Scenario:` line changes. Coverage-matrix waitlist rows keep their titles.
+
+#### Scenario: Join the waitlist
+- **WHEN** I choose to join the waitlist
+- **THEN** a waitlist entry is created with `requested_qty = 1` and status `WAITING`
+- **AND** the join form has no ticket-quantity control
+
+#### Scenario: Promotion books one ticket
+- **WHEN** capacity frees and the earliest eligible `WAITING` entry is promoted
+- **THEN** the system books one ticket on my behalf through the same transaction as a normal booking
+
 ### Requirement: Automatic promotion via booking transaction
-The system SHALL promote waitlist entries by calling the same atomic booking transaction used for normal purchases (`bookEvent`), re-checking subscription eligibility and credits at promotion time. Promotion SHALL use a stable per-entry idempotency key so retries do not double-book. The system SHALL NOT mark an entry `PROMOTED` unless `bookEvent` succeeded for that entry.
+The system SHALL promote waitlist entries by calling the same atomic booking transaction used for normal purchases (`bookEvent`), re-checking subscription eligibility and credits at promotion time. Promotion SHALL book exactly one ticket (`ticketsCount = 1`) regardless of any historical `requested_qty`. Promotion SHALL use a stable per-entry idempotency key so retries do not double-book. The system SHALL NOT mark an entry `PROMOTED` unless `bookEvent` succeeded for that entry. If `bookEvent` returns `ALREADY_BOOKED`, the entry SHALL remain `WAITING` with `skipped_once` set and the processor SHALL continue to later entries (same skip path as ineligible subscription / insufficient credits).
 
 #### Scenario: Capacity frees and earliest eligible is promoted
-- **WHEN** remaining capacity increases and the earliest `WAITING` entry's quantity fits
-- **THEN** the system creates a `CONFIRMED` booking via `bookEvent`, sets the entry to `PROMOTED`, and stops promoting once freed capacity is exhausted
+- **WHEN** remaining capacity increases and the earliest `WAITING` entry fits (one ticket)
+- **THEN** the system creates a `CONFIRMED` booking via `bookEvent` with `tickets_count = 1`, sets the entry to `PROMOTED`, and stops promoting once freed capacity is exhausted
 
 #### Scenario: Ineligible entry is skipped
 - **WHEN** the earliest `WAITING` member is not booking-eligible or lacks credits
 - **THEN** the entry remains `WAITING` with `skipped_once` set and the next eligible entry is attempted
+
+#### Scenario: Already-booked occurrence is skipped
+- **WHEN** the earliest `WAITING` member already holds a `CONFIRMED` or `USED` booking for the occurrence promotion would book
+- **THEN** the entry remains `WAITING` with `skipped_once` set and no second booking is created
 
 #### Scenario: Queue order and partial capacity
 - **WHEN** multiple `WAITING` entries exist for the same event and freed capacity fits only some of them
@@ -86,11 +117,11 @@ The system SHALL provide `/:locale/admin/waitlist` listing and `/:locale/admin/w
 - **THEN** access is denied
 
 ### Requirement: SSR waitlist join and cancel
-The system SHALL expose locale-prefixed SSR pages for joining an event waitlist and cancelling one's own waiting entry via form POST. Mutations SHALL use dedicated pages with form POST (no client-only dialogs). Ticket quantity on the join form SHALL use HeroUI `Select` (not radios or checkboxes). Unauthenticated join attempts SHALL redirect to sign-in with a return path.
+The system SHALL expose locale-prefixed SSR pages for joining an event waitlist and cancelling one's own waiting entry via form POST. Mutations SHALL use dedicated pages with form POST (no client-only dialogs). The join form SHALL NOT collect ticket quantity; it SHALL persist `requested_qty = 1`. Unauthenticated join attempts SHALL redirect to sign-in with a return path.
 
 #### Scenario: Join waitlist page
-- **WHEN** a signed-in member submits the join form for a sold-out event with a requested ticket count
-- **THEN** they see a waitlist confirmation and a `WAITING` entry exists for that user and event
+- **WHEN** a signed-in member submits the join form for a sold-out event
+- **THEN** they see a waitlist confirmation and a `WAITING` entry exists for that user and event with `requested_qty = 1`
 
 #### Scenario: Join requires authentication
 - **WHEN** an unauthenticated visitor opens or posts to `/:locale/events/:id/waitlist`

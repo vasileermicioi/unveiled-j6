@@ -172,10 +172,10 @@ Feature: Event Discovery
     When I view Discover or the member feed
     Then event cards do not show image credit
 
-  Scenario: Booking-eligible member sees tickets, credits and date on event detail
+  Scenario: Booking-eligible member sees credits and date on event detail
     Given I am signed in as a booking-eligible member
     When I open the same valid upcoming event detail URL ("/events/:id")
-    Then the summary card shows ticket quantity controls and total credits
+    Then the summary card shows the credit total for one ticket (no quantity stepper)
     And DETAILS includes Date chrome (calendar date; clock time omitted when partner opening hours are visible)
 
   Scenario: Eligible member Date is date-only when partner has hours
@@ -196,7 +196,7 @@ Feature: Event Discovery
     Given an upcoming event with a morning slot priced 1 and an evening slot priced 4
     And I am signed in as a booking-eligible member
     When I open "/events/:id" and choose the evening datetime
-    Then the checkout total uses 4 credits per ticket
+    Then the checkout total uses 4 credits for one ticket
 
   Scenario: Guest checkout omits slot picker
     When a guest opens the same event

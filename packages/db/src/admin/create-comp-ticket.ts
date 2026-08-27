@@ -4,8 +4,6 @@ import type { TxDb } from "../index";
 export type CreateCompTicketInput = {
   userId: string;
   eventId: string;
-  /** Defaults to 1. */
-  ticketsCount?: number;
   idempotencyKey: string;
   /** Trusted admin actor id for call-site audit; not persisted on the booking. */
   adminUserId: string;
@@ -13,8 +11,8 @@ export type CreateCompTicketInput = {
 
 /**
  * Complimentary confirmed booking via the shared booking transaction.
- * Uses `skipCreditCharge` — capacity and subscription eligibility still apply.
- * BookingError codes (SOLD_OUT, INELIGIBLE_SUBSCRIPTION, …) bubble unchanged.
+ * Always one ticket. Uses `skipCreditCharge` — capacity, subscription, and
+ * occurrence uniqueness still apply. BookingError codes bubble unchanged.
  */
 export async function createCompTicket(
   db: TxDb,
@@ -24,7 +22,7 @@ export async function createCompTicket(
   return bookEvent(db, {
     userId: input.userId,
     eventId: input.eventId,
-    ticketsCount: input.ticketsCount ?? 1,
+    ticketsCount: 1,
     idempotencyKey: input.idempotencyKey,
     skipCreditCharge: true,
   });

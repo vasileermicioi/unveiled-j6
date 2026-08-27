@@ -15,7 +15,11 @@ import {
   hasDatabaseUrl,
   setSubscriptionStatus,
 } from "../fixtures/billing";
-import { createPricedSlotEvent, ensureEventHasCapacity } from "../fixtures/catalog";
+import {
+  createPricedSlotEvent,
+  ensureEventHasCapacity,
+  seedGrandfatheredPromoBooking,
+} from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
 import {
   forceEventSoldOut,
@@ -51,15 +55,32 @@ async function bookableEventPath(locale: Locale, title = BOOKABLE_TITLE): Promis
   return `/${locale}/events/${eventId}`;
 }
 
-async function confirmBooking(page: Page, locale: Locale, title: string, tickets = 1) {
+function alreadyBookedMessage(locale: Locale): string {
+  return locale === "de"
+    ? "Du hast das bereits gebucht. Du kannst es unter Meine Tickets nachschauen."
+    : "You've already booked this. You can check it in My Tickets.";
+}
+
+async function confirmBooking(page: Page, locale: Locale, title: string): Promise<string> {
   const eventPath = await bookableEventPath(locale, title);
-  // Prefer qty query (SSR default) — island hydration can reset a client-side selectOption.
-  const bookUrl = tickets > 1 ? `${eventPath}/book?qty=${tickets}` : `${eventPath}/book`;
-  await page.goto(bookUrl);
+  await page.goto(`${eventPath}/book`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/events/.+/book`));
-  await expect(page.getByLabel(/anzahl tickets|ticket count/i)).toBeVisible();
   await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
   await expect(page).toHaveURL(/\/book\/confirm/, { timeout: 15_000 });
+  return eventPath;
+}
+
+async function expectAlreadyBookedChrome(page: Page, locale: Locale) {
+  await expect(page.getByText(alreadyBookedMessage(locale))).toBeVisible();
+  const ticketsLink = page.getByRole("main").getByRole("link", {
+    name: locale === "de" ? "Meine Tickets" : "My Tickets",
+  });
+  await expect(ticketsLink).toBeVisible();
+  await expect(ticketsLink).toHaveAttribute("href", `/${locale}/bookings`);
+  await expect(
+    page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }),
+  ).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /tickets buchen|book tickets/i })).toHaveCount(0);
 }
 
 async function expectMaskedCode(page: Page, code: string) {
@@ -102,28 +123,77 @@ test.describe("booking.feature", () => {
     await expect(page.getByRole("button", { name: /abo starten|start sub/i })).toBeVisible();
   });
 
-  test("Scenario: Member ticket quantity follows credits and capacity", async ({
-    page,
-    locale,
-  }) => {
+  test("Scenario: Member cannot select more than one ticket", async ({ page, locale }) => {
     test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member + resolve event");
 
     const user = await onboardFreshMember(page, locale);
     await activateMemberForBooking(user.email, 17);
-    // Bookable seed creditPrice 2 → floor(17/2)=8; ensure capacity allows > 3
-    const eventId = await ensureEventHasCapacity(BOOKABLE_TITLE, 8);
+    const eventId = await ensureEventHasCapacity(BOOKABLE_TITLE, 5);
 
     await page.goto(`/${locale}/events/${eventId}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByLabel(/anzahl tickets|ticket count/i)).toHaveCount(0);
+    await expect(page.getByText(/2 CREDITS/i).first()).toBeVisible();
 
-    const increase = page.getByRole("button", { name: /ticket mehr|increase tickets/i });
-    await expect(increase).toBeVisible();
-    // From 1 → 4 (past former hard max of 3); total = 4 × 2 credits
-    await increase.click();
-    await increase.click();
-    await increase.click();
-    await expect(page.getByText(/8 credits/i).first()).toBeVisible();
-    await expect(increase).toBeEnabled();
+    await page.goto(`/${locale}/events/${eventId}/book`);
+    await expect(page.getByLabel(/anzahl tickets|ticket count/i)).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }),
+    ).toBeVisible();
+  });
+
+  test("Scenario: Reopening a booked single-slot event", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member + resolve event");
+
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    const eventPath = await confirmBooking(page, locale, BOOKABLE_TITLE);
+
+    await page.goto(eventPath);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expectAlreadyBookedChrome(page, locale);
+
+    await page.goto(`${eventPath}/book`);
+    await expectAlreadyBookedChrome(page, locale);
+  });
+
+  test("Scenario: Booked hour on a multi-hour event", async ({ page, locale }) => {
+    test.skip(
+      !hasDatabaseUrl(),
+      "DATABASE_URL required to seed multi-slot event + activate member",
+    );
+
+    const event = await createPricedSlotEvent();
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email, 17);
+
+    await page.goto(`/${locale}/events/${event.id}`);
+    await expect(page.getByRole("heading", { level: 1, name: event.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page
+      .getByRole("link", { name: /tickets buchen|book tickets/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/events/${event.id}/book`));
+    await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
+    await expect(page).toHaveURL(/\/book\/confirm/, { timeout: 15_000 });
+
+    await page.goto(`/${locale}/events/${event.id}`);
+    await expectAlreadyBookedChrome(page, locale);
+    const slotSelect = page.getByLabel(/datum und uhrzeit|date and time/i);
+    await expect(slotSelect).toBeVisible();
+    await slotSelect.selectOption({ index: 1 });
+    await expect(
+      page.getByRole("link", { name: /tickets buchen|book tickets/i }).first(),
+    ).toBeVisible();
+    await page
+      .getByRole("link", { name: /tickets buchen|book tickets/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/events/${event.id}/book`));
+    await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
+    await expect(page).toHaveURL(/\/book\/confirm/, { timeout: 15_000 });
   });
 
   test("Scenario: Successful booking", async ({ page, locale }) => {
@@ -134,7 +204,6 @@ test.describe("booking.feature", () => {
 
     const eventPath = await bookableEventPath(locale);
     await page.goto(`${eventPath}/book`);
-    await expect(page.getByLabel(/anzahl tickets|ticket count/i)).toBeVisible();
     await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
 
     await expect(page).toHaveURL(/\/book\/confirm/, { timeout: 15_000 });
@@ -212,9 +281,7 @@ test.describe("booking.feature", () => {
     await activateMemberForBooking(user.email);
     await ensureEventHasCapacity(PROMO_TITLE, 4);
 
-    await confirmBooking(page, locale, PROMO_TITLE, 2);
-    await expect(page.getByText(/Ticket 1/i)).toBeVisible();
-    await expect(page.getByText(/Ticket 2/i)).toBeVisible();
+    await confirmBooking(page, locale, PROMO_TITLE);
     const allocatedCode = await page.locator('input[type="password"]').first().inputValue();
     expect(allocatedCode.length).toBeGreaterThan(0);
     await revealAndHideCode(page, allocatedCode);
@@ -237,11 +304,9 @@ test.describe("booking.feature", () => {
     await activateMemberForBooking(user.email);
     await ensureEventHasCapacity(PDF_TITLE, 4);
 
-    await confirmBooking(page, locale, PDF_TITLE, 2);
-    await expect(page.getByText(/Ticket 1/i)).toBeVisible();
-    await expect(page.getByText(/Ticket 2/i)).toBeVisible();
+    await confirmBooking(page, locale, PDF_TITLE);
     const downloadLinks = page.getByRole("link", { name: /pdf herunterladen|download pdf/i });
-    await expect(downloadLinks).toHaveCount(2);
+    await expect(downloadLinks).toHaveCount(1);
 
     const href = await downloadLinks.first().getAttribute("href");
     expect(href).toMatch(/\/bookings\/.+\/tickets\/.+\/voucher\.pdf$/);
@@ -343,14 +408,11 @@ test.describe("booking.feature", () => {
     await activateMemberForBooking(user.email);
     await ensureEventHasCapacity(PROMO_TITLE, 4);
 
-    await confirmBooking(page, locale, PROMO_TITLE, 2);
-    await expect(page.getByText(/Ticket 1/i)).toBeVisible();
-    await expect(page.getByText(/Ticket 2/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /code anzeigen|show code/i })).toHaveCount(2);
-
+    await seedGrandfatheredPromoBooking(user.email, PROMO_TITLE);
     await page.goto(`/${locale}/bookings`);
     await expect(page.getByText(/Ticket 1/i)).toBeVisible();
     await expect(page.getByText(/Ticket 2/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /code anzeigen|show code/i })).toHaveCount(2);
   });
 
   test("Scenario: PDF voucher download is ownership-gated", async ({ page, locale, browser }) => {
@@ -364,7 +426,7 @@ test.describe("booking.feature", () => {
     await activateMemberForBooking(user.email);
     await ensureEventHasCapacity(PDF_TITLE, 3);
 
-    await confirmBooking(page, locale, PDF_TITLE, 1);
+    await confirmBooking(page, locale, PDF_TITLE);
     const downloadLink = page
       .getByRole("link", { name: /pdf herunterladen|download pdf/i })
       .first();

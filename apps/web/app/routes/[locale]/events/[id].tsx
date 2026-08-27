@@ -3,6 +3,7 @@ import {
   getPartnerById,
   getPublicEventById,
   isBookingEligibleStatus,
+  listActiveBookedOccurrenceInstants,
   listEventGalleryImages,
   maxBookableTickets,
 } from "@unveiled/db";
@@ -26,17 +27,6 @@ import { buildEventJsonLd, eventDetailPageMeta } from "../../../lib/seo";
 
 function getLocaleParam(value: string | undefined): Locale {
   return value && isValidLocale(value) ? value : "de";
-}
-
-function parseQtyParam(raw: string | undefined, maxQty: number): number {
-  const n = Number.parseInt(raw ?? "1", 10);
-  if (!Number.isFinite(n) || n < 1) {
-    return 1;
-  }
-  if (maxQty < 1) {
-    return 1;
-  }
-  return Math.min(n, maxQty);
 }
 
 export default createRoute(async (c) => {
@@ -129,17 +119,19 @@ export default createRoute(async (c) => {
     ? occurrences?.find((occurrence) => occurrence.startsAtIso === requestedDateTime.toISOString())
         ?.startsAtIso
     : defaultSlot?.startsAtIso;
-  const defaultQty = parseQtyParam(
-    url.searchParams.get("qty") ?? undefined,
-    occurrences?.find((occurrence) => occurrence.startsAtIso === defaultDateTimeIso)?.maxQty ??
-      maxQty,
-  );
 
-  const [galleryRows, partner, heroCredit] = await Promise.all([
+  const [galleryRows, partner, heroCredit, bookedInstants] = await Promise.all([
     listEventGalleryImages(db, eventId),
     getPartnerById(db, event.partnerId),
     getImageCredit(db, event.imageId).catch(() => null),
+    viewer.kind === "eligible" && session?.user && event.dateTime > new Date()
+      ? listActiveBookedOccurrenceInstants(db, session.user.id, event.id)
+      : Promise.resolve([] as Date[]),
   ]);
+  const bookedOccurrenceIsos =
+    viewer.kind === "eligible" && event.dateTime > new Date()
+      ? bookedInstants.map((instant) => instant.toISOString())
+      : undefined;
   const galleryImages = toPublicEventGalleryImages(galleryRows);
 
   let partnerLogoUrl: string | undefined;
@@ -165,13 +157,13 @@ export default createRoute(async (c) => {
       <EventDetailPage
         closeHref={closeHref}
         defaultDateTimeIso={defaultDateTimeIso}
-        defaultQty={defaultQty}
         event={event}
         galleryImages={galleryImages}
         heroCredit={heroCredit}
         locale={locale}
         maxQty={maxQty}
         occurrences={occurrences}
+        bookedOccurrenceIsos={bookedOccurrenceIsos}
         partnerAttribution={{
           name: event.partnerName,
           logoUrl: partnerLogoUrl,
