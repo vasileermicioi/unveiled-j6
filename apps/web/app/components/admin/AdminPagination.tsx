@@ -1,5 +1,3 @@
-"use client";
-
 import { Link, Paragraph, Surface } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";

@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * MDXEditor load surface — imported only from EventDescriptionEditor via dynamic import
  * so `@mdxeditor/editor` never loads on the public SSR Markdown path.

@@ -1,5 +1,3 @@
-"use client";
-
 import { Form, Label, Paragraph, Surface } from "@heroui/react";
 import type { UserProfile } from "@unveiled/db";
 

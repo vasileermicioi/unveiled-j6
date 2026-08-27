@@ -1,5 +1,3 @@
-"use client";
-
 import { Button, Form, Input, Paragraph, Surface, Table } from "@heroui/react";
 import type { PartnerListItem, PartnerSort } from "@unveiled/db";
 

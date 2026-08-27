@@ -1,5 +1,3 @@
-"use client";
-
 import { Input, Surface } from "@heroui/react";
 import { useEffect, useId } from "react";
 

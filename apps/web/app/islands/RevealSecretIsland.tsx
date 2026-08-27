@@ -1,5 +1,3 @@
-"use client";
-
 import { Button, Label, Surface } from "@heroui/react";
 import { Eye, EyeOff } from "lucide-react";
 import { useId, useState } from "react";

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import EventDetailCheckoutCard from "./EventDetailCheckoutCard";
+import EventDetailCheckoutCard from "../../islands/EventDetailCheckoutCard";
 
 const morning = "2030-09-01T08:00:00.000Z";
 const evening = "2030-09-01T17:00:00.000Z";

@@ -1,5 +1,3 @@
-"use client";
-
 import { Description, Input, Label, Surface, TextField } from "@heroui/react";
 import type { CapacityMode, TicketType, TimingMode } from "@unveiled/db";
 import { useId, useLayoutEffect, useState } from "react";

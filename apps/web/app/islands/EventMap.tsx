@@ -1,5 +1,3 @@
-"use client";
-
 import { Alert, Card, Link, Paragraph, Skeleton, Surface } from "@heroui/react";
 import { useEffect, useRef, useState } from "react";
 

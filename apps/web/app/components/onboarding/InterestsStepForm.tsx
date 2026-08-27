@@ -1,5 +1,3 @@
-"use client";
-
 import { Form, Label, Surface } from "@heroui/react";
 import { INTERESTS_OTHER_MAX_LENGTH } from "@unveiled/auth/constants";
 import type { UserProfile } from "@unveiled/db";

@@ -1,5 +1,3 @@
-"use client";
-
 import { Description, Label, Paragraph, Surface } from "@heroui/react";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 

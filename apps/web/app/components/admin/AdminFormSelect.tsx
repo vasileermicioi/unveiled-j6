@@ -1,5 +1,3 @@
-"use client";
-
 import { Label, Surface } from "@heroui/react";
 import type { ChangeEvent } from "react";
 

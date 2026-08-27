@@ -1,5 +1,3 @@
-"use client";
-
 import { Link, Paragraph, Table } from "@heroui/react";
 import type { AdminWaitlistRow } from "@unveiled/db";
 

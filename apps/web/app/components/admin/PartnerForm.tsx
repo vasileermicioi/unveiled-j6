@@ -1,5 +1,3 @@
-"use client";
-
 import { Button, Description, Form, Input, Label, Link, Surface, TextField } from "@heroui/react";
 import { OPENING_HOURS_DAY_KEYS, type OpeningHoursDayKey } from "@unveiled/db";
 import { useLayoutEffect, useState } from "react";

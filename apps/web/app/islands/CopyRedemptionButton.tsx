@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@heroui/react";
 import { useState } from "react";
 

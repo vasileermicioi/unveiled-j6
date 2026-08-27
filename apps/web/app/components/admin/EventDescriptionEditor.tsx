@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Allowed non-native form exception (alongside EventImageUpload / EventGeoPicker):
  * MDXEditor for Markdown authoring. Persistence stays SSR form POST via native

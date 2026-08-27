@@ -1,5 +1,3 @@
-"use client";
-
 import { Description, Input, Paragraph, Surface } from "@heroui/react";
 import { ACCEPTED_IMAGE_FILE_ACCEPT } from "@unveiled/images/constants";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";

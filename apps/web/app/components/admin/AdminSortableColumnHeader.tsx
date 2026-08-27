@@ -1,5 +1,3 @@
-"use client";
-
 import { Link, Table } from "@heroui/react";
 
 import type { AdminListSortDir } from "../../lib/admin-list";

@@ -1,5 +1,3 @@
-"use client";
-
 import { Paragraph, Surface, Table } from "@heroui/react";
 import type { Event, EventSort } from "@unveiled/db";
 

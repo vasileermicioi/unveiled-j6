@@ -1,5 +1,3 @@
-"use client";
-
 import { Button, Description, Modal, Paragraph, Surface, useOverlayState } from "@heroui/react";
 import { buildVariantUrl } from "@unveiled/images/urls";
 import { ChevronLeft, ChevronRight } from "lucide-react";

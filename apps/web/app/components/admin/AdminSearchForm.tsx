@@ -1,5 +1,3 @@
-"use client";
-
 import { Button, Form, Input, Label, Link, Surface, TextField } from "@heroui/react";
 import type { ReactNode } from "react";
 

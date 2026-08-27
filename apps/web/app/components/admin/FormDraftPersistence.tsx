@@ -1,5 +1,3 @@
-"use client";
-
 import { Alert, Button, Surface } from "@heroui/react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 

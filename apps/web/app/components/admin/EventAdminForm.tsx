@@ -1,5 +1,3 @@
-"use client";
-
 import { Button, Form, Label, Link, ProgressBar, Surface } from "@heroui/react";
 
 import { getAdminCopy } from "../../lib/admin-content";

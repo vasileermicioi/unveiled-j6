@@ -150,6 +150,23 @@ export default defineConfig(({ command, mode }) => {
       // jSquash WASM codecs break under Vite pre-bundling (Invalid URL / wasm failed).
       exclude: ["@jsquash/webp"],
     },
+    // HonoX hydrates via app/islands/, not RSC "use client". Rollup errors if that
+    // directive is left in source or in React libraries that still ship it.
+    esbuild: {
+      logOverride: {
+        "ignored-directive": "silent",
+      },
+    },
+    build: {
+      rollupOptions: {
+        onwarn(warning, warn) {
+          if (warning.code === "MODULE_LEVEL_DIRECTIVE") {
+            return;
+          }
+          warn(warning);
+        },
+      },
+    },
     ssr: {
       external: ["react", "react-dom", "@heroui/react"],
       noExternal: ["@unveiled/images"],
