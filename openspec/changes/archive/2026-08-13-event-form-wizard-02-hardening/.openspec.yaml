@@ -1,3 +1,0 @@
-schema: spec-driven
-created: 2026-08-13
-goal: Lock the event create/edit wizard in Gherkin, Playwright, and docs; clone stays a non-wizard page.

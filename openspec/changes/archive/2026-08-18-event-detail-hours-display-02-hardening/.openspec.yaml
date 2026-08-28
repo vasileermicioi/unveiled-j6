@@ -1,5 +1,0 @@
-schema: spec-driven
-created: 2026-08-18
-goal: Align Gherkin, ui-component-map, i18n, coverage matrix, and Playwright
-  with working-day hours and date-only DETAILS Date so
-  event-detail-hours-display can close.
