@@ -12,9 +12,16 @@
 #     admin-initiated cancellation capability, because without it there is no way to free up capacity
 #     for waitlist promotion to have anything to promote into (see waitlist.feature) — this was a real
 #     gap, not a deliberate policy, since capacity could otherwise only ever go down, never recover.
-#     Cancellation and refunding are DECIDED to be decoupled: cancelling a booking frees capacity but
-#     never auto-refunds credits (preserves the no-refund policy); a refund, if warranted, is a separate
-#     explicit admin action (see credits-subscription.feature's "Admin issues a manual credit refund").
+#     Cancellation and refunding are DECIDED to be two admin paths:
+#       1. Single cancel (`/admin/bookings/:id/cancel`) frees capacity but never auto-refunds credits
+#          (preserves the member-facing no-refund policy) and then runs waitlist promotion. A goodwill
+#          refund, if warranted, remains a separate explicit admin action (see credits-subscription.feature
+#          "Admin issues a manual credit refund").
+#       2. Event cancel-all (`/admin/events/:id/bookings/cancel-all`, see admin-event-bookings.feature)
+#          refunds each cancelled booking's total_credits (REFUND ledger, idempotency key
+#          event-cancel-all:{bookingId}), restocks vouchers, restores capacity by cancelled ticket
+#          counts only, and closes WAITING waitlist entries without promoting. Comp tickets
+#          (total_credits = 0) are cancelled with no ledger row. USED bookings are left unchanged.
 #   - One ticket per occurrence: a booking-eligible member holds at most one CONFIRMED/USED ticket
 #     per event datetime. New writes persist tickets_count = 1. Reopening a held hour shows locked
 #     already-booked copy and a My Tickets link (not a second checkout). Grandfathered tickets_count > 1
@@ -165,6 +172,47 @@ Feature: Event Booking
     And no credits are refunded to the member as part of cancellation itself
     And any allocated VOUCHER_PROMO codes or VOUCHER_PDF inventory for that booking return to AVAILABLE
     And waitlist processing is triggered for that event (see waitlist.feature)
+
+  Scenario: Admin cancels all confirmed bookings for an event
+    Given I am signed in as "ADMIN"
+    And an event has confirmed bookings
+    When I cancel all confirmed bookings for that event with a non-empty reason
+    Then every previously CONFIRMED booking for that event is CANCELLED with that reason
+    And charged credits (each booking's total_credits) are returned to the corresponding members
+    And a REFUND ledger entry exists per refunded booking
+    And allocated voucher codes and PDF inventory for those bookings are AVAILABLE again
+    And remaining capacity increases by the cancelled ticket count
+    And waitlist promotion does not run
+
+  Scenario: Cancel-all refunds paid tickets but not comps
+    Given I am signed in as "ADMIN"
+    And the event has a paid CONFIRMED booking and a complimentary CONFIRMED booking
+    When I cancel all confirmed bookings for that event
+    Then the paid member's credits increase by that booking's total_credits
+    And the comp member's credits are unchanged
+    And both bookings become CANCELLED
+
+  Scenario: Cancel-all leaves USED bookings in place
+    Given I am signed in as "ADMIN"
+    And the event has a USED booking and a CONFIRMED booking
+    When I cancel all confirmed bookings for that event
+    Then only the CONFIRMED booking is cancelled and refunded
+    And the USED booking is unchanged
+
+  Scenario: Cancel-all is idempotent when nothing is confirmed
+    Given I am signed in as "ADMIN"
+    And the event has no CONFIRMED bookings
+    When I run cancel-all on that event
+    Then the operation succeeds without credit, inventory, or capacity changes
+
+  Scenario: Cancel-all requires a reason
+    Given I am signed in as "ADMIN"
+    When I submit cancel-all with a blank reason
+    Then the operation is rejected and no bookings change
+
+  Scenario: Member receives cancel-all email
+    Given an admin completes cancel-all for an event the member had a paid CONFIRMED booking on
+    Then the member receives an email that the ticket is void and credits were returned
 
   Scenario: Cannot cancel a booking that is not confirmed
     Given a booking's status is "WAITLIST", "CANCELLED", or "USED"

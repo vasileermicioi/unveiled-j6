@@ -138,6 +138,12 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `auth.feature` | Request account deletion | `e2e/specs/auth.spec.ts` · `Scenario: Request account deletion` | `pass` | Disposable member; may skip credential check if Neon Auth disable incomplete |
 | `auth.feature` | Account deletion is distinct from subscription cancellation | `e2e/specs/auth.spec.ts` · `Scenario: Account deletion is distinct from subscription cancellation` | `pass` | Cancel-alone vs delete; no fake Stripe ids on delete path |
 | `auth.feature` | Admin can process account deletion on a member's behalf | `e2e/specs/auth.spec.ts` · `Scenario: Admin can process account deletion on a member's behalf` | `pass` | Needs `E2E_ADMIN_*`; may skip credential check if Neon Auth admin remove incomplete |
+| `admin-event-bookings.feature` | Admin opens the Bookings tab | `e2e/specs/admin-event-bookings.spec.ts` · `Scenario: Admin opens the Bookings tab` | `pass` | Needs `DATABASE_URL` + `E2E_ADMIN_*`; unique SECRET_CODE fixture |
+| `admin-event-bookings.feature` | Admin views bookings for one event | `e2e/specs/admin-event-bookings.spec.ts` · `Scenario: Admin views bookings for one event` | `pass` | Needs `E2E_ADMIN_*`; member/status/cancel + cancel-all toolbar |
+| `admin-event-bookings.feature` | Empty event bookings | `e2e/specs/admin-event-bookings.spec.ts` · `Scenario: Empty event bookings` | `pass` | Events catalog Bookings action; no cancel-all submit |
+| `admin-event-bookings.feature` | Admin cancels all bookings from the confirm page | `e2e/specs/admin-event-bookings.spec.ts` · `Scenario: Admin cancels all bookings from the confirm page` | `pass` | Needs `E2E_ADMIN_*`; success flash + cancelled status |
+| `admin-event-bookings.feature` | Cancel-all confirm rejects an empty reason | `e2e/specs/admin-event-bookings.spec.ts` · `Scenario: Cancel-all confirm rejects an empty reason` | `pass` | Whitespace reason hits server `INVALID_REASON` |
+| `admin-event-bookings.feature` | Member cannot open the Bookings tab | `e2e/specs/admin-event-bookings.spec.ts` · `Scenario: Member cannot open the Bookings tab` | `pass` | USER redirected away from `/admin/bookings` |
 | `booking.feature` | Booking requires authentication | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires authentication` | `pass` | Needs `DATABASE_URL` for seeded event id |
 | `booking.feature` | Booking requires an active subscription | `e2e/specs/booking.spec.ts` · `Scenario: Booking requires an active subscription` | `pass` |  |
 | `booking.feature` | Member cannot select more than one ticket | `e2e/specs/booking.spec.ts` · `Scenario: Member cannot select more than one ticket` | `pass` | Needs `DATABASE_URL`; no qty control; credit total = one slot |
@@ -158,6 +164,12 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `booking.feature` | Admin cancels a confirmed booking | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels a confirmed booking` | `pass` | Needs `E2E_ADMIN_*`; no credit refund on cancel; restock covered in domain tests |
 | `booking.feature` | Cannot cancel a booking that is not confirmed | `e2e/specs/booking.spec.ts` · `Scenario: Cannot cancel a booking that is not confirmed` | `pass` | Re-open cancel URL after first cancel |
 | `booking.feature` | Members cannot self-cancel or self-refund | `e2e/specs/booking.spec.ts` · `Scenario: Members cannot self-cancel or self-refund` | `pass` |  |
+| `booking.feature` | Admin cancels all confirmed bookings for an event | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels all confirmed bookings for an event` | `pass` | Needs `E2E_ADMIN_*`; credits **are** refunded (distinct from single-cancel) |
+| `booking.feature` | Cancel-all refunds paid tickets but not comps | `e2e/specs/booking.spec.ts` · `Scenario: Cancel-all refunds paid tickets but not comps` | `skip` | Covered by `cancel-all-bookings-for-event.integration.test.ts` |
+| `booking.feature` | Cancel-all leaves USED bookings in place | `e2e/specs/booking.spec.ts` · `Scenario: Cancel-all leaves USED bookings in place` | `skip` | Domain integration; USED needs partner check-in (post-MVP) |
+| `booking.feature` | Cancel-all is idempotent when nothing is confirmed | `e2e/specs/booking.spec.ts` · `Scenario: Cancel-all is idempotent when nothing is confirmed` | `skip` | Domain integration no-op path |
+| `booking.feature` | Cancel-all requires a reason | `e2e/specs/booking.spec.ts` · `Scenario: Cancel-all requires a reason` | `skip` | UI covered by admin-event-bookings empty-reason scenario; domain `INVALID_REASON` |
+| `booking.feature` | Member receives cancel-all email | `e2e/specs/booking.spec.ts` · `Scenario: Member receives cancel-all email` | `skip` | No inbox harness; staging Resend |
 | `credits-subscription.feature` | New signups start inactive with starter credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: New signups start inactive with starter credits` | `pass` |  |
 | `credits-subscription.feature` | Activating a subscription via real Stripe Checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Activating a subscription via real Stripe Checkout` | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
 | `credits-subscription.feature` | Subscription invoice email after first successful payment | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Subscription invoice email after first successful payment` | `skip` | No inbox harness; staging Resend checklist; unit tests in `@unveiled/email`, `@unveiled/billing`, `apps/web/app/lib/subscription-invoice-email.test.ts` |
@@ -176,6 +188,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `credits-subscription.feature` | Admin freezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin freezes a member's account` | `pass` | ACTIVE → UNPAID via admin freeze |
 | `credits-subscription.feature` | Admin unfreezes a member's account | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin unfreezes a member's account` | `pass` | UNPAID → ACTIVE; no Stripe call |
 | `credits-subscription.feature` | Admin creates a complimentary ticket | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin creates a complimentary ticket` | `pass` | Shared booking path, no credit charge |
+| `credits-subscription.feature` | Event cancel-all writes REFUND ledger rows | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Event cancel-all writes REFUND ledger rows` | `skip` | Domain integration + booking cancel-all e2e (credits assertion) |
 | `event-discovery.feature` | Public discovery preview for guests | `e2e/specs/event-discovery.spec.ts` · `Scenario: Public discovery preview for guests` | `pass` | Partner venues section visible when seed has featured partners |
 | `event-discovery.feature` | Guest sees featured Discover | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees featured Discover` | `pass` | Needs `DATABASE_URL`; `ensureDemoFeaturedSplit` |
 | `event-discovery.feature` | Guest sees featured partners only | `e2e/specs/event-discovery.spec.ts` · `Scenario: Guest sees featured partners only` | `pass` | Needs `DATABASE_URL`; `ensureDemoFeaturedPartnersSplit` |
@@ -267,6 +280,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `waitlist.feature` | Admin can manually trigger promotion for a specific entry | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin can manually trigger promotion for a specific entry` | `pass` | Capacity freed via DB (no auto-promote), then `/admin/waitlist/:id/promote` |
 | `waitlist.feature` | Admin visibility | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin visibility` | `pass` | `/admin/waitlist` list |
 | `waitlist.feature` | User visibility is scoped to their own entries | `e2e/specs/waitlist.spec.ts` · `Scenario: User visibility is scoped to their own entries` | `pass` | Entry-scoped status/cancel only |
+| `waitlist.feature` | Cancel-all does not promote the waitlist | `e2e/specs/waitlist.spec.ts` · `Scenario: Cancel-all does not promote the waitlist` | `pass` | Needs `E2E_ADMIN_*`; unique fixture; WAITING → CANCELLED, not PROMOTED |
+| `waitlist.feature` | Waitlist member receives waitlist-closed email | `e2e/specs/waitlist.spec.ts` · `Scenario: Waitlist member receives waitlist-closed email` | `skip` | No inbox harness; staging Resend |
 
 ## Post-MVP (`features/post-mvp/`)
 

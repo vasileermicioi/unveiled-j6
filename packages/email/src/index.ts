@@ -9,6 +9,8 @@
  * On Resend failure, log booking id / user id and do not roll back the booking.
  */
 
+export type { BuildBookingCancellationInput } from "./booking-cancellation";
+export { buildBookingCancellationContent } from "./booking-cancellation";
 export type {
   BookingConfirmationContent,
   BookingLocale,
@@ -23,6 +25,10 @@ export {
   sendResendEmail,
 } from "./resend-client";
 export {
+  type SendBookingCancellationInput,
+  sendBookingCancellation,
+} from "./send-booking-cancellation";
+export {
   type SendBookingConfirmationInput,
   sendBookingConfirmation,
 } from "./send-booking-confirmation";
@@ -30,6 +36,10 @@ export {
   type SendSubscriptionInvoiceInput,
   sendSubscriptionInvoice,
 } from "./send-subscription-invoice";
+export {
+  type SendWaitlistClosedInput,
+  sendWaitlistClosed,
+} from "./send-waitlist-closed";
 export {
   type SendWaitlistPromotionInput,
   sendWaitlistPromotion,
@@ -40,6 +50,8 @@ export {
   type SubscriptionInvoiceContent,
   type SubscriptionInvoiceLocale,
 } from "./subscription-invoice";
+export type { BuildWaitlistClosedInput } from "./waitlist-closed";
+export { buildWaitlistClosedContent } from "./waitlist-closed";
 export {
   type BuildWaitlistPromotionInput,
   buildWaitlistPromotionContent,

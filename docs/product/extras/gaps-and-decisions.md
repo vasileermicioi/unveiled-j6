@@ -27,7 +27,7 @@ Delivery plan: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](../../.dev-plan/IMPLEMEN
 | Credits do **not** roll over (contradicting old marketing copy) — unused credits are forfeited each period boundary, recorded via a real `EXPIRY` ledger entry | `features/credits-subscription.feature`, `extras/content-i18n-inventory.md` (copy needs correcting) |
 | `PAUSED` subscription status cut (never reached by any real flow); `CANCELLED_PENDING` kept (now genuinely used by real cancellation) | `database/schema-overview.md` |
 | Ledger types `PURCHASE` and `REFERRAL_BONUS` cut (no à la carte credit purchases or referral program planned — see non-goals); `EXPIRY` and `REFUND` are now real, produced types | `database/schema-overview.md`, `product/vision-and-domains.md` |
-| Admin manual credit refund is a distinct, explicit action, decoupled from booking cancellation (which never auto-refunds) | `features/credits-subscription.feature`, `features/booking.feature` |
+| Admin manual credit refund is a distinct, explicit action, decoupled from **single-booking** cancellation (which never auto-refunds). Event **cancel-all** is the other `REFUND` producer (`event-cancel-all:{bookingId}`) | `features/credits-subscription.feature`, `features/booking.feature`, `features/admin-event-bookings.feature` |
 | First paid subscription invoice (`invoice.paid` + `billing_reason` `subscription_create`) sends a branded Unveiled Resend email with the Stripe invoice PDF attached (DE/EN, `SITE_URL` links, credits do not roll over). Renewal / `subscription_cycle` invoices do **not** send this email. Operators MUST disable Stripe Dashboard customer invoice/receipt emails in test and live so members are not double-mailed | `features/credits-subscription.feature`, `extras/integrations-and-config.md`, `extras/content-i18n-inventory.md`, `apps/web/DEPLOYMENT.md` |
 
 ## Waitlist
@@ -38,7 +38,7 @@ Delivery plan: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](../../.dev-plan/IMPLEMEN
 | Duplicate-waitlist-join prevention added (one active `WAITING` entry per user per event) | `features/waitlist.feature` |
 | User-initiated waitlist cancellation added (previously admin-only) | `features/waitlist.feature` |
 | Admin can manually trigger promotion for a specific entry (support use case) | `features/waitlist.feature` |
-| Booking cancellation (previously nonexistent in any form) added specifically because it's the mechanism that frees capacity for promotion to have something to promote into | `features/booking.feature` |
+| Booking cancellation (previously nonexistent in any form) added specifically because it's the mechanism that frees capacity for promotion to have something to promote into. **Two paths:** single cancel (no refund, then promote) vs event cancel-all (refund charged credits, close waitlist, do not promote; event stays in catalog) | `features/booking.feature`, `features/admin-event-bookings.feature`, `features/waitlist.feature` |
 
 ## Partner self-service
 
@@ -113,7 +113,7 @@ Delivery plan: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](../../.dev-plan/IMPLEMEN
 | Legacy single event-level `promo_code` is not the voucher source — `VOUCHER_PROMO` uses `event_voucher_codes` inventory (one code per ticket); `VOUCHER_PDF` uses `event_voucher_pdfs` (one PDF per ticket) | `database/schema-overview.md`, ticket-redemption parent guide |
 | Per-ticket redemption lives in `booking_tickets`; booking-level `redemption_*` remains a summary (typically ordinal 1) for email/compat | `features/booking.feature`, `database/schema-overview.md` |
 | Member UI masks secret/promo codes by default (reveal/hide island); PDF vouchers download via auth-gated `/:locale/bookings/:bookingId/tickets/:ticketId/voucher.pdf` — **not** attached to confirmation email in MVP | `features/booking.feature`, `sitemap/sitemap.md`, `ui/ui-component-map.md` |
-| Admin cancel restocks unused allocated promo/PDF inventory to `AVAILABLE`; credits are still never auto-refunded | `features/booking.feature` |
+| Admin **single** cancel restocks unused allocated promo/PDF inventory to `AVAILABLE` and does not auto-refund credits. **Event cancel-all** restocks the same way **and** refunds charged credits | `features/booking.feature`, `features/admin-event-bookings.feature` |
 | **Private assets bucket (current):** voucher PDFs (and other non-public files) use a dedicated `S3_PRIVATE_BUCKET` (optional `S3_PRIVATE_*` credential overrides falling back to public `S3_*`). Bucket must not be CDN-bound; delivery is BE-only via ownership-gated routes. Catalog images remain on the public bucket + `IMAGE_PUBLIC_BASE_URL`. Historical public-bucket `vouchers/` keys are one-shot backfilled (`bun scripts/backfill-vouchers-to-private-bucket.ts`); no permanent dual-read | `extras/image-uploads.md`, `extras/integrations-and-config.md`, `apps/web/DEPLOYMENT.md`, `@unveiled/images`, private-assets-bucket parent guide |
 
 ## Extraction-accuracy correction (this pass)

@@ -6,6 +6,7 @@ import type { Locale } from "../../lib/locale";
 import {
   ADMIN_TAB_ORDER,
   type AdminTab,
+  adminBookingsPath,
   adminDashboardPath,
   adminEventsPath,
   adminFeaturedPartnersPath,
@@ -29,6 +30,7 @@ export function AdminTabNav({ locale, activeTab }: AdminTabNavProps) {
     { id: "overview", href: adminDashboardPath(locale), label: copy.tabOverview },
     { id: "partners", href: adminPartnersPath(locale), label: copy.tabPartners },
     { id: "events", href: adminEventsPath(locale), label: copy.tabEvents },
+    { id: "bookings", href: adminBookingsPath(locale), label: copy.tabBookings },
     { id: "featured", href: adminFeaturedPath(locale), label: copy.tabFeatured },
     {
       id: "featured-partners",

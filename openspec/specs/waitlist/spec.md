@@ -65,6 +65,39 @@ The system SHALL promote waitlist entries by calling the same atomic booking tra
 - **WHEN** promotion is retried for an entry that already produced a booking via `waitlist-promote:{entryId}`
 - **THEN** `bookEvent` returns the existing booking and no second booking is created
 
+### Requirement: Event cancel-all closes the waitlist
+When an admin cancels all confirmed bookings for an event, the system SHALL set every WAITING waitlist entry for that event to CANCELLED in the same transaction and SHALL NOT attempt automatic or manual promotion as a side effect of that operation. PROMOTED entries SHALL remain PROMOTED.
+
+#### Scenario: Cancel-all does not promote the waitlist
+- **WHEN** an event is sold out, members are WAITING, and an admin cancels all confirmed bookings
+- **THEN** those WAITING entries become CANCELLED
+- **AND** no waitlist entry becomes PROMOTED as a result of cancel-all
+- **AND** restored capacity is not consumed by promotion
+- **AND** Playwright uses that Gherkin title verbatim
+
+### Requirement: Members are notified when event cancel-all closes the waitlist
+After a successful event cancel-all commit, the system SHALL email each member whose WAITING waitlist entry was closed. The email SHALL state that the waitlist for that event is closed and SHALL NOT include a credit-return sentence. Complimentary vs paid booking language SHALL NOT appear. Email failure SHALL NOT roll back waitlist close or booking cancellation.
+
+#### Scenario: Waitlist member receives waitlist-closed email
+- **WHEN** an admin completes cancel-all for an event the member was WAITING on
+- **THEN** the member receives an email that the waitlist is closed
+- **AND** that email does not state that credits were returned
+
+### Requirement: Canonical waitlist Gherkin records cancel-all close
+`docs/product/features/waitlist.feature` SHALL state that event cancel-all sets every `WAITING` entry for that event to `CANCELLED` and MUST NOT run automatic or manual promotion as a side effect. Promotion SHALL remain documented as triggered by single-booking admin cancel or an admin capacity increase — not by cancel-all. Playwright `e2e/specs/waitlist.spec.ts` SHALL include a test titled verbatim `Scenario: Cancel-all does not promote the waitlist`. The waitlist-closed email scenario MAY skip inbox assertion with an explicit no-harness reason and MUST NOT use `@skip-no-ui`.
+
+#### Scenario: Cancel-all does not promote the waitlist
+- **WHEN** an event is sold out, members are WAITING, and an admin cancels all confirmed bookings
+- **THEN** those WAITING entries become CANCELLED
+- **AND** no waitlist entry becomes PROMOTED as a result of cancel-all
+- **AND** restored capacity is not consumed by promotion
+- **AND** Playwright uses that Gherkin title verbatim
+
+#### Scenario: Waitlist member receives waitlist-closed email
+- **WHEN** an admin completes cancel-all for an event the member was WAITING on
+- **THEN** the member receives an email that the waitlist is closed
+- **AND** that email does not state that credits were returned
+
 ### Requirement: Member self-cancel
 The system SHALL allow a member to cancel their own `WAITING` entry, setting status to `CANCELLED` and excluding it from future promotion.
 

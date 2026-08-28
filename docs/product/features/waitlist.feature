@@ -14,8 +14,11 @@
 #   - DECIDED: add user-initiated waitlist cancellation (a real gap — only admins could touch entries
 #     before).
 #   - DECIDED: promotion is triggered by two events, both from booking.feature/admin-events.feature:
-#     an admin cancelling a confirmed booking (frees capacity), or an admin increasing an event's total
-#     capacity. There is no user-initiated way to free capacity (no self-cancel — see booking.feature).
+#     an admin cancelling a **single** confirmed booking (frees capacity, no refund), or an admin
+#     increasing an event's total capacity. Event-level **cancel-all** is the exception: it restores
+#     capacity but sets every WAITING entry for that event to CANCELLED in the same transaction and
+#     MUST NOT promote (see admin-event-bookings.feature). There is no user-initiated way to free
+#     capacity (no self-cancel — see booking.feature).
 
 Feature: Event Waitlist
   As a member
@@ -52,11 +55,25 @@ Feature: Event Waitlist
   Scenario: Automatic promotion when capacity frees up
     Given I am on the waitlist for an event with status "WAITING"
     And I am the earliest-queued "WAITING" entry whose one-ticket request fits the newly freed capacity
-    And a confirmed booking for that event is cancelled by an admin, or an admin increases the event's total capacity
+    And a confirmed booking for that event is cancelled by an admin via single-booking cancel, or an admin increases the event's total capacity
     When the system processes the freed capacity
     Then the system attempts to book one ticket on my behalf, through the same transaction as a normal booking (re-checking my subscription status and credit balance at this moment)
     And on success my waitlist entry becomes "PROMOTED" and a "CONFIRMED" booking is created for me with tickets_count 1 and the same redemption info a normal booking would produce
     And I am notified by email that I've been promoted, with my redemption details
+
+  Scenario: Cancel-all does not promote the waitlist
+    Given I am on the waitlist for an event with status "WAITING"
+    And the event is sold out
+    When an admin cancels all confirmed bookings for that event
+    Then my waitlist entry becomes "CANCELLED"
+    And no waitlist entry becomes "PROMOTED" as a result of cancel-all
+    And restored capacity is not consumed by promotion
+
+  Scenario: Waitlist member receives waitlist-closed email
+    Given I was WAITING on an event
+    When an admin completes cancel-all for that event
+    Then I receive an email that the waitlist is closed
+    And that email does not state that credits were returned
 
   Scenario: Promotion is skipped if I'm no longer eligible
     Given I am the earliest-queued "WAITING" entry for a newly freed spot

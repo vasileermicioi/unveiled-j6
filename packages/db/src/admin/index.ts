@@ -4,6 +4,14 @@ export {
   adjustMemberCredits,
 } from "./adjust-member-credits";
 export {
+  type CancelAllBookingsForEventInput,
+  type CancelAllBookingsForEventResult,
+  type CancelAllNotificationLocale,
+  type CancelledMemberNotification,
+  type ClosedWaitlistNotification,
+  cancelAllBookingsForEvent,
+} from "./cancel-all-bookings-for-event";
+export {
   type CancelBookingAsAdminInput,
   type CancelBookingAsAdminResult,
   cancelBookingAsAdmin,
@@ -21,6 +29,16 @@ export {
   isAdminMemberError,
 } from "./errors";
 export { getMemberDetail, type MemberDetail } from "./get-member-detail";
+export {
+  type EventBookingListItem,
+  type EventBookingStatsRow,
+  type ListEventBookingsOptions,
+  type ListEventBookingsResult,
+  type ListEventsWithBookingStatsOptions,
+  type ListEventsWithBookingStatsResult,
+  listEventBookings,
+  listEventsWithBookingStats,
+} from "./list-event-bookings";
 export {
   countMembers,
   type ListMembersOptions,

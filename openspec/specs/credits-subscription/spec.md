@@ -15,6 +15,24 @@ The system SHALL persist credit movements in `public.credit_ledger` with `user_i
 - **WHEN** a ledger row is inserted
 - **THEN** its `type` is one of `SUBSCRIPTION_REFILL`, `BOOKING`, `EXPIRY`, `REFUND`, or `ADMIN_ADJUST` (not `PURCHASE` or `REFERRAL_BONUS`)
 
+### Requirement: Credit refunds
+The system SHALL record REFUND ledger entries for (1) the existing admin manual goodwill refund and (2) event-level cancel-all, where the refunded amount equals each cancelled booking's total_credits when that amount is greater than 0. Single-booking admin cancel SHALL still NOT write a REFUND. Manual refunds remain available as a separate support gesture.
+
+#### Scenario: Event cancel-all writes REFUND ledger rows
+- **WHEN** an admin cancels all confirmed bookings for an event
+- **THEN** each member who was charged credits receives that amount back
+- **AND** a REFUND ledger entry is recorded per refunded booking with a unique idempotency key
+- **AND** Playwright uses that Gherkin title verbatim
+
+### Requirement: Canonical credits Gherkin records cancel-all REFUND
+`docs/product/features/credits-subscription.feature` SHALL state that `REFUND` ledger rows are produced by (1) the existing admin manual goodwill refund and (2) event-level cancel-all, where the refunded amount equals each cancelled booking's `total_credits` when that amount is greater than 0. Single-booking admin cancel SHALL still NOT write a `REFUND`. Playwright `e2e/specs/credits-subscription.spec.ts` SHALL include a test titled verbatim `Scenario: Event cancel-all writes REFUND ledger rows`. That test MAY skip with a documented pointer to domain integration tests and/or the booking cancel-all e2e; it MUST NOT use `@skip-no-ui`.
+
+#### Scenario: Event cancel-all writes REFUND ledger rows
+- **WHEN** an admin cancels all confirmed bookings for an event
+- **THEN** each member who was charged credits receives that amount back
+- **AND** a REFUND ledger entry is recorded per refunded booking with a unique idempotency key
+- **AND** Playwright uses that Gherkin title verbatim
+
 ### Requirement: Real Stripe Checkout activation
 The system SHALL start a Stripe Checkout Session for the Basic Berlin price when a signed-in member with a non-frozen, non-active subscription submits the membership checkout action, and SHALL activate the subscription only after a verified Stripe webhook confirms success. Checkout Session creation SHALL omit `payment_method_types` so Stripe dynamic payment methods apply. Activation SHALL set subscription status to `ACTIVE`, record a `SUBSCRIPTION_REFILL` ledger entry of +17, set the member credit balance to exactly 17 (forfeiting any prior balance via `EXPIRY` when needed), store Stripe customer/subscription identifiers, and allow the member to proceed to the events feed after Checkout return. Checkout SHALL copy the membership page locale (`de` | `en`) into `subscription_data.metadata.locale` (in addition to existing `userId` metadata) so the invoice email can be localized without a request URL.
 

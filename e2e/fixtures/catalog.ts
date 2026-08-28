@@ -265,6 +265,86 @@ export async function createPricedSlotEvent(options?: {
 }
 
 /**
+ * Insert a unique-titled SECRET_CODE event (single future slot) for admin Bookings / cancel-all e2e.
+ * Reuses an existing partner + image so Playwright does not need R2.
+ * Never reuse the shared waitlist demo title — cancel-all would break other specs.
+ */
+export async function createSecretCodeE2eEvent(options?: {
+  title?: string;
+  remainingCapacity?: number;
+  totalCapacity?: number;
+  creditPrice?: number;
+  daysAhead?: number;
+}): Promise<{ id: string; title: string }> {
+  const db = createDb(requireDatabaseUrl());
+  const template = await db.query.events.findFirst();
+  if (!template) {
+    throw new Error("No events in catalog — run bun run seed:demo");
+  }
+  const partnerRows = await listPartners(db, { limit: 1 });
+  const partner = partnerRows[0];
+  if (!partner) {
+    throw new Error("No partners in catalog — run bun run seed:demo");
+  }
+
+  const totalCapacity = options?.totalCapacity ?? 8;
+  const remainingCapacity = options?.remainingCapacity ?? totalCapacity;
+  const creditPrice = options?.creditPrice ?? 2;
+  const daysAhead = options?.daysAhead ?? 21;
+  const title =
+    options?.title ?? `E2E Bookings ${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const dateTime = berlinWallClock(daysAhead, 20);
+
+  const [created] = await db
+    .insert(events)
+    .values({
+      partnerId: partner.id,
+      partnerName: partner.name,
+      title,
+      titleDe: title,
+      titleEn: title,
+      description: "E2E admin event bookings fixture",
+      descriptionDe: "E2E admin event bookings fixture",
+      descriptionEn: "E2E admin event bookings fixture",
+      address: partner.address || "Berlin",
+      street: template.street || "E2E Straße",
+      houseNumber: template.houseNumber || "1",
+      addressLine2: template.addressLine2,
+      country: "DE",
+      city: "berlin",
+      zipCode: template.zipCode || "10115",
+      imageId: template.imageId,
+      category: template.category || "theater",
+      eventType: template.eventType || "theater_play",
+      tags: ["e2e", "admin-bookings"],
+      dateTimes: [dateTime],
+      dateTime,
+      timingMode: template.timingMode,
+      startTimeMinutes: 20 * 60,
+      weekday: dateTime.getDay(),
+      occurrenceCreditPrices: [creditPrice],
+      creditPrice,
+      capacityMode: "SHARED",
+      occurrenceCapacities: [totalCapacity],
+      totalCapacity,
+      remainingCapacity,
+      ticketType: "SECRET_CODE",
+      secretCode: `BK${Date.now().toString(36).slice(-6).toUpperCase()}`,
+      languages: ["de", "en"],
+      hasSubtitles: false,
+      subtitleLanguages: null,
+      lat: template.lat,
+      lng: template.lng,
+    })
+    .returning();
+
+  if (!created) {
+    throw new Error("Failed to insert admin-bookings e2e event");
+  }
+  return { id: created.id, title };
+}
+
+/**
  * Resolve a demo event that already has ≥2 gallery images (from `bun run seed:demo`).
  * Prefer theaterFuture — featured + reliably upcoming. Does not attach images here
  * (Playwright cannot load `@unveiled/db/seed` / `@unveiled/images` prebuilt helpers).

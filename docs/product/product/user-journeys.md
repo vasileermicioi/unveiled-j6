@@ -48,7 +48,7 @@ Each step names the feature file it belongs to. Align routes with [`../sitemap/s
 
 1. Member tries to book with insufficient remaining capacity. *(→ `booking.feature`)*
 2. Offered waitlist; joins with requested quantity, status `WAITING`. *(→ `waitlist.feature`)*
-3. Capacity frees (admin cancels a booking or raises total capacity). *(→ `booking.feature` / `admin-events.feature`)*
+3. Capacity frees (admin **single-cancels** a booking or raises total capacity — not event cancel-all, which closes the waitlist). *(→ `booking.feature` / `admin-events.feature` / `admin-event-bookings.feature`)*
 4. Waitlist processing promotes the earliest eligible `WAITING` entry through the **same** booking transaction (re-checks subscription + credits). *(→ `waitlist.feature`)*
 5. On success: entry `PROMOTED`, `CONFIRMED` booking + email. On ineligibility: skip and try next in queue.
 6. Rejoins Journey 1 at pre-event.
@@ -80,7 +80,7 @@ Each step names the feature file it belongs to. Align routes with [`../sitemap/s
 
 1. Admin creates **venue** (partner) records and events under `/admin/partners`, `/admin/events`. *(→ `admin-partners.feature`, `admin-events.feature`)*
 2. Member emails support. Admin searches `/admin/users`, opens member detail. *(→ `admin-users.feature`)*
-3. Admin may adjust credits, freeze/unfreeze, issue comp ticket, cancel a booking (triggers waitlist), or issue a manual `REFUND` ledger entry. *(→ `admin-users.feature`, `booking.feature`, `credits-subscription.feature`, `waitlist.feature`)*
+3. Admin may adjust credits, freeze/unfreeze, issue comp ticket, **single-cancel** a booking (triggers waitlist), **cancel-all** for an event (refunds charged credits, closes waitlist), or issue a manual `REFUND` ledger entry. *(→ `admin-users.feature`, `booking.feature`, `credits-subscription.feature`, `waitlist.feature`, `admin-event-bookings.feature`)*
 4. Admin may process account deletion on a member’s behalf. *(→ `auth.feature`)*
 
 **Not in this journey (post-MVP):** portal-access provisioning, venue check-in QR, partner self-service events, door check-in UI.

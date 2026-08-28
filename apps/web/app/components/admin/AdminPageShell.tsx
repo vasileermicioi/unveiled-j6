@@ -83,7 +83,10 @@ export function AdminPageShell({
 export type { AdminTab } from "./admin-tabs";
 export {
   adminBookingCancelPath,
+  adminBookingsPath,
   adminDashboardPath,
+  adminEventBookingsCancelAllPath,
+  adminEventBookingsPath,
   adminEventGalleryAddPath,
   adminEventGalleryPath,
   adminEventGalleryRemovePath,

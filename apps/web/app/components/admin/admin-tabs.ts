@@ -5,6 +5,7 @@ export type AdminTab =
   | "overview"
   | "partners"
   | "events"
+  | "bookings"
   | "featured"
   | "featured-partners"
   | "users"
@@ -14,6 +15,7 @@ export const ADMIN_TAB_ORDER: AdminTab[] = [
   "overview",
   "partners",
   "events",
+  "bookings",
   "featured",
   "featured-partners",
   "users",
@@ -30,6 +32,18 @@ export function adminPartnersPath(locale: Locale): string {
 
 export function adminEventsPath(locale: Locale): string {
   return localizedPath(locale, "admin/events");
+}
+
+export function adminBookingsPath(locale: Locale): string {
+  return localizedPath(locale, "admin/bookings");
+}
+
+export function adminEventBookingsPath(locale: Locale, eventId: string): string {
+  return localizedPath(locale, `admin/events/${eventId}/bookings`);
+}
+
+export function adminEventBookingsCancelAllPath(locale: Locale, eventId: string): string {
+  return localizedPath(locale, `admin/events/${eventId}/bookings/cancel-all`);
 }
 
 export function adminEventGalleryPath(locale: Locale, eventId: string): string {
@@ -154,15 +168,24 @@ export function inferAdminTab(pathname: string): AdminTab {
     return "featured";
   }
 
+  // Per-event bookings list + cancel-all live under `/admin/events/:id/bookings`.
+  if (pathname.includes("/admin/events/") && pathname.includes("/bookings")) {
+    return "bookings";
+  }
+
   if (pathname.includes("/admin/events")) {
     return "events";
+  }
+
+  if (pathname.includes("/admin/bookings")) {
+    return "bookings";
   }
 
   if (pathname.includes("/admin/waitlist")) {
     return "waitlist";
   }
 
-  if (pathname.includes("/admin/users") || pathname.includes("/admin/bookings")) {
+  if (pathname.includes("/admin/users")) {
     return "users";
   }
 

@@ -24,6 +24,7 @@ export type AdminCopy = {
   tabOverview: string;
   tabPartners: string;
   tabEvents: string;
+  tabBookings: string;
   tabFeatured: string;
   tabFeaturedPartners: string;
   tabUsers: string;
@@ -251,6 +252,28 @@ export type AdminCopy = {
   cancelBookingSubmit: string;
   cancelBookingSuccess: string;
   cancelBookingNotConfirmed: string;
+  bookingsIndexTitle: string;
+  bookingsIndexSubtitle: string;
+  eventBookingsTitle: string;
+  eventBookingsAction: string;
+  cancelAllAction: string;
+  cancelAllTitle: string;
+  cancelAllLead: string;
+  cancelAllCatalogWarning: string;
+  cancelAllSinglePathNote: string;
+  cancelAllUsedNote: string;
+  cancelAllReasonLabel: string;
+  cancelAllSubmit: string;
+  cancelAllEmpty: string;
+  bookingsEmpty: string;
+  bookingsIndexEmpty: string;
+  colConfirmed: string;
+  colUsed: string;
+  colCancelled: string;
+  colWaitlist: string;
+  colCreditsCharged: string;
+  statusFilterLabel: string;
+  okCancelAll: string;
   deleteAccountTitle: string;
   deleteAccountBody: (name: string) => string;
   deleteAccountSubmit: string;
@@ -501,6 +524,7 @@ const copy: Record<Locale, AdminCopy> = {
     tabOverview: "Übersicht",
     tabPartners: "Partner",
     tabEvents: "Events",
+    tabBookings: "Buchungen",
     tabFeatured: "Empfohlene Events",
     tabFeaturedPartners: "Empfohlene Partner",
     tabUsers: "Mitglieder",
@@ -742,6 +766,31 @@ const copy: Record<Locale, AdminCopy> = {
     cancelBookingSubmit: "Buchung stornieren",
     cancelBookingSuccess: "Buchung wurde storniert.",
     cancelBookingNotConfirmed: "Nur bestätigte Buchungen können storniert werden.",
+    bookingsIndexTitle: "Buchungen nach Event",
+    bookingsIndexSubtitle: "Bestätigte, genutzte und stornierte Buchungen pro Event.",
+    eventBookingsTitle: "Buchungen",
+    eventBookingsAction: "Buchungen",
+    cancelAllAction: "Alle bestätigten Buchungen stornieren",
+    cancelAllTitle: "Alle Buchungen stornieren",
+    cancelAllLead:
+      "Alle bestätigten Buchungen für dieses Event werden storniert. Berechnete Credits gehen an die Mitglieder zurück. Gutscheine kehren in den Pool zurück. Die Warteliste wird geschlossen und nicht befördert.",
+    cancelAllCatalogWarning:
+      "Das Event bleibt im Katalog und kann danach wieder gebucht werden, solange du es nicht löschst oder bearbeitest.",
+    cancelAllSinglePathNote:
+      "Eine einzelne Stornierung über „Stornieren“ erstattet keine Credits und kann die Warteliste befördern.",
+    cancelAllUsedNote: "Bereits genutzte Tickets bleiben unverändert.",
+    cancelAllReasonLabel: "Grund (erforderlich)",
+    cancelAllSubmit: "Stornierung bestätigen",
+    cancelAllEmpty: "Keine bestätigten Buchungen zum Stornieren.",
+    bookingsEmpty: "Keine Buchungen für dieses Event.",
+    bookingsIndexEmpty: "Keine Events mit Buchungen oder Warteliste.",
+    colConfirmed: "Bestätigt",
+    colUsed: "Genutzt",
+    colCancelled: "Storniert",
+    colWaitlist: "Warteliste",
+    colCreditsCharged: "Credits",
+    statusFilterLabel: "Status",
+    okCancelAll: "Buchungen storniert. Credits und Gutscheine wurden zurückgegeben.",
     deleteAccountTitle: "Konto löschen",
     deleteAccountBody: (name) =>
       `Konto von „${name}" endgültig löschen? Name, E-Mail und Präferenzen werden anonymisiert. Buchungs- und Credit-Historie bleiben anonymisiert erhalten. Die Anmeldung wird deaktiviert. Ein aktives Abo wird mitgekündigt. Diese Aktion kann nicht rückgängig gemacht werden.`,
@@ -1018,6 +1067,7 @@ const copy: Record<Locale, AdminCopy> = {
     tabOverview: "Overview",
     tabPartners: "Partners",
     tabEvents: "Events",
+    tabBookings: "Bookings",
     tabFeatured: "Featured events",
     tabFeaturedPartners: "Featured partners",
     tabUsers: "Users",
@@ -1254,6 +1304,31 @@ const copy: Record<Locale, AdminCopy> = {
     cancelBookingSubmit: "Cancel booking",
     cancelBookingSuccess: "Booking was cancelled.",
     cancelBookingNotConfirmed: "Only confirmed bookings can be cancelled.",
+    bookingsIndexTitle: "Bookings by event",
+    bookingsIndexSubtitle: "Confirmed, used, and cancelled bookings per event.",
+    eventBookingsTitle: "Bookings",
+    eventBookingsAction: "Bookings",
+    cancelAllAction: "Cancel all confirmed bookings",
+    cancelAllTitle: "Cancel all bookings",
+    cancelAllLead:
+      "All confirmed bookings for this event will be cancelled. Charged credits return to members. Vouchers return to the pool. The waitlist is closed and will not be promoted.",
+    cancelAllCatalogWarning:
+      "The event stays in the catalog and can be booked again unless you delete or edit it.",
+    cancelAllSinglePathNote:
+      "Cancelling a single booking does not refund credits and may promote the waitlist.",
+    cancelAllUsedNote: "Already used tickets are left unchanged.",
+    cancelAllReasonLabel: "Reason (required)",
+    cancelAllSubmit: "Confirm cancellation",
+    cancelAllEmpty: "No confirmed bookings to cancel.",
+    bookingsEmpty: "No bookings for this event.",
+    bookingsIndexEmpty: "No events with bookings or waitlist.",
+    colConfirmed: "Confirmed",
+    colUsed: "Used",
+    colCancelled: "Cancelled",
+    colWaitlist: "Waitlist",
+    colCreditsCharged: "Credits",
+    statusFilterLabel: "Status",
+    okCancelAll: "Bookings cancelled. Credits and vouchers were returned.",
     deleteAccountTitle: "Delete account",
     deleteAccountBody: (name) =>
       `Permanently delete “${name}”? Name, email, and preferences will be anonymized. Booking and credit history are retained in anonymized form. Login will be disabled. Any active subscription is cancelled. This cannot be undone.`,

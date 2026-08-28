@@ -273,7 +273,7 @@ One redemption artifact per ticket on a booking (`ordinal` 1..N, unique per book
 | `voucher_pdf_id` | uuid, nullable | Points at `event_voucher_pdfs.id` (no circular FK; inventory row holds `booking_ticket_id`) |
 | `created_at` / `updated_at` | timestamptz | |
 
-Admin cancel of a confirmed booking returns allocated inventory to `AVAILABLE` and clears live redemption payloads on these rows (credits are not auto-refunded).
+Admin **single** cancel of a confirmed booking returns allocated inventory to `AVAILABLE` and clears live redemption payloads on these rows (credits are not auto-refunded). **Event cancel-all** restocks the same way and **does** refund charged credits (see transactional flows below).
 
 ---
 
@@ -299,7 +299,7 @@ Admin cancel of a confirmed booking returns allocated inventory to `AVAILABLE` a
 | `user_id` | FK → `users.id` | |
 | `amount` | integer | Positive (refill/adjust-up) or negative (booking spend/adjust-down) |
 | `balance_after` | integer | Snapshot for audit trail |
-| `type` | enum: `SUBSCRIPTION_REFILL`, `BOOKING`, `EXPIRY`, `REFUND`, `ADMIN_ADJUST` | **Decided, resolved from the old app's unused-enum-value gap:** `PURCHASE` and `REFERRAL_BONUS` are cut (no à la carte credit purchases or referral program — see `product/vision-and-domains.md` non-goals). `EXPIRY` and `REFUND` are now real, produced types — `EXPIRY` on every subscription renewal/cancellation-at-period-end (forfeiting unused credits, see `features/credits-subscription.feature`), `REFUND` on admin manual goodwill refunds (decoupled from booking cancellation, see `features/booking.feature`) |
+| `type` | enum: `SUBSCRIPTION_REFILL`, `BOOKING`, `EXPIRY`, `REFUND`, `ADMIN_ADJUST` | **Decided, resolved from the old app's unused-enum-value gap:** `PURCHASE` and `REFERRAL_BONUS` are cut (no à la carte credit purchases or referral program — see `product/vision-and-domains.md` non-goals). `EXPIRY` and `REFUND` are now real, produced types — `EXPIRY` on every subscription renewal/cancellation-at-period-end (forfeiting unused credits, see `features/credits-subscription.feature`), `REFUND` on admin manual goodwill refunds **and** event-level cancel-all (`idempotency_key` `event-cancel-all:{bookingId}` when `total_credits > 0`). Single-booking admin cancel does **not** write `REFUND` (see `features/booking.feature`) |
 | `description` | text | |
 | `idempotency_key` | text, nullable, **unique where not null** | Enforces the idempotent-booking guarantee |
 | `timestamp` | timestamptz | |
@@ -362,7 +362,8 @@ The old `bookEventAtomic` Firestore transaction (check subscription → check ca
 **New transactional flows that reuse this same logic (decided during the rewrite, not present in the old app):**
 - **Comp tickets** (`features/credits-subscription.feature`) go through the identical transaction, just skipping the credit-deduction step.
 - **Waitlist promotion** (`features/waitlist.feature`) calls the same transaction on a waiting member's behalf when capacity frees up — it must re-run the full subscription/credit checks at promotion time, not reuse stale checks from when they originally joined the waitlist.
-- **Booking cancellation** (`features/booking.feature`) is its own transaction: set `status = 'CANCELLED'`, increment `events.remaining_capacity`, then (in the same or an immediately-following transaction) trigger waitlist promotion processing for that event.
+- **Booking cancellation (single)** (`features/booking.feature`) is its own transaction: set `status = 'CANCELLED'`, increment `events.remaining_capacity`, restock allocated voucher inventory, then trigger waitlist promotion for that event. Credits are **not** auto-refunded on this path.
+- **Event cancel-all** (`features/admin-event-bookings.feature`, `features/booking.feature`): one transaction locks the event, cancels every `CONFIRMED` booking (required reason), restocks vouchers, writes `REFUND` + increments `users.credits` by `total_credits` when charged, increases remaining capacity by cancelled `tickets_count` only (does not reset to `total_capacity` if `USED` rows exist), sets every `WAITING` waitlist entry to `CANCELLED`, and **does not** call waitlist promotion. `USED` bookings stay in place. The event remains in the catalog. A second call with no remaining `CONFIRMED` bookings is a successful no-op.
 
 ## Timezone handling
 

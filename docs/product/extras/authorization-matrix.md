@@ -54,9 +54,11 @@ Default **deny**. Helpers: `requireAuth`, `requireRole`, `requireOwnerOrRole` (i
 
 | Action | USER (own) | USER (other) | ADMIN |
 |---|---|---|---|
-| Read | ✅ | ❌ | ✅ |
+| Read (My Tickets) | ✅ | ❌ | ✅ |
+| Read admin Bookings tab / per-event list (`/admin/bookings`, `/admin/events/:id/bookings`) | ❌ → locale home | ❌ → locale home | ✅ |
 | Create | ✅ via atomic booking txn only | ❌ | ✅ comp-ticket path |
-| Update / Cancel | limited self-cancel where specified | ❌ | ✅ |
+| Single cancel (`/admin/bookings/:id/cancel`) | limited self-cancel where specified (none for tickets) | ❌ | ✅ CONFIRMED only; **no** credit refund; waitlist may promote |
+| Event cancel-all (`/admin/events/:id/bookings/cancel-all`) | ❌ → locale home | ❌ → locale home | ✅ refunds charged credits; closes WAITING; does not promote |
 | Delete | ❌ | ❌ | ✅ (retention rules apply) |
 
 ---

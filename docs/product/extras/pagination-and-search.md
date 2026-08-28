@@ -32,6 +32,7 @@ Fixed page size per list (no `pageSize` param exposed to users — avoids lettin
 |---|---|---|
 | `/events` (member feed) | 24 | Grid of `EventCard`s, ~2–4 rows depending on breakpoint |
 | `/admin/events`, `/admin/partners` | 25 | Standard admin table page size |
+| `/admin/bookings`, `/admin/events/:id/bookings` | 25 | Same admin table page size (Bookings by event + per-event list) |
 | `/admin/users` | 25 | Same |
 | `/partner/guests` | 50 | Guest lists are read in bulk before a door shift, denser rows suit a bigger page |
 | `/bookings` ("My Tickets") | 20 | Personal list, small by nature |

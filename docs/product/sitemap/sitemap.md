@@ -135,7 +135,10 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin/featured-partners` | ✅ | ADMIN | Featured partners grid (drag reorder + Save order; tab label **Featured partners** / **Empfohlene Partner**) |
 | `/admin/featured-partners/add?q=` | ✅ | ADMIN | Search and add featured partner |
 | `/admin/featured-partners/remove?partnerIds=` | ✅ | ADMIN | Remove one or many from featured (catalog partners kept) |
-| `/admin/bookings/:id/cancel` | ✅ | ADMIN | Cancel booking (+ waitlist promo path) |
+| `/admin/bookings?title=&partner=&page=` | ✅ | ADMIN | Bookings by event (tab **Bookings** / **Buchungen** after Events; GET title/partner filters; page size 25). Not export-only and not inferred as the Users tab. |
+| `/admin/events/:id/bookings?status=&page=` | ✅ | ADMIN | Per-event booking list (status filter + page size 25). CONFIRMED rows link to single cancel. Toolbar **Cancel all confirmed bookings** when confirmed count > 0. Events catalog row action **Bookings** / **Buchungen**. |
+| `/admin/events/:id/bookings/cancel-all` | ✅ | ADMIN | Cancel-all confirm (SSR POST; required reason; refunds charged credits; closes waitlist, does not promote; event stays in catalog) |
+| `/admin/bookings/:id/cancel` | ✅ | ADMIN | Single-booking cancel (**no** credit refund; waitlist may promote) |
 | `/admin/waitlist?eventId=&status=&page=` | ✅ | ADMIN | Waitlist list |
 | `/admin/waitlist/:id/promote` | ✅ | ADMIN | Manual promote |
 | `/admin/partners?q=&sort=&dir=&page=` | ✅ | ADMIN | Venue list (Name search; column sort `name`\|`created`\|`events`=active; default last-created desc; Reset filters; **Active events** + **Created** columns; toolbar **Export**) |

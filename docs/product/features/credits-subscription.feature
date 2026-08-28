@@ -19,8 +19,11 @@
 #     because the new real-cancellation flow actually uses it.
 #   - Ledger types PURCHASE and REFERRAL_BONUS: DECIDED cut (see product/vision-and-domains.md non-goals
 #     — no à la carte credit purchases, no referral program). EXPIRY is now a real, used type (monthly
-#     forfeiture + cancellation forfeiture). REFUND is kept as a real, used type (admin support gesture,
-#     decoupled from booking cancellation — see booking.feature).
+#     forfeiture + cancellation forfeiture). REFUND is kept as a real, used type for (1) admin manual
+#     goodwill refunds (decoupled from **single-booking** cancel) and (2) event-level cancel-all, which
+#     writes one REFUND per charged booking with idempotency key event-cancel-all:{bookingId}
+#     (see booking.feature / admin-event-bookings.feature). Single-booking admin cancel still MUST NOT
+#     write REFUND.
 #   - First successful subscription payment: DECIDED: send a branded Unveiled transactional email via
 #     Resend with the Stripe invoice PDF attached (`invoice.paid` + `billing_reason` `subscription_create`
 #     only). Renewal / `subscription_cycle` invoices do not send this email. Operators MUST disable Stripe
@@ -127,10 +130,17 @@ Feature: Credits and Subscription
 
   Scenario: Admin issues a manual credit refund (support gesture)
     Given I am signed in as "ADMIN"
-    And a member has a legitimate service complaint not covered by normal booking cancellation
+    And a member has a legitimate service complaint not covered by single-booking cancellation
     When I issue a manual credit refund with a description
     Then the member's credit balance increases by the refunded amount
-    And a "REFUND" ledger entry is recorded, decoupled from any booking-cancellation event
+    And a "REFUND" ledger entry is recorded, decoupled from single-booking cancellation
+
+  Scenario: Event cancel-all writes REFUND ledger rows
+    Given I am signed in as "ADMIN"
+    And an event has confirmed bookings that charged credits
+    When I cancel all confirmed bookings for that event
+    Then each member who was charged credits receives that amount back
+    And a "REFUND" ledger entry is recorded per refunded booking with a unique idempotency key
 
   Scenario: Admin freezes a member's account
     Given I am signed in as "ADMIN"

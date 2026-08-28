@@ -14,7 +14,7 @@ import { localizedPath } from "../../lib/locale";
 
 import { AdminSortableColumnHeader } from "./AdminSortableColumnHeader";
 import { AdminTableActions } from "./AdminTableActions";
-import { adminEventGalleryPath } from "./admin-tabs";
+import { adminEventBookingsPath, adminEventGalleryPath } from "./admin-tabs";
 
 type AdminEventsTableProps = {
   locale: Locale;
@@ -172,6 +172,11 @@ export function AdminEventsTable({
                         href: localizedPath(locale, `admin/events/${event.id}/edit`),
                         label: copy.editAction,
                         icon: "edit",
+                      },
+                      {
+                        href: adminEventBookingsPath(locale, event.id),
+                        label: copy.eventBookingsAction,
+                        icon: "bookings",
                       },
                       {
                         href: adminEventGalleryPath(locale, event.id),

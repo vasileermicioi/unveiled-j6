@@ -1,13 +1,17 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  buildBookingCancellationContent,
   buildBookingConfirmationContent,
   buildEventIcs,
   buildSubscriptionInvoiceContent,
+  buildWaitlistClosedContent,
   buildWaitlistPromotionContent,
   formatIcsUtc,
+  sendBookingCancellation,
   sendBookingConfirmation,
   sendSubscriptionInvoice,
+  sendWaitlistClosed,
   sendWaitlistPromotion,
 } from "./index";
 
@@ -334,5 +338,176 @@ describe("sendSubscriptionInvoice", () => {
 
     expect(result.ok).toBe(true);
     expect(headers[0]?.["Idempotency-Key"]).toBe("in_test");
+  });
+});
+
+const CANCELLATION_EVENT = {
+  id: "evt-1",
+  title: "Tonight Show",
+  address: "Rosa-Luxemburg-Platz, Berlin",
+  dateTime: new Date("2030-06-01T18:00:00.000Z"),
+  partnerName: "Volksbühne",
+};
+
+describe("booking cancellation content", () => {
+  test("paid cancellation includes voided ticket and credit-return sentences", () => {
+    const de = buildBookingCancellationContent({
+      locale: "de",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+      ticketsCount: 1,
+      totalCredits: 2,
+    });
+    expect(de.subject).toBe("Buchung storniert: Tonight Show");
+    expect(de.text).toContain("ungültig");
+    expect(de.text).toContain("2 Credits wurden dir zurückgegeben");
+    expect(de.html).toContain("ungültig");
+    expect(de.html).toContain("2 Credits wurden dir zurückgegeben");
+
+    const en = buildBookingCancellationContent({
+      locale: "en",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+      ticketsCount: 1,
+      totalCredits: 2,
+    });
+    expect(en.subject).toBe("Booking cancelled: Tonight Show");
+    expect(en.text).toContain("is void");
+    expect(en.text).toContain("2 credits were returned to you");
+    expect(en.html).toContain("is void");
+    expect(en.html).toContain("2 credits were returned to you");
+  });
+
+  test("comp cancellation includes voided ticket and no credit-return sentence", () => {
+    const en = buildBookingCancellationContent({
+      locale: "en",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+      ticketsCount: 1,
+      totalCredits: 0,
+    });
+    expect(en.text).toContain("is void");
+    expect(en.text).not.toContain("credits were returned");
+    expect(en.html).not.toContain("credits were returned");
+
+    const de = buildBookingCancellationContent({
+      locale: "de",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+      ticketsCount: 1,
+      totalCredits: 0,
+    });
+    expect(de.text).toContain("ungültig");
+    expect(de.text).not.toContain("Credits wurden dir zurückgegeben");
+  });
+});
+
+describe("waitlist-closed content", () => {
+  test("states the waitlist is closed and has no credit sentence", () => {
+    const de = buildWaitlistClosedContent({
+      locale: "de",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+    });
+    expect(de.subject).toBe("Warteliste geschlossen: Tonight Show");
+    expect(de.text).toContain("Warteliste");
+    expect(de.text).toContain("geschlossen");
+    expect(de.text).not.toContain("Credits");
+    expect(de.html).not.toContain("Credits");
+
+    const en = buildWaitlistClosedContent({
+      locale: "en",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+    });
+    expect(en.subject).toBe("Waitlist closed: Tonight Show");
+    expect(en.text).toContain("waitlist");
+    expect(en.text).toContain("closed");
+    expect(en.text).not.toContain("credits were returned");
+    expect(en.html).not.toContain("credits were returned");
+  });
+});
+
+describe("sendBookingCancellation", () => {
+  test("posts to Resend without ICS and returns ok false on HTTP error without throwing", async () => {
+    const calls: Array<{ url: string; body: string }> = [];
+    const ok = await sendBookingCancellation({
+      apiKey: "re_test",
+      from: "codes@unveiled.berlin",
+      locale: "en",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+      ticketsCount: 1,
+      totalCredits: 2,
+      fetchImpl: async (url, init) => {
+        calls.push({ url, body: String(init?.body ?? "") });
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ id: "email_cancel" }),
+        };
+      },
+    });
+    expect(ok.ok).toBe(true);
+    expect(ok.id).toBe("email_cancel");
+    expect(calls).toHaveLength(1);
+    const body = JSON.parse(calls[0]?.body ?? "{}") as {
+      subject: string;
+      attachments?: unknown[];
+    };
+    expect(body.subject).toBe("Booking cancelled: Tonight Show");
+    expect(body.attachments).toBeUndefined();
+
+    const failed = await sendBookingCancellation({
+      apiKey: "re_test",
+      from: "codes@unveiled.berlin",
+      locale: "en",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+      ticketsCount: 1,
+      totalCredits: 2,
+      fetchImpl: async () => ({
+        ok: false,
+        status: 500,
+        json: async () => ({ message: "Resend down" }),
+      }),
+    });
+    expect(failed.ok).toBe(false);
+    expect(failed.status).toBe(500);
+    expect(failed.error).toBe("Resend down");
+  });
+});
+
+describe("sendWaitlistClosed", () => {
+  test("posts to Resend without ICS and returns ok false on HTTP error without throwing", async () => {
+    const ok = await sendWaitlistClosed({
+      apiKey: "re_test",
+      from: "codes@unveiled.berlin",
+      locale: "de",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: "email_wait_closed" }),
+      }),
+    });
+    expect(ok.ok).toBe(true);
+    expect(ok.id).toBe("email_wait_closed");
+
+    const failed = await sendWaitlistClosed({
+      apiKey: "re_test",
+      from: "codes@unveiled.berlin",
+      locale: "en",
+      toEmail: "member@example.com",
+      event: CANCELLATION_EVENT,
+      fetchImpl: async () => ({
+        ok: false,
+        status: 429,
+        json: async () => ({ message: "rate limited" }),
+      }),
+    });
+    expect(failed.ok).toBe(false);
+    expect(failed.status).toBe(429);
   });
 });

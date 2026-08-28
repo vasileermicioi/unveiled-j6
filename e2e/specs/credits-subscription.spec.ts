@@ -369,4 +369,11 @@ test.describe("credits-subscription.feature", () => {
     ).toBeVisible();
     expect(await getUserCredits(user.email)).toBe(creditsBefore);
   });
+
+  test("Scenario: Event cancel-all writes REFUND ledger rows", async () => {
+    test.skip(
+      true,
+      "Covered by packages/db cancel-all-bookings-for-event.integration.test.ts and booking.feature Scenario: Admin cancels all confirmed bookings for an event",
+    );
+  });
 });

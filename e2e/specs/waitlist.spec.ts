@@ -1,5 +1,13 @@
 import type { Page } from "@playwright/test";
-
+import {
+  bookPaidTicket,
+  createSecretCodeE2eEvent,
+  getBookingStatusesForUserEvent,
+  getWaitlistStatusesForUserEvent,
+  joinEventWaitlist,
+  loginAdmin,
+  submitCancelAll,
+} from "../fixtures/admin-event-bookings";
 import {
   getWaitingEntryIdForUserEvent,
   promoteWaitlistEntryViaAdmin,
@@ -252,5 +260,33 @@ test.describe("waitlist.feature", () => {
       page.getByRole("link", { name: /wartelisten-eintrag stornieren|cancel waitlist entry/i }),
     ).toBeVisible();
     await expect(page.getByRole("table")).toHaveCount(0);
+  });
+
+  test("Scenario: Cancel-all does not promote the waitlist", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required for cancel-all");
+
+    const event = await createSecretCodeE2eEvent({ remainingCapacity: 1, totalCapacity: 1 });
+    await bookPaidTicket(page, locale, event.id);
+    await page.context().clearCookies();
+    const waiter = await joinEventWaitlist(page, locale, event.id);
+    await page.context().clearCookies();
+
+    await loginAdmin(page, locale);
+    await submitCancelAll(page, locale, event.id, "E2E waitlist cancel-all");
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/${event.id}/bookings(\\?|$)`));
+
+    const waitlistStatuses = await getWaitlistStatusesForUserEvent(waiter.email, event.id);
+    expect(waitlistStatuses).toContain("CANCELLED");
+    expect(waitlistStatuses).not.toContain("PROMOTED");
+    const bookingStatuses = await getBookingStatusesForUserEvent(waiter.email, event.id);
+    expect(bookingStatuses).not.toContain("CONFIRMED");
+  });
+
+  test("Scenario: Waitlist member receives waitlist-closed email", async () => {
+    test.skip(
+      true,
+      "No email capture harness in Playwright; assert via Resend dashboard on staging smoke (DEPLOYMENT.md Phase 6)",
+    );
   });
 });

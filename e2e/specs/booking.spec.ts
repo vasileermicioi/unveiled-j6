@@ -3,6 +3,13 @@ import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 
 import { privateR2Configured, settleAdminSession } from "../fixtures/admin";
 import {
+  bookPaidTicket,
+  createSecretCodeE2eEvent,
+  getBookingStatusesForUserEvent,
+  loginAdmin,
+  submitCancelAll,
+} from "../fixtures/admin-event-bookings";
+import {
   hasAdminCredentials,
   loginAdminForMembershipHq,
   openMemberDetailByEmail,
@@ -547,5 +554,58 @@ test.describe("booking.feature", () => {
     await expect(
       page.getByRole("button", { name: /stornieren|cancel|refund|erstattung/i }),
     ).toHaveCount(0);
+  });
+
+  test("Scenario: Admin cancels all confirmed bookings for an event", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required");
+    test.skip(!hasAdminCredentials(), "E2E_ADMIN_* required for admin cancel-all");
+
+    const event = await createSecretCodeE2eEvent();
+    const paid = await bookPaidTicket(page, locale, event.id);
+    const creditsBefore = await getUserCredits(paid.email);
+    await page.context().clearCookies();
+
+    await loginAdmin(page, locale);
+    await submitCancelAll(page, locale, event.id, "E2E booking.feature cancel-all");
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/${event.id}/bookings(\\?|$)`));
+
+    const statuses = await getBookingStatusesForUserEvent(paid.email, event.id);
+    expect(statuses).toContain("CANCELLED");
+    expect(await getUserCredits(paid.email)).toBeGreaterThan(creditsBefore);
+  });
+
+  test("Scenario: Cancel-all refunds paid tickets but not comps", async () => {
+    test.skip(
+      true,
+      "Covered by packages/db cancel-all-bookings-for-event.integration.test.ts (paid vs comp)",
+    );
+  });
+
+  test("Scenario: Cancel-all leaves USED bookings in place", async () => {
+    test.skip(
+      true,
+      "Covered by packages/db cancel-all-bookings-for-event.integration.test.ts; USED requires partner check-in (post-MVP)",
+    );
+  });
+
+  test("Scenario: Cancel-all is idempotent when nothing is confirmed", async () => {
+    test.skip(
+      true,
+      "Covered by packages/db cancel-all-bookings-for-event.integration.test.ts no-op path",
+    );
+  });
+
+  test("Scenario: Cancel-all requires a reason", async () => {
+    test.skip(
+      true,
+      "UI covered by admin-event-bookings.feature Scenario: Cancel-all confirm rejects an empty reason; domain INVALID_REASON unit test",
+    );
+  });
+
+  test("Scenario: Member receives cancel-all email", async () => {
+    test.skip(
+      true,
+      "No email capture harness in Playwright; assert via Resend dashboard on staging smoke (DEPLOYMENT.md Phase 6)",
+    );
   });
 });

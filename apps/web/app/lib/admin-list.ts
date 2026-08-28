@@ -1,4 +1,4 @@
-import type { EventSort, PartnerSort, UserRole } from "@unveiled/db";
+import type { BookingStatus, EventSort, PartnerSort, UserRole } from "@unveiled/db";
 
 import { ADMIN_LIST_PAGE_SIZE } from "./admin-content";
 
@@ -43,8 +43,29 @@ export type AdminWaitlistListQuery = {
   limit: number;
 };
 
+export type AdminEventBookingsIndexQuery = {
+  title: string;
+  partner: string;
+  page: number;
+  offset: number;
+  limit: number;
+};
+
+export type AdminEventBookingsListQuery = {
+  status?: BookingStatus;
+  page: number;
+  offset: number;
+  limit: number;
+};
+
 const USER_ROLES: ReadonlySet<string> = new Set(["USER", "ADMIN", "PARTNER"]);
 const WAITLIST_STATUSES: ReadonlySet<string> = new Set(["WAITING", "PROMOTED", "CANCELLED"]);
+const BOOKING_STATUSES: ReadonlySet<string> = new Set([
+  "CONFIRMED",
+  "WAITLIST",
+  "CANCELLED",
+  "USED",
+]);
 const PARTNER_SORTS: ReadonlySet<string> = new Set(["name", "created", "events"]);
 const EVENT_SORTS: ReadonlySet<string> = new Set([
   "title",
@@ -227,6 +248,35 @@ export function parseAdminWaitlistListQuery(url: URL): AdminWaitlistListQuery {
   };
 }
 
+export function parseAdminEventBookingsIndexQuery(url: URL): AdminEventBookingsIndexQuery {
+  const title = url.searchParams.get("title")?.trim() ?? "";
+  const partner = url.searchParams.get("partner")?.trim() ?? "";
+  const rawPage = Number.parseInt(url.searchParams.get("page") ?? "1", 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+
+  return {
+    title,
+    partner,
+    page,
+    offset: (page - 1) * ADMIN_LIST_PAGE_SIZE,
+    limit: ADMIN_LIST_PAGE_SIZE,
+  };
+}
+
+export function parseAdminEventBookingsListQuery(url: URL): AdminEventBookingsListQuery {
+  const statusParam = url.searchParams.get("status")?.trim() ?? "";
+  const status = BOOKING_STATUSES.has(statusParam) ? (statusParam as BookingStatus) : undefined;
+  const rawPage = Number.parseInt(url.searchParams.get("page") ?? "1", 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+
+  return {
+    status,
+    page,
+    offset: (page - 1) * ADMIN_LIST_PAGE_SIZE,
+    limit: ADMIN_LIST_PAGE_SIZE,
+  };
+}
+
 export function clampAdminListPage(page: number, total: number, pageSize: number): number {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   return Math.min(page, totalPages);
@@ -337,4 +387,36 @@ export function buildAdminWaitlistQueryString(options: {
 
   const query = params.toString();
   return query ? `?${query}` : "";
+}
+
+export function buildAdminEventBookingsListQueryString(options: {
+  status?: string;
+  page?: number;
+}): string {
+  const params = new URLSearchParams();
+  if (options.status) {
+    params.set("status", options.status);
+  }
+  if (options.page && options.page > 1) {
+    params.set("page", String(options.page));
+  }
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+export function adminEventBookingsListPageRedirectPath(
+  basePath: string,
+  listQuery: AdminEventBookingsListQuery,
+  total: number,
+): string | null {
+  const effectivePage = clampAdminListPage(listQuery.page, total, listQuery.limit);
+  if (effectivePage === listQuery.page) {
+    return null;
+  }
+
+  return `${basePath}${buildAdminEventBookingsListQueryString({
+    status: listQuery.status,
+    page: effectivePage,
+  })}`;
 }
