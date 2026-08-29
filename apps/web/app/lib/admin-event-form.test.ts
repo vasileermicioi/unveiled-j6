@@ -5,7 +5,9 @@ import { VARIANT_FILENAMES } from "@unveiled/images";
 import { ImageValidationError } from "@unveiled/images/errors";
 
 import {
+  assertEventFormStepFields,
   defaultRangeSlotsFromHours,
+  type EventFormValues,
   eventFormErrorStep,
   eventFormValuesToDateTimes,
   eventFormValuesToOccurrenceLists,
@@ -1343,6 +1345,95 @@ describe("eventFormErrorStep", () => {
     ).toBe(1);
     expect(eventFormErrorStep(new PostalValidationError("INVALID_POSTAL_CODE", "bad zip"))).toBe(1);
     expect(eventFormErrorStep(new Error("something else"))).toBe(1);
+  });
+});
+
+function stepFixture(overrides: Partial<EventFormValues> = {}): EventFormValues {
+  return {
+    partnerId: "partner-1",
+    titleDe: "Jazz Night",
+    titleEn: "Jazz Night",
+    descriptionDe: "Live set",
+    descriptionEn: "Live set",
+    street: "Main St",
+    houseNumber: "1",
+    addressLine2: null,
+    zipCode: "10115",
+    country: "DE",
+    city: "berlin",
+    category: "theater",
+    eventType: "theater_play",
+    tags: [],
+    dateTimeRows: [{ date: "2026-08-01", time: "20:00", credits: "1" }],
+    timingMode: "TIME_SLOT",
+    creditPrice: 1,
+    totalCapacity: 10,
+    ticketType: "SECRET_CODE",
+    secretCode: "SECRET1",
+    eventWebsiteUrl: null,
+    promoCodes: [],
+    voucherPdfs: [],
+    replaceUnusedInventory: false,
+    languageIndependent: false,
+    languages: null,
+    hasSubtitles: false,
+    subtitleLanguages: null,
+    lat: null,
+    lng: null,
+    imageUpload: null,
+    imageUrl: null,
+    imagePrebuilt: null,
+    stagedImageId: null,
+    imageCredit: "",
+    ...overrides,
+  };
+}
+
+describe("assertEventFormStepFields", () => {
+  test("step 2 rejects missing secret code without checking image", () => {
+    expect(() =>
+      assertEventFormStepFields(
+        2,
+        stepFixture({ secretCode: null, stagedImageId: null, imagePrebuilt: null }),
+      ),
+    ).toThrow(CatalogValidationError);
+    try {
+      assertEventFormStepFields(2, stepFixture({ secretCode: null }));
+    } catch (error) {
+      expect(error).toBeInstanceOf(CatalogValidationError);
+      expect((error as CatalogValidationError).code).toBe("INVALID_REDEMPTION_CONFIG");
+    }
+  });
+
+  test("step 2 accepts dates and redemption without an image", () => {
+    expect(() => assertEventFormStepFields(2, stepFixture({ stagedImageId: null }))).not.toThrow();
+  });
+
+  test("step 3 rejects a missing image without checking redemption", () => {
+    expect(() =>
+      assertEventFormStepFields(3, stepFixture({ secretCode: null, stagedImageId: null })),
+    ).toThrow(CatalogValidationError);
+    try {
+      assertEventFormStepFields(3, stepFixture({ secretCode: null, stagedImageId: null }));
+    } catch (error) {
+      expect(error).toBeInstanceOf(CatalogValidationError);
+      expect((error as CatalogValidationError).code).toBe("MISSING_EVENT_IMAGE");
+    }
+  });
+
+  test("step 3 accepts a staged image even if redemption would fail", () => {
+    expect(() =>
+      assertEventFormStepFields(3, stepFixture({ secretCode: null, stagedImageId: "img-1" })),
+    ).not.toThrow();
+  });
+
+  test("step 1 rejects empty title without checking dates", () => {
+    expect(() =>
+      assertEventFormStepFields(
+        1,
+        stepFixture({ titleDe: "", dateTimeRows: [{ date: "", time: "", credits: "" }] }),
+      ),
+    ).toThrow(CatalogValidationError);
   });
 });
 

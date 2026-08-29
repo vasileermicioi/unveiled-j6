@@ -47,6 +47,7 @@ export function EventAdminForm({
     2: copy.wizardStepDateTickets,
     3: copy.wizardStepImage,
   };
+  const imageStepUnlocked = Boolean(defaults?.currentImageId);
 
   return (
     <Form
@@ -115,6 +116,21 @@ export function EventAdminForm({
                   name="wizard_intent"
                   type="submit"
                   value="back"
+                >
+                  {title}
+                </Button>
+              );
+            }
+
+            if (n === 3 && imageStepUnlocked && step === 2) {
+              return (
+                <Button
+                  className={className}
+                  formAction={stepHrefs[3]}
+                  key={n}
+                  name="wizard_intent"
+                  type="submit"
+                  value="next"
                 >
                   {title}
                 </Button>

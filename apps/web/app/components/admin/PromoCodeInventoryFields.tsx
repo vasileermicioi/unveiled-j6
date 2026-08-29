@@ -32,6 +32,8 @@ type PromoCodeInventoryFieldsProps = {
   isEdit?: boolean;
   inventoryCounts?: { available: number; allocated: number } | null;
   onInventoryPreviewChange?: (state: InventoryPreviewChange) => void;
+  /** Posted / error-retry codes so Next/Create keep inventory after a remount. */
+  initialCodes?: string[];
 };
 
 export function PromoCodeInventoryFields({
@@ -39,9 +41,12 @@ export function PromoCodeInventoryFields({
   isEdit = false,
   inventoryCounts = null,
   onInventoryPreviewChange,
+  initialCodes,
 }: PromoCodeInventoryFieldsProps) {
   const copy = getAdminCopy(locale);
-  const [codes, setCodes] = useState<string[]>([]);
+  const [codes, setCodes] = useState<string[]>(
+    () => initialCodes?.filter((code) => code.trim().length > 0) ?? [],
+  );
   const [replaceUnused, setReplaceUnused] = useState(false);
   const fileInputId = "promo-codes-file";
   const pasteId = "promo-codes-paste";
@@ -62,7 +67,11 @@ export function PromoCodeInventoryFields({
       if (jsonRaw) {
         try {
           const parsed: unknown = JSON.parse(jsonRaw);
-          if (Array.isArray(parsed) && parsed.every((entry) => typeof entry === "string")) {
+          if (
+            Array.isArray(parsed) &&
+            parsed.length > 0 &&
+            parsed.every((entry) => typeof entry === "string")
+          ) {
             setCodes(parsed);
             return;
           }

@@ -2,6 +2,7 @@ import { Description, Label, Paragraph, Surface } from "@heroui/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { getAdminCopy } from "../../lib/admin-content";
+import { resubmitFormWithSubmitter } from "../../lib/admin-event-wizard";
 import type { InventoryPreviewChange } from "../../lib/admin-voucher-inventory";
 import {
   draftFieldValue,
@@ -175,6 +176,8 @@ type PdfVoucherInventoryFieldsProps = {
   inventoryCounts?: { available: number; allocated: number } | null;
   uploadPath: string;
   onInventoryPreviewChange?: (state: InventoryPreviewChange) => void;
+  /** Posted / error-retry tickets so Next/Create keep inventory after a remount. */
+  initialStaged?: StagedVoucherPdf[];
 };
 
 export function PdfVoucherInventoryFields({
@@ -184,16 +187,16 @@ export function PdfVoucherInventoryFields({
   inventoryCounts = null,
   uploadPath,
   onInventoryPreviewChange,
+  initialStaged,
 }: PdfVoucherInventoryFieldsProps) {
   const copy = getAdminCopy(locale);
   const hiddenRef = useRef<HTMLInputElement | null>(null);
   const masterFileRef = useRef<File | null>(null);
   const multiFilesRef = useRef<File[]>([]);
   const previewsRef = useRef<TicketPreview[]>([]);
-  const stagedRef = useRef<StagedVoucherPdf[]>([]);
+  const stagedRef = useRef<StagedVoucherPdf[]>(initialStaged ?? []);
   const modeRef = useRef<PdfImportMode>("split");
   const submittingRef = useRef(false);
-  const [formEl, setFormEl] = useState<HTMLFormElement | null>(null);
 
   const [mode, setMode] = useState<PdfImportMode>("split");
   const [pageCount, setPageCount] = useState(0);
@@ -204,8 +207,17 @@ export function PdfVoucherInventoryFields({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replaceUnused, setReplaceUnused] = useState(false);
-  const [restoredStagedCount, setRestoredStagedCount] = useState(0);
+  const [restoredStagedCount, setRestoredStagedCount] = useState(initialStaged?.length ?? 0);
   const skipPreviewClearOnMount = useRef(true);
+
+  const writeStaged = useCallback((items: StagedVoucherPdf[]) => {
+    stagedRef.current = items;
+    setRestoredStagedCount(items.length);
+    if (hiddenRef.current) {
+      hiddenRef.current.value = JSON.stringify(items);
+      hiddenRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }, []);
 
   const modeId = "voucher-pdf-import-mode";
   const fileInputId = "voucher-pdf-file";
@@ -230,20 +242,16 @@ export function PdfVoucherInventoryFields({
       skipPreviewClearOnMount.current = false;
       return;
     }
-    stagedRef.current = [];
-    setRestoredStagedCount(0);
-    if (hiddenRef.current) {
-      hiddenRef.current.value = "[]";
+    // Remount / step change has no local File — keep server- or draft-staged tickets.
+    if (!masterFileRef.current && multiFilesRef.current.length === 0) {
+      return;
     }
-  }, [previews]);
+    writeStaged([]);
+  }, [previews, writeStaged]);
 
   const clearStaged = useCallback(() => {
-    stagedRef.current = [];
-    setRestoredStagedCount(0);
-    if (hiddenRef.current) {
-      hiddenRef.current.value = "[]";
-    }
-  }, []);
+    writeStaged([]);
+  }, [writeStaged]);
 
   const resetImportState = useCallback(() => {
     masterFileRef.current = null;
@@ -268,21 +276,20 @@ export function PdfVoucherInventoryFields({
         return;
       }
       const staged = parseStagedVoucherPdfs(raw);
-      if (!staged || staged.length === 0) {
+      if (staged && staged.length > 0) {
+        writeStaged(staged);
         return;
       }
-      stagedRef.current = staged;
-      if (hiddenRef.current) {
-        hiddenRef.current.value = JSON.stringify(staged);
+      if (stagedRef.current.length > 0 && hiddenRef.current) {
+        hiddenRef.current.value = JSON.stringify(stagedRef.current);
       }
-      setRestoredStagedCount(staged.length);
     }
 
     document.addEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
     return () => {
       document.removeEventListener(FORM_DRAFT_APPLIED_EVENT, onApplied);
     };
-  }, []);
+  }, [writeStaged]);
 
   const uploadBlob = useCallback(
     async (
@@ -322,7 +329,7 @@ export function PdfVoucherInventoryFields({
     if (modeRef.current === "files") {
       const files = multiFilesRef.current;
       if (files.length === 0) {
-        return [];
+        return stagedRef.current;
       }
       if (stagedRef.current.length === files.length) {
         return stagedRef.current;
@@ -337,10 +344,7 @@ export function PdfVoucherInventoryFields({
           const staged = await uploadBlob(file, file.name, pageLabel, file.name);
           uploaded.push(staged);
         }
-        stagedRef.current = uploaded;
-        if (hiddenRef.current) {
-          hiddenRef.current.value = JSON.stringify(uploaded);
-        }
+        writeStaged(uploaded);
         return uploaded;
       } finally {
         setBusy(false);
@@ -350,7 +354,7 @@ export function PdfVoucherInventoryFields({
     const file = masterFileRef.current;
     const currentPreviews = previewsRef.current;
     if (!file) {
-      return [];
+      return stagedRef.current;
     }
     if (currentPreviews.length === 0) {
       throw new Error(copy.voucherPdfZeroTickets);
@@ -385,25 +389,24 @@ export function PdfVoucherInventoryFields({
         uploaded.push(staged);
       }
 
-      stagedRef.current = uploaded;
-      if (hiddenRef.current) {
-        hiddenRef.current.value = JSON.stringify(uploaded);
-      }
+      writeStaged(uploaded);
       return uploaded;
     } finally {
       setBusy(false);
     }
-  }, [copy.voucherPdfZeroTickets, uploadBlob]);
+  }, [copy.voucherPdfZeroTickets, uploadBlob, writeStaged]);
 
   useEffect(() => {
-    if (!formEl) {
-      return;
-    }
-
-    const form = formEl;
-
     async function onSubmit(event: Event) {
       if (submittingRef.current) {
+        return;
+      }
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) {
+        return;
+      }
+      const hidden = hiddenRef.current;
+      if (!hidden || !form.contains(hidden)) {
         return;
       }
 
@@ -415,7 +418,7 @@ export function PdfVoucherInventoryFields({
         try {
           await ensureStagedUploads();
           submittingRef.current = true;
-          form.requestSubmit();
+          resubmitFormWithSubmitter(form, event);
         } catch (uploadError) {
           setError(uploadError instanceof Error ? uploadError.message : copy.voucherPdfUploadError);
         }
@@ -439,20 +442,19 @@ export function PdfVoucherInventoryFields({
       try {
         await ensureStagedUploads();
         submittingRef.current = true;
-        form.requestSubmit();
+        resubmitFormWithSubmitter(form, event);
       } catch (uploadError) {
         setError(uploadError instanceof Error ? uploadError.message : copy.voucherPdfUploadError);
       }
     }
 
-    form.addEventListener("submit", onSubmit);
-    return () => form.removeEventListener("submit", onSubmit);
+    document.addEventListener("submit", onSubmit, true);
+    return () => document.removeEventListener("submit", onSubmit, true);
   }, [
     copy.voucherPdfSkipInvalid,
     copy.voucherPdfUploadError,
     copy.voucherPdfZeroTickets,
     ensureStagedUploads,
-    formEl,
     skipParsed.ok,
   ]);
 
@@ -609,11 +611,8 @@ export function PdfVoucherInventoryFields({
       {busy ? <Description>{copy.voucherPdfBusy}</Description> : null}
 
       <input
-        ref={(node) => {
-          hiddenRef.current = node;
-          setFormEl(node?.form ?? null);
-        }}
-        defaultValue="[]"
+        ref={hiddenRef}
+        defaultValue={JSON.stringify(initialStaged ?? [])}
         name="voucher_pdfs_json"
         type="hidden"
       />

@@ -16,9 +16,9 @@ import type { EventFormDefaults } from "../components/admin/event-admin-types";
 import { NotFoundPage } from "../components/NotFoundPage";
 import { getAdminCopy } from "./admin-content";
 import {
+  assertEventFormStepFields,
   type EventFormStep,
   eventFormErrorStep,
-  eventFormValuesToOccurrences,
 } from "./admin-event-form";
 import { toCreateEventInput, toUpdateEventInput } from "./admin-event-input";
 import {
@@ -26,7 +26,11 @@ import {
   formValuesToDefaults,
   toPartnerOptions,
 } from "./admin-event-route-helpers";
-import { type EventWizardTarget, parseWizardIntent } from "./admin-event-wizard";
+import {
+  type EventWizardTarget,
+  eventWizardLeavingStep,
+  parseWizardIntent,
+} from "./admin-event-wizard";
 import { renderAdminPage } from "./admin-render";
 import { mapCatalogError, type ParsedBody, parseEventFormBodyFromRequest } from "./admin-route";
 import {
@@ -113,15 +117,18 @@ export async function postEventCreateWizard(
     const defaults = formValuesToDefaults(values);
 
     if (intent === "next" || intent === "back") {
-      if (intent === "next" && step === 3) {
-        eventFormValuesToOccurrences(values);
-        const payload = voucherPayloadFromFormValues(values);
-        await assertVoucherInventoryForForm(db, {
-          ticketType: values.ticketType,
-          payload,
-          mode: "create",
-        });
-        assertCapacityMatchesInventory(values);
+      const leaving = eventWizardLeavingStep(intent, step);
+      if (leaving != null) {
+        assertEventFormStepFields(leaving, values);
+        if (leaving === 2) {
+          const payload = voucherPayloadFromFormValues(values);
+          await assertVoucherInventoryForForm(db, {
+            ticketType: values.ticketType,
+            payload,
+            mode: "create",
+          });
+          assertCapacityMatchesInventory(values);
+        }
       }
       return renderWizard(c, {
         locale,

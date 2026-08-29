@@ -2,9 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import {
   eventAdminFormDraftId,
+  eventWizardLeavingStep,
   eventWizardStepHrefs,
   eventWizardStepPath,
   parseWizardIntent,
+  submitterFromSubmitEvent,
 } from "./admin-event-wizard";
 
 describe("eventAdminFormDraftId", () => {
@@ -48,5 +50,26 @@ describe("parseWizardIntent", () => {
     expect(parseWizardIntent("create")).toBe("create");
     expect(parseWizardIntent("save")).toBe("save");
     expect(parseWizardIntent(undefined)).toBe("save");
+  });
+});
+
+describe("eventWizardLeavingStep", () => {
+  test("Next to a destination validates the previous step only", () => {
+    expect(eventWizardLeavingStep("next", 2)).toBe(1);
+    expect(eventWizardLeavingStep("next", 3)).toBe(2);
+    expect(eventWizardLeavingStep("next", 1)).toBeNull();
+  });
+
+  test("Back and persist do not validate a leaving step", () => {
+    expect(eventWizardLeavingStep("back", 2)).toBeNull();
+    expect(eventWizardLeavingStep("back", 1)).toBeNull();
+    expect(eventWizardLeavingStep("create", 3)).toBeNull();
+    expect(eventWizardLeavingStep("save", 2)).toBeNull();
+  });
+});
+
+describe("submitterFromSubmitEvent", () => {
+  test("returns null when the event is not a SubmitEvent", () => {
+    expect(submitterFromSubmitEvent(new Event("submit"))).toBeNull();
   });
 });

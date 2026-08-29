@@ -5,7 +5,18 @@ import type {
   TicketType,
   TimingMode,
 } from "@unveiled/db";
-import { CatalogValidationError, distinctOpenTimes, PostalValidationError } from "@unveiled/db";
+import {
+  assertEventCategory,
+  assertEventType,
+  CatalogValidationError,
+  distinctOpenTimes,
+  PostalValidationError,
+  requireNonEmpty,
+  resolveEventCopyFields,
+  validateImageSourceExclusive,
+  validatePostalCode,
+  validateRedemptionConfig,
+} from "@unveiled/db";
 import type { PrebuiltImageVariantsInput } from "@unveiled/images";
 import { ImageValidationError } from "@unveiled/images/errors";
 
@@ -121,6 +132,59 @@ export function eventFormErrorStep(error: unknown): EventFormStep {
   }
 
   return 1;
+}
+
+/** Step 1 (General) only — titles, partner, address, taxonomy. */
+export function assertEventFormGeneralStep(values: EventFormValues): void {
+  requireNonEmpty(values.partnerId, "partnerId");
+  resolveEventCopyFields({
+    titleDe: values.titleDe,
+    titleEn: values.titleEn,
+    descriptionDe: values.descriptionDe,
+    descriptionEn: values.descriptionEn,
+  });
+  validatePostalCode({
+    country: values.country,
+    city: values.city,
+    zipCode: values.zipCode,
+  });
+  requireNonEmpty(values.street, "street");
+  requireNonEmpty(values.houseNumber, "houseNumber");
+  assertEventCategory(values.category);
+  assertEventType(values.eventType);
+}
+
+/** Step 2 (Date & tickets) only — schedule and redemption, not image. */
+export function assertEventFormScheduleStep(values: EventFormValues): void {
+  eventFormValuesToOccurrences(values);
+  validateRedemptionConfig({
+    ticketType: values.ticketType,
+    secretCode: values.secretCode,
+    eventWebsiteUrl: values.eventWebsiteUrl,
+  });
+}
+
+/** Step 3 (Image) only — prebuilt variants or a staged id. */
+export function assertEventFormImageStep(values: EventFormValues): void {
+  if (values.stagedImageId?.trim()) {
+    return;
+  }
+  validateImageSourceExclusive(values.imageUpload, values.imageUrl, {
+    required: true,
+    prebuilt: values.imagePrebuilt,
+  });
+}
+
+export function assertEventFormStepFields(step: EventFormStep, values: EventFormValues): void {
+  if (step === 1) {
+    assertEventFormGeneralStep(values);
+    return;
+  }
+  if (step === 2) {
+    assertEventFormScheduleStep(values);
+    return;
+  }
+  assertEventFormImageStep(values);
 }
 
 export type RangeBuilderSlotRow = {

@@ -41,6 +41,12 @@ export type EventFormDefaults = Partial<{
   ticketType: TicketType;
   secretCode: string | null;
   eventWebsiteUrl: string | null;
+  promoCodes: string[];
+  voucherPdfs: {
+    objectKey: string;
+    originalFilename?: string | null;
+    pageLabel?: string | null;
+  }[];
   eventId: string;
   published: boolean;
   inventoryCounts: VoucherInventoryCounts;

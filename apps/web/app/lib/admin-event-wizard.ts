@@ -45,17 +45,48 @@ export function parseWizardIntent(raw: string | undefined): EventWizardIntent {
   return "save";
 }
 
-/** True when the submitter is create-wizard Next/Back (not a persist). */
-export function isWizardAdvanceSubmit(event: Event): boolean {
-  if (!(event instanceof SubmitEvent)) {
-    return false;
+/**
+ * Create Next POSTs to the destination step URL. Validate the step being left,
+ * not the destination (image must not re-check dates/redemption).
+ */
+export function eventWizardLeavingStep(
+  intent: EventWizardIntent,
+  postedStep: EventFormStep,
+): EventFormStep | null {
+  if (intent !== "next" || postedStep <= 1) {
+    return null;
+  }
+  return (postedStep - 1) as EventFormStep;
+}
+
+export function submitterFromSubmitEvent(
+  event: Event,
+): HTMLButtonElement | HTMLInputElement | null {
+  if (typeof SubmitEvent === "undefined" || !(event instanceof SubmitEvent)) {
+    return null;
   }
   const submitter = event.submitter;
-  if (!(submitter instanceof HTMLButtonElement) && !(submitter instanceof HTMLInputElement)) {
-    return false;
+  if (submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement) {
+    return submitter;
   }
-  if (submitter.name !== "wizard_intent") {
+  return null;
+}
+
+/** True when the submitter is create-wizard Next/Back (not a persist). */
+export function isWizardAdvanceSubmit(event: Event): boolean {
+  const submitter = submitterFromSubmitEvent(event);
+  if (submitter?.name !== "wizard_intent") {
     return false;
   }
   return submitter.value === "next" || submitter.value === "back";
+}
+
+/** Re-submit after async work, keeping the original button's formaction / wizard_intent. */
+export function resubmitFormWithSubmitter(form: HTMLFormElement, event: Event): void {
+  const submitter = submitterFromSubmitEvent(event);
+  if (submitter && submitter.form === form) {
+    form.requestSubmit(submitter);
+    return;
+  }
+  form.requestSubmit();
 }

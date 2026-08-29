@@ -106,6 +106,22 @@ describe("formValuesToDefaults", () => {
     ]);
   });
 
+  test("round-trips voucher PDF and promo inventory on error re-render", () => {
+    const defaults = formValuesToDefaults(
+      baseValues({
+        ticketType: "VOUCHER_PDF",
+        promoCodes: ["PROMO1"],
+        voucherPdfs: [
+          { objectKey: "vouchers/a.pdf", originalFilename: "test4.pdf", pageLabel: "p.1" },
+        ],
+      }),
+    );
+    expect(defaults.promoCodes).toEqual(["PROMO1"]);
+    expect(defaults.voucherPdfs).toEqual([
+      { objectKey: "vouchers/a.pdf", originalFilename: "test4.pdf", pageLabel: "p.1" },
+    ]);
+  });
+
   test("round-trips imageCredit onto currentImageCredit", () => {
     const defaults = formValuesToDefaults(baseValues({ imageCredit: "Photo: Ada" }));
     expect(defaults.currentImageCredit).toBe("Photo: Ada");

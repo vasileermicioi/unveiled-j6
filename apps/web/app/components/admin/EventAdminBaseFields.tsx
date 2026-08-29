@@ -605,7 +605,12 @@ export function EventAdminBaseFields({
         />
 
         {ticketType === "SECRET_CODE" ? (
-          <TextField defaultValue={defaults?.secretCode ?? undefined} fullWidth name="secret_code">
+          <TextField
+            defaultValue={defaults?.secretCode ?? undefined}
+            fullWidth
+            isRequired={datesRequired}
+            name="secret_code"
+          >
             <Label>{copy.secretCodeLabel}</Label>
             <Input />
           </TextField>
@@ -616,12 +621,14 @@ export function EventAdminBaseFields({
             <TextField
               defaultValue={defaults?.eventWebsiteUrl ?? undefined}
               fullWidth
+              isRequired={datesRequired}
               name="event_website_url"
             >
               <Label>{copy.eventWebsiteUrlLabel}</Label>
               <Input type="url" />
             </TextField>
             <PromoCodeInventoryIsland
+              initialCodes={defaults?.promoCodes}
               inventoryCounts={defaults?.inventoryCounts?.promo ?? null}
               isEdit={isEdit}
               locale={locale}
@@ -633,6 +640,7 @@ export function EventAdminBaseFields({
         {ticketType === "VOUCHER_PDF" ? (
           <PdfVoucherInventoryIsland
             eventId={defaults?.eventId ?? null}
+            initialStaged={defaults?.voucherPdfs}
             inventoryCounts={defaults?.inventoryCounts?.pdf ?? null}
             isEdit={isEdit}
             locale={locale}

@@ -503,10 +503,7 @@ test.describe("admin-events.feature", () => {
     await pastePromoCodes(page, codes);
     await expect(page.getByText(adminLabels.totalCapacityLine)).toContainText("10");
     await expect(page.getByText(adminLabels.totalInventory)).toContainText("7");
-    await clickEventFormNext(page, 3);
-    await attachEventImageFile(page);
-    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
+    await page.getByRole("button", { name: adminLabels.wizardNext }).click();
     await expect(page.getByText(adminLabels.capacityInventoryMismatch).first()).toBeVisible({
       timeout: 15_000,
     });
@@ -702,6 +699,8 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("button", { name: adminLabels.addDateTime })).toBeVisible();
     await expect(page.getByText(adminLabels.imageSection).first()).not.toBeVisible();
 
+    await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
+    await fillSecretIfPresent(page, "WALK001");
     await clickEventFormNext(page, 3);
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/image`));
     await expect(page.getByText(adminLabels.imageSection).first()).toBeVisible();
@@ -716,6 +715,7 @@ test.describe("admin-events.feature", () => {
 
     await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(14));
+    await fillSecretIfPresent(page, "SUBMIT01");
     await expect(page.getByRole("button", { name: /^anlegen$|^create$/i })).toHaveCount(0);
 
     await clickEventFormNext(page, 3);
@@ -851,6 +851,7 @@ test.describe("admin-events.feature", () => {
     );
     await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
+    await fillSecretIfPresent(page, "NOIMGSTEP");
     await clickEventFormNext(page, 3);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new/image`));
@@ -879,13 +880,11 @@ test.describe("admin-events.feature", () => {
     await selectOptionByLabel(page, adminLabels.eventType, adminLabels.eventTypeTheaterPlay);
     await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
-    await clickEventFormNext(page, 3);
-    await attachEventImageFile(page);
-    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
+    await page.getByRole("button", { name: adminLabels.wizardNext }).click();
+    await expectEventFormStep(page, 2);
     await expect(
-      page.getByText(/redemption|secret|erforderlich|required|unvollständig|incomplete/i).first(),
-    ).toBeVisible({ timeout: 15_000 });
+      page.getByRole("textbox", { name: adminLabels.secretCode, exact: true }),
+    ).toHaveJSProperty("validity.valid", false);
   });
 
   test("Scenario Outline: Redemption configuration validation on create — ticketType = VOUCHER_PROMO, requiredField = eventWebsiteUrl", async ({
@@ -907,13 +906,12 @@ test.describe("admin-events.feature", () => {
     await clickEventFormNext(page, 2);
     await fillLabeledDateOrTime(page, adminLabels.eventDate, futureDateISO(10));
     await selectOptionByLabel(page, adminLabels.ticketType, /voucher \(promo\)|voucher/i);
-    await clickEventFormNext(page, 3);
-    await attachEventImageFile(page);
-    await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/new`));
-    await expect(
-      page.getByText(/redemption|website|erforderlich|required|unvollständig|incomplete/i).first(),
-    ).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("button", { name: adminLabels.wizardNext }).click();
+    await expectEventFormStep(page, 2);
+    await expect(page.getByRole("textbox", { name: adminLabels.eventWebsite })).toHaveJSProperty(
+      "validity.valid",
+      false,
+    );
   });
 
   test("Scenario: Secret code event is created with admin-configured code", async ({

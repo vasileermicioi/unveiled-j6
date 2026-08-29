@@ -117,6 +117,8 @@ export function formValuesToDefaults(values: EventFormValues): EventFormDefaults
     ticketType: values.ticketType,
     secretCode: values.secretCode,
     eventWebsiteUrl: values.eventWebsiteUrl,
+    promoCodes: values.promoCodes,
+    voucherPdfs: values.voucherPdfs,
     languageIndependent: values.languageIndependent,
     languages: values.languages,
     hasSubtitles: values.hasSubtitles,
