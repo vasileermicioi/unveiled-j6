@@ -7,10 +7,10 @@ import {
   deletePartnerViaUI,
   disablePartnerOpeningHoursToggle,
   enablePartnerOpeningHoursToggle,
-  expectEventOnDiscover,
   fillPartnerOpeningHoursSampleWeek,
   fillStructuredLocation,
   fillTextbox,
+  finishFeaturedAddViaUI,
   navigateAdminTab,
   r2Configured,
   SAMPLE_EVENT_IMAGE,
@@ -280,7 +280,10 @@ test.describe("admin-partners.feature", () => {
     test.setTimeout(120_000);
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
-    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      publish: true,
+    });
 
     await page.goto(`/${locale}/admin/partners`);
     const row = page.getByRole("row").filter({ hasText: partner.name });
@@ -346,7 +349,10 @@ test.describe("admin-partners.feature", () => {
     test.setTimeout(120_000);
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
-    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      publish: true,
+    });
 
     await page.goto(`/${locale}/admin/partners`);
     await page
@@ -381,7 +387,10 @@ test.describe("admin-partners.feature", () => {
     test.setTimeout(120_000);
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
-    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      publish: true,
+    });
 
     await page.goto(`/${locale}/admin/partners`);
     const row = page.getByRole("row").filter({ hasText: partner.name });
@@ -392,7 +401,11 @@ test.describe("admin-partners.feature", () => {
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/partners/?$`));
 
-    await expectEventOnDiscover(page, locale, event.title, renamed);
+    await page.goto(event.detailPath);
+    await expect(page.getByRole("heading", { level: 1, name: event.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(renamed).first()).toBeVisible();
   });
 
   test("Scenario: Delete a partner", async ({ page, locale }) => {
@@ -410,9 +423,7 @@ test.describe("admin-partners.feature", () => {
     const addRow = page.getByRole("row").filter({ hasText: partner.name });
     await expect(addRow).toBeVisible({ timeout: 15_000 });
     await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
-      timeout: 30_000,
-    });
+    await finishFeaturedAddViaUI(page, locale, "partner");
 
     const tabs = page.getByRole("tablist");
     await expect(tabs.getByRole("link", { name: adminTabLabels.featuredPartners })).toBeVisible();
@@ -442,9 +453,7 @@ test.describe("admin-partners.feature", () => {
     const addRow = page.getByRole("row").filter({ hasText: partner.name });
     await expect(addRow).toBeVisible({ timeout: 15_000 });
     await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
-      timeout: 30_000,
-    });
+    await finishFeaturedAddViaUI(page, locale, "partner");
     await expect(page.getByText(partner.name, { exact: true }).first()).toBeVisible();
   });
 
@@ -463,9 +472,7 @@ test.describe("admin-partners.feature", () => {
       const addRow = page.getByRole("row").filter({ hasText: partner.name });
       await expect(addRow).toBeVisible({ timeout: 15_000 });
       await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
-      await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
-        timeout: 30_000,
-      });
+      await finishFeaturedAddViaUI(page, locale, "partner");
     }
 
     const tileA = page
@@ -514,9 +521,7 @@ test.describe("admin-partners.feature", () => {
     const addRow = page.getByRole("row").filter({ hasText: partner.name });
     await expect(addRow).toBeVisible({ timeout: 15_000 });
     await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured-partners/?$`), {
-      timeout: 30_000,
-    });
+    await finishFeaturedAddViaUI(page, locale, "partner");
 
     const tile = page
       .locator(".admin-featured-partners__tile")

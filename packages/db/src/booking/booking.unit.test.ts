@@ -52,6 +52,7 @@ function baseEvent(overrides: Partial<Event> = {}): Event {
     subtitleLanguages: null,
     lat: null,
     lng: null,
+    published: true,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

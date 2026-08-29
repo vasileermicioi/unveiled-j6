@@ -42,6 +42,7 @@ export type EventFormDefaults = Partial<{
   secretCode: string | null;
   eventWebsiteUrl: string | null;
   eventId: string;
+  published: boolean;
   inventoryCounts: VoucherInventoryCounts;
   languageIndependent: boolean;
   languages: string[] | null;

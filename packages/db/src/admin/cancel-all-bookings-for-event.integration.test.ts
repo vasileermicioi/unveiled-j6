@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { createTestImagePrebuilt } from "../catalog/test-image";
 import { structuredLocationFromAddress } from "../catalog/test-location";
+import { createPublishedEvent } from "../catalog/test-published-event";
 
 import {
   bookEvent,
@@ -9,7 +10,6 @@ import {
   cancelAllBookingsForEvent,
   createCompTicket,
   createDb,
-  createEvent,
   createPartner,
   createTxDb,
   creditLedger,
@@ -60,7 +60,7 @@ describe("cancelAllBookingsForEvent (integration)", () => {
       skipUpload: true,
     });
 
-    const promoEvent = await createEvent(httpDb, {
+    const promoEvent = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Cancel All Promo ${token}`,
       description: "Description",
@@ -79,7 +79,7 @@ describe("cancelAllBookingsForEvent (integration)", () => {
       skipUpload: true,
     });
 
-    const pdfEvent = await createEvent(httpDb, {
+    const pdfEvent = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Cancel All PDF ${token}`,
       description: "Description",

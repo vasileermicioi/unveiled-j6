@@ -19,6 +19,8 @@
 #     capacity but sets every WAITING entry for that event to CANCELLED in the same transaction and
 #     MUST NOT promote (see admin-event-bookings.feature). There is no user-initiated way to free
 #     capacity (no self-cancel — see booking.feature).
+#   - Unpublished events are not waitlistable (`joinWaitlist` fails as not found). Existing WAITING
+#     rows stay if the event is later unpublished.
 
 Feature: Event Waitlist
   As a member
@@ -104,3 +106,7 @@ Feature: Event Waitlist
     Given I am signed in as "USER"
     When I view my waitlist entries
     Then I only see my own entries, not other users'
+
+  Scenario: Join unpublished fails
+    When I join the waitlist for an unpublished event
+    Then no waitlist row is written

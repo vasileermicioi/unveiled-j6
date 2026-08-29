@@ -21,6 +21,9 @@ import {
   partners,
   removeFeaturedEvent,
   removeFeaturedPartner,
+  setEventPublished,
+  setFeaturedEventPublished,
+  setFeaturedPartnerPublished,
 } from "@unveiled/db";
 import { DEMO_DISCOVERY_TITLES } from "@unveiled/db/seed-titles";
 
@@ -88,6 +91,8 @@ export async function ensureDemoFeaturedSplit(): Promise<void> {
         throw error;
       }
     }
+    await setEventPublished(db, eventId, true);
+    await setFeaturedEventPublished(db, eventId, true);
   }
   try {
     const konzertId = await getEventIdByTitle(DEMO_DISCOVERY_TITLES.konzert);
@@ -136,6 +141,9 @@ export async function ensureDemoFeaturedPartnersSplit(): Promise<{
       }
     }
     featured = await listFeaturedPartners(db);
+  }
+  for (const row of featured) {
+    await setFeaturedPartnerPublished(db, row.id, true);
   }
 
   const featuredIds = new Set(featured.map((partner) => partner.id));
@@ -255,6 +263,7 @@ export async function createPricedSlotEvent(options?: {
       subtitleLanguages: null,
       lat: template.lat,
       lng: template.lng,
+      published: true,
     })
     .returning();
 
@@ -275,6 +284,8 @@ export async function createSecretCodeE2eEvent(options?: {
   totalCapacity?: number;
   creditPrice?: number;
   daysAhead?: number;
+  /** Default true so member/public booking surfaces can see the event. */
+  published?: boolean;
 }): Promise<{ id: string; title: string }> {
   const db = createDb(requireDatabaseUrl());
   const template = await db.query.events.findFirst();
@@ -335,6 +346,7 @@ export async function createSecretCodeE2eEvent(options?: {
       subtitleLanguages: null,
       lat: template.lat,
       lng: template.lng,
+      published: options?.published ?? true,
     })
     .returning();
 
@@ -342,6 +354,25 @@ export async function createSecretCodeE2eEvent(options?: {
     throw new Error("Failed to insert admin-bookings e2e event");
   }
   return { id: created.id, title };
+}
+
+/** Harness-only publish toggle — specs must not `import("@unveiled/db")` (Playwright ESM). */
+export async function setE2eEventPublished(eventId: string, published: boolean): Promise<void> {
+  await setEventPublished(createDb(requireDatabaseUrl()), eventId, published);
+}
+
+/** Add (or reuse) a featured-event row and set its featured publish flag. */
+export async function ensureE2eFeaturedEvent(
+  eventId: string,
+  featuredPublished: boolean,
+): Promise<void> {
+  const db = createDb(requireDatabaseUrl());
+  try {
+    await addFeaturedEvent(db, eventId);
+  } catch {
+    // already featured
+  }
+  await setFeaturedEventPublished(db, eventId, featuredPublished);
 }
 
 /**

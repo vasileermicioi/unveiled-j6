@@ -10,6 +10,7 @@ import {
   createEventViaUI,
   createPartnerViaUI,
   deleteEventViaUI,
+  dismissCreatePublishConfirmViaUI,
   expectEventFormStep,
   expectEventOnDiscover,
   expectPublicEventDetail,
@@ -20,18 +21,23 @@ import {
   fillNumberByLabel,
   fillStructuredLocation,
   fillTextbox,
+  finishFeaturedAddViaUI,
   futureDateISO,
   goToEventFormStep,
   navigateAdminTab,
+  publishEventViaUI,
   r2Configured,
   SAMPLE_EVENT_IMAGE,
   selectOptionByLabel,
   settleAdminSession,
   uniqueSuffix,
+  unpublishEventViaUI,
 } from "../fixtures/admin";
-import { loginAsAdmin } from "../fixtures/auth";
+import { loginAsAdmin, signupFreshUser } from "../fixtures/auth";
 import { expect, test } from "../fixtures/base";
+import { activateMemberForBooking, hasDatabaseUrl } from "../fixtures/billing";
 import { E2E_WEEKDAY_10_HOURS, withPartnerOpeningHours } from "../fixtures/catalog";
+import { completeOnboardingWizard } from "../fixtures/onboarding";
 import { hasAdminCredentials } from "../fixtures/waitlist";
 
 /** Step 1 (General) only — callers that need dates MUST Next first. */
@@ -158,7 +164,7 @@ async function createVoucherPromoViaUI(
   await clickEventFormNext(page, 3);
   await attachEventImageFile(page);
   await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+  await dismissCreatePublishConfirmViaUI(page, locale);
   const row = page.getByRole("row").filter({ hasText: title });
   await expect(row).toBeVisible({ timeout: 15_000 });
   const editHref = await row.getByRole("link", { name: /bearbeiten|edit/i }).getAttribute("href");
@@ -190,10 +196,8 @@ test.describe("admin-events.feature", () => {
 
     const row = page.getByRole("row").filter({ hasText: event.title });
     await expect(row.getByText(/12\/12/)).toBeVisible();
-
-    await expectEventOnDiscover(page, locale, event.title, partner.name);
-    await expectPublicEventDetail(page, locale, event);
-    await expect(page.getByText(/10115/)).toBeVisible();
+    await expect(row.getByText(/entwurf|draft/i)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events`));
   });
 
   test("Scenario: Create event with DE and EN titles", async ({ page, locale }) => {
@@ -208,6 +212,7 @@ test.describe("admin-events.feature", () => {
       titleEn,
       descriptionDe: `DE Beschreibung ${suffix}`,
       descriptionEn: `EN description ${suffix}`,
+      publish: true,
     });
 
     const row = page.getByRole("row").filter({ hasText: titleDe });
@@ -252,7 +257,7 @@ test.describe("admin-events.feature", () => {
     await clickEventFormNext(page, 3);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await dismissCreatePublishConfirmViaUI(page, locale);
 
     const row = page.getByRole("row").filter({ hasText: title });
     await expect(row).toBeVisible({ timeout: 15_000 });
@@ -308,7 +313,7 @@ test.describe("admin-events.feature", () => {
     await clickEventFormNext(page, 3);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await dismissCreatePublishConfirmViaUI(page, locale);
 
     const row = page.getByRole("row").filter({ hasText: title });
     await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
@@ -411,7 +416,7 @@ test.describe("admin-events.feature", () => {
     await clickEventFormNext(page, 3);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await dismissCreatePublishConfirmViaUI(page, locale);
     const row = page.getByRole("row").filter({ hasText: title });
     await expect(row.getByText(/10\/10/)).toBeVisible({ timeout: 15_000 });
     await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
@@ -444,7 +449,7 @@ test.describe("admin-events.feature", () => {
     await clickEventFormNext(page, 3);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await dismissCreatePublishConfirmViaUI(page, locale);
     const row = page.getByRole("row").filter({ hasText: title });
     await expect(row.getByText(/10\/10/)).toBeVisible({ timeout: 15_000 });
     await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
@@ -513,7 +518,7 @@ test.describe("admin-events.feature", () => {
       await attachEventImageFile(page);
     }
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await dismissCreatePublishConfirmViaUI(page, locale);
     await expect(page.getByText(title).first()).toBeVisible({ timeout: 15_000 });
   });
 
@@ -620,6 +625,7 @@ test.describe("admin-events.feature", () => {
     const event = await createEventViaUI(page, locale, {
       partnerName: partner.name,
       zipCode: "10969",
+      publish: true,
     });
     await expectPublicEventDetail(page, locale, event);
     await expect(page.getByText(/10969/)).toBeVisible();
@@ -717,7 +723,7 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("button", { name: /^anlegen$|^create$/i })).toBeVisible();
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await dismissCreatePublishConfirmViaUI(page, locale);
     await expect(page.getByText(title).first()).toBeVisible({ timeout: 15_000 });
   });
 
@@ -961,7 +967,7 @@ test.describe("admin-events.feature", () => {
     await clickEventFormNext(page, 3);
     await attachEventImageFile(page);
     await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
+    await dismissCreatePublishConfirmViaUI(page, locale);
     await expect(page.getByRole("row").filter({ hasText: title })).toBeVisible({ timeout: 15_000 });
   });
 
@@ -1062,6 +1068,7 @@ test.describe("admin-events.feature", () => {
       { column: /^(datum|date)$/i, sort: "date", dir: "desc" },
       { column: /^(erstellt|created)$/i, sort: "created", dir: "asc" },
       { column: /^(kapazität|capacity)$/i, sort: "capacity", dir: "desc" },
+      { column: /^status$/i, sort: "published", dir: "desc" },
       {
         column: /^(titel|title)$/i,
         sort: "title",
@@ -1120,12 +1127,9 @@ test.describe("admin-events.feature", () => {
     await expect(page).toHaveURL(/[?&]title=demo(?:&|$)/);
     await expect(page).toHaveURL(/[?&]partner=berlin(?:&|$)/);
     await expect(page).toHaveURL(/[?&]language=EN(?:&|$)/);
-    await expect(page.getByRole("columnheader", { name: /^sprachen$|^languages$/i })).toBeVisible({
+    await expect(page.getByRole("columnheader", { name: /^status$/i })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(
-      page.getByRole("columnheader", { name: /^untertitel$|^subtitles$/i }),
-    ).toBeVisible();
   });
 
   test("Scenario: Update an event's capacity", async ({ page, locale }) => {
@@ -1157,7 +1161,10 @@ test.describe("admin-events.feature", () => {
   test("Scenario: Edit event details", async ({ page, locale }) => {
     test.skip(!r2Configured(), "R2 vars not configured");
     const partner = await createPartnerViaUI(page, locale);
-    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      publish: true,
+    });
 
     const row = page.getByRole("row").filter({ hasText: event.title });
     await row.getByRole("link", { name: /bearbeiten|edit/i }).click();
@@ -1166,7 +1173,6 @@ test.describe("admin-events.feature", () => {
     await page.getByRole("button", { name: /^speichern$|^save$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`));
 
-    await expectEventOnDiscover(page, locale, updatedTitle, partner.name);
     await page.goto(event.detailPath);
     await expect(page.getByRole("heading", { name: updatedTitle })).toBeVisible();
   });
@@ -1188,6 +1194,7 @@ test.describe("admin-events.feature", () => {
     const event = await createEventViaUI(page, locale, {
       partnerName: partner.name,
       language: /deutsch|german/i,
+      publish: true,
     });
     await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
     await expect(page.getByRole("heading", { name: /event bearbeiten|edit event/i })).toBeVisible({
@@ -1232,6 +1239,7 @@ test.describe("admin-events.feature", () => {
       partnerName: partner.name,
       hasSubtitles: true,
       subtitleLanguages: ["DE", "EN"],
+      publish: true,
     });
     await page.goto(event.detailPath);
     await expect(page.getByRole("heading", { name: event.title })).toBeVisible();
@@ -1431,6 +1439,7 @@ test.describe("admin-events.feature", () => {
     const event = await createEventViaUI(page, locale, {
       partnerName: partner.name,
       imageCredit: "Photo: Ada",
+      publish: true,
     });
 
     await expectPublicEventDetail(page, locale, event);
@@ -1445,6 +1454,7 @@ test.describe("admin-events.feature", () => {
     const event = await createEventViaUI(page, locale, {
       partnerName: partner.name,
       imageCredit: "Photo: Ada",
+      publish: true,
     });
 
     await page.goto(`/${locale}/admin/events/${event.eventId}/edit`);
@@ -1631,9 +1641,7 @@ test.describe("admin-events.feature", () => {
       const addRow = page.getByRole("row").filter({ hasText: event.title });
       await expect(addRow).toBeVisible({ timeout: 15_000 });
       await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
-      await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), {
-        timeout: 30_000,
-      });
+      await finishFeaturedAddViaUI(page, locale, "event");
     }
 
     const rowA = page.locator(".admin-featured-events__row").filter({ hasText: eventA.title });
@@ -1713,7 +1721,7 @@ test.describe("admin-events.feature", () => {
     await expect(addThumb).toBeVisible({ timeout: 15_000 });
     await expect(addThumb).toHaveAttribute("src", /small-320\.webp(?:\?|$)/);
     await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/featured/?$`), { timeout: 30_000 });
+    await finishFeaturedAddViaUI(page, locale, "event");
     await expect(page.getByText(event.title)).toBeVisible();
 
     const featuredRow = page
@@ -1748,6 +1756,132 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByRole("row").filter({ hasText: event.title })).toBeVisible({
       timeout: 15_000,
     });
+  });
+
+  test("Scenario: Publish confirm goes live on Browse", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member for /events browse");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    await publishEventViaUI(page, locale, event.eventId);
+    const row = page.getByRole("row").filter({ hasText: event.title });
+    await expect(row.getByText(/veröffentlicht|published/i)).toBeVisible();
+
+    await page.context().clearCookies();
+    const user = await signupFreshUser(page, locale);
+    await completeOnboardingWizard(page, locale);
+    await activateMemberForBooking(user.email);
+    await page.goto(`/${locale}/events`);
+    await expect(page.getByRole("main").getByText(event.title)).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("Scenario: Unpublish confirm hides from Browse", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member for /events browse");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      publish: true,
+    });
+    await unpublishEventViaUI(page, locale, event.eventId);
+    const row = page.getByRole("row").filter({ hasText: event.title });
+    await expect(row.getByText(/entwurf|draft/i)).toBeVisible();
+
+    await page.context().clearCookies();
+    const user = await signupFreshUser(page, locale);
+    await completeOnboardingWizard(page, locale);
+    await activateMemberForBooking(user.email);
+    await page.goto(`/${locale}/events`);
+    await expect(page.getByRole("main").getByText(event.title)).toHaveCount(0);
+  });
+
+  test("Scenario: Create does not appear on Browse", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to activate member for /events browse");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    const row = page.getByRole("row").filter({ hasText: event.title });
+    await expect(row.getByText(/entwurf|draft/i)).toBeVisible();
+
+    await page.context().clearCookies();
+    const user = await signupFreshUser(page, locale);
+    await completeOnboardingWizard(page, locale);
+    await activateMemberForBooking(user.email);
+    await page.goto(`/${locale}/events`);
+    await expect(page.getByRole("main").getByText(event.title)).toHaveCount(0);
+  });
+
+  test("Scenario: Event list shows Published or Draft status", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const draft = await createEventViaUI(page, locale, { partnerName: partner.name });
+    const live = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      publish: true,
+    });
+    await page.goto(`/${locale}/admin/events`);
+    const draftRow = page.getByRole("row").filter({ hasText: draft.title });
+    await expect(draftRow.getByText(/^(entwurf|draft)$/i)).toBeVisible();
+    await expect(
+      draftRow.getByRole("link", { name: /^veröffentlichen$|^publish$/i }),
+    ).toBeVisible();
+    const liveRow = page.getByRole("row").filter({ hasText: live.title });
+    await expect(liveRow.getByText(/^(veröffentlicht|published)$/i)).toBeVisible();
+    await expect(
+      liveRow.getByRole("link", { name: /veröffentlichung aufheben|^unpublish$/i }),
+    ).toBeVisible();
+  });
+
+  test("Scenario: Event list filters by published", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const draft = await createEventViaUI(page, locale, { partnerName: partner.name });
+    const live = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      publish: true,
+    });
+    await page.goto(`/${locale}/admin/events?published=no`);
+    await expect(page.getByRole("row").filter({ hasText: draft.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("row").filter({ hasText: live.title })).toHaveCount(0);
+    await expect(page).toHaveURL(/published=no/);
+    await page.getByLabel(/^status$/i).selectOption("yes");
+    await page.getByRole("button", { name: /suchen|search/i }).click();
+    await expect(page).toHaveURL(/published=yes/);
+    await expect(page.getByRole("row").filter({ hasText: live.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("row").filter({ hasText: draft.title })).toHaveCount(0);
+  });
+
+  test("Scenario: Unpublish does not delete or drop featured membership", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, {
+      partnerName: partner.name,
+      publish: true,
+    });
+    await navigateAdminTab(page, locale, "featured");
+    await page.getByRole("link", { name: /event hinzufügen|add event/i }).click();
+    await page.goto(`/${locale}/admin/featured/add?title=${encodeURIComponent(event.title)}`);
+    const addRow = page.getByRole("row").filter({ hasText: event.title });
+    await expect(addRow).toBeVisible({ timeout: 15_000 });
+    await addRow.getByRole("button", { name: /zur featured-liste|add to featured/i }).click();
+    await finishFeaturedAddViaUI(page, locale, "event");
+
+    await unpublishEventViaUI(page, locale, event.eventId);
+    await expect(page.getByRole("row").filter({ hasText: event.title })).toBeVisible();
+    await navigateAdminTab(page, locale, "featured");
+    await expect(
+      page.locator(".admin-featured-events__row").filter({ hasText: event.title }),
+    ).toBeVisible({ timeout: 15_000 });
+
+    await page.goto(`/${locale}/discover`);
+    await expect(page.getByText(event.title)).toHaveCount(0);
   });
 
   test("Scenario: Seed demo data (empty environment only)", async ({ page, locale }) => {

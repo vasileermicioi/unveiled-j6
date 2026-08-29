@@ -73,6 +73,7 @@ export function eventToFormDefaults(
     secretCode: event.secretCode,
     eventWebsiteUrl: event.eventWebsiteUrl,
     eventId: event.id,
+    published: event.published,
     inventoryCounts,
     languageIndependent: event.languageIndependent,
     languages: event.languages,

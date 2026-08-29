@@ -17,7 +17,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 
 | Feature file | Scenario title | Playwright | Status | Notes |
 |---|---|---|---|---|
-| `admin-events.feature` | Create a single event | `e2e/specs/admin-events.spec.ts` · `Scenario: Create a single event` | `pass` | Fills Berlin PLZ `10115`; asserts zip on public detail; fills DE+EN title/description |
+| `admin-events.feature` | Create a single event | `e2e/specs/admin-events.spec.ts` · `Scenario: Create a single event` | `pass` | Fills Berlin PLZ `10115`; catalog Draft (create no longer implies public detail); fills DE+EN title/description |
 | `admin-events.feature` | Create event with DE and EN titles | `e2e/specs/admin-events.spec.ts` · `Scenario: Create event with DE and EN titles` | `pass` | R2 / `E2E_ADMIN_*` env-skip; distinct DE/EN titles; `/de` and `/en` public headings |
 | `admin-events.feature` | Create rejects empty English title | — | `pass` | Gherkin-only; `packages/db` `event-copy.unit.test.ts` `REQUIRED_FIELD` (no Playwright — wizard + R2) |
 | `admin-events.feature` | Add and remove datetimes on create | `e2e/specs/admin-events.spec.ts` · `Scenario: Add and remove datetimes on create` | `pass` | R2 env-skip; per-row credits via `getByLabel`; unskipped (multi-datetime UI shipped) |
@@ -115,6 +115,12 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-events.feature` | Add by searching existing events | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin remove from featured keeps catalog event` | `pass` | Covered inline in remove flow (add search + add-results thumb proximity + add POST); needs `E2E_ADMIN_*` + R2 (env-skip when missing) |
 | `admin-events.feature` | Admin reorders featured events by drag and drop | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin reorders featured events by drag and drop` | `pass` | Needs `E2E_ADMIN_*` + R2; Surface-row mouse-drag + Save order; relative order after reload |
 | `admin-events.feature` | Admin remove from featured keeps catalog event | `e2e/specs/admin-events.spec.ts` · `Scenario: Admin remove from featured keeps catalog event` | `pass` | Needs `E2E_ADMIN_*` + R2; checkbox + bulk confirm `/admin/featured/remove`; list-row thumb (`small-320.webp`) proximity; not `role=row` |
+| `admin-events.feature` | Publish confirm goes live on Browse | `e2e/specs/admin-events.spec.ts` · `Scenario: Publish confirm goes live on Browse` | `pass` | Needs `E2E_ADMIN_*` + R2 + `DATABASE_URL` |
+| `admin-events.feature` | Unpublish confirm hides from Browse | `e2e/specs/admin-events.spec.ts` · `Scenario: Unpublish confirm hides from Browse` | `pass` | Needs `E2E_ADMIN_*` + R2 + `DATABASE_URL` |
+| `admin-events.feature` | Create does not appear on Browse | `e2e/specs/admin-events.spec.ts` · `Scenario: Create does not appear on Browse` | `pass` | Needs `E2E_ADMIN_*` + R2 + `DATABASE_URL` |
+| `admin-events.feature` | Event list shows Published or Draft status | `e2e/specs/admin-events.spec.ts` · `Scenario: Event list shows Published or Draft status` | `pass` | Needs `E2E_ADMIN_*` + R2 |
+| `admin-events.feature` | Event list filters by published | `e2e/specs/admin-events.spec.ts` · `Scenario: Event list filters by published` | `pass` | Needs `E2E_ADMIN_*` + R2 |
+| `admin-events.feature` | Unpublish does not delete or drop featured membership | `e2e/specs/admin-events.spec.ts` · `Scenario: Unpublish does not delete or drop featured membership` | `pass` | Needs `E2E_ADMIN_*` + R2 |
 | `admin-users.feature` | List all members | `e2e/specs/admin-users.spec.ts` · `Scenario: List all members` | `pass` | Needs `DATABASE_URL` + `E2E_ADMIN_*` |
 | `admin-users.feature` | Search members | `e2e/specs/admin-users.spec.ts` · `Scenario: Search members` | `pass` |  |
 | `admin-users.feature` | View a member's collapsed summary | `e2e/specs/admin-users.spec.ts` · `Scenario: View a member's collapsed summary` | `pass` | List row columns (role, subscription, credits, …) |
@@ -164,6 +170,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `booking.feature` | Admin cancels a confirmed booking | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels a confirmed booking` | `pass` | Needs `E2E_ADMIN_*`; no credit refund on cancel; restock covered in domain tests |
 | `booking.feature` | Cannot cancel a booking that is not confirmed | `e2e/specs/booking.spec.ts` · `Scenario: Cannot cancel a booking that is not confirmed` | `pass` | Re-open cancel URL after first cancel |
 | `booking.feature` | Members cannot self-cancel or self-refund | `e2e/specs/booking.spec.ts` · `Scenario: Members cannot self-cancel or self-refund` | `pass` |  |
+| `booking.feature` | Book unpublished fails | `e2e/specs/booking.spec.ts` · `Scenario: Book unpublished fails` | `pass` | Needs `DATABASE_URL`; draft `/events/:id/book` has no confirm |
+| `booking.feature` | Existing booking remains after unpublish | `e2e/specs/booking.spec.ts` · `Scenario: Existing booking remains after unpublish` | `pass` | Needs `DATABASE_URL`; My Tickets still lists CONFIRMED |
 | `booking.feature` | Admin cancels all confirmed bookings for an event | `e2e/specs/booking.spec.ts` · `Scenario: Admin cancels all confirmed bookings for an event` | `pass` | Needs `E2E_ADMIN_*`; credits **are** refunded (distinct from single-cancel) |
 | `booking.feature` | Cancel-all refunds paid tickets but not comps | `e2e/specs/booking.spec.ts` · `Scenario: Cancel-all refunds paid tickets but not comps` | `skip` | Covered by `cancel-all-bookings-for-event.integration.test.ts` |
 | `booking.feature` | Cancel-all leaves USED bookings in place | `e2e/specs/booking.spec.ts` · `Scenario: Cancel-all leaves USED bookings in place` | `skip` | Domain integration; USED needs partner check-in (post-MVP) |
@@ -236,6 +244,11 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `event-discovery.feature` | Saved events view | `e2e/specs/event-discovery.spec.ts` · `Scenario: Saved events view` | `pass` |  |
 | `event-discovery.feature` | Save and unsave an event | `e2e/specs/event-discovery.spec.ts` · `Scenario: Save and unsave an event` | `pass` |  |
 | `event-discovery.feature` | Saving requires authentication | `e2e/specs/event-discovery.spec.ts` · `Scenario: Saving requires authentication` | `pass` |  |
+| `event-discovery.feature` | Unpublished featured event stays off Discover | `e2e/specs/event-discovery.spec.ts` · `Scenario: Unpublished featured event stays off Discover` | `pass` | Needs `DATABASE_URL`; catalog unpublished, featured membership present |
+| `event-discovery.feature` | Unpublished events are hidden from Browse events | `e2e/specs/event-discovery.spec.ts` · `Scenario: Unpublished events are hidden from Browse events` | `pass` | Needs `DATABASE_URL`; `/events` and `/events/map` |
+| `event-discovery.feature` | Published featured event with unpublished catalog stays off Discover | `e2e/specs/event-discovery.spec.ts` · `Scenario: Published featured event with unpublished catalog stays off Discover` | `pass` | Needs `DATABASE_URL` |
+| `event-discovery.feature` | Unpublished event public detail is not found | `e2e/specs/event-discovery.spec.ts` · `Scenario: Unpublished event public detail is not found` | `pass` | Needs `DATABASE_URL`; HTTP 404 |
+| `event-discovery.feature` | Saved list hides unpublished events | `e2e/specs/event-discovery.spec.ts` · `Scenario: Saved list hides unpublished events` | `pass` | Needs `DATABASE_URL`; save then unpublish |
 | `onboarding.feature` | Onboarding is required before using the app | `e2e/specs/onboarding.spec.ts` · `Scenario: Onboarding is required before using the app` | `pass` |  |
 | `onboarding.feature` | Non-USER roles skip onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Non-USER roles skip onboarding` | `pass` |  |
 | `onboarding.feature` | Already-onboarded users skip onboarding | `e2e/specs/onboarding.spec.ts` · `Scenario: Already-onboarded users skip onboarding` | `pass` | Redirect may be `/events` or `/discover` by booking eligibility |
@@ -280,6 +293,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `waitlist.feature` | Admin can manually trigger promotion for a specific entry | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin can manually trigger promotion for a specific entry` | `pass` | Capacity freed via DB (no auto-promote), then `/admin/waitlist/:id/promote` |
 | `waitlist.feature` | Admin visibility | `e2e/specs/waitlist.spec.ts` · `Scenario: Admin visibility` | `pass` | `/admin/waitlist` list |
 | `waitlist.feature` | User visibility is scoped to their own entries | `e2e/specs/waitlist.spec.ts` · `Scenario: User visibility is scoped to their own entries` | `pass` | Entry-scoped status/cancel only |
+| `waitlist.feature` | Join unpublished fails | `e2e/specs/waitlist.spec.ts` · `Scenario: Join unpublished fails` | `skip` | Domain `joinWaitlist` unpublished test; no waitlist CTA on 404 detail |
 | `waitlist.feature` | Cancel-all does not promote the waitlist | `e2e/specs/waitlist.spec.ts` · `Scenario: Cancel-all does not promote the waitlist` | `pass` | Needs `E2E_ADMIN_*`; unique fixture; WAITING → CANCELLED, not PROMOTED |
 | `waitlist.feature` | Waitlist member receives waitlist-closed email | `e2e/specs/waitlist.spec.ts` · `Scenario: Waitlist member receives waitlist-closed email` | `skip` | No inbox harness; staging Resend |
 

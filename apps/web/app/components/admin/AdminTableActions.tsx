@@ -6,7 +6,9 @@ export type AdminTableActionIcon =
   | "delete"
   | "download"
   | "gallery"
-  | "bookings";
+  | "bookings"
+  | "publish"
+  | "unpublish";
 
 export type AdminTableAction = {
   href: string;
@@ -21,6 +23,8 @@ const ICON_SRC: Record<AdminTableActionIcon, string> = {
   download: "/icons/admin-download.svg",
   gallery: "/icons/admin-gallery.svg",
   bookings: "/icons/admin-bookings.svg",
+  publish: "/icons/admin-publish.svg",
+  unpublish: "/icons/admin-unpublish.svg",
 };
 
 type AdminTableActionsProps = {

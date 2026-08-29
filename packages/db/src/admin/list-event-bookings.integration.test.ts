@@ -2,13 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { createTestImagePrebuilt } from "../catalog/test-image";
 import { structuredLocationFromAddress } from "../catalog/test-location";
+import { createPublishedEvent } from "../catalog/test-published-event";
 
 import {
   bookEvent,
   bookings,
   createCompTicket,
   createDb,
-  createEvent,
   createPartner,
   createTxDb,
   creditLedger,
@@ -64,7 +64,7 @@ describe("listEventBookings / listEventsWithBookingStats (integration)", () => {
       skipUpload: true,
     });
 
-    const mixedEvent = await createEvent(httpDb, {
+    const mixedEvent = await createPublishedEvent(httpDb, {
       partnerId: partnerA.id,
       title: `Mixed ${token}`,
       description: "Description",
@@ -81,7 +81,7 @@ describe("listEventBookings / listEventsWithBookingStats (integration)", () => {
       imagePrebuilt: imageMixed,
       skipUpload: true,
     });
-    const waitlistOnly = await createEvent(httpDb, {
+    const waitlistOnly = await createPublishedEvent(httpDb, {
       partnerId: partnerA.id,
       title: `Waitonly ${token}`,
       description: "Description",
@@ -98,7 +98,7 @@ describe("listEventBookings / listEventsWithBookingStats (integration)", () => {
       imagePrebuilt: imageWait,
       skipUpload: true,
     });
-    const otherPartnerEvent = await createEvent(httpDb, {
+    const otherPartnerEvent = await createPublishedEvent(httpDb, {
       partnerId: partnerB.id,
       title: `Other ${token}`,
       description: "Description",

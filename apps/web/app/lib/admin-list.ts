@@ -19,6 +19,8 @@ export type AdminPartnersListQuery = AdminListQuery & {
   dir?: AdminListSortDir;
 };
 
+export type AdminPublishedFilter = "yes" | "no";
+
 export type AdminEventsListQuery = AdminListQuery & {
   /** Dedicated admin-events title filter (preferred over combined `q`). */
   title: string;
@@ -26,6 +28,8 @@ export type AdminEventsListQuery = AdminListQuery & {
   partner: string;
   /** Spoken or subtitle language code (uppercase ISO 639-1), empty = all. */
   language: string;
+  /** `yes` / `no` from `published=`; omitted = drafts and published. */
+  published?: AdminPublishedFilter;
   /** Present only for an explicit non-default sort selection. */
   sort?: EventSort;
   dir?: AdminListSortDir;
@@ -73,6 +77,7 @@ const EVENT_SORTS: ReadonlySet<string> = new Set([
   "date",
   "created",
   "capacity",
+  "published",
 ]);
 const LIST_DIRS: ReadonlySet<string> = new Set(["asc", "desc"]);
 const LANGUAGE_CODE_RE = /^[A-Za-z]{2}$/;
@@ -196,6 +201,8 @@ export function parseAdminEventsListQuery(url: URL): AdminEventsListQuery {
   const partner = url.searchParams.get("partner")?.trim() ?? "";
   const languageRaw = url.searchParams.get("language")?.trim() ?? "";
   const language = LANGUAGE_CODE_RE.test(languageRaw) ? languageRaw.toUpperCase() : "";
+  const publishedRaw = url.searchParams.get("published")?.trim() ?? "";
+  const published = publishedRaw === "yes" || publishedRaw === "no" ? publishedRaw : undefined;
   const sortParam = url.searchParams.get("sort")?.trim() ?? "";
   const dirParam = url.searchParams.get("dir")?.trim() ?? "";
   const sort = EVENT_SORTS.has(sortParam) ? (sortParam as EventSort) : undefined;
@@ -206,6 +213,7 @@ export function parseAdminEventsListQuery(url: URL): AdminEventsListQuery {
     title,
     partner,
     language,
+    ...(published ? { published } : {}),
   };
 
   if (!sort || !dir || isDefaultEventListSort(sort, dir)) {
@@ -289,6 +297,7 @@ export function adminListPageRedirectPath(
     title?: string;
     partner?: string;
     language?: string;
+    published?: AdminPublishedFilter;
     sort?: AdminListSortKey;
     dir?: AdminListSortDir;
   },
@@ -304,6 +313,7 @@ export function adminListPageRedirectPath(
     title: listQuery.title,
     partner: listQuery.partner,
     language: listQuery.language,
+    published: listQuery.published,
     page: effectivePage,
     role: listQuery.role,
     sort: listQuery.sort,
@@ -333,6 +343,7 @@ export function buildAdminListQueryString(options: {
   title?: string;
   partner?: string;
   language?: string;
+  published?: AdminPublishedFilter;
   page?: number;
   role?: string;
   sort?: AdminListSortKey;
@@ -353,6 +364,9 @@ export function buildAdminListQueryString(options: {
   const language = options.language?.trim();
   if (language) {
     params.set("language", language);
+  }
+  if (options.published === "yes" || options.published === "no") {
+    params.set("published", options.published);
   }
   if (options.role) {
     params.set("role", options.role);

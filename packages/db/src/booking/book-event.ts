@@ -122,6 +122,9 @@ export async function bookEvent(db: TxDb, input: BookEventInput): Promise<BookEv
     if (!event) {
       throw new BookingError("EVENT_NOT_FOUND", "Event not found");
     }
+    if (!event.published) {
+      throw new BookingError("EVENT_NOT_FOUND", "Event not found");
+    }
 
     const lockedUsers = await tx
       .select()

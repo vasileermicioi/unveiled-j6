@@ -59,3 +59,40 @@ The admin tab that routes to `/:locale/admin/featured` SHALL be labeled **Featur
 - **WHEN** `admin-events.feature` and admin e2e tab navigation are read after this step
 - **THEN** the tab for `/admin/featured` is named Featured events / Empfohlene Events
 - **AND** Featured partners routes are covered under admin-partners (or adjacent) Gherkin and fixtures
+
+### Requirement: Admin publish and unpublish featured membership
+Admins SHALL publish or unpublish a featured event from `/:locale/admin/featured/:eventId/publish` and `/:locale/admin/featured/:eventId/unpublish`, and a featured partner from `/:locale/admin/featured-partners/:partnerId/publish` and `/:locale/admin/featured-partners/:partnerId/unpublish`, via form POST on dedicated pages (no client-only toggle, no localStorage draft, no publish inside featured drag-reorder POST). Admin featured lists SHALL show Published or Draft for the **featured membership** flag and SHALL keep unpublished rows. Adding to featured SHALL create an unpublished featured row (database default) and MUST NOT by itself make Discover show the item. A missing featured row SHALL return admin 404. POST SHALL be idempotent when the membership is already in the requested state. Successful POST SHALL persist only that featured flag and redirect to the originating featured list.
+
+#### Scenario: Publish featured event
+- **WHEN** an admin confirms publish on a featured event whose catalog event is also published
+- **THEN** Discover may list it
+- **AND** the featured row stays on `/admin/featured`
+
+#### Scenario: Unpublish featured partner
+- **WHEN** an admin confirms unpublish on a featured partner
+- **THEN** Discover Partner venues omits it
+- **AND** the partner remains on `/admin/partners` and `/admin/featured-partners`
+
+#### Scenario: Add to featured stays off Discover until publish
+- **WHEN** an admin adds an event or partner to featured
+- **THEN** the new featured row is unpublished
+- **AND** success copy does not claim Discover is updated
+- **AND** Discover still omits the item until the featured row is published (and, for events, the catalog event is published)
+
+### Requirement: Canonical featured-partners Gherkin records featured publish
+`docs/product/features/admin-partners.feature` SHALL include featured-partner publish/unpublish behavior with the titles below. Playwright `e2e/specs/admin-partners.spec.ts` SHALL map 1:1. Existing title **Add by searching existing partners** SHALL keep its name; its steps SHALL state that add creates an unpublished featured row and points at the featured-partner publish confirm. **Admin remove from featured partners keeps venue** SHALL still assert Discover Partner venues no longer lists the partner after remove. Selectors SHALL be proximity/layout only. Env skips (`E2E_ADMIN_*`, R2) MAY remain. The system SHALL NOT add `@skip-no-ui` for these MVP scenarios.
+
+#### Scenario: Add featured partner stays off Discover until publish
+- **WHEN** an admin adds a partner to featured and does not publish the featured row
+- **THEN** the partner is on `/admin/featured-partners` as Draft
+- **AND** a guest on `/:locale/discover` does not see that partner in Partner venues
+
+#### Scenario: Publish featured partner shows on Discover
+- **WHEN** an admin confirms publish on a featured partner
+- **THEN** a guest on `/:locale/discover` may see that partner in Partner venues
+- **AND** the partner remains on `/admin/featured-partners` as Published
+
+#### Scenario: Unpublish featured partner keeps venue
+- **WHEN** an admin confirms unpublish on a featured partner
+- **THEN** Discover Partner venues omits it
+- **AND** the partner remains on `/admin/partners` and `/admin/featured-partners`

@@ -26,6 +26,8 @@
 #     per event datetime. New writes persist tickets_count = 1. Reopening a held hour shows locked
 #     already-booked copy and a My Tickets link (not a second checkout). Grandfathered tickets_count > 1
 #     still display as multiple booking_tickets rows.
+#   - Unpublished events are not bookable (`bookEvent` fails as not found). Existing CONFIRMED
+#     bookings stay after unpublish (no cancel, no refund). A new booking for that event is rejected.
 #   - The old app never emailed a booking confirmation — redemption info only ever appeared in-app
 #     (BookingModal's success step). DECIDED: send a real confirmation email on every successful booking
 #     (normal, comp ticket, and waitlist-promotion path alike), containing the same redemption info shown
@@ -223,3 +225,14 @@ Feature: Event Booking
     Given I am signed in as a "USER"
     Then no member-facing action exists to cancel a booking or request a refund myself
     And the "SECURE RSVP // NO REFUNDS" policy is communicated at the point of booking
+
+  Scenario: Book unpublished fails
+    When I attempt to book an unpublished event
+    Then no booking or ledger row is written
+    And I do not reach a booking confirmation
+
+  Scenario: Existing booking remains after unpublish
+    Given I have a CONFIRMED booking
+    When an admin later unpublishes that event
+    Then the booking stays CONFIRMED on My Tickets
+    And a new booking for that event is rejected

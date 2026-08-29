@@ -68,7 +68,7 @@ function catalogGallery() {
 }
 
 /** URL-stable sort keys for the admin event list. */
-export type EventSort = "title" | "partner" | "date" | "created" | "capacity";
+export type EventSort = "title" | "partner" | "date" | "created" | "capacity" | "published";
 
 export type ListEventsOptions = {
   limit?: number;
@@ -90,6 +90,8 @@ export type ListEventsOptions = {
   desc?: boolean;
   /** When true, omit events that already have a `featured_events` row. */
   excludeFeatured?: boolean;
+  /** When set, filter by `events.published`. Omitted = drafts and published. */
+  published?: boolean;
 };
 
 export type CreateEventInput = {
@@ -256,7 +258,32 @@ export async function getEventById(db: Db, eventId: string): Promise<Event | nul
 }
 
 export async function getPublicEventById(db: Db, eventId: string): Promise<Event | null> {
-  return getEventById(db, eventId);
+  const event = await getEventById(db, eventId);
+  return event?.published ? event : null;
+}
+
+export async function setEventPublished(
+  db: Db,
+  eventId: string,
+  published: boolean,
+): Promise<Event> {
+  const existing = await getEventById(db, eventId);
+  if (!existing) {
+    throw new CatalogValidationError("EVENT_NOT_FOUND", `Event ${eventId} not found`);
+  }
+  if (existing.published === published) {
+    return existing;
+  }
+
+  const [updated] = await db
+    .update(events)
+    .set({ published, updatedAt: new Date() })
+    .where(eq(events.id, eventId))
+    .returning();
+  if (!updated) {
+    throw new CatalogValidationError("EVENT_NOT_FOUND", `Event ${eventId} not found`);
+  }
+  return updated;
 }
 
 export type ListUpcomingEventsOptions = {
@@ -274,7 +301,7 @@ export async function listUpcomingEvents(
   return db
     .select()
     .from(events)
-    .where(gte(events.dateTime, now))
+    .where(and(gte(events.dateTime, now), eq(events.published, true)))
     .orderBy(asc(events.dateTime))
     .limit(limit);
 }
@@ -304,7 +331,9 @@ export async function listBookableEventsForSitemap(
       updatedAt: events.updatedAt,
     })
     .from(events)
-    .where(and(gt(events.dateTime, now), gt(events.remainingCapacity, 0)))
+    .where(
+      and(gt(events.dateTime, now), gt(events.remainingCapacity, 0), eq(events.published, true)),
+    )
     .orderBy(asc(events.dateTime))
     .limit(limit);
 }
@@ -359,11 +388,16 @@ function eventListFilterConditions(options: {
   partnerId?: string;
   excludeFeatured?: boolean;
   excludeFeaturedExists?: SQL;
+  published?: boolean;
 }): SQL[] {
   const conditions: SQL[] = [];
 
   if (options.partnerId) {
     conditions.push(eq(events.partnerId, options.partnerId));
+  }
+
+  if (options.published !== undefined) {
+    conditions.push(eq(events.published, options.published));
   }
 
   if (options.excludeFeaturedExists) {
@@ -413,6 +447,8 @@ function eventListOrderBy(sort: EventSort | undefined, descending: boolean): SQL
       return [primaryDir(events.createdAt), idTiebreak];
     case "capacity":
       return [primaryDir(events.remainingCapacity), primaryDir(events.totalCapacity), idTiebreak];
+    case "published":
+      return [primaryDir(events.published), idTiebreak];
   }
 }
 
@@ -437,6 +473,7 @@ export async function listEvents(db: Db, options: ListEventsOptions = {}): Promi
     language: options.language,
     partnerId: options.partnerId,
     excludeFeaturedExists,
+    published: options.published,
   });
 
   let query = db.select().from(events).$dynamic();
@@ -1177,6 +1214,7 @@ export type CountEventsOptions = {
   title?: string;
   partner?: string;
   language?: string;
+  published?: boolean;
 };
 
 export async function countEvents(db: Db, options: CountEventsOptions = {}): Promise<number> {
@@ -1185,6 +1223,7 @@ export async function countEvents(db: Db, options: CountEventsOptions = {}): Pro
     title: options.title,
     partner: options.partner,
     language: options.language,
+    published: options.published,
   });
 
   if (conditions.length === 1) {

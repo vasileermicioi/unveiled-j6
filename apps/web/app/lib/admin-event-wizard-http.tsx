@@ -9,6 +9,7 @@ import {
 import { ensureImageVariantsUploaded, getImageCredit } from "@unveiled/db/catalog/images";
 import type { Context } from "hono";
 
+import { adminEventPublishPath } from "../components/admin/admin-tabs";
 import { eventListPath } from "../components/admin/EventAdminForm";
 import { EventAdminWizardPage } from "../components/admin/EventAdminWizardPage";
 import type { EventFormDefaults } from "../components/admin/event-admin-types";
@@ -144,7 +145,7 @@ export async function postEventCreateWizard(
       ticketType: values.ticketType,
       payload,
     });
-    return c.redirect(eventListPath(locale), 302);
+    return c.redirect(adminEventPublishPath(locale, event.id), 302);
   } catch (error) {
     let defaults: EventFormDefaults | undefined;
     try {

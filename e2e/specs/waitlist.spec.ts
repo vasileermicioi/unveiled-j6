@@ -289,4 +289,11 @@ test.describe("waitlist.feature", () => {
       "No email capture harness in Playwright; assert via Resend dashboard on staging smoke (DEPLOYMENT.md Phase 6)",
     );
   });
+
+  test("Scenario: Join unpublished fails", async () => {
+    test.skip(
+      true,
+      "Covered by packages/db waitlist.integration.test.ts joinWaitlist rejects unpublished; public detail 404 has no waitlist CTA",
+    );
+  });
 });

@@ -6,6 +6,9 @@
 #   - Member feed /events, /events/map, /saved require USER; browse/map also require booking-eligible subscription
 #   - No algorithmic ranking — explicit filters only (event name / category / partner / date; single-select partner)
 #   - Default feed scope = all upcoming (any date_times element >= now / denormalized date_time >= now), soonest first by next upcoming; custom date range available
+#   - Browse / map / saved-upcoming and public `/events/:id` include only `events.published = true`
+#   - Discover featured events need catalog `events.published` (featured membership is not separately draftable); featured partners appear when they are on the featured list
+#   - Unpublished `/events/:id` is the same 404 as a missing id (not indexable, not in sitemap)
 #   - Date range lower bound is never before Berlin today; ranged results still exclude already-started events
 #   - Cards/map popups show next upcoming datetime + denormalized credit_price; booking-eligible detail lists all datetimes (emphasize next)
 #   - Booking-eligible checkout shows a native datetime dropdown when two or more future occurrences exist; guests omit dropdown and credits
@@ -365,3 +368,28 @@ Feature: Event Discovery
     Then the EventCard save control is not shown
     When I POST to a save endpoint without a session
     Then I am redirected to sign in
+
+  Scenario: Unpublished featured event stays off Discover
+    Given a featured event whose catalog event is unpublished
+    When I visit Discover as a guest ("/:locale/discover")
+    Then I do not see that event
+
+  Scenario: Unpublished events are hidden from Browse events
+    When I view "/events" or "/events/map" as a booking-eligible member
+    Then unpublished events do not appear
+
+  Scenario: Published featured event with unpublished catalog stays off Discover
+    Given an event is on the featured list and the catalog event is unpublished
+    When I visit Discover as a guest ("/:locale/discover")
+    Then I do not see that event
+
+  Scenario: Unpublished event public detail is not found
+    When I open "/:locale/events/:id" for an unpublished event as a guest
+    Then I see the same not-found page as a missing event
+    And the unpublished title is not shown in public metadata
+
+  Scenario: Saved list hides unpublished events
+    Given I have a save row for an event that is now unpublished
+    When I view "/saved"
+    Then that event is omitted
+    And the saved_events row remains

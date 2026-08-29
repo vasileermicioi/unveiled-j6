@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { createTestImagePrebuilt } from "../catalog/test-image";
 import { structuredLocationFromAddress } from "../catalog/test-location";
+import { createPublishedEvent } from "../catalog/test-published-event";
 
 import {
   bookEvent,
@@ -9,7 +10,6 @@ import {
   cancelBookingAsAdmin,
   createCompTicket,
   createDb,
-  createEvent,
   createPartner,
   createTxDb,
   creditLedger,
@@ -58,7 +58,7 @@ describe("admin capacity ops (integration)", () => {
       skipUpload: true,
     });
 
-    const event = await createEvent(httpDb, {
+    const event = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Capacity Ops Event ${suffix.slice(0, 8)}`,
       description: "Description",
@@ -234,7 +234,7 @@ describe("admin capacity ops (integration)", () => {
       expect(manualPromote.kind).toBe("promoted");
 
       // Comp ticket on a fresh event with capacity.
-      const compEvent = await createEvent(httpDb, {
+      const compEvent = await createPublishedEvent(httpDb, {
         partnerId: partner.id,
         title: `Comp Event ${suffix.slice(0, 8)}`,
         description: "Comp",
@@ -362,7 +362,7 @@ describe("admin capacity ops (integration)", () => {
       skipUpload: true,
     });
 
-    const event = await createEvent(httpDb, {
+    const event = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Restock Event ${suffix.slice(0, 8)}`,
       description: "Description",

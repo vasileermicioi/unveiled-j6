@@ -4,6 +4,8 @@
 # Partner self-service event CRUD is post-MVP (features/post-mvp/). Admin retains
 # unrestricted cross-venue event management in MVP.
 # Event image = required file upload → five WebP variants (extras/image-uploads.md).
+# Create stays Draft (`published = false`) until `/:locale/admin/events/:id/publish`.
+# Featured-add creates an unpublished featured row until `/:locale/admin/featured/:eventId/publish`.
 
 Feature: Admin — Event Management
   As an admin
@@ -15,14 +17,16 @@ Feature: Admin — Event Management
 
   Scenario: Create a single event
     When I create a new event with German and English titles and Markdown descriptions, partner, per-datetime credit prices, capacity, image, Berlin zip code, and one or more dateTimes
-    Then the event is added to the catalog
+    Then the event is added to the catalog as Draft
     And its remaining capacity defaults to its total capacity
     And its startTimeMinutes and weekday are computed from its primary/next dateTime
+    And the success path points at the publish confirm
     # descriptions are Markdown source (two MDXEditor instances, DE then EN); other required fields unchanged
     # Admin create/edit/clone forms present an editable datetime list (add/remove inplace) with credits per row
 
   Scenario: Create event with DE and EN titles
     When I create an event with both locale titles and both locale descriptions
+    And I publish the event
     Then the event is added to the catalog
     And "/de" and "/en" public detail show the matching titles
 
@@ -264,12 +268,13 @@ Feature: Admin — Event Management
       | Date     | date       | desc      |
       | Created  | created    | asc       |
       | Capacity | capacity   | desc      |
+      | Status   | published  | desc      |
 
   Scenario: Event list filters by title, partner, and language
     When I open "/:locale/admin/events" and filter by event title, partner name, and/or language
     Then the list shows matching events
     And language filter also matches events whose subtitle language equals the selected code
-    And the table shows Languages and Subtitles columns
+    And the table shows a Status column with Published/Draft and a Publish or Unpublish link
 
   Scenario: Event list reset filters clears search and sort
     Given I have active title/partner/language filters and/or a non-default sort on "/:locale/admin/events"
@@ -418,8 +423,8 @@ Feature: Admin — Event Management
     Then I see matching catalog events that are not already featured
     And each result row shows a primary-image thumbnail (or placeholder) alongside title, partner, languages, subtitles, and date/time
     And a missing or broken thumbnail does not block the add action
-    And submitting add creates a featured row for that event
-    And I am redirected to the featured list
+    And submitting add adds that event to the featured list
+    And I am returned to the Featured events list
 
   Scenario: Admin reorders featured events by drag and drop
     Given at least two events are on the Featured list
@@ -440,3 +445,34 @@ Feature: Admin — Event Management
     Given no featured rows exist
     When I open "/:locale/admin/featured"
     Then I see an empty state and a path to add featured events
+
+  Scenario: Publish confirm goes live on Browse
+    When I confirm publish for a draft event
+    Then the Events catalog shows Published / Veröffentlicht
+    And a booking-eligible member sees that event on "/events"
+
+  Scenario: Unpublish confirm hides from Browse
+    When I confirm unpublish for a published event
+    Then the Events catalog still lists the event as Draft / Entwurf
+    And that event does not appear on member "/events"
+
+  Scenario: Create does not appear on Browse
+    When I create an event and do not publish it
+    Then the event is on "/admin/events" as Draft
+    And it does not appear on member "/events"
+
+  Scenario: Event list shows Published or Draft status
+    When I open "/admin/events" with both a draft and a published event
+    Then each row shows Published / Veröffentlicht or Draft / Entwurf
+
+  Scenario: Event list filters by published
+    When I open "/admin/events?published=no"
+    Then only unpublished events are listed
+    And sort, title, partner, and language params are preserved when changing the filter
+
+  Scenario: Unpublish does not delete or drop featured membership
+    Given a catalog event has a featured row
+    When I unpublish the catalog event
+    Then the event remains on "/admin/events"
+    And the featured row remains on "/admin/featured"
+    And Discover omits the event until the catalog event is published again

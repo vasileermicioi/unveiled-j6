@@ -68,6 +68,13 @@ export async function joinWaitlist(
     return { entry: existing, created: false };
   }
 
+  const event = await db.query.events.findFirst({
+    where: (fields, { eq: eqOp }) => eqOp(fields.id, input.eventId),
+  });
+  if (!event?.published) {
+    throw new WaitlistError("EVENT_NOT_FOUND", "Event not found");
+  }
+
   const now = new Date();
   try {
     const [entry] = await db

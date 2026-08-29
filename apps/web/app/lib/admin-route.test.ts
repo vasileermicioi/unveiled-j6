@@ -74,6 +74,7 @@ describe("admin-route helpers", () => {
     expect(query.title).toBe("");
     expect(query.partner).toBe("");
     expect(query.language).toBe("");
+    expect(query.published).toBeUndefined();
   });
 
   test("parseAdminEventsListQuery treats created+desc as domain default", () => {
@@ -96,6 +97,21 @@ describe("admin-route helpers", () => {
     expect(query.page).toBe(2);
     expect(query.sort).toBe("title");
     expect(query.dir).toBe("asc");
+  });
+
+  test("parseAdminEventsListQuery reads published=yes|no and ignores invalid", () => {
+    expect(
+      parseAdminEventsListQuery(new URL("https://example.com/de/admin/events?published=yes"))
+        .published,
+    ).toBe("yes");
+    expect(
+      parseAdminEventsListQuery(new URL("https://example.com/de/admin/events?published=no"))
+        .published,
+    ).toBe("no");
+    expect(
+      parseAdminEventsListQuery(new URL("https://example.com/de/admin/events?published=maybe"))
+        .published,
+    ).toBeUndefined();
   });
 
   test("parseAdminEventsListQuery ignores invalid or incomplete sort params", () => {
@@ -139,10 +155,12 @@ describe("admin-route helpers", () => {
         title: "opera",
         partner: "haus",
         language: "EN",
+        published: "no",
         sort: "title",
         dir: "asc",
+        page: 2,
       }),
-    ).toBe("?title=opera&partner=haus&language=EN&sort=title&dir=asc");
+    ).toBe("?title=opera&partner=haus&language=EN&published=no&sort=title&dir=asc&page=2");
     expect(buildAdminListQueryString({ sort: "date", dir: "desc" })).toBe("?sort=date&dir=desc");
     expect(buildAdminListQueryString({ sort: "capacity", dir: "asc" })).toBe(
       "?sort=capacity&dir=asc",

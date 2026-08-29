@@ -11,13 +11,15 @@ import {
   type PartnerListItem,
 } from "./partners";
 
-export type FeaturedPartnerRow = Partner & { sortOrder: number };
+export type FeaturedPartnerRow = Partner & { sortOrder: number; featuredPublished: boolean };
 
 /** Temp offset for reorder writes (admin curated lists stay small). */
 const FEATURED_PARTNERS_REORDER_TEMP_BASE = 10_000;
 
 export type ListFeaturedPartnersOptions = {
   limit?: number;
+  /** Unused for Discover: featured-partner membership is live as soon as the row exists. */
+  publishedOnly?: boolean;
 };
 
 export type SearchPartnersNotFeaturedOptions = Pick<
@@ -33,6 +35,7 @@ export async function listFeaturedPartners(
     .select({
       partner: partners,
       sortOrder: featuredPartners.sortOrder,
+      featuredPublished: featuredPartners.published,
     })
     .from(featuredPartners)
     .innerJoin(partners, eq(featuredPartners.partnerId, partners.id))
@@ -44,7 +47,11 @@ export async function listFeaturedPartners(
   }
 
   const rows = await query;
-  return rows.map((row) => ({ ...row.partner, sortOrder: row.sortOrder }));
+  return rows.map((row) => ({
+    ...row.partner,
+    sortOrder: row.sortOrder,
+    featuredPublished: row.featuredPublished,
+  }));
 }
 
 export async function searchPartnersNotFeatured(
@@ -55,6 +62,56 @@ export async function searchPartnersNotFeatured(
     ...options,
     excludeFeatured: true,
   });
+}
+
+export async function getFeaturedPartnerByPartnerId(
+  db: Db,
+  partnerId: string,
+): Promise<FeaturedPartnerRow | null> {
+  const [row] = await db
+    .select({
+      partner: partners,
+      sortOrder: featuredPartners.sortOrder,
+      featuredPublished: featuredPartners.published,
+    })
+    .from(featuredPartners)
+    .innerJoin(partners, eq(featuredPartners.partnerId, partners.id))
+    .where(eq(featuredPartners.partnerId, partnerId))
+    .limit(1);
+  if (!row) {
+    return null;
+  }
+  return {
+    ...row.partner,
+    sortOrder: row.sortOrder,
+    featuredPublished: row.featuredPublished,
+  };
+}
+
+export async function setFeaturedPartnerPublished(
+  db: Db,
+  partnerId: string,
+  published: boolean,
+): Promise<void> {
+  const [existing] = await db
+    .select({
+      partnerId: featuredPartners.partnerId,
+      published: featuredPartners.published,
+    })
+    .from(featuredPartners)
+    .where(eq(featuredPartners.partnerId, partnerId))
+    .limit(1);
+  if (!existing) {
+    throw new CatalogValidationError("PARTNER_NOT_FOUND", `Partner ${partnerId} not found`);
+  }
+  if (existing.published === published) {
+    return;
+  }
+
+  await db
+    .update(featuredPartners)
+    .set({ published })
+    .where(eq(featuredPartners.partnerId, partnerId));
 }
 
 export async function addFeaturedPartner(db: Db, partnerId: string): Promise<FeaturedPartnerRow> {
@@ -82,7 +139,7 @@ export async function addFeaturedPartner(db: Db, partnerId: string): Promise<Fea
 
   await db.insert(featuredPartners).values({ partnerId, sortOrder });
 
-  return { ...partner, sortOrder };
+  return { ...partner, sortOrder, featuredPublished: false };
 }
 
 export async function removeFeaturedPartner(db: Db, partnerId: string): Promise<void> {

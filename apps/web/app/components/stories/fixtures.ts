@@ -118,6 +118,7 @@ export const mockEvent: Event = {
   subtitleLanguages: null,
   lat: "52.5025",
   lng: "13.3275",
+  published: true,
   createdAt: storyNow,
   updatedAt: storyNow,
 };

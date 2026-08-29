@@ -22,6 +22,7 @@ import {
 import { runDemoSeed, shouldRunDemoSeed } from "./seed";
 import { createTestImagePrebuilt } from "./test-image";
 import { structuredLocationFromAddress } from "./test-location";
+import { createPublishedEvent } from "./test-published-event";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -714,7 +715,7 @@ describe("catalog integration", () => {
     const soonerDate = new Date(Date.now() + 86_400_000);
     const pastDate = new Date(Date.now() - 86_400_000);
 
-    const laterEvent = await createEvent(db, {
+    const laterEvent = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: "Later Upcoming Event",
       description: "Description",
@@ -731,7 +732,7 @@ describe("catalog integration", () => {
       skipUpload: true,
     });
 
-    const soonerEvent = await createEvent(db, {
+    const soonerEvent = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: "Sooner Upcoming Event",
       description: "Description",

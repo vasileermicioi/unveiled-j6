@@ -29,11 +29,14 @@ export default createRoute(async (c) => {
   }
 
   const listQuery = parseAdminEventsListQuery(new URL(c.req.url));
+  const published =
+    listQuery.published === "yes" ? true : listQuery.published === "no" ? false : undefined;
   const { db } = getAuthOptions();
   const total = await countEvents(db, {
     title: listQuery.title || undefined,
     partner: listQuery.partner || undefined,
     language: listQuery.language || undefined,
+    published,
   });
   const listPath = `/${guard.locale}/admin/events`;
   const redirectPath = adminListPageRedirectPath(listPath, listQuery, total);
@@ -45,6 +48,7 @@ export default createRoute(async (c) => {
     title: listQuery.title || undefined,
     partner: listQuery.partner || undefined,
     language: listQuery.language || undefined,
+    published,
     limit: listQuery.limit,
     offset: listQuery.offset,
     sort: listQuery.sort,
@@ -54,10 +58,14 @@ export default createRoute(async (c) => {
   await ensureEventImages(db, events);
 
   const copy = getAdminCopy(guard.locale);
+  const ok = new URL(c.req.url).searchParams.get("ok");
+  const successMessage =
+    ok === "publish" ? copy.okPublish : ok === "unpublish" ? copy.okUnpublish : null;
   const queryString = buildAdminListQueryString({
     title: listQuery.title || undefined,
     partner: listQuery.partner || undefined,
     language: listQuery.language || undefined,
+    published: listQuery.published,
     page: listQuery.page,
     sort: listQuery.sort,
     dir: listQuery.dir,
@@ -73,11 +81,13 @@ export default createRoute(async (c) => {
         title: listQuery.title,
         partner: listQuery.partner,
         language: listQuery.language,
+        published: listQuery.published,
         page: listQuery.page,
         limit: listQuery.limit,
         sort: listQuery.sort,
         dir: listQuery.dir,
       }}
+      successMessage={successMessage}
       total={total}
     />,
     {

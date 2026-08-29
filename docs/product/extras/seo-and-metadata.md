@@ -11,8 +11,9 @@ SSR metadata for the production MVP. Aligns with [`sitemap/sitemap.md`](../sitem
 | `/login`, `/signup`, `/forgot-password`, `/reset-link-sent`, `/reset-password` | ❌ `noindex` | Utility / token URLs |
 | `/events` | ❌ `noindex` | **Member-gated** feed — not a public catalog list |
 | `/events/map`, `/saved` | ❌ `noindex` | Member-only |
-| `/events/:id` | ✅ Yes, **when bookable** | Public detail; long-tail SEO. Bookable = future `date_time` + `remaining_capacity > 0` |
-| `/events/:id` sold-out or past | ❌ `noindex, follow` | Still HTTP 200 with clear state — do not hard-404 |
+| `/events/:id` | ✅ Yes, **when bookable and published** | Public detail; long-tail SEO. Bookable = `published = true` + future `date_time` + `remaining_capacity > 0` |
+| `/events/:id` unpublished | ❌ not served | Same HTTP **404** as a missing id (`getPublicEventById` returns null). Not indexable. Not in `sitemap.xml`. Do **not** treat as sold-out `noindex` 200. |
+| `/events/:id` sold-out or past | ❌ `noindex, follow` | Still HTTP 200 with clear state — do not hard-404. Only applies to **published** events. |
 | `/events/:id/book`, `/book/confirm`, `/waitlist` | ❌ `noindex` | Auth + transactional |
 | `/onboarding/*`, `/bookings`, `/profile/*` | ❌ `noindex` | Private member area |
 | `/admin/*` | ❌ `noindex` | Internal |
@@ -48,7 +49,7 @@ Every indexable page needs SSR (initial HTML):
 ## 5. `sitemap.xml` and `robots.txt`
 
 - **robots.txt** — allow indexable routes; disallow `/*/admin/`, `/*/partner/`, `/*/profile/`, `/*/bookings`, `/*/saved`, `/*/onboarding/`, `/*/checkin`, `/*/events/*/book*`, `/*/events/*/waitlist`, auth paths. `Sitemap:` → `/sitemap.xml`.
-- **sitemap.xml** — both locales of marketing/legal pages + both locales of **currently bookable** event detail URLs (`lastmod` from `updated_at`). Do **not** include member `/events`.
+- **sitemap.xml** — both locales of marketing/legal pages + both locales of **currently bookable published** event detail URLs (`lastmod` from `updated_at`). Do **not** include member `/events` or unpublished `/events/:id`.
 
 ## 6. Performance notes
 

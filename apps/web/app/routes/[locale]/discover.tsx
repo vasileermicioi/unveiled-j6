@@ -38,8 +38,8 @@ export default createRoute(async (c) => {
     try {
       const [featuredEvents, partnerRows] = await Promise.all([
         // Show all curated featured rows (including past) — Discover has no date filter.
-        listFeaturedEvents(db),
-        listFeaturedPartners(db, { limit: 8 }),
+        listFeaturedEvents(db, { publishedOnly: true }),
+        listFeaturedPartners(db, { publishedOnly: true, limit: 8 }),
       ]);
 
       events = featuredEvents.map((event) => toEventCardItem(event, locale));

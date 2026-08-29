@@ -1,13 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
+import { createEvent, setEventPublished } from "../catalog/events";
 import { createTestImagePrebuilt } from "../catalog/test-image";
 import { structuredLocationFromAddress } from "../catalog/test-location";
+import { createPublishedEvent } from "../catalog/test-published-event";
 
 import {
+  BookingError,
   bookEvent,
   bookings,
   createDb,
-  createEvent,
   createPartner,
   createTxDb,
   creditLedger,
@@ -66,7 +68,7 @@ describe("bookEvent", () => {
       skipUpload: true,
     });
 
-    const event = await createEvent(httpDb, {
+    const event = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Booking Test Event ${suffix.slice(0, 8)}`,
       description: "Description",
@@ -264,7 +266,7 @@ describe("bookEvent", () => {
       skipUpload: true,
     });
 
-    const event = await createEvent(httpDb, {
+    const event = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Booking Uniq Event ${suffix.slice(0, 8)}`,
       description: "Description",
@@ -406,7 +408,7 @@ describe("bookEvent", () => {
       skipUpload: true,
     });
 
-    const event = await createEvent(httpDb, {
+    const event = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Promo Event ${suffix.slice(0, 8)}`,
       description: "Description",
@@ -552,7 +554,7 @@ describe("bookEvent", () => {
       skipUpload: true,
     });
 
-    const event = await createEvent(httpDb, {
+    const event = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `PDF Event ${suffix.slice(0, 8)}`,
       description: "Description",
@@ -657,7 +659,7 @@ describe("bookEvent", () => {
       skipUpload: true,
     });
 
-    const event = await createEvent(httpDb, {
+    const event = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Slot Event ${suffix.slice(0, 8)}`,
       description: "Description",
@@ -767,7 +769,7 @@ describe("bookEvent", () => {
       }
       expect(pastCode).toBe("UNKNOWN_SLOT");
 
-      const pastOnEvent = await createEvent(httpDb, {
+      const pastOnEvent = await createPublishedEvent(httpDb, {
         partnerId: partner.id,
         title: `Past Slot Event ${suffix.slice(0, 8)}`,
         description: "Description",
@@ -824,6 +826,118 @@ describe("bookEvent", () => {
         await deleteEvent(httpDb, pastOnEventId, { skipBucket: true });
       }
       await deleteEvent(httpDb, event.id, { skipBucket: true });
+      await deletePartner(httpDb, partner.id, { skipBucket: true });
+      await txDb.pool.end().catch(() => undefined);
+    }
+  });
+
+  test("unpublished event is not bookable; existing CONFIRMED booking survives unpublish", async () => {
+    if (!databaseUrl) {
+      console.warn("Skipping bookEvent unpublished test (DATABASE_URL unset)");
+      return;
+    }
+
+    const httpDb = createDb(databaseUrl);
+    const txDb = createTxDb(databaseUrl);
+    const suffix = crypto.randomUUID();
+    const userId = `book-unpub-${suffix}`;
+    const partner = await createPartner(httpDb, {
+      name: `Unpublished Book Venue ${suffix.slice(0, 8)}`,
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      contactEmail: `book-unpub-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+    const draft = await createEvent(httpDb, {
+      partnerId: partner.id,
+      title: `Unpublished Book Event ${suffix.slice(0, 8)}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "theater",
+      eventType: "theater_play",
+      dateTimes: [new Date(Date.now() + 86_400_000)],
+      creditPrice: 2,
+      totalCapacity: 5,
+      secretCode: "UNPUBBOOK",
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+    const live = await createPublishedEvent(httpDb, {
+      partnerId: partner.id,
+      title: `Then Unpublished ${suffix.slice(0, 8)}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "theater",
+      eventType: "theater_play",
+      dateTimes: [new Date(Date.now() + 172_800_000)],
+      creditPrice: 2,
+      totalCapacity: 5,
+      secretCode: "THENUNPUB",
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    try {
+      await httpDb.insert(users).values({
+        id: userId,
+        email: `${userId}@example.com`,
+        emailVerified: true,
+        credits: 10,
+      });
+      await httpDb.insert(subscriptions).values({ userId, status: "ACTIVE", plan: "Basic Berlin" });
+
+      await expect(
+        bookEvent(txDb, {
+          userId,
+          eventId: draft.id,
+          ticketsCount: 1,
+          idempotencyKey: `idem-unpub-${suffix}`,
+        }),
+      ).rejects.toMatchObject({ name: "BookingError", code: "EVENT_NOT_FOUND" });
+      expect(await httpDb.select().from(bookings).where(eq(bookings.eventId, draft.id))).toEqual(
+        [],
+      );
+      expect(
+        await httpDb.select().from(creditLedger).where(eq(creditLedger.userId, userId)),
+      ).toEqual([]);
+
+      const booked = await bookEvent(txDb, {
+        userId,
+        eventId: live.id,
+        ticketsCount: 1,
+        idempotencyKey: `idem-then-unpub-${suffix}`,
+      });
+      expect(booked.created).toBe(true);
+      await setEventPublished(httpDb, live.id, false);
+      const stillThere = await httpDb.query.bookings.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, booked.booking.id),
+      });
+      expect(stillThere?.status).toBe("CONFIRMED");
+
+      let secondCode: string | undefined;
+      try {
+        await bookEvent(txDb, {
+          userId,
+          eventId: live.id,
+          ticketsCount: 1,
+          idempotencyKey: `idem-then-unpub-2-${suffix}`,
+        });
+      } catch (error) {
+        secondCode = error instanceof BookingError ? error.code : undefined;
+      }
+      expect(secondCode).toBe("EVENT_NOT_FOUND");
+    } finally {
+      await cleanupUserBookings(httpDb, userId);
+      await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await httpDb.delete(users).where(eq(users.id, userId));
+      await deleteEvent(httpDb, draft.id, { skipBucket: true });
+      await deleteEvent(httpDb, live.id, { skipBucket: true });
       await deletePartner(httpDb, partner.id, { skipBucket: true });
       await txDb.pool.end().catch(() => undefined);
     }

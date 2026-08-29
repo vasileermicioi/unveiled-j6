@@ -81,6 +81,7 @@ export async function getSoldOutWaitlistEventId(): Promise<string> {
       subtitleLanguages: null,
       lat: template.lat,
       lng: template.lng,
+      published: true,
     })
     .returning();
 

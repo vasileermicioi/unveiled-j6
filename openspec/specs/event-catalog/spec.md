@@ -1749,3 +1749,53 @@ Given an admin creates an event without specifying capacity, ticket type, timing
 
 - **WHEN** I create an event without specifying capacity, ticket type, timing mode, or capacity allocation
 - **THEN** it defaults to totalCapacity 10, ticketType "SECRET_CODE", timingMode "TIME_SLOT", capacityMode "SHARED"
+
+### Requirement: Event published flag
+Each `events` row SHALL have `published` boolean NOT NULL. Existing rows SHALL backfill `true`. New inserts SHALL default to `false`. Admin `getEventById` / `listEvents` SHALL return unpublished rows. Public `getPublicEventById` SHALL return null when unpublished. `listBookableEventsForSitemap` and `listUpcomingEvents` SHALL include only `published = true` events (in addition to their existing date/capacity filters).
+
+#### Scenario: Draft is admin-visible and publicly missing
+- **WHEN** an event is unpublished
+- **THEN** `getEventById` returns the row
+- **AND** `getPublicEventById` returns null
+
+#### Scenario: Unpublished events are omitted from sitemap and upcoming picker
+- **WHEN** an upcoming event has remaining capacity and `published = false`
+- **THEN** it does not appear in `listBookableEventsForSitemap`
+- **AND** it does not appear in `listUpcomingEvents`
+- **AND** a published sibling with the same dates still appears
+
+### Requirement: Featured published flags
+`featured_events.published` and `featured_partners.published` SHALL be boolean NOT NULL with the same backfill (`true`) and new-insert default (`false`) as events. Discover-facing lists SHALL use `publishedOnly: true` (featured flag and, for events, catalog `events.published`). Admin featured lists SHALL return unpublished featured rows.
+
+#### Scenario: Discover omits unpublished featured
+- **WHEN** `listFeaturedEvents` / `listFeaturedPartners` is called with `publishedOnly: true`
+- **THEN** unpublished featured rows are omitted
+- **AND** a featured event whose catalog event is unpublished is omitted even if the featured row is published
+
+#### Scenario: Admin featured lists include drafts
+- **WHEN** `listFeaturedEvents` / `listFeaturedPartners` is called without `publishedOnly` (or with `publishedOnly: false`)
+- **THEN** unpublished featured rows are included
+
+### Requirement: Set published
+`setEventPublished`, `setFeaturedEventPublished`, and `setFeaturedPartnerPublished` SHALL persist the boolean and SHALL NOT delete rows, cancel bookings, or alter the other publish flags. A missing catalog event or featured row SHALL fail with the existing not-found error (`EVENT_NOT_FOUND` / `PARTNER_NOT_FOUND`). A write that is already in the requested state SHALL succeed as a no-op.
+
+#### Scenario: Unpublish keeps featured membership
+- **WHEN** an admin unpublishes a catalog event that has a featured row
+- **THEN** the featured row remains
+- **AND** Discover `publishedOnly` omits it until both flags are true
+
+#### Scenario: Missing row is not found
+- **WHEN** `setEventPublished` is called for an unknown event id
+- **THEN** the operation fails with `EVENT_NOT_FOUND` and no other rows change
+
+### Requirement: Canonical schema SEO and decisions document three published flags
+`docs/product/database/schema-overview.md` SHALL document `published` boolean NOT NULL on `events`, `featured_events`, and `featured_partners` (existing rows backfilled `true`; new inserts default `false`; unpublish does not delete rows or drop featured membership). `docs/product/extras/seo-and-metadata.md` SHALL state that unpublished `/events/:id` is HTTP 404 (same as missing), not indexable, and not listed in `sitemap.xml`. `docs/product/sitemap/sitemap.md` SHALL keep the six publish/unpublish admin routes and the events `published=` query. `docs/product/extras/content-i18n-inventory.md` SHALL list the step-02 admin publish copy keys. `docs/product/extras/gaps-and-decisions.md` SHALL log the three independent flags (Discover events need both featured and catalog published; no `partners.published`). `docs/product/testing/coverage-matrix.md` SHALL add a row for every new Scenario (pass or documented skip).
+
+#### Scenario: Schema overview names the three flags
+- **WHEN** a reader opens `schema-overview.md` after this change
+- **THEN** `events.published`, `featured_events.published`, and `featured_partners.published` are documented with backfill/default and independence
+
+#### Scenario: Unpublished detail is not indexable
+- **WHEN** an event is unpublished
+- **THEN** `/:locale/events/:id` is not in `sitemap.xml`
+- **AND** SEO docs treat it as 404 / not indexable (not `noindex` 200)

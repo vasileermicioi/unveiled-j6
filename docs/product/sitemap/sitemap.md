@@ -116,7 +116,7 @@ See `ui/app-shell.md` for header/footer detail.
 | Route | Auth | Role | Notes |
 |---|---|---|---|
 | `/admin` | ✅ | ADMIN | Dashboard |
-| `/admin/events?title=&partner=&language=&sort=&dir=&page=` | ✅ | ADMIN | Event list (title/partner/language filters; language matches spoken or subtitle; column sort; default last-created desc; Reset filters; Languages + Subtitles columns) |
+| `/admin/events?title=&partner=&language=&published=&sort=&dir=&page=` | ✅ | ADMIN | Event list (title/partner/language/`published=yes\|no` filters; language matches spoken or subtitle; column sort; default last-created desc; Reset filters; Languages + Subtitles + Published/Draft columns) |
 | `/admin/events/new` | ✅ | ADMIN | Create event step 1 General (unsaved fields restore from `localStorage`) |
 | `/admin/events/new/dates` | ✅ | ADMIN | Create event step 2 Date & tickets (POST from step 1 Next; GET renders this step, no redirect to `/new`; `localStorage` drafts can restore) |
 | `/admin/events/new/image` | ✅ | ADMIN | Create event step 3 Image (final create POST; GET renders this step, no redirect to `/new`; `localStorage` drafts can restore) |
@@ -128,12 +128,14 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin/events/:id/gallery/add` | ✅ | ADMIN | Multi-upload gallery photos |
 | `/admin/events/:id/gallery/remove` | ✅ | ADMIN | Remove one or many gallery photos (confirm) |
 | `/admin/events/:id/delete` | ✅ | ADMIN | Delete confirmation |
+| `/admin/events/:id/publish` | ✅ | ADMIN | Publish confirm (SSR POST; draft → live on Browse; FormDraft-exempt) |
+| `/admin/events/:id/unpublish` | ✅ | ADMIN | Unpublish confirm (SSR POST; hides from Browse; row stays on admin list; FormDraft-exempt) |
 | `/admin/events/:id/codes` | ✅ | ADMIN | Export redemption codes (CSV) |
-| `/admin/featured` | ✅ | ADMIN | Featured events list (drag reorder + Save order POST; checkbox bulk remove; tab label **Featured events** / **Empfohlene Events**) |
-| `/admin/featured/add?title=&partner=&language=&sort=&dir=` | ✅ | ADMIN | Search and add featured event (title/partner/language filters; language matches spoken or subtitle; column sort; Languages + Subtitles columns; Reset filters; default last-created) |
+| `/admin/featured` | ✅ | ADMIN | Featured events list (drag reorder + Save order POST; checkbox bulk remove; tab label **Featured events** / **Empfohlene Events**; add is live — no featured publish/unpublish) |
+| `/admin/featured/add?title=&partner=&language=&sort=&dir=` | ✅ | ADMIN | Search and add featured event (title/partner/language filters; language matches spoken or subtitle; column sort; Languages + Subtitles columns; Reset filters; default last-created; success returns to the list) |
 | `/admin/featured/remove?eventIds=` | ✅ | ADMIN | Remove one or many from featured (catalog events kept) |
-| `/admin/featured-partners` | ✅ | ADMIN | Featured partners grid (drag reorder + Save order; tab label **Featured partners** / **Empfohlene Partner**) |
-| `/admin/featured-partners/add?q=` | ✅ | ADMIN | Search and add featured partner |
+| `/admin/featured-partners` | ✅ | ADMIN | Featured partners grid (drag reorder + Save order; tab label **Featured partners** / **Empfohlene Partner**; add is live — no featured publish/unpublish) |
+| `/admin/featured-partners/add?q=` | ✅ | ADMIN | Search and add featured partner (success returns to the list) |
 | `/admin/featured-partners/remove?partnerIds=` | ✅ | ADMIN | Remove one or many from featured (catalog partners kept) |
 | `/admin/bookings?title=&partner=&page=` | ✅ | ADMIN | Bookings by event (tab **Bookings** / **Buchungen** after Events; GET title/partner filters; page size 25). Not export-only and not inferred as the Users tab. |
 | `/admin/events/:id/bookings?status=&page=` | ✅ | ADMIN | Per-event booking list (status filter + page size 25). CONFIRMED rows link to single cancel. Toolbar **Cancel all confirmed bookings** when confirmed count > 0. Events catalog row action **Bookings** / **Buchungen**. |

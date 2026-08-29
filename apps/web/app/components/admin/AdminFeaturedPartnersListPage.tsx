@@ -14,6 +14,7 @@ type AdminFeaturedPartnersListPageProps = {
   partners: FeaturedPartnerRow[];
   logoUrls: Record<string, string | undefined>;
   error?: string | null;
+  successMessage?: string | null;
 };
 
 function partnerInitial(name: string): string {
@@ -26,6 +27,7 @@ export function AdminFeaturedPartnersListPage({
   partners,
   logoUrls,
   error,
+  successMessage = null,
 }: AdminFeaturedPartnersListPageProps) {
   const copy = getAdminCopy(locale);
   const listHref = adminFeaturedPartnersPath(locale);
@@ -54,6 +56,9 @@ export function AdminFeaturedPartnersListPage({
       subtitle={copy.featuredPartnersSubtitle}
       title={copy.featuredPartnersTitle}
     >
+      {successMessage ? (
+        <Paragraph className="admin-flash admin-flash--success">{successMessage}</Paragraph>
+      ) : null}
       {error ? <AdminFormError message={error} /> : null}
 
       {partners.length === 0 ? (

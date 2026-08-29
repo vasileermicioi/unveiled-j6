@@ -6,7 +6,7 @@ import { featuredEvents } from "../schema/featured-events";
 import { CatalogValidationError } from "./errors";
 import { getEventById, type ListEventsOptions, listEvents } from "./events";
 
-export type FeaturedEventRow = Event & { sortOrder: number };
+export type FeaturedEventRow = Event & { sortOrder: number; featuredPublished: boolean };
 
 /** Temp offset for reorder writes (admin curated lists stay small). */
 const FEATURED_EVENTS_REORDER_TEMP_BASE = 10_000;
@@ -14,6 +14,8 @@ const FEATURED_EVENTS_REORDER_TEMP_BASE = 10_000;
 export type ListFeaturedEventsOptions = {
   upcomingOnly?: boolean;
   now?: Date;
+  /** When true, require catalog `events.published`. Featured membership is not draftable. */
+  publishedOnly?: boolean;
 };
 
 export type SearchEventsNotFeaturedOptions = Pick<
@@ -30,11 +32,15 @@ export async function listFeaturedEvents(
     const now = options.now ?? new Date();
     conditions.push(gte(events.dateTime, now));
   }
+  if (options.publishedOnly) {
+    conditions.push(eq(events.published, true));
+  }
 
   let query = db
     .select({
       event: events,
       sortOrder: featuredEvents.sortOrder,
+      featuredPublished: featuredEvents.published,
     })
     .from(featuredEvents)
     .innerJoin(events, eq(featuredEvents.eventId, events.id))
@@ -47,7 +53,11 @@ export async function listFeaturedEvents(
   }
 
   const rows = await query.orderBy(asc(featuredEvents.sortOrder), asc(events.dateTime));
-  return rows.map((row) => ({ ...row.event, sortOrder: row.sortOrder }));
+  return rows.map((row) => ({
+    ...row.event,
+    sortOrder: row.sortOrder,
+    featuredPublished: row.featuredPublished,
+  }));
 }
 
 export async function listFeaturedEventIds(db: Db): Promise<string[]> {
@@ -66,6 +76,53 @@ export async function searchEventsNotFeatured(
     ...options,
     excludeFeatured: true,
   });
+}
+
+export async function getFeaturedEventByEventId(
+  db: Db,
+  eventId: string,
+): Promise<FeaturedEventRow | null> {
+  const [row] = await db
+    .select({
+      event: events,
+      sortOrder: featuredEvents.sortOrder,
+      featuredPublished: featuredEvents.published,
+    })
+    .from(featuredEvents)
+    .innerJoin(events, eq(featuredEvents.eventId, events.id))
+    .where(eq(featuredEvents.eventId, eventId))
+    .limit(1);
+  if (!row) {
+    return null;
+  }
+  return {
+    ...row.event,
+    sortOrder: row.sortOrder,
+    featuredPublished: row.featuredPublished,
+  };
+}
+
+export async function setFeaturedEventPublished(
+  db: Db,
+  eventId: string,
+  published: boolean,
+): Promise<void> {
+  const [existing] = await db
+    .select({
+      eventId: featuredEvents.eventId,
+      published: featuredEvents.published,
+    })
+    .from(featuredEvents)
+    .where(eq(featuredEvents.eventId, eventId))
+    .limit(1);
+  if (!existing) {
+    throw new CatalogValidationError("EVENT_NOT_FOUND", `Event ${eventId} not found`);
+  }
+  if (existing.published === published) {
+    return;
+  }
+
+  await db.update(featuredEvents).set({ published }).where(eq(featuredEvents.eventId, eventId));
 }
 
 export async function addFeaturedEvent(db: Db, eventId: string): Promise<FeaturedEventRow> {
@@ -88,7 +145,7 @@ export async function addFeaturedEvent(db: Db, eventId: string): Promise<Feature
 
   await db.insert(featuredEvents).values({ eventId, sortOrder });
 
-  return { ...event, sortOrder };
+  return { ...event, sortOrder, featuredPublished: false };
 }
 
 export async function removeFeaturedEvent(db: Db, eventId: string): Promise<void> {

@@ -15,6 +15,7 @@ type AdminFeaturedListPageProps = {
   events: FeaturedEventRow[];
   imageUrls: Record<string, string | undefined>;
   error?: string | null;
+  successMessage?: string | null;
 };
 
 export function AdminFeaturedListPage({
@@ -22,6 +23,7 @@ export function AdminFeaturedListPage({
   events,
   imageUrls,
   error,
+  successMessage = null,
 }: AdminFeaturedListPageProps) {
   const copy = getAdminCopy(locale);
   const listHref = adminFeaturedPath(locale);
@@ -48,6 +50,9 @@ export function AdminFeaturedListPage({
       subtitle={copy.featuredSubtitle}
       title={copy.featuredTitle}
     >
+      {successMessage ? (
+        <Paragraph className="admin-flash admin-flash--success">{successMessage}</Paragraph>
+      ) : null}
       {error ? <AdminFormError message={error} /> : null}
 
       {events.length === 0 ? (

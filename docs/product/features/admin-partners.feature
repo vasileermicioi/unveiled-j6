@@ -107,8 +107,8 @@ Feature: Admin — Partner Management
   Scenario: Add by searching existing partners
     When I search on the featured partners add page ("/:locale/admin/featured-partners/add?q=")
     Then I see matching catalog partners that are not already featured
-    And submitting add creates a featured row for that partner
-    And I am redirected to the featured partners list
+    And submitting add adds that partner to the featured list
+    And I am returned to the Featured partners list
 
   Scenario: Admin reorders featured partners by drag and drop
     Given at least two partners are on the Featured partners list

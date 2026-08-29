@@ -12,10 +12,11 @@ import {
   saveEvent,
   unsaveEvent,
 } from "./discovery";
-import { createEvent, deleteEvent } from "./events";
+import { deleteEvent } from "./events";
 import { createPartner, deletePartner } from "./partners";
 import { createTestImagePrebuilt } from "./test-image";
 import { structuredLocationFromAddress } from "./test-location";
+import { createPublishedEvent } from "./test-published-event";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -57,7 +58,7 @@ describe("discovery integration", () => {
     const now = new Date("2026-07-09T14:00:00.000Z");
     expect(getBerlinCalendarDate(now)).toBe("2026-07-09");
 
-    const todayFuture = await createEvent(db, {
+    const todayFuture = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Today Future ${suffix}`,
       description: "Description",
@@ -74,7 +75,7 @@ describe("discovery integration", () => {
       skipUpload: true,
     });
 
-    const todayPast = await createEvent(db, {
+    const todayPast = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Today Past ${suffix}`,
       description: "Description",
@@ -91,7 +92,7 @@ describe("discovery integration", () => {
       skipUpload: true,
     });
 
-    const tomorrow = await createEvent(db, {
+    const tomorrow = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Tomorrow ${suffix}`,
       description: "Description",
@@ -142,7 +143,7 @@ describe("discovery integration", () => {
     });
 
     const now = new Date("2026-07-09T14:00:00.000Z");
-    const past = await createEvent(db, {
+    const past = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Past In Range ${suffix}`,
       description: "Description",
@@ -158,7 +159,7 @@ describe("discovery integration", () => {
       imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
-    const todayFuture = await createEvent(db, {
+    const todayFuture = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Today Future Clamp ${suffix}`,
       description: "Description",
@@ -174,7 +175,7 @@ describe("discovery integration", () => {
       imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
-    const todayPast = await createEvent(db, {
+    const todayPast = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Today Past Clamp ${suffix}`,
       description: "Description",
@@ -190,7 +191,7 @@ describe("discovery integration", () => {
       imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
-    const future = await createEvent(db, {
+    const future = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Future Outside Range ${suffix}`,
       description: "Description",
@@ -257,7 +258,7 @@ describe("discovery integration", () => {
     });
 
     const now = new Date("2026-07-09T08:00:00.000Z");
-    const match = await createEvent(db, {
+    const match = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Neon Jazz Night ${suffix}`,
       description: "Description",
@@ -273,7 +274,7 @@ describe("discovery integration", () => {
       imagePrebuilt: await createTestImage(),
       skipUpload: true,
     });
-    const other = await createEvent(db, {
+    const other = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Silent Reading ${suffix}`,
       description: "Description",
@@ -350,7 +351,7 @@ describe("discovery integration", () => {
     const categoryMusic = "live_music_venue";
     const testPartnerIds = [partnerA.id, partnerB.id];
 
-    const theaterA = await createEvent(db, {
+    const theaterA = await createPublishedEvent(db, {
       partnerId: partnerA.id,
       title: `Theater A ${suffix}`,
       description: "Description",
@@ -367,7 +368,7 @@ describe("discovery integration", () => {
       skipUpload: true,
     });
 
-    const musicA = await createEvent(db, {
+    const musicA = await createPublishedEvent(db, {
       partnerId: partnerA.id,
       title: `Music A ${suffix}`,
       description: "Description",
@@ -384,7 +385,7 @@ describe("discovery integration", () => {
       skipUpload: true,
     });
 
-    const theaterB = await createEvent(db, {
+    const theaterB = await createPublishedEvent(db, {
       partnerId: partnerB.id,
       title: `Theater B ${suffix}`,
       description: "Description",
@@ -489,7 +490,7 @@ describe("discovery integration", () => {
 
     const now = new Date("2026-07-09T08:00:00.000Z");
 
-    const withCoords = await createEvent(db, {
+    const withCoords = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Map Coords ${suffix}`,
       description: "Description",
@@ -508,7 +509,7 @@ describe("discovery integration", () => {
       lng: "13.405000",
     });
 
-    const withoutCoords = await createEvent(db, {
+    const withoutCoords = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Map NoCoords ${suffix}`,
       description: "Description",
@@ -525,7 +526,7 @@ describe("discovery integration", () => {
       skipUpload: true,
     });
 
-    const past = await createEvent(db, {
+    const past = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Map Past ${suffix}`,
       description: "Description",
@@ -595,7 +596,7 @@ describe("discovery integration", () => {
 
     const now = new Date("2026-07-09T14:00:00.000Z");
 
-    const todayEvent = await createEvent(db, {
+    const todayEvent = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Saved Today ${suffix}`,
       description: "Description",
@@ -612,7 +613,7 @@ describe("discovery integration", () => {
       skipUpload: true,
     });
 
-    const laterEvent = await createEvent(db, {
+    const laterEvent = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Saved Later ${suffix}`,
       description: "Description",
@@ -629,7 +630,7 @@ describe("discovery integration", () => {
       skipUpload: true,
     });
 
-    const pastEvent = await createEvent(db, {
+    const pastEvent = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Saved Past ${suffix}`,
       description: "Description",
@@ -693,7 +694,7 @@ describe("discovery integration", () => {
       skipUpload: true,
     });
 
-    const multi = await createEvent(db, {
+    const multi = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `Multi Slot ${suffix}`,
       description: "Description",
@@ -711,7 +712,7 @@ describe("discovery integration", () => {
       skipUpload: true,
     });
 
-    const allPast = await createEvent(db, {
+    const allPast = await createPublishedEvent(db, {
       partnerId: partner.id,
       title: `All Past Multi ${suffix}`,
       description: "Description",

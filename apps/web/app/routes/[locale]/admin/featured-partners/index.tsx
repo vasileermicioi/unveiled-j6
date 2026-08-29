@@ -28,6 +28,7 @@ async function renderList(
   options: {
     locale: Locale;
     error?: string | null;
+    successMessage?: string | null;
   },
 ) {
   const { db } = getAuthOptions();
@@ -42,6 +43,7 @@ async function renderList(
       locale={options.locale}
       logoUrls={buildPartnerLogoUrls(partners)}
       partners={partners}
+      successMessage={options.successMessage}
     />,
     {
       locale: options.locale,
@@ -79,5 +81,10 @@ export default createRoute(async (c) => {
     return guard.response;
   }
 
-  return renderList(c, { locale: guard.locale });
+  const ok = new URL(c.req.url).searchParams.get("ok");
+  const copy = getAdminCopy(guard.locale);
+  const successMessage =
+    ok === "publish" ? copy.okPublish : ok === "unpublish" ? copy.okUnpublish : null;
+
+  return renderList(c, { locale: guard.locale, successMessage });
 });

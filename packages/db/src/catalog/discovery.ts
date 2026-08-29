@@ -4,6 +4,7 @@ import type { Db } from "../index";
 import { type Event, events } from "../schema/events";
 import { savedEvents } from "../schema/saved-events";
 import { type BerlinDayRange, berlinInclusiveDateRange, getBerlinCalendarDate } from "./datetime";
+import { CatalogValidationError } from "./errors";
 import { eventTitleLocaleIlike } from "./event-copy";
 
 export const MEMBER_FEED_PAGE_SIZE = 24;
@@ -101,7 +102,7 @@ function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
   // Default: all upcoming (`date_time >= now`), soonest first via orderBy.
   // Ranged: inclusive Europe/Berlin calendar days, clamped so from ≥ Berlin today,
   // always intersected with `date_time >= now` so past showtimes stay hidden.
-  const conditions: SQL[] = [];
+  const conditions: SQL[] = [eq(events.published, true)];
 
   if (window === "empty") {
     conditions.push(sql`false`);
@@ -207,6 +208,13 @@ export async function listMemberFeedMapEvents(
 }
 
 export async function saveEvent(db: Db, userId: string, eventId: string): Promise<void> {
+  const event = await db.query.events.findFirst({
+    where: eq(events.id, eventId),
+  });
+  if (!event?.published) {
+    throw new CatalogValidationError("EVENT_NOT_FOUND", `Event ${eventId} not found`);
+  }
+
   await db
     .insert(savedEvents)
     .values({ userId, eventId })
@@ -247,7 +255,9 @@ export async function listSavedUpcomingEvents(
     .select({ event: events })
     .from(savedEvents)
     .innerJoin(events, eq(savedEvents.eventId, events.id))
-    .where(and(eq(savedEvents.userId, userId), gte(events.dateTime, now)))
+    .where(
+      and(eq(savedEvents.userId, userId), gte(events.dateTime, now), eq(events.published, true)),
+    )
     .orderBy(asc(events.dateTime), asc(events.id));
 
   return rows.map((row) => row.event);

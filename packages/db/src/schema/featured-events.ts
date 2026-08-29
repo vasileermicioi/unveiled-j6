@@ -1,4 +1,4 @@
-import { integer, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 import { events } from "./events";
 
 export const featuredEvents = pgTable("featured_events", {
@@ -6,6 +6,8 @@ export const featuredEvents = pgTable("featured_events", {
     .primaryKey()
     .references(() => events.id, { onDelete: "cascade" }),
   sortOrder: integer("sort_order").notNull(),
+  /** Unused on public Discover (catalog `events.published` gates visibility). Default unpublished. */
+  published: boolean("published").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 

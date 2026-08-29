@@ -1,14 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
+import { createEvent, setEventPublished } from "../catalog/events";
 import { createTestImagePrebuilt } from "../catalog/test-image";
 import { structuredLocationFromAddress } from "../catalog/test-location";
+import { createPublishedEvent } from "../catalog/test-published-event";
 
 import {
   bookEvent,
   bookings,
   cancelWaitlistEntry,
   createDb,
-  createEvent,
   createPartner,
   createTxDb,
   creditLedger,
@@ -53,7 +54,7 @@ describe("waitlist domain", () => {
       skipUpload: true,
     });
 
-    const event = await createEvent(httpDb, {
+    const event = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Waitlist Event ${suffix.slice(0, 8)}`,
       description: "Description",
@@ -300,7 +301,7 @@ describe("waitlist domain", () => {
       skipUpload: true,
     });
 
-    const event = await createEvent(httpDb, {
+    const event = await createPublishedEvent(httpDb, {
       partnerId: partner.id,
       title: `Waitlist Held Event ${suffix.slice(0, 8)}`,
       description: "Description",
@@ -375,6 +376,92 @@ describe("waitlist domain", () => {
       await deleteEvent(httpDb, event.id, { skipBucket: true });
       await deletePartner(httpDb, partner.id, { skipBucket: true });
       await txDb.pool.end().catch(() => undefined);
+    }
+  });
+
+  test("joinWaitlist rejects unpublished; existing WAITING survives unpublish", async () => {
+    if (!databaseUrl) {
+      console.warn("Skipping waitlist unpublished test (DATABASE_URL unset)");
+      return;
+    }
+
+    const httpDb = createDb(databaseUrl);
+    const suffix = crypto.randomUUID();
+    const userId = `wait-unpub-${suffix}`;
+    const partner = await createPartner(httpDb, {
+      name: `Waitlist Unpub Venue ${suffix.slice(0, 8)}`,
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      contactEmail: `wait-unpub-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+    const draft = await createEvent(httpDb, {
+      partnerId: partner.id,
+      title: `Waitlist Unpub Event ${suffix.slice(0, 8)}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "theater",
+      eventType: "theater_play",
+      dateTimes: [new Date(Date.now() + 86_400_000)],
+      creditPrice: 2,
+      totalCapacity: 1,
+      secretCode: "WAITUNPUB",
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+    const live = await createPublishedEvent(httpDb, {
+      partnerId: partner.id,
+      title: `Waitlist Then Unpub ${suffix.slice(0, 8)}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Teststraße 9, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "theater",
+      eventType: "theater_play",
+      dateTimes: [new Date(Date.now() + 172_800_000)],
+      creditPrice: 2,
+      totalCapacity: 1,
+      secretCode: "WAITTHEN",
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    try {
+      await httpDb.insert(users).values({
+        id: userId,
+        email: `${userId}@example.com`,
+        emailVerified: true,
+        credits: 10,
+      });
+
+      await expect(
+        joinWaitlist(httpDb, { userId, eventId: draft.id, requestedQty: 1 }),
+      ).rejects.toMatchObject({ name: "WaitlistError", code: "EVENT_NOT_FOUND" });
+      expect(
+        await httpDb.select().from(waitlistEntries).where(eq(waitlistEntries.eventId, draft.id)),
+      ).toEqual([]);
+
+      const joined = await joinWaitlist(httpDb, { userId, eventId: live.id, requestedQty: 1 });
+      expect(joined.created).toBe(true);
+      await setEventPublished(httpDb, live.id, false);
+      const stillWaiting = await httpDb.query.waitlistEntries.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, joined.entry.id),
+      });
+      expect(stillWaiting?.status).toBe("WAITING");
+
+      const again = await joinWaitlist(httpDb, { userId, eventId: live.id, requestedQty: 1 });
+      expect(again.created).toBe(false);
+      expect(again.entry.id).toBe(joined.entry.id);
+    } finally {
+      await httpDb.delete(waitlistEntries).where(eq(waitlistEntries.userId, userId));
+      await httpDb.delete(users).where(eq(users.id, userId));
+      await deleteEvent(httpDb, draft.id, { skipBucket: true });
+      await deleteEvent(httpDb, live.id, { skipBucket: true });
+      await deletePartner(httpDb, partner.id, { skipBucket: true });
     }
   });
 });

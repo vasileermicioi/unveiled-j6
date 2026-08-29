@@ -149,6 +149,7 @@ No per-variant rows or columns — the five filenames are a fixed, universal con
 | `subtitle_languages` | text[], nullable | Unique uppercase ISO 639-1 codes (e.g. `{DE,EN,SW}`) when `has_subtitles` is true — broader than spoken-event `EVENT_LANGUAGES`; MUST be null when `has_subtitles` is false. |
 | `lat`, `lng` | numeric, nullable | System-derived from **structured** geocode (`street` + `house_number` + `zip_code`; `address_line2` excluded) for map display only — not admin-authored. Null when geocode soft-fails; MUST NOT store invented default-center coordinates |
 | ~~`map_zoom`~~ | — | **Decided cut:** admin zoom authoring removed; maps use a UI default zoom. Column dropped. |
+| `published` | boolean, not null | Visibility flag. Column default is `false` (draft until an admin publishes). `0031_unpublished_backfill` set existing rows to `false`. Admin `getEventById` / `listEvents` return drafts. Public `getPublicEventById` returns null when unpublished (same 404 as missing). Member feed, map, saved-upcoming, sitemap, booking, waitlist, and save require `true`. Unpublish does **not** delete the row, cancel bookings, or drop featured membership. Btree index `events (published, date_time)`. |
 | `created_at` / `updated_at` | timestamptz | |
 
 ---
@@ -175,9 +176,10 @@ Admin-curated Discover featured list (join table; no duplicated event payload).
 |---|---|---|
 | `event_id` | FK → `events.id`, PK | One featured row per event; **ON DELETE CASCADE** |
 | `sort_order` | integer | Append on add; Discover/admin order by `sort_order` then `date_time` |
+| `published` | boolean, not null | Legacy featured-membership flag (column retained). Admin no longer exposes featured publish/unpublish. New rows and existing data default to `false`. Discover ignores this flag and requires catalog `events.published` only. |
 | `created_at` | timestamptz | |
 
-Removing a featured row MUST NOT delete the underlying `events` row. Full Discover/browse product behavior is documented with the Featured Discover feature steps.
+Removing a featured row MUST NOT delete the underlying `events` row. Full Discover/browse product behavior is documented with the Featured Discover feature steps. Unpublishing a catalog event MUST NOT drop this row.
 
 ---
 
@@ -189,9 +191,10 @@ Admin-curated Discover Partner venues list (join table; no duplicated partner pa
 |---|---|---|
 | `partner_id` | FK → `partners.id`, PK | One featured row per partner; **ON DELETE CASCADE** |
 | `sort_order` | integer | Append on add; Discover/admin order by `sort_order` then partner name |
+| `published` | boolean, not null | Legacy featured-membership flag (column retained). Admin no longer exposes featured publish/unpublish. New rows and existing data default to `false`. Discover Partner venues shows every featured row. There is no `partners.published` column. |
 | `created_at` | timestamptz | |
 
-Removing a featured row MUST NOT delete the underlying `partners` row. Discover displays up to 8 by `sort_order`; admin may hold a longer curated list. Empty curated list hides the Partner venues section on Discover.
+Removing a featured row MUST NOT delete the underlying `partners` row. Discover displays up to 8 by `sort_order`; admin may hold a longer curated list. Empty featured list hides the Partner venues section on Discover.
 
 ---
 

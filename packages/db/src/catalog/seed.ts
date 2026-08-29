@@ -11,9 +11,9 @@ import { partners } from "../schema/partners";
 import { waitlistEntries } from "../schema/waitlist-entries";
 import { DEMO_DISCOVERY_TITLES, DEMO_PROMO_CODES } from "./demo-discovery-titles";
 import { addEventGalleryImages } from "./event-gallery-images";
-import { countEvents, createEvent, listEvents } from "./events";
-import { addFeaturedEvent } from "./featured-events";
-import { addFeaturedPartner } from "./featured-partners";
+import { countEvents, createEvent, listEvents, setEventPublished } from "./events";
+import { addFeaturedEvent, setFeaturedEventPublished } from "./featured-events";
+import { addFeaturedPartner, setFeaturedPartnerPublished } from "./featured-partners";
 import { deleteImageRecord, persistPrebuiltImage } from "./images";
 import { countPartners, createPartner, listPartners } from "./partners";
 import { getDemoCatalog, readDemoSeedPrebuilt } from "./seed-data";
@@ -186,6 +186,7 @@ async function seedDemoVoucherRedemptionEvents(
     subtitleLanguages: ["EN"],
     skipUpload: options.skipBucket,
   });
+  await setEventPublished(db, promoEvent.id, true);
   await appendPromoCodes(db, promoEvent.id, [...DEMO_PROMO_CODES]);
   await sleep(SEED_IMAGE_PAUSE_MS);
 
@@ -209,6 +210,7 @@ async function seedDemoVoucherRedemptionEvents(
     languages: ["de", "en"],
     skipUpload: options.skipBucket,
   });
+  await setEventPublished(db, pdfEvent.id, true);
 
   const pdfItems: { objectKey: string; originalFilename: string; pageLabel: string }[] = [];
   for (let i = 1; i <= DEMO_VOUCHER_PDF_COUNT; i++) {
@@ -241,7 +243,7 @@ async function seedDemoLocaleCopyEvent(
   await sleep(SEED_IMAGE_PAUSE_MS);
   const dateTime = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000);
 
-  await createEvent(db, {
+  const localeEvent = await createEvent(db, {
     partnerId,
     titleDe: DEMO_DISCOVERY_TITLES.localeCopyDe,
     titleEn: DEMO_DISCOVERY_TITLES.localeCopyEn,
@@ -264,6 +266,7 @@ async function seedDemoLocaleCopyEvent(
     languages: ["de", "en"],
     skipUpload: options.skipBucket,
   });
+  await setEventPublished(db, localeEvent.id, true);
 }
 
 /** Idempotent: add the bilingual demo event on existing catalogs that predate this seed. */
@@ -306,6 +309,7 @@ export async function runDemoSeed(
 
     for (const eventInput of entry.events) {
       const created = await createEvent(db, { ...eventInput, partnerId: partner.id });
+      await setEventPublished(db, created.id, true);
       createdByTitle.set(created.title, created.id);
       // DEMO_SOLD_OUT_WAITLIST: force zero remaining for Phase 7 waitlist demos
       if (created.title === DEMO_DISCOVERY_TITLES.soldOutWaitlist) {
@@ -319,6 +323,7 @@ export async function runDemoSeed(
     const eventId = createdByTitle.get(title);
     if (eventId) {
       await addFeaturedEvent(db, eventId);
+      await setFeaturedEventPublished(db, eventId, true);
     }
   }
 
@@ -333,6 +338,7 @@ export async function runDemoSeed(
       : Math.min(DEMO_FEATURED_PARTNER_LIMIT, createdPartners.length - 1);
   for (const partner of featuredPartnerCandidates.slice(0, maxFeaturedPartners)) {
     await addFeaturedPartner(db, partner.id);
+    await setFeaturedPartnerPublished(db, partner.id, true);
   }
 
   const galleryHostId = createdByTitle.get(DEMO_GALLERY_HOST_TITLE);

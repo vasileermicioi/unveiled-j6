@@ -99,6 +99,8 @@ export const events = pgTable(
     subtitleLanguages: text("subtitle_languages").array(),
     lat: numeric("lat"),
     lng: numeric("lng"),
+    /** Draft until an admin publishes. Default and existing rows are unpublished (`false`). */
+    published: boolean("published").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
@@ -124,6 +126,7 @@ export const events = pgTable(
     index("events_date_time_idx").on(table.dateTime),
     index("events_date_time_partner_id_idx").on(table.dateTime, table.partnerId),
     index("events_date_time_category_idx").on(table.dateTime, table.category),
+    index("events_published_date_time_idx").on(table.published, table.dateTime),
   ],
 );
 

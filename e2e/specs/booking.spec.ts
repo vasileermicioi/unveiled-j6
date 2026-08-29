@@ -26,6 +26,7 @@ import {
   createPricedSlotEvent,
   ensureEventHasCapacity,
   seedGrandfatheredPromoBooking,
+  setE2eEventPublished,
 } from "../fixtures/catalog";
 import { completeOnboardingWizard } from "../fixtures/onboarding";
 import {
@@ -607,5 +608,33 @@ test.describe("booking.feature", () => {
       true,
       "No email capture harness in Playwright; assert via Resend dashboard on staging smoke (DEPLOYMENT.md Phase 6)",
     );
+  });
+
+  test("Scenario: Book unpublished fails", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required for unpublished booking fixture");
+    const event = await createSecretCodeE2eEvent({ published: false });
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    const response = await page.goto(`/${locale}/events/${event.id}/book`);
+    expect([404, 302, 301]).toContain(response?.status() ?? 0);
+    await expect(
+      page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }),
+    ).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: /bestätigt|confirmed/i })).toHaveCount(0);
+  });
+
+  test("Scenario: Existing booking remains after unpublish", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required for unpublish-after-book fixture");
+    const event = await createSecretCodeE2eEvent();
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email);
+    await page.goto(`/${locale}/events/${event.id}/book`);
+    await page.getByRole("button", { name: /buchung bestätigen|confirm booking/i }).click();
+    await expect(page).toHaveURL(/\/book\/confirm/, { timeout: 15_000 });
+    await setE2eEventPublished(event.id, false);
+    await page.goto(`/${locale}/bookings`);
+    await expect(page.getByText(event.title)).toBeVisible({ timeout: 15_000 });
+    const bookAgain = await page.goto(`/${locale}/events/${event.id}/book`);
+    expect(bookAgain?.status()).toBe(404);
   });
 });

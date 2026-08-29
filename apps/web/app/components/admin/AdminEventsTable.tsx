@@ -1,10 +1,11 @@
-import { Paragraph, Surface, Table } from "@heroui/react";
+import { Chip, Link, Paragraph, Surface, Table } from "@heroui/react";
 import type { Event, EventSort } from "@unveiled/db";
 
-import { formatAdminLanguageCode, getAdminCopy } from "../../lib/admin-content";
+import { getAdminCopy } from "../../lib/admin-content";
 import { formatEventDateTime, formatEventDateTimeWithCount } from "../../lib/admin-event-form";
 import {
   type AdminListSortDir,
+  type AdminPublishedFilter,
   buildAdminListQueryString,
   effectiveEventListSort,
   nextEventColumnSort,
@@ -14,7 +15,12 @@ import { localizedPath } from "../../lib/locale";
 
 import { AdminSortableColumnHeader } from "./AdminSortableColumnHeader";
 import { AdminTableActions } from "./AdminTableActions";
-import { adminEventBookingsPath, adminEventGalleryPath } from "./admin-tabs";
+import {
+  adminEventBookingsPath,
+  adminEventGalleryPath,
+  adminEventPublishPath,
+  adminEventUnpublishPath,
+} from "./admin-tabs";
 
 type AdminEventsTableProps = {
   locale: Locale;
@@ -25,6 +31,7 @@ type AdminEventsTableProps = {
     title?: string;
     partner?: string;
     language?: string;
+    published?: AdminPublishedFilter;
     q?: string;
     sort?: EventSort;
     dir?: AdminListSortDir;
@@ -41,30 +48,12 @@ function sortHref(
     title: query.title,
     partner: query.partner,
     language: query.language,
+    published: query.published,
     q: query.q,
     sort: next.sort,
     dir: next.dir,
     page: 1,
   })}`;
-}
-
-function formatSpokenLanguages(event: Event, locale: Locale, independentLabel: string): string {
-  if (event.languageIndependent) {
-    return independentLabel;
-  }
-  const codes = event.languages ?? [];
-  if (codes.length === 0) {
-    return "—";
-  }
-  return codes.map((code) => formatAdminLanguageCode(locale, code)).join(", ");
-}
-
-function formatSubtitleLanguage(event: Event, locale: Locale): string {
-  const codes = event.subtitleLanguages ?? [];
-  if (!event.hasSubtitles || codes.length === 0) {
-    return "—";
-  }
-  return codes.map((code) => formatAdminLanguageCode(locale, code)).join(", ");
 }
 
 export function AdminEventsTable({
@@ -101,8 +90,6 @@ export function AdminEventsTable({
               href={sortHref(listPath, query, "partner")}
               label={copy.tablePartner}
             />
-            <Table.Column isRowHeader>{copy.tableLanguages}</Table.Column>
-            <Table.Column isRowHeader>{copy.tableSubtitles}</Table.Column>
             <AdminSortableColumnHeader
               activeDir={activeDir}
               activeSort={activeSort}
@@ -123,6 +110,13 @@ export function AdminEventsTable({
               column="capacity"
               href={sortHref(listPath, query, "capacity")}
               label={copy.tableCapacity}
+            />
+            <AdminSortableColumnHeader
+              activeDir={activeDir}
+              activeSort={activeSort}
+              column="published"
+              href={sortHref(listPath, query, "published")}
+              label={copy.eventsPublishedFilter}
             />
             <Table.Column className="admin-table__actions-column" isRowHeader>
               {copy.tableActions}
@@ -151,10 +145,6 @@ export function AdminEventsTable({
                 <Table.Cell>{event.title}</Table.Cell>
                 <Table.Cell>{event.partnerName}</Table.Cell>
                 <Table.Cell>
-                  {formatSpokenLanguages(event, locale, copy.languageIndependentLabel)}
-                </Table.Cell>
-                <Table.Cell>{formatSubtitleLanguage(event, locale)}</Table.Cell>
-                <Table.Cell>
                   {formatEventDateTimeWithCount(
                     event.dateTime,
                     locale,
@@ -164,6 +154,25 @@ export function AdminEventsTable({
                 <Table.Cell>{formatEventDateTime(event.createdAt, locale)}</Table.Cell>
                 <Table.Cell>
                   {event.remainingCapacity}/{event.totalCapacity}
+                </Table.Cell>
+                <Table.Cell>
+                  <Surface className="flex flex-wrap items-center gap-2" variant="transparent">
+                    <Chip variant="tertiary">
+                      <Chip.Label>
+                        {event.published ? copy.statusPublished : copy.statusDraft}
+                      </Chip.Label>
+                    </Chip>
+                    <Link
+                      className="link"
+                      href={
+                        event.published
+                          ? adminEventUnpublishPath(locale, event.id)
+                          : adminEventPublishPath(locale, event.id)
+                      }
+                    >
+                      {event.published ? copy.unpublishAction : copy.publishAction}
+                    </Link>
+                  </Surface>
                 </Table.Cell>
                 <Table.Cell className="admin-table__actions-cell">
                   <AdminTableActions

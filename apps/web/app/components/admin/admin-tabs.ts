@@ -46,6 +46,14 @@ export function adminEventBookingsCancelAllPath(locale: Locale, eventId: string)
   return localizedPath(locale, `admin/events/${eventId}/bookings/cancel-all`);
 }
 
+export function adminEventPublishPath(locale: Locale, eventId: string): string {
+  return localizedPath(locale, `admin/events/${eventId}/publish`);
+}
+
+export function adminEventUnpublishPath(locale: Locale, eventId: string): string {
+  return localizedPath(locale, `admin/events/${eventId}/unpublish`);
+}
+
 export function adminEventGalleryPath(locale: Locale, eventId: string): string {
   return localizedPath(locale, `admin/events/${eventId}/gallery`);
 }

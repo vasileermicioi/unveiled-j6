@@ -10,7 +10,13 @@ import {
 } from "../../lib/admin-event-wizard";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
-import { AdminPageShell, adminEventGalleryPath, adminEventsPath } from "./AdminPageShell";
+import {
+  AdminPageShell,
+  adminEventGalleryPath,
+  adminEventPublishPath,
+  adminEventsPath,
+  adminEventUnpublishPath,
+} from "./AdminPageShell";
 import { eventListPath } from "./EventAdminForm";
 import type { EventFormDefaults, PartnerOption } from "./event-admin-types";
 
@@ -43,6 +49,16 @@ export function EventAdminWizardPage({
       actions={
         eventId ? (
           <Surface className="flex flex-wrap items-center gap-2" variant="transparent">
+            <Link
+              className="link"
+              href={
+                defaults?.published
+                  ? adminEventUnpublishPath(locale, eventId)
+                  : adminEventPublishPath(locale, eventId)
+              }
+            >
+              {defaults?.published ? copy.unpublishAction : copy.publishAction}
+            </Link>
             <Link
               className="button button--secondary button--md"
               href={adminEventGalleryPath(locale, eventId)}

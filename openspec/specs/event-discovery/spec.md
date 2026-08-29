@@ -6,7 +6,7 @@ Phase 5 member discovery: saved-events persistence and member feed / saved-upcom
 
 ### Requirement: Saved events persistence
 
-The system SHALL store member bookmarks in a `saved_events` join table keyed by `(user_id, event_id)` with `created_at`, referential integrity to `users` and `events`, and an index on `user_id`. The `@unveiled/db` package SHALL expose idempotent `saveEvent` / `unsaveEvent` helpers plus `isEventSaved` and `listSavedEventIds`.
+The system SHALL store member bookmarks in a `saved_events` join table keyed by `(user_id, event_id)` with `created_at`, referential integrity to `users` and `events`, and an index on `user_id`. The `@unveiled/db` package SHALL expose idempotent `saveEvent` / `unsaveEvent` helpers plus `isEventSaved` and `listSavedEventIds`. `saveEvent` SHALL reject an unpublished event and SHALL NOT create a `saved_events` row. `unsaveEvent` SHALL remain unchanged (including for unpublished events). Existing save rows SHALL remain if the event is later unpublished.
 
 #### Scenario: Migration creates saved_events
 
@@ -28,9 +28,13 @@ The system SHALL store member bookmarks in a `saved_events` join table keyed by 
 - **WHEN** a user unsaves an event that is not saved
 - **THEN** the operation completes without error and no row exists
 
+#### Scenario: Save rejects unpublished
+- **WHEN** a member saves an unpublished event
+- **THEN** no `saved_events` row is created
+
 ### Requirement: Member feed query contract
 
-The system SHALL list discoverable events for the member feed using Europe/Berlin day boundaries, including an event when **any** of its `date_times` is still upcoming (`>= now`) — equivalently, when the denormalized primary `date_time >= now` after write-time sync — and SHALL support filters `title`, `category`, `partnerId`, `from`, `to`, and `page` (fixed page size 24) with stable ordering by denormalized `date_time` (next upcoming) then `id`, returning both the page of items and a total count matching the same filters. When `from` and/or `to` are provided, the inclusive Europe/Berlin calendar range SHALL match events that have **at least one** `date_times` element inside that window, SHALL still exclude events with no upcoming occurrence, and the effective range start SHALL NOT be before Berlin today (a requested `from` earlier than today is treated as today).
+The system SHALL list discoverable events for the member feed using Europe/Berlin day boundaries, including an event when **any** of its `date_times` is still upcoming (`>= now`) — equivalently, when the denormalized primary `date_time >= now` after write-time sync — and SHALL include only events with `published = true`. Filters `title`, `category`, `partnerId`, `from`, `to`, and `page` (fixed page size 24) and ordering by denormalized `date_time` then `id` remain as today. The query SHALL return both the page of items and a total count matching the same filters. When `from` and/or `to` are provided, the inclusive Europe/Berlin calendar range SHALL match events that have **at least one** `date_times` element inside that window, SHALL still exclude events with no upcoming occurrence, and the effective range start SHALL NOT be before Berlin today (a requested `from` earlier than today is treated as today). The same published and date gates SHALL apply to `listMemberFeedEvents` and `listMemberFeedMapEvents`.
 
 #### Scenario: Default scope is all upcoming
 
@@ -90,6 +94,11 @@ The system SHALL list discoverable events for the member feed using Europe/Berli
 
 - **WHEN** the feed is requested with `page` greater than 1
 - **THEN** results use `LIMIT 24` and `OFFSET (page - 1) * 24` with `ORDER BY date_time ASC, id ASC`
+
+#### Scenario: Unpublished events are excluded from the member feed
+- **WHEN** an upcoming event has `published = false`
+- **THEN** it does not appear in `listMemberFeedEvents` or `listMemberFeedMapEvents`
+- **AND** a published sibling with the same dates still appears
 
 ### Requirement: Event feed URL query includes title
 
@@ -157,7 +166,7 @@ The Browse events category `<select>` SHALL list the event-category taxonomy lab
 
 ### Requirement: Saved upcoming list query
 
-The system SHALL list a user's saved events that are still upcoming (any `date_times` element `>= now`, equivalently denormalized `date_time >= now`), ordered by next upcoming `date_time` then `id`, without applying the today-only default.
+The system SHALL list a user's saved events that are still upcoming (any `date_times` element `>= now`, equivalently denormalized `date_time >= now`) and `published = true`, ordered by next upcoming `date_time` then `id`, without applying the today-only default. Existing save rows for an event that is later unpublished SHALL remain in `saved_events` but SHALL be omitted from this list until the event is republished.
 
 #### Scenario: Saved upcoming ignores today default
 
@@ -173,6 +182,10 @@ The system SHALL list a user's saved events that are still upcoming (any `date_t
 
 - **WHEN** a saved event’s earliest `date_times` element is past but a later element is still upcoming
 - **THEN** it appears in the saved upcoming list ordered by its next upcoming instant
+
+#### Scenario: Saved list hides unpublished
+- **WHEN** a member has a save row for an event that is now unpublished
+- **THEN** `listSavedUpcomingEvents` omits that event
 
 ### Requirement: Authenticated events feed page
 
@@ -487,6 +500,15 @@ Discover (`/:locale/discover`) SHALL render the Partner venues logo marquee from
 - **GIVEN** no featured partners exist
 - **WHEN** a guest visits Discover
 - **THEN** the Partner venues section is not shown
+
+### Requirement: Discover lists only published featured rows
+Discover (`/:locale/discover`) SHALL load featured events and featured partners with `publishedOnly: true`. A featured event SHALL appear only when both `featured_events.published` and `events.published` are true. A featured partner SHALL appear only when `featured_partners.published` is true. Past featured events that are published SHALL still appear (Discover’s include-past rule is unchanged). Admin featured pages SHALL keep using the unfiltered lists.
+
+#### Scenario: Discover omits unpublished featured
+- **WHEN** a guest visits Discover
+- **AND** a featured event or featured partner is unpublished (or the featured event’s catalog event is unpublished)
+- **THEN** that row does not appear on Discover
+- **AND** published featured siblings still appear, including past published featured events
 
 ### Requirement: Member event list requires active subscription
 
@@ -1172,4 +1194,33 @@ Product Gherkin MAY include a scenario that a booking-eligible member on `/de/ev
 - **WHEN** a booking-eligible member on `/de/events` applies an event-name filter that matches only `title_en`
 - **THEN** the event is included in the feed
 - **AND** the EventCard title shown is the German title
+
+### Requirement: Canonical discovery Gherkin hides unpublished catalog and featured
+`docs/product/features/event-discovery.feature` SHALL add the titles below (do not invent parallel titles for the same behavior). Existing Discover/Browse scenarios that already assume seeded published rows SHALL keep their titles; their fixtures SHALL publish catalog events and featured rows when asserting Discover. Playwright `e2e/specs/event-discovery.spec.ts` SHALL map 1:1. Public unpublished detail SHALL render the same not-found page as a missing id (HTTP 404). Selectors SHALL be proximity/layout only. Europe/Berlin for displayed dates. The system SHALL NOT add `@skip-no-ui` for these MVP scenarios.
+
+#### Scenario: Unpublished featured event stays off Discover
+- **WHEN** a featured event row is unpublished (or the catalog event is unpublished)
+- **THEN** a guest on `/:locale/discover` does not see that event
+
+#### Scenario: Unpublished featured partner stays off Discover
+- **WHEN** a featured partner row is unpublished
+- **THEN** a guest on `/:locale/discover` does not see that partner in Partner venues
+
+#### Scenario: Unpublished events are hidden from Browse events
+- **WHEN** a booking-eligible member views `/events` or `/events/map`
+- **THEN** unpublished events do not appear
+
+#### Scenario: Published featured event with unpublished catalog stays off Discover
+- **WHEN** a featured event row is published and the catalog event is unpublished
+- **THEN** a guest on `/:locale/discover` does not see that event
+
+#### Scenario: Unpublished event public detail is not found
+- **WHEN** a guest opens `/:locale/events/:id` for an unpublished event
+- **THEN** the response is the same not-found page as a missing event
+- **AND** the unpublished title is not shown in public metadata
+
+#### Scenario: Saved list hides unpublished events
+- **WHEN** a member has a save row for an event that is now unpublished
+- **THEN** `/saved` omits that event
+- **AND** the `saved_events` row remains
 

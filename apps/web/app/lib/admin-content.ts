@@ -55,6 +55,12 @@ export type AdminCopy = {
   eventsPartnerFilter: string;
   eventsLanguageFilter: string;
   eventsLanguageAll: string;
+  eventsPublishedFilter: string;
+  eventsPublishedAll: string;
+  statusPublished: string;
+  statusDraft: string;
+  publishAction: string;
+  unpublishAction: string;
   resetFilters: string;
   tableLogo: string;
   tableName: string;
@@ -318,6 +324,23 @@ export type AdminCopy = {
   deleteEventTitle: string;
   deleteEventBody: (title: string, date: string) => string;
   deleteConfirm: string;
+  publishEventTitle: string;
+  publishEventBody: (title: string, date: string) => string;
+  unpublishEventTitle: string;
+  unpublishEventBody: (title: string) => string;
+  publishFeaturedEventTitle: string;
+  publishFeaturedEventBody: (title: string) => string;
+  unpublishFeaturedEventTitle: string;
+  unpublishFeaturedEventBody: (title: string) => string;
+  publishFeaturedPartnerTitle: string;
+  publishFeaturedPartnerBody: (name: string) => string;
+  unpublishFeaturedPartnerTitle: string;
+  unpublishFeaturedPartnerBody: (name: string) => string;
+  publishConfirm: string;
+  unpublishConfirm: string;
+  okPublish: string;
+  okUnpublish: string;
+  featuredCatalogDraftNote: string;
   cancel: string;
   save: string;
   create: string;
@@ -555,6 +578,12 @@ const copy: Record<Locale, AdminCopy> = {
     eventsPartnerFilter: "Partnername",
     eventsLanguageFilter: "Sprache",
     eventsLanguageAll: "Alle Sprachen",
+    eventsPublishedFilter: "Status",
+    eventsPublishedAll: "Alle",
+    statusPublished: "Veröffentlicht",
+    statusDraft: "Entwurf",
+    publishAction: "Veröffentlichen",
+    unpublishAction: "Veröffentlichung aufheben",
     resetFilters: "Filter zurücksetzen",
     tableLogo: "Bild",
     tableName: "Name",
@@ -839,6 +868,29 @@ const copy: Record<Locale, AdminCopy> = {
     deleteEventTitle: "Event löschen",
     deleteEventBody: (title, date) => `Event „${title}" (${date}) endgültig löschen?`,
     deleteConfirm: "Löschen",
+    publishEventTitle: "Event veröffentlichen",
+    publishEventBody: (title, date) =>
+      `„${title}“ (${date}) veröffentlichen? Es erscheint danach auf Browse, wenn das Datum noch ansteht.`,
+    unpublishEventTitle: "Veröffentlichung aufheben",
+    unpublishEventBody: (title) =>
+      `„${title}“ von Browse nehmen? Das Event bleibt im Katalog. Bestehende Buchungen bleiben.`,
+    publishFeaturedEventTitle: "Empfohlenes Event veröffentlichen",
+    publishFeaturedEventBody: (title) =>
+      `„${title}“ auf Discover zeigen? Discover listet es nur, wenn auch das Katalog-Event veröffentlicht ist.`,
+    unpublishFeaturedEventTitle: "Empfohlenes Event zurückziehen",
+    unpublishFeaturedEventBody: (title) =>
+      `„${title}“ von Discover nehmen? Die Featured-Mitgliedschaft und das Katalog-Event bleiben.`,
+    publishFeaturedPartnerTitle: "Empfohlenen Partner veröffentlichen",
+    publishFeaturedPartnerBody: (name) => `„${name}“ unter Partner venues auf Discover zeigen?`,
+    unpublishFeaturedPartnerTitle: "Empfohlenen Partner zurückziehen",
+    unpublishFeaturedPartnerBody: (name) =>
+      `„${name}“ von Discover Partner venues nehmen? Der Partner bleibt im Katalog und auf der Featured-Liste.`,
+    publishConfirm: "Veröffentlichen",
+    unpublishConfirm: "Veröffentlichung aufheben",
+    okPublish: "Veröffentlichung gespeichert.",
+    okUnpublish: "Veröffentlichung aufgehoben.",
+    featuredCatalogDraftNote:
+      "Das Katalog-Event ist noch ein Entwurf. Discover zeigt die Karte erst, wenn beides veröffentlicht ist.",
     cancel: "Abbrechen",
     save: "Speichern",
     create: "Anlegen",
@@ -1098,6 +1150,12 @@ const copy: Record<Locale, AdminCopy> = {
     eventsPartnerFilter: "Partner name",
     eventsLanguageFilter: "Language",
     eventsLanguageAll: "All languages",
+    eventsPublishedFilter: "Status",
+    eventsPublishedAll: "All",
+    statusPublished: "Published",
+    statusDraft: "Draft",
+    publishAction: "Publish",
+    unpublishAction: "Unpublish",
     resetFilters: "Reset filters",
     tableLogo: "Image",
     tableName: "Name",
@@ -1376,6 +1434,29 @@ const copy: Record<Locale, AdminCopy> = {
     deleteEventTitle: "Delete event",
     deleteEventBody: (title, date) => `Permanently delete event “${title}” (${date})?`,
     deleteConfirm: "Delete",
+    publishEventTitle: "Publish event",
+    publishEventBody: (title, date) =>
+      `Publish “${title}” (${date})? It will appear on Browse when the date is still upcoming.`,
+    unpublishEventTitle: "Unpublish event",
+    unpublishEventBody: (title) =>
+      `Unpublish “${title}” from Browse? The event stays in the catalog. Existing bookings stay.`,
+    publishFeaturedEventTitle: "Publish featured event",
+    publishFeaturedEventBody: (title) =>
+      `Show “${title}” on Discover? Discover lists it only when the catalog event is also published.`,
+    unpublishFeaturedEventTitle: "Unpublish featured event",
+    unpublishFeaturedEventBody: (title) =>
+      `Remove “${title}” from Discover? Featured membership and the catalog event stay.`,
+    publishFeaturedPartnerTitle: "Publish featured partner",
+    publishFeaturedPartnerBody: (name) => `Show “${name}” under Partner venues on Discover?`,
+    unpublishFeaturedPartnerTitle: "Unpublish featured partner",
+    unpublishFeaturedPartnerBody: (name) =>
+      `Remove “${name}” from Discover Partner venues? The partner stays in the catalog and on the featured list.`,
+    publishConfirm: "Publish",
+    unpublishConfirm: "Unpublish",
+    okPublish: "Publish status saved.",
+    okUnpublish: "Unpublished.",
+    featuredCatalogDraftNote:
+      "The catalog event is still a draft. Discover shows the card only when both are published.",
     cancel: "Cancel",
     save: "Save",
     create: "Create",

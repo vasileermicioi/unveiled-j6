@@ -1,6 +1,7 @@
 import { Button, Form, Input, Label, Link, Surface, TextField } from "@heroui/react";
 
 import { getAdminCopy, getEventSubtitleLanguageOptions } from "../../lib/admin-content";
+import type { AdminPublishedFilter } from "../../lib/admin-list";
 import type { Locale } from "../../lib/locale";
 
 import { AdminFormSelect } from "./AdminFormSelect";
@@ -11,6 +12,7 @@ type AdminEventsListFiltersProps = {
   title: string;
   partner: string;
   language: string;
+  published?: AdminPublishedFilter;
   preserveParams?: Record<string, string>;
   resetHref?: string;
 };
@@ -21,6 +23,7 @@ export function AdminEventsListFilters({
   title,
   partner,
   language,
+  published,
   preserveParams,
   resetHref,
 }: AdminEventsListFiltersProps) {
@@ -63,6 +66,17 @@ export function AdminEventsListFilters({
         name="language"
         options={languageOptions}
         placeholder={copy.eventsLanguageAll}
+      />
+      <AdminFormSelect
+        className="w-full max-w-xs shrink-0 lg:w-52"
+        defaultSelectedKey={published ?? ""}
+        label={copy.eventsPublishedFilter}
+        name="published"
+        options={[
+          { id: "", label: copy.eventsPublishedAll },
+          { id: "yes", label: copy.statusPublished },
+          { id: "no", label: copy.statusDraft },
+        ]}
       />
       <Surface className="flex shrink-0 flex-wrap gap-2" variant="transparent">
         <Button className="button button--secondary button--md shrink-0" type="submit">

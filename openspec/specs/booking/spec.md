@@ -607,3 +607,30 @@ The Gherkin feature file and Playwright coverage (or a named deferral) SHALL cov
 
 - **WHEN** `bun run test:e2e` runs the Playwright file that maps to the sales-export Gherkin scenarios
 - **THEN** each new sales-export Scenario either passes with proximity/layout selectors or is recorded as a named env/harness deferral in the coverage matrix
+
+### Requirement: Unpublished events are not bookable
+`bookEvent` SHALL reject an unpublished event with the same not-found / not-bookable failure as a missing event (`EVENT_NOT_FOUND`). The transaction SHALL NOT write a booking or ledger row, decrement credits or capacity, or allocate redemption inventory. Existing `CONFIRMED` bookings SHALL remain. Idempotent retry of an already-created `(user_id, idempotency_key)` SHALL still return the original booking even if the event is later unpublished.
+
+#### Scenario: Book unpublished fails
+- **WHEN** a booking-eligible member posts a booking for an unpublished event
+- **THEN** no booking or ledger row is written
+
+#### Scenario: Existing confirmed booking survives unpublish
+- **WHEN** a member already has a `CONFIRMED` booking
+- **AND** the event is later unpublished
+- **THEN** that booking row remains `CONFIRMED`
+- **AND** a new booking for that event is rejected
+
+### Requirement: Canonical booking Gherkin rejects unpublished events
+`docs/product/features/booking.feature` SHALL add the titles below. Playwright `e2e/specs/booking.spec.ts` SHALL map 1:1. Booking an unpublished event SHALL fail as not found / not bookable (no booking or ledger row). An existing CONFIRMED booking SHALL remain after unpublish (no cancel, no refund). Direct `/:locale/events/:id/book` for a draft SHALL not leak a successful checkout. Env skips (`DATABASE_URL`, billing) MAY remain as named `test.skip` reasons. The system SHALL NOT add `@skip-no-ui` for these MVP scenarios.
+
+#### Scenario: Book unpublished fails
+- **WHEN** a booking-eligible member posts a booking for an unpublished event
+- **THEN** no booking or ledger row is written
+- **AND** they do not reach a booking confirmation
+
+#### Scenario: Existing booking remains after unpublish
+- **WHEN** a member already has a CONFIRMED booking
+- **AND** an admin later unpublishes that event
+- **THEN** the booking stays CONFIRMED on My Tickets
+- **AND** a new booking for that event is rejected

@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-08-29
+goal: Add published flags on events, featured_events, and featured_partners, and
+  enforce visibility/booking gates in @unveiled/db so catalog publish step 02
+  can be UI-only.

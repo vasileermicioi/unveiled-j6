@@ -229,3 +229,23 @@ The system SHALL implement Playwright coverage for `waitlist.feature` scenarios 
 #### Scenario: Admin waitlist Ladle stories load
 - **WHEN** Ladle is started after this change
 - **THEN** admin waitlist list and promote confirm stories are available without runtime errors
+
+### Requirement: Unpublished events are not waitlistable
+`joinWaitlist` SHALL reject an unpublished event with the same not-found failure as a missing event (`EVENT_NOT_FOUND`) and SHALL NOT create a waitlist row. Existing `WAITING` entries SHALL remain if the event is later unpublished. Promotion SHALL call `bookEvent` and therefore SHALL NOT create a booking for an unpublished event.
+
+#### Scenario: Join unpublished fails
+- **WHEN** a member joins the waitlist for an unpublished event
+- **THEN** no waitlist row is written
+
+#### Scenario: Existing waiting entry survives unpublish
+- **WHEN** a member already has a `WAITING` entry
+- **AND** the event is later unpublished
+- **THEN** that waitlist row remains
+- **AND** a new join for that event is rejected
+
+### Requirement: Canonical waitlist Gherkin rejects unpublished events
+`docs/product/features/waitlist.feature` SHALL add a one-liner that joining an unpublished event fails. Playwright `e2e/specs/waitlist.spec.ts` SHALL include the matching title. When the only honest assertion is domain-level (public detail 404 leaves no waitlist CTA), the titled test MAY `test.skip` pointing at the existing `joinWaitlist` unpublished package test. The system SHALL NOT add `@skip-no-ui`.
+
+#### Scenario: Join unpublished fails
+- **WHEN** a member joins the waitlist for an unpublished event
+- **THEN** no waitlist row is written

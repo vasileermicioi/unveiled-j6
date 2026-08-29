@@ -566,6 +566,8 @@ export type CreateEventOverrides = {
   /** ISO 639-1 codes to check in the subtitle multi-select. Defaults to `["EN"]` when hasSubtitles. */
   subtitleLanguages?: string[];
   imageCredit?: string;
+  /** When true, confirm publish after create so public/member surfaces can see the event. */
+  publish?: boolean;
 };
 
 export async function createEventViaUI(
@@ -663,15 +665,21 @@ export async function createEventViaUI(
   }
 
   await page.getByRole("button", { name: /^anlegen$|^create$/i }).click();
-  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?$`), { timeout: 90_000 });
-  await expect(page.getByText(title).first()).toBeVisible({ timeout: 15_000 });
-
-  const row = page.getByRole("row").filter({ hasText: title });
-  const editHref = await row.getByRole("link", { name: /bearbeiten|edit/i }).getAttribute("href");
-  const eventId = editHref?.match(/\/events\/([^/]+)\/edit/)?.[1];
+  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/[^/]+/publish/?$`), {
+    timeout: 90_000,
+  });
+  const eventId = page.url().match(/\/events\/([^/]+)\/publish/)?.[1];
   if (!eventId) {
-    throw new Error(`Could not parse event id from edit href: ${editHref}`);
+    throw new Error(`Could not parse event id from publish URL: ${page.url()}`);
   }
+
+  if (overrides.publish) {
+    await page.getByRole("button", { name: /^veröffentlichen$|^publish$/i }).click();
+  } else {
+    await page.getByRole("link", { name: /^abbrechen$|^cancel$/i }).click();
+  }
+  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?`), { timeout: 30_000 });
+  await expect(page.getByText(title).first()).toBeVisible({ timeout: 15_000 });
 
   return {
     title,
@@ -679,6 +687,56 @@ export async function createEventViaUI(
     eventId,
     detailPath: `/${locale}/events/${eventId}`,
   };
+}
+
+/** After a successful create POST, dismiss the publish confirm and land on the events list. */
+export async function dismissCreatePublishConfirmViaUI(page: Page, locale: Locale): Promise<void> {
+  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/[^/]+/publish/?$`), {
+    timeout: 90_000,
+  });
+  await page.getByRole("link", { name: /^abbrechen$|^cancel$/i }).click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?`), { timeout: 30_000 });
+}
+
+export async function publishEventViaUI(
+  page: Page,
+  locale: Locale,
+  eventId: string,
+): Promise<void> {
+  await page.goto(`/${locale}/admin/events/${eventId}/publish`);
+  await expect(
+    page.getByRole("heading", { name: /event veröffentlichen|publish event/i }),
+  ).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.getByRole("button", { name: /^veröffentlichen$|^publish$/i }).click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?`), { timeout: 30_000 });
+}
+
+export async function unpublishEventViaUI(
+  page: Page,
+  locale: Locale,
+  eventId: string,
+): Promise<void> {
+  await page.goto(`/${locale}/admin/events/${eventId}/unpublish`);
+  await expect(
+    page.getByRole("heading", { name: /veröffentlichung aufheben|unpublish event/i }),
+  ).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("button", { name: /veröffentlichung aufheben|^unpublish$/i }).click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/?`), { timeout: 30_000 });
+}
+
+/** After featured-add POST, land on the featured list (membership is live immediately). */
+export async function finishFeaturedAddViaUI(
+  page: Page,
+  locale: Locale,
+  kind: "event" | "partner",
+): Promise<void> {
+  const listRe =
+    kind === "event"
+      ? new RegExp(`/${locale}/admin/featured/?`)
+      : new RegExp(`/${locale}/admin/featured-partners/?`);
+  await expect(page).toHaveURL(listRe, { timeout: 30_000 });
 }
 
 export async function deleteEventViaUI(
@@ -702,25 +760,10 @@ export async function expectEventOnDiscover(
   eventTitle: string,
   partnerName?: string,
 ): Promise<void> {
-  // Discover shows admin-featured upcoming only — assert via Discover when featured;
-  // otherwise fall back to admin catalog (create flows do not auto-feature).
   await page.goto(`/${locale}/discover`);
-  const onDiscover = page.getByText(eventTitle);
-  if ((await onDiscover.count()) > 0) {
-    await expect(onDiscover.first()).toBeVisible({ timeout: 10_000 });
-    if (partnerName) {
-      await expect(page.getByText(partnerName).first()).toBeVisible();
-    }
-    return;
-  }
-
-  // Fallback: event remains in admin catalog even when not featured.
-  await page.goto(`/${locale}/admin/events`);
   await expect(page.getByText(eventTitle).first()).toBeVisible({ timeout: 15_000 });
   if (partnerName) {
-    await expect(
-      page.getByRole("row").filter({ hasText: eventTitle }).getByText(partnerName).first(),
-    ).toBeVisible();
+    await expect(page.getByText(partnerName).first()).toBeVisible();
   }
 }
 

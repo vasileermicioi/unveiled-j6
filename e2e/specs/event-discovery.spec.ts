@@ -7,13 +7,16 @@ import { expect, type Locale, test } from "../fixtures/base";
 import { activateMemberForBooking, hasDatabaseUrl } from "../fixtures/billing";
 import {
   createPricedSlotEvent,
+  createSecretCodeE2eEvent,
   E2E_SAMPLE_OPENING_HOURS,
   ensureDemoEventGallery,
   ensureDemoFeaturedPartnersSplit,
   ensureDemoFeaturedSplit,
+  ensureE2eFeaturedEvent,
   ensureEventHasCapacity,
   getEventIdByTitle,
   getPartnerIdByName,
+  setE2eEventPublished,
   withEventPrimaryCredit,
   withGalleryImageCredit,
   withPartnerBarrierFree,
@@ -1026,5 +1029,67 @@ test.describe("event-discovery.feature", () => {
       .getByRole("link", { name: /events entdecken|browse events/i });
     await expect(browseNav).toBeVisible({ timeout: 15_000 });
     await expect(browseNav).toHaveAttribute("href", new RegExp(`/${locale}/events`));
+  });
+
+  test("Scenario: Unpublished featured event stays off Discover", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required for unpublished featured fixture");
+    const event = await createSecretCodeE2eEvent({ published: false });
+    await ensureE2eFeaturedEvent(event.id, true);
+    await page.goto(`/${locale}/discover`);
+    await expect(page.getByText(event.title)).toHaveCount(0);
+  });
+
+  test("Scenario: Unpublished events are hidden from Browse events", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required for unpublished browse fixture");
+    const event = await createSecretCodeE2eEvent({ published: false });
+    await loginMember(page, locale);
+    await page.goto(`/${locale}/events`);
+    await expect(page.getByRole("main").getByText(event.title)).toHaveCount(0);
+    await page.goto(`/${locale}/events/map`);
+    await expect(page.getByRole("main").getByText(event.title)).toHaveCount(0);
+  });
+
+  test("Scenario: Published featured event with unpublished catalog stays off Discover", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required for dual-flag featured fixture");
+    const event = await createSecretCodeE2eEvent({ published: false });
+    await ensureE2eFeaturedEvent(event.id, true);
+    await setE2eEventPublished(event.id, false);
+    await page.goto(`/${locale}/discover`);
+    await expect(page.getByText(event.title)).toHaveCount(0);
+  });
+
+  test("Scenario: Unpublished event public detail is not found", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required for unpublished public detail fixture");
+    const event = await createSecretCodeE2eEvent({ published: false });
+    const response = await page.goto(`/${locale}/events/${event.id}`);
+    expect(response?.status()).toBe(404);
+    await expect(
+      page.getByRole("heading", { name: /seite nicht gefunden|page not found/i }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: event.title })).toHaveCount(0);
+  });
+
+  test("Scenario: Saved list hides unpublished events", async ({ page, locale }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required for save-then-unpublish fixture");
+    const event = await createSecretCodeE2eEvent();
+    await loginMember(page, locale);
+    await page.goto(`/${locale}/events/${event.id}`);
+    const save = page.getByRole("button", { name: /^(merken|save)$/i }).first();
+    if ((await save.count()) > 0) {
+      await save.click();
+    } else {
+      await page.goto(`/${locale}/events?title=${encodeURIComponent(event.title)}`);
+      const bookmark = page.getByRole("button", { name: /^(merken|save)$/i }).first();
+      await expect(bookmark).toBeVisible({ timeout: 15_000 });
+      await bookmark.click();
+    }
+    await page.goto(`/${locale}/saved`);
+    await expect(page.getByText(event.title)).toBeVisible({ timeout: 15_000 });
+    await setE2eEventPublished(event.id, false);
+    await page.goto(`/${locale}/saved`);
+    await expect(page.getByText(event.title)).toHaveCount(0);
   });
 });

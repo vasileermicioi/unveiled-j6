@@ -15,7 +15,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Button, Link, Paragraph, Surface } from "@heroui/react";
+import { Button, Paragraph, Surface } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 
 import { adminFeaturedRemovePath } from "../components/admin/admin-tabs";

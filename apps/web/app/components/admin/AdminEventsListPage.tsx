@@ -1,9 +1,10 @@
-import { Link, Surface } from "@heroui/react";
+import { Link, Paragraph, Surface } from "@heroui/react";
 import type { Event, EventSort } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import {
   type AdminListSortDir,
+  type AdminPublishedFilter,
   buildAdminListQueryString,
   isDefaultEventListSort,
 } from "../../lib/admin-list";
@@ -23,12 +24,14 @@ type AdminEventsListPageProps = {
     title: string;
     partner: string;
     language: string;
+    published?: AdminPublishedFilter;
     page: number;
     limit: number;
     sort?: EventSort;
     dir?: AdminListSortDir;
   };
   total: number;
+  successMessage?: string | null;
 };
 
 export function AdminEventsListPage({
@@ -37,6 +40,7 @@ export function AdminEventsListPage({
   imageUrls,
   query,
   total,
+  successMessage = null,
 }: AdminEventsListPageProps) {
   const copy = getAdminCopy(locale);
   const listPath = `/${locale}/admin/events`;
@@ -44,12 +48,13 @@ export function AdminEventsListPage({
     title: query.title || undefined,
     partner: query.partner || undefined,
     language: query.language || undefined,
+    published: query.published,
     page: query.page,
     sort: query.sort,
     dir: query.dir,
   });
   const hasFilters =
-    Boolean(query.title || query.partner || query.language) ||
+    Boolean(query.title || query.partner || query.language || query.published) ||
     !isDefaultEventListSort(query.sort, query.dir);
   const preserveParams =
     query.sort && query.dir && !isDefaultEventListSort(query.sort, query.dir)
@@ -72,12 +77,16 @@ export function AdminEventsListPage({
       subtitle={copy.eventsSubtitle}
       title={copy.eventsTitle}
     >
+      {successMessage ? (
+        <Paragraph className="admin-flash admin-flash--success">{successMessage}</Paragraph>
+      ) : null}
       <AdminEventsListFilters
         action={listPath}
         language={query.language}
         locale={locale}
         partner={query.partner}
         preserveParams={preserveParams}
+        published={query.published}
         resetHref={hasFilters ? listPath : undefined}
         title={query.title}
       />
@@ -90,6 +99,7 @@ export function AdminEventsListPage({
           title: query.title,
           partner: query.partner,
           language: query.language,
+          published: query.published,
           sort: query.sort,
           dir: query.dir,
         }}
