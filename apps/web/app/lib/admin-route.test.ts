@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { CatalogValidationError } from "@unveiled/db";
 
+import {
+  adminEventPreviewBrowsePath,
+  adminEventPreviewDiscoverPath,
+  adminEventPreviewPath,
+} from "../components/admin/admin-tabs";
 import { mapCatalogErrorCode } from "./admin-content";
 import {
   adminListPageRedirectPath,
@@ -225,5 +230,22 @@ describe("admin-route helpers", () => {
     expect(
       mapCatalogError(new Error("S3_ENDPOINT, S3_REGION, S3_BUCKET are required"), "en"),
     ).toContain("not configured");
+  });
+
+  test("adminEventPreviewPath omits guest query and appends member", () => {
+    expect(adminEventPreviewPath("en", "evt-1")).toBe("/en/admin/events/evt-1/preview");
+    expect(adminEventPreviewPath("en", "evt-1", "guest")).toBe("/en/admin/events/evt-1/preview");
+    expect(adminEventPreviewPath("de", "evt-1", "member")).toBe(
+      "/de/admin/events/evt-1/preview?audience=member",
+    );
+  });
+
+  test("adminEventPreviewBrowsePath and Discover path are nested under preview", () => {
+    expect(adminEventPreviewBrowsePath("en", "evt-1")).toBe(
+      "/en/admin/events/evt-1/preview/browse",
+    );
+    expect(adminEventPreviewDiscoverPath("de", "evt-1")).toBe(
+      "/de/admin/events/evt-1/preview/discover",
+    );
   });
 });

@@ -8,7 +8,8 @@ export type AdminTableActionIcon =
   | "gallery"
   | "bookings"
   | "publish"
-  | "unpublish";
+  | "unpublish"
+  | "preview";
 
 export type AdminTableAction = {
   href: string;
@@ -25,6 +26,7 @@ const ICON_SRC: Record<AdminTableActionIcon, string> = {
   bookings: "/icons/admin-bookings.svg",
   publish: "/icons/admin-publish.svg",
   unpublish: "/icons/admin-unpublish.svg",
+  preview: "/icons/admin-preview.svg",
 };
 
 type AdminTableActionsProps = {

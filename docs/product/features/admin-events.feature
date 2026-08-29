@@ -476,3 +476,31 @@ Feature: Admin — Event Management
     Then the event remains on "/admin/events"
     And the featured row remains on "/admin/featured"
     And Discover omits the event until the catalog event is published again
+
+  Scenario: Preview draft detail
+    When I open "/:locale/admin/events/:id/preview" for an unpublished event
+    Then the preview page is available and shows the locale title
+    And a guest opening "/:locale/events/:id" sees the same not-found page as a missing event
+
+  Scenario: Preview does not book
+    When I am on the detail preview
+    Then the primary checkout control is Preview only / Nur Vorschau
+    And there is no book, waitlist, save, or login form POST from that page
+
+  Scenario: Preview browse card
+    When I open the browse preview for an unpublished event that is not featured
+    Then I see one event card with the locale title
+    And the page does not list other catalog events
+    And the card CTA stays on "/:locale/admin/events/:id/preview"
+
+  Scenario: Preview discover card
+    When I open the discover preview for an unpublished event that is not featured
+    Then I still see one Discover-styled event card with the locale title
+    And I see the live Discover section header copy
+    And live "/:locale/discover" does not list that draft
+
+  Scenario: Guest cannot open event preview
+    Given I have an unpublished event
+    When a guest opens "/:locale/admin/events/:id/preview"
+    Then they are sent to "/:locale/login?returnTo="
+    And the event body is not shown

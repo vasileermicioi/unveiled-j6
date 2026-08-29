@@ -75,6 +75,24 @@ export const Guest: Story = () => (
 Guest.storyName = "EventDetailPage / Guest";
 Guest.meta = wideMeta;
 
+/** Admin preview: guest chrome, inert CTA (no book/login/waitlist). */
+export const PreviewGuest: Story = () => (
+  <EventDetailPage
+    closeHref={`/${storyLocale}/admin/events`}
+    event={mockEvent}
+    locale={storyLocale}
+    maxQty={1}
+    partnerAttribution={storyPartnerAttribution}
+    preview={{
+      primaryHref: `/${storyLocale}/admin/events/${mockEvent.id}/preview`,
+      primaryLabel: "Preview only",
+    }}
+    viewer={{ kind: "guest" }}
+  />
+);
+PreviewGuest.storyName = "EventDetailPage / Preview guest";
+PreviewGuest.meta = wideMeta;
+
 /** Eligible member: credit total + date visible; no quantity stepper (one ticket). */
 export const Eligible: Story = () => (
   <EventDetailPage

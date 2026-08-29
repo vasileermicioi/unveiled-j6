@@ -18,6 +18,7 @@ import { AdminTableActions } from "./AdminTableActions";
 import {
   adminEventBookingsPath,
   adminEventGalleryPath,
+  adminEventPreviewPath,
   adminEventPublishPath,
   adminEventUnpublishPath,
 } from "./admin-tabs";
@@ -181,6 +182,11 @@ export function AdminEventsTable({
                         href: localizedPath(locale, `admin/events/${event.id}/edit`),
                         label: copy.editAction,
                         icon: "edit",
+                      },
+                      {
+                        href: adminEventPreviewPath(locale, event.id),
+                        label: copy.previewAction,
+                        icon: "preview",
                       },
                       {
                         href: adminEventBookingsPath(locale, event.id),

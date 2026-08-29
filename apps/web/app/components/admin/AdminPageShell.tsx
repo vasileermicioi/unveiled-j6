@@ -90,6 +90,7 @@ export {
   adminEventGalleryAddPath,
   adminEventGalleryPath,
   adminEventGalleryRemovePath,
+  adminEventPreviewPath,
   adminEventPublishPath,
   adminEventsPath,
   adminEventUnpublishPath,

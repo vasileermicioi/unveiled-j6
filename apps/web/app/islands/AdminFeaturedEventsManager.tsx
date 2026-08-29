@@ -15,7 +15,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Button, Paragraph, Surface } from "@heroui/react";
+import { Button, Link, Paragraph, Surface } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 
 import { adminFeaturedRemovePath } from "../components/admin/admin-tabs";
@@ -28,6 +28,8 @@ export type AdminFeaturedEventManagerItem = {
   dateLabel: string;
   thumbnailUrl: string | null;
   selectLabel: string;
+  previewHref: string;
+  previewLabel: string;
 };
 
 export type AdminFeaturedEventsManagerCopy = {
@@ -116,7 +118,18 @@ function SortableRow({ item, selected, imagePlaceholderLabel, onToggle }: Sortab
           </Paragraph>
         </Surface>
       )}
-      <Paragraph className="admin-featured-events__cell-title">{item.title}</Paragraph>
+      <Surface className="flex flex-col gap-1" variant="transparent">
+        <Paragraph className="admin-featured-events__cell-title">{item.title}</Paragraph>
+        <Link
+          className="link"
+          href={item.previewHref}
+          onMouseDown={stopDragGesture}
+          onPointerDown={stopDragGesture}
+          onTouchStart={stopDragGesture}
+        >
+          {item.previewLabel}
+        </Link>
+      </Surface>
       <Paragraph className="admin-featured-events__cell">{item.partnerName}</Paragraph>
       <Paragraph className="admin-featured-events__cell">{item.dateLabel}</Paragraph>
     </Surface>

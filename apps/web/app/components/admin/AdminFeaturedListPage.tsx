@@ -8,7 +8,7 @@ import type { Locale } from "../../lib/locale";
 
 import { AdminFormError } from "./AdminFormError";
 import { AdminPageShell } from "./AdminPageShell";
-import { adminFeaturedAddPath, adminFeaturedPath } from "./admin-tabs";
+import { adminEventPreviewPath, adminFeaturedAddPath, adminFeaturedPath } from "./admin-tabs";
 
 type AdminFeaturedListPageProps = {
   locale: Locale;
@@ -35,6 +35,8 @@ export function AdminFeaturedListPage({
     dateLabel: formatEventDateTimeWithCount(event.dateTime, locale, event.dateTimes?.length ?? 1),
     thumbnailUrl: imageUrls[event.id] ?? null,
     selectLabel: copy.featuredSelectLabel(event.title),
+    previewHref: adminEventPreviewPath(locale, event.id),
+    previewLabel: copy.previewAction,
   }));
 
   return (

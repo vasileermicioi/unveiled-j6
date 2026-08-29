@@ -65,6 +65,11 @@ type EventDetailPageProps = {
   heroCredit?: string | null;
   /** Hosting partner name + optional logo for DETAILS-card attribution. */
   partnerAttribution?: EventDetailPartnerAttribution;
+  /**
+   * Admin preview: replace book/login/waitlist CTAs with an inert link.
+   * Guest vs eligible chrome still follows `viewer`. Omit on public detail.
+   */
+  preview?: { primaryHref: string; primaryLabel: string };
 };
 
 export type EventDetailViewer =
@@ -489,6 +494,7 @@ export function EventDetailPage({
   galleryImages = [],
   heroCredit = null,
   partnerAttribution,
+  preview,
 }: EventDetailPageProps) {
   const eventCopy = resolveEventCopy(event, locale);
   const bookable = isEventBookable(event);
@@ -515,14 +521,26 @@ export function EventDetailPage({
     heroSrcSet = "";
   }
 
-  const checkout = resolveCheckoutActions(locale, event.id, {
+  const resolvedCheckout = resolveCheckoutActions(locale, event.id, {
     isPast,
     isSoldOut,
     bookable,
     viewer,
   });
+  const checkout = preview
+    ? {
+        ...resolvedCheckout,
+        primaryAction: {
+          type: "link" as const,
+          href: preview.primaryHref,
+          label: preview.primaryLabel,
+        },
+        secondaryAction: null,
+      }
+    : resolvedCheckout;
   const showMemberBookingChrome = viewer.kind === "eligible";
   const alreadyBooked = getAlreadyBookedCopy(locale);
+  const bookedIsos = preview ? undefined : bookedOccurrenceIsos;
 
   return (
     <Surface
@@ -570,14 +588,14 @@ export function EventDetailPage({
 
           <Surface className="event-detail--checkout__checkout min-w-0" variant="transparent">
             <EventDetailCheckoutCard
-              alreadyBookedMessage={alreadyBooked.message}
-              bookedOccurrenceIsos={bookedOccurrenceIsos}
+              alreadyBookedMessage={preview ? undefined : alreadyBooked.message}
+              bookedOccurrenceIsos={bookedIsos}
               datetimeLabel={datetimeLabel(locale)}
               defaultDateTimeIso={defaultDateTimeIso}
               locale={locale}
               creditPrice={occurrences?.[0]?.creditPrice ?? event.creditPrice}
-              myTicketsHref={alreadyBookedTicketsPath(locale)}
-              myTicketsLabel={alreadyBooked.myTicketsLabel}
+              myTicketsHref={preview ? undefined : alreadyBookedTicketsPath(locale)}
+              myTicketsLabel={preview ? undefined : alreadyBooked.myTicketsLabel}
               noticeText={checkout.noticeText}
               occurrences={showMemberBookingChrome ? occurrences : undefined}
               policyText={policyText()}

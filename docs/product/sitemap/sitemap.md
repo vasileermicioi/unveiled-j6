@@ -130,6 +130,9 @@ See `ui/app-shell.md` for header/footer detail.
 | `/admin/events/:id/delete` | ✅ | ADMIN | Delete confirmation |
 | `/admin/events/:id/publish` | ✅ | ADMIN | Publish confirm (SSR POST; draft → live on Browse; FormDraft-exempt) |
 | `/admin/events/:id/unpublish` | ✅ | ADMIN | Unpublish confirm (SSR POST; hides from Browse; row stays on admin list; FormDraft-exempt) |
+| `/admin/events/:id/preview?audience=` | ✅ | ADMIN | Admin-only event detail preview (`noindex`; default guest chrome; `audience=member` is read-only date/credit chrome; drafts included; FormDraft-exempt) |
+| `/admin/events/:id/preview/browse` | ✅ | ADMIN | Admin-only Browse events card preview (`noindex`; member `EventCard` in the feed grid; no save form; CTA → detail preview; drafts included; FormDraft-exempt) |
+| `/admin/events/:id/preview/discover` | ✅ | ADMIN | Admin-only Discover card preview (`noindex`; guest `EventCard` + Discover section header; works if not featured; CTA → detail preview; FormDraft-exempt) |
 | `/admin/events/:id/codes` | ✅ | ADMIN | Export redemption codes (CSV) |
 | `/admin/featured` | ✅ | ADMIN | Featured events list (drag reorder + Save order POST; checkbox bulk remove; tab label **Featured events** / **Empfohlene Events**; add is live — no featured publish/unpublish) |
 | `/admin/featured/add?title=&partner=&language=&sort=&dir=` | ✅ | ADMIN | Search and add featured event (title/partner/language filters; language matches spoken or subtitle; column sort; Languages + Subtitles columns; Reset filters; default last-created; success returns to the list) |

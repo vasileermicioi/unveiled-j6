@@ -743,3 +743,85 @@ The Events catalog MAY accept `published=yes` or `published=no`. When omitted, b
 - **THEN** a featured row exists as Draft
 - **AND** Discover does not list that event until the featured row is published and the catalog event is published
 
+### Requirement: Admin preview of event detail
+Admins SHALL open `/:locale/admin/events/:id/preview` to see the event rendered with the same `EventDetailPage` layout as public `/:locale/events/:id`. The page SHALL be `noindex`, ADMIN-only, and available for unpublished events. Booking, waitlist, and save mutations SHALL NOT run from preview. Default chrome is the guest checkout card; `?audience=member` SHALL show booking-eligible date/credit chrome without enabling POST. A missing event SHALL return the same admin 404 as other event confirm pages. The Events catalog and event edit page SHALL offer a Preview entry to this route.
+
+#### Scenario: Preview draft detail
+- **WHEN** an admin opens preview for an unpublished event
+- **THEN** they see the locale title, image, and description as on public detail
+- **AND** guests opening `/events/:id` still do not see the event
+
+#### Scenario: Preview does not book
+- **WHEN** an admin is on the detail preview
+- **THEN** there is no form POST that creates a booking, waitlist entry, or save row
+
+#### Scenario: Member audience is read-only
+- **WHEN** an admin opens preview with `?audience=member`
+- **THEN** they see booking-eligible date and credit chrome
+- **AND** the primary checkout control does not navigate to book, waitlist, or login
+
+#### Scenario: Non-admin cannot open event preview
+- **WHEN** a guest or USER requests `/:locale/admin/events/:id/preview`
+- **THEN** access is denied per existing admin route guards (guest → login, USER → locale home)
+
+#### Scenario: Preview entry from catalog and edit
+- **WHEN** an admin views the Events catalog or an event edit page
+- **THEN** a Preview action linking to `/:locale/admin/events/:id/preview` is available
+
+### Requirement: Admin preview of Browse and Discover cards
+Admins SHALL open `/:locale/admin/events/:id/preview/browse` to see the event as a single event card in the Browse events grid (member viewer, no save form) and `/:locale/admin/events/:id/preview/discover` to see it as a single event card in the Discover featured grid (guest viewer). Both pages SHALL be `noindex`, ADMIN-only, and available for unpublished events and for events that are not on the featured list. Card CTAs SHALL go to the admin detail preview (`/:locale/admin/events/:id/preview`), not to public `/:locale/events/:id`. Neither page SHALL list other catalog events, load featured/partner catalogs, or run save/book/waitlist POST. Preview chrome SHALL switch among Detail, Browse events, and Discover via SSR links. A missing event SHALL return the same admin 404 as other event confirm pages.
+
+#### Scenario: Preview browse card
+- **WHEN** an admin opens the browse preview for an event
+- **THEN** they see one event card with the same title, zip, and next datetime treatment as member `/events`
+- **AND** the page does not list other catalog events
+
+#### Scenario: Preview discover card
+- **WHEN** an admin opens the discover preview for an event that is not featured
+- **THEN** they still see one Discover-styled event card
+- **AND** live `/:locale/discover` is unchanged
+
+#### Scenario: Card preview CTA stays in admin preview
+- **WHEN** an admin follows the card CTA on browse or discover preview
+- **THEN** they land on `/:locale/admin/events/:id/preview`
+- **AND** they do not open public `/:locale/events/:id`
+
+#### Scenario: Non-admin cannot open card previews
+- **WHEN** a guest or USER requests `/:locale/admin/events/:id/preview/browse` or `.../preview/discover`
+- **THEN** access is denied per existing admin route guards (guest → login, USER → locale home)
+
+#### Scenario: Preview chrome switches surfaces
+- **WHEN** an admin is on any of the three event preview pages
+- **THEN** they can switch among Detail, Browse events, and Discover via links
+- **AND** the current surface is marked as the active page
+
+### Requirement: Preview routes are documented and tested
+`docs/product/features/admin-events.feature` and `e2e/specs/admin-events.spec.ts` SHALL include the five preview scenarios below with identical titles (`test("Scenario: <exact Gherkin title>")`). Sitemap SHALL list `/:locale/admin/events/:id/preview`, `/:locale/admin/events/:id/preview/browse`, and `/:locale/admin/events/:id/preview/discover` as ADMIN `noindex` GET pages. `docs/product/extras/content-i18n-inventory.md`, `docs/product/ui/ui-component-map.md`, `docs/product/extras/gaps-and-decisions.md`, and `docs/product/testing/coverage-matrix.md` SHALL record admin-only preview chrome and the new scenarios. Playwright titles SHALL match Gherkin `Scenario:` lines verbatim. Selectors SHALL be proximity/layout only. Env skips (`E2E_ADMIN_*`, R2) MAY remain as named `test.skip` reasons for create. The system SHALL NOT add `@skip-no-ui` for these MVP scenarios. The system SHALL NOT invent parallel titles for member-audience, chrome-switcher, card-CTA, catalog-entry, or USER-denied (those stay covered by the five titles and existing `guardAdminRoute` coverage).
+
+#### Scenario: Preview draft detail
+- **WHEN** an admin opens `/:locale/admin/events/:id/preview` for an unpublished event
+- **THEN** the preview page is 200 and shows the locale title
+- **AND** a guest opening `/:locale/events/:id` sees the same not-found page as a missing event (HTTP 404; draft title not shown)
+
+#### Scenario: Preview does not book
+- **WHEN** an admin is on the detail preview
+- **THEN** the primary checkout control is Preview only / Nur Vorschau
+- **AND** there is no book, waitlist, save, or login form POST from that page
+
+#### Scenario: Preview browse card
+- **WHEN** an admin opens the browse preview for an unpublished event that is not featured
+- **THEN** they see one event card with the locale title
+- **AND** the page does not list other catalog events
+- **AND** the card CTA stays on `/:locale/admin/events/:id/preview`
+
+#### Scenario: Preview discover card
+- **WHEN** an admin opens the discover preview for an unpublished event that is not featured
+- **THEN** they still see one Discover-styled event card with the locale title
+- **AND** they see the live Discover section header copy
+- **AND** live `/:locale/discover` does not list that draft
+
+#### Scenario: Guest cannot open event preview
+- **WHEN** a guest opens `/:locale/admin/events/:id/preview`
+- **THEN** they are sent to `/:locale/login?returnTo=`
+- **AND** the event body is not shown
+

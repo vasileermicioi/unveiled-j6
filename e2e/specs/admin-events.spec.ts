@@ -1884,6 +1884,87 @@ test.describe("admin-events.feature", () => {
     await expect(page.getByText(event.title)).toHaveCount(0);
   });
 
+  test("Scenario: Preview draft detail", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    const preview = await page.goto(`/${locale}/admin/events/${event.eventId}/preview`);
+    expect(preview?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: event.title })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(/entwurf|draft/i).first()).toBeVisible();
+
+    await page.context().clearCookies();
+    const publicDetail = await page.goto(`/${locale}/events/${event.eventId}`);
+    expect(publicDetail?.status()).toBe(404);
+    await expect(
+      page.getByRole("heading", { name: /seite nicht gefunden|page not found/i }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: event.title })).toHaveCount(0);
+  });
+
+  test("Scenario: Preview does not book", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    await page.goto(`/${locale}/admin/events/${event.eventId}/preview`);
+    const main = page.getByRole("main");
+    await expect(main.getByRole("link", { name: /nur vorschau|preview only/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    const mutationName = /^(buchen|book|anmelden|log in|merken|save|warteliste|waitlist)$/i;
+    await expect(main.getByRole("button", { name: mutationName })).toHaveCount(0);
+    await expect(main.getByRole("link", { name: mutationName })).toHaveCount(0);
+  });
+
+  test("Scenario: Preview browse card", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    await page.goto(`/${locale}/admin/events/${event.eventId}/preview/browse`);
+    const main = page.getByRole("main");
+    await expect(main.getByText(event.title)).toHaveCount(1);
+    await expect(page.getByText(/filter und karte|filters and map/i)).toBeVisible();
+    await main.getByRole("link", { name: event.title }).first().click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/events/${event.eventId}/preview/?$`));
+    await expect(page).not.toHaveURL(new RegExp(`/${locale}/events/${event.eventId}`));
+  });
+
+  test("Scenario: Preview discover card", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    await page.goto(`/${locale}/admin/events/${event.eventId}/preview/discover`);
+    const main = page.getByRole("main");
+    await expect(
+      main.getByText(/mit deiner mitgliedschaft buchbar|bookable with your membership/i),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      main.getByText(/aktuelle events in berlin\.|current events in berlin\./i),
+    ).toBeVisible();
+    await expect(main.getByText(event.title)).toHaveCount(1);
+
+    await page.context().clearCookies();
+    await page.goto(`/${locale}/discover`);
+    await expect(page.getByRole("main").getByText(event.title)).toHaveCount(0);
+  });
+
+  test("Scenario: Guest cannot open event preview", async ({ page, locale }) => {
+    test.skip(!r2Configured(), "R2 vars not configured");
+    const partner = await createPartnerViaUI(page, locale);
+    const event = await createEventViaUI(page, locale, { partnerName: partner.name });
+    await page.context().clearCookies();
+    await page.goto(`/${locale}/admin/events/${event.eventId}/preview`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?returnTo=`));
+    await expect(page.getByRole("heading", { name: event.title })).toHaveCount(0);
+
+    await page.goto(`/${locale}/admin/events/${event.eventId}/preview/browse`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?returnTo=`));
+    await page.goto(`/${locale}/admin/events/${event.eventId}/preview/discover`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?returnTo=`));
+  });
+
   test("Scenario: Seed demo data (empty environment only)", async ({ page, locale }) => {
     await navigateAdminTab(page, locale, "overview");
     const seedButton = page.getByRole("button", { name: /demo-daten laden|load demo data/i });

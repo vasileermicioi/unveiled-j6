@@ -54,6 +54,23 @@ export function adminEventUnpublishPath(locale: Locale, eventId: string): string
   return localizedPath(locale, `admin/events/${eventId}/unpublish`);
 }
 
+export function adminEventPreviewPath(
+  locale: Locale,
+  eventId: string,
+  audience?: "guest" | "member",
+): string {
+  const path = localizedPath(locale, `admin/events/${eventId}/preview`);
+  return audience === "member" ? `${path}?audience=member` : path;
+}
+
+export function adminEventPreviewBrowsePath(locale: Locale, eventId: string): string {
+  return localizedPath(locale, `admin/events/${eventId}/preview/browse`);
+}
+
+export function adminEventPreviewDiscoverPath(locale: Locale, eventId: string): string {
+  return localizedPath(locale, `admin/events/${eventId}/preview/discover`);
+}
+
 export function adminEventGalleryPath(locale: Locale, eventId: string): string {
   return localizedPath(locale, `admin/events/${eventId}/gallery`);
 }

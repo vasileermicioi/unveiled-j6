@@ -121,6 +121,11 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `admin-events.feature` | Event list shows Published or Draft status | `e2e/specs/admin-events.spec.ts` · `Scenario: Event list shows Published or Draft status` | `pass` | Needs `E2E_ADMIN_*` + R2 |
 | `admin-events.feature` | Event list filters by published | `e2e/specs/admin-events.spec.ts` · `Scenario: Event list filters by published` | `pass` | Needs `E2E_ADMIN_*` + R2 |
 | `admin-events.feature` | Unpublish does not delete or drop featured membership | `e2e/specs/admin-events.spec.ts` · `Scenario: Unpublish does not delete or drop featured membership` | `pass` | Needs `E2E_ADMIN_*` + R2 |
+| `admin-events.feature` | Preview draft detail | `e2e/specs/admin-events.spec.ts` · `Scenario: Preview draft detail` | `pass` | Needs `E2E_ADMIN_*` + R2; public `/events/:id` 404 after `clearCookies` |
+| `admin-events.feature` | Preview does not book | `e2e/specs/admin-events.spec.ts` · `Scenario: Preview does not book` | `pass` | Needs `E2E_ADMIN_*` + R2; inert Preview only / Nur Vorschau CTA |
+| `admin-events.feature` | Preview browse card | `e2e/specs/admin-events.spec.ts` · `Scenario: Preview browse card` | `pass` | Needs `E2E_ADMIN_*` + R2; unpublished, not featured; CTA → detail preview |
+| `admin-events.feature` | Preview discover card | `e2e/specs/admin-events.spec.ts` · `Scenario: Preview discover card` | `pass` | Needs `E2E_ADMIN_*` + R2; unpublished, not featured; Discover `livePreview` header |
+| `admin-events.feature` | Guest cannot open event preview | `e2e/specs/admin-events.spec.ts` · `Scenario: Guest cannot open event preview` | `pass` | Needs `E2E_ADMIN_*` + R2 to create; then `clearCookies` → login?returnTo= |
 | `admin-users.feature` | List all members | `e2e/specs/admin-users.spec.ts` · `Scenario: List all members` | `pass` | Needs `DATABASE_URL` + `E2E_ADMIN_*` |
 | `admin-users.feature` | Search members | `e2e/specs/admin-users.spec.ts` · `Scenario: Search members` | `pass` |  |
 | `admin-users.feature` | View a member's collapsed summary | `e2e/specs/admin-users.spec.ts` · `Scenario: View a member's collapsed summary` | `pass` | List row columns (role, subscription, credits, …) |

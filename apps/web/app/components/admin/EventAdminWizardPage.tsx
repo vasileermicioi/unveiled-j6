@@ -13,6 +13,7 @@ import { localizedPath } from "../../lib/locale";
 import {
   AdminPageShell,
   adminEventGalleryPath,
+  adminEventPreviewPath,
   adminEventPublishPath,
   adminEventsPath,
   adminEventUnpublishPath,
@@ -58,6 +59,9 @@ export function EventAdminWizardPage({
               }
             >
               {defaults?.published ? copy.unpublishAction : copy.publishAction}
+            </Link>
+            <Link className="link" href={adminEventPreviewPath(locale, eventId)}>
+              {copy.previewAction}
             </Link>
             <Link
               className="button button--secondary button--md"

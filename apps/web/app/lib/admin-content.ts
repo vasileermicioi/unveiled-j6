@@ -61,6 +61,17 @@ export type AdminCopy = {
   statusDraft: string;
   publishAction: string;
   unpublishAction: string;
+  previewAction: string;
+  previewPageTitle: string;
+  previewBanner: string;
+  previewAudienceGuest: string;
+  previewAudienceMember: string;
+  previewSurfaceDetail: string;
+  previewSurfaceBrowse: string;
+  previewSurfaceDiscover: string;
+  previewBrowseNote: string;
+  previewOnlyCta: string;
+  previewDocumentTitle: (title: string) => string;
   resetFilters: string;
   tableLogo: string;
   tableName: string;
@@ -584,6 +595,17 @@ const copy: Record<Locale, AdminCopy> = {
     statusDraft: "Entwurf",
     publishAction: "Veröffentlichen",
     unpublishAction: "Veröffentlichung aufheben",
+    previewAction: "Vorschau",
+    previewPageTitle: "Vorschau",
+    previewBanner: "Vorschau",
+    previewAudienceGuest: "Gast",
+    previewAudienceMember: "Mitglied",
+    previewSurfaceDetail: "Detail",
+    previewSurfaceBrowse: "Events entdecken",
+    previewSurfaceDiscover: "Entdecken",
+    previewBrowseNote: "Filter und Karte sind nicht Teil dieser Vorschau.",
+    previewOnlyCta: "Nur Vorschau",
+    previewDocumentTitle: (title) => `Vorschau: ${title}`,
     resetFilters: "Filter zurücksetzen",
     tableLogo: "Bild",
     tableName: "Name",
@@ -1156,6 +1178,17 @@ const copy: Record<Locale, AdminCopy> = {
     statusDraft: "Draft",
     publishAction: "Publish",
     unpublishAction: "Unpublish",
+    previewAction: "Preview",
+    previewPageTitle: "Preview",
+    previewBanner: "Preview",
+    previewAudienceGuest: "Guest",
+    previewAudienceMember: "Member",
+    previewSurfaceDetail: "Detail",
+    previewSurfaceBrowse: "Browse events",
+    previewSurfaceDiscover: "Discover",
+    previewBrowseNote: "Filters and map are not part of this preview.",
+    previewOnlyCta: "Preview only",
+    previewDocumentTitle: (title) => `Preview: ${title}`,
     resetFilters: "Reset filters",
     tableLogo: "Image",
     tableName: "Name",
