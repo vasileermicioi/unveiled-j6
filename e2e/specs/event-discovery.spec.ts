@@ -84,7 +84,17 @@ function berlinYmd(daysFromToday: number): string {
   return formatter.format(utc);
 }
 
+async function expandEventFeedFilters(page: Page): Promise<void> {
+  const titleField = page.getByLabel(/eventname|event name/i);
+  if (await titleField.isVisible()) {
+    return;
+  }
+  await page.getByRole("button", { name: /filtern|filters/i }).click();
+  await expect(titleField).toBeVisible();
+}
+
 async function applyDateRange(page: Page, from: string, to: string): Promise<void> {
+  await expandEventFeedFilters(page);
   await page.getByLabel(/von|from/i).fill(from);
   await page.getByLabel(/bis|until/i).fill(to);
   await page.getByRole("button", { name: /anwenden|apply/i }).click();
@@ -679,6 +689,7 @@ test.describe("event-discovery.feature", () => {
     const from = berlinYmd(0);
     const to = berlinYmd(30);
     await page.goto(`/${locale}/events`);
+    await expandEventFeedFilters(page);
     await page.getByLabel(/von|from/i).fill(from);
     await page.getByLabel(/bis|until/i).fill(to);
     const categorySelect = page.getByLabel(/kategorie|category/i);
@@ -695,6 +706,7 @@ test.describe("event-discovery.feature", () => {
   test("Scenario: Category filter lists venue types", async ({ page, locale }) => {
     await loginMember(page, locale);
     await page.goto(`/${locale}/events`);
+    await expandEventFeedFilters(page);
     const categorySelect = page.getByLabel(/kategorie|category/i);
     await expect(categorySelect).toBeVisible();
     const optionTexts = (await categorySelect.locator("option").allTextContents()).map((text) =>
@@ -716,6 +728,7 @@ test.describe("event-discovery.feature", () => {
   test("Scenario: Event name filter control", async ({ page, locale }) => {
     await loginMember(page, locale);
     await page.goto(`/${locale}/events`);
+    await expandEventFeedFilters(page);
 
     const titleField = page.getByLabel(/eventname|event name/i);
     await expect(titleField).toBeVisible();
@@ -803,6 +816,7 @@ test.describe("event-discovery.feature", () => {
     await expect(page).not.toHaveURL(/title=/);
     await expect(page).not.toHaveURL(/from=/);
     await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toBeVisible();
+    await expandEventFeedFilters(page);
     await expect(page.getByLabel(/eventname|event name/i)).toHaveValue("");
   });
 
@@ -860,6 +874,7 @@ test.describe("event-discovery.feature", () => {
     await expect(listTab).toHaveAttribute("href", /title=/);
     await expect(listTab).toHaveAttribute("href", /category=theater/);
     await expect(page.getByText(/filtern|filters/i).first()).toBeVisible();
+    await expandEventFeedFilters(page);
     await expect(page.getByLabel(/eventname|event name/i)).toBeVisible();
     await expect(page.getByText(TITLES.ausstellung)).toHaveCount(0);
     // Popup close hit-target coverage lives on guest detail LOCATION map (same EventMap
@@ -1029,6 +1044,33 @@ test.describe("event-discovery.feature", () => {
       .getByRole("link", { name: /events entdecken|browse events/i });
     await expect(browseNav).toBeVisible({ timeout: 15_000 });
     await expect(browseNav).toHaveAttribute("href", new RegExp(`/${locale}/events`));
+  });
+
+  test("Scenario: Inactive member nav shows membership CTA", async ({ page, locale }) => {
+    await page.context().clearCookies();
+    await signupFreshUser(page, locale);
+    await completeOnboardingWizard(page, locale);
+
+    const banner = page.getByRole("banner");
+    await expect(banner.getByRole("link", { name: /events entdecken|browse events/i })).toHaveCount(
+      0,
+    );
+    const subscribe = banner.getByRole("link", {
+      name: /mitgliedschaft starten|start membership/i,
+    });
+    await expect(subscribe).toBeVisible({ timeout: 15_000 });
+    await expect(subscribe).toHaveAttribute("href", new RegExp(`/${locale}/membership`));
+
+    await banner.getByRole("button", { name: /konto|account/i }).click();
+    await expect(page.getByRole("menu").getByText(/credits/i)).toHaveCount(0);
+  });
+
+  test("Scenario: Browse events filters are collapsed by default", async ({ page, locale }) => {
+    await loginMember(page, locale);
+    await page.goto(`/${locale}/events`);
+    await expect(page.getByLabel(/eventname|event name/i)).toBeHidden();
+    await expandEventFeedFilters(page);
+    await expect(page.getByLabel(/eventname|event name/i)).toBeVisible();
   });
 
   test("Scenario: Unpublished featured event stays off Discover", async ({ page, locale }) => {

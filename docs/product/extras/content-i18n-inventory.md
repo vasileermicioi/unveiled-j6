@@ -58,6 +58,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `createEvent` | Event erstellen | Create Event |
 | `nav.discover` (shell) | Entdecken | Discover |
 | `browseEvents` (shell, booking-eligible) | Events entdecken | Browse events |
+| `subscribeCta` (shell, non-booking-eligible USER) | Mitgliedschaft starten | Start membership |
 
 ## `filters`
 

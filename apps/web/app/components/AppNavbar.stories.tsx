@@ -6,7 +6,7 @@ import { mockAdminSession, mockUserSession, storyLocale, storyPathname } from ".
 /**
  * Slim header IA (Featured Discover browse split):
  * - Guest: logo · Discover → /discover · FAQ · DE|EN · Log in
- * - Inactive USER: Discover → /discover; Tickets/Saved text tools · DE|EN · Account menu
+ * - Inactive USER: Discover → /discover; Tickets/Saved · Start membership · DE|EN · Account (no credits)
  * - Active USER: Browse events → /events; Tickets/Saved · DE|EN · Account menu (email + credits)
  * - ADMIN: no Discover/FAQ; DE|EN · Account menu (Admin + Log out); logo → /admin
  */
@@ -24,7 +24,7 @@ export const SignedInUserInactive: Story = () => (
     session={mockUserSession}
   />
 );
-SignedInUserInactive.storyName = "AppNavbar / USER inactive (Discover)";
+SignedInUserInactive.storyName = "AppNavbar / USER inactive (membership CTA)";
 
 export const SignedInUserActive: Story = () => (
   <AppNavbar

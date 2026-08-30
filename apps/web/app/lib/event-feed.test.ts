@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   buildEventFeedQueryString,
   clampEventFeedPage,
+  eventFeedHasActiveFilters,
   eventFeedPageRedirectPath,
   parseEventFeedQuery,
 } from "./event-feed";
@@ -99,6 +100,29 @@ describe("event-feed helpers", () => {
         page: 3,
       }),
     ).toBe("?title=Jazz&category=Theater&partnerId=p1&from=2026-07-09&to=2026-07-12&page=3");
+  });
+
+  test("eventFeedHasActiveFilters is false only when no filter params are set", () => {
+    expect(
+      eventFeedHasActiveFilters({
+        title: undefined,
+        category: undefined,
+        partnerId: undefined,
+        from: undefined,
+        to: undefined,
+        page: 2,
+      }),
+    ).toBe(false);
+    expect(
+      eventFeedHasActiveFilters({
+        title: "Jazz",
+        category: undefined,
+        partnerId: undefined,
+        from: undefined,
+        to: undefined,
+        page: 1,
+      }),
+    ).toBe(true);
   });
 
   test("clampEventFeedPage caps to total pages with size 24", () => {

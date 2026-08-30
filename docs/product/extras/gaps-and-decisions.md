@@ -87,6 +87,8 @@ Delivery plan: [`.dev-plan/IMPLEMENTATION-PLAN.mvp.md`](../../.dev-plan/IMPLEMEN
 | Real mobile menu (hamburger + drawer via HeroUI's `Navbar`) replaces the old app's "hide nav items progressively" approach | `ui/app-shell.md` |
 | Footer nav gains a "How it works" link (previously missing despite being a real page) | `ui/app-shell.md` |
 | Guest header drops the separate "Mitglied werden"/"Become a member" CTA — Sign up + Membership nav cover the same intent | `ui/app-shell.md` |
+| **Inactive member chrome (2026-08):** Non-booking-eligible `USER` does not see Browse events or a credits count. Header/drawer show **Start membership** / **Mitgliedschaft starten** → `/membership`. Credits stay in the Account menu only for booking-eligible `USER`. Empty Saved / My Tickets CTAs follow the same split. | `ui/app-shell.md`, `features/event-discovery.feature`, `sitemap/sitemap.md` |
+| **Browse filters collapsed (2026-08):** Member feed/map filter controls are a disclosure, collapsed by default so the event grid is first. Applied `title`/`category`/`partnerId`/`from`/`to` open the panel. | `features/event-discovery.feature`, `ui/ui-component-map.md` |
 | FAQ page drops the Back / Zurück button — leave via header/footer instead | `ui/static-pages-content.md` |
 | Membership marketing page uses the wide `max-w-7xl` shell with Discover-style perk cards (not a narrow centered stub) | `ui/static-pages-content.md`, OpenSpec `rework-membership-marketing-shell` |
 | Legal pages (Impressum, Privacy Policy, Terms of Service) added — required for a real German consumer product, absent entirely from the old app | `features/static-pages.feature`, `sitemap/sitemap.md`, `ui/app-shell.md` |

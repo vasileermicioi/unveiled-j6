@@ -41,6 +41,8 @@ type AppNavbarMenuProps = {
   profileHref?: string;
   profileLabel?: string;
   profileIsActive?: boolean;
+  subscribeHref?: string;
+  subscribeLabel?: string;
 };
 
 const menuTriggerClassName = "button button--secondary button--md site-nav-icon-button lg:hidden";
@@ -114,6 +116,8 @@ export default function AppNavbarMenu({
   profileHref,
   profileLabel,
   profileIsActive = false,
+  subscribeHref,
+  subscribeLabel,
 }: AppNavbarMenuProps) {
   const [mounted, setMounted] = useState(false);
   const drawerState = useOverlayState();
@@ -129,7 +133,7 @@ export default function AppNavbarMenu({
   const showAccountSection =
     Boolean(bookingsHref || savedHref || adminHref || profileHref || logoutLabel) ||
     showGuestAuthActions ||
-    Boolean(creditsLabel);
+    Boolean(creditsLabel || subscribeHref);
 
   return (
     <Drawer state={drawerState}>
@@ -157,6 +161,12 @@ export default function AppNavbarMenu({
               {showAccountSection ? (
                 <Surface className="site-nav-drawer__section" variant="transparent">
                   <DrawerSectionLabel>{sections.account}</DrawerSectionLabel>
+
+                  {subscribeHref && subscribeLabel ? (
+                    <Link className="button button--primary button--md" href={subscribeHref}>
+                      {subscribeLabel}
+                    </Link>
+                  ) : null}
 
                   {bookingsHref && bookingsLabel ? (
                     <DrawerTextLink

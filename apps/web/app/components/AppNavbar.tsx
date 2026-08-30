@@ -40,8 +40,12 @@ export function AppNavbar({
   const profileHref = localizedPath(locale, "profile");
   const isAdmin = session?.user.role === "ADMIN";
   const isUser = session?.user.role === "USER";
-  // Credits live in Account menu / mobile drawer — not in the desktop bar.
-  const creditsLabel = isUser ? copy.formatCredits(session.user.credits) : undefined;
+  const showSubscribeCta = isUser && !canBrowseEvents;
+  const subscribeHref = showSubscribeCta ? localizedPath(locale, "membership") : undefined;
+  const subscribeLabel = showSubscribeCta ? copy.subscribeCta : undefined;
+  // Credits live in Account menu / mobile drawer — booking-eligible USER only.
+  const creditsLabel =
+    isUser && canBrowseEvents ? copy.formatCredits(session.user.credits) : undefined;
   const showSavedNav = isUser;
   const showBookingsNav = isUser;
   const showProfileNav = isUser;
@@ -168,6 +172,15 @@ export function AppNavbar({
             </Link>
           </Surface>
 
+          {subscribeHref && subscribeLabel ? (
+            <Link
+              className="button button--primary button--md hidden lg:inline-flex"
+              href={subscribeHref}
+            >
+              {subscribeLabel}
+            </Link>
+          ) : null}
+
           {showAccountMenu && session ? (
             <Surface className="hidden lg:block" variant="transparent">
               <AccountMenu
@@ -215,6 +228,8 @@ export function AppNavbar({
             savedLabel={showSavedNav ? copy.mySaves : undefined}
             sections={copy.drawer}
             showGuestAuthActions={showGuestAuthActions}
+            subscribeHref={subscribeHref}
+            subscribeLabel={subscribeLabel}
           />
         </Surface>
       </Surface>

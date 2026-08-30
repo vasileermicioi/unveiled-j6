@@ -103,7 +103,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 | Audience | Primary nav (header) | Events path |
 |---|---|---|
 | **Guest** | Discover → `/discover`, FAQ; Log in (Sign up via auth routes; How it works / Membership via direct URL / in-flow CTAs) | Featured preview → `/events/:id`; full feed via signup/login + active sub → `/events` |
-| **Member (`USER`) non-active** | Discover → `/discover`, FAQ; Saved + Bookings; credits badge; profile; logout | Discover featured list; `/events` / map redirect to Discover; public detail |
+| **Member (`USER`) non-active** | Discover → `/discover`, FAQ; Saved + Bookings; Start membership CTA; profile; logout (**no** Browse events, **no** credits count) | Discover featured list; `/events` / map redirect to Discover; public detail |
 | **Member (`USER`) booking-eligible** | **Browse events** → `/events`, FAQ; Saved + Bookings; credits badge; profile; logout | `/events`, `/events/map`, `/saved`, public detail |
 | **Admin** | Discover + FAQ where shared; admin chrome → `/admin` | Catalog via `/admin/events`; **Featured events** at `/admin/featured`; **Featured partners** at `/admin/featured-partners` |
 

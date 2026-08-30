@@ -29,7 +29,7 @@ export const SignedInUserInactive: Story = () => (
     </Surface>
   </AppShell>
 );
-SignedInUserInactive.storyName = "AppShell / USER inactive (Discover)";
+SignedInUserInactive.storyName = "AppShell / USER inactive (membership CTA)";
 
 export const SignedInUserActive: Story = () => (
   <AppShell

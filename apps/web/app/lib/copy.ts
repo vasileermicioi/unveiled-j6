@@ -36,6 +36,8 @@ export type ShellCopy = {
    * Matches saved/bookings `browseEvents` phrasing.
    */
   browseEvents: string;
+  /** Header CTA for USER without a booking-eligible subscription → `/membership`. */
+  subscribeCta: string;
   login: string;
   signup: string;
   logout: string;
@@ -63,6 +65,7 @@ const copy: Record<Locale, ShellCopy> = {
       faq: "Häufig gestellte Fragen",
     },
     browseEvents: "Events entdecken",
+    subscribeCta: "Mitgliedschaft starten",
     login: "Anmelden",
     signup: "Registrieren",
     logout: "Abmelden",
@@ -107,6 +110,7 @@ const copy: Record<Locale, ShellCopy> = {
       faq: "FAQ",
     },
     browseEvents: "Browse events",
+    subscribeCta: "Start membership",
     login: "Log in",
     signup: "Sign up",
     logout: "Log out",

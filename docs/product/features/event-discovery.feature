@@ -13,6 +13,7 @@
 #   - Cards/map popups show next upcoming datetime + denormalized credit_price; booking-eligible detail lists all datetimes (emphasize next)
 #   - Booking-eligible checkout shows a native datetime dropdown when two or more future occurrences exist; guests omit dropdown and credits
 #   - List and map share the same filters + pagination; view switch is tabs (admin-style)
+#   - Feed/map filter panel is collapsed by default (events first); expand to reveal controls. Applied query params open the panel.
 #
 # Prefer Scenario titles that match shipped e2e/specs/event-discovery.spec.ts when
 # behavior is unchanged.
@@ -79,6 +80,13 @@ Feature: Event Discovery
     Given I am signed in as a "USER" with a booking-eligible subscription
     When I view the app shell (sticky header or mobile drawer)
     Then the primary nav shows Browse events (localized) linking to "/events"
+
+  Scenario: Inactive member nav shows membership CTA
+    Given I am signed in as a "USER" without a booking-eligible subscription
+    When I view the app shell (sticky header or mobile drawer)
+    Then I do not see Browse events
+    And I do not see a credits count
+    And I see Start membership (localized) linking to "/membership"
 
   Scenario: Guest can view public event detail without authentication
     Given I am not signed in
@@ -303,9 +311,16 @@ Feature: Event Discovery
     When a guest or member opens an event detail page with has_subtitles false
     Then the DETAILS metadata does not include a subtitles row
 
+  Scenario: Browse events filters are collapsed by default
+    Given I am viewing the events feed as a booking-eligible member
+    And I have not applied any filters
+    When I view the feed
+    Then the filter controls are hidden
+    And I can expand filters to reveal them
+
   Scenario: Event name filter control
     Given I am viewing the events feed as a booking-eligible member
-    When I view the filters
+    When I expand the filters
     Then I see an event name field alongside partner and date range controls
 
   Scenario: Filter by event name

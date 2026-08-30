@@ -15,16 +15,16 @@ Role-aware header variants (guest, member, admin) composed from shared pieces �
 
 2. **Primary nav (marketing)**
    - **Guest (`lg+`):** Discover / Entdecken → `/discover`; FAQ → `/faq`. Active link: yellow highlight, no border (same in mobile drawer).
-   - **Member (`USER`) non-booking-eligible:** Discover / Entdecken → `/discover`; FAQ → `/faq`. Plus role tools: Saved (bookmark, badge when count > 0) and Bookings / “My Tickets”.
-   - **Member (`USER`) booking-eligible (`ACTIVE` | `CANCELLED_PENDING` via `isBookingEligibleStatus`):** **Browse events** / **Events entdecken** → `/events`; FAQ → `/faq`. Same role tools as above.
+   - **Member (`USER`) non-booking-eligible:** Discover / Entdecken → `/discover`; FAQ → `/faq`. Plus role tools: Saved (bookmark, badge when count > 0) and Bookings / “My Tickets”. **No Browse events.** Primary **Start membership** / **Mitgliedschaft starten** button → `/membership`.
+   - **Member (`USER`) booking-eligible (`ACTIVE` | `CANCELLED_PENDING` via `isBookingEligibleStatus`):** **Browse events** / **Events entdecken** → `/events`; FAQ → `/faq`. Same role tools as above. No membership CTA in the header.
    - **Admin:** no Discover / FAQ in header or mobile drawer — dashboard-focused chrome only (Admin + Log out; logo → `/admin`). Discover/FAQ remain reachable by direct URL for QA.
-   - **Not in header or footer nav:** How it works, Membership (pages remain at `/how-it-works` and `/membership`; reachable via direct URL / in-flow CTAs).
+   - **Not in header or footer nav:** How it works. Membership is **not** a marketing nav link; non-booking-eligible `USER` gets the Start membership header/drawer CTA above. Guests reach `/membership` via in-flow CTAs / direct URL.
 
 3. **Member tools (`USER`, desktop `lg+`)** — My Tickets / Saved as text+icon links (not secondary CTA boxes); Saved shows a badge when count > 0. Separated from the account cluster by a thin vertical rule.
 
 4. **Language toggle** — DE | EN; navigates to the same path under the other locale prefix.
 
-5. **Account menu** — signed-in roles; trigger “Account” / “Konto”. Identity header: muted session email + credits (`USER`, not in the bar). Menu items: `USER` → “Your account” / “Dein Konto” (`/profile`) + Log out; `ADMIN` → Admin dashboard + Log out.
+5. **Account menu** — signed-in roles; trigger “Account” / “Konto”. Identity header: muted session email; credits (`USER`, not in the bar) **only when booking-eligible**. Menu items: `USER` → “Your account” / “Dein Konto” (`/profile`) + Log out; `ADMIN` → Admin dashboard + Log out.
 
 7. **Guest auth** — “Log in” only. Sign up is **not** in the header; guests create accounts via auth routes (`/signup`, etc.) and in-flow membership CTAs.
 

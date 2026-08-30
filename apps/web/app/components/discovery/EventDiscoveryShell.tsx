@@ -1,6 +1,6 @@
 import { Alert, Card, Link, Surface } from "@heroui/react";
 import type { ReactNode } from "react";
-
+import EventFeedFilters from "../../islands/EventFeedFilters";
 import {
   buildEventFeedQueryString,
   type EventFeedQuery,
@@ -11,8 +11,6 @@ import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import type { AdminFormSelectOption } from "../admin/AdminFormSelect";
 import { PageSectionHeader } from "../marketing/PageSectionHeader";
-
-import { EventFeedFilters } from "./EventFeedFilters";
 import { EventFeedPagination } from "./EventFeedPagination";
 import { type EventFeedView, EventFeedViewTabs } from "./EventFeedViewTabs";
 

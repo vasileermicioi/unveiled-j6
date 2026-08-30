@@ -2992,6 +2992,39 @@
     box-shadow: none;
   }
 
+  .event-feed-filters__accordion {
+    width: 100%;
+  }
+
+  .event-feed-filters__toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .event-feed-filters__toggle:hover,
+  .event-feed-filters__toggle[data-hovered="true"] {
+    background: transparent;
+  }
+
+  .event-feed-filters__chevron {
+    flex-shrink: 0;
+    transition: transform 160ms ease;
+  }
+
+  .event-feed-filters__chevron--open,
+  .event-feed-filters__toggle[aria-expanded="true"] .event-feed-filters__chevron {
+    transform: rotate(180deg);
+  }
+
   .event-map__canvas-wrap {
     border: var(--border-width) solid var(--border);
     overflow: hidden;

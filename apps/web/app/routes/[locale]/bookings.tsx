@@ -1,4 +1,4 @@
-import { BOOKINGS_PAGE_SIZE, listUserBookings } from "@unveiled/db";
+import { BOOKINGS_PAGE_SIZE, isBookingEligibleStatus, listUserBookings } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { MyTicketsPage } from "../../components/booking/MyTicketsPage";
@@ -20,11 +20,18 @@ export default createRoute(async (c) => {
   const query = parseBookingsListQuery(url);
   const basePath = `/${guard.locale}/bookings`;
 
-  const result = await listUserBookings(db, {
-    userId,
-    page: query.page,
-    pageSize: BOOKINGS_PAGE_SIZE,
-  });
+  const [result, subscription] = await Promise.all([
+    listUserBookings(db, {
+      userId,
+      page: query.page,
+      pageSize: BOOKINGS_PAGE_SIZE,
+    }),
+    db.query.subscriptions.findFirst({
+      where: (fields, { eq }) => eq(fields.userId, userId),
+      columns: { status: true },
+    }),
+  ]);
+  const subscriptionActive = isBookingEligibleStatus(subscription?.status);
 
   const redirectPath = bookingsListPageRedirectPath(basePath, query, result.total);
   if (redirectPath) {
@@ -43,6 +50,7 @@ export default createRoute(async (c) => {
       locale={guard.locale}
       page={effectivePage}
       pageSize={result.pageSize}
+      subscriptionActive={subscriptionActive}
       total={result.total}
     />,
     {

@@ -82,6 +82,10 @@ export function buildEventFeedQueryString(query: {
   return qs ? `?${qs}` : "";
 }
 
+export function eventFeedHasActiveFilters(query: EventFeedQuery): boolean {
+  return Boolean(query.title || query.category || query.partnerId || query.from || query.to);
+}
+
 export function clampEventFeedPage(page: number, total: number): number {
   const totalPages = Math.max(1, Math.ceil(total / MEMBER_FEED_PAGE_SIZE));
   return Math.min(page, totalPages);

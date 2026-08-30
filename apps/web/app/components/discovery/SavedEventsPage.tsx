@@ -1,6 +1,7 @@
 import { Card, Link, Paragraph, Surface } from "@heroui/react";
 import { EventCard, type EventCardItem } from "@unveiled/ui";
 
+import { getCopy } from "../../lib/copy";
 import type { Locale } from "../../lib/locale";
 import { localizedPath } from "../../lib/locale";
 import { eventUnsavePath } from "../../lib/saved-events";
@@ -30,10 +31,18 @@ export function SavedEventsPage({ locale, events, subscriptionActive }: SavedEve
           <Card.Content className="flex flex-col items-start gap-4">
             <Paragraph>{copy.empty}</Paragraph>
             <Link
-              className="button button--secondary button--md"
-              href={localizedPath(locale, "events")}
+              className={
+                subscriptionActive
+                  ? "button button--secondary button--md"
+                  : "button button--primary button--md"
+              }
+              href={
+                subscriptionActive
+                  ? localizedPath(locale, "events")
+                  : localizedPath(locale, "membership")
+              }
             >
-              {copy.browseEvents}
+              {subscriptionActive ? copy.browseEvents : getCopy(locale).subscribeCta}
             </Link>
           </Card.Content>
         </Card>
