@@ -79,6 +79,7 @@ Footer LEGAL column → three links. Component: `LegalPage.tsx`. Content module:
 
 - Layout matches FAQ: on-yellow `PageSectionHeader` + intro; then a `help-section` card with eyebrow, page title, `support@unveiled.berlin` mailto, and the shared **`FaqAccordion`** island (~3 sections per page; `answer` may be `string[]`). Body text uses **foreground** color (not muted gray).
 - Operator identity on Impressum; Privacy/Terms refer to it instead of repeating full contact blocks.
+- Impressum provider block (verbatim, both locales except the represented-by line): **unveiled GmbH**; DE `Vertreten durch Pia Sonnekalb & Sarah Michot` / EN `represented by Pia Sonnekalb & Sarah Michot`; **Greifswalder Straße 1**; **10405 Berlin**.
 - Sections use `title` + `body: string[]`. Single-open accordion; first section expanded by default.
 - Copy is **operational** MVP text; formal counsel review still recommended before production launch.
 - Terms currently state that unused **credits do not roll over**. The FAQ's 2-month rollover promise is the approved marketing forward copy pending credit-engine implementation — deliberate interim inconsistency; see the decision entry in `extras/gaps-and-decisions.md` (follow-up feature will align Terms/billing copy with the promise).

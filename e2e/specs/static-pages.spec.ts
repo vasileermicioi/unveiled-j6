@@ -230,7 +230,9 @@ test.describe("static-pages.feature", () => {
     const main = page.getByRole("main");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(main.getByRole("button").first()).toBeVisible();
-    await expect(main.getByText(/Luisenstra(ß|ss)e|10117 Berlin/i).first()).toBeVisible();
+    await expect(main.getByText(/unveiled GmbH/i).first()).toBeVisible();
+    await expect(main.getByText(/Greifswalder Stra(ß|ss)e 1/i).first()).toBeVisible();
+    await expect(main.getByText(/10405 Berlin/i).first()).toBeVisible();
     await expect(main.getByRole("link", { name: /support@unveiled\.berlin/i })).toBeVisible();
     await expect(main).not.toContainText(/Platzhalter|pending legal review/i);
 

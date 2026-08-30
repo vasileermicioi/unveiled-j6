@@ -153,6 +153,8 @@ Bilingual Impressum / Privacy / Terms module for `LegalPage`. Footer links: `foo
 
 Chrome: eyebrow `Rechtliches` / `Legal`. Section model: `id`, `title`, `body: string[]`. Body uses foreground color (not muted). See `docs/product/ui/static-pages-content.md` § Legal pages.
 
+Impressum provider identity: `unveiled GmbH`; DE `Vertreten durch Pia Sonnekalb & Sarah Michot` / EN `represented by Pia Sonnekalb & Sarah Michot`; `Greifswalder Straße 1`; `10405 Berlin`.
+
 ## Transactional emails — subscription invoice
 
 Not a `translations.ts` key table. Verbatim DE/EN copy lives in `packages/email/src/subscription-invoice.ts` (`buildSubscriptionInvoiceContent`). Sent via Resend after the first paid subscription invoice (`invoice.paid` + `billing_reason` `subscription_create` only). From-address is `DAILY_CODES_FROM_EMAIL`. `{SITE_URL}` is the public origin with no trailing slash; links are `{SITE_URL}/{locale}/…`. Credits do **not** roll over.

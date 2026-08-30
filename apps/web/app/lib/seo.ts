@@ -243,8 +243,11 @@ export type OrganizationJsonLd = {
   name: string;
   url: string;
   email: string;
+  legalName: string;
   address: {
     "@type": "PostalAddress";
+    streetAddress: string;
+    postalCode: string;
     addressLocality: string;
     addressCountry: string;
   };
@@ -255,10 +258,13 @@ export function buildOrganizationJsonLd(locale: Locale): OrganizationJsonLd {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Unveiled Berlin",
+    legalName: "unveiled GmbH",
     url: absoluteUrl(localizedPath(locale, "")),
     email: "support@unveiled.berlin",
     address: {
       "@type": "PostalAddress",
+      streetAddress: "Greifswalder Straße 1",
+      postalCode: "10405",
       addressLocality: "Berlin",
       addressCountry: "DE",
     },

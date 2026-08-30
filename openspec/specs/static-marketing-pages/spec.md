@@ -177,7 +177,7 @@ The system SHALL publish a bilingual Impressum/Imprint page with operator name, 
 #### Scenario: Impressum linked from footer shows real identity
 
 - **WHEN** a visitor opens Impressum / Imprint from the footer LEGAL column
-- **THEN** they see unveiled berlin operator details (representatives, Berlin address, phone, support email)
+- **THEN** they see unveiled GmbH operator details (representatives, Greifswalder Straße 1, 10405 Berlin, phone, support email)
 - **AND** the page language matches the URL locale (`de` or `en`)
 
 #### Scenario: Impressum has no placeholder body copy
