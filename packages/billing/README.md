@@ -6,7 +6,7 @@ Stripe Billing domain for Unveiled Berlin: Checkout, webhooks, credit lifecycle,
 
 | Export | Role |
 |---|---|
-| `createCheckoutSession` | Basic Berlin subscription Checkout |
+| `createCheckoutSession` | Basic Berlin subscription Checkout (`allow_promotion_codes`) |
 | `createBillingPortalSession` | Stripe Customer Portal session (`customer` + `return_url`) |
 | `cancelSubscriptionAtPeriodEnd` | Stripe `cancel_at_period_end` + optional local `CANCELLED_PENDING` via `applySubscriptionUpdated` |
 | `applyStripeEvent` / `constructStripeEvent` | Verified webhook application |
@@ -26,6 +26,15 @@ Enable the [Customer Portal](https://docs.stripe.com/customer-management/integra
 3. Cancellation — **at end of billing period** (not immediate cancel)
 
 App env: existing `STRIPE_SECRET_KEY` + `SITE_URL` for portal `return_url` (`/{locale}/profile/billing`). No new secrets for portal/cancel.
+
+## Subscription coupons / vouchers
+
+Checkout Sessions set `allow_promotion_codes: true` so the hosted page shows **Add promotion code**. Creating a Coupon in the Dashboard is not enough:
+
+1. Create a **Coupon** (the discount). Restricting it to the Basic Berlin product/price is fine.
+2. Create a customer-facing **Promotion code** for that coupon (Product catalog → Coupons → the coupon → Promotion codes). Members type that code, not the coupon id.
+
+Do not attach a coupon via Checkout `discounts` — that would hide the input and apply one coupon to every session.
 
 ## Credits / EXPIRY
 

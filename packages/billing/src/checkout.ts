@@ -19,6 +19,8 @@ export type CreateCheckoutSessionInput = {
 /**
  * Creates a subscription Checkout Session for Basic Berlin.
  * Omits `payment_method_types` so Stripe dynamic payment methods apply.
+ * Enables `allow_promotion_codes` so Checkout shows the voucher / promo-code field.
+ * Do not also pass `discounts` — Stripe rejects the two together.
  */
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInput,
@@ -44,6 +46,7 @@ export async function createCheckoutSession(
     cancel_url: cancelUrl,
     client_reference_id: userId,
     metadata: { userId },
+    allow_promotion_codes: true,
     subscription_data: {
       metadata: { userId, locale },
     },

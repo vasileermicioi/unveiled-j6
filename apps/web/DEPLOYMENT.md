@@ -772,6 +772,10 @@ Handler: `packages/billing/src/webhooks.ts` via `POST /api/webhooks/stripe`.
 
 **Staging / production:** Stripe Dashboard → Developers → Webhooks → Add endpoint → URL `https://<host>/api/webhooks/stripe` → select the five events above → copy that endpoint’s signing secret into Workers as `STRIPE_WEBHOOK_SECRET`. Use **test** mode + test keys on staging; **live** mode + live keys + a live-mode webhook on production.
 
+#### Subscription coupons (Checkout voucher field)
+
+Hosted Checkout shows **Add promotion code** because sessions set `allow_promotion_codes`. A Dashboard **Coupon** alone does not appear as an input. Also create a customer-facing **Promotion code** on that coupon (restrict to Basic Berlin if you want). Members enter the promotion code, not the coupon id. Do not pre-apply a coupon on the session via `discounts`.
+
 #### Disable Stripe customer invoice/receipt emails (test + live)
 
 Unveiled Resend is the product receipt (Stripe invoice PDF attached). If Dashboard customer emails stay on, members get **two** invoices.

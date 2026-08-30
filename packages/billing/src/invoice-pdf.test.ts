@@ -144,6 +144,8 @@ describe("createCheckoutSession", () => {
 
     expect(created).toHaveLength(1);
     expect(created[0]?.metadata).toEqual({ userId: "user_1" });
+    expect(created[0]?.allow_promotion_codes).toBe(true);
+    expect(created[0]?.discounts).toBeUndefined();
     expect(created[0]?.subscription_data?.metadata).toEqual({
       userId: "user_1",
       locale: "en",
