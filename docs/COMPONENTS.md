@@ -160,7 +160,7 @@ Embeds `FaqAccordion` island. Reuse on standalone FAQ and future checkout help w
 **Path:** `components/marketing/LandingPage.tsx`  
 **Route:** `[locale]/index.tsx` (guest marketing home)
 
-Hero headline + subheadline, phone mockup, black membership plan card (perks + signup CTA), benefits strip.
+Long-form guest conversion: hero gallery + inverted plan card, Community Experience rail, credits explainer, partner flexibility band, community photowall, final CTA. App shell (nav/footer) stays shared. v1 snapshot: `LandingPage.legacy.tsx`.
 
 Props: `{ locale, landing: LandingContent }`
 

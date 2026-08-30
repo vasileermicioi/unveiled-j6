@@ -12,22 +12,109 @@ export type PageKey =
 
 export type LocalizedContent<T> = Record<Locale, T>;
 
-export type LandingBenefit = {
+export type LandingPerk = {
+  highlight: string;
   title: string;
   body: string;
+  highlightPlacement: "start" | "end";
+};
+
+export type LandingEventTeaser = {
+  id: string;
+  title: string;
+  description: string;
+  dateLabel: string;
+  time: string;
+  place: string;
+  credits: string;
+  locked: boolean;
+};
+
+export type LandingCreditExample = {
+  name: string;
+  credits: string;
+  icon: "community" | "theater" | "exhibition";
+};
+
+export type LandingVenueCard = {
+  name: string;
+  type: string;
+  fromCredits: string;
+};
+
+export type LandingComingSoonPartner = {
+  name: string;
+  href: string;
+  logoSrc: string;
 };
 
 export type LandingContent = {
-  headline: string;
-  subheadline: string;
-  phoneAlt: string;
-  plan: {
-    priceAmount: string;
-    pricePeriod: string;
-    perks: readonly [string, string, string, string];
-    cta: string;
+  hero: {
+    tag: string;
+    headline: string;
+    lead: string;
+    galleryAlt: string;
   };
-  benefits: readonly [LandingBenefit, LandingBenefit, LandingBenefit];
+  offer: {
+    depositEyebrow: string;
+    depositAmount: string;
+    depositToday: string;
+    depositSub: string;
+    depositAfter: string;
+    basePerk: LandingPerk;
+    perkGroupLabel: string;
+    foundingPerks: readonly [LandingPerk, LandingPerk];
+    cta: string;
+    cancel: string;
+  };
+  events: {
+    eyebrow: string;
+    headline: string;
+    body: string;
+    railHint: string;
+    loginCta: string;
+    loginShort: string;
+    communityLabel: string;
+    previousPhoto: string;
+    nextPhoto: string;
+    items: readonly LandingEventTeaser[];
+  };
+  credits: {
+    eyebrow: string;
+    headline: string;
+    amount: string;
+    period: string;
+    body: string;
+    exampleLabel: string;
+    examples: readonly [LandingCreditExample, LandingCreditExample, LandingCreditExample];
+    exampleNote: string;
+    used: string;
+    left: string;
+    mix: string;
+  };
+  flexibility: {
+    eyebrow: string;
+    headline: string;
+    body: string;
+    venues: readonly [LandingVenueCard, LandingVenueCard];
+    moreStrip: string;
+    comingSoon: string;
+    reassure: string;
+    reassureMuted: string;
+    partners: readonly LandingComingSoonPartner[];
+  };
+  community: {
+    eyebrow: string;
+    headline: string;
+    proof: string;
+    photoAlt: string;
+  };
+  finalCta: {
+    headline: string;
+    body: string;
+    cta: string;
+    cancel: string;
+  };
 };
 
 export type ValuePropCard = {

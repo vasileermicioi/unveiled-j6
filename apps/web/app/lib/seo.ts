@@ -83,8 +83,8 @@ export function buildPageMeta(input: PageMetaInput): PageMeta {
 
 export function landingPageMeta(content: LandingContent) {
   return {
-    title: content.headline,
-    description: content.subheadline,
+    title: content.hero.headline,
+    description: content.hero.lead,
   };
 }
 

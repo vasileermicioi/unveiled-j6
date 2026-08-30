@@ -8,12 +8,16 @@ Exact DE/EN copy and section structure for marketing pages. Rebuild with HeroUI.
 
 ## Guest marketing home (`/:locale`)
 
-Public conversion landing for **guests only**. Signed-in members/admins who hit this URL are redirected to their role home (booking-eligible `USER` → `/events`, non-active `USER` → `/discover` or onboarding, `ADMIN` → `/admin`). Logo (guest) points here. Navbar links **Discover** / **Entdecken** to `/discover` for guests (active members see **Browse events** → `/events` instead). Sections, top to bottom:
+Public conversion landing for **guests only**. Signed-in members/admins who hit this URL are redirected to their role home (booking-eligible `USER` → `/events`, non-active `USER` → `/discover` or onboarding, `ADMIN` → `/admin`). Logo (guest) points here. Navbar links **Discover** / **Entdecken** to `/discover` for guests (active members see **Browse events** → `/events` instead). App chrome (navbar + footer) is unchanged. Sections, top to bottom:
 
-1. **Hero** — H1 + subheadline (all-caps brand tone): membership for Berlin’s cultural scene / monthly credits framing
-2. **Showcase** — phone mockup (`/images/guest-home-phone.png`) + black plan card (29€ / month, four perks, cream CTA panel)
-3. **Primary CTA** — “Registrier dich jetzt” / “Register now” → `/signup` (no limited-offer / bonus-credits block)
-4. **Benefits strip** — three columns: save time / save money / meet people
+1. **Hero** — campaign tag + H1 (“Willst du mehr Tage wie diesen?” / “Want more days like this?”) + lead; community photo gallery + inverted plan card (19 € today after 10 € deposit, 29 € / month after, 17 credits, first-30 perks, Join → `/signup`)
+2. **Experiences grid** — same 1/2/3-column `EventCard` layout as Discover; Community Experience teasers (date chip, place, credits in the footer) + locked lineup cards; CTA “Einloggen für mehr” / “Log in to see more” → `/login`
+3. **Credits explainer** — 17 credits / month, example mix, used/left tally
+4. **Flexibility** — inverted band: partner-venue teasers + coming-soon partner tiles (initial-letter marks, not Google favicons)
+5. **Community photowall** — “Komm für die Kultur…” / “Come for the culture…”
+6. **Final CTA** — inverted band, same Join → `/signup`
+
+v1 (phone mockup + 29€ plan + three-benefit strip) is archived at `.dev-plan/archived-landing-v1/` and `LandingPage.legacy.tsx`.
 
 ---
 

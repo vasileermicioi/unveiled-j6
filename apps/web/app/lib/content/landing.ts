@@ -1,66 +1,344 @@
 import type { LandingContent, LocalizedContent } from "./types";
 
+const partnerLogo = (file: string) => `/images/landing/partners/${file}`;
+
+const comingSoonPartners = [
+  {
+    name: "Theater im Delphi",
+    href: "https://theater-im-delphi.de/",
+    logoSrc: partnerLogo("theater-im-delphi.png"),
+  },
+  {
+    name: "Hebbel am Ufer",
+    href: "https://www.hebbel-am-ufer.de/",
+    logoSrc: partnerLogo("hebbel-am-ufer.png"),
+  },
+  {
+    name: "Dark Matter",
+    href: "https://www.darkmatter.berlin/",
+    logoSrc: partnerLogo("dark-matter.png"),
+  },
+  {
+    name: "Fotografiska Berlin",
+    href: "https://berlin.fotografiska.com/de",
+    logoSrc: partnerLogo("fotografiska.png"),
+  },
+  {
+    name: "Samurai Museum",
+    href: "https://samuraimuseum.de/",
+    logoSrc: partnerLogo("samurai-museum.png"),
+  },
+  {
+    name: "Sophiensæle",
+    href: "https://sophiensaele.com/de",
+    logoSrc: partnerLogo("sophiensaele.png"),
+  },
+  {
+    name: "Bröhan-Museum",
+    href: "https://www.broehan-museum.de/",
+    logoSrc: partnerLogo("broehan-museum.png"),
+  },
+  {
+    name: "P61 Gallery",
+    href: "https://www.p61gallery.com/",
+    logoSrc: partnerLogo("p61-gallery.png"),
+  },
+] as const;
+
 export const landingContent: LocalizedContent<LandingContent> = {
   de: {
-    headline: "Eine Mitgliedschaft für die gesamte Kulturszene.",
-    subheadline:
-      "Monatliche Credits für den Zugang zu Berlins besten Kultureinrichtungen und exklusiven Community-Events.",
-    phoneAlt: "Unveiled App auf dem Smartphone",
-    plan: {
-      priceAmount: "29€",
-      pricePeriod: "pro Monat",
-      perks: [
-        "17 monatliche Credits",
-        "Flexible Nutzung deiner Credits",
-        "Exklusiver Community-Zugang",
-        "Jederzeit kündbar",
-      ],
-      cta: "Registrier dich jetzt",
+    hero: {
+      tag: "Heute geliebt? Da kommt mehr.",
+      headline: "Willst du mehr Tage wie diesen?",
+      lead: "Werde Teil von unveiled und entdecke deinen nächsten Monat Berliner Kultur, zusammen.",
+      galleryAlt: "unveiled Community",
     },
-    benefits: [
-      {
-        title: "Zeit sparen.",
-        body: "Finde großartige Events in unter einer Minute.",
+    offer: {
+      depositEyebrow: "Deine 10 € Anzahlung zählt 🫶",
+      depositAmount: "19 €",
+      depositToday: "heute",
+      depositSub: "Dein erster Monat unveiled",
+      depositAfter: "danach 29 € / Monat",
+      basePerk: {
+        highlight: "17",
+        title: "Credits jeden Monat",
+        body: "für Community Experiences & Deals bei Kulturpartnern",
+        highlightPlacement: "start",
       },
-      {
-        title: "Geld sparen.",
-        body: "Eine Mitgliedschaft statt einzelner Tickets.",
-      },
-      {
-        title: "Leute treffen.",
-        body: "Werde Teil einer Community, die wirklich ausgeht.",
-      },
-    ],
+      perkGroupLabel: "Perks für die ersten 30",
+      foundingPerks: [
+        {
+          highlight: "+5",
+          title: "extra Credits",
+          body: "Mehr zum Entdecken in deinem ersten Monat",
+          highlightPlacement: "start",
+        },
+        {
+          highlight: "+1",
+          title: "Bring deine",
+          body: "zu ausgewählten Community Experiences",
+          highlightPlacement: "end",
+        },
+      ],
+      cta: "unveiled beitreten",
+      cancel: "Jederzeit kündbar",
+    },
+    events: {
+      eyebrow: "Was als Nächstes kommt",
+      headline: "Das war erst der Anfang.",
+      body: "Und das machen wir als Nächstes. Stell dir vor, du stehst nächste Woche mittendrin.",
+      railHint: "Wisch für das ganze Lineup →",
+      loginCta: "Einloggen für mehr",
+      loginShort: "Einloggen",
+      communityLabel: "unveiled Community Experience",
+      previousPhoto: "Vorheriges Foto",
+      nextPhoto: "Nächstes Foto",
+      items: [
+        {
+          id: "chameleon",
+          title: "Show & Drinks im Chamäleon Theater",
+          description:
+            "Wir schauen die Show im Chamäleon Theater und gehen danach zusammen was trinken. Join the unveiled culture club.",
+          dateLabel: "02 SEP",
+          time: "20:00",
+          place: "Mitte",
+          credits: "6 Credits",
+          locked: false,
+        },
+        {
+          id: "tempelhof",
+          title: "Sunset & Festival am Tempelhofer Feld",
+          description:
+            "Musik, Talks und ein Sonnenuntergang auf einem echten Flugfeld. Wir verbringen den Freitagabend zusammen auf dem Tempelhofer Feld.",
+          dateLabel: "04 SEP",
+          time: "ab 19:00",
+          place: "Tempelhofer Feld",
+          credits: "2 Credits",
+          locked: false,
+        },
+        {
+          id: "dark-matter",
+          title: "Licht & Drinks im Dark Matter",
+          description:
+            "Durch die Lichtinstallationen laufen, Drink in der Hand, mit den Leuten die's feiern.",
+          dateLabel: "09 SEP",
+          time: "ab 19:00",
+          place: "Lichtenberg",
+          credits: "8 Credits",
+          locked: false,
+        },
+        {
+          id: "rooftop",
+          title: "Sunset Rooftop Cinema",
+          description:
+            "Open-Air-Film, warme Drinks, Decken und gute Gesellschaft, wenn es dunkel wird.",
+          dateLabel: "18 SEP",
+          time: "",
+          place: "Neukölln",
+          credits: "3 Credits",
+          locked: true,
+        },
+        {
+          id: "gallery-hop",
+          title: "Gallery Hop in Kreuzberg",
+          description: "Drei Studios, ein Abend, eine kleine Gruppe. Kein Solo-Herumirren.",
+          dateLabel: "25 SEP",
+          time: "",
+          place: "Kreuzberg",
+          credits: "4 Credits",
+          locked: true,
+        },
+      ],
+    },
+    credits: {
+      eyebrow: "Der einfache Teil",
+      headline: "Okay, aber wie funktionieren Credits?",
+      amount: "17 Credits",
+      period: "jeden Monat",
+      body: "Nutze sie für unsere Community Experiences oder auf eigene Faust für die besten Deals bei unseren Kulturpartnern.",
+      exampleLabel: "Ein Monat könnte so aussehen",
+      examples: [
+        { name: "Community Experience", credits: "5 Credits", icon: "community" },
+        { name: "Theater", credits: "3 Credits", icon: "theater" },
+        { name: "Ausstellung", credits: "4 Credits", icon: "exhibition" },
+      ],
+      exampleNote: "Nur Beispiele. Die Credit-Kosten variieren je nach Experience.",
+      used: "12 Credits genutzt.",
+      left: "5 noch übrig.",
+      mix: "Misch sie, wie du willst.",
+    },
+    flexibility: {
+      eyebrow: "Kein Zwang",
+      headline: "Keine Zeit für eine unserer Community Experiences?",
+      body: "Kein Stress. Deine Credits gehören dir. Gib sie einfach für andere Experiences auf unveiled aus.",
+      venues: [
+        { name: "Designpanoptikum", type: "Ausstellung", fromCredits: "ab 5 Credits" },
+        { name: "DDR Museum", type: "Museum", fromCredits: "ab 5 Credits" },
+      ],
+      moreStrip: "Weitere Kulturpartner kommen zu unveiled dazu · neue Orte alle paar Wochen",
+      comingSoon: "Bald verfügbar",
+      reassure: "Deine Credits sind also nicht an unsere Community Events gebunden.",
+      reassureMuted: "Du entscheidest, was für dich passt.",
+      partners: comingSoonPartners,
+    },
+    community: {
+      eyebrow: "Echte Leute",
+      headline: "Komm für die Kultur. Bleib für die Leute.",
+      proof: "Werde Teil von 500+ Leuten in unserer Community.",
+      photoAlt: "unveiled Community",
+    },
+    finalCta: {
+      headline: "Willst du mehr Tage wie diesen?",
+      body: "17 Credits im Monat · Community inklusive · Heute nur noch 19 €",
+      cta: "unveiled beitreten",
+      cancel: "Jederzeit kündbar",
+    },
   },
   en: {
-    headline: "One membership for the entire cultural scene.",
-    subheadline:
-      "Monthly credits for Berlin's best cultural venues and exclusive community events.",
-    phoneAlt: "Unveiled app on a smartphone",
-    plan: {
-      priceAmount: "29€",
-      pricePeriod: "per month",
-      perks: [
-        "17 monthly credits",
-        "Flexible credit combinations",
-        "Exclusive community access",
-        "Cancel the subscription anytime",
-      ],
-      cta: "Register now",
+    hero: {
+      tag: "Loved today? There's more.",
+      headline: "Want more days like this?",
+      lead: "Join unveiled and spend your next month discovering Berlin's culture together.",
+      galleryAlt: "unveiled community",
     },
-    benefits: [
-      {
-        title: "Save time.",
-        body: "Find great events in under a minute.",
+    offer: {
+      depositEyebrow: "Your €10 deposit counts 🫶",
+      depositAmount: "19 €",
+      depositToday: "today",
+      depositSub: "Your first month of unveiled",
+      depositAfter: "29 € / month after",
+      basePerk: {
+        highlight: "17",
+        title: "Credits every month",
+        body: "to spend on Community Experiences & cultural partner deals",
+        highlightPlacement: "start",
       },
-      {
-        title: "Save money.",
-        body: "One membership instead of individual tickets.",
-      },
-      {
-        title: "Meet people.",
-        body: "Join a community that actually goes out.",
-      },
-    ],
+      perkGroupLabel: "First 30 member perks",
+      foundingPerks: [
+        {
+          highlight: "+5",
+          title: "extra Credits",
+          body: "More to explore in your first month",
+          highlightPlacement: "start",
+        },
+        {
+          highlight: "+1",
+          title: "Bring your",
+          body: "to selected Community Experiences",
+          highlightPlacement: "end",
+        },
+      ],
+      cta: "Join unveiled",
+      cancel: "Cancel anytime",
+    },
+    events: {
+      eyebrow: "What's next",
+      headline: "This was just the beginning.",
+      body: "Here's what we're doing next. Picture yourself there next week.",
+      railHint: "Swipe to see the full lineup →",
+      loginCta: "Log in to see more",
+      loginShort: "Log in",
+      communityLabel: "unveiled Community Experience",
+      previousPhoto: "Previous photo",
+      nextPhoto: "Next photo",
+      items: [
+        {
+          id: "chameleon",
+          title: "Show & Drinks at Chamäleon Theater",
+          description:
+            "We watch the show at Chamäleon Theater, then head out for drinks together. Join the unveiled culture club.",
+          dateLabel: "02 SEP",
+          time: "20:00",
+          place: "Mitte",
+          credits: "6 Credits",
+          locked: false,
+        },
+        {
+          id: "tempelhof",
+          title: "Sunset & Festival at Tempelhof Field",
+          description:
+            "Music, talks and a sunset on an actual airfield. We're spending Friday night at Tempelhofer Feld together.",
+          dateLabel: "04 SEP",
+          time: "from 19:00",
+          place: "Tempelhofer Feld",
+          credits: "2 Credits",
+          locked: false,
+        },
+        {
+          id: "dark-matter",
+          title: "Light & Drinks at Dark Matter",
+          description:
+            "Walk through the light installations, one drink in hand, with the people who get it.",
+          dateLabel: "09 SEP",
+          time: "from 19:00",
+          place: "Lichtenberg",
+          credits: "8 Credits",
+          locked: false,
+        },
+        {
+          id: "rooftop",
+          title: "Sunset Rooftop Cinema",
+          description: "Open air film, warm drinks, blankets and good company as it gets dark.",
+          dateLabel: "18 SEP",
+          time: "",
+          place: "Neukölln",
+          credits: "3 Credits",
+          locked: true,
+        },
+        {
+          id: "gallery-hop",
+          title: "Gallery Hop in Kreuzberg",
+          description: "Three studios, one evening, a small group. No awkward solo wandering.",
+          dateLabel: "25 SEP",
+          time: "",
+          place: "Kreuzberg",
+          credits: "4 Credits",
+          locked: true,
+        },
+      ],
+    },
+    credits: {
+      eyebrow: "The simple part",
+      headline: "Okay, but how do Credits work?",
+      amount: "17 Credits",
+      period: "every month",
+      body: "Use them across our Community Experiences, or on your own for the best deals with our cultural partners.",
+      exampleLabel: "One month could look like this",
+      examples: [
+        { name: "Community Experience", credits: "5 Credits", icon: "community" },
+        { name: "Theater", credits: "3 Credits", icon: "theater" },
+        { name: "Exhibition", credits: "4 Credits", icon: "exhibition" },
+      ],
+      exampleNote: "Just examples. Credit costs vary by experience.",
+      used: "12 Credits used.",
+      left: "5 still left.",
+      mix: "Mix them however you want.",
+    },
+    flexibility: {
+      eyebrow: "No pressure",
+      headline: "Can't make one of our Community Experiences?",
+      body: "No worries. Your Credits are yours to spend. Use them for other experiences on unveiled instead.",
+      venues: [
+        { name: "Designpanoptikum", type: "Exhibition", fromCredits: "from 5 Credits" },
+        { name: "DDR Museum", type: "Museum", fromCredits: "from 5 Credits" },
+      ],
+      moreStrip: "More cultural partners are joining unveiled · new places every few weeks",
+      comingSoon: "Coming soon",
+      reassure: "So your Credits aren't tied to our Community Events.",
+      reassureMuted: "You decide what works for you.",
+      partners: comingSoonPartners,
+    },
+    community: {
+      eyebrow: "Real people",
+      headline: "Come for the culture. Stay for the people.",
+      proof: "Join 500+ people already in our community.",
+      photoAlt: "unveiled community",
+    },
+    finalCta: {
+      headline: "Want more days like this?",
+      body: "17 Credits a month · Community built in · Only 19 € left today",
+      cta: "Join unveiled",
+      cancel: "Cancel anytime",
+    },
   },
 };

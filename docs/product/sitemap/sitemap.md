@@ -20,7 +20,7 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 
 ## Guest home, Discover & public marketing
 
-**Guest marketing home is locale home.** `/:locale` renders the membership conversion landing (headline, phone mockup, plan card, benefits). **Discover** is `/:locale/discover` (admin-curated **featured events** + admin-curated **featured partners** Partner venues marquee — not an automatic catalog slice). Bare `/discover` **302** redirects to `/:locale/discover` via `Accept-Language`.
+**Guest marketing home is locale home.** `/:locale` renders the membership conversion landing (hero + plan card, experience rail, credits, partners, community, final CTA). **Discover** is `/:locale/discover` (admin-curated **featured events** + admin-curated **featured partners** Partner venues marquee — not an automatic catalog slice). Bare `/discover` **302** redirects to `/:locale/discover` via `Accept-Language`.
 
 ### Guest journey (Home → Discover → Events)
 
