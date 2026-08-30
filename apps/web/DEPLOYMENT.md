@@ -1039,6 +1039,8 @@ After deploy (with `SITE_URL` set to the staging origin), confirm:
 
 **Cookie consent note:** Declining non-essential cookies stores the preference in `localStorage` (`unveiled:cookie-consent`). On `/:locale/events/map`, MapLibre + OpenStreetMap tiles load only when consent is **accepted**; otherwise a static address-list fallback is shown and no OSM tile requests are made. Sentry (when added) remains ungated.
 
+**FAQ refresh (faq-refresh-03) checklist note:** `/de/faq` + `/en/faq` verified on local SSR (dev server, port 3000): page source `FAQPage` JSON-LD `mainEntity` contains exactly **11** entries of type `Question` per locale with the shipped copy (incl. the rollover promise); `<title>`, description, canonical, hreflang, and `og:*` meta unchanged in shape; hero + help-card + accordion layout identical to pre-refresh (e2e `Scenario: FAQ` green). **Staging re-run of items 1 and 5 above for both locales is still required at the next deploy** — record the result here when done.
+
 **Event map:** No map API keys. Tiles are requested from `https://tile.openstreetmap.org/{z}/{x}/{y}.png` (same as admin geo picker). Declined consent shows an address-list fallback with an external OpenStreetMap link (no tile requests). If a future Workers Content-Security-Policy is added, allow `img-src` / `connect-src` for that host and MapLibre worker scripts as needed. OSM attribution must remain visible when the map loads.
 
 Local verification (dev server on port 3000):

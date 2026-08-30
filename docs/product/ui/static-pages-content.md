@@ -77,7 +77,7 @@ Footer LEGAL column → three links. Component: `LegalPage.tsx`. Content module:
 - Operator identity on Impressum; Privacy/Terms refer to it instead of repeating full contact blocks.
 - Sections use `title` + `body: string[]`. Single-open accordion; first section expanded by default.
 - Copy is **operational** MVP text; formal counsel review still recommended before production launch.
-- Terms state that unused **credits do not roll over**. Do not reintroduce rollover claims from the old marketing FAQ.
+- Terms currently state that unused **credits do not roll over**. The FAQ's 2-month rollover promise is the approved marketing forward copy pending credit-engine implementation — deliberate interim inconsistency; see the decision entry in `extras/gaps-and-decisions.md` (follow-up feature will align Terms/billing copy with the promise).
 - Full bilingual prose lives in `legal.ts`.
 
 ---
@@ -86,24 +86,50 @@ Footer LEGAL column → three links. Component: `LegalPage.tsx`. Content module:
 
 ### 1. Page header
 - Shared `PageSectionHeader` on the yellow page background (not a bordered `PageHero` card): eyebrow "Support" (same in both languages), headline **"Häufig gestellte Fragen" / "FAQ"** (large display headline), full-width rule under the title
-- Subheadline below the header: "Alles Wichtige zu Mitgliedschaft, Buchung und Check-in an einem Ort." / "Everything important about membership, booking, and check-in in one place."
+- Subheadline below the header: "Alles Wichtige zu Mitgliedschaft, Credits, Buchung und Storno an einem Ort." / "Everything important about membership, credits, booking, and cancellation in one place."
 - Shell nav/footer DE label for this route is also **"Häufig gestellte Fragen"** / **"HÄUFIG GESTELLTE FRAGEN"** (not the English acronym "FAQ")
 
 ### 2. Help/FAQ card (`HelpSection`, reused elsewhere too — see below)
 - Eyebrow: "HILFE & SUPPORT" / "FAQ & SUPPORT"
 - Headline: "Häufig gestellte Fragen." / "Everything you need to know."
 - Support email link: `support@unveiled.berlin` (mailto)
-- **Accordion with exactly 3 Q&As, one open at a time (first one open by default):**
+- **Accordion with 11 Q&As, one open at a time (first one open by default).** Copy approved in `.dev-plan/FAQs.md` (EN verbatim) with DE translation; shipped in `apps/web/app/lib/content/faq.ts` and pinned by the guard test `apps/web/app/lib/content/faq.test.ts` (item count + non-empty copy + JSON-LD parity):
 
-  1. **DE:** "Wie buche ich ein Event?" → "Öffne ein Event, wähle die Anzahl der Tickets und bestätige die Buchung mit deinen Credits. Danach findest du alle Details direkt unter Meine Tickets."
-     **EN:** "How does booking work?" → "Open an event, choose the number of tickets, and confirm the booking with your credits. All details, codes, or vouchers will then appear in My Tickets."
+  1. **DE:** "Wie funktioniert die unveiled Mitgliedschaft?" → "Jeden Monat erhältst du Credits für kulturelle Erlebnisse in ganz Berlin. Nutze sie, um mit der unveiled Community Erfahrungen zu teilen oder die Stadt auf eigene Faust zu entdecken — von Museen und Ausstellungen über Theater und Konzerte bis mehr. Buche einfach über unveiled, dein Ticket ist in der Mitgliedschaft enthalten."
+     **EN:** "How does the unveiled membership work?" → "Every month, you receive Credits to spend on cultural experiences across Berlin. Use them to join experiences with the unveiled community or explore on your own, from museums and exhibitions to theatre, concerts and more. Simply book through unveiled and your ticket is included in your membership."
 
-  2. **DE:** "Was passiert nach der Buchung?" → "Je nach Event bekommst du entweder einen Einlasscode oder einen Promo-Code mit Link zur externen Ticketseite. Alle Details findest du unter Meine Tickets — zeige den Code bei Bedarf an der Tür vor."
-     **EN:** "What do I receive after booking?" → "Depending on the event, you will receive either an entry code or a voucher or promo code with a link to the external ticket page. All details appear under My Tickets — show the code at the door when needed."
-     _(Venue QR self-check-in is **post-MVP**; do not document it as a required guest step in MVP copy.)_
+  2. **DE:** "Wofür kann ich meine Credits nutzen?" → "Deine Credits schalten kulturelle Erlebnisse in ganz Berlin frei — ob mit der Community oder allein. Nimm an einem unserer Community Experiences teil und entdeckt gemeinsam Kultur, oder nutze deine Credits, um unsere Partner-Venues zu besuchen, wann immer du Lust auf einen Solo-Besuch hast. Und wir fangen gerade erst an: Jede Woche kommen neue Kulturpartner und Erlebnisse hinzu."
+     **EN:** "What can I use my Credits for?" → "Your Credits unlock cultural experiences across Berlin, whether you want to experience them with the community or on your own. Join one of our Community Experiences and discover culture together, or use your Credits to visit our partner venues whenever you feel like going solo. And we’re just getting started. New cultural partners and experiences are added every week."
 
-  3. **DE:** "Was mache ich, wenn etwas nicht funktioniert?" → "Schreib uns an support@unveiled.berlin. Am besten mit Eventname, Uhrzeit und einem Screenshot, damit wir dir schnell helfen können."
-     **EN:** "What if something is not working?" → "Email us at support@unveiled.berlin. The fastest way for us to help is if you include the event name, time, and a screenshot."
+  3. **DE:** "Wie viele Credits kostet ein Erlebnis?" → "Das hängt vom Erlebnis ab. Die benötigte Anzahl an Credits kann je nach regulärem Ticketpreis, Nachfrage, Zeitpunkt und dem jeweiligen Partner variieren. Den genauen Credit-Preis siehst du immer vor der Buchung. Nach der Buchung ändert sich der Credit-Preis deiner bestätigten Buchung nicht."
+     **EN:** "How many Credits does an experience cost?" → "It depends on the experience. The number of Credits required can vary based on factors such as the regular ticket price, demand, timing and the individual partner. You’ll always see the exact Credit price before booking. Once you’ve booked, the Credit price of your confirmed booking won’t change."
+
+  4. **DE:** "Was passiert mit ungenutzten Credits?" → "Keine Sorge, ungenutzte Credits verschwinden nicht am Ende des Monats. Sie werden in den nächsten Monat übertragen, sodass du dir bis zu 2 Monatskontingente ansparen kannst."
+     **EN:** "What happens to unused Credits?" → "Don’t worry, unused Credits don’t disappear at the end of the month. They roll over to the next month, so you can save up to 2 months’ worth of Credits."
+     _(Deliberate forward promise — see the rollover decision in `extras/gaps-and-decisions.md`; support fulfills it manually until the credit-engine feature ships.)_
+
+  5. **DE:** "Kann ich ein gebuchtes Erlebnis stornieren?" → "Da wir gerade erst starten, schreib uns einfach kurz eine E-Mail an support@unveiled.berlin — mindestens 12 h vor Beginn des Events. Wir finden immer eine gute Lösung für dich."
+     **EN:** "Can I cancel an experience I booked?" → "Since we’re just getting started, just send us a quick email at support@unveiled.berlin at least 12h before the event starts. We’ll always do our best to find a good solution for you."
+
+  6. **DE:** "Was passiert, wenn ich zu spät storniere oder nicht erscheine?" → "Wenn du nach Ablauf der Stornofrist stornierst oder das Erlebnis nicht besuchst, können die für die Buchung verwendeten Credits verfallen und werden nicht erstattet."
+     **EN:** "What happens if I cancel too late or don’t show up?" → "If you cancel after the cancellation deadline or don’t attend the experience, the Credits used for the booking may be forfeited and won’t be refunded."
+
+  7. **DE:** "Was passiert, wenn ein Event abgesagt wird?" → "Wenn ein Erlebnis abgesagt wird und du Anspruch auf eine Erstattung hast, werden dir die Credits der Buchung auf deinem unveiled-Konto gutgeschrieben."
+     **EN:** "What happens if an event is cancelled?" → "If an experience is cancelled and you are entitled to a refund, the Credits you used for the booking will be returned to your unveiled account."
+
+  8. **DE:** "Was passiert, wenn ein Event verschoben wird?" → "Wenn ein Erlebnis auf einen neuen Termin verschoben wird, kannst du entweder am neuen Termin teilnehmen oder die Buchung stornieren und deine Credits zurückerhalten. Falls wir dich um eine Entscheidung bitten, hast du drei Tage Zeit. Reagierst du in dieser Frist nicht, werden deine Credits automatisch deinem Konto gutgeschrieben."
+     **EN:** "What happens if an event is rescheduled?" → "If an experience is moved to a new date, you can either attend on the new date or cancel the booking and receive your Credits back. If we ask you to make a choice, you’ll have three days to do so. If you don’t respond within that time, your Credits will automatically be returned to your account."
+
+  9. **DE:** "Kann ich meine Mitgliedschaft jederzeit kündigen?" → "Ja. Du kannst deine Mitgliedschaft jederzeit kündigen. Deine Mitgliedschaft bleibt bis zum Ende des aktuellen bezahlten Abrechnungszeitraums aktiv. Eine zusätzliche Kündigungsfrist gibt es nicht."
+     **EN:** "Can I cancel my membership anytime?" → "Yes. You can cancel your membership at any time. Your membership will remain active until the end of your current paid billing period. There is no additional notice period."
+
+  10. **DE:** "Kann ich mein unveiled-Konto mit anderen teilen?" → "Nein. Dein Konto ist persönlich und darf nicht mit einer anderen Person geteilt oder von ihr genutzt werden. Jede Person darf nur ein Konto erstellen."
+      **EN:** "Can I share my unveiled account with someone else?" → "No. Your account is personal and may not be shared with or used by another person. Each person may only create one account."
+
+  11. **DE:** "Wer organisiert eigentlich die kulturellen Erlebnisse?" → "Die auf unveiled verfügbaren Erlebnisse werden von unseren Kulturpartnern organisiert und durchgeführt. unveiled hilft dir, sie zu entdecken und zu buchen, aber wir sind nicht Veranstalter der einzelnen Events. Daher können auch die Regeln und Bedingungen der Venues gelten."
+      **EN:** "Who actually organises the cultural experiences?" → "The experiences available on unveiled are organised and operated by our cultural partners. unveiled helps you discover and book them, but we are not the organiser of the individual events. The venue’s own rules and conditions may therefore also apply."
+
+- Support email addresses inside answers render as the **literal text** `support@unveiled.berlin` (no mailto link in answers; the clickable support link lives in the help-card description above the accordion).
 
 ### 3. Back button
 **Decided (rewrite):** no Back / Zurück button on the FAQ page — guests leave via header, footer, or other in-page links.

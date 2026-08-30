@@ -172,9 +172,11 @@ test.describe("static-pages.feature", () => {
       page.getByRole("link", { name: /support@unveiled\.berlin/i }).first(),
     ).toBeVisible();
 
-    const firstQuestion = page.getByRole("button", { name: /wie buche ich|how does booking/i });
+    const firstQuestion = page.getByRole("button", {
+      name: /wie funktioniert die unveiled mitgliedschaft|how does the unveiled membership/i,
+    });
     const secondQuestion = page.getByRole("button", {
-      name: /was passiert nach|what do i receive after/i,
+      name: /wofür kann ich meine credits|what can i use my credits/i,
     });
     await expect(firstQuestion).toBeVisible({ timeout: 10_000 });
     await expect(secondQuestion).toBeVisible();
@@ -182,8 +184,11 @@ test.describe("static-pages.feature", () => {
     await secondQuestion.click();
     // Accordion is single-expand: second panel open implies first closed.
     await expect(
-      page.getByText(/einlasscode|promo-code|my tickets|meine tickets/i).first(),
+      page.getByText(/community|partner venues|kulturelle Erlebnisse/i).first(),
     ).toBeVisible();
+    await expect(
+      page.getByText(/jeden Monat erhältst du|every month, you receive/i).first(),
+    ).toBeHidden();
   });
 
   test("Scenario: Bare /discover redirects to localized Discover", async ({ page }) => {
