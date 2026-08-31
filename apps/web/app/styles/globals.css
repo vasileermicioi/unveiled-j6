@@ -3730,10 +3730,18 @@
     line-height: 1.5;
   }
 
+  .landing-hero__grid {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Width from the column — min-height × aspect-ratio overflowed the phone viewport. */
   .landing-hero__media {
     position: relative;
     overflow: hidden;
-    min-height: 22rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     aspect-ratio: 4 / 3;
     border: var(--border-width) solid var(--foreground);
     background: var(--surface);
