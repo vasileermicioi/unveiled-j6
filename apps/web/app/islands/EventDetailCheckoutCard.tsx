@@ -37,6 +37,8 @@ export type EventDetailCheckoutCardProps = {
   occurrences?: CheckoutOccurrence[];
   defaultDateTimeIso?: string;
   datetimeLabel?: string;
+  /** When false, slot labels omit clock time (all-day events). Default true. */
+  includeTime?: boolean;
   /** Active booked occurrence ISOs for the eligible member; overlay is per selected hour. */
   bookedOccurrenceIsos?: string[];
   alreadyBookedMessage?: string;
@@ -73,6 +75,7 @@ export default function EventDetailCheckoutCard({
   occurrences = [],
   defaultDateTimeIso,
   datetimeLabel,
+  includeTime = true,
   bookedOccurrenceIsos = [],
   alreadyBookedMessage,
   myTicketsHref,
@@ -108,9 +111,9 @@ export default function EventDetailCheckoutCard({
     () =>
       occurrences.map((occurrence) => ({
         ...occurrence,
-        label: formatOccurrenceLabel(occurrence.startsAtIso, locale),
+        label: formatOccurrenceLabel(occurrence.startsAtIso, locale, { includeTime }),
       })),
-    [occurrences, locale],
+    [includeTime, occurrences, locale],
   );
 
   return (

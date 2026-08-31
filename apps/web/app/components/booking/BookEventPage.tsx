@@ -52,6 +52,8 @@ export function BookEventPage({
   const unitPrice = selected?.creditPrice ?? occurrences[0]?.creditPrice ?? event.creditPrice;
   const slotIso = selected?.startsAtIso ?? occurrences[0]?.startsAtIso ?? slotDateTimeIso;
   const slotMaxQty = selected?.maxQty ?? occurrences[0]?.maxQty ?? maxQty;
+  const includeTime = event.timingMode !== "ALL_DAY";
+  const datetimeLabel = includeTime ? copy.datetimeLabel : copy.datetimeLabelAllDay;
 
   const fieldsOccurrences: CheckoutOccurrence[] =
     occurrences.length > 0
@@ -77,7 +79,8 @@ export function BookEventPage({
         {showDatetimeSelect ? (
           <BookAlreadyBookedSlotSelect
             actionPath={action}
-            datetimeLabel={copy.datetimeLabel}
+            datetimeLabel={datetimeLabel}
+            includeTime={includeTime}
             locale={locale}
             occurrences={occurrences}
             selectedIso={slotDateTimeIso}
@@ -162,8 +165,9 @@ export function BookEventPage({
               value={slotIso ?? fieldsOccurrences[0]?.startsAtIso ?? ""}
             />
             <BookSlotFields
-              datetimeLabel={copy.datetimeLabel}
+              datetimeLabel={datetimeLabel}
               defaultDateTimeIso={slotIso ?? fieldsOccurrences[0]?.startsAtIso}
+              includeTime={includeTime}
               locale={locale}
               occurrences={fieldsOccurrences}
             />

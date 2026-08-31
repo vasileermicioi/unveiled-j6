@@ -3,6 +3,7 @@ import {
   type Event,
   getEventCategoryLabel,
   getEventTypeLabel,
+  isOccurrenceUpcoming,
   type OpeningHoursWeek,
   resolveEventCopy,
 } from "@unveiled/db";
@@ -132,7 +133,10 @@ function pastDueLabel(locale: Locale): string {
   return locale === "de" ? "Zahlung aktualisieren" : "Update payment";
 }
 
-function datetimeLabel(locale: Locale): string {
+function datetimeLabel(locale: Locale, allDay: boolean): string {
+  if (allDay) {
+    return locale === "de" ? "Datum" : "Date";
+  }
   return locale === "de" ? "Datum und Uhrzeit" : "Date and time";
 }
 
@@ -498,7 +502,7 @@ export function EventDetailPage({
 }: EventDetailPageProps) {
   const eventCopy = resolveEventCopy(event, locale);
   const bookable = isEventBookable(event);
-  const isPast = event.dateTime <= new Date();
+  const isPast = !isOccurrenceUpcoming(event.dateTime, new Date(), event.timingMode);
   const isSoldOut = event.remainingCapacity <= 0 && !isPast;
   const mapMarkers = eventDetailMarkers(event, locale, eventCopy.title);
   const resolvedCloseHref = closeHref ?? localizedPath(locale, "");
@@ -590,8 +594,9 @@ export function EventDetailPage({
             <EventDetailCheckoutCard
               alreadyBookedMessage={preview ? undefined : alreadyBooked.message}
               bookedOccurrenceIsos={bookedIsos}
-              datetimeLabel={datetimeLabel(locale)}
+              datetimeLabel={datetimeLabel(locale, event.timingMode === "ALL_DAY")}
               defaultDateTimeIso={defaultDateTimeIso}
+              includeTime={event.timingMode !== "ALL_DAY"}
               locale={locale}
               creditPrice={occurrences?.[0]?.creditPrice ?? event.creditPrice}
               myTicketsHref={preview ? undefined : alreadyBookedTicketsPath(locale)}
@@ -707,7 +712,7 @@ export function EventDetailPage({
                 {showMemberBookingChrome ? (
                   <DateTimesMetaCell
                     dateTimes={event.dateTimes}
-                    includeTime={partnerHoursLines == null}
+                    includeTime={event.timingMode !== "ALL_DAY" && partnerHoursLines == null}
                     label={metadataLabel("when", locale)}
                     locale={locale}
                     nextDateTime={event.dateTime}

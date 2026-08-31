@@ -5,13 +5,13 @@
 #   - /events/:id is public (no auth); book/save/waitlist remain gated
 #   - Member feed /events, /events/map, /saved require USER; browse/map also require booking-eligible subscription
 #   - No algorithmic ranking — explicit filters only (event name / category / partner / date; single-select partner)
-#   - Default feed scope = all upcoming (any date_times element >= now / denormalized date_time >= now), soonest first by next upcoming; custom date range available
+#   - Default feed scope = all upcoming (timed: date_time >= now; all-day: date_time >= Berlin midnight today so 00:00 stays listed until the next day), soonest first; custom date range available
 #   - Browse / map / saved-upcoming and public `/events/:id` include only `events.published = true`
 #   - Discover featured events need catalog `events.published` (featured membership is not separately draftable); featured partners appear when they are on the featured list
 #   - Unpublished `/events/:id` is the same 404 as a missing id (not indexable, not in sitemap)
-#   - Date range lower bound is never before Berlin today; ranged results still exclude already-started events
+#   - Date range lower bound is never before Berlin today; ranged results exclude already-started timed slots (`dt >= now`) but all-day occurrences match the Berlin day (`dt < next midnight`)
 #   - Cards/map popups show next upcoming datetime + denormalized credit_price; booking-eligible detail lists all datetimes (emphasize next)
-#   - Booking-eligible checkout shows a native datetime dropdown when two or more future occurrences exist; guests omit dropdown and credits
+#   - Booking-eligible checkout shows a native datetime dropdown when two or more future occurrences exist; all-day labels omit clock time; guests omit dropdown and credits
 #   - List and map share the same filters + pagination; view switch is tabs (admin-style)
 #   - Feed/map filter panel is collapsed by default (events first); expand to reveal controls. Applied query params open the panel.
 #
@@ -213,6 +213,12 @@ Feature: Event Discovery
     When a guest opens the same event
     Then the checkout card does not show a datetime dropdown or credit totals
 
+  Scenario: All-day checkout dropdown omits clock time
+    Given an all-day event with two or more upcoming Berlin calendar days
+    And I am signed in as a booking-eligible member
+    When I open "/events/:id"
+    Then the checkout datetime dropdown lists each day without a clock time (no 00:00)
+
   Scenario: Detail lists multiple datetimes
     Given an upcoming event with two future datetimes
     And I am signed in as a booking-eligible member
@@ -272,12 +278,20 @@ Feature: Event Discovery
     And I have not applied any date filters
     When I view the events feed
     Then I see all upcoming events that have not already started
+    And all-day events whose Berlin calendar day is today still appear after midnight
     And events are ordered by start time ascending (soonest first)
 
   Scenario: Events with invalid or past dates are hidden
     Given an event has a missing/invalid date or a start time in the past
     When any booking-eligible user views the events feed or map
     Then that event does not appear
+
+  Scenario: All-day events match a browse day filter
+    Given an all-day event whose occurrence is stored as Europe/Berlin 00:00 on a day D
+    And I am signed in as a booking-eligible member
+    When I filter the events feed from D to D (after that midnight)
+    Then that all-day event is included
+    And timed slots that already started that day are still excluded
 
   Scenario: Filter by category
     Given I am viewing the events feed as a booking-eligible member

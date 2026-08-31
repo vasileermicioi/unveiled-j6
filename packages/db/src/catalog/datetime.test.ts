@@ -8,6 +8,8 @@ import {
   fillOccurrenceCapacities,
   futureOccurrences,
   getBerlinCalendarDate,
+  isOccurrenceUpcoming,
+  occurrenceHorizon,
   primaryDateTimeFromList,
   sortUniqueDateTimes,
   tryFillOccurrenceCreditsFromPrice,
@@ -324,5 +326,22 @@ describe("occurrence credit lookup", () => {
       later.toISOString(),
     ]);
     expect(result.map((row) => row.creditPrice)).toEqual([2, 4]);
+  });
+
+  test("all-day occurrences stay upcoming through the Berlin calendar day", () => {
+    const now = new Date("2026-07-09T14:00:00.000Z");
+    const todayStart = berlinTodayRange(now).start;
+    const yesterday = berlinInclusiveDateRange("2026-07-08", "2026-07-08").start;
+
+    expect(occurrenceHorizon(now, "ALL_DAY").getTime()).toBe(todayStart.getTime());
+    expect(isOccurrenceUpcoming(todayStart, now, "ALL_DAY")).toBe(true);
+    expect(isOccurrenceUpcoming(yesterday, now, "ALL_DAY")).toBe(false);
+    expect(isOccurrenceUpcoming(todayStart, now, "TIME_SLOT")).toBe(false);
+
+    const upcoming = futureOccurrences([yesterday, todayStart], [1, 2], now, "ALL_DAY");
+    expect(upcoming.map((row) => row.startsAt.toISOString())).toEqual([todayStart.toISOString()]);
+    expect(primaryDateTimeFromList([yesterday, todayStart], now, "ALL_DAY").toISOString()).toBe(
+      todayStart.toISOString(),
+    );
   });
 });

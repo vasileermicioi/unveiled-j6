@@ -1,9 +1,14 @@
-import { and, asc, count, eq, gte, inArray, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, ne, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { type Event, events } from "../schema/events";
 import { savedEvents } from "../schema/saved-events";
-import { type BerlinDayRange, berlinInclusiveDateRange, getBerlinCalendarDate } from "./datetime";
+import {
+  type BerlinDayRange,
+  berlinInclusiveDateRange,
+  berlinTodayRange,
+  getBerlinCalendarDate,
+} from "./datetime";
 import { CatalogValidationError } from "./errors";
 import { eventTitleLocaleIlike } from "./event-copy";
 
@@ -48,7 +53,8 @@ function escapeIlikePattern(value: string): string {
  * Resolve the calendar range for a ranged feed query.
  * - `null` — no from/to (default upcoming window).
  * - `"empty"` — inverted after clamping (past-only range).
- * - otherwise inclusive Berlin day bounds (caller still intersects with `now`).
+ * - otherwise inclusive Berlin day bounds (timed slots still intersect with `now`;
+ *   all-day uses the Berlin day start so 00:00 stays in range).
  */
 function resolveFeedWindow(filters: MemberFeedFilters, now: Date): BerlinDayRange | "empty" | null {
   const hasFrom = Boolean(filters.from?.trim());
@@ -97,33 +103,54 @@ function normalizeFilterList(value?: string | string[]): string[] {
   return out;
 }
 
+/**
+ * Timed events drop at `now`. All-day events stay listed through Berlin midnight
+ * of the next calendar day (`date_time` is stored as that day's 00:00).
+ */
+function upcomingDateTimeCondition(now: Date): SQL {
+  const todayStart = berlinTodayRange(now).start;
+  return or(
+    and(eq(events.timingMode, "ALL_DAY"), gte(events.dateTime, todayStart)),
+    and(ne(events.timingMode, "ALL_DAY"), gte(events.dateTime, now)),
+  ) as SQL;
+}
+
 function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
   const window = resolveFeedWindow(filters, now);
-  // Default: all upcoming (`date_time >= now`), soonest first via orderBy.
-  // Ranged: inclusive Europe/Berlin calendar days, clamped so from ≥ Berlin today,
-  // always intersected with `date_time >= now` so past showtimes stay hidden.
+  // Default: upcoming soonest-first. Ranged: inclusive Europe/Berlin calendar
+  // days, from ≥ Berlin today. Timed slots still require dt >= now; all-day
+  // occurrences match the Berlin day (`dt < next midnight`) even after 00:00.
   const conditions: SQL[] = [eq(events.published, true)];
 
   if (window === "empty") {
     conditions.push(sql`false`);
   } else if (window === null) {
-    conditions.push(gte(events.dateTime, now));
+    conditions.push(upcomingDateTimeCondition(now));
   } else {
-    const effectiveStart = window.start > now ? window.start : now;
-    if (effectiveStart >= window.end) {
-      conditions.push(sql`false`);
-    } else {
-      // Upcoming gate via denormalized next; range matches any occurrence in the window.
-      conditions.push(gte(events.dateTime, now));
-      conditions.push(
-        sql`EXISTS (
-          SELECT 1
-          FROM unnest(${events.dateTimes}) AS occurrence(dt)
-          WHERE occurrence.dt >= ${effectiveStart}
-            AND occurrence.dt < ${window.end}
-        )`,
-      );
-    }
+    const timedStart = window.start > now ? window.start : now;
+    conditions.push(upcomingDateTimeCondition(now));
+    conditions.push(
+      or(
+        and(
+          eq(events.timingMode, "ALL_DAY"),
+          sql`EXISTS (
+            SELECT 1
+            FROM unnest(${events.dateTimes}) AS occurrence(dt)
+            WHERE occurrence.dt >= ${window.start}
+              AND occurrence.dt < ${window.end}
+          )`,
+        ),
+        and(
+          ne(events.timingMode, "ALL_DAY"),
+          sql`EXISTS (
+            SELECT 1
+            FROM unnest(${events.dateTimes}) AS occurrence(dt)
+            WHERE occurrence.dt >= ${timedStart}
+              AND occurrence.dt < ${window.end}
+          )`,
+        ),
+      ) as SQL,
+    );
   }
 
   const title = filters.title?.trim();
@@ -256,7 +283,11 @@ export async function listSavedUpcomingEvents(
     .from(savedEvents)
     .innerJoin(events, eq(savedEvents.eventId, events.id))
     .where(
-      and(eq(savedEvents.userId, userId), gte(events.dateTime, now), eq(events.published, true)),
+      and(
+        eq(savedEvents.userId, userId),
+        upcomingDateTimeCondition(now),
+        eq(events.published, true),
+      ),
     )
     .orderBy(asc(events.dateTime), asc(events.id));
 

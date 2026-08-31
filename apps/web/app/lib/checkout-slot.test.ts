@@ -51,6 +51,15 @@ describe("checkout-slot helpers", () => {
     expect(label).not.toContain("T17:00");
   });
 
+  test("formatOccurrenceLabel omits clock time when includeTime is false", () => {
+    const midnight = "2026-09-01T22:00:00.000Z";
+    const withTime = formatOccurrenceLabel(midnight, "en");
+    const dateOnly = formatOccurrenceLabel(midnight, "en", { includeTime: false });
+    expect(withTime).toMatch(/\d/);
+    expect(dateOnly).not.toMatch(/\d{1,2}:\d{2}/);
+    expect(dateOnly).toContain("2026");
+  });
+
   test("formatSlotUnitPrice is serializable copy", () => {
     expect(formatSlotUnitPrice(1, "de")).toBe("1 Credit pro Ticket");
     expect(formatSlotUnitPrice(4, "en")).toBe("4 credits per ticket");

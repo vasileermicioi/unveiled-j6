@@ -42,7 +42,12 @@ export default createRoute(async (c) => {
   const viewer: EventDetailViewer =
     audience === "member" ? { kind: "eligible" } : { kind: "guest" };
 
-  const future = futureOccurrences(event.dateTimes, event.occurrenceCreditPrices);
+  const future = futureOccurrences(
+    event.dateTimes,
+    event.occurrenceCreditPrices,
+    new Date(),
+    event.timingMode,
+  );
   const occurrences =
     viewer.kind === "eligible"
       ? future.map((occurrence) => ({

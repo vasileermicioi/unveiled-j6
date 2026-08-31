@@ -43,10 +43,15 @@ export function resolveSelectedOccurrence(
   return occurrences[0];
 }
 
-export function formatOccurrenceLabel(startsAtIso: string, locale: Locale): string {
+export function formatOccurrenceLabel(
+  startsAtIso: string,
+  locale: Locale,
+  options?: { includeTime?: boolean },
+): string {
+  const includeTime = options?.includeTime ?? true;
   return new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", {
     dateStyle: "medium",
-    timeStyle: "short",
+    ...(includeTime ? { timeStyle: "short" as const } : {}),
     timeZone: "Europe/Berlin",
   }).format(new Date(startsAtIso));
 }

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createDb, users } from "@unveiled/db";
 import { eq } from "drizzle-orm";
-import { getBerlinCalendarDate } from "./datetime";
+import { berlinTodayRange, getBerlinCalendarDate } from "./datetime";
 import {
   isEventSaved,
   listMemberFeedEvents,
@@ -121,6 +121,83 @@ describe("discovery integration", () => {
       await deleteEvent(db, todayFuture.id, { skipBucket: true });
       await deleteEvent(db, todayPast.id, { skipBucket: true });
       await deleteEvent(db, tomorrow.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
+  test("all-day events stay in the default feed and a same-day filter after midnight", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const partnerImage = await createTestImage();
+    const partner = await createPartner(db, {
+      name: `Discovery AllDay ${suffix}`,
+      ...structuredLocationFromAddress("Alltagstraße 1, Berlin"),
+      contactEmail: `discovery-allday-${suffix}@example.com`,
+      logoPrebuilt: partnerImage,
+      skipUpload: true,
+    });
+
+    const now = new Date("2026-07-09T14:00:00.000Z");
+    expect(getBerlinCalendarDate(now)).toBe("2026-07-09");
+    const todayStart = berlinTodayRange(now).start;
+
+    const allDayToday = await createPublishedEvent(db, {
+      partnerId: partner.id,
+      title: `All Day Today ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Alltagstraße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "museum",
+      eventType: "exhibition_ongoing",
+      timingMode: "ALL_DAY",
+      dateTimes: [todayStart],
+      creditPrice: 1,
+      secretCode: `ADAY${suffix.slice(0, 4)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    const timedPast = await createPublishedEvent(db, {
+      partnerId: partner.id,
+      title: `Timed Past ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Alltagstraße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "theater",
+      eventType: "theater_play",
+      dateTimes: [new Date("2026-07-09T10:00:00.000Z")],
+      creditPrice: 1,
+      secretCode: `TPAST${suffix.slice(0, 4)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    try {
+      const feed = await listMemberFeedEvents(db, { now });
+      const feedIds = new Set(feed.items.map((row) => row.id));
+      expect(feedIds.has(allDayToday.id)).toBe(true);
+      expect(feedIds.has(timedPast.id)).toBe(false);
+
+      const day = await listMemberFeedEvents(db, {
+        now,
+        from: "2026-07-09",
+        to: "2026-07-09",
+      });
+      const dayIds = new Set(day.items.map((row) => row.id));
+      expect(dayIds.has(allDayToday.id)).toBe(true);
+      expect(dayIds.has(timedPast.id)).toBe(false);
+    } finally {
+      await deleteEvent(db, allDayToday.id, { skipBucket: true });
+      await deleteEvent(db, timedPast.id, { skipBucket: true });
       await deletePartner(db, partner.id, { skipBucket: true });
     }
   });

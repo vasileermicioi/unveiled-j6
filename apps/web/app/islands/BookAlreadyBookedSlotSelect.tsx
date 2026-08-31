@@ -11,6 +11,8 @@ export type BookAlreadyBookedSlotSelectProps = {
   datetimeLabel: string;
   /** Localized book path without query, e.g. `/de/events/:id/book`. */
   actionPath: string;
+  /** When false, slot labels omit clock time (all-day events). Default true. */
+  includeTime?: boolean;
 };
 
 export default function BookAlreadyBookedSlotSelect({
@@ -19,15 +21,16 @@ export default function BookAlreadyBookedSlotSelect({
   selectedIso,
   datetimeLabel,
   actionPath,
+  includeTime = true,
 }: BookAlreadyBookedSlotSelectProps) {
   const datetimeSelectId = "book-already-booked-datetime";
   const options = useMemo(
     () =>
       occurrences.map((occurrence) => ({
         ...occurrence,
-        label: formatOccurrenceLabel(occurrence.startsAtIso, locale),
+        label: formatOccurrenceLabel(occurrence.startsAtIso, locale, { includeTime }),
       })),
-    [occurrences, locale],
+    [includeTime, occurrences, locale],
   );
   const value = selectedIso ?? options[0]?.startsAtIso;
 

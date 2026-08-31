@@ -22,6 +22,7 @@ export type BookPageCopy = {
   waitlistCta: string;
   support: string;
   datetimeLabel: string;
+  datetimeLabelAllDay: string;
 };
 
 export type BookConfirmCopy = {
@@ -70,6 +71,7 @@ const bookCopy: Record<Locale, BookPageCopy> = {
     waitlistCta: "Auf die Warteliste",
     support: "support@unveiled.berlin",
     datetimeLabel: "Datum und Uhrzeit",
+    datetimeLabelAllDay: "Datum",
   },
   en: {
     eyebrow: "Bookings",
@@ -93,6 +95,7 @@ const bookCopy: Record<Locale, BookPageCopy> = {
     waitlistCta: "Join waitlist",
     support: "support@unveiled.berlin",
     datetimeLabel: "Date and time",
+    datetimeLabelAllDay: "Date",
   },
 };
 

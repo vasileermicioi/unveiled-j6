@@ -60,15 +60,40 @@ export function sortUniqueDateTimes(dateTimes: Date[]): Date[] {
 }
 
 /**
- * Next upcoming instant (`>= now`), or the earliest instant when all are past.
- * Assumes `dateTimes` is non-empty and preferably pre-normalized.
+ * Instant at which an occurrence is no longer bookable / listed as upcoming.
+ * Time-slot events expire at `startsAt`; all-day events stay current until the
+ * next Europe/Berlin midnight (`startsAt` is stored as that day's 00:00).
  */
-export function primaryDateTimeFromList(dateTimes: Date[], now: Date = new Date()): Date {
+export function occurrenceHorizon(now: Date, timingMode: TimingMode = "TIME_SLOT"): Date {
+  if (timingMode === "ALL_DAY") {
+    return berlinTodayRange(now).start;
+  }
+  return now;
+}
+
+export function isOccurrenceUpcoming(
+  startsAt: Date,
+  now: Date,
+  timingMode: TimingMode = "TIME_SLOT",
+): boolean {
+  return startsAt.getTime() >= occurrenceHorizon(now, timingMode).getTime();
+}
+
+/**
+ * Next upcoming instant (`>= horizon`), or the earliest instant when all are past.
+ * Assumes `dateTimes` is non-empty and preferably pre-normalized.
+ * All-day horizon is Berlin midnight today so today's 00:00 slot stays current.
+ */
+export function primaryDateTimeFromList(
+  dateTimes: Date[],
+  now: Date = new Date(),
+  timingMode: TimingMode = "TIME_SLOT",
+): Date {
   if (dateTimes.length === 0) {
     throw new Error("primaryDateTimeFromList requires a non-empty list");
   }
 
-  const nowMs = now.getTime();
+  const horizonMs = occurrenceHorizon(now, timingMode).getTime();
   let next: Date | undefined;
   const first = dateTimes[0];
   if (!first) {
@@ -80,7 +105,7 @@ export function primaryDateTimeFromList(dateTimes: Date[], now: Date = new Date(
     if (value.getTime() < earliest.getTime()) {
       earliest = value;
     }
-    if (value.getTime() >= nowMs && (next === undefined || value.getTime() < next.getTime())) {
+    if (value.getTime() >= horizonMs && (next === undefined || value.getTime() < next.getTime())) {
       next = value;
     }
   }
@@ -193,17 +218,18 @@ export function creditPriceForOccurrence(
 }
 
 /**
- * Occurrences with `startsAt >= now`, sorted ascending by instant.
+ * Occurrences still upcoming for `timingMode`, sorted ascending by instant.
+ * All-day slots remain listed through the end of their Berlin calendar day.
  * Zips by index; extra elements on either array are ignored.
  */
 export function futureOccurrences(
   dateTimes: Date[],
   occurrenceCreditPrices: number[],
   now: Date = new Date(),
+  timingMode: TimingMode = "TIME_SLOT",
 ): EventOccurrence[] {
-  const nowMs = now.getTime();
   return zipOccurrences(dateTimes, occurrenceCreditPrices)
-    .filter((occurrence) => occurrence.startsAt.getTime() >= nowMs)
+    .filter((occurrence) => isOccurrenceUpcoming(occurrence.startsAt, now, timingMode))
     .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 }
 

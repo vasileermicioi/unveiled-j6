@@ -15,6 +15,8 @@ export type BookSlotFieldsProps = {
   occurrences: CheckoutOccurrence[];
   defaultDateTimeIso?: string;
   datetimeLabel: string;
+  /** When false, slot labels omit clock time (all-day events). Default true. */
+  includeTime?: boolean;
 };
 
 function syncPostedDateTime(iso: string | undefined): void {
@@ -32,6 +34,7 @@ export default function BookSlotFields({
   occurrences,
   defaultDateTimeIso,
   datetimeLabel,
+  includeTime = true,
 }: BookSlotFieldsProps) {
   const [selectedIso, setSelectedIso] = useState(
     () => resolveSelectedOccurrence(occurrences, defaultDateTimeIso)?.startsAtIso,
@@ -45,16 +48,16 @@ export default function BookSlotFields({
     () =>
       occurrences.map((occurrence) => ({
         ...occurrence,
-        label: formatOccurrenceLabel(occurrence.startsAtIso, locale),
+        label: formatOccurrenceLabel(occurrence.startsAtIso, locale, { includeTime }),
       })),
-    [occurrences, locale],
+    [includeTime, occurrences, locale],
   );
 
   return (
     <Surface className="flex flex-col gap-6" variant="transparent">
       {selected ? (
         <Paragraph>
-          {formatOccurrenceLabel(selected.startsAtIso, locale)} ·{" "}
+          {formatOccurrenceLabel(selected.startsAtIso, locale, { includeTime })} ·{" "}
           {formatSlotUnitPrice(slotPrice, locale)}
         </Paragraph>
       ) : null}

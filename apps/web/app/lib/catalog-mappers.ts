@@ -1,4 +1,10 @@
-import { type Event, getEventCategoryLabel, type Partner, resolveEventCopy } from "@unveiled/db";
+import {
+  type Event,
+  getEventCategoryLabel,
+  isOccurrenceUpcoming,
+  type Partner,
+  resolveEventCopy,
+} from "@unveiled/db";
 import { buildVariantUrl } from "@unveiled/images/urls";
 import type { EventCardItem } from "@unveiled/ui";
 
@@ -47,5 +53,8 @@ export function toDiscoverPartnerTile(partner: Partner): DiscoverPartnerTile {
 }
 
 export function isEventBookable(event: Event, referenceDate: Date = new Date()): boolean {
-  return event.remainingCapacity > 0 && event.dateTime > referenceDate;
+  return (
+    event.remainingCapacity > 0 &&
+    isOccurrenceUpcoming(event.dateTime, referenceDate, event.timingMode)
+  );
 }

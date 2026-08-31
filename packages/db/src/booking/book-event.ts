@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import {
   creditPriceForOccurrence,
   futureOccurrences,
+  occurrenceHorizon,
   primaryDateTimeFromList,
 } from "../catalog/datetime";
 import type { TxDb } from "../index";
@@ -80,17 +81,22 @@ function resolveBookingSlot(event: Event, posted: Date | undefined, now: Date): 
     if (!canonical) {
       throw new BookingError("UNKNOWN_SLOT", "Datetime is not an occurrence of this event");
     }
-    if (canonical.getTime() < now.getTime()) {
+    if (canonical.getTime() < occurrenceHorizon(now, event.timingMode).getTime()) {
       throw new BookingError("PAST_SLOT", "Datetime is in the past");
     }
     return canonical;
   }
 
-  const next = futureOccurrences(event.dateTimes, event.occurrenceCreditPrices, now)[0];
+  const next = futureOccurrences(
+    event.dateTimes,
+    event.occurrenceCreditPrices,
+    now,
+    event.timingMode,
+  )[0];
   if (next) {
     return next.startsAt;
   }
-  return primaryDateTimeFromList(event.dateTimes, now);
+  return primaryDateTimeFromList(event.dateTimes, now, event.timingMode);
 }
 
 /**

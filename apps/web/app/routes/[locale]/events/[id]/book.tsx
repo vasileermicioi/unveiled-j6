@@ -51,7 +51,12 @@ function computeBookMaxQty(
 }
 
 function toBookOccurrences(event: Event, credits: number): CheckoutOccurrence[] {
-  return futureOccurrences(event.dateTimes, event.occurrenceCreditPrices).map((occurrence) => ({
+  return futureOccurrences(
+    event.dateTimes,
+    event.occurrenceCreditPrices,
+    new Date(),
+    event.timingMode,
+  ).map((occurrence) => ({
     startsAtIso: occurrence.startsAt.toISOString(),
     creditPrice: occurrence.creditPrice,
     maxQty: computeBookMaxQty(credits, occurrence.creditPrice, event.remainingCapacity),

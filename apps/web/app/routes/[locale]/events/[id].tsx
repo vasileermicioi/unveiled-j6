@@ -3,6 +3,7 @@ import {
   getPartnerById,
   getPublicEventById,
   isBookingEligibleStatus,
+  isOccurrenceUpcoming,
   listActiveBookedOccurrenceInstants,
   listEventGalleryImages,
   maxBookableTickets,
@@ -86,7 +87,12 @@ export default createRoute(async (c) => {
     }
   }
 
-  const future = futureOccurrences(event.dateTimes, event.occurrenceCreditPrices);
+  const future = futureOccurrences(
+    event.dateTimes,
+    event.occurrenceCreditPrices,
+    new Date(),
+    event.timingMode,
+  );
   const occurrences =
     viewer.kind === "eligible"
       ? future.map((occurrence) => ({
@@ -120,16 +126,17 @@ export default createRoute(async (c) => {
         ?.startsAtIso
     : defaultSlot?.startsAtIso;
 
+  const slotStillOpen = isOccurrenceUpcoming(event.dateTime, new Date(), event.timingMode);
   const [galleryRows, partner, heroCredit, bookedInstants] = await Promise.all([
     listEventGalleryImages(db, eventId),
     getPartnerById(db, event.partnerId),
     getImageCredit(db, event.imageId).catch(() => null),
-    viewer.kind === "eligible" && session?.user && event.dateTime > new Date()
+    viewer.kind === "eligible" && session?.user && slotStillOpen
       ? listActiveBookedOccurrenceInstants(db, session.user.id, event.id)
       : Promise.resolve([] as Date[]),
   ]);
   const bookedOccurrenceIsos =
-    viewer.kind === "eligible" && event.dateTime > new Date()
+    viewer.kind === "eligible" && slotStillOpen
       ? bookedInstants.map((instant) => instant.toISOString())
       : undefined;
   const galleryImages = toPublicEventGalleryImages(galleryRows);
