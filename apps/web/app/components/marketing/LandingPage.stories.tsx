@@ -8,3 +8,8 @@ export const Default: Story = () => (
   <LandingPage landing={getPageContent(storyLocale, "landing")} locale={storyLocale} />
 );
 Default.storyName = "LandingPage / Default";
+
+export const Regular: Story = () => (
+  <LandingPage landing={getPageContent(storyLocale, "regular")} locale={storyLocale} />
+);
+Regular.storyName = "LandingPage / Regular";

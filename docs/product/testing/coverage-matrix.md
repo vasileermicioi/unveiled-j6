@@ -283,6 +283,8 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `static-pages.feature` | Discover preview links to public event detail | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover preview links to public event detail` | `pass` |  |
 | `static-pages.feature` | Discover CTA path to the full member events feed | `e2e/specs/static-pages.spec.ts` · `Scenario: Discover CTA path to the full member events feed` | `pass` | CTA → signup?returnTo=/events; after onboarding test navigates to `/events`. Auto honor `returnTo` on onboarding finish → `deferred` (post-MVP polish) |
 | `static-pages.feature` | How it works | `e2e/specs/static-pages.spec.ts` · `Scenario: How it works` | `pass` |  |
+| `static-pages.feature` | Regular membership landing | `e2e/specs/static-pages.spec.ts` · `Scenario: Regular membership landing` | `pass` | 29 € / month plan card; no founding 19 € deposit |
+| `static-pages.feature` | Bare /regular redirects to localized regular landing | `e2e/specs/static-pages.spec.ts` · `Scenario: Bare /regular redirects to localized regular landing` | `pass` |  |
 | `static-pages.feature` | FAQ | `e2e/specs/static-pages.spec.ts` · `Scenario: FAQ` | `pass` | Refreshed 11 Q&As DE/EN; shape pinned by `app/lib/content/faq.test.ts` guard (count + non-empty copy + JSON-LD parity); rollover answer is the approved forward promise (`extras/gaps-and-decisions.md`) |
 | `static-pages.feature` | Bare /discover redirects to localized Discover | `e2e/specs/static-pages.spec.ts` · `Scenario: Bare /discover redirects to localized Discover` | `pass` |  |
 | `static-pages.feature` | Bilingual content | `e2e/specs/static-pages.spec.ts` · `Scenario: Bilingual content` | `pass` |  |

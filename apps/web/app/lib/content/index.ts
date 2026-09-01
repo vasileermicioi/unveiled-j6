@@ -5,10 +5,12 @@ import { howItWorksContent } from "./how-it-works";
 import { landingContent } from "./landing";
 import { legalContent } from "./legal";
 import { membershipContent } from "./membership";
+import { regularLandingContent } from "./regular";
 import type { PageContentMap, PageKey } from "./types";
 
 const contentByKey = {
   landing: landingContent,
+  regular: regularLandingContent,
   "how-it-works": howItWorksContent,
   faq: faqContent,
   discover: discoverContent,

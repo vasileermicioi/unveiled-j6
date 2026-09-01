@@ -21,6 +21,17 @@ v1 (phone mockup + 29€ plan + three-benefit strip) is archived at `.dev-plan/a
 
 ---
 
+## Regular membership landing (`/:locale/regular`)
+
+Public campaign landing at the regular **29 € / month** price (no 10 € deposit / 19 € today). Reuses the guest-home `LandingPage` composition and copy except:
+
+1. **Hero plan card** — `29 €` + “pro Monat” / “per month”; same 17-credit perk; perk group “Member Perks” / “First member perks” (not first-30); Join → `/signup`
+2. **Final CTA** — inverted band; body uses 29 € / month (not the founding 19 € remainder)
+
+Bare `/regular` 302s to `/:locale/regular`. App chrome is unchanged. Signed-in members/admins who hit this URL stay on the page (unlike locale home).
+
+---
+
 ## Discover (`/:locale/discover`)
 
 Public page without login for guests and non-booking-eligible members. Navbar “Discover” / “Entdecken” points here for those audiences. Booking-eligible `USER` members are redirected to `/events` (they see **Browse events** in the nav instead). `ADMIN` may open Discover for QA. Sections, top to bottom:

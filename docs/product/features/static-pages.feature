@@ -48,6 +48,15 @@ Feature: Static and Marketing Pages
     When I visit the "How it works" page
     Then I see a 3-step explainer of the membership process and its value points
 
+  Scenario: Regular membership landing
+    When I visit "/:locale/regular"
+    Then I see the membership headline, 29 € monthly plan, and signup CTA
+
+  Scenario: Bare /regular redirects to localized regular landing
+    When I visit "/regular"
+    Then I am redirected to "/:locale/regular"
+    And I see the regular membership landing
+
   Scenario: FAQ
     When I visit the FAQ page
     Then I see a support header with a contact email

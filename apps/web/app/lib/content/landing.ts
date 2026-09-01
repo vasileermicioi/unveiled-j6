@@ -54,6 +54,7 @@ export const landingContent: LocalizedContent<LandingContent> = {
       galleryAlt: "unveiled Community",
     },
     offer: {
+      kind: "founding",
       depositEyebrow: "Deine 10 € Anzahlung zählt 🫶",
       depositAmount: "19 €",
       depositToday: "heute",
@@ -202,6 +203,7 @@ export const landingContent: LocalizedContent<LandingContent> = {
       galleryAlt: "unveiled community",
     },
     offer: {
+      kind: "founding",
       depositEyebrow: "Your €10 deposit counts 🫶",
       depositAmount: "19 €",
       depositToday: "today",

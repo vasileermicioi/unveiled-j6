@@ -12,6 +12,7 @@ describe("landing content guard", () => {
       expect(page.hero.headline.trim().length).toBeGreaterThan(0);
       expect(page.hero.lead.trim().length).toBeGreaterThan(0);
       expect(page.offer.cta.trim().length).toBeGreaterThan(0);
+      expect(page.offer.kind).toBe("founding");
       expect(page.events.items.length).toBe(5);
       expect(page.events.items.filter((item) => item.locked).length).toBe(2);
       expect(page.credits.examples.length).toBe(3);

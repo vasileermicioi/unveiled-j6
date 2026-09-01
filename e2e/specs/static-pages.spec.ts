@@ -161,6 +161,34 @@ test.describe("static-pages.feature", () => {
     await expect(page.getByText(/3\./).first()).toBeVisible();
   });
 
+  test("Scenario: Regular membership landing", async ({ page, locale }) => {
+    await page.goto(`/${locale}/regular`);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: /willst du mehr tage wie diesen|want more days like this/i,
+      }),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "29 €" })).toBeVisible();
+    await expect(page.getByText(/pro monat|per month/i).first()).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /unveiled beitreten|join unveiled/i }).first(),
+    ).toBeVisible();
+    await expect(page.getByText(/19\s*€/)).toHaveCount(0);
+  });
+
+  test("Scenario: Bare /regular redirects to localized regular landing", async ({ page }) => {
+    await page.goto("/regular");
+    await expect(page).toHaveURL(/\/(de|en)\/regular\/?$/);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: /willst du mehr tage wie diesen|want more days like this/i,
+      }),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "29 €" })).toBeVisible();
+  });
+
   test("Scenario: FAQ", async ({ page, locale }) => {
     await page.goto(`/${locale}/faq`);
     // PageSectionHeader: eyebrow + H1 (proximity role/name — not CSS-class selectors)

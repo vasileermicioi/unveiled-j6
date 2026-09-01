@@ -1,7 +1,7 @@
 import { Card, Chip, Heading, Link, Paragraph, Surface } from "@heroui/react";
 
 import LandingImageGallery from "../../../islands/LandingImageGallery";
-import type { LandingContent } from "../../../lib/content/types";
+import type { LandingContent, LandingOffer } from "../../../lib/content/types";
 import type { Locale } from "../../../lib/locale";
 import { localizedPath } from "../../../lib/locale";
 import { landingHeroImages } from "./assets";
@@ -48,19 +48,7 @@ export function LandingHero({ locale, content }: LandingHeroProps) {
 
         <Card className="landing-offer">
           <Card.Content className="landing-offer__body">
-            <Surface className="landing-offer__deposit" variant="transparent">
-              <Paragraph className="landing-offer__deposit-eyebrow">
-                {offer.depositEyebrow}
-              </Paragraph>
-              <Surface className="landing-offer__deposit-row" variant="transparent">
-                <Heading className="landing-offer__deposit-amount" level={2}>
-                  {offer.depositAmount}
-                </Heading>
-                <Paragraph className="landing-offer__deposit-today">{offer.depositToday}</Paragraph>
-              </Surface>
-              <Paragraph className="landing-offer__deposit-sub">{offer.depositSub}</Paragraph>
-              <Paragraph className="landing-offer__deposit-after">{offer.depositAfter}</Paragraph>
-            </Surface>
+            <OfferPricing offer={offer} />
 
             <Surface className="landing-offer__perks" variant="transparent">
               <LandingPerkRow perk={offer.basePerk} />
@@ -86,6 +74,33 @@ export function LandingHero({ locale, content }: LandingHeroProps) {
           </Card.Content>
         </Card>
       </Surface>
+    </Surface>
+  );
+}
+
+function OfferPricing({ offer }: { offer: LandingOffer }) {
+  if (offer.kind === "regular") {
+    return (
+      <Surface className="landing-offer__price-row" variant="transparent">
+        <Heading className="landing-offer__price" level={2}>
+          {offer.price}
+        </Heading>
+        <Paragraph className="landing-offer__period">{offer.period}</Paragraph>
+      </Surface>
+    );
+  }
+
+  return (
+    <Surface className="landing-offer__deposit" variant="transparent">
+      <Paragraph className="landing-offer__deposit-eyebrow">{offer.depositEyebrow}</Paragraph>
+      <Surface className="landing-offer__deposit-row" variant="transparent">
+        <Heading className="landing-offer__deposit-amount" level={2}>
+          {offer.depositAmount}
+        </Heading>
+        <Paragraph className="landing-offer__deposit-today">{offer.depositToday}</Paragraph>
+      </Surface>
+      <Paragraph className="landing-offer__deposit-sub">{offer.depositSub}</Paragraph>
+      <Paragraph className="landing-offer__deposit-after">{offer.depositAfter}</Paragraph>
     </Surface>
   );
 }

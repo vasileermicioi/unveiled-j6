@@ -12,6 +12,7 @@ const SITEMAP_STATIC_PATHS = [
   "how-it-works",
   "faq",
   "membership",
+  "regular",
   "impressum",
   "privacy",
   "terms",

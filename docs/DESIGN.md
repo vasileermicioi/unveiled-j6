@@ -26,6 +26,7 @@ apps/web/app/
 │       ├── _middleware.tsx    # Locale validation
 │       ├── index.tsx          # Discover (home)
 │       ├── how-it-works.tsx
+│       ├── regular.tsx
 │       ├── faq.tsx
 │       ├── membership.tsx
 │       └── [...slug].tsx      # 404 catch-all

@@ -171,7 +171,7 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 
 | Spec | Feature file | Notes |
 |---|---|---|
-| `specs/static-pages.spec.ts` | `static-pages.feature` | 9 scenarios; declining consent asserts fallback + no OSM tiles on public `/events/:id` |
+| `specs/static-pages.spec.ts` | `static-pages.feature` | 15 scenarios; declining consent asserts fallback + no OSM tiles on public `/events/:id` |
 | `specs/auth.spec.ts` | `auth.feature` | Core auth + outlines; see skip inventory below |
 | `specs/onboarding.spec.ts` | `onboarding.feature` | 12 scenarios; fresh signup per mutating test |
 | `specs/admin-partners.spec.ts` | `admin-partners.feature` | Partner CRUD; portal/QR scenarios skipped (post-MVP) |

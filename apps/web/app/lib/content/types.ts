@@ -2,6 +2,7 @@ import type { Locale } from "../locale";
 
 export type PageKey =
   | "landing"
+  | "regular"
   | "how-it-works"
   | "faq"
   | "discover"
@@ -48,6 +49,31 @@ export type LandingComingSoonPartner = {
   logoSrc: string;
 };
 
+type LandingOfferBase = {
+  basePerk: LandingPerk;
+  perkGroupLabel: string;
+  foundingPerks: readonly [LandingPerk, LandingPerk];
+  cta: string;
+  cancel: string;
+};
+
+export type LandingFoundingOffer = LandingOfferBase & {
+  kind: "founding";
+  depositEyebrow: string;
+  depositAmount: string;
+  depositToday: string;
+  depositSub: string;
+  depositAfter: string;
+};
+
+export type LandingRegularOffer = LandingOfferBase & {
+  kind: "regular";
+  price: string;
+  period: string;
+};
+
+export type LandingOffer = LandingFoundingOffer | LandingRegularOffer;
+
 export type LandingContent = {
   hero: {
     tag: string;
@@ -55,18 +81,7 @@ export type LandingContent = {
     lead: string;
     galleryAlt: string;
   };
-  offer: {
-    depositEyebrow: string;
-    depositAmount: string;
-    depositToday: string;
-    depositSub: string;
-    depositAfter: string;
-    basePerk: LandingPerk;
-    perkGroupLabel: string;
-    foundingPerks: readonly [LandingPerk, LandingPerk];
-    cta: string;
-    cancel: string;
-  };
+  offer: LandingOffer;
   events: {
     eyebrow: string;
     headline: string;
@@ -237,6 +252,7 @@ export type LegalContent = {
 
 export type PageContentMap = {
   landing: LandingContent;
+  regular: LandingContent;
   "how-it-works": HowItWorksContent;
   faq: FaqContent;
   discover: DiscoverContent;
