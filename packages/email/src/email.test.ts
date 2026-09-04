@@ -4,12 +4,15 @@ import {
   buildBookingCancellationContent,
   buildBookingConfirmationContent,
   buildEventIcs,
+  buildSubscriptionCancellationContent,
   buildSubscriptionInvoiceContent,
   buildWaitlistClosedContent,
   buildWaitlistPromotionContent,
+  formatCancellationEndDate,
   formatIcsUtc,
   sendBookingCancellation,
   sendBookingConfirmation,
+  sendSubscriptionCancellation,
   sendSubscriptionInvoice,
   sendWaitlistClosed,
   sendWaitlistPromotion,
@@ -274,6 +277,84 @@ describe("subscription invoice content", () => {
     expect(content.html).toContain(`href="${DE_INVOICE_LINKS[0]}"`);
     expect(content.html).toContain('href="mailto:support@unveiled.berlin"');
   });
+
+  test("uses a branded mail-client-safe layout with preheader in both locales", () => {
+    const en = buildSubscriptionInvoiceContent({
+      locale: "en",
+      siteUrl: INVOICE_SITE_URL,
+    });
+    const de = buildSubscriptionInvoiceContent({
+      locale: "de",
+      siteUrl: INVOICE_SITE_URL,
+    });
+
+    for (const content of [en, de]) {
+      // Hidden inbox-preview preheader.
+      expect(content.html).toContain("display:none");
+      expect(content.html).toContain("mso-hide:all");
+      // Table-based layout, max-width 600, brand yellow, inline styles only.
+      expect(content.html).toContain("<table");
+      expect(content.html).toContain("600");
+      expect(content.html).toContain("#FAFF86");
+      expect(content.html).not.toContain("<style");
+      // Header / summary / next-steps / footer structure.
+      expect(content.html).toContain("Unveiled Berlin");
+      expect(content.html).toContain("<ol");
+      expect(content.html).toContain("<li");
+      for (const body of [content.text, content.html]) {
+        expect(body).toContain("Basic Berlin");
+        expect(body).toContain("support@unveiled.berlin");
+      }
+    }
+
+    expect(en.html).toContain("Your membership is active");
+    expect(en.html).toContain("invoice attached");
+    expect(de.html).toContain("Deine Mitgliedschaft ist aktiv");
+    expect(de.html).toContain("Rechnung im Anhang");
+  });
+
+  test("keeps text free of markup while HTML anchors every locale link", () => {
+    for (const locale of ["en", "de"] as const) {
+      const content = buildSubscriptionInvoiceContent({
+        locale,
+        siteUrl: INVOICE_SITE_URL,
+      });
+      const links = locale === "en" ? EN_INVOICE_LINKS : DE_INVOICE_LINKS;
+
+      expect(content.text).not.toContain("<a");
+      expect(content.text).not.toContain("<table");
+      for (const link of links) {
+        expect(content.text).toContain(link);
+        expect(content.html).toContain(`href="${link}"`);
+      }
+    }
+  });
+
+  test("escapes a hostile siteUrl in HTML", () => {
+    const hostile = 'https://example.test"><script>alert(1)</script>';
+    const content = buildSubscriptionInvoiceContent({
+      locale: "en",
+      siteUrl: hostile,
+    });
+
+    expect(content.html).not.toContain("<script>");
+    expect(content.html).toContain("&lt;script&gt;");
+  });
+
+  test("reuses the same neutral template for resubscription (no welcome fork)", () => {
+    // A resubscription (new `subscription_create` after `INACTIVE`) reuses this
+    // same builder — neutral "active" wording, no welcome/welcome-back copy.
+    for (const locale of ["en", "de"] as const) {
+      const content = buildSubscriptionInvoiceContent({
+        locale,
+        siteUrl: INVOICE_SITE_URL,
+      });
+      for (const body of [content.text, content.html]) {
+        expect(body).not.toMatch(/welcome/i);
+        expect(body).not.toContain("Willkommen");
+      }
+    }
+  });
 });
 
 describe("sendSubscriptionInvoice", () => {
@@ -509,5 +590,191 @@ describe("sendWaitlistClosed", () => {
     });
     expect(failed.ok).toBe(false);
     expect(failed.status).toBe(429);
+  });
+});
+
+const CANCELLATION_SITE_URL = "https://example.test";
+const CANCELLATION_END_DATE = new Date("2030-09-30T21:59:59.000Z");
+
+function cancellationInput(locale: "de" | "en") {
+  return {
+    locale,
+    siteUrl: CANCELLATION_SITE_URL,
+    endDate: CANCELLATION_END_DATE,
+    resubscribeUrl: `${CANCELLATION_SITE_URL}/${locale}/membership`,
+  };
+}
+
+describe("subscription cancellation content", () => {
+  test("builds EN cancellation with end date, expiry note, and links", () => {
+    const content = buildSubscriptionCancellationContent(cancellationInput("en"));
+    const endDateLabel = formatCancellationEndDate(CANCELLATION_END_DATE, "en");
+
+    expect(content.subject).toBe("Your Unveiled Berlin membership is ending");
+
+    for (const body of [content.text, content.html]) {
+      expect(body).toContain("membership is ending");
+      expect(body).toContain(endDateLabel);
+      expect(body).toContain("Unused credits expire");
+      expect(body).toContain("tickets stay valid");
+      expect(body).toContain(`${CANCELLATION_SITE_URL}/en/membership`);
+      expect(body).toContain(`${CANCELLATION_SITE_URL}/en/profile/billing`);
+      expect(body).toContain("support@unveiled.berlin");
+    }
+
+    expect(content.html).toContain(`href="${CANCELLATION_SITE_URL}/en/membership"`);
+    expect(content.html).toContain(`href="${CANCELLATION_SITE_URL}/en/profile/billing"`);
+    expect(content.html).toContain('href="mailto:support@unveiled.berlin"');
+  });
+
+  test("builds DE cancellation with end date, expiry note, and links", () => {
+    const content = buildSubscriptionCancellationContent(cancellationInput("de"));
+    const endDateLabel = formatCancellationEndDate(CANCELLATION_END_DATE, "de");
+
+    expect(content.subject).toBe("Deine Unveiled Berlin Mitgliedschaft endet");
+
+    for (const body of [content.text, content.html]) {
+      expect(body).toContain("Mitgliedschaft endet");
+      expect(body).toContain(endDateLabel);
+      expect(body).toContain("Ungenutzte Credits verfallen");
+      expect(body).toContain("Tickets bleiben");
+      expect(body).toContain("gültig");
+      expect(body).toContain(`${CANCELLATION_SITE_URL}/de/membership`);
+      expect(body).toContain(`${CANCELLATION_SITE_URL}/de/profile/billing`);
+      expect(body).toContain("support@unveiled.berlin");
+    }
+
+    expect(content.html).toContain(`href="${CANCELLATION_SITE_URL}/de/membership"`);
+    expect(content.html).toContain(`href="${CANCELLATION_SITE_URL}/de/profile/billing"`);
+    expect(content.html).toContain('href="mailto:support@unveiled.berlin"');
+  });
+
+  test("formats the Berlin end date per locale", () => {
+    expect(formatCancellationEndDate(CANCELLATION_END_DATE, "de")).toContain("September 2030");
+    expect(formatCancellationEndDate(CANCELLATION_END_DATE, "en")).toContain("September 2030");
+  });
+
+  test("uses a branded mail-client-safe layout with preheader in both locales", () => {
+    const en = buildSubscriptionCancellationContent(cancellationInput("en"));
+    const de = buildSubscriptionCancellationContent(cancellationInput("de"));
+
+    for (const content of [en, de]) {
+      expect(content.html).toContain("display:none");
+      expect(content.html).toContain("mso-hide:all");
+      expect(content.html).toContain("<table");
+      expect(content.html).toContain("600");
+      expect(content.html).toContain("#FAFF86");
+      expect(content.html).not.toContain("<style");
+      expect(content.html).toContain("Unveiled Berlin");
+      for (const body of [content.text, content.html]) {
+        expect(body).toContain("support@unveiled.berlin");
+      }
+    }
+
+    expect(en.html).toContain("Your membership is ending");
+    expect(de.html).toContain("Deine Mitgliedschaft endet");
+  });
+
+  test("keeps text free of markup while HTML anchors every link", () => {
+    for (const locale of ["en", "de"] as const) {
+      const content = buildSubscriptionCancellationContent(cancellationInput(locale));
+      const links = [
+        `${CANCELLATION_SITE_URL}/${locale}/membership`,
+        `${CANCELLATION_SITE_URL}/${locale}/profile/billing`,
+      ];
+
+      expect(content.text).not.toContain("<a");
+      expect(content.text).not.toContain("<table");
+      for (const link of links) {
+        expect(content.text).toContain(link);
+        expect(content.html).toContain(`href="${link}"`);
+      }
+    }
+  });
+
+  test("escapes a hostile resubscribeUrl in HTML", () => {
+    const hostile = 'https://example.test"><script>alert(1)</script>';
+    const content = buildSubscriptionCancellationContent({
+      locale: "en",
+      siteUrl: CANCELLATION_SITE_URL,
+      endDate: CANCELLATION_END_DATE,
+      resubscribeUrl: hostile,
+    });
+
+    expect(content.html).not.toContain("<script>");
+    expect(content.html).toContain("&lt;script&gt;");
+  });
+});
+
+describe("sendSubscriptionCancellation", () => {
+  test("posts to Resend without attachments and without live network", async () => {
+    const calls: Array<{ url: string; body: string }> = [];
+    const result = await sendSubscriptionCancellation({
+      ...cancellationInput("en"),
+      apiKey: "re_test",
+      from: "codes@unveiled.berlin",
+      toEmail: "member@example.com",
+      fetchImpl: async (url, init) => {
+        calls.push({ url, body: String(init?.body ?? "") });
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ id: "email_cancel_sub" }),
+        };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.id).toBe("email_cancel_sub");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe("https://api.resend.com/emails");
+    const body = JSON.parse(calls[0]?.body ?? "{}") as {
+      attachments?: unknown;
+      subject: string;
+      to: string[];
+    };
+    expect(body.subject).toBe("Your Unveiled Berlin membership is ending");
+    expect(body.to).toEqual(["member@example.com"]);
+    expect(body.attachments).toBeUndefined();
+  });
+
+  test("forwards Idempotency-Key when provided", async () => {
+    const headers: Array<Record<string, string> | undefined> = [];
+    const result = await sendSubscriptionCancellation({
+      ...cancellationInput("de"),
+      apiKey: "re_test",
+      from: "codes@unveiled.berlin",
+      toEmail: "member@example.com",
+      idempotencyKey: "evt_test",
+      fetchImpl: async (_url, init) => {
+        headers.push(init?.headers);
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ id: "email_cancel_idem" }),
+        };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(headers[0]?.["Idempotency-Key"]).toBe("evt_test");
+  });
+
+  test("returns ok false on HTTP error without throwing", async () => {
+    const result = await sendSubscriptionCancellation({
+      ...cancellationInput("en"),
+      apiKey: "re_test",
+      from: "codes@unveiled.berlin",
+      toEmail: "member@example.com",
+      fetchImpl: async () => ({
+        ok: false,
+        status: 500,
+        json: async () => ({ message: "Resend down" }),
+      }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(500);
+    expect(result.error).toBe("Resend down");
   });
 });

@@ -8,7 +8,7 @@
  * - STRIPE_PUBLISHABLE_KEY (reserved for future client use)
  * - SITE_URL
  * - DATABASE_URL
- * - RESEND_API_KEY / DAILY_CODES_FROM_EMAIL (invoice email; skip if unset)
+ * - RESEND_API_KEY / DAILY_CODES_FROM_EMAIL (subscription emails; skip if unset)
  */
 import { applyStripeEvent, constructStripeEvent, createStripeClient } from "@unveiled/billing";
 import { createTxDb } from "@unveiled/db";
@@ -17,6 +17,10 @@ import type Stripe from "stripe";
 
 import { type RuntimeEnv, resolveEnvVarFromContext } from "./runtime-env";
 import { getSiteUrl } from "./site-config";
+import {
+  lookupCancellationMemberByStripeSubscriptionId as lookupCancellationEmailMember,
+  maybeSendSubscriptionCancellationEmail,
+} from "./subscription-cancellation-email";
 import {
   lookupMemberByStripeSubscriptionId as lookupInvoiceEmailMember,
   maybeSendSubscriptionInvoiceEmail,
@@ -47,6 +51,23 @@ export async function stripeWebhookHandler(c: Context<{ Bindings: RuntimeEnv }>)
   }
 
   const db = createTxDb(databaseUrl);
+  // Snapshot the subscription status before the ledger apply so the
+  // cancellation email can detect the transition into CANCELLED_PENDING
+  // (already-pending redeliveries must not resend).
+  let previousStatus: string | null = null;
+  if (event.type === "customer.subscription.updated") {
+    try {
+      const stripeSubscriptionId = (event.data.object as Stripe.Subscription).id;
+      if (stripeSubscriptionId) {
+        const before = await db.query.subscriptions.findFirst({
+          where: (fields, { eq }) => eq(fields.stripeSubscriptionId, stripeSubscriptionId),
+        });
+        previousStatus = before?.status ?? null;
+      }
+    } catch (error) {
+      console.warn("cancellation email pre-apply lookup failed; proceeding", { error });
+    }
+  }
   try {
     const result = await applyStripeEvent(db, event, { stripe });
     try {
@@ -59,13 +80,23 @@ export async function stripeWebhookHandler(c: Context<{ Bindings: RuntimeEnv }>)
         lookupMemberByStripeSubscriptionId: (stripeSubscriptionId) =>
           lookupInvoiceEmailMember(db, stripeSubscriptionId),
       });
-      if (invoiceEmail.status === "retry") {
-        return c.json({ received: true, ...result, invoiceEmail }, 500);
+      const cancellationEmail = await maybeSendSubscriptionCancellationEmail({
+        event,
+        stripe,
+        apiKey: resolveEnvVarFromContext(c, "RESEND_API_KEY"),
+        from: resolveEnvVarFromContext(c, "DAILY_CODES_FROM_EMAIL"),
+        siteUrl: getSiteUrl(),
+        previousStatus,
+        lookupMemberByStripeSubscriptionId: (stripeSubscriptionId) =>
+          lookupCancellationEmailMember(db, stripeSubscriptionId),
+      });
+      if (invoiceEmail.status === "retry" || cancellationEmail.status === "retry") {
+        return c.json({ received: true, ...result, invoiceEmail, cancellationEmail }, 500);
       }
-      return c.json({ received: true, ...result, invoiceEmail }, 200);
+      return c.json({ received: true, ...result, invoiceEmail, cancellationEmail }, 200);
     } catch (error) {
-      console.error("subscription invoice email threw after apply", error);
-      return c.json({ received: true, ...result, error: "Invoice email send failed" }, 500);
+      console.error("subscription email threw after apply", error);
+      return c.json({ received: true, ...result, error: "Subscription email send failed" }, 500);
     }
   } catch (error) {
     console.error("stripe webhook apply failed", error);

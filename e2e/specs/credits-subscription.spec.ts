@@ -71,7 +71,7 @@ test.describe("credits-subscription.feature", () => {
   test("Scenario: Subscription invoice email after first successful payment", async () => {
     test.skip(
       true,
-      "No email capture harness in Playwright; assert via Resend dashboard on staging smoke (DEPLOYMENT.md Phase 6)",
+      "No email capture harness in Playwright; assert branded invoice mail with PDF + resub reuse via Resend dashboard on staging smoke (DEPLOYMENT.md Phase 6) + unit tests in @unveiled/email, @unveiled/billing, apps/web/app/lib/subscription-invoice-email.test.ts",
     );
   });
 
@@ -172,6 +172,13 @@ test.describe("credits-subscription.feature", () => {
     await expect(
       page.getByText(/kündigung zum periodenende|ends at the end of|period end/i).first(),
     ).toBeVisible();
+  });
+
+  test("Scenario: Cancelling member is told access runs until period end", async () => {
+    test.skip(
+      true,
+      "No email capture harness in Playwright; assert single unsubscribe mail via Resend dashboard on staging smoke (DEPLOYMENT.md Phase 7) + unit tests in apps/web/app/lib/subscription-cancellation-email.test.ts",
+    );
   });
 
   test("Scenario: Cancellation takes effect at period end", async ({ page, locale }) => {

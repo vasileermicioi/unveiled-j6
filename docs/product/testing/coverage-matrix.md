@@ -193,14 +193,15 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `booking.feature` | Member receives cancel-all email | `e2e/specs/booking.spec.ts` · `Scenario: Member receives cancel-all email` | `skip` | No inbox harness; staging Resend |
 | `credits-subscription.feature` | New signups start inactive with starter credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: New signups start inactive with starter credits` | `pass` |  |
 | `credits-subscription.feature` | Activating a subscription via real Stripe Checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Activating a subscription via real Stripe Checkout` | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
-| `credits-subscription.feature` | Subscription invoice email after first successful payment | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Subscription invoice email after first successful payment` | `skip` | No inbox harness; staging Resend checklist; unit tests in `@unveiled/email`, `@unveiled/billing`, `apps/web/app/lib/subscription-invoice-email.test.ts` |
+| `credits-subscription.feature` | Subscription invoice email after first successful payment | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Subscription invoice email after first successful payment` | `skip` | No inbox harness; staging Resend checklist (branded layout + resub reuse); unit tests in `@unveiled/email`, `@unveiled/billing`, `apps/web/app/lib/subscription-invoice-email.test.ts` |
 | `credits-subscription.feature` | Checkout blocked while frozen | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Checkout blocked while frozen` | `pass` | Seeds `UNPAID` |
 | `credits-subscription.feature` | Already-active member revisits checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Already-active member revisits checkout` | `pass` |  |
 | `credits-subscription.feature` | Failed payment marks the account past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Failed payment marks the account past due` | `pass` | Seeds `PAST_DUE` + book gate; full Stripe fail = staging webhook |
 | `credits-subscription.feature` | Recovering from past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Recovering from past due` | `pass` | Asserts `/profile/billing` PAST_DUE + portal CTA; deep Portal = staging |
 | `credits-subscription.feature` | Monthly renewal resets credits (no rollover) | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Monthly renewal resets credits (no rollover)` | `skip` | Billing package / webhook tests |
 | `credits-subscription.feature` | Cancelling a subscription | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancelling a subscription` | `pass` | Cancel confirm UI + seeded `CANCELLED_PENDING`; live Stripe cancel = package/staging |
-| `credits-subscription.feature` | Cancellation takes effect at period end | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancellation takes effect at period end` | `pass` | `CANCELLED_PENDING` still bookable |
+| `credits-subscription.feature` | Cancelling member is told access runs until period end | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancelling member is told access runs until period end` | `skip` | No inbox harness; staging Resend checklist (single unsubscribe mail, no second at expiry); unit tests in `apps/web/app/lib/subscription-cancellation-email.test.ts` |
+| `credits-subscription.feature` | Cancellation takes effect at period end | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancellation takes effect at period end` | `pass` | `CANCELLED_PENDING` still bookable; no further mail at expiry (unit-tested) |
 | `credits-subscription.feature` | Reactivating after cancellation | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Reactivating after cancellation` | `pass` | INACTIVE → membership CTA |
 | `credits-subscription.feature` | Booking gate by subscription status | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Booking gate by subscription status` | `pass` |  |
 | `credits-subscription.feature` | Admin manually adjusts a member's credits | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Admin manually adjusts a member's credits` | `pass` | Membership HQ adjust-credits |
@@ -358,7 +359,8 @@ All 11 top-level MVP `docs/product/features/*.feature` files are mapped above to
 | Scenario | Status | Owner / reason |
 |---|---|---|
 | Stripe Checkout activation | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
-| Subscription invoice email after first successful payment | `skip` | No inbox harness; staging Resend |
+| Subscription invoice email after first successful payment | `skip` | No inbox harness; staging Resend (branded + resub reuse) |
+| Cancelling member is told access runs until period end | `skip` | No inbox harness; staging Resend (single unsubscribe, nothing at expiry) |
 | Monthly renewal / no rollover | `skip` | Billing package + webhook tests |
 | Booking confirmation email | `skip` | No inbox harness; staging Resend |
 | Idempotent retry / waitlist queue order | `skip` | Covered by package integration tests |

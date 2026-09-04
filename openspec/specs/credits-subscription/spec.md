@@ -205,7 +205,7 @@ The membership page SHALL present plan benefits as a vertical list inside the sa
 - **THEN** the benefits list remains a vertical icon-bullet stack inside the single membership card (not a three-column perk card strip and not a second benefits-only card)
 
 ### Requirement: Subscription invoice email content
-The system SHALL be able to build and send a transactional membership invoice email in `de` or `en` via the existing Resend client (`@unveiled/email`), with a single PDF attachment supplied by the caller. The body SHALL include basic next-step instructions and absolute links derived from `SITE_URL` (no trailing slash) plus the email locale. Unused credits SHALL be described as not rolling over. HTML SHALL be simple escaped markup (not HeroUI). Send helpers SHALL return Resend success/failure and MUST NOT throw on HTTP errors.
+The system SHALL be able to build and send a transactional membership invoice email in `de` or `en` via the existing Resend client (`@unveiled/email`), with a single PDF attachment supplied by the caller. The email SHALL use a mail-client-safe branded layout: hidden preheader text, a branded header block, a membership summary (plan Basic Berlin, 29 €, 17 credits per month, unused credits do not roll over), an "invoice attached (PDF)" note, next-step instructions with absolute links derived from `SITE_URL` (no trailing slash) plus the email locale, and a support footer — with a plain-text mirror carrying the same content. Unused credits SHALL be described as not rolling over. HTML SHALL be mail-client-safe markup (tables with inline styles, max-width 600, no external CSS/JS/fonts, absolute URLs, escaped interpolated values — not HeroUI). Send helpers SHALL return Resend success/failure and MUST NOT throw on HTTP errors. A resubscription (new `subscription_create` after `INACTIVE`) SHALL reuse this same template with neutral active wording — no welcome / welcome-back copy fork.
 
 EN subject SHALL be `Your Unveiled Berlin invoice`. DE subject SHALL be `Deine Unveiled Berlin Rechnung`.
 
@@ -249,12 +249,13 @@ Nächste Schritte:
 Support: support@unveiled.berlin
 ```
 
-HTML SHALL be a paragraph-equivalent of the same content with anchor tags on each URL and `mailto:support@unveiled.berlin`.
+HTML SHALL be a branded mail-client-safe rendering of the same content: hidden preheader, header block, summary block with the plan/price/credits/no-rollover lines, PDF-attached note, ordered next-steps with anchor tags on each URL, and a support footer with `mailto:support@unveiled.berlin`.
 
 #### Scenario: EN invoice email includes instructions and site links
 - **WHEN** invoice email content is built with locale `en` and `siteUrl` `https://example.test`
 - **THEN** the subject is `Your Unveiled Berlin invoice`
 - **AND** the text and HTML mention that membership is active, plan **Basic Berlin** at **29€/month**, **17 credits** per month, and that unused credits do not roll over
+- **AND** the HTML carries a hidden preheader and a branded header/summary/next-steps/footer structure with inline styles
 - **AND** they include links `https://example.test/en/events`, `https://example.test/en/bookings`, `https://example.test/en/profile/billing`, `https://example.test/en/how-it-works`, `https://example.test/en/faq`
 - **AND** they include `support@unveiled.berlin`
 - **AND** they state that the invoice PDF is attached
@@ -263,6 +264,7 @@ HTML SHALL be a paragraph-equivalent of the same content with anchor tags on eac
 - **WHEN** invoice email content is built with locale `de` and `siteUrl` `https://example.test`
 - **THEN** the subject is `Deine Unveiled Berlin Rechnung`
 - **AND** the text and HTML mention that the membership is active, plan **Basic Berlin** at **29€/Monat**, **17 Credits** pro Monat, and that unused credits do not roll over (`ungenutzte Credits verfallen` / equivalent no-rollover wording)
+- **AND** the HTML carries a hidden preheader and a branded header/summary/next-steps/footer structure with inline styles
 - **AND** they include links `https://example.test/de/events`, `https://example.test/de/bookings`, `https://example.test/de/profile/billing`, `https://example.test/de/how-it-works`, `https://example.test/de/faq`
 - **AND** they include `support@unveiled.berlin`
 - **AND** they state that the invoice PDF is attached
@@ -271,6 +273,11 @@ HTML SHALL be a paragraph-equivalent of the same content with anchor tags on eac
 - **WHEN** `sendSubscriptionInvoice` is called with base64 PDF bytes and filename `invoice-in_test.pdf`
 - **THEN** the Resend payload includes one attachment with that filename, those bytes, and content type `application/pdf`
 - **AND** no Stripe API is called from `@unveiled/email`
+
+#### Scenario: First and repeat subscriptions get the professional mail
+- **WHEN** `sendSubscriptionInvoice` is called for a first or repeat `subscription_create` invoice
+- **THEN** text and HTML carry the branded summary, all five locale links, the support address, and the no-rollover line in the member locale
+- **AND** the resubscription uses the same neutral-active template with no welcome / welcome-back fork
 
 ### Requirement: Invoice PDF email after successful first subscription payment
 The system SHALL, after a verified Stripe `invoice.paid` event whose `billing_reason` is `subscription_create`, download the invoice PDF from Stripe (`invoice.invoice_pdf` on a finalized invoice; always use a freshly retrieved URL) and send the subscription invoice email from `@unveiled/email` with that PDF attached. The send SHALL NOT run for `subscription_cycle` or other billing reasons. Credit ledger and subscription status updates SHALL continue to use the existing `applyStripeEvent` path unchanged. A successful send SHALL be recorded on the Stripe invoice (metadata) so webhook retries do not send a second email. Missing Resend configuration SHALL skip the email and MUST NOT fail activation. Missing `invoice_pdf` SHALL skip and log. Transient download or Resend failures MAY return a 5xx so Stripe retries. Membership Checkout SHALL store the UI locale on Stripe subscription metadata for this email.
@@ -310,3 +317,33 @@ Product Gherkin, integrations extras, i18n inventory, decisions log, coverage ma
 - **WHEN** an operator follows `DEPLOYMENT.md` for Stripe + Resend
 - **THEN** they can confirm the invoice email on a test Checkout
 - **AND** they are instructed to turn off Stripe-hosted customer invoice/receipt emails in the Dashboard
+
+### Requirement: Single unsubscribe email on scheduled cancel
+The system SHALL send exactly one branded mail-client-safe unsubscribe email on the transition into `CANCELLED_PENDING` (states access-until date, unused credits expire at period end, tickets valid until end, resubscribe link), at most once per Stripe event (Resend `Idempotency-Key` = event id; already-pending → no resend). The send occurs post-commit only, skips with HTTP 200 when Resend env or recipient is missing, and returns HTTP 500 for retry on transient failures without rolling back the ledger. The later `customer.subscription.deleted` → `INACTIVE` expiry SHALL send nothing. Admin freeze (`UNPAID`) SHALL NOT trigger this mail.
+
+#### Scenario: Cancelling member is told access runs until period end
+- **WHEN** a member's subscription moves to `CANCELLED_PENDING`
+- **THEN** they receive the unsubscribe mail with the Berlin end date, expiry note, and resubscribe link
+
+#### Scenario: No second mail at final expiry
+- **WHEN** that subscription later deletes to `INACTIVE`
+- **THEN** no further mail is sent
+
+#### Scenario: Already-pending retry does not resend
+- **WHEN** the same scheduled-cancel event is delivered again after a successful send
+- **THEN** the system does not send a second email
+
+#### Scenario: Missing mail configuration skips without failing billing
+- **WHEN** the scheduled-cancel transition applies but Resend env or recipient is missing
+- **THEN** the webhook still succeeds and the ledger update is kept
+
+#### Scenario: Admin freeze sends no unsubscribe mail
+- **WHEN** a subscription is frozen to `UNPAID` by an admin
+- **THEN** no unsubscribe mail is sent
+
+### Requirement: Subscription email release coverage
+The system SHALL document and prove both subscription mails: the invoice mail on first and repeat `subscription_create` with the Stripe PDF and once-only metadata, plus exactly one unsubscribe mail on entering `CANCELLED_PENDING` (nothing on final deletion), with skip/retry semantics, locale rule, and staging Resend proof reflected in Gherkin, i18n inventory, integrations config, coverage matrix, and `DEPLOYMENT.md`.
+
+#### Scenario: Email release is provable
+- **WHEN** the staging subscribe/cancel/expiry flow runs with Resend configured and Stripe customer mails off
+- **THEN** the dashboard shows one invoice mail with PDF plus one unsubscribe mail at cancel time and no mail at final expiry, and docs describe both sends

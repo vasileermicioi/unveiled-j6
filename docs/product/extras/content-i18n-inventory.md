@@ -174,7 +174,24 @@ Not a `translations.ts` key table. Verbatim DE/EN copy lives in `packages/email/
 | 5. FAQ | FAQ: `{SITE_URL}/de/faq` | FAQ: `{SITE_URL}/en/faq` |
 | Support | Support: support@unveiled.berlin | Support: support@unveiled.berlin |
 
-HTML is a paragraph-equivalent of the same content with anchor tags on each URL and `mailto:support@unveiled.berlin`.
+HTML is a branded mail-client-safe rendering of the same content (hidden preheader, header block, summary block, PDF note, ordered next-steps with anchor tags, support footer with `mailto:support@unveiled.berlin`). A resubscription (new `subscription_create` after `INACTIVE`) reuses the same neutral-active template with no welcome / welcome-back fork.
+
+## Transactional emails — subscription cancellation
+
+Not a `translations.ts` key table. Verbatim DE/EN copy lives in `packages/email/src/subscription-cancellation.ts` (`buildSubscriptionCancellationContent`). Sent via Resend exactly once on the transition into `CANCELLED_PENDING` (`customer.subscription.updated` with `cancel_at_period_end`; `Idempotency-Key` = Stripe event id; already-pending → no resend). The later `customer.subscription.deleted` → `INACTIVE` expiry sends nothing. From-address is `DAILY_CODES_FROM_EMAIL`. `{SITE_URL}` is the public origin with no trailing slash; links are `{SITE_URL}/{locale}/…`. `{END_DATE}` is the access-until date formatted in Europe/Berlin per locale (`de-DE` / `en-GB` long date).
+
+| | DE | EN |
+|---|---|---|
+| Subject | Deine Unveiled Berlin Mitgliedschaft endet | Your Unveiled Berlin membership is ending |
+| Lead | Deine Unveiled Berlin Mitgliedschaft endet am {END_DATE}. | Your Unveiled Berlin membership is ending on {END_DATE}. |
+| Access | Du behältst bis dahin vollen Zugriff auf alle Events. | You keep full access to all events until then. |
+| Credits | Ungenutzte Credits verfallen am {END_DATE}. | Unused credits expire on {END_DATE}. |
+| Tickets | Deine Tickets bleiben bis dahin gültig. | Your tickets stay valid until then. |
+| Resubscribe | Werde wieder Mitglied: `{SITE_URL}/de/membership` | Become a member again: `{SITE_URL}/en/membership` |
+| Billing | Abrechnung verwalten: `{SITE_URL}/de/profile/billing` | Manage billing: `{SITE_URL}/en/profile/billing` |
+| Support | Support: support@unveiled.berlin | Support: support@unveiled.berlin |
+
+HTML is a branded mail-client-safe rendering of the same content (hidden preheader, header block, summary block with access/credits/tickets lines, resubscribe CTA, billing link, support footer with `mailto:support@unveiled.berlin`).
 
 ## Booking checkout — already booked
 

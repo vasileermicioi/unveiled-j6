@@ -137,7 +137,7 @@ Locally, root `.env` supplies the same vars (`bun --env-file=.env` on `db:migrat
 | `STRIPE_WEBHOOK_SECRET` | 6+ | Webhook signing secret |
 | `STRIPE_PRICE_ID_BASIC_BERLIN` | 6+ | Basic Berlin price id |
 | `RESEND_API_KEY` | 6+ | Resend API key |
-| `DAILY_CODES_FROM_EMAIL` | 6+ | Verified From address (booking, waitlist, daily codes, subscription invoice) |
+| `DAILY_CODES_FROM_EMAIL` | 6+ | Verified From address (booking, waitlist, daily codes, subscription invoice + cancellation) |
 
 **Never commit credentials in `wrangler.toml` `[vars]`.** Deploy uploads that block as dashboard **Plaintext** (readable in the UI). Use dashboard **Secrets** or `bun run secrets:workers` (reads gitignored root `.env`). `keep_vars` keeps dashboard-only plaintext vars across deploys; encrypted Secrets already survive deploy.
 
@@ -196,7 +196,7 @@ Phase 1 requires `SITE_URL` on staging/production for absolute canonical, Open G
 | `STRIPE_WEBHOOK_SECRET` | **Yes (Phase 6 staging+)** | 6+ | Stripe webhook signing secret |
 | `STRIPE_PRICE_ID_BASIC_BERLIN` | **Yes (Phase 6 staging+)** | 6+ | Stripe price ID for Basic Berlin plan |
 | `RESEND_API_KEY` | **Yes (Phase 6 staging+)** | 6+ | Resend API key for transactional email |
-| `DAILY_CODES_FROM_EMAIL` | **Yes (Phase 6 staging+)** | 6+ | Sender address for booking confirmation, waitlist, daily codes, and subscription invoice emails |
+| `DAILY_CODES_FROM_EMAIL` | **Yes (Phase 6 staging+)** | 6+ | Sender address for booking confirmation, waitlist, daily codes, subscription invoice, and subscription cancellation emails |
 | `SENTRY_DSN` | — | 8+ (optional) | Server-side Sentry via `@sentry/cloudflare` — PII-free; app boots when unset. Not gated by cookie consent. |
 
 ### Cloudflare R2 (Phase 4)
@@ -792,8 +792,9 @@ In **both** the test-mode and live-mode Stripe Dashboards: Settings → Billing 
 
 1. Sign up → complete onboarding → `/membership` shows checkout CTA.
 2. Start Checkout → pay with `4242…` → webhook sets `ACTIVE` and refills credits to 17.
-3. In Resend dashboard, confirm the subscription invoice email with a PDF named `invoice-*.pdf` (when `RESEND_*` set).
-4. Open a seeded upcoming event → **Tickets buchen** → confirm booking.
+3. In Resend dashboard, confirm the subscription invoice email with a PDF named `invoice-*.pdf` and the five locale links (`/{locale}/events`, `/bookings`, `/profile/billing`, `/how-it-works`, `/faq`) (when `RESEND_*` set). Keep Stripe Dashboard customer invoice/receipt emails OFF in test + live.
+4. Resub check (after cancel expiry → `INACTIVE`): complete Checkout again → same neutral-active invoice mail with PDF, no welcome / welcome-back fork.
+5. Open a seeded upcoming event → **Tickets buchen** → confirm booking.
 5. Confirm page shows redemption code + copy + `.ics` download; `/bookings` lists the ticket.
 6. In Resend dashboard, confirm booking email with `.ics` attachment (when `RESEND_*` set).
 7. **Ticket redemption (after `seed:demo -- --reset`):** book a `SECRET_CODE` seed event → codes masked on confirm / My Tickets → reveal/hide works; book **Demo: Promo Code Inventory Night** ×2 → two masked promo rows; book **Demo: PDF Voucher Inventory Night** ×2 → two PDF downloads succeed while logged in (guest denied). Or create one admin event per type and stock inventory manually.
@@ -859,7 +860,7 @@ App env: existing `STRIPE_SECRET_KEY` + `SITE_URL` for portal `return_url` (`/{l
 1. Open seeded sold-out event → **Auf die Warteliste** → join with ticket count → confirmation `WAITING`.
 2. As admin, edit the event and increase capacity by 1 → member is auto-promoted → ticket on `/bookings`; Resend promotion email when configured.
 3. Profile → edit name → save; Vibes → save preferences; wallet shows credits; refill → `/membership`.
-4. Billing → portal CTA visible when Stripe customer linked; cancel confirm → `CANCELLED_PENDING` (access until period end).
+4. Billing → portal CTA visible when Stripe customer linked; cancel confirm → `CANCELLED_PENDING` (access until period end). In Resend dashboard, confirm exactly one unsubscribe mail with the Berlin access-until date, credits-expiry + tickets-valid notes, and `/{locale}/membership` resubscribe link; period expiry (`customer.subscription.deleted` → `INACTIVE`) sends no further mail. Keep Stripe Dashboard customer invoice/receipt emails OFF in test + live.
 5. **Stop** — do not start Phase 8.
 
 ### Playwright (Phase 7)

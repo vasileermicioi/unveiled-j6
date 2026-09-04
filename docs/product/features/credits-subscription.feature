@@ -26,8 +26,19 @@
 #     write REFUND.
 #   - First successful subscription payment: DECIDED: send a branded Unveiled transactional email via
 #     Resend with the Stripe invoice PDF attached (`invoice.paid` + `billing_reason` `subscription_create`
-#     only). Renewal / `subscription_cycle` invoices do not send this email. Operators MUST disable Stripe
-#     Dashboard customer invoice/receipt emails in test and live so members are not double-mailed.
+#     only). The mail uses the branded mail-client-safe layout (preheader, header, membership summary,
+#     PDF note, next steps, support footer) with a plain-text mirror. A resubscription (new
+#     `subscription_create` after `INACTIVE`) reuses the same neutral-active template with no
+#     welcome / welcome-back fork. Renewal / `subscription_cycle` invoices do not send this email.
+#     Operators MUST disable Stripe Dashboard customer invoice/receipt emails in test and live so
+#     members are not double-mailed.
+#   - Scheduled cancel: DECIDED: send exactly one branded Unveiled transactional email via Resend on
+#     the transition into `CANCELLED_PENDING` (`customer.subscription.updated` with
+#     `cancel_at_period_end`, once per Stripe event with `Idempotency-Key` = event id;
+#     already-pending → no resend). The mail states the Berlin access-until date, that unused credits
+#     expire at period end, that tickets stay valid until end, with a resubscribe CTA. The later
+#     `customer.subscription.deleted` → `INACTIVE` expiry sends nothing. Admin freeze (`UNPAID`)
+#     sends no unsubscribe mail.
 
 Feature: Credits and Subscription
   As a member
@@ -54,8 +65,10 @@ Feature: Credits and Subscription
     When I complete Stripe Checkout successfully for the Basic Berlin plan
     And Stripe reports the first subscription invoice as paid
     Then I receive an email with the Stripe invoice PDF attached
+    And the email uses the branded Unveiled layout with membership summary and plain-text mirror
     And the email includes basic instructions and links to events, My Tickets, billing, how-it-works, FAQ, and support
     And unused credits are described as not rolling over
+    And a resubscription after cancellation reuses the same neutral-active template with no welcome fork
 
   Scenario: Checkout blocked while frozen
     Given my subscription status is "UNPAID" (frozen by an admin)
@@ -93,11 +106,19 @@ Feature: Credits and Subscription
     Then my subscription status becomes "CANCELLED_PENDING" immediately
     And I retain full booking access and my current credit balance until the current billing period ends
 
+  Scenario: Cancelling member is told access runs until period end
+    Given my subscription status is "ACTIVE"
+    When Stripe reports the subscription is set to cancel at period end
+    Then my subscription status becomes "CANCELLED_PENDING"
+    And I receive one unsubscribe email with the Berlin access-until date, unused-credits-expiry note, tickets-valid note, and resubscribe link
+    And a redelivered cancel event does not send a second email
+
   Scenario: Cancellation takes effect at period end
     Given my subscription status is "CANCELLED_PENDING" and the current billing period has ended
     When the end-of-period Stripe webhook fires
     Then my subscription status becomes "INACTIVE"
     And any remaining credits are forfeited with an "EXPIRY" ledger entry, same as a normal renewal
+    And no further email is sent (the member was already notified at cancel time)
 
   Scenario: Reactivating after cancellation
     Given my subscription status is "INACTIVE" after a previous cancellation

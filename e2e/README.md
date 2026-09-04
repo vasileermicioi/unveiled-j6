@@ -116,7 +116,7 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 
 Put the CLI `whsec_…` in root `.env` as `STRIPE_WEBHOOK_SECRET` and restart the app. Dashboard / staging / prod event checklist (`checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`): [`apps/web/DEPLOYMENT.md`](../apps/web/DEPLOYMENT.md) § Stripe webhook setup.
 
-Activation scenario skips unless `E2E_STRIPE_CHECKOUT=1`. Booking confirmation email skips in Playwright (no inbox harness) — verify in Resend on staging.
+Activation scenario skips unless `E2E_STRIPE_CHECKOUT=1`. Subscription invoice (including resub reuse) and single-unsubscribe emails skip in Playwright (no inbox harness) — verify both in Resend on staging smoke (`DEPLOYMENT.md` Phase 6 invoice + Phase 7 cancel); unit tests in `@unveiled/email`, `@unveiled/billing`, `apps/web/app/lib/subscription-invoice-email.test.ts` + `subscription-cancellation-email.test.ts` remain the default proof. Booking confirmation email skips likewise — verify in Resend on staging.
 
 Focused run:
 
@@ -195,6 +195,8 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | Image upload / logo processing | `admin-*.spec.ts` | `R2 vars not configured` when any of six R2 env vars missing; asserts `.webp` variant URLs |
 | Admin events / partners suite | `admin-events` / `admin-partners` | Skips when `E2E_ADMIN_*` unset (named env skip; was a throw before Phase 8 close) |
 | Activating via real Stripe Checkout | `credits-subscription.spec.ts` | Skips unless `E2E_STRIPE_CHECKOUT=1`; staging smoke is SoT |
+| Subscription invoice email (incl. resub reuse) | `credits-subscription.spec.ts` | No inbox harness; staging Resend checklist; unit tests in email/billing/orchestrator |
+| Cancelling member is told access runs until period end | `credits-subscription.spec.ts` | No inbox harness; staging Resend checklist (single mail, nothing at expiry); unit tests in `subscription-cancellation-email.test.ts` |
 | Monthly renewal resets credits | `credits-subscription.spec.ts` | Billing package / webhook tests; no e2e renewal clock |
 | Deep Stripe Customer Portal hosted UI | `profile.spec.ts` / credits | Fake `cus_*` asserts CTA/error; staging for real portal; optional future `E2E_STRIPE_PORTAL=1` |
 | Insufficient voucher inventory | `booking.spec.ts` | Covered by `book-event.integration.test` |

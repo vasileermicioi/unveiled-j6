@@ -33,6 +33,10 @@ export {
   sendBookingConfirmation,
 } from "./send-booking-confirmation";
 export {
+  type SendSubscriptionCancellationInput,
+  sendSubscriptionCancellation,
+} from "./send-subscription-cancellation";
+export {
   type SendSubscriptionInvoiceInput,
   sendSubscriptionInvoice,
 } from "./send-subscription-invoice";
@@ -44,6 +48,13 @@ export {
   type SendWaitlistPromotionInput,
   sendWaitlistPromotion,
 } from "./send-waitlist-promotion";
+export {
+  type BuildSubscriptionCancellationInput,
+  buildSubscriptionCancellationContent,
+  formatCancellationEndDate,
+  type SubscriptionCancellationContent,
+  type SubscriptionCancellationLocale,
+} from "./subscription-cancellation";
 export {
   type BuildSubscriptionInvoiceInput,
   buildSubscriptionInvoiceContent,
