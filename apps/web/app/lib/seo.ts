@@ -6,7 +6,7 @@ import type {
   FaqContent,
   FaqItem,
   HowItWorksContent,
-  LandingContent,
+  LandingV3Content,
   LegalContent,
   MembershipCheckoutContent,
 } from "./content/types";
@@ -81,9 +81,9 @@ export function buildPageMeta(input: PageMetaInput): PageMeta {
   };
 }
 
-export function landingPageMeta(content: LandingContent) {
+export function landingPageMeta(content: LandingV3Content) {
   return {
-    title: content.hero.headline,
+    title: `${content.hero.headlineA} ${content.hero.headlineB}`,
     description: content.hero.lead,
   };
 }

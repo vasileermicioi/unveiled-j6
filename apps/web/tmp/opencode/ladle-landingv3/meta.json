@@ -1,0 +1,87 @@
+{
+  "about": {
+    "homepage": "https://www.ladle.dev",
+    "github": "https://github.com/tajo/ladle",
+    "version": 1
+  },
+  "stories": {
+    "landing-page-v3--landing-page-v3--empty-rail--de-": {
+      "name": "De ",
+      "levels": [
+        "Landing page v3",
+        "Landing page v3",
+        "Empty rail"
+      ],
+      "locStart": 35,
+      "locEnd": 37,
+      "filePath": "app/components/marketing/landing-v3/LandingPageV3.stories.tsx",
+      "namedExport": "EmptyRailDe",
+      "meta": {}
+    },
+    "landing-page-v3--landing-page-v3--empty-rail--en-": {
+      "name": "En ",
+      "levels": [
+        "Landing page v3",
+        "Landing page v3",
+        "Empty rail"
+      ],
+      "locStart": 40,
+      "locEnd": 42,
+      "filePath": "app/components/marketing/landing-v3/LandingPageV3.stories.tsx",
+      "namedExport": "EmptyRailEn",
+      "meta": {}
+    },
+    "landing-page-v3--landing-page-v3--full-rail--de-": {
+      "name": "De ",
+      "levels": [
+        "Landing page v3",
+        "Landing page v3",
+        "Full rail"
+      ],
+      "locStart": 15,
+      "locEnd": 17,
+      "filePath": "app/components/marketing/landing-v3/LandingPageV3.stories.tsx",
+      "namedExport": "FullRailDe",
+      "meta": {}
+    },
+    "landing-page-v3--landing-page-v3--full-rail--en-": {
+      "name": "En ",
+      "levels": [
+        "Landing page v3",
+        "Landing page v3",
+        "Full rail"
+      ],
+      "locStart": 20,
+      "locEnd": 22,
+      "filePath": "app/components/marketing/landing-v3/LandingPageV3.stories.tsx",
+      "namedExport": "FullRailEn",
+      "meta": {}
+    },
+    "landing-page-v3--landing-page-v3--short-rail--de-": {
+      "name": "De ",
+      "levels": [
+        "Landing page v3",
+        "Landing page v3",
+        "Short rail"
+      ],
+      "locStart": 25,
+      "locEnd": 27,
+      "filePath": "app/components/marketing/landing-v3/LandingPageV3.stories.tsx",
+      "namedExport": "ShortRailDe",
+      "meta": {}
+    },
+    "landing-page-v3--landing-page-v3--short-rail--en-": {
+      "name": "En ",
+      "levels": [
+        "Landing page v3",
+        "Landing page v3",
+        "Short rail"
+      ],
+      "locStart": 30,
+      "locEnd": 32,
+      "filePath": "app/components/marketing/landing-v3/LandingPageV3.stories.tsx",
+      "namedExport": "ShortRailEn",
+      "meta": {}
+    }
+  }
+}

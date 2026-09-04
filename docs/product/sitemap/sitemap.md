@@ -38,7 +38,6 @@ Locale is a **route segment**. Switching language re-navigates to the same path 
 | `/how-it-works` | — | Static explainer |
 | `/faq` | — | FAQ accordion |
 | `/membership` | — | Plan details; Stripe checkout when signed in (Phase 6+) |
-| `/regular` | — | Regular-price membership landing (29 € / month, no deposit). Same sections as guest home. Bare `/regular` **302** → `/:locale/regular`. Signed-in users are **not** redirected (campaign URL). |
 | `/impressum` | — | Imprint |
 | `/privacy` | — | Privacy / Datenschutz |
 | `/terms` | — | Terms / AGB |

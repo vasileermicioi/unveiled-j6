@@ -6,46 +6,6 @@ Defines behavior and automated coverage for the public marketing routes (home, h
 
 ## Requirements
 
-### Requirement: Discover marketing preview page
-
-The locale home route `/:locale` SHALL render the Discover marketing preview with hero stats, three value proposition cards, a preview grid of up to six upcoming catalog events (soonest first), membership category highlights, partner venue highlights with logos where available, and a "missing venue" callout, using verbatim static copy from `static-pages-content.md` for hero and value sections while sourcing event and partner preview data from the database. Legacy `/:locale/discover` SHALL **301** redirect to `/:locale`. Bare `/discover` (no locale segment), when requested, SHALL **301** to the visitor's locale home (`/:locale` via `Accept-Language`, same resolution as `/`) so sitemap legacy paths do not 404.
-
-#### Scenario: Discover page sections
-
-- **WHEN** a guest visits `/de`
-- **THEN** they see the hero panel, value cards, event preview grid, membership categories, and partner venues sections
-
-#### Scenario: Live event grid
-
-- **WHEN** at least one future event exists in the catalog
-- **THEN** up to six EventCard components render with guest CTA labels "Bin dabei" (DE) or "Book Now" (EN) when capacity remains, ordered by ascending `date_time`
-
-#### Scenario: Empty event state
-
-- **WHEN** no future events exist in the catalog
-- **THEN** the dashed-border empty state message from `static-pages-content.md` is shown
-
-#### Scenario: Guest sold-out Waitlist CTA
-
-- **WHEN** a guest views an EventCard for a sold-out upcoming event on discover
-- **THEN** the CTA reads "Waitlist" / "Warteliste"
-- **AND** following the CTA opens public `/events/:id` without being forced to log in
-
-#### Scenario: Discover page SEO
-
-- **WHEN** a crawler requests `/de`
-- **THEN** the response includes a unique `<title>`, `<meta name="description">`, canonical, hreflang alternates, and Open Graph tags in the initial HTML
-
-#### Scenario: Legacy discover path redirects home
-
-- **WHEN** a guest visits `/de/discover`
-- **THEN** they receive a **301** redirect to `/de`
-
-#### Scenario: Bare discover path redirects to locale home
-
-- **WHEN** a visitor requests `/discover` without a locale segment
-- **THEN** they receive a **301** to `/:locale` (locale from `Accept-Language`, fallback `de`)
-
 ### Requirement: Discover partner venues section
 
 The Discover locale home SHALL include a Partner venues section with a small uppercase eyebrow (“Partnerorte” / “Partner venues”) and a horizontal logo strip of featured partner venues (logo image or initial-letter fallback). The section SHALL NOT present a multi-column grid of address cards as the primary layout. The logo sequence markup SHALL include a duplicated partner sequence (or equivalent dual track) so a later continuous-loop animation can translate without restructuring. Partner addresses SHALL NOT be required as primary marquee cell content.
@@ -106,30 +66,6 @@ When Discover has zero featured partners to show in the strip, the Partner venue
 
 - **WHEN** a guest views `/:locale` with an empty featured-partners list
 - **THEN** the Partner venues eyebrow and logo strip are not shown
-
-### Requirement: Discover to events navigation
-
-The public Discover experience (locale home `/:locale`) SHALL present marketing content and a curated event preview and SHALL provide a clear path into fuller event browsing: preview EventCard CTAs (**Book Now** / **Bin dabei**, or **Waitlist** / **Warteliste** when sold out) link to public `/events/:id` without forcing login, and a primary CTA path leads guests to signup or login that lands on member `/events` after auth (and onboarding if incomplete). Guests SHALL NOT receive a public full upcoming-events list equivalent to `/events` in MVP. Product docs (`docs/product/sitemap/sitemap.md`, `ui/app-shell.md`, `ui/static-pages-content.md`) SHALL document these CTAs without dead ends (doc updates may land in hardening). Phase 5.5 release spot-checks SHALL confirm these CTA hrefs and journeys (or record a named deferral with target phase).
-
-#### Scenario: Discover preview links to public event detail
-
-- **WHEN** a guest follows a Discover preview event CTA ("Book Now" / "Bin dabei")
-- **THEN** they land on public `/events/:id` without being forced to log in
-
-#### Scenario: Discover CTA path to the full member events feed
-
-- **WHEN** a guest follows the primary browse-all-events CTA path to signup or login
-- **THEN** they are taken to signup or login and after auth (and onboarding if incomplete) land on `/events`, never receiving a public full feed equivalent
-
-#### Scenario: Guest has no public full feed
-
-- **WHEN** a guest is not signed in
-- **THEN** product docs and Discover CTAs do not offer an ungated `/events` browse list; the full feed remains member-gated
-
-#### Scenario: Guest journey matches sitemap
-
-- **WHEN** a guest follows Discover preview CTAs and auth CTAs during Phase 5.5 release verification
-- **THEN** preview CTAs open public `/events/:id` and the full-browse path goes through signup/login toward member `/events` without exposing a public full feed
 
 ### Requirement: Legal pages
 
@@ -376,3 +312,80 @@ The system SHALL keep a unit test that asserts the FAQ content module exposes 11
 
 - **WHEN** the FAQ guard test builds JSON-LD from the shipped FAQ items
 - **THEN** the resulting `mainEntity` array contains exactly 11 entries
+
+### Requirement: Guest marketing home renders v3 content with live teasers
+
+The system SHALL render the membership conversion landing on `/:locale` from one `LandingPageV3` composition (hero + 29 € offer card, live rail of up to 3 upcoming teasers, credits, flexibility/partners, community, final CTA) sourced from the v3 content model, with the events rail sourced from the first 3 upcoming published events via a guest-safe teaser (title, description, date/time labels, place, image only — no credit prices, capacity, redemption, or event-detail URLs) and a static fallback when no upcoming events exist. `/:locale/regular` and bare `/regular` SHALL NOT exist (route files deleted; both return 404). Rail cards SHALL NOT link to `/events/:id`; the only clickable elements on rail cards SHALL be action buttons to registration (`/:locale/signup`). Rail cards SHALL NOT display credit prices or other guest-hidden details.
+
+#### Scenario: Landing rail uses live upcoming teasers without guest-hidden details
+
+- **WHEN** a guest opens `/:locale` with 3+ upcoming published events
+- **THEN** the rail shows the 3 soonest teasers with no credit labels and no links to `/events/:id`
+
+#### Scenario: Teaser list is limited and soonest-first
+
+- **WHEN** more than 3 upcoming published events exist
+- **THEN** only the first 3 ordered by ascending `date_time` are exposed to the landing rail
+
+#### Scenario: Guest-safe teaser exposes no restricted fields
+
+- **WHEN** a landing teaser is built from a catalog event row
+- **THEN** it contains only id, title, description, dateLabel, time, place, and image — without credit price, capacity, redemption, or event-detail URL data
+
+#### Scenario: Static fallback when no upcoming events exist
+
+- **WHEN** a guest opens `/:locale` with zero upcoming published events or an unreachable catalog query
+- **THEN** the rail renders the static fallback items (existing rail copy minus credits) instead of failing the build or rendering an empty rail
+
+#### Scenario: V3 content is available in both locales
+
+- **WHEN** the `landing-v3` content model is loaded for `de` or `en`
+- **THEN** all v3 sections (hero + 29 € offer, events rail copy, credits, flexibility/partners, community, final CTA) are present with locale-matched copy ported from the mock
+
+#### Scenario: Guest rail cards lead only to registration
+
+- **WHEN** a guest opens `/:locale` and activates any rail-card action
+- **THEN** they land on `/:locale/signup`, never on `/events/:id`
+
+#### Scenario: /regular is gone
+
+- **WHEN** anyone opens `/:locale/regular` or `/regular`
+- **THEN** the response is 404
+
+#### Scenario: Landing page SEO
+
+- **WHEN** a crawler requests `/de`
+- **THEN** the response includes a unique `<title>`, `<meta name="description">`, canonical, hreflang alternates, and Open Graph tags in the initial HTML
+
+### Requirement: Legacy discover redirects
+
+Legacy discover paths SHALL keep redirecting to the locale home (which now renders the v3 landing) so sitemap legacy paths do not 404. The `/:locale/discover` and bare `/discover` routes themselves are unchanged.
+
+#### Scenario: Legacy discover path redirects home
+
+- **WHEN** a guest visits `/de/discover`
+- **THEN** they receive a **301** redirect to `/de`
+
+#### Scenario: Bare discover path redirects to locale home
+
+- **WHEN** a visitor requests `/discover` without a locale segment
+- **THEN** they receive a **301** to `/:locale` (locale from `Accept-Language`, fallback `de`)
+
+### Requirement: Landing CTA path to the member events feed
+
+The v3 landing SHALL send guests to registration and SHALL NOT offer a public full upcoming-events list equivalent to `/events`. A primary CTA path leads guests to signup or login that lands on member `/events` after auth (and onboarding if incomplete). Product docs (`docs/product/sitemap/sitemap.md`, `ui/app-shell.md`, `ui/static-pages-content.md`) SHALL document these CTAs without dead ends (doc updates may land in hardening). Phase 5.5 release spot-checks SHALL confirm these CTA hrefs and journeys (or record a named deferral with target phase).
+
+#### Scenario: Landing CTA path to the full member events feed
+
+- **WHEN** a guest follows the primary browse-all-events CTA path to signup or login
+- **THEN** they are taken to signup or login and after auth (and onboarding if incomplete) land on `/events`, never receiving a public full feed equivalent
+
+#### Scenario: Guest has no public full feed
+
+- **WHEN** a guest is not signed in
+- **THEN** product docs and landing CTAs do not offer an ungated `/events` browse list; the full feed remains member-gated
+
+#### Scenario: Guest journey matches sitemap
+
+- **WHEN** a guest follows landing rail CTAs and auth CTAs during Phase 5.5 release verification
+- **THEN** rail CTAs open `/:locale/signup` and the full-browse path goes through signup/login toward member `/events` without exposing a public full feed

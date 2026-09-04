@@ -48,14 +48,16 @@ Feature: Static and Marketing Pages
     When I visit the "How it works" page
     Then I see a 3-step explainer of the membership process and its value points
 
-  Scenario: Regular membership landing
-    When I visit "/:locale/regular"
-    Then I see the membership headline, 29 € monthly plan, and signup CTA
+  Scenario: V3 landing rail shows login-gated teasers
+    Given I am not signed in
+    When I visit the locale home ("/:locale")
+    Then I see at most 3 live event teasers with no credit figures or event detail links
+    And every live teaser CTA takes me to login
+    And 2 locked teaser cards complete the rail
 
-  Scenario: Bare /regular redirects to localized regular landing
-    When I visit "/regular"
-    Then I am redirected to "/:locale/regular"
-    And I see the regular membership landing
+  Scenario: /regular routes return 404
+    When I visit "/:locale/regular" or "/regular"
+    Then I see a 404 not-found page
 
   Scenario: FAQ
     When I visit the FAQ page

@@ -8,27 +8,16 @@ Exact DE/EN copy and section structure for marketing pages. Rebuild with HeroUI.
 
 ## Guest marketing home (`/:locale`)
 
-Public conversion landing for **guests only**. Signed-in members/admins who hit this URL are redirected to their role home (booking-eligible `USER` → `/events`, non-active `USER` → `/discover` or onboarding, `ADMIN` → `/admin`). Logo (guest) points here. Navbar links **Discover** / **Entdecken** to `/discover` for guests (active members see **Browse events** → `/events` instead). App chrome (navbar + footer) is unchanged. Sections, top to bottom:
+Public conversion landing for **guests only** (`LandingPageV3` in `apps/web/app/components/marketing/landing-v3/`; content module `apps/web/app/lib/content/landing-v3.ts` on the `landing` PageKey). Signed-in members/admins who hit this URL are redirected to their role home (booking-eligible `USER` → `/events`, non-active `USER` → `/discover` or onboarding, `ADMIN` → `/admin`). Logo (guest) points here. Navbar links **Discover** / **Entdecken** to `/discover` for guests (active members see **Browse events** → `/events` instead). App chrome (navbar + footer) is unchanged. Sections, top to bottom:
 
-1. **Hero** — campaign tag + H1 (“Willst du mehr Tage wie diesen?” / “Want more days like this?”) + lead; community photo gallery + inverted plan card (19 € today after 10 € deposit, 29 € / month after, 17 credits, first-30 perks, Join → `/signup`)
-2. **Experiences grid** — same 1/2/3-column `EventCard` layout as Discover; Community Experience teasers (date chip, place, credits in the footer) + locked lineup cards; CTA “Einloggen für mehr” / “Log in to see more” → `/login`
-3. **Credits explainer** — 17 credits / month, example mix, used/left tally
-4. **Flexibility** — inverted band: partner-venue teasers + coming-soon partner tiles (initial-letter marks, not Google favicons)
-5. **Community photowall** — “Komm für die Kultur…” / “Come for the culture…”
-6. **Final CTA** — inverted band, same Join → `/signup`
+1. **Hero** — campaign tag ("Willkommen im Culture Club." / "Welcome to the culture club.") + H1 ("Berliner Kultur ist besser zusammen." / "Berlin culture is better together.") + lead; community photo gallery (`LandingImageGallery` island with localized previous/next labels, position dots, autoplay paused on `prefers-reduced-motion`) + 29 € offer card (17 credits every month, +5 extra credits in the first month, +1 bring-a-friend, Join CTA → `/signup`, cancel-anytime note)
+2. **Events rail** — up to 3 live upcoming teasers (guest-safe: title, description, date/time labels, place, image only — no credit prices, no detail links); cards are not links, each live card has a login CTA ("Einloggen für mehr" / "Log in to see more" → `/:locale/login`); 2 locked skeleton cards always complete the rail (blurred community photo behind a yellow wash with lock icon + short login button → `/:locale/login`, deleted-pages lock-overlay pattern); static fallback items when no upcoming events exist
+3. **Credits explainer** — 17 credits every month for Community Experiences and cultural-partner visits ("Gemeinsam losziehen" / "Go together" + "Mach deine eigenen Pläne" / "Make your own plans")
+4. **Flexibility / partners band** — culture-partner list ("Unsere Kulturpartner" / "Our cultural partners"; "Ständig kommen neue Orte zu unveiled dazu." / "New places keep joining unveiled.")
+5. **Community proof** — "Komm für die Kultur. Bleib für die Leute." / "Come for the culture. Stay for the people." + 500+ community proof
+6. **Final CTA** — "Sehen wir uns beim nächsten Mal?" / "See you at the next one?" + same Join → `/signup`, cancel-anytime note
 
-v1 (phone mockup + 29€ plan + three-benefit strip) is archived at `.dev-plan/archived-landing-v1/` and `LandingPage.legacy.tsx`.
-
----
-
-## Regular membership landing (`/:locale/regular`)
-
-Public campaign landing at the regular **29 € / month** price (no 10 € deposit / 19 € today). Reuses the guest-home `LandingPage` composition and copy except:
-
-1. **Hero plan card** — `29 €` + “pro Monat” / “per month”; same 17-credit perk; perk group “Member Perks” / “First member perks” (not first-30); Join → `/signup`
-2. **Final CTA** — inverted band; body uses 29 € / month (not the founding 19 € remainder)
-
-Bare `/regular` 302s to `/:locale/regular`. App chrome is unchanged. Signed-in members/admins who hit this URL stay on the page (unlike locale home).
+`/:locale/regular` and bare `/regular` do not exist (both return 404). The v1 founding/deposit landing is hard-deleted (no archive; `.dev-plan/archived-landing-v1/` doc note is a history pointer only).
 
 ---
 

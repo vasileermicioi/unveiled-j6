@@ -2,7 +2,7 @@ import type { Locale } from "../locale";
 
 export type PageKey =
   | "landing"
-  | "regular"
+  | "landing-v3"
   | "how-it-works"
   | "faq"
   | "discover"
@@ -20,33 +20,81 @@ export type LandingPerk = {
   highlightPlacement: "start" | "end";
 };
 
-export type LandingEventTeaser = {
+export type LandingComingSoonPartner = {
+  name: string;
+  href: string;
+  logoSrc: string;
+};
+
+/**
+ * Guest-safe live teaser for the v3 landing rail (step 01).
+ * Deliberately narrow: no credit prices, capacity, redemption, or event-detail URLs.
+ */
+export type LandingLiveTeaser = {
   id: string;
   title: string;
   description: string;
   dateLabel: string;
   time: string;
   place: string;
-  credits: string;
-  locked: boolean;
+  image?: string;
 };
 
-export type LandingCreditExample = {
-  name: string;
-  credits: string;
-  icon: "community" | "theater" | "exhibition";
+export type LandingV3Hero = {
+  tag: string;
+  headlineA: string;
+  headlineB: string;
+  lead: string;
+  galleryAlt: string;
 };
 
-export type LandingVenueCard = {
-  name: string;
-  type: string;
-  fromCredits: string;
+export type LandingV3EventsCopy = {
+  eyebrow: string;
+  headline: string;
+  body: string;
+  loginCta: string;
+  loginShort: string;
+  communityLabel: string;
+  previousPhoto: string;
+  nextPhoto: string;
 };
 
-export type LandingComingSoonPartner = {
-  name: string;
-  href: string;
-  logoSrc: string;
+export type LandingV3Credits = {
+  eyebrow: string;
+  headlineA: string;
+  headlineB: string;
+  body: string;
+  goTogetherTitle: string;
+  goTogetherBody: string;
+  ownPlansTitle: string;
+  ownPlansBody: string;
+  partnersEyebrow: string;
+  partnersSub: string;
+  partnersNote: string;
+  partners: readonly LandingComingSoonPartner[];
+};
+
+export type LandingV3Community = {
+  eyebrow: string;
+  headline: string;
+  proof: string;
+  photoAlt: string;
+};
+
+export type LandingV3FinalCta = {
+  headline: string;
+  body: string;
+  cta: string;
+  cancel: string;
+};
+
+export type LandingV3Content = {
+  hero: LandingV3Hero;
+  offer: LandingRegularOffer;
+  events: LandingV3EventsCopy;
+  credits: LandingV3Credits;
+  community: LandingV3Community;
+  finalCta: LandingV3FinalCta;
 };
 
 type LandingOfferBase = {
@@ -57,79 +105,10 @@ type LandingOfferBase = {
   cancel: string;
 };
 
-export type LandingFoundingOffer = LandingOfferBase & {
-  kind: "founding";
-  depositEyebrow: string;
-  depositAmount: string;
-  depositToday: string;
-  depositSub: string;
-  depositAfter: string;
-};
-
 export type LandingRegularOffer = LandingOfferBase & {
   kind: "regular";
   price: string;
   period: string;
-};
-
-export type LandingOffer = LandingFoundingOffer | LandingRegularOffer;
-
-export type LandingContent = {
-  hero: {
-    tag: string;
-    headline: string;
-    lead: string;
-    galleryAlt: string;
-  };
-  offer: LandingOffer;
-  events: {
-    eyebrow: string;
-    headline: string;
-    body: string;
-    railHint: string;
-    loginCta: string;
-    loginShort: string;
-    communityLabel: string;
-    previousPhoto: string;
-    nextPhoto: string;
-    items: readonly LandingEventTeaser[];
-  };
-  credits: {
-    eyebrow: string;
-    headline: string;
-    amount: string;
-    period: string;
-    body: string;
-    exampleLabel: string;
-    examples: readonly [LandingCreditExample, LandingCreditExample, LandingCreditExample];
-    exampleNote: string;
-    used: string;
-    left: string;
-    mix: string;
-  };
-  flexibility: {
-    eyebrow: string;
-    headline: string;
-    body: string;
-    venues: readonly [LandingVenueCard, LandingVenueCard];
-    moreStrip: string;
-    comingSoon: string;
-    reassure: string;
-    reassureMuted: string;
-    partners: readonly LandingComingSoonPartner[];
-  };
-  community: {
-    eyebrow: string;
-    headline: string;
-    proof: string;
-    photoAlt: string;
-  };
-  finalCta: {
-    headline: string;
-    body: string;
-    cta: string;
-    cancel: string;
-  };
 };
 
 export type ValuePropCard = {
@@ -251,8 +230,8 @@ export type LegalContent = {
 };
 
 export type PageContentMap = {
-  landing: LandingContent;
-  regular: LandingContent;
+  landing: LandingV3Content;
+  "landing-v3": LandingV3Content;
   "how-it-works": HowItWorksContent;
   faq: FaqContent;
   discover: DiscoverContent;

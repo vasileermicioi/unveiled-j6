@@ -187,7 +187,7 @@ Not a `translations.ts` key. Verbatim DE/EN copy lives in `apps/web/app/lib/book
 
 ## Content not captured in `translations.ts` (extract manually from components if needed)
 
-- Landing page hero/marketing copy (inline in `App.tsx`)
+- Landing v3 copy (`apps/web/app/lib/content/landing-v3.ts`, `landing` PageKey — hero, 29 € offer, events-rail copy, credits, partners, community, final CTA — full DE/EN pairs) plus guest-safe live teasers (`apps/web/app/lib/landing-teasers.ts`: locale title/description, Berlin date/time labels, partner-area place, primary image variant; no `regular` PageKey remains)
 - How It Works page steps/value points (`HowItWorksPage.tsx`)
 - FAQ questions/answers (`HelpSection.tsx` — hardcoded 3 Q&As per language)
 - Discover/marketing page copy (`apps/web/app/lib/content/discover.ts` — featured empty state: "Aktuell keine empfohlenen Events." / "No featured events right now."; Partner venues eyebrow "Partnerorte" / "Partner venues"). `livePreview` eyebrow/headline ("Mit deiner Mitgliedschaft buchbar" / "Bookable with your membership"; "Aktuelle Events in Berlin." / "Current events in Berlin.") are reused on admin Discover card preview (`/:locale/admin/events/:id/preview/discover`)

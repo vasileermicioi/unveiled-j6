@@ -42,15 +42,24 @@ test.describe("static-pages.feature", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: /eine mitgliedschaft für die gesamte kulturszene|one membership for the entire cultural scene/i,
+        name: /berliner kultur|berlin culture/i,
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /registrier dich jetzt|register now/i }),
+      page
+        .getByRole("link", {
+          name: /werde teil des unveiled culture clubs|join the unveiled culture club/i,
+        })
+        .first(),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /registrier dich jetzt|register now/i }),
+      page
+        .getByRole("link", {
+          name: /werde teil des unveiled culture clubs|join the unveiled culture club/i,
+        })
+        .first(),
     ).toHaveAttribute("href", new RegExp(`/${locale}/signup`));
+    await expect(page.getByRole("heading", { name: "29 €" })).toBeVisible();
 
     // Slim sticky header: Log in only — Sign up / How it works / Membership are not in the banner.
     const header = page.getByRole("banner");
@@ -77,6 +86,47 @@ test.describe("static-pages.feature", () => {
     await expect(footer.getByRole("link", { name: /^mitgliedschaft$|^membership$/i })).toHaveCount(
       0,
     );
+  });
+
+  test("Scenario: V3 landing rail shows login-gated teasers", async ({ page, locale }) => {
+    await page.goto(`/${locale}`);
+    const main = page.getByRole("main");
+
+    // Rail section is present (v3 events headline).
+    await expect(
+      main.getByRole("heading", { name: /was machen wir als nächstes|what are we doing next/i }),
+    ).toBeVisible();
+
+    // Live teaser cards link to login with the login CTA label (≤3, capped).
+    const liveCta = main.getByRole("link", { name: /einloggen für mehr|log in to see more/i });
+    const liveCount = await liveCta.count();
+    expect(liveCount).toBeGreaterThanOrEqual(1);
+    expect(liveCount).toBeLessThanOrEqual(3);
+    for (let i = 0; i < liveCount; i++) {
+      await expect(liveCta.nth(i)).toHaveAttribute("href", `/${locale}/login`);
+    }
+
+    // Two locked skeleton cards complete the rail (short login button → login).
+    const lockedCta = main.getByRole("link", { name: /^einloggen$|^log in$/i });
+    await expect(lockedCta).toHaveCount(2);
+    for (let i = 0; i < 2; i++) {
+      await expect(lockedCta.nth(i)).toHaveAttribute("href", `/${locale}/login`);
+    }
+
+    // Nothing in the page main links to event detail (rail cards are never links).
+    const allLinks = main.getByRole("link");
+    const linkCount = await allLinks.count();
+    for (let i = 0; i < linkCount; i++) {
+      await expect(allLinks.nth(i)).not.toHaveAttribute("href", /\/events\//);
+    }
+
+    // Live cards carry no credit figures. Card scope via parent walks from the
+    // live CTA: CTA → actions surface → card footer → card (see LandingEventsRailV3).
+    for (let i = 0; i < liveCount; i++) {
+      const card = liveCta.nth(i).locator("..").locator("..").locator("..");
+      await expect(card).not.toContainText(/credits?/i);
+      await expect(card).not.toContainText(/\d+\s*€/);
+    }
   });
 
   test("Scenario: Discover is available at /discover", async ({ page, locale }) => {
@@ -161,32 +211,18 @@ test.describe("static-pages.feature", () => {
     await expect(page.getByText(/3\./).first()).toBeVisible();
   });
 
-  test("Scenario: Regular membership landing", async ({ page, locale }) => {
+  test("Scenario: /regular routes return 404", async ({ page, locale }) => {
     await page.goto(`/${locale}/regular`);
+    await expect(page.getByRole("heading", { level: 1, name: "404" })).toBeVisible();
     await expect(
-      page.getByRole("heading", {
-        level: 1,
-        name: /willst du mehr tage wie diesen|want more days like this/i,
-      }),
+      page.getByRole("heading", { name: /seite nicht gefunden|page not found/i }),
     ).toBeVisible();
-    await expect(page.getByRole("heading", { name: "29 €" })).toBeVisible();
-    await expect(page.getByText(/pro monat|per month/i).first()).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: /unveiled beitreten|join unveiled/i }).first(),
-    ).toBeVisible();
-    await expect(page.getByText(/19\s*€/)).toHaveCount(0);
-  });
 
-  test("Scenario: Bare /regular redirects to localized regular landing", async ({ page }) => {
     await page.goto("/regular");
-    await expect(page).toHaveURL(/\/(de|en)\/regular\/?$/);
+    await expect(page.getByRole("heading", { level: 1, name: "404" })).toBeVisible();
     await expect(
-      page.getByRole("heading", {
-        level: 1,
-        name: /willst du mehr tage wie diesen|want more days like this/i,
-      }),
+      page.getByRole("heading", { name: /seite nicht gefunden|page not found/i }),
     ).toBeVisible();
-    await expect(page.getByRole("heading", { name: "29 €" })).toBeVisible();
   });
 
   test("Scenario: FAQ", async ({ page, locale }) => {

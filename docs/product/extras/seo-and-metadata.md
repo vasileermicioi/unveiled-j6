@@ -6,7 +6,7 @@ SSR metadata for the production MVP. Aligns with [`sitemap/sitemap.md`](../sitem
 
 | Route group | Indexable? | Why |
 |---|---|---|
-| `/:locale` (Discover home), `/how-it-works`, `/faq`, `/membership`, `/regular`, `/impressum`, `/privacy`, `/terms` | ✅ Yes | Public marketing / legal |
+| `/:locale` (Discover home), `/how-it-works`, `/faq`, `/membership`, `/impressum`, `/privacy`, `/terms` | ✅ Yes | Public marketing / legal |
 | `/discover` | — | **301** to `/:locale` — do not list separately in sitemap.xml |
 | `/login`, `/signup`, `/forgot-password`, `/reset-link-sent`, `/reset-password` | ❌ `noindex` | Utility / token URLs |
 | `/events` | ❌ `noindex` | **Member-gated** feed — not a public catalog list |

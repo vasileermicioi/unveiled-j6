@@ -2,7 +2,7 @@ import { Button, Surface } from "@heroui/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import type { LandingGalleryImage } from "../components/marketing/landing/assets";
+import type { LandingGalleryImage } from "../components/marketing/landing-v3/assets";
 
 export type LandingImageGalleryProps = {
   images: LandingGalleryImage[];

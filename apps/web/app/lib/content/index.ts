@@ -2,15 +2,14 @@ import type { Locale } from "../locale";
 import { discoverContent } from "./discover";
 import { faqContent } from "./faq";
 import { howItWorksContent } from "./how-it-works";
-import { landingContent } from "./landing";
+import { landingV3Content } from "./landing-v3";
 import { legalContent } from "./legal";
 import { membershipContent } from "./membership";
-import { regularLandingContent } from "./regular";
 import type { PageContentMap, PageKey } from "./types";
 
 const contentByKey = {
-  landing: landingContent,
-  regular: regularLandingContent,
+  landing: landingV3Content,
+  "landing-v3": landingV3Content,
   "how-it-works": howItWorksContent,
   faq: faqContent,
   discover: discoverContent,

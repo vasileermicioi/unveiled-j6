@@ -45,8 +45,7 @@ Membership unlock / login messaging lives on the **event detail** checkout card,
 
 | Surface | Route | Notes |
 |---|---|---|
-| **Guest marketing home** | `/:locale` | Guests only (signed-in → role home). Headline + gallery + founding plan card (19 € today) + signup CTA |
-| **Regular membership landing** | `/:locale/regular` | Same `LandingPage` as guest home at 29 € / month (no deposit). Bare `/regular` 302s here. Signed-in users stay on the page. |
+| **Guest marketing home** | `/:locale` | Guests only (signed-in → role home). `LandingPageV3`: hero + 29 € offer card + signup-only live rail (≤3 teasers, no credits/detail links) + credits + partners + community + final CTA |
 | **Discover** | `/:locale/discover` | `PageSectionHeader` + admin-**featured** EventCards including past featured (not automatic catalog slice; no upcoming-only filter) for featured membership whose catalog `events.published` is true; empty featured state copy; Partner venues logo marquee from admin-curated `featured_partners` (up to 8 by `sort_order`; eyebrow + continuous strip; hidden when the featured set is empty — not first N of all partners); Discover / Entdecken (or Waitlist) → public detail. Booking-eligible USER redirected to `/events`. |
 | **Member feed** | `/events` | Booking-eligible USER only (non-active → Discover). `PageSectionHeader`; collapsible filters (collapsed by default; GET query params — category `<select>` option **values** are `EVENT_CATEGORIES` keys, visible text is the locale taxonomy label; not onboarding `INTERESTS`; applied params expand the panel), pagination, EventCard grid |
 | **Map** | `/events/map` | Same audience gate as feed. MapLibre + OSM island; cookie-gated; marker popups show **next upcoming** datetime plus a large close control (~44px hit target, keyboard-accessible) |
@@ -95,7 +94,7 @@ Four SSR steps: `/onboarding/age` → `interests` → `location` → `timing`. N
 
 ## Static / marketing
 
-How it works, FAQ, legal pages, regular membership landing (`/:locale/regular`) — copy in `static-pages-content.md`. Guest marketing home is locale home; Discover is `/:locale/discover`.
+How it works, FAQ, legal pages — copy in `static-pages-content.md`. Guest marketing home is locale home; Discover is `/:locale/discover`.
 
 ---
 
