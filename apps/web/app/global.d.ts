@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import "@hono/react-renderer";
 
 import type { AppSession } from "../lib/auth";

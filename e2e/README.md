@@ -176,7 +176,7 @@ Both servers use the production HeroUI Uber theme (`globals.css`) and yellow pag
 | `specs/onboarding.spec.ts` | `onboarding.feature` | 12 scenarios; fresh signup per mutating test |
 | `specs/admin-partners.spec.ts` | `admin-partners.feature` | Partner CRUD; portal/QR scenarios skipped (post-MVP) |
 | `specs/admin-events.spec.ts` | `admin-events.feature` | Event CRUD + public home (Discover) / `/events/:id`; image tests need R2 |
-| `specs/admin-users.spec.ts` | `admin-users.feature` | Membership HQ list/detail + adjust/freeze/comp; needs `E2E_ADMIN_*` + `DATABASE_URL` |
+| `specs/admin-users.spec.ts` | `admin-users.feature` | Membership HQ list (merged Member + Created, sort/filter/pagination/reset) + detail + adjust/freeze/comp; needs `E2E_ADMIN_*` + `DATABASE_URL` |
 | `specs/event-discovery.spec.ts` | `event-discovery.feature` | 12 scenarios; member feed, filters, saved, map |
 | `specs/credits-subscription.spec.ts` | `credits-subscription.feature` | Phase 6–8 member gates + admin credit/freeze/comp via Membership HQ; Checkout opt-in via `E2E_STRIPE_CHECKOUT=1` |
 | `specs/booking.spec.ts` | `booking.feature` | Phase 6 book/confirm; waitlist offer; admin cancel via `/admin/bookings/:id/cancel` |

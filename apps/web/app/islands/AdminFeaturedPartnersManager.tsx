@@ -15,7 +15,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Button, Paragraph, Surface } from "@heroui/react";
+import { Button, Link, Paragraph, Surface } from "@heroui/react";
 import { useEffect, useMemo, useState } from "react";
 
 import { adminFeaturedPartnersRemovePath } from "../components/admin/admin-tabs";

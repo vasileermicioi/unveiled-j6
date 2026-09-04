@@ -43,7 +43,10 @@ export {
   countMembers,
   type ListMembersOptions,
   listMembers,
+  type MemberListFilters,
   type MemberListItem,
+  type MemberSort,
+  type MemberSortDir,
 } from "./list-members";
 export {
   type AdminWaitlistRow,

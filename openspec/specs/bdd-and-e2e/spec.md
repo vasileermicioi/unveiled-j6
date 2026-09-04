@@ -88,7 +88,7 @@ The system SHALL map `waitlist.feature` → `e2e/specs/waitlist.spec.ts` and `pr
 - **THEN** booking “Sold out — automatic waitlist offer” and credits-subscription portal/cancel/reactivate rows are `pass`, documented `skip`, or `deferred` with an updated reason — not left as “Phase 7 — UI not built”
 
 ### Requirement: Admin users Playwright coverage
-The system SHALL map `docs/product/features/admin-users.feature` scenarios to `e2e/specs/admin-users.spec.ts` using verbatim Gherkin `Scenario:` titles as Playwright `test()` titles and proximity/layout selectors per `docs/product/testing/bdd-and-e2e.md`. Admin waitlist promote, admin booking cancel, and admin credit/freeze/comp/refund scenarios SHALL pass in their feature-mapped specs (`waitlist.spec.ts`, `booking.spec.ts`, `credits-subscription.spec.ts`) or be listed as named deferrals with reason and owner limited to remaining Phase 8 / `seo-launch-polish-03` when blocked by env or harness — not by missing UI. The coverage matrix and `e2e/README.md` SHALL reflect the updated inventory with no silent skips and no lingering “Phase 8 — UI not built” reasons for shipped admin-ops surfaces.
+The system SHALL map `docs/product/features/admin-users.feature` scenarios to `e2e/specs/admin-users.spec.ts` using verbatim Gherkin `Scenario:` titles as Playwright `test()` titles and proximity/layout selectors per `docs/product/testing/bdd-and-e2e.md`. The admin-users spec SHALL cover the shipped Membership HQ filter table: merged Member cell (name link + email line), Created column presence, header-sort round trip (toggle + new-column defaults, filters preserved), per-column filter round trips (subscription enum dropdown via the filter bar; credits/bookings/event-opens numeric ranges and created from/to date range via URL query params), filter+sort+pagination composition, and reset-filters link. Admin waitlist promote, admin booking cancel, and admin credit/freeze/comp/refund scenarios SHALL pass in their feature-mapped specs (`waitlist.spec.ts`, `booking.spec.ts`, `credits-subscription.spec.ts`) or be listed as named deferrals with reason and owner limited to remaining Phase 8 / `seo-launch-polish-03` when blocked by env or harness — not by missing UI. The coverage matrix and `e2e/README.md` SHALL reflect the updated inventory with no silent skips and no lingering “Phase 8 — UI not built” reasons for shipped admin-ops surfaces.
 
 #### Scenario: Admin users spec exists
 - **WHEN** Phase 8 admin-ops hardens
@@ -101,6 +101,14 @@ The system SHALL map `docs/product/features/admin-users.feature` scenarios to `e
 #### Scenario: Phase 7 admin UI skips are resolved
 - **WHEN** admin-ops step 05 completes
 - **THEN** waitlist admin visibility/promote, booking admin cancel, and credits-subscription admin adjust/freeze/comp/refund scenarios no longer skip solely because “Phase 8 — … UI” is missing
+
+#### Scenario: Filter and sort scenarios are executable
+- **WHEN** `bun run test:e2e -- e2e/specs/admin-users.spec.ts` runs with admin credentials and `DATABASE_URL` available
+- **THEN** merged-cell, Created-column, header-sort, per-column-filter, filter+sort+pagination composition, and reset scenarios pass, or skip only with documented `DATABASE_URL` / `E2E_ADMIN_*` prerequisites
+
+#### Scenario: Selectors follow the proximity contract
+- **WHEN** admin-users filter/sort e2e coverage is reviewed
+- **THEN** assertions use `getByRole` / `getByText` / `getByLabel` (or equivalent layout/proximity queries) scoped to table/row/header regions with no assertions coupled to admin CSS class names and no bare `input[name=…]` locators for labeled fields
 
 ### Requirement: Auth coverage inventory has no Google deferral
 `docs/product/testing/coverage-matrix.md`, `docs/product/testing/bdd-and-e2e.md`, and `e2e/README.md` SHALL map `docs/product/features/auth.feature` scenario `Auth screens do not offer Google` to a Playwright test in `e2e/specs/auth.spec.ts` with status `pass`. Google OAuth signup/login and “social login never creates PARTNER/ADMIN” SHALL NOT remain as `deferred` rows or skip-inventory entries. Google OAuth is not a valid `test.skip` reason.

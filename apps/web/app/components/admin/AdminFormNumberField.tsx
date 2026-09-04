@@ -10,6 +10,8 @@ type AdminFormNumberFieldProps = {
   maxValue?: number;
   step?: number;
   isRequired?: boolean;
+  /** Layout-only Tailwind classes for the wrapper (e.g. toolbar width). */
+  className?: string;
 };
 
 function numberIdForName(name: string): string {
@@ -26,12 +28,16 @@ export function AdminFormNumberField({
   maxValue,
   step = 1,
   isRequired = false,
+  className,
 }: AdminFormNumberFieldProps) {
   const id = numberIdForName(name);
   const controlled = onChange !== undefined;
 
   return (
-    <Surface className="admin-form__native-field w-full" variant="transparent">
+    <Surface
+      className={["admin-form__native-field w-full", className].filter(Boolean).join(" ")}
+      variant="transparent"
+    >
       <Label htmlFor={id}>{label}</Label>
       <input
         className="admin-native-number"

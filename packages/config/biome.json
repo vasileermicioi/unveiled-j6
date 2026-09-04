@@ -24,7 +24,9 @@
       "package.json",
       "biome.json",
       "bunfig.toml",
-      "!!**/public"
+      "!!**/public",
+      "!!apps/web/tmp/**",
+      "!!packages/db/drizzle/**"
     ]
   },
   "css": {

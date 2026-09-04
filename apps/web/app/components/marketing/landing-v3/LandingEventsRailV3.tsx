@@ -166,20 +166,30 @@ function LandingLockedTeaserCard({
           <Surface
             className="landing-event__skeleton-bar landing-event__skeleton-bar--title"
             variant="transparent"
-          />
-          <Surface className="landing-event__skeleton-bar" variant="transparent" />
+          >
+            {null}
+          </Surface>
+          <Surface className="landing-event__skeleton-bar" variant="transparent">
+            {null}
+          </Surface>
           <Surface
             className="landing-event__skeleton-bar landing-event__skeleton-bar--short"
             variant="transparent"
-          />
+          >
+            {null}
+          </Surface>
           <Surface
             className="landing-event__skeleton-bar landing-event__skeleton-bar--meta"
             variant="transparent"
-          />
+          >
+            {null}
+          </Surface>
         </Surface>
         <Surface className="event-card__footer" variant="transparent">
           <Surface className="event-card__actions" variant="transparent">
-            <Surface className="landing-event__skeleton-button" variant="transparent" />
+            <Surface className="landing-event__skeleton-button" variant="transparent">
+              {null}
+            </Surface>
           </Surface>
         </Surface>
       </Surface>

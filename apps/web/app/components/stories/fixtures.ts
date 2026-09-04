@@ -5,8 +5,10 @@ import type {
   Event,
   MemberDetail,
   MemberListItem,
+  MemberSort,
   Partner,
   PartnerListItem,
+  SubscriptionStatus,
   UserBehavior,
   UserProfile,
   WaitlistEntry,
@@ -191,6 +193,24 @@ export const mockAdminListQuery = {
   limit: 10,
 };
 
+export const mockAdminUsersListQuery = {
+  q: "",
+  page: 1,
+  limit: 25,
+  role: undefined as MemberListItem["role"] | undefined,
+  subscription: undefined as SubscriptionStatus | "NONE" | undefined,
+  creditsMin: undefined as number | undefined,
+  creditsMax: undefined as number | undefined,
+  bookingsMin: undefined as number | undefined,
+  bookingsMax: undefined as number | undefined,
+  eventOpensMin: undefined as number | undefined,
+  eventOpensMax: undefined as number | undefined,
+  createdFrom: undefined as string | undefined,
+  createdTo: undefined as string | undefined,
+  sort: undefined as MemberSort | undefined,
+  dir: undefined as "asc" | "desc" | undefined,
+};
+
 export const mockAdminEventsListQuery = {
   title: "",
   partner: "",
@@ -209,7 +229,46 @@ export const mockMemberListItem: MemberListItem = {
   subscriptionStatus: "ACTIVE",
   bookingCount: 2,
   eventOpenCount: 5,
+  createdAt: storyNow,
   profile: mockProfile,
+  behavior: mockBehavior,
+};
+
+const storyPast = new Date("2026-01-10T10:00:00+01:00");
+
+export const mockMemberListItemSecond: MemberListItem = {
+  id: "00000000-0000-4000-8000-000000000021",
+  email: "jordan.lee@example.com",
+  role: "USER",
+  credits: 3,
+  subscriptionStatus: "INACTIVE",
+  bookingCount: 0,
+  eventOpenCount: 0,
+  createdAt: storyPast,
+  profile: {
+    ...mockProfile,
+    first_name: "Jordan",
+    last_name: "Lee",
+    zip_code: "10115",
+  },
+  behavior: mockBehavior,
+};
+
+export const mockMemberListItemNoSubscription: MemberListItem = {
+  id: "00000000-0000-4000-8000-000000000022",
+  email: "sam.noabo@example.com",
+  role: "USER",
+  credits: 17,
+  subscriptionStatus: null,
+  bookingCount: 5,
+  eventOpenCount: null,
+  createdAt: storyLater,
+  profile: {
+    ...mockProfile,
+    first_name: "Sam",
+    last_name: "Noabo",
+    zip_code: "10997",
+  },
   behavior: mockBehavior,
 };
 

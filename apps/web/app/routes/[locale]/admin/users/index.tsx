@@ -5,8 +5,8 @@ import { AdminUsersListPage } from "../../../../components/admin/AdminUsersListP
 import { getAdminCopy } from "../../../../lib/admin-content";
 import { renderAdminPage } from "../../../../lib/admin-render";
 import {
-  adminListPageRedirectPath,
-  buildAdminListQueryString,
+  adminUsersListPageRedirectPath,
+  buildAdminUsersListQueryString,
   guardAdminRoute,
   parseAdminUsersListQuery,
 } from "../../../../lib/admin-route";
@@ -20,28 +20,50 @@ export default createRoute(async (c) => {
 
   const listQuery = parseAdminUsersListQuery(new URL(c.req.url));
   const { db } = getAuthOptions();
-  const total = await countMembers(db, {
+  const filters = {
     q: listQuery.q || undefined,
     role: listQuery.role,
-  });
+    subscription: listQuery.subscription,
+    creditsMin: listQuery.creditsMin,
+    creditsMax: listQuery.creditsMax,
+    bookingsMin: listQuery.bookingsMin,
+    bookingsMax: listQuery.bookingsMax,
+    eventOpensMin: listQuery.eventOpensMin,
+    eventOpensMax: listQuery.eventOpensMax,
+    createdFrom: listQuery.createdFrom,
+    createdTo: listQuery.createdTo,
+  };
+  const total = await countMembers(db, filters);
   const listPath = `/${guard.locale}/admin/users`;
-  const redirectPath = adminListPageRedirectPath(listPath, listQuery, total);
+  const redirectPath = adminUsersListPageRedirectPath(listPath, listQuery, total);
   if (redirectPath) {
     return c.redirect(redirectPath, 302);
   }
 
   const members = await listMembers(db, {
-    q: listQuery.q || undefined,
-    role: listQuery.role,
+    ...filters,
+    sort: listQuery.sort,
+    dir: listQuery.dir,
     limit: listQuery.limit,
     offset: listQuery.offset,
   });
 
   const copy = getAdminCopy(guard.locale);
-  const queryString = buildAdminListQueryString({
+  const queryString = buildAdminUsersListQueryString({
     q: listQuery.q || undefined,
     page: listQuery.page,
     role: listQuery.role,
+    subscription: listQuery.subscription,
+    creditsMin: listQuery.creditsMin,
+    creditsMax: listQuery.creditsMax,
+    bookingsMin: listQuery.bookingsMin,
+    bookingsMax: listQuery.bookingsMax,
+    eventOpensMin: listQuery.eventOpensMin,
+    eventOpensMax: listQuery.eventOpensMax,
+    createdFrom: listQuery.createdFrom,
+    createdTo: listQuery.createdTo,
+    sort: listQuery.sort,
+    dir: listQuery.dir,
   });
   const ok = new URL(c.req.url).searchParams.get("ok");
   const successMessage = ok === "delete-account" ? copy.deleteAccountSuccess : null;
@@ -56,6 +78,17 @@ export default createRoute(async (c) => {
         page: listQuery.page,
         limit: listQuery.limit,
         role: listQuery.role,
+        subscription: listQuery.subscription,
+        creditsMin: listQuery.creditsMin,
+        creditsMax: listQuery.creditsMax,
+        bookingsMin: listQuery.bookingsMin,
+        bookingsMax: listQuery.bookingsMax,
+        eventOpensMin: listQuery.eventOpensMin,
+        eventOpensMax: listQuery.eventOpensMax,
+        createdFrom: listQuery.createdFrom ?? "",
+        createdTo: listQuery.createdTo ?? "",
+        sort: listQuery.sort,
+        dir: listQuery.dir,
       }}
       successMessage={successMessage}
       total={total}

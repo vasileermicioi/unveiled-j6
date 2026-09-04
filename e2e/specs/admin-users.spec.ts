@@ -193,4 +193,179 @@ test.describe("admin-users.feature", () => {
 
     await expect(page.getByText(BOOKABLE_TITLE)).toBeVisible({ timeout: 10_000 });
   });
+
+  test("Scenario: Member rows show combined name and email", async ({ page, locale }) => {
+    const user = await onboardFreshMember(page, locale);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    await openMembershipHq(page, locale);
+    await searchMembers(page, user.email);
+
+    const table = page.getByRole("table", { name: /mitglieder|users/i });
+    await expect(table).toBeVisible();
+    await expect(table.getByRole("columnheader", { name: /mitglied|member/i })).toBeVisible();
+    const row = page.getByRole("row").filter({ hasText: user.email });
+    await expect(row).toBeVisible();
+    await expect(row.getByRole("link").first()).toBeVisible();
+    await expect(row.getByText(user.email)).toBeVisible();
+  });
+
+  test("Scenario: Created column shows registration date", async ({ page, locale }) => {
+    const user = await onboardFreshMember(page, locale);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    await openMembershipHq(page, locale);
+    await searchMembers(page, user.email);
+
+    const table = page.getByRole("table", { name: /mitglieder|users/i });
+    await expect(table.getByRole("columnheader", { name: /erstellt|created/i })).toBeVisible();
+    const row = page.getByRole("row").filter({ hasText: user.email });
+    await expect(row).toBeVisible();
+    await expect(row.getByText(/2026/)).toBeVisible();
+  });
+
+  test("Scenario: Sort members via header links", async ({ page, locale }) => {
+    const user = await onboardFreshMember(page, locale);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    await openMembershipHq(page, locale);
+    await searchMembers(page, user.email);
+
+    const table = page.getByRole("table", { name: /mitglieder|users/i });
+    const createdHeader = table.getByRole("link", { name: /erstellt|created/i });
+    await expect(createdHeader).toBeVisible();
+    await createdHeader.click();
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(/sort=created/);
+    await expect(page).toHaveURL(/dir=desc/);
+    await expect(page).toHaveURL(new RegExp(`q=${encodeURIComponent(user.email)}`));
+
+    const createdHeaderToggled = table.getByRole("link", { name: /erstellt|created/i });
+    await createdHeaderToggled.click();
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(/sort=created/);
+    await expect(page).toHaveURL(/dir=asc/);
+    await expect(page).toHaveURL(new RegExp(`q=${encodeURIComponent(user.email)}`));
+  });
+
+  test("Scenario: Filter members by subscription", async ({ page, locale }) => {
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email, 12);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    await openMembershipHq(page, locale);
+
+    await page
+      .getByRole("searchbox", { name: /name oder e-mail|search name or email/i })
+      .fill(user.email);
+    await selectOptionByLabel(page, /^(abo|subscription)$/i, /ACTIVE/);
+    await page.getByRole("button", { name: /suchen|search/i }).click();
+    await page.waitForLoadState("networkidle");
+
+    await expect(page).toHaveURL(/subscription=ACTIVE/);
+    const row = page.getByRole("row").filter({ hasText: user.email });
+    await expect(row).toBeVisible();
+    await expect(row.getByText("ACTIVE")).toBeVisible();
+  });
+
+  test("Scenario: Filter members by numeric range", async ({ page, locale }) => {
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email, 12);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+
+    // Numeric ranges are URL query params (no form controls); the table proves them.
+    await page.goto(
+      `/${locale}/admin/users?q=${encodeURIComponent(user.email)}&creditsMin=10&creditsMax=15&bookingsMin=0&bookingsMax=10&eventOpensMin=0&eventOpensMax=10`,
+    );
+    await expect(page.getByRole("table", { name: /mitglieder|users/i })).toBeVisible();
+
+    await expect(page).toHaveURL(/creditsMin=10/);
+    await expect(page).toHaveURL(/creditsMax=15/);
+    await expect(page).toHaveURL(/bookingsMin=0/);
+    await expect(page).toHaveURL(/eventOpensMin=0/);
+    const row = page.getByRole("row").filter({ hasText: user.email });
+    await expect(row).toBeVisible();
+    await expect(row.getByText("12")).toBeVisible();
+  });
+
+  test("Scenario: Filter members by created date range", async ({ page, locale }) => {
+    const user = await onboardFreshMember(page, locale);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+
+    // Created range is URL query params (no form controls); the table proves it.
+    await page.goto(
+      `/${locale}/admin/users?q=${encodeURIComponent(user.email)}&createdFrom=2026-01-01&createdTo=2027-12-31`,
+    );
+    await expect(page.getByRole("table", { name: /mitglieder|users/i })).toBeVisible();
+
+    await expect(page).toHaveURL(/createdFrom=2026-01-01/);
+    await expect(page).toHaveURL(/createdTo=2027-12-31/);
+    await expect(page.getByRole("row").filter({ hasText: user.email })).toBeVisible();
+
+    await page.goto(
+      `/${locale}/admin/users?q=${encodeURIComponent(user.email)}&createdFrom=2020-01-01&createdTo=2020-01-31`,
+    );
+    await expect(page.getByRole("table", { name: /mitglieder|users/i })).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: user.email })).toHaveCount(0);
+  });
+
+  test("Scenario: Sort and filter compose through pagination", async ({ page, locale }) => {
+    const user = await onboardFreshMember(page, locale);
+    await activateMemberForBooking(user.email, 12);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    await openMembershipHq(page, locale);
+
+    await page
+      .getByRole("searchbox", { name: /name oder e-mail|search name or email/i })
+      .fill(user.email);
+    await selectOptionByLabel(page, /^(abo|subscription)$/i, /ACTIVE/);
+    await page.getByRole("button", { name: /suchen|search/i }).click();
+    await page.waitForLoadState("networkidle");
+
+    const table = page.getByRole("table", { name: /mitglieder|users/i });
+    await table.getByRole("link", { name: /erstellt|created/i }).click();
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(/subscription=ACTIVE/);
+    await expect(page).toHaveURL(/sort=created/);
+
+    const filteredUrl = page.url();
+    await page.goto(`${filteredUrl}${filteredUrl.includes("?") ? "&" : "?"}page=2`);
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(/subscription=ACTIVE/);
+    await expect(page).toHaveURL(/sort=created/);
+    await expect(page.getByLabel(/^(abo|subscription)$/i)).not.toBeHidden();
+  });
+
+  test("Scenario: Reset filters", async ({ page, locale }) => {
+    const user = await onboardFreshMember(page, locale);
+    await page.context().clearCookies();
+
+    await loginAdminForMembershipHq(page, locale);
+    await settleAdminSession(page, locale);
+    await openMembershipHq(page, locale);
+    await searchMembers(page, user.email);
+    await expect(page).toHaveURL(/q=/);
+
+    await page.getByRole("link", { name: /filter zurücksetzen|reset filters/i }).click();
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(new RegExp(`/${locale}/admin/users/?$`));
+    await expect(page.getByRole("table", { name: /mitglieder|users/i })).toBeVisible();
+  });
 });

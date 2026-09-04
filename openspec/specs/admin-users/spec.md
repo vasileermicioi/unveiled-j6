@@ -5,7 +5,7 @@ Admin-only Membership HQ: domain operations (list/search, detail aggregates, cre
 ## Requirements
 
 ### Requirement: Admin member list and detail queries
-The system SHALL expose admin-only domain operations to list members (sorted by name then email), filter by name/email/role, and load a member detail aggregate including preferences, history counts, and available behavior fields. Soft-deleted members (`deleted_at` set) SHALL be excluded from the list and SHALL NOT be returned as a successful detail load.
+The system SHALL expose admin-only domain operations to list members (sorted by name then email by default), filter by name/email/role, subscription status (including no-subscription), credit range, booking-count range, event-open-count range, and registration date range, and sort by member name, role, subscription, credits, bookings, event opens, or registration date in either direction with a stable default (display name, then email, then id). List and count operations SHALL apply identical filter predicates. Soft-deleted members (`deleted_at` set) SHALL be excluded from the list and SHALL NOT be returned as a successful detail load. Detail loads SHALL return a member detail aggregate including preferences, history counts, and available behavior fields.
 
 #### Scenario: List members for Membership HQ
 - **WHEN** an admin requests the member list
@@ -19,16 +19,56 @@ The system SHALL expose admin-only domain operations to list members (sorted by 
 - **WHEN** an admin loads member detail for an existing non-deleted user
 - **THEN** the result includes profile preferences, subscription status when present, history counts (bookings, waitlist, saved events), and available behavior JSON fields without inventing missing analytics
 
+#### Scenario: Range and enum filters compose
+- **WHEN** an admin lists members with subscription `ACTIVE`, credits `10..17`, and created `2026-01-01..2026-12-31` sorted by created desc
+- **THEN** list and count agree and every row matches all three predicates
+
+#### Scenario: No-subscription filter
+- **WHEN** an admin lists members with subscription filter `NONE`
+- **THEN** only members with no subscription row are returned, and list and count agree
+
+#### Scenario: Numeric range filters
+- **WHEN** an admin lists members with a credits, booking-count, or event-open-count min/max range
+- **THEN** only members whose value falls inside the inclusive range are returned, and list and count agree
+
+#### Scenario: Registration date range uses calendar days
+- **WHEN** an admin lists members with a created from/to date range
+- **THEN** only members registered within the Europe/Berlin calendar-day bounds (inclusive, `from <= to`) are returned
+
+#### Scenario: Sortable member list
+- **WHEN** an admin lists members sorted by any of member, role, subscription, credits, bookings, event opens, or created in either direction
+- **THEN** rows are ordered by the requested key and direction with a deterministic tiebreak (display name, then email, then id), and omitting sort preserves the name-asc default
+
+#### Scenario: Invalid filter input is ignored
+- **WHEN** an admin lists members with an invalid filter or sort value (unknown enum, malformed date, inverted range end, unknown sort key)
+- **THEN** the invalid predicate is ignored without error and remaining valid predicates still apply
+
 ### Requirement: Membership HQ list and detail pages
-The system SHALL provide SSR admin pages at `/:locale/admin/users` and `/:locale/admin/users/:id` that are ADMIN-only and `noindex`. The list page SHALL show members sorted by display name then email, support search by name/email via `q` and optional role filter via query param, paginate results, and show summary columns for role, subscription status, credits, booking count, and event-open count. The detail page SHALL show preferences, history counts, and available behavior analytics fields without inventing missing metrics, and SHALL expose links to forthcoming mutation paths under `/:locale/admin/users/:id/*` (adjust-credits, freeze, comp-ticket, refund). Soft-deleted or unknown members SHALL yield a not-found response on detail.
+The system SHALL provide SSR admin pages at `/:locale/admin/users` and `/:locale/admin/users/:id` that are ADMIN-only and `noindex`. The list page SHALL show one Member column (display name linked to member detail on line one, email on line two), Role, Subscription, Credits, Bookings, Event opens, Created (registration date, Europe/Berlin calendar day), and Actions. Every data column SHALL be sortable ascending/descending via header links that preserve active filters. A single SSR GET filter bar SHALL offer name/email search via `q`, role and subscription dropdowns (subscription includes all five statuses plus no-subscription), numeric min/max for credits, bookings, and event opens, and a from/to registration date range, plus a reset-filters link. Filters, sort, and pagination SHALL compose through query params; invalid filter or sort input SHALL be ignored without error. The list SHALL paginate results. The detail page SHALL show preferences, history counts, and available behavior analytics fields without inventing missing metrics, and SHALL expose links to forthcoming mutation paths under `/:locale/admin/users/:id/*` (adjust-credits, freeze, comp-ticket, refund). Soft-deleted or unknown members SHALL yield a not-found response on detail.
 
 #### Scenario: Open members list
 - **WHEN** an admin opens Membership HQ at `/:locale/admin/users`
-- **THEN** they see members sorted by name then email with summary columns for role, subscription status, credits, booking count, and event-open count
+- **THEN** they see one Member column (name link plus email line), role, subscription status, credits, booking count, event-open count, and Created date, sorted by display name then email by default
 
 #### Scenario: Search and filter members
-- **WHEN** an admin submits a name/email query and/or role filter on the members list
-- **THEN** the list shows only matching non-deleted members and preserves filters across pagination
+- **WHEN** an admin submits a name/email query, role filter, subscription filter, numeric min/max, and/or created from/to range on the members list
+- **THEN** the list shows only matching non-deleted members and preserves filters across sort and pagination
+
+#### Scenario: Sort members via header links
+- **WHEN** an admin activates a data-column header sort link
+- **THEN** rows reorder by that column and direction (same column toggles direction; a new column uses member/role/subscription to asc and credits/bookings/event-opens/created to desc) with a deterministic tiebreak (display name, then email, then id), and active filters are preserved
+
+#### Scenario: Sort and filter compose through pagination
+- **WHEN** an admin filters by subscription and sorts by Created desc, then moves to page 2
+- **THEN** page 2 keeps the same filter and sort with correctly clamped results
+
+#### Scenario: Reset filters
+- **WHEN** an admin activates the reset-filters link
+- **THEN** the list returns to the unfiltered default sort with page reset
+
+#### Scenario: Invalid filter input is ignored
+- **WHEN** an admin lists members with an invalid filter or sort value (unknown enum, malformed date, inverted range end, unknown sort key)
+- **THEN** the invalid predicate is ignored without error and remaining valid predicates still apply
 
 #### Scenario: Open member detail
 - **WHEN** an admin opens a member detail page at `/:locale/admin/users/:id`
@@ -96,7 +136,7 @@ The system SHALL expose dedicated SSR pages with form POST for adjust-credits, f
 - **THEN** access is denied
 
 ### Requirement: Membership HQ Ladle and Playwright coverage
-The system SHALL provide Ladle stories for Membership HQ list/detail (existing or extended) and for adjust-credits, freeze, refund, and comp-ticket mutation confirm forms under `apps/web/app/components/admin/`. Playwright SHALL cover `admin-users.feature` scenarios in `e2e/specs/admin-users.spec.ts` with verbatim titles and proximity selectors, exercising SSR list/detail and mutation pages (detail panel Gherkin maps to `/admin/users/:id` + linked form pages). Soft-deleted members remain out of list/detail success paths.
+The system SHALL provide Ladle stories for Membership HQ list/detail (existing or extended) and for adjust-credits, freeze, refund, and comp-ticket mutation confirm forms under `apps/web/app/components/admin/`. The Membership HQ list stories SHALL cover the shipped filter-table layout: one merged Member column (display name linked to member detail on line one, email on line two), Created registration-date column (Europe/Berlin calendar day, including empty), sortable header states, filtered and filtered-empty states, in DE and EN. Playwright SHALL cover `admin-users.feature` scenarios in `e2e/specs/admin-users.spec.ts` with verbatim titles and proximity selectors, exercising SSR list/detail and mutation pages (detail panel Gherkin maps to `/admin/users/:id` + linked form pages) plus merged-cell display, Created column, sortable headers, every column filter (subscription enum, credits/bookings/event-opens numeric ranges, created date range) composing with sort, pagination, and reset. Soft-deleted members remain out of list/detail success paths.
 
 #### Scenario: Mutation confirm stories load
 - **WHEN** Ladle is started after this change
@@ -105,6 +145,14 @@ The system SHALL provide Ladle stories for Membership HQ list/detail (existing o
 #### Scenario: Admin-users scenarios are executable
 - **WHEN** `bun run test:e2e -- e2e/specs/admin-users.spec.ts` runs with admin credentials and `DATABASE_URL` available
 - **THEN** list, search, summary, detail, adjust, freeze/unfreeze, and comp-ticket scenarios pass, or skip only with documented env prerequisites
+
+#### Scenario: Filter-table stories cover merged cells and Created dates
+- **WHEN** Ladle builds the Membership HQ list stories
+- **THEN** merged Member cells (name link + muted email line), Created dates (set and empty), sorted-header states, filtered states, and a filtered-empty state render in DE and EN without runtime errors
+
+#### Scenario: Filter coverage stays green
+- **WHEN** `e2e/specs/admin-users.spec.ts` runs with admin credentials and `DATABASE_URL`
+- **THEN** the filter/sort scenarios (merged member display, Created column, sortable headers, every column filter composing with pagination and reset) pass and the matrix shows no silent skips
 
 ### Requirement: Admin member detail shows interests_other
 When a member profile includes a non-empty `interests_other` value, the Membership HQ detail page at `/:locale/admin/users/:id` SHALL display that free-text interest alongside other preference fields. When `interests_other` is null or empty, the detail page SHALL omit the field or show the same empty-state pattern used for other sparse preference values.

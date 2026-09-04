@@ -115,10 +115,23 @@ export type AdminCopy = {
   usersRoleAdmin: string;
   usersRolePartner: string;
   usersColRole: string;
+  usersColMember: string;
   usersColSubscription: string;
   usersColCredits: string;
   usersColBookings: string;
   usersColEventOpens: string;
+  usersColCreated: string;
+  usersSubscriptionLabel: string;
+  usersSubscriptionAll: string;
+  usersSubscriptionNone: string;
+  usersCreditsMinLabel: string;
+  usersCreditsMaxLabel: string;
+  usersBookingsMinLabel: string;
+  usersBookingsMaxLabel: string;
+  usersEventOpensMinLabel: string;
+  usersEventOpensMaxLabel: string;
+  usersCreatedFromLabel: string;
+  usersCreatedToLabel: string;
   usersViewAction: string;
   usersSectionSummary: string;
   usersSectionPreferences: string;
@@ -650,10 +663,23 @@ const copy: Record<Locale, AdminCopy> = {
     usersRoleAdmin: "ADMIN",
     usersRolePartner: "PARTNER",
     usersColRole: "Rolle",
+    usersColMember: "Mitglied",
     usersColSubscription: "Abo-Status",
     usersColCredits: "Credits",
     usersColBookings: "Buchungen",
     usersColEventOpens: "Event-Öffnungen",
+    usersColCreated: "Erstellt",
+    usersSubscriptionLabel: "Abo",
+    usersSubscriptionAll: "Alle Status",
+    usersSubscriptionNone: "Ohne Abo",
+    usersCreditsMinLabel: "Credits min.",
+    usersCreditsMaxLabel: "Credits max.",
+    usersBookingsMinLabel: "Buchungen min.",
+    usersBookingsMaxLabel: "Buchungen max.",
+    usersEventOpensMinLabel: "Öffnungen min.",
+    usersEventOpensMaxLabel: "Öffnungen max.",
+    usersCreatedFromLabel: "Registriert von",
+    usersCreatedToLabel: "Registriert bis",
     usersViewAction: "Öffnen",
     usersSectionSummary: "Übersicht",
     usersSectionPreferences: "Präferenzen",
@@ -1232,10 +1258,23 @@ const copy: Record<Locale, AdminCopy> = {
     usersRoleAdmin: "ADMIN",
     usersRolePartner: "PARTNER",
     usersColRole: "Role",
+    usersColMember: "Member",
     usersColSubscription: "Subscription",
     usersColCredits: "Credits",
     usersColBookings: "Bookings",
     usersColEventOpens: "Event opens",
+    usersColCreated: "Created",
+    usersSubscriptionLabel: "Subscription",
+    usersSubscriptionAll: "All statuses",
+    usersSubscriptionNone: "No subscription",
+    usersCreditsMinLabel: "Credits min",
+    usersCreditsMaxLabel: "Credits max",
+    usersBookingsMinLabel: "Bookings min",
+    usersBookingsMaxLabel: "Bookings max",
+    usersEventOpensMinLabel: "Opens min",
+    usersEventOpensMaxLabel: "Opens max",
+    usersCreatedFromLabel: "Registered from",
+    usersCreatedToLabel: "Registered to",
     usersViewAction: "Open",
     usersSectionSummary: "Summary",
     usersSectionPreferences: "Preferences",

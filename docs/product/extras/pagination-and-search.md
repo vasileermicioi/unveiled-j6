@@ -44,11 +44,11 @@ Every search scenario already described in the feature files becomes an SSR `q` 
 
 | Route | Searches | Backing scenario |
 |---|---|---|
-| `/admin/users?q=` | name, email, role (`admin-users.feature` "Search members") | Server-side `ILIKE`/trigram match, not a client-side filter over a preloaded list |
+| `/admin/users` | `q` (name, email server-side `ILIKE`), `role`, `subscription` (all five statuses plus `NONE` for no-subscription) via the filter bar; `creditsMin`/`creditsMax`, `bookingsMin`/`bookingsMax`, `eventOpensMin`/`eventOpensMax`, `createdFrom`/`createdTo` (`YYYY-MM-DD` Europe/Berlin day, inclusive), `sort`/`dir` (`member`/`role`/`subscription`/`credits`/`bookings`/`eventOpens`/`created`; `admin-users.feature` "Search members" + filter/sort scenarios) via URL query params | Server-side `ILIKE`/enum/range/date predicates in `listMembers`/`countMembers` with identical predicates, not a client-side filter over a preloaded list; invalid filter/sort input ignored without error |
 | `/partner/guests?q=` | booking id, redemption code (`partner-portal.feature` "Search the guest list") | Same |
 | `/admin/events`, `/admin/partners` | Event title + denormalized partner name (`/admin/events`); partner **name only** (`/admin/partners`) — decided for the rewrite so admins can search growing catalog lists without scrolling hundreds of rows |
 
-Result ordering for search is decided per list to match the existing "sorted by name, then email" convention (`admin-users.feature`) as the default `sort`, with relevance-style ordering only worth adding later if simple alphabetical/date ordering proves insufficient once there's real data volume.
+Result ordering for search is decided per list to match the existing "sorted by name, then email" convention (`admin-users.feature`) as the default `sort` for `/admin/users` (member asc with display-name, email, id tiebreak; omitted `sort`/`dir` = default), with explicit `sort`/`dir` per column (new column defaults member/role/subscription → `asc`, credits/bookings/event-opens/created → `desc`; same column toggles). `listMembers` and `countMembers` apply identical predicates so pagination counts never drift; page size for `/admin/users` stays 25 with no `pageSize` param. Relevance-style ordering is only worth adding later if simple alphabetical/date ordering proves insufficient once there's real data volume.
 
 ## 4. Progressive enhancement (optional, does not change the SSR contract)
 
