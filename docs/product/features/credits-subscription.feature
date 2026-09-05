@@ -26,19 +26,22 @@
 #     write REFUND.
 #   - First successful subscription payment: DECIDED: send a branded Unveiled transactional email via
 #     Resend with the Stripe invoice PDF attached (`invoice.paid` + `billing_reason` `subscription_create`
-#     only). The mail uses the branded mail-client-safe layout (preheader, header, membership summary,
-#     PDF note, next steps, support footer) with a plain-text mirror. A resubscription (new
+#     only). The mail uses the branded mail-client-safe layout (preheader, header with Unveiled logo,
+#     membership summary, PDF note, next steps, support footer) with a plain-text mirror. A resubscription (new
 #     `subscription_create` after `INACTIVE`) reuses the same neutral-active template with no
 #     welcome / welcome-back fork. Renewal / `subscription_cycle` invoices do not send this email.
 #     Operators MUST disable Stripe Dashboard customer invoice/receipt emails in test and live so
 #     members are not double-mailed.
 #   - Scheduled cancel: DECIDED: send exactly one branded Unveiled transactional email via Resend on
-#     the transition into `CANCELLED_PENDING` (`customer.subscription.updated` with
-#     `cancel_at_period_end`, once per Stripe event with `Idempotency-Key` = event id;
-#     already-pending → no resend). The mail states the Berlin access-until date, that unused credits
-#     expire at period end, that tickets stay valid until end, with a resubscribe CTA. The later
-#     `customer.subscription.deleted` → `INACTIVE` expiry sends nothing. Admin freeze (`UNPAID`)
-#     sends no unsubscribe mail.
+#     the scheduled cancel (`customer.subscription.updated` with
+#     `cancel_at_period_end`, `Idempotency-Key` = event id). Exactly-once across
+#     redeliveries and repeated cancel events is guarded by the Stripe subscription
+#     metadata marker `unveiled_cancellation_email=sent` (stamped after send;
+#     already-sent → no resend, mirroring the invoice mail). The mail states the
+#     Berlin access-until date, that unused credits expire at period end, that
+#     tickets stay valid until end, with a resubscribe CTA and the Unveiled logo.
+#     The later `customer.subscription.deleted` → `INACTIVE` expiry sends nothing.
+#     Admin freeze (`UNPAID`) sends no unsubscribe mail.
 
 Feature: Credits and Subscription
   As a member

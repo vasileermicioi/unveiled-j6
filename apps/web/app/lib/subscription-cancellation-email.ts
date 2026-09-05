@@ -21,6 +21,20 @@ export type CancellationEmailResult =
 
 export type CancellationEmailSendFn = typeof sendSubscriptionCancellation;
 
+/** Stripe subscription metadata marker so a cancel episode mails exactly once. */
+export const UNVEILED_CANCELLATION_EMAIL_METADATA_KEY = "unveiled_cancellation_email";
+export const UNVEILED_CANCELLATION_EMAIL_SENT_VALUE = "sent";
+
+function isCancellationEmailSent(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== "object") {
+    return false;
+  }
+  return (
+    (metadata as Record<string, unknown>)[UNVEILED_CANCELLATION_EMAIL_METADATA_KEY] ===
+    UNVEILED_CANCELLATION_EMAIL_SENT_VALUE
+  );
+}
+
 export type MaybeSendSubscriptionCancellationEmailInput = {
   event: Stripe.Event;
   stripe: Stripe;
@@ -29,10 +43,11 @@ export type MaybeSendSubscriptionCancellationEmailInput = {
   siteUrl: string;
   /**
    * Subscription status snapshot taken before `applyStripeEvent` ran.
-   * The mail fires only on the transition into `CANCELLED_PENDING`:
-   * `undefined`/`null` (row missing) still sends when the Stripe object shows
-   * a scheduled cancel; `CANCELLED_PENDING` skips as already-pending and
-   * `UNPAID` skips as admin-frozen.
+   * Retained for observability; the send-guard is the Stripe subscription
+   * metadata marker (`unveiled_cancellation_email=sent`), not this snapshot —
+   * the in-app cancel path syncs `CANCELLED_PENDING` before the webhook
+   * arrives, so gating on `CANCELLED_PENDING` here would skip the one
+   * legitimate mail (and a DB miss would double-send across event ids).
    */
   previousStatus?: string | null;
   lookupMemberByStripeSubscriptionId: (
@@ -102,8 +117,13 @@ function endDateFromSubscription(sub: Stripe.Subscription): Date | null {
 
 /**
  * After `applyStripeEvent`, send the scheduled-cancel unsubscribe email at most
- * once per transition into `CANCELLED_PENDING`. Skip (HTTP 200) vs retry
- * (HTTP 500) is encoded in the result status. Never throws.
+ * once per cancel episode. The Stripe subscription metadata marker
+ * (`unveiled_cancellation_email=sent`, mirroring the invoice mail) is the
+ * cross-delivery guard: redelivered or repeated `customer.subscription.updated`
+ * events for the same cancel state skip as `already_sent`, while the in-app
+ * cancel path (which syncs `CANCELLED_PENDING` before the webhook) still mails
+ * once via the webhook. Skip (HTTP 200) vs retry (HTTP 500) is encoded in the
+ * result status. Never throws.
  */
 export async function maybeSendSubscriptionCancellationEmail(
   input: MaybeSendSubscriptionCancellationEmailInput,
@@ -121,11 +141,6 @@ export async function maybeSendSubscriptionCancellationEmail(
   if (!stripeSubscriptionId) {
     logSkip("missing_subscription_id", { eventId: input.event.id });
     return skipped("missing_subscription_id");
-  }
-
-  if (input.previousStatus === "CANCELLED_PENDING") {
-    logSkip("already_pending", { eventId: input.event.id });
-    return skipped("already_pending");
   }
 
   if (input.previousStatus === "UNPAID") {
@@ -174,6 +189,28 @@ export async function maybeSendSubscriptionCancellationEmail(
     return skipped("missing_end_date");
   }
 
+  // Cross-delivery guard: the event snapshot may predate a marker stamped by
+  // an earlier delivery, so confirm against a fresh subscription read.
+  if (isCancellationEmailSent(sub.metadata)) {
+    logSkip("already_sent", { eventId: input.event.id });
+    return skipped("already_sent");
+  }
+
+  let subscriptionMetadata: Record<string, string> = {};
+  try {
+    const fresh = await input.stripe.subscriptions.retrieve(stripeSubscriptionId);
+    const freshMetadata = (fresh as Stripe.Subscription).metadata ?? {};
+    if (isCancellationEmailSent(freshMetadata)) {
+      logSkip("already_sent", { eventId: input.event.id });
+      return skipped("already_sent");
+    }
+    subscriptionMetadata = { ...(freshMetadata as Record<string, string>) };
+  } catch (error) {
+    logRetry("subscription_retrieve_failed", { eventId: input.event.id });
+    console.error("subscription cancellation subscription retrieve failed", error);
+    return retry("subscription_retrieve_failed");
+  }
+
   const sendCancellation = input.sendCancellation ?? sendSubscriptionCancellation;
   try {
     const sendResult = await sendCancellation({
@@ -195,6 +232,19 @@ export async function maybeSendSubscriptionCancellationEmail(
     logRetry("send_threw", { eventId: input.event.id });
     console.error("subscription cancellation email threw", error);
     return retry("send_threw");
+  }
+
+  try {
+    await input.stripe.subscriptions.update(stripeSubscriptionId, {
+      metadata: {
+        ...subscriptionMetadata,
+        [UNVEILED_CANCELLATION_EMAIL_METADATA_KEY]: UNVEILED_CANCELLATION_EMAIL_SENT_VALUE,
+      },
+    });
+  } catch (error) {
+    logRetry("metadata_update_failed", { eventId: input.event.id });
+    console.error("subscription cancellation metadata update failed", error);
+    return retry("metadata_update_failed");
   }
 
   return { status: "sent" };

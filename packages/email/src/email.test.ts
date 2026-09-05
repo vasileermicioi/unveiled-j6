@@ -313,6 +313,31 @@ describe("subscription invoice content", () => {
     expect(de.html).toContain("Rechnung im Anhang");
   });
 
+  test("renders the Unveiled logo as an absolute-URL image in both locales", () => {
+    const logoSrc = `${INVOICE_SITE_URL}/logos/unveiled-logo-white.svg`;
+    for (const locale of ["en", "de"] as const) {
+      const content = buildSubscriptionInvoiceContent({
+        locale,
+        siteUrl: INVOICE_SITE_URL,
+      });
+      expect(content.html).toContain(`<img src="${logoSrc}"`);
+      expect(content.html).toContain('alt="Unveiled Berlin"');
+      // Text twin stays image-free.
+      expect(content.text).not.toContain("<img");
+    }
+  });
+
+  test("escapes a hostile siteUrl in the logo src", () => {
+    const hostile = 'https://example.test"><script>alert(1)</script>';
+    const content = buildSubscriptionInvoiceContent({
+      locale: "en",
+      siteUrl: hostile,
+    });
+
+    expect(content.html).not.toContain('"><script>');
+    expect(content.html).toContain("&quot;&gt;&lt;script&gt;");
+  });
+
   test("keeps text free of markup while HTML anchors every locale link", () => {
     for (const locale of ["en", "de"] as const) {
       const content = buildSubscriptionInvoiceContent({
@@ -673,6 +698,17 @@ describe("subscription cancellation content", () => {
 
     expect(en.html).toContain("Your membership is ending");
     expect(de.html).toContain("Deine Mitgliedschaft endet");
+  });
+
+  test("renders the Unveiled logo as an absolute-URL image in both locales", () => {
+    const logoSrc = `${CANCELLATION_SITE_URL}/logos/unveiled-logo-white.svg`;
+    for (const locale of ["en", "de"] as const) {
+      const content = buildSubscriptionCancellationContent(cancellationInput(locale));
+      expect(content.html).toContain(`<img src="${logoSrc}"`);
+      expect(content.html).toContain('alt="Unveiled Berlin"');
+      // Text twin stays image-free.
+      expect(content.text).not.toContain("<img");
+    }
   });
 
   test("keeps text free of markup while HTML anchors every link", () => {

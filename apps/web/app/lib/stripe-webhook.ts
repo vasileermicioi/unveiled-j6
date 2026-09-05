@@ -51,9 +51,12 @@ export async function stripeWebhookHandler(c: Context<{ Bindings: RuntimeEnv }>)
   }
 
   const db = createTxDb(databaseUrl);
-  // Snapshot the subscription status before the ledger apply so the
-  // cancellation email can detect the transition into CANCELLED_PENDING
-  // (already-pending redeliveries must not resend).
+  // Snapshot the subscription status before the ledger apply for the
+  // cancellation-email orchestrator (observability only). Exactly-once
+  // delivery is guarded by the Stripe subscription metadata marker
+  // (`unveiled_cancellation_email=sent`), not by this snapshot, so the
+  // in-app cancel path (which syncs CANCELLED_PENDING before the webhook)
+  // still mails once while redeliveries never resend.
   let previousStatus: string | null = null;
   if (event.type === "customer.subscription.updated") {
     try {

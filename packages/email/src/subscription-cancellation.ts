@@ -41,6 +41,11 @@ type CancellationLinks = {
   billing: string;
 };
 
+/** Absolute logo URL for mail (white wordmark for the dark header). */
+function cancellationLogoUrl(siteUrl: string): string {
+  return `${siteUrl}/logos/unveiled-logo-white.svg`;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -104,13 +109,19 @@ function cancellationCopy(
  * Mail-client-safe branded HTML (tables + inline styles only, max-width 600,
  * no external CSS/JS/fonts). All interpolated values are escaped.
  */
-function cancellationHtml(copy: CancellationCopy, links: CancellationLinks): string {
+function cancellationHtml(
+  copy: CancellationCopy,
+  links: CancellationLinks,
+  logoUrl: string,
+): string {
+  const logo = escapeHtml(logoUrl);
   return (
     `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${escapeHtml(copy.preheader)}</div>` +
     `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:${BRAND_YELLOW};margin:0;padding:24px 0;font-family:${FONT_STACK};">` +
     `<tr><td align="center" style="padding:0 16px;">` +
     `<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background-color:#ffffff;border:1px solid ${BRAND_INK};">` +
     `<tr><td style="background-color:${BRAND_INK};padding:20px 24px;">` +
+    `<img src="${logo}" alt="Unveiled Berlin" width="180" style="display:block;border:0;outline:none;text-decoration:none;height:auto;max-width:180px;margin:0 0 12px 0;" />` +
     `<p style="margin:0 0 4px 0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${BRAND_YELLOW};">${escapeHtml(copy.brandLine)}</p>` +
     `<p style="margin:0;font-size:22px;font-weight:bold;color:#ffffff;">${escapeHtml(copy.headline)}</p>` +
     `</td></tr>` +
@@ -145,6 +156,7 @@ export function buildSubscriptionCancellationContent(
   };
   const endDateLabel = formatCancellationEndDate(input.endDate, input.locale);
   const copy = cancellationCopy(input.locale, endDateLabel);
+  const logoUrl = cancellationLogoUrl(input.siteUrl);
 
   if (input.locale === "de") {
     return {
@@ -159,7 +171,7 @@ Werde wieder Mitglied: ${links.resubscribe}
 Abrechnung verwalten: ${links.billing}
 
 Support: ${SUPPORT_EMAIL}`,
-      html: cancellationHtml(copy, links),
+      html: cancellationHtml(copy, links, logoUrl),
     };
   }
 
@@ -175,6 +187,6 @@ Become a member again: ${links.resubscribe}
 Manage billing: ${links.billing}
 
 Support: ${SUPPORT_EMAIL}`,
-    html: cancellationHtml(copy, links),
+    html: cancellationHtml(copy, links, logoUrl),
   };
 }

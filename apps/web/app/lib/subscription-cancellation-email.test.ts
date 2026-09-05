@@ -6,6 +6,8 @@ import {
   lookupCancellationMemberByStripeSubscriptionId,
   type MaybeSendSubscriptionCancellationEmailInput,
   maybeSendSubscriptionCancellationEmail,
+  UNVEILED_CANCELLATION_EMAIL_METADATA_KEY,
+  UNVEILED_CANCELLATION_EMAIL_SENT_VALUE,
 } from "./subscription-cancellation-email";
 
 const SITE_URL = "https://example.test";
@@ -34,12 +36,31 @@ function subscriptionUpdatedEvent(sub: Stripe.Subscription): Stripe.Event {
   } as unknown as Stripe.Event;
 }
 
+function mockStripe(subscriptionMetadata: Record<string, string> = {}) {
+  const retrieveIds: string[] = [];
+  const updateCalls: Array<{ id: string; params: { metadata?: Record<string, string> } }> = [];
+  const stripe = {
+    subscriptions: {
+      retrieve: async (id: string) => {
+        retrieveIds.push(id);
+        return { id, metadata: { ...subscriptionMetadata } };
+      },
+      update: async (id: string, params: { metadata?: Record<string, string> }) => {
+        updateCalls.push({ id, params });
+        return { id, metadata: params.metadata };
+      },
+    },
+  } as unknown as Stripe;
+  return { stripe, retrieveIds, updateCalls };
+}
+
 function baseInput(
   overrides: Partial<MaybeSendSubscriptionCancellationEmailInput> = {},
 ): MaybeSendSubscriptionCancellationEmailInput {
+  const { stripe } = mockStripe();
   return {
     event: subscriptionUpdatedEvent(subscriptionFixture()),
-    stripe: {} as Stripe,
+    stripe,
     apiKey: "re_test",
     from: "codes@unveiled.berlin",
     siteUrl: SITE_URL,
@@ -62,9 +83,11 @@ describe("maybeSendSubscriptionCancellationEmail", () => {
       resubscribeUrl: string;
       key?: string;
     }> = [];
+    const { stripe, updateCalls } = mockStripe();
 
     const result = await maybeSendSubscriptionCancellationEmail(
       baseInput({
+        stripe,
         sendCancellation: async (input) => {
           sendCalls.push({
             toEmail: input.toEmail,
@@ -85,6 +108,11 @@ describe("maybeSendSubscriptionCancellationEmail", () => {
     expect(sendCalls[0]?.endDate).toEqual(new Date(PERIOD_END_UNIX * 1000));
     expect(sendCalls[0]?.resubscribeUrl).toBe(`${SITE_URL}/en/membership`);
     expect(sendCalls[0]?.key).toBe("evt_cancel_1");
+    expect(updateCalls).toHaveLength(1);
+    expect(updateCalls[0]?.id).toBe("sub_test");
+    expect(updateCalls[0]?.params.metadata?.[UNVEILED_CANCELLATION_EMAIL_METADATA_KEY]).toBe(
+      UNVEILED_CANCELLATION_EMAIL_SENT_VALUE,
+    );
   });
 
   test("non-update events do not send", async () => {
@@ -135,11 +163,15 @@ describe("maybeSendSubscriptionCancellationEmail", () => {
     expect(sent).toBe(0);
   });
 
-  test("already-pending subscription does not resend", async () => {
+  test("already-pending webhook without a sent marker still sends once (in-app cancel path)", async () => {
+    // The in-app cancel POST syncs CANCELLED_PENDING before the webhook
+    // arrives; the Stripe sent-marker (not the DB snapshot) guards resends.
     let sent = 0;
+    const { stripe, updateCalls } = mockStripe();
     const result = await maybeSendSubscriptionCancellationEmail(
       baseInput({
         previousStatus: "CANCELLED_PENDING",
+        stripe,
         sendCancellation: async () => {
           sent += 1;
           return { ok: true, status: 200 };
@@ -147,8 +179,109 @@ describe("maybeSendSubscriptionCancellationEmail", () => {
       }),
     );
 
-    expect(result).toEqual({ status: "skipped", reason: "already_pending" });
+    expect(result).toEqual({ status: "sent" });
+    expect(sent).toBe(1);
+    expect(updateCalls).toHaveLength(1);
+  });
+
+  test("already-sent marker on the event snapshot skips without resending", async () => {
+    let sent = 0;
+    const { stripe, updateCalls } = mockStripe({
+      [UNVEILED_CANCELLATION_EMAIL_METADATA_KEY]: UNVEILED_CANCELLATION_EMAIL_SENT_VALUE,
+    });
+    const sub = subscriptionFixture({
+      metadata: {
+        locale: "en",
+        [UNVEILED_CANCELLATION_EMAIL_METADATA_KEY]: UNVEILED_CANCELLATION_EMAIL_SENT_VALUE,
+      },
+    });
+    const result = await maybeSendSubscriptionCancellationEmail(
+      baseInput({
+        event: subscriptionUpdatedEvent(sub),
+        previousStatus: "CANCELLED_PENDING",
+        stripe,
+        sendCancellation: async () => {
+          sent += 1;
+          return { ok: true, status: 200 };
+        },
+      }),
+    );
+
+    expect(result).toEqual({ status: "skipped", reason: "already_sent" });
     expect(sent).toBe(0);
+    expect(updateCalls).toEqual([]);
+  });
+
+  test("already-sent marker on a fresh read skips when the event snapshot is stale", async () => {
+    let sent = 0;
+    const { stripe, retrieveIds, updateCalls } = mockStripe({
+      [UNVEILED_CANCELLATION_EMAIL_METADATA_KEY]: UNVEILED_CANCELLATION_EMAIL_SENT_VALUE,
+    });
+    const result = await maybeSendSubscriptionCancellationEmail(
+      baseInput({
+        previousStatus: "CANCELLED_PENDING",
+        stripe,
+        sendCancellation: async () => {
+          sent += 1;
+          return { ok: true, status: 200 };
+        },
+      }),
+    );
+
+    expect(result).toEqual({ status: "skipped", reason: "already_sent" });
+    expect(sent).toBe(0);
+    expect(retrieveIds).toEqual(["sub_test"]);
+    expect(updateCalls).toEqual([]);
+  });
+
+  test("subscription retrieve failure returns retry without sending", async () => {
+    let sent = 0;
+    const stripe = {
+      subscriptions: {
+        retrieve: async () => {
+          throw new Error("stripe down");
+        },
+        update: async () => {
+          throw new Error("should not update");
+        },
+      },
+    } as unknown as Stripe;
+    const result = await maybeSendSubscriptionCancellationEmail(
+      baseInput({
+        stripe,
+        sendCancellation: async () => {
+          sent += 1;
+          return { ok: true, status: 200 };
+        },
+      }),
+    );
+
+    expect(result).toEqual({ status: "retry", reason: "subscription_retrieve_failed" });
+    expect(sent).toBe(0);
+  });
+
+  test("metadata update failure returns retry after sending", async () => {
+    let sent = 0;
+    const stripe = {
+      subscriptions: {
+        retrieve: async () => ({ id: "sub_test", metadata: {} }),
+        update: async () => {
+          throw new Error("stripe down");
+        },
+      },
+    } as unknown as Stripe;
+    const result = await maybeSendSubscriptionCancellationEmail(
+      baseInput({
+        stripe,
+        sendCancellation: async () => {
+          sent += 1;
+          return { ok: true, status: 200 };
+        },
+      }),
+    );
+
+    expect(result).toEqual({ status: "retry", reason: "metadata_update_failed" });
+    expect(sent).toBe(1);
   });
 
   test("admin-frozen subscription does not send", async () => {
