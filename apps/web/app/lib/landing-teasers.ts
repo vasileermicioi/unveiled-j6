@@ -48,8 +48,9 @@ function teaserImage(imageId: string | null | undefined): string | undefined {
 
 /**
  * Guest-safe projection of a catalog event row.
- * Exposes only id/title/description/date labels/place/image —
- * never credit price, capacity, redemption, or event-detail URLs.
+ * Exposes only id/title/description/date labels/place/credit price/image —
+ * never capacity, redemption, or event-detail URLs. Credit price is public
+ * pricing, so guests see it too.
  */
 export function toLandingLiveTeaser(event: Event, locale: Locale): LandingLiveTeaser {
   const copy = resolveEventCopy(event, locale);
@@ -60,6 +61,7 @@ export function toLandingLiveTeaser(event: Event, locale: Locale): LandingLiveTe
     dateLabel: formatTeaserDateLabel(event.dateTime),
     time: formatTeaserTime(event.dateTime, locale, event.timingMode),
     place: event.partnerName?.trim() || event.zipCode || "",
+    creditPrice: event.creditPrice,
     image: teaserImage(event.imageId),
   };
 }
@@ -72,7 +74,7 @@ export function mapLandingLiveTeasers(events: Event[], locale: Locale): LandingL
 }
 
 /**
- * Static fallback (previous rail items minus credits) when the catalog query
+ * Static fallback (previous rail items with credits) when the catalog query
  * is empty or unreachable, so the locale-home build stays green.
  */
 export function getLandingFallbackTeasers(locale: Locale): LandingLiveTeaser[] {

@@ -51,7 +51,7 @@ Feature: Static and Marketing Pages
   Scenario: V3 landing rail shows login-gated teasers
     Given I am not signed in
     When I visit the locale home ("/:locale")
-    Then I see at most 3 live event teasers with no credit figures or event detail links
+    Then I see at most 3 live event teasers with credit figures and no event detail links
     And every live teaser CTA takes me to login
     And 2 locked teaser cards complete the rail
 

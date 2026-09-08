@@ -49,12 +49,12 @@ describe("landing live teasers", () => {
     delete process.env.IMAGE_PUBLIC_BASE_URL;
     const teaser = toLandingLiveTeaser(makeEvent(), "de");
     expect(Object.keys(teaser).sort()).toEqual(
-      ["dateLabel", "description", "id", "image", "place", "time", "title"].sort(),
+      ["creditPrice", "dateLabel", "description", "id", "image", "place", "time", "title"].sort(),
     );
+    expect(teaser.creditPrice).toBe(6);
     const serialized = JSON.stringify(teaser);
     expect(serialized).not.toContain("SECRET-123");
     expect(serialized).not.toContain("example.com/event");
-    expect(serialized.toLowerCase()).not.toContain("credit");
     expect(serialized.toLowerCase()).not.toContain("capacity");
   });
 
@@ -107,7 +107,7 @@ describe("landing live teasers", () => {
     expect(mapLandingLiveTeasers(five, "de").slice(0, LANDING_LIVE_TEASER_LIMIT)).toHaveLength(3);
   });
 
-  test("static fallback mirrors rail items without credits when DB is empty", () => {
+  test("static fallback mirrors rail items with credits when DB is empty", () => {
     for (const locale of ["de", "en"] as Locale[]) {
       const fallback = getLandingFallbackTeasers(locale);
       expect(fallback.length).toBe(landingFallbackTeasers[locale].length);
@@ -115,7 +115,7 @@ describe("landing live teasers", () => {
         landingFallbackTeasers[locale].map((item) => item.title),
       );
       for (const teaser of fallback) {
-        expect("credits" in teaser).toBe(false);
+        expect(typeof teaser.creditPrice).toBe("number");
         expect("locked" in teaser).toBe(false);
       }
     }

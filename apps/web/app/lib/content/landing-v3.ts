@@ -211,9 +211,10 @@ export const landingV3Content: LocalizedContent<LandingV3Content> = {
 };
 
 /**
- * Static fallback rail items (previous static rail copy minus credits) used
+ * Static fallback rail items (previous static rail copy with credits) used
  * when the catalog query is empty or unreachable, so the locale-home build
- * stays green. Guest-safe: no credit prices, capacity, or event-detail URLs.
+ * stays green. Guest-safe: no capacity, or event-detail URLs (credit price
+ * is public pricing).
  */
 export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
   de: [
@@ -225,6 +226,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "02 SEP",
       time: "20:00",
       place: "Mitte",
+      creditPrice: 6,
     },
     {
       id: "tempelhof",
@@ -234,6 +236,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "04 SEP",
       time: "ab 19:00",
       place: "Tempelhofer Feld",
+      creditPrice: 2,
     },
     {
       id: "dark-matter",
@@ -243,6 +246,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "09 SEP",
       time: "ab 19:00",
       place: "Lichtenberg",
+      creditPrice: 8,
     },
     {
       id: "rooftop",
@@ -252,6 +256,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "18 SEP",
       time: "",
       place: "Neukölln",
+      creditPrice: 3,
     },
     {
       id: "gallery-hop",
@@ -260,6 +265,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "25 SEP",
       time: "",
       place: "Kreuzberg",
+      creditPrice: 4,
     },
   ],
   en: [
@@ -271,6 +277,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "02 SEP",
       time: "20:00",
       place: "Mitte",
+      creditPrice: 6,
     },
     {
       id: "tempelhof",
@@ -280,6 +287,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "04 SEP",
       time: "from 19:00",
       place: "Tempelhofer Feld",
+      creditPrice: 2,
     },
     {
       id: "dark-matter",
@@ -289,6 +297,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "09 SEP",
       time: "from 19:00",
       place: "Lichtenberg",
+      creditPrice: 8,
     },
     {
       id: "rooftop",
@@ -297,6 +306,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "18 SEP",
       time: "",
       place: "Neukölln",
+      creditPrice: 3,
     },
     {
       id: "gallery-hop",
@@ -305,6 +315,7 @@ export const landingFallbackTeasers: LocalizedContent<LandingLiveTeaser[]> = {
       dateLabel: "25 SEP",
       time: "",
       place: "Kreuzberg",
+      creditPrice: 4,
     },
   ],
 };

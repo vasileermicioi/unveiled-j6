@@ -28,7 +28,8 @@ export type LandingComingSoonPartner = {
 
 /**
  * Guest-safe live teaser for the v3 landing rail (step 01).
- * Deliberately narrow: no credit prices, capacity, redemption, or event-detail URLs.
+ * Deliberately narrow: credit price is shown (public pricing), but no
+ * capacity, redemption, or event-detail URLs.
  */
 export type LandingLiveTeaser = {
   id: string;
@@ -37,6 +38,7 @@ export type LandingLiveTeaser = {
   dateLabel: string;
   time: string;
   place: string;
+  creditPrice: number;
   image?: string;
 };
 

@@ -120,11 +120,12 @@ test.describe("static-pages.feature", () => {
       await expect(allLinks.nth(i)).not.toHaveAttribute("href", /\/events\//);
     }
 
-    // Live cards carry no credit figures. Card scope via parent walks from the
-    // live CTA: CTA → actions surface → card footer → card (see LandingEventsRailV3).
+    // Live cards show the credit price (public pricing) but no detail links.
+    // Card scope via parent walks from the live CTA: CTA → actions surface →
+    // card footer → card (see LandingEventsRailV3).
     for (let i = 0; i < liveCount; i++) {
       const card = liveCta.nth(i).locator("..").locator("..").locator("..");
-      await expect(card).not.toContainText(/credits?/i);
+      await expect(card).toContainText(/credits?/i);
       await expect(card).not.toContainText(/\d+\s*€/);
     }
   });

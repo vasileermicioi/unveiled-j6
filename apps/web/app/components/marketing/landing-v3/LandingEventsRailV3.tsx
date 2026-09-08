@@ -25,6 +25,13 @@ const LOCKED_RAIL_CARDS = [
 
 const META_ICON = 14;
 
+function creditsUnitLabel(creditPrice: number, locale: Locale): string {
+  if (locale === "de") {
+    return creditPrice === 1 ? "Credit" : "Credits";
+  }
+  return creditPrice === 1 ? "credit" : "credits";
+}
+
 export function LandingEventsRailV3({ locale, copy, teasers }: LandingEventsRailV3Props) {
   const loginHref = localizedPath(locale, "login");
 
@@ -45,6 +52,7 @@ export function LandingEventsRailV3({ locale, copy, teasers }: LandingEventsRail
         {teasers.map((teaser) => (
           <LandingLiveTeaserCard
             key={teaser.id}
+            locale={locale}
             loginCta={copy.loginCta}
             loginHref={loginHref}
             teaser={teaser}
@@ -66,16 +74,19 @@ export function LandingEventsRailV3({ locale, copy, teasers }: LandingEventsRail
 
 /**
  * Guest-safe teaser card. The card itself is never a link and exposes no
- * credit prices or event-detail URLs — the login CTA is the only click target.
+ * event-detail URLs — the credit price is public pricing so guests see it,
+ * and the login CTA is the only click target.
  */
 function LandingLiveTeaserCard({
   teaser,
   loginHref,
   loginCta,
+  locale,
 }: {
   teaser: LandingLiveTeaser;
   loginHref: string;
   loginCta: string;
+  locale: Locale;
 }) {
   return (
     <Card className="event-card landing-event">
@@ -121,6 +132,12 @@ function LandingLiveTeaserCard({
         </Surface>
       </Card.Content>
       <Card.Footer className="event-card__footer">
+        <Surface className="event-card__price" variant="transparent">
+          <Paragraph className="event-card__price-value">{teaser.creditPrice}</Paragraph>
+          <Paragraph className="event-card__price-unit" color="muted" size="xs">
+            {creditsUnitLabel(teaser.creditPrice, locale)}
+          </Paragraph>
+        </Surface>
         <Surface className="event-card__actions" variant="transparent">
           <Link className="button button--secondary button--md" href={loginHref}>
             {loginCta}
