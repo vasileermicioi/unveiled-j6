@@ -222,6 +222,28 @@ test.describe("booking.feature", () => {
     await expectMaskedCode(page, SECRET_CODE);
   });
 
+  test("Scenario: Calendar download keeps download intent across login", async ({
+    page,
+    locale,
+  }) => {
+    test.skip(!hasDatabaseUrl(), "DATABASE_URL required to resolve event");
+    const eventPath = await bookableEventPath(locale);
+    const eventId = eventPath.split("/").pop() ?? "";
+    // Logged-out (expired session) GET on the .ics URL must land on login with
+    // the full download URL in returnTo — otherwise the file intent is lost.
+    const icsUrl =
+      `/${locale}/events/${eventId}/book/confirm` +
+      `?booking=00000000-0000-0000-0000-000000000000&download=ics`;
+    await page.context().clearCookies();
+    await page.goto(icsUrl);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?returnTo=`), {
+      timeout: 15_000,
+    });
+    const returnTo = decodeURIComponent(page.url());
+    expect(returnTo).toContain("/book/confirm?booking=");
+    expect(returnTo).toContain("download=ics");
+  });
+
   test("Scenario: Book a priced datetime slot", async ({ page, locale }) => {
     test.skip(
       !hasDatabaseUrl(),

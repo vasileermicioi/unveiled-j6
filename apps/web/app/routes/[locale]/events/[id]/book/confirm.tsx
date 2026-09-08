@@ -35,10 +35,10 @@ export default createRoute(async (c) => {
 
   const session = await getSessionIfConfigured(c);
   if (!session?.user) {
-    return c.redirect(
-      `/${locale}/login?returnTo=${encodeURIComponent(`${confirmPath}?booking=${bookingId}`)}`,
-      302,
-    );
+    // Preserve the full URL (including `download=ics`) so a login forced by an
+    // expired session returns to the calendar download instead of dropping it.
+    const loginReturnTo = `${url.pathname}${url.search}`;
+    return c.redirect(`/${locale}/login?returnTo=${encodeURIComponent(loginReturnTo)}`, 302);
   }
 
   const databaseUrl = resolveEnvVarFromContext(c, "DATABASE_URL");
