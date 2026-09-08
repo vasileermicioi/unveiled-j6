@@ -80,7 +80,7 @@ function invoiceCopy(locale: SubscriptionInvoiceLocale, links: InvoiceLinks): In
       pdfNote: "Deine Rechnung ist als PDF angehängt.",
       stepsHeading: "Nächste Schritte",
       steps: [
-        { label: "Events entdecken", url: links.events },
+        { label: "Erlebnisse entdecken", url: links.events },
         {
           label: "Mit Credits buchen — Tickets und Einlassdetails findest du unter Meine Tickets",
           url: links.bookings,
@@ -103,7 +103,7 @@ function invoiceCopy(locale: SubscriptionInvoiceLocale, links: InvoiceLinks): In
     pdfNote: "Your invoice is attached as a PDF.",
     stepsHeading: "What to do next",
     steps: [
-      { label: "Browse events", url: links.events },
+      { label: "Explore experiences", url: links.events },
       {
         label: "Book with your credits — tickets and door details land in My Tickets",
         url: links.bookings,

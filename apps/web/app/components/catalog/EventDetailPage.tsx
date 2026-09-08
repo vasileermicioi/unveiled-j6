@@ -81,29 +81,29 @@ export type EventDetailViewer =
   | { kind: "past_due" };
 
 function soldOutMessage(locale: Locale): string {
-  return locale === "de" ? "Dieses Event ist ausverkauft." : "This event is sold out.";
+  return locale === "de" ? "Dieses Erlebnis ist ausverkauft." : "This experience is sold out.";
 }
 
 function waitlistOfferMessage(locale: Locale): string {
   return locale === "de"
-    ? "Dieses Event ist ausverkauft. Du kannst dich auf die Warteliste setzen."
-    : "This event is sold out. You can join the waitlist.";
+    ? "Dieses Erlebnis ist ausverkauft. Du kannst dich auf die Warteliste setzen."
+    : "This experience is sold out. You can join the waitlist.";
 }
 
 function waitlistGuestMessage(locale: Locale): string {
   return locale === "de"
-    ? "Dieses Event ist ausverkauft. Melde dich an, um auf die Warteliste zu kommen."
-    : "This event is sold out. Sign in to join the waitlist.";
+    ? "Dieses Erlebnis ist ausverkauft. Melde dich an, um auf die Warteliste zu kommen."
+    : "This experience is sold out. Sign in to join the waitlist.";
 }
 
 function pastMessage(locale: Locale): string {
   return locale === "de"
-    ? "Dieses Event hat bereits stattgefunden."
-    : "This event has already taken place.";
+    ? "Dieses Erlebnis hat bereits stattgefunden."
+    : "This experience has already taken place.";
 }
 
 function browseEventsLabel(locale: Locale): string {
-  return locale === "de" ? "Mehr Events" : "Browse events";
+  return locale === "de" ? "Mehr Erlebnisse" : "Explore experiences";
 }
 
 function unlockCtaLabel(locale: Locale): string {
@@ -151,8 +151,8 @@ function policyText(): string {
 
 function guestNotice(locale: Locale): string {
   return locale === "de"
-    ? "Dieses Event ist in der Mitgliedschaft enthalten. Logge dich ein oder registriere dich, um weiterzumachen."
-    : "This event is included in the membership. Log in or register to continue.";
+    ? "Dieses Erlebnis ist in der Mitgliedschaft enthalten. Logge dich ein oder registriere dich, um weiterzumachen."
+    : "This experience is included in the membership. Log in or register to continue.";
 }
 
 function membershipNotice(locale: Locale): string {
@@ -214,7 +214,7 @@ function metadataLabel(key: string, locale: Locale): string {
     languages: { de: "Sprachen", en: "Languages" },
     languageIndependent: { de: "Sprache", en: "Language" },
     subtitles: { de: "Untertitel", en: "Subtitles" },
-    type: { de: "Format", en: "Event type" },
+    type: { de: "Format", en: "Experience type" },
     when: { de: "Datum", en: "Date" },
     partner: { de: "Partner", en: "Partner" },
   };

@@ -11,14 +11,14 @@ const copyByLocale: Record<Locale, SavedEventsCopy> = {
   de: {
     eyebrow: "Merkliste",
     title: "Gemerkt",
-    empty: "Du hast noch keine kommenden Events gemerkt.",
-    browseEvents: "Events entdecken",
+    empty: "Du hast noch keine kommenden Erlebnisse gemerkt.",
+    browseEvents: "Erlebnisse entdecken",
   },
   en: {
     eyebrow: "Your list",
     title: "Saved",
-    empty: "You have no upcoming saved events yet.",
-    browseEvents: "Browse events",
+    empty: "You have no upcoming saved experiences yet.",
+    browseEvents: "Explore experiences",
   },
 };
 

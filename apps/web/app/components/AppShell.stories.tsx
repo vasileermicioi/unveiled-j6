@@ -44,7 +44,7 @@ export const SignedInUserActive: Story = () => (
     </Surface>
   </AppShell>
 );
-SignedInUserActive.storyName = "AppShell / USER active (Browse events)";
+SignedInUserActive.storyName = "AppShell / USER active (Explore experiences)";
 
 /** @deprecated Prefer SignedInUserInactive / SignedInUserActive */
 export const SignedInUser: Story = () => (

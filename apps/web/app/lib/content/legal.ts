@@ -100,7 +100,7 @@ export const legalContent: {
           title: "Empfänger, Cookies und Rechte",
           body: [
             "Empfänger: Neon Auth / Neon Postgres, Stripe Billing, Resend, Cloudflare Workers und R2, Sentry (PII-frei). OpenStreetMap-Kacheln nur nach Cookie-Einwilligung.",
-            "Beim ersten Besuch können Sie nicht notwendige Cookies annehmen oder ablehnen; die Event-Karte lädt nur nach Annahme. Sitzung/Auth und PII-freies Sentry sind davon unabhängig.",
+            "Beim ersten Besuch können Sie nicht notwendige Cookies annehmen oder ablehnen; die Erlebnis-Karte lädt nur nach Annahme. Sitzung/Auth und PII-freies Sentry sind davon unabhängig.",
             "Speicherung nur so lange wie nötig bzw. gesetzlich vorgeschrieben. Bei Kontolöschung anonymisieren wir personenbezogene Angaben und deaktivieren den Login; anonymisierte Buchungs-/Ledger-Daten können aus handels- und steuerrechtlichen Gründen verbleiben.",
             "Sie haben insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch sowie Widerruf erteilter Einwilligungen mit Wirkung für die Zukunft. Beschwerde bei der Berliner Beauftragten für Datenschutz und Informationsfreiheit ist möglich.",
           ],
@@ -133,7 +133,7 @@ export const legalContent: {
           title: "Recipients, cookies, and rights",
           body: [
             "Recipients: Neon Auth / Neon Postgres, Stripe Billing, Resend, Cloudflare Workers and R2, Sentry (PII-free). OpenStreetMap tiles only after cookie consent.",
-            "On a first visit you can accept or decline non-essential cookies; the event map loads only after accept. Session/auth and PII-free Sentry are not gated on that choice.",
+            "On a first visit you can accept or decline non-essential cookies; the experience map loads only after accept. Session/auth and PII-free Sentry are not gated on that choice.",
             "We keep data only as long as needed or legally required. On account deletion we anonymize personal details and disable login; anonymized booking/ledger records may remain for commercial and tax reasons.",
             "You have, in particular, rights of access, rectification, erasure, restriction, portability, and objection, and may withdraw consent with effect for the future. You may also complain to the Berliner Beauftragte für Datenschutz und Informationsfreiheit.",
           ],
@@ -152,7 +152,7 @@ export const legalContent: {
           title: "Geltung und Mitgliedschaft",
           body: [
             "Diese AGB gelten für die Unveiled-Berlin-Plattform und die kuratierte Kultur-Mitgliedschaft (Betreiber: siehe Impressum). Es handelt sich um ein Abonnement mit monatlichen Credits für Partnerveranstaltungen in Berlin — kein Einzel-Ticketshop und kein Multi-City-Angebot.",
-            "Mit Abschluss erhalten Sie Zugang und die im Plan enthaltenen Credits für den laufenden Abrechnungszeitraum. Zahlung und Abo-Verwaltung laufen über Stripe Billing bzw. die in der App angebotenen Abrechnungsfunktionen. Es besteht kein Anspruch auf bestimmte Events oder Partner.",
+            "Mit Abschluss erhalten Sie Zugang und die im Plan enthaltenen Credits für den laufenden Abrechnungszeitraum. Zahlung und Abo-Verwaltung laufen über Stripe Billing bzw. die in der App angebotenen Abrechnungsfunktionen. Es besteht kein Anspruch auf bestimmte Erlebnisse oder Partner.",
             "Soweit ein gesetzliches Widerrufsrecht für digitale Abonnements gilt, bleiben die gesetzlichen Regeln unberührt.",
           ],
         },
@@ -185,8 +185,8 @@ export const legalContent: {
           id: "membership",
           title: "Scope and membership",
           body: [
-            "These Terms apply to the Unveiled Berlin platform and curated cultural-access membership (operator: see Imprint). Membership is a subscription with monthly credits for partner events in Berlin — not a one-off ticket shop and not multi-city.",
-            "When you subscribe you get platform access and the credits in your plan for the current billing period. Payment and subscription management run through Stripe Billing and in-app billing. There is no entitlement to specific events or partners.",
+            "These Terms apply to the Unveiled Berlin platform and curated cultural-access membership (operator: see Imprint). Membership is a subscription with monthly credits for partner experiences in Berlin — not a one-off ticket shop and not multi-city.",
+            "When you subscribe you get platform access and the credits in your plan for the current billing period. Payment and subscription management run through Stripe Billing and in-app billing. There is no entitlement to specific experiences or partners.",
             "Where a statutory right of withdrawal applies to digital subscriptions, the statutory rules apply.",
           ],
         },
@@ -196,7 +196,7 @@ export const legalContent: {
           body: [
             "Credits are only for bookings on Unveiled Berlin; no cash exchange, sale, transfer, or à-la-carte packs.",
             "Unused credits expire at the period boundary or renewal. Credits do not roll over to the next period. After cancellation, remaining credits are forfeited at the end of the paid period.",
-            "Bookings spend credits and need a booking-eligible status. Admission uses secret codes in the app. Capacity and waitlist may apply; waitlist promotion uses the same booking path. No self-cancel or self-refund (secure RSVP); if we cancel an event, credits may be restored under the product rules.",
+            "Bookings spend credits and need a booking-eligible status. Admission uses secret codes in the app. Capacity and waitlist may apply; waitlist promotion uses the same booking path. No self-cancel or self-refund (secure RSVP); if we cancel an experience, credits may be restored under the product rules.",
           ],
         },
         {

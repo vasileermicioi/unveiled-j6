@@ -35,7 +35,7 @@ export const faqContent: LocalizedContent<FaqContent> = {
         {
           question: "Kann ich ein gebuchtes Erlebnis stornieren?",
           answer:
-            "Da wir gerade erst starten, schreib uns einfach kurz eine E-Mail an support@unveiled.berlin — mindestens 12 h vor Beginn des Events. Wir finden immer eine gute Lösung für dich.",
+            "Da wir gerade erst starten, schreib uns einfach kurz eine E-Mail an support@unveiled.berlin — mindestens 12 h vor Beginn des Erlebnisses. Wir finden immer eine gute Lösung für dich.",
         },
         {
           question: "Was passiert, wenn ich zu spät storniere oder nicht erscheine?",
@@ -43,12 +43,12 @@ export const faqContent: LocalizedContent<FaqContent> = {
             "Wenn du nach Ablauf der Stornofrist stornierst oder das Erlebnis nicht besuchst, können die für die Buchung verwendeten Credits verfallen und werden nicht erstattet.",
         },
         {
-          question: "Was passiert, wenn ein Event abgesagt wird?",
+          question: "Was passiert, wenn ein Erlebnis abgesagt wird?",
           answer:
             "Wenn ein Erlebnis abgesagt wird und du Anspruch auf eine Erstattung hast, werden dir die Credits der Buchung auf deinem unveiled-Konto gutgeschrieben.",
         },
         {
-          question: "Was passiert, wenn ein Event verschoben wird?",
+          question: "Was passiert, wenn ein Erlebnis verschoben wird?",
           answer:
             "Wenn ein Erlebnis auf einen neuen Termin verschoben wird, kannst du entweder am neuen Termin teilnehmen oder die Buchung stornieren und deine Credits zurückerhalten. Falls wir dich um eine Entscheidung bitten, hast du drei Tage Zeit. Reagierst du in dieser Frist nicht, werden deine Credits automatisch deinem Konto gutgeschrieben.",
         },
@@ -65,7 +65,7 @@ export const faqContent: LocalizedContent<FaqContent> = {
         {
           question: "Wer organisiert eigentlich die kulturellen Erlebnisse?",
           answer:
-            "Die auf unveiled verfügbaren Erlebnisse werden von unseren Kulturpartnern organisiert und durchgeführt. unveiled hilft dir, sie zu entdecken und zu buchen, aber wir sind nicht Veranstalter der einzelnen Events. Daher können auch die Regeln und Bedingungen der Venues gelten.",
+            "Die auf unveiled verfügbaren Erlebnisse werden von unseren Kulturpartnern organisiert und durchgeführt. unveiled hilft dir, sie zu entdecken und zu buchen, aber wir sind nicht Veranstalter der einzelnen Erlebnisse. Daher können auch die Regeln und Bedingungen der Venues gelten.",
         },
       ],
     },
@@ -105,7 +105,7 @@ export const faqContent: LocalizedContent<FaqContent> = {
         {
           question: "Can I cancel an experience I booked?",
           answer:
-            "Since we’re just getting started, just send us a quick email at support@unveiled.berlin at least 12h before the event starts. We’ll always do our best to find a good solution for you.",
+            "Since we’re just getting started, just send us a quick email at support@unveiled.berlin at least 12h before the experience starts. We’ll always do our best to find a good solution for you.",
         },
         {
           question: "What happens if I cancel too late or don’t show up?",
@@ -113,12 +113,12 @@ export const faqContent: LocalizedContent<FaqContent> = {
             "If you cancel after the cancellation deadline or don’t attend the experience, the Credits used for the booking may be forfeited and won’t be refunded.",
         },
         {
-          question: "What happens if an event is cancelled?",
+          question: "What happens if an experience is cancelled?",
           answer:
             "If an experience is cancelled and you are entitled to a refund, the Credits you used for the booking will be returned to your unveiled account.",
         },
         {
-          question: "What happens if an event is rescheduled?",
+          question: "What happens if an experience is rescheduled?",
           answer:
             "If an experience is moved to a new date, you can either attend on the new date or cancel the booking and receive your Credits back. If we ask you to make a choice, you’ll have three days to do so. If you don’t respond within that time, your Credits will automatically be returned to your account.",
         },
@@ -135,7 +135,7 @@ export const faqContent: LocalizedContent<FaqContent> = {
         {
           question: "Who actually organises the cultural experiences?",
           answer:
-            "The experiences available on unveiled are organised and operated by our cultural partners. unveiled helps you discover and book them, but we are not the organiser of the individual events. The venue’s own rules and conditions may therefore also apply.",
+            "The experiences available on unveiled are organised and operated by our cultural partners. unveiled helps you discover and book them, but we are not the organiser of the individual experiences. The venue’s own rules and conditions may therefore also apply.",
         },
       ],
     },

@@ -85,7 +85,7 @@ function berlinYmd(daysFromToday: number): string {
 }
 
 async function expandEventFeedFilters(page: Page): Promise<void> {
-  const titleField = page.getByLabel(/eventname|event name/i);
+  const titleField = page.getByLabel(/erlebnisname|experience name/i);
   if (await titleField.isVisible()) {
     return;
   }
@@ -608,7 +608,7 @@ test.describe("event-discovery.feature", () => {
     }
 
     const mapRegion = page.getByRole("region", {
-      name: /karte der gefilterten events|map of filtered events/i,
+      name: /karte der gefilterten erlebnisse|map of filtered experiences/i,
     });
     const consentFallback = page.getByText(
       /karte benötigt cookie-zustimmung|map needs cookie consent/i,
@@ -657,7 +657,9 @@ test.describe("event-discovery.feature", () => {
     await loginMember(page, locale);
     await page.goto(`/${locale}/events`);
 
-    await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toBeVisible();
+    await expect(
+      page.getByText(/alle kommenden erlebnisse|all upcoming experiences/i),
+    ).toBeVisible();
     await expect(page.getByText(TITLES.tonight)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(TITLES.theaterFuture)).toBeVisible();
     await expect(page.getByText(TITLES.pastHidden)).toHaveCount(0);
@@ -730,7 +732,7 @@ test.describe("event-discovery.feature", () => {
     await page.goto(`/${locale}/events`);
     await expandEventFeedFilters(page);
 
-    const titleField = page.getByLabel(/eventname|event name/i);
+    const titleField = page.getByLabel(/erlebnisname|experience name/i);
     await expect(titleField).toBeVisible();
     await expect(page.getByLabel(/partner/i).first()).toBeVisible();
     await expect(page.getByLabel(/von|from/i)).toBeVisible();
@@ -793,7 +795,9 @@ test.describe("event-discovery.feature", () => {
     await applyDateRange(page, from, to);
 
     await expect(page.getByText(/zeitraum:|range:/i)).toBeVisible();
-    await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toHaveCount(0);
+    await expect(page.getByText(/alle kommenden erlebnisse|all upcoming experiences/i)).toHaveCount(
+      0,
+    );
     await expect(page.getByText(TITLES.theaterFuture)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(TITLES.tonight)).toHaveCount(0);
   });
@@ -815,9 +819,11 @@ test.describe("event-discovery.feature", () => {
     await expect(page).toHaveURL(new RegExp(`/${locale}/events/?$`));
     await expect(page).not.toHaveURL(/title=/);
     await expect(page).not.toHaveURL(/from=/);
-    await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toBeVisible();
+    await expect(
+      page.getByText(/alle kommenden erlebnisse|all upcoming experiences/i),
+    ).toBeVisible();
     await expandEventFeedFilters(page);
-    await expect(page.getByLabel(/eventname|event name/i)).toHaveValue("");
+    await expect(page.getByLabel(/erlebnisname|experience name/i)).toHaveValue("");
   });
 
   test("Scenario: No results", async ({ page, locale }) => {
@@ -859,7 +865,7 @@ test.describe("event-discovery.feature", () => {
     }
 
     const mapRegion = page.getByRole("region", {
-      name: /karte der gefilterten events|map of filtered events/i,
+      name: /karte der gefilterten erlebnisse|map of filtered experiences/i,
     });
     const consentFallback = page.getByText(
       /karte benötigt cookie-zustimmung|map needs cookie consent/i,
@@ -875,7 +881,7 @@ test.describe("event-discovery.feature", () => {
     await expect(listTab).toHaveAttribute("href", /category=theater/);
     await expect(page.getByText(/filtern|filters/i).first()).toBeVisible();
     await expandEventFeedFilters(page);
-    await expect(page.getByLabel(/eventname|event name/i)).toBeVisible();
+    await expect(page.getByLabel(/erlebnisname|experience name/i)).toBeVisible();
     await expect(page.getByText(TITLES.ausstellung)).toHaveCount(0);
     // Popup close hit-target coverage lives on guest detail LOCATION map (same EventMap
     // chrome) to avoid Neon Auth signup flake on this member-only scenario.
@@ -1031,7 +1037,9 @@ test.describe("event-discovery.feature", () => {
     // Fresh signup stays INACTIVE — must not reach the full feed.
     await page.goto(`/${locale}/events`);
     await expect(page).toHaveURL(new RegExp(`/${locale}/discover`), { timeout: 15_000 });
-    await expect(page.getByText(/alle kommenden events|all upcoming events/i)).toHaveCount(0);
+    await expect(page.getByText(/alle kommenden erlebnisse|all upcoming experiences/i)).toHaveCount(
+      0,
+    );
   });
 
   test("Scenario: Active member nav shows Browse events", async ({ page, locale }) => {
@@ -1041,7 +1049,7 @@ test.describe("event-discovery.feature", () => {
 
     const browseNav = page
       .getByRole("banner")
-      .getByRole("link", { name: /events entdecken|browse events/i });
+      .getByRole("link", { name: /erlebnisse entdecken|explore experiences/i });
     await expect(browseNav).toBeVisible({ timeout: 15_000 });
     await expect(browseNav).toHaveAttribute("href", new RegExp(`/${locale}/events`));
   });
@@ -1052,9 +1060,9 @@ test.describe("event-discovery.feature", () => {
     await completeOnboardingWizard(page, locale);
 
     const banner = page.getByRole("banner");
-    await expect(banner.getByRole("link", { name: /events entdecken|browse events/i })).toHaveCount(
-      0,
-    );
+    await expect(
+      banner.getByRole("link", { name: /erlebnisse entdecken|explore experiences/i }),
+    ).toHaveCount(0);
     const subscribe = banner.getByRole("link", {
       name: /mitgliedschaft starten|start membership/i,
     });
@@ -1068,9 +1076,9 @@ test.describe("event-discovery.feature", () => {
   test("Scenario: Browse events filters are collapsed by default", async ({ page, locale }) => {
     await loginMember(page, locale);
     await page.goto(`/${locale}/events`);
-    await expect(page.getByLabel(/eventname|event name/i)).toBeHidden();
+    await expect(page.getByLabel(/erlebnisname|experience name/i)).toBeHidden();
     await expandEventFeedFilters(page);
-    await expect(page.getByLabel(/eventname|event name/i)).toBeVisible();
+    await expect(page.getByLabel(/erlebnisname|experience name/i)).toBeVisible();
   });
 
   test("Scenario: Unpublished featured event stays off Discover", async ({ page, locale }) => {

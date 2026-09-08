@@ -45,7 +45,7 @@ type OnboardingCopy = {
 const copy: Record<Locale, OnboardingCopy> = {
   de: {
     title: "DEIN KULTUR-PROFIL.",
-    subtitle: "Wir finden die Events, die wirklich zu dir passen.",
+    subtitle: "Wir finden die Erlebnisse, die wirklich zu dir passen.",
     ageLabel: "WIE ALT BIST DU?",
     ageSubtitle: "Keine Sorge, nur für die Statistik (und Altersbeschränkungen).",
     interestLabel: "WAS INTERESSIERT DICH?",
@@ -76,7 +76,7 @@ const copy: Record<Locale, OnboardingCopy> = {
   },
   en: {
     title: "YOUR CULTURE PROFILE.",
-    subtitle: "Let's find the events that actually vibe with you.",
+    subtitle: "Let's find the experiences that actually vibe with you.",
     ageLabel: "HOW OLD ARE YOU?",
     ageSubtitle: "Don't worry, just for stats (and age restrictions).",
     interestLabel: "WHAT INTERESTS YOU?",

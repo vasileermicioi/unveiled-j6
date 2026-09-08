@@ -3,7 +3,10 @@ import type { Story } from "@ladle/react";
 import { PageSectionHeader } from "./PageSectionHeader";
 
 export const Default: Story = () => (
-  <PageSectionHeader eyebrow="Bookable with your membership" headline="Current events in Berlin." />
+  <PageSectionHeader
+    eyebrow="Bookable with your membership"
+    headline="Current experiences in Berlin."
+  />
 );
 Default.storyName = "PageSectionHeader / Default";
 

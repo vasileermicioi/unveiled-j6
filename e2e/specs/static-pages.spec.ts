@@ -135,7 +135,7 @@ test.describe("static-pages.feature", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: /aktuelle events in berlin|current events in berlin/i,
+        name: /aktuelle erlebnisse in berlin|current experiences in berlin/i,
       }),
     ).toBeVisible();
     await expect(page.getByText(/partnerorte|partner venues/i).first()).toBeVisible();
@@ -197,7 +197,9 @@ test.describe("static-pages.feature", () => {
     await page.goto(`/${locale}/events`);
     await expect(page).toHaveURL(new RegExp(`/${locale}/events`));
     await expect(page).not.toHaveURL(/\/(login|signup)/);
-    await expect(page.getByRole("heading", { level: 1, name: /events/i })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { level: 1, name: /experiences|erlebnisse/i }),
+    ).toBeVisible({
       timeout: 15_000,
     });
   });
@@ -262,7 +264,7 @@ test.describe("static-pages.feature", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: /aktuelle events in berlin|current events in berlin/i,
+        name: /aktuelle erlebnisse in berlin|current experiences in berlin/i,
       }),
     ).toBeVisible();
   });
@@ -377,7 +379,9 @@ test.describe("static-pages.feature", () => {
       page.getByRole("link", { name: /auf openstreetmap öffnen|open in openstreetmap/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole("region", { name: /karte der gefilterten events|map of filtered events/i }),
+      page.getByRole("region", {
+        name: /karte der gefilterten erlebnisse|map of filtered experiences/i,
+      }),
     ).toHaveCount(0);
     expect(tileHits).toEqual([]);
   });

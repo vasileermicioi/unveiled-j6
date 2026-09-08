@@ -8,11 +8,11 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
       subheadline:
         "Deine Mitgliedschaft für Theater, Kino, Ausstellungen und neue Leute in Berlin.",
       ctaMembership: "Mitgliedschaft ansehen",
-      ctaBrowseEvents: "Live Events ansehen",
+      ctaBrowseEvents: "Live Erlebnisse ansehen",
       stats: {
         liveFeed: {
           label: "Live im Feed",
-          suffix: "kommende Events",
+          suffix: "kommende Erlebnisse",
         },
         partnerVenues: {
           label: "Partnerorte",
@@ -27,7 +27,7 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
     valueProps: [
       {
         title: "Finde Dinge, die zu dir passen",
-        body: "Theater, Kino, Ausstellungen und Events in Berlin, die man sonst leicht verpasst.",
+        body: "Theater, Kino, Ausstellungen und Erlebnisse in Berlin, die man sonst leicht verpasst.",
       },
       {
         title: "Buche spontan mit deinen Credits",
@@ -40,8 +40,8 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
     ],
     livePreview: {
       eyebrow: "Mit deiner Mitgliedschaft buchbar",
-      headline: "Aktuelle Events in Berlin.",
-      emptyState: "Aktuell keine empfohlenen Events.",
+      headline: "Aktuelle Erlebnisse in Berlin.",
+      emptyState: "Aktuell keine empfohlenen Erlebnisse.",
     },
     categories: {
       eyebrow: "Mitgliedschaft",
@@ -65,11 +65,11 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
       headline: "Discover Berlin the way you want.",
       subheadline: "Your membership for theatre, cinema, exhibitions, and new people in Berlin.",
       ctaMembership: "View membership",
-      ctaBrowseEvents: "Browse live events",
+      ctaBrowseEvents: "Explore live experiences",
       stats: {
         liveFeed: {
           label: "Live in the feed",
-          suffix: "upcoming events",
+          suffix: "upcoming experiences",
         },
         partnerVenues: {
           label: "Partner venues",
@@ -84,7 +84,7 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
     valueProps: [
       {
         title: "Find things that fit you",
-        body: "Theatre, cinema, exhibitions, and events in Berlin that are easy to miss otherwise.",
+        body: "Theatre, cinema, exhibitions, and experiences in Berlin that are easy to miss otherwise.",
       },
       {
         title: "Book spontaneously with your credits",
@@ -97,8 +97,8 @@ export const discoverContent: LocalizedContent<DiscoverContent> = {
     ],
     livePreview: {
       eyebrow: "Bookable with your membership",
-      headline: "Current events in Berlin.",
-      emptyState: "No featured events right now.",
+      headline: "Current experiences in Berlin.",
+      emptyState: "No featured experiences right now.",
     },
     categories: {
       eyebrow: "Memberships",

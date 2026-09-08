@@ -10,7 +10,7 @@ const BERLIN_CENTER: [number, number] = [13.405, 52.52];
 const DEFAULT_ZOOM = 11;
 const OSM_TILES = ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"];
 const OSM_ATTRIBUTION = "© OpenStreetMap contributors";
-const MARKER_LABEL_FALLBACK = "Event location";
+const MARKER_LABEL_FALLBACK = "Experience location";
 /** Teardrop pin; tip at bottom center of viewBox for MapLibre `anchor: "bottom"`. */
 const MARKER_PIN_PATH = "M12 32C12 32 3.5 20.5 3.5 13a8.5 8.5 0 1 1 17 0C20.5 20.5 12 32 12 32Z";
 

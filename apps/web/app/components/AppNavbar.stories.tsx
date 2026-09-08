@@ -7,7 +7,7 @@ import { mockAdminSession, mockUserSession, storyLocale, storyPathname } from ".
  * Slim header IA (Featured Discover browse split):
  * - Guest: logo · Discover → /discover · FAQ · DE|EN · Log in
  * - Inactive USER: Discover → /discover; Tickets/Saved · Start membership · DE|EN · Account (no credits)
- * - Active USER: Browse events → /events; Tickets/Saved · DE|EN · Account menu (email + credits)
+ * - Active USER: Explore experiences → /events; Tickets/Saved · DE|EN · Account menu (email + credits)
  * - ADMIN: no Discover/FAQ; DE|EN · Account menu (Admin + Log out); logo → /admin
  */
 export const Guest: Story = () => (
@@ -35,7 +35,7 @@ export const SignedInUserActive: Story = () => (
     session={mockUserSession}
   />
 );
-SignedInUserActive.storyName = "AppNavbar / USER active (Browse events)";
+SignedInUserActive.storyName = "AppNavbar / USER active (Explore experiences)";
 
 /** @deprecated Prefer SignedInUserInactive / SignedInUserActive */
 export const SignedInUser: Story = () => (

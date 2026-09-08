@@ -82,7 +82,7 @@ function cancellationCopy(
       brandLine: "Unveiled Berlin",
       headline: "Deine Mitgliedschaft endet",
       greeting: `Deine Unveiled Berlin Mitgliedschaft endet am ${endDateLabel}.`,
-      accessLine: `Du behältst bis dahin vollen Zugriff auf alle Events.`,
+      accessLine: `Du behältst bis dahin vollen Zugriff auf alle Erlebnisse.`,
       creditsLine: `Ungenutzte Credits verfallen am ${endDateLabel}.`,
       ticketsLine: `Deine Tickets bleiben bis dahin gültig.`,
       resubscribeLabel: "Werde wieder Mitglied",
@@ -96,7 +96,7 @@ function cancellationCopy(
     brandLine: "Unveiled Berlin",
     headline: "Your membership is ending",
     greeting: `Your Unveiled Berlin membership is ending on ${endDateLabel}.`,
-    accessLine: `You keep full access to all events until then.`,
+    accessLine: `You keep full access to all experiences until then.`,
     creditsLine: `Unused credits expire on ${endDateLabel}.`,
     ticketsLine: `Your tickets stay valid until then.`,
     resubscribeLabel: "Become a member again",
@@ -163,7 +163,7 @@ export function buildSubscriptionCancellationContent(
       subject: "Deine Unveiled Berlin Mitgliedschaft endet",
       text: `Deine Unveiled Berlin Mitgliedschaft endet am ${endDateLabel}.
 
-Du behältst bis dahin vollen Zugriff auf alle Events.
+Du behältst bis dahin vollen Zugriff auf alle Erlebnisse.
 Ungenutzte Credits verfallen am ${endDateLabel}.
 Deine Tickets bleiben bis dahin gültig.
 
@@ -179,7 +179,7 @@ Support: ${SUPPORT_EMAIL}`,
     subject: "Your Unveiled Berlin membership is ending",
     text: `Your Unveiled Berlin membership is ending on ${endDateLabel}.
 
-You keep full access to all events until then.
+You keep full access to all experiences until then.
 Unused credits expire on ${endDateLabel}.
 Your tickets stay valid until then.
 

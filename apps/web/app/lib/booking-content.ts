@@ -50,13 +50,13 @@ export type BookConfirmCopy = {
 const bookCopy: Record<Locale, BookPageCopy> = {
   de: {
     eyebrow: "Buchungen",
-    title: "Event buchen",
+    title: "Erlebnis buchen",
     subtitle: (eventTitle) => `Reserviere Tickets für ${eventTitle}`,
     ticketsLabel: "Anzahl Tickets",
     policy: "SICHERE RSVP // KEINE ERSTATTUNG",
     submit: "Buchung bestätigen",
     creditCost: (total) => `${total} Credit${total === 1 ? "" : "s"}`,
-    backToEvent: "Zurück zum Event",
+    backToEvent: "Zurück zum Erlebnis",
     pastDueEyebrow: "Buchungen",
     pastDueTitle: "Credits eingefroren",
     pastDueBody:
@@ -75,13 +75,13 @@ const bookCopy: Record<Locale, BookPageCopy> = {
   },
   en: {
     eyebrow: "Bookings",
-    title: "Book event",
+    title: "Book experience",
     subtitle: (eventTitle) => `Reserve tickets for ${eventTitle}`,
     ticketsLabel: "Ticket count",
     policy: "SECURE RSVP // NO REFUNDS",
     submit: "Confirm booking",
     creditCost: (total) => `${total} credit${total === 1 ? "" : "s"}`,
-    backToEvent: "Back to event",
+    backToEvent: "Back to experience",
     pastDueEyebrow: "Bookings",
     pastDueTitle: "Credits frozen",
     pastDueBody: "Your subscription is past due. Update your payment method before booking again.",
@@ -118,7 +118,7 @@ const confirmCopy: Record<Locale, BookConfirmCopy> = {
     supportEmail: "support@unveiled.berlin",
     ticketsLabel: (count) => `${count} Ticket${count === 1 ? "" : "s"}`,
     ticketOrdinalLabel: (ordinal) => `Ticket ${ordinal}`,
-    backToEvent: "Zurück zum Event",
+    backToEvent: "Zurück zum Erlebnis",
     openVoucher: "Zur Partner-Website",
   },
   en: {
@@ -139,7 +139,7 @@ const confirmCopy: Record<Locale, BookConfirmCopy> = {
     supportEmail: "support@unveiled.berlin",
     ticketsLabel: (count) => `${count} ticket${count === 1 ? "" : "s"}`,
     ticketOrdinalLabel: (ordinal) => `Ticket ${ordinal}`,
-    backToEvent: "Back to event",
+    backToEvent: "Back to experience",
     openVoucher: "Open partner website",
   },
 };

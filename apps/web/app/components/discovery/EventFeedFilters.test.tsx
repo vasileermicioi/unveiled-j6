@@ -27,7 +27,7 @@ describe("EventFeedFilters collapse", () => {
     );
 
     expect(html).toContain("FILTERS");
-    expect(html).toContain("All upcoming events");
+    expect(html).toContain("All upcoming experiences");
     expect(html).not.toContain('id="event-feed-title"');
     expect(html).not.toContain('id="event-feed-category"');
   });

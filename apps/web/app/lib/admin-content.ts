@@ -614,7 +614,7 @@ const copy: Record<Locale, AdminCopy> = {
     previewAudienceGuest: "Gast",
     previewAudienceMember: "Mitglied",
     previewSurfaceDetail: "Detail",
-    previewSurfaceBrowse: "Events entdecken",
+    previewSurfaceBrowse: "Erlebnisse entdecken",
     previewSurfaceDiscover: "Entdecken",
     previewBrowseNote: "Filter und Karte sind nicht Teil dieser Vorschau.",
     previewOnlyCta: "Nur Vorschau",
@@ -918,10 +918,10 @@ const copy: Record<Locale, AdminCopy> = {
     deleteConfirm: "Löschen",
     publishEventTitle: "Event veröffentlichen",
     publishEventBody: (title, date) =>
-      `„${title}“ (${date}) veröffentlichen? Es erscheint danach auf Browse, wenn das Datum noch ansteht.`,
+      `„${title}“ (${date}) veröffentlichen? Es erscheint danach auf Erlebnisse entdecken, wenn das Datum noch ansteht.`,
     unpublishEventTitle: "Veröffentlichung aufheben",
     unpublishEventBody: (title) =>
-      `„${title}“ von Browse nehmen? Das Event bleibt im Katalog. Bestehende Buchungen bleiben.`,
+      `„${title}“ von Erlebnisse entdecken nehmen? Das Event bleibt im Katalog. Bestehende Buchungen bleiben.`,
     publishFeaturedEventTitle: "Empfohlenes Event veröffentlichen",
     publishFeaturedEventBody: (title) =>
       `„${title}“ auf Discover zeigen? Discover listet es nur, wenn auch das Katalog-Event veröffentlicht ist.`,
@@ -1210,7 +1210,7 @@ const copy: Record<Locale, AdminCopy> = {
     previewAudienceGuest: "Guest",
     previewAudienceMember: "Member",
     previewSurfaceDetail: "Detail",
-    previewSurfaceBrowse: "Browse events",
+    previewSurfaceBrowse: "Explore experiences",
     previewSurfaceDiscover: "Discover",
     previewBrowseNote: "Filters and map are not part of this preview.",
     previewOnlyCta: "Preview only",
@@ -1508,10 +1508,10 @@ const copy: Record<Locale, AdminCopy> = {
     deleteConfirm: "Delete",
     publishEventTitle: "Publish event",
     publishEventBody: (title, date) =>
-      `Publish “${title}” (${date})? It will appear on Browse when the date is still upcoming.`,
+      `Publish “${title}” (${date})? It will appear on Explore experiences when the date is still upcoming.`,
     unpublishEventTitle: "Unpublish event",
     unpublishEventBody: (title) =>
-      `Unpublish “${title}” from Browse? The event stays in the catalog. Existing bookings stay.`,
+      `Unpublish “${title}” from Explore experiences? The event stays in the catalog. Existing bookings stay.`,
     publishFeaturedEventTitle: "Publish featured event",
     publishFeaturedEventBody: (title) =>
       `Show “${title}” on Discover? Discover lists it only when the catalog event is also published.`,
