@@ -1,4 +1,4 @@
-import { listFeaturedEvents, listFeaturedPartners } from "@unveiled/db";
+import { listFeaturedEvents, listFeaturedPartners, listPartners } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { DiscoverPage } from "../../components/marketing/DiscoverPage";
@@ -36,13 +36,21 @@ export default createRoute(async (c) => {
   const db = getCatalogDb();
   if (db) {
     try {
-      const [featuredEvents, partnerRows] = await Promise.all([
+      const [featuredEvents, partnerRows, hostPartners] = await Promise.all([
         // Show all curated featured rows (including past) — Discover has no date filter.
         listFeaturedEvents(db, { publishedOnly: true }),
         listFeaturedPartners(db, { publishedOnly: true, limit: 8 }),
+        listPartners(db, { limit: 500 }),
       ]);
 
-      events = featuredEvents.map((event) => toEventCardItem(event, locale));
+      const hoursByPartnerId = new Map(
+        hostPartners.map((partner) => [partner.id, partner.hasOpeningHours]),
+      );
+      events = featuredEvents.map((event) =>
+        toEventCardItem(event, locale, {
+          partnerHasOpeningHours: hoursByPartnerId.get(event.partnerId) ?? false,
+        }),
+      );
       partners = partnerRows.map(toDiscoverPartnerTile);
     } catch (error) {
       console.error("discover catalog fetch failed", error);

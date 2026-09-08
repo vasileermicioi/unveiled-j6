@@ -96,6 +96,32 @@ export const MemberDiscoverDe: Story = () => (
 );
 MemberDiscoverDe.storyName = "EventCard / Member — Entdecken (de)";
 
+export const MemberMultiDateWithHours: Story = () => (
+  <EventCard
+    event={{
+      ...sampleEventAvailable,
+      isMultiDateWithHours: true,
+      partnerHasOpeningHours: true,
+    }}
+    locale="en"
+    viewer={{ kind: "member", subscriptionActive: true }}
+  />
+);
+MemberMultiDateWithHours.storyName = "EventCard / Member — From prefix (multi-date + hours)";
+
+export const MemberMultiDateWithHoursDe: Story = () => (
+  <EventCard
+    event={{
+      ...sampleEventAvailableDe,
+      isMultiDateWithHours: true,
+      partnerHasOpeningHours: true,
+    }}
+    locale="de"
+    viewer={{ kind: "member", subscriptionActive: true }}
+  />
+);
+MemberMultiDateWithHoursDe.storyName = "EventCard / Member — Ab prefix (de)";
+
 export const MemberSavedOn: Story = () => (
   <EventCard
     bookmarkFormAction="/en/events/sample/unsave"

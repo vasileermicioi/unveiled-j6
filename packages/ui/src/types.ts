@@ -13,6 +13,10 @@ export type EventCardItem = {
   ticketType: EventCardTicketType;
   category: string;
   imageId: string;
+  /** Multi-date event with partner opening hours → card date shows "From"/"Ab" prefix. */
+  isMultiDateWithHours?: boolean;
+  /** Partner has opening hours → card date omits clock time (date-only). */
+  partnerHasOpeningHours?: boolean;
 };
 
 export type EventCardViewerState =

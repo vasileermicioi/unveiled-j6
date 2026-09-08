@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { formatEventDetailWhenLines } from "./event-detail-when-display";
+import { formatEventDetailWhenLines, shouldHideDetailDateLines } from "./event-detail-when-display";
 
 const CLOCK_HH_MM = /\d{2}:\d{2}/;
 
@@ -52,5 +52,23 @@ describe("formatEventDetailWhenLines", () => {
     expect(lines[0]?.key).toBe(laterDay.toISOString());
     expect(lines[0]?.isNext).toBe(true);
     expect(lines[0]?.label).toMatch(CLOCK_HH_MM);
+  });
+});
+
+describe("shouldHideDetailDateLines", () => {
+  test("hides when hours visible and more than one Berlin day", () => {
+    expect(shouldHideDetailDateLines([morning, laterDay], evening, true)).toBe(true);
+  });
+
+  test("shows single day with hours visible", () => {
+    expect(shouldHideDetailDateLines([morning, evening], evening, true)).toBe(false);
+  });
+
+  test("shows multiple days when hours hidden", () => {
+    expect(shouldHideDetailDateLines([morning, laterDay], evening, false)).toBe(false);
+  });
+
+  test("empty dateTimes falls back to nextDateTime (single day → visible)", () => {
+    expect(shouldHideDetailDateLines([], laterDay, true)).toBe(false);
   });
 });

@@ -23,6 +23,7 @@ import { getEventDetailGalleryCopy } from "../../lib/event-detail-gallery-copy";
 import {
   formatEventDateTime,
   formatEventDetailWhenLines,
+  shouldHideDetailDateLines,
 } from "../../lib/event-detail-when-display";
 import { imageAltWithCredit, imageCreditTitle } from "../../lib/image-credit";
 import type { Locale } from "../../lib/locale";
@@ -703,7 +704,12 @@ export function EventDetailPage({
                 </Surface>
               ) : null}
               <Surface className="event-detail--checkout__meta-grid min-w-0" variant="transparent">
-                {showMemberBookingChrome ? (
+                {showMemberBookingChrome &&
+                !shouldHideDetailDateLines(
+                  event.dateTimes,
+                  event.dateTime,
+                  partnerHoursLines != null,
+                ) ? (
                   <DateTimesMetaCell
                     dateTimes={event.dateTimes}
                     includeTime={event.timingMode !== "ALL_DAY" && partnerHoursLines == null}

@@ -80,3 +80,27 @@ export function formatEventDetailWhenLines(
 
   return lines;
 }
+
+/**
+ * Whether the DETAILS Date cell should be omitted entirely.
+ * When partner opening hours are visible and the event spans more than one
+ * Berlin calendar day, opening hours are enough — hide the date list.
+ */
+export function shouldHideDetailDateLines(
+  dateTimes: Date[],
+  nextDateTime: Date,
+  partnerHoursVisible: boolean,
+): boolean {
+  if (!partnerHoursVisible) {
+    return false;
+  }
+  const ordered = dateTimes.length > 0 ? dateTimes : [nextDateTime];
+  const seen = new Set<string>();
+  for (const dateTime of ordered) {
+    seen.add(getBerlinCalendarDate(dateTime));
+    if (seen.size > 1) {
+      return true;
+    }
+  }
+  return false;
+}

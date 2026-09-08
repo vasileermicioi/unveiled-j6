@@ -1,5 +1,6 @@
 import {
   type Event,
+  getBerlinCalendarDate,
   getEventCategoryLabel,
   isOccurrenceUpcoming,
   type Partner,
@@ -10,7 +11,23 @@ import type { EventCardItem } from "@unveiled/ui";
 
 import type { Locale } from "./locale";
 
-export function toEventCardItem(event: Event, locale: Locale): EventCardItem {
+function hasMultipleBerlinCalendarDays(dateTimes: Date[]): boolean {
+  const seen = new Set<string>();
+  for (const dateTime of dateTimes) {
+    seen.add(getBerlinCalendarDate(dateTime));
+    if (seen.size > 1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function toEventCardItem(
+  event: Event,
+  locale: Locale,
+  options?: { partnerHasOpeningHours?: boolean },
+): EventCardItem {
+  const partnerHasOpeningHours = Boolean(options?.partnerHasOpeningHours);
   return {
     id: event.id,
     title: resolveEventCopy(event, locale).title,
@@ -22,6 +39,8 @@ export function toEventCardItem(event: Event, locale: Locale): EventCardItem {
     ticketType: event.ticketType,
     category: getEventCategoryLabel(locale, event.category),
     imageId: event.imageId,
+    isMultiDateWithHours: partnerHasOpeningHours && hasMultipleBerlinCalendarDays(event.dateTimes),
+    partnerHasOpeningHours,
   };
 }
 

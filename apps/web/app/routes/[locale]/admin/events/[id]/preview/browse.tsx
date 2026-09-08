@@ -1,4 +1,4 @@
-import { resolveEventCopy } from "@unveiled/db";
+import { getPartnerById, resolveEventCopy } from "@unveiled/db";
 import { createRoute } from "honox/factory";
 
 import { AdminEventPreviewCardFrame } from "../../../../../../components/admin/AdminEventPreviewCardFrame";
@@ -6,6 +6,7 @@ import { AdminEventPreviewChrome } from "../../../../../../components/admin/Admi
 import { adminEventPreviewPath } from "../../../../../../components/admin/admin-tabs";
 import { getAdminCopy } from "../../../../../../lib/admin-content";
 import { loadAdminEventPreview } from "../../../../../../lib/admin-event-preview";
+import { getAuthOptions } from "../../../../../../lib/auth";
 import { toEventCardItem } from "../../../../../../lib/catalog-mappers";
 
 export default createRoute(async (c) => {
@@ -17,7 +18,11 @@ export default createRoute(async (c) => {
   const { locale, event } = loaded;
   const copy = getAdminCopy(locale);
   const eventCopy = resolveEventCopy(event, locale);
-  const card = toEventCardItem(event, locale);
+  const { db } = getAuthOptions();
+  const partner = await getPartnerById(db, event.partnerId).catch(() => null);
+  const card = toEventCardItem(event, locale, {
+    partnerHasOpeningHours: partner?.hasOpeningHours ?? false,
+  });
 
   return c.render(
     <>

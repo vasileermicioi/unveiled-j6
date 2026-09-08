@@ -23,13 +23,18 @@ export type EventCardProps = {
 const ICON_SIZE = 14;
 const BOOKMARK_ICON_SIZE = 18;
 
-function formatEventDate(dateTime: Date, locale: CatalogLocale): string {
+function formatEventDate(
+  dateTime: Date,
+  locale: CatalogLocale,
+  options?: { includeTime?: boolean },
+): string {
   return new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", {
     weekday: "short",
     day: "numeric",
     month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
+    ...(options?.includeTime === false
+      ? {}
+      : { hour: "2-digit" as const, minute: "2-digit" as const }),
     timeZone: "Europe/Berlin",
   }).format(dateTime);
 }
@@ -39,6 +44,10 @@ function creditsUnitLabel(creditPrice: number, locale: CatalogLocale): string {
     return creditPrice === 1 ? "Credit" : "Credits";
   }
   return creditPrice === 1 ? "credit" : "credits";
+}
+
+function fromDatePrefix(locale: CatalogLocale): string {
+  return locale === "de" ? "Ab" : "From";
 }
 
 function waitlistCtaLabel(locale: CatalogLocale): string {
@@ -188,7 +197,10 @@ export function EventCard({
               strokeWidth={2}
             />
             <Paragraph color="muted" size="sm">
-              {formatEventDate(event.dateTime, locale)}
+              {event.isMultiDateWithHours ? `${fromDatePrefix(locale)} ` : ""}
+              {formatEventDate(event.dateTime, locale, {
+                includeTime: !(event.partnerHasOpeningHours ?? event.isMultiDateWithHours),
+              })}
             </Paragraph>
           </Surface>
         ) : null}
