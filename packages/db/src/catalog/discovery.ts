@@ -2,6 +2,7 @@ import { and, asc, count, eq, gte, inArray, ne, or, type SQL, sql } from "drizzl
 
 import type { Db } from "../index";
 import { type Event, events } from "../schema/events";
+import { partners } from "../schema/partners";
 import { savedEvents } from "../schema/saved-events";
 import {
   type BerlinDayRange,
@@ -106,12 +107,32 @@ function normalizeFilterList(value?: string | string[]): string[] {
 /**
  * Timed events drop at `now`. All-day events stay listed through Berlin midnight
  * of the next calendar day (`date_time` is stored as that day's 00:00).
+ * Museum-style events (partner has opening hours + spans >1 Berlin calendar day)
+ * are date-only: any occurrence on/after Berlin today keeps them listed,
+ * regardless of clock time.
  */
+function openingHoursMultiDateUpcomingCondition(todayStart: Date): SQL {
+  return and(
+    sql`EXISTS (SELECT 1 FROM ${partners} WHERE ${partners.id} = ${events.partnerId} AND ${partners.hasOpeningHours} = TRUE)`,
+    sql`(SELECT COUNT(DISTINCT ((multi_day.dt AT TIME ZONE 'Europe/Berlin')::date)) FROM unnest(${events.dateTimes}) AS multi_day(dt)) > 1`,
+    sql`EXISTS (SELECT 1 FROM unnest(${events.dateTimes}) AS occ_today(dt) WHERE occ_today.dt >= ${todayStart})`,
+  ) as SQL;
+}
+
+function openingHoursMultiDateWindowCondition(window: BerlinDayRange): SQL {
+  return and(
+    sql`EXISTS (SELECT 1 FROM ${partners} WHERE ${partners.id} = ${events.partnerId} AND ${partners.hasOpeningHours} = TRUE)`,
+    sql`(SELECT COUNT(DISTINCT ((multi_win.dt AT TIME ZONE 'Europe/Berlin')::date)) FROM unnest(${events.dateTimes}) AS multi_win(dt)) > 1`,
+    sql`EXISTS (SELECT 1 FROM unnest(${events.dateTimes}) AS occ_win(dt) WHERE occ_win.dt >= ${window.start} AND occ_win.dt < ${window.end})`,
+  ) as SQL;
+}
+
 function upcomingDateTimeCondition(now: Date): SQL {
   const todayStart = berlinTodayRange(now).start;
   return or(
     and(eq(events.timingMode, "ALL_DAY"), gte(events.dateTime, todayStart)),
     and(ne(events.timingMode, "ALL_DAY"), gte(events.dateTime, now)),
+    openingHoursMultiDateUpcomingCondition(todayStart),
   ) as SQL;
 }
 
@@ -120,6 +141,8 @@ function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
   // Default: upcoming soonest-first. Ranged: inclusive Europe/Berlin calendar
   // days, from ≥ Berlin today. Timed slots still require dt >= now; all-day
   // occurrences match the Berlin day (`dt < next midnight`) even after 00:00.
+  // Opening-hours multi-date events match date-only (Berlin day >= today / in
+  // window) regardless of clock time.
   const conditions: SQL[] = [eq(events.published, true)];
 
   if (window === "empty") {
@@ -149,6 +172,7 @@ function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
               AND occurrence.dt < ${window.end}
           )`,
         ),
+        openingHoursMultiDateWindowCondition(window),
       ) as SQL,
     );
   }
