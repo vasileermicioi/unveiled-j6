@@ -154,12 +154,6 @@ function guestNotice(locale: Locale): string {
     : "This event is included in the membership. Log in or register to continue.";
 }
 
-function eligibleNotice(locale: Locale): string {
-  return locale === "de"
-    ? "Dieses Event ist in der Mitgliedschaft enthalten."
-    : "This event is included in the membership.";
-}
-
 function membershipNotice(locale: Locale): string {
   return locale === "de"
     ? "Aktiviere deine Mitgliedschaft, um zu buchen."
@@ -446,7 +440,7 @@ function resolveCheckoutActions(
     return {
       primaryAction: { type: "book", bookPath, label: bookLabel(locale) },
       secondaryAction: null,
-      noticeText: eligibleNotice(locale),
+      noticeText: null,
       statusMessage: null,
       showTicketControls: true,
     };
