@@ -326,7 +326,7 @@ test.describe("static-pages.feature", () => {
     await expect(
       page
         .getByRole("main")
-        .getByText(/do not roll over|rollen nicht|nicht .*übertragen/i)
+        .getByText(/verfallen Restcredits|forfeited at the end of the paid period/i)
         .first(),
     ).toBeVisible();
     await expect(page.getByRole("main")).not.toContainText(/Platzhalter|pending legal review/i);

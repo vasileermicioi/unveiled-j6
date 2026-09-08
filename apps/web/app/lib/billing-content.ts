@@ -38,7 +38,6 @@ export type BillingCopy = {
   cancelConfirm: string;
   cancelKeep: string;
   successCancelled: string;
-  noRolloverNote: string;
 };
 
 const copy: Record<Locale, BillingCopy> = {
@@ -87,11 +86,10 @@ const copy: Record<Locale, BillingCopy> = {
     backToBilling: "Zurück zur Abrechnung",
     cancelPageTitle: "Abo kündigen?",
     cancelPageSubtitle:
-      "Die Kündigung gilt zum Ende der aktuellen Periode. Bis dahin bleiben Credits und Buchungen verfügbar. Credits verfallen am Periodenende (kein Übertrag).",
+      "Die Kündigung gilt zum Ende der aktuellen Periode. Bis dahin bleiben Credits und Buchungen verfügbar.",
     cancelConfirm: "Zum Periodenende kündigen",
     cancelKeep: "Abo behalten",
     successCancelled: "Kündigung zum Periodenende vorgemerkt.",
-    noRolloverNote: "Ungenutzte Credits verfallen am Periodenende — kein Übertrag.",
   },
   en: {
     eyebrow: "Account",
@@ -138,11 +136,10 @@ const copy: Record<Locale, BillingCopy> = {
     backToBilling: "Back to billing",
     cancelPageTitle: "Cancel subscription?",
     cancelPageSubtitle:
-      "Cancellation takes effect at the end of the current period. Credits and booking access remain until then. Unused credits expire at period end (no rollover).",
+      "Cancellation takes effect at the end of the current period. Credits and booking access remain until then.",
     cancelConfirm: "Cancel at period end",
     cancelKeep: "Keep subscription",
     successCancelled: "Cancellation scheduled for period end.",
-    noRolloverNote: "Unused credits expire at period end — no rollover.",
   },
 };
 

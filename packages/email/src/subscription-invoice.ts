@@ -76,7 +76,7 @@ function invoiceCopy(locale: SubscriptionInvoiceLocale, links: InvoiceLinks): In
       headline: "Deine Mitgliedschaft ist aktiv",
       greeting: "Deine Unveiled Berlin Mitgliedschaft ist aktiv.",
       planLine: "Abo: Basic Berlin — 29€/Monat",
-      creditsLine: "Credits: 17 pro Monat (ungenutzte Credits verfallen)",
+      creditsLine: "Credits: 17 pro Monat",
       pdfNote: "Deine Rechnung ist als PDF angehängt.",
       stepsHeading: "Nächste Schritte",
       steps: [
@@ -99,7 +99,7 @@ function invoiceCopy(locale: SubscriptionInvoiceLocale, links: InvoiceLinks): In
     headline: "Your membership is active",
     greeting: "Your Unveiled Berlin membership is active.",
     planLine: "Plan: Basic Berlin — 29€/month",
-    creditsLine: "Credits: 17 per month (unused credits do not roll over)",
+    creditsLine: "Credits: 17 per month",
     pdfNote: "Your invoice is attached as a PDF.",
     stepsHeading: "What to do next",
     steps: [
@@ -182,7 +182,7 @@ export function buildSubscriptionInvoiceContent(
       text: `Deine Unveiled Berlin Mitgliedschaft ist aktiv.
 
 Abo: Basic Berlin — 29€/Monat
-Credits: 17 pro Monat (ungenutzte Credits verfallen)
+Credits: 17 pro Monat
 
 Deine Rechnung ist als PDF angehängt.
 
@@ -199,7 +199,7 @@ Support: ${SUPPORT_EMAIL}`,
     text: `Your Unveiled Berlin membership is active.
 
 Plan: Basic Berlin — 29€/month
-Credits: 17 per month (unused credits do not roll over)
+Credits: 17 per month
 
 Your invoice is attached as a PDF.
 

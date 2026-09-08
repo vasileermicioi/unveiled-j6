@@ -89,7 +89,6 @@ export function BillingPage({
               <Paragraph>
                 {copy.billingAddressLabel}: {billingAddress}
               </Paragraph>
-              <Paragraph color="muted">{copy.noRolloverNote}</Paragraph>
             </>
           )}
 

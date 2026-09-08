@@ -161,7 +161,7 @@ export const legalContent: {
           title: "Credits und Buchung",
           body: [
             "Credits dienen nur der Buchung auf Unveiled Berlin; kein Umtausch in Geld, kein Verkauf, keine Übertragung, keine à-la-carte-Pakete.",
-            "Nicht genutzte Credits verfallen am Periodenende bzw. bei Verlängerung. Credits werden nicht in den nächsten Zeitraum übertragen und rollen nicht mit. Nach Kündigung verfallen Restcredits am Ende des bezahlten Zeitraums.",
+            "Nach Kündigung verfallen Restcredits am Ende des bezahlten Zeitraums.",
             "Buchungen verbrauchen Credits und setzen buchungsfähigen Status voraus. Eintritt über geheime Codes in der App. Kapazität und Warteliste können gelten; Wartelistenförderung nutzt denselben Buchungsweg. Keine Selbst-Stornierung oder Selbst-Erstattung (Secure RSVP); bei Absage durch den Betreiber können Credits nach Produktregeln gutgeschrieben werden.",
           ],
         },
@@ -195,7 +195,7 @@ export const legalContent: {
           title: "Credits and booking",
           body: [
             "Credits are only for bookings on Unveiled Berlin; no cash exchange, sale, transfer, or à-la-carte packs.",
-            "Unused credits expire at the period boundary or renewal. Credits do not roll over to the next period. After cancellation, remaining credits are forfeited at the end of the paid period.",
+            "After cancellation, remaining credits are forfeited at the end of the paid period.",
             "Bookings spend credits and need a booking-eligible status. Admission uses secret codes in the app. Capacity and waitlist may apply; waitlist promotion uses the same booking path. No self-cancel or self-refund (secure RSVP); if we cancel an experience, credits may be restored under the product rules.",
           ],
         },
