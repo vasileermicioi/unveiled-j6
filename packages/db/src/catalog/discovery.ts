@@ -54,8 +54,8 @@ function escapeIlikePattern(value: string): string {
  * Resolve the calendar range for a ranged feed query.
  * - `null` — no from/to (default upcoming window).
  * - `"empty"` — inverted after clamping (past-only range).
- * - otherwise inclusive Berlin day bounds (timed slots still intersect with `now`;
- *   all-day uses the Berlin day start so 00:00 stays in range).
+ * - otherwise inclusive Berlin day bounds (date >= today; same-day past slots
+ *   stay in range, all-day uses the Berlin day start so 00:00 stays in range).
  */
 function resolveFeedWindow(filters: MemberFeedFilters, now: Date): BerlinDayRange | "empty" | null {
   const hasFrom = Boolean(filters.from?.trim());
@@ -105,11 +105,11 @@ function normalizeFilterList(value?: string | string[]): string[] {
 }
 
 /**
- * Timed events drop at `now`. All-day events stay listed through Berlin midnight
- * of the next calendar day (`date_time` is stored as that day's 00:00).
- * Museum-style events (partner has opening hours + spans >1 Berlin calendar day)
- * are date-only: any occurrence on/after Berlin today keeps them listed,
- * regardless of clock time.
+ * Browse feed shows only events with Berlin calendar date >= today.
+ * Timed and all-day events stay listed through the end of their Berlin day
+ * (`date_time >= Berlin midnight today`). Museum-style events (partner has
+ * opening hours + spans >1 Berlin calendar day) are date-only: any occurrence
+ * on/after Berlin today keeps them listed, regardless of clock time.
  */
 function openingHoursMultiDateUpcomingCondition(todayStart: Date): SQL {
   return and(
@@ -130,17 +130,31 @@ function openingHoursMultiDateWindowCondition(window: BerlinDayRange): SQL {
 function upcomingDateTimeCondition(now: Date): SQL {
   const todayStart = berlinTodayRange(now).start;
   return or(
-    and(eq(events.timingMode, "ALL_DAY"), gte(events.dateTime, todayStart)),
-    and(ne(events.timingMode, "ALL_DAY"), gte(events.dateTime, now)),
+    gte(events.dateTime, todayStart),
     openingHoursMultiDateUpcomingCondition(todayStart),
   ) as SQL;
 }
 
+/**
+ * Browse ordering: soonest first, but events whose partner has opening hours
+ * sort last (after all regular events, still soonest-first within each group).
+ */
+function memberFeedOrderBy(): SQL[] {
+  return [
+    asc(
+      sql`EXISTS (SELECT 1 FROM ${partners} WHERE ${partners.id} = ${events.partnerId} AND ${partners.hasOpeningHours} = TRUE)`,
+    ),
+    asc(events.dateTime),
+    asc(events.id),
+  ];
+}
+
 function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
   const window = resolveFeedWindow(filters, now);
-  // Default: upcoming soonest-first. Ranged: inclusive Europe/Berlin calendar
-  // days, from ≥ Berlin today. Timed slots still require dt >= now; all-day
-  // occurrences match the Berlin day (`dt < next midnight`) even after 00:00.
+  // Default: date >= Berlin today, soonest-first with opening-hours partners
+  // last. Ranged: inclusive Europe/Berlin calendar days, from ≥ Berlin today.
+  // Timed and all-day occurrences match the Berlin day window (`dt >= start`
+  // and `dt < end`), so same-day past slots stay listed.
   // Opening-hours multi-date events match date-only (Berlin day >= today / in
   // window) regardless of clock time.
   const conditions: SQL[] = [eq(events.published, true)];
@@ -150,7 +164,7 @@ function memberFeedConditions(filters: MemberFeedFilters, now: Date): SQL[] {
   } else if (window === null) {
     conditions.push(upcomingDateTimeCondition(now));
   } else {
-    const timedStart = window.start > now ? window.start : now;
+    const timedStart = window.start;
     conditions.push(upcomingDateTimeCondition(now));
     conditions.push(
       or(
@@ -218,7 +232,7 @@ export async function listMemberFeedEvents(
       .select()
       .from(events)
       .where(where)
-      .orderBy(asc(events.dateTime), asc(events.id))
+      .orderBy(...memberFeedOrderBy())
       .limit(MEMBER_FEED_PAGE_SIZE)
       .offset(offset),
     db.select({ count: count() }).from(events).where(where),
@@ -247,7 +261,7 @@ export async function listMemberFeedMapEvents(
       .select()
       .from(events)
       .where(where)
-      .orderBy(asc(events.dateTime), asc(events.id))
+      .orderBy(...memberFeedOrderBy())
       .limit(MEMBER_FEED_MAP_MAX),
     db.select({ count: count() }).from(events).where(where),
   ]);
@@ -313,7 +327,7 @@ export async function listSavedUpcomingEvents(
         eq(events.published, true),
       ),
     )
-    .orderBy(asc(events.dateTime), asc(events.id));
+    .orderBy(...memberFeedOrderBy());
 
   return rows.map((row) => row.event);
 }

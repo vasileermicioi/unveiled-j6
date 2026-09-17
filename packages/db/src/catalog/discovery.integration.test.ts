@@ -37,7 +37,7 @@ async function insertTestUser(db: ReturnType<typeof createDb>, suffix: string) {
 }
 
 describe("discovery integration", () => {
-  test("defaults to all upcoming soonest-first and excludes past events", async () => {
+  test("defaults to date >= today soonest-first and excludes past dates", async () => {
     if (!databaseUrl) {
       console.warn("DATABASE_URL not set — skipping integration test");
       return;
@@ -114,9 +114,11 @@ describe("discovery integration", () => {
       const ids = feed.items.map((row) => row.id);
       expect(ids).toContain(todayFuture.id);
       expect(ids).toContain(tomorrow.id);
-      expect(ids).not.toContain(todayPast.id);
+      // Browse shows date >= today: same-day past slots stay listed.
+      expect(ids).toContain(todayPast.id);
+      expect(ids.indexOf(todayPast.id)).toBeLessThan(ids.indexOf(todayFuture.id));
       expect(ids.indexOf(todayFuture.id)).toBeLessThan(ids.indexOf(tomorrow.id));
-      expect(feed.total).toBeGreaterThanOrEqual(2);
+      expect(feed.total).toBeGreaterThanOrEqual(3);
     } finally {
       await deleteEvent(db, todayFuture.id, { skipBucket: true });
       await deleteEvent(db, todayPast.id, { skipBucket: true });
@@ -185,7 +187,8 @@ describe("discovery integration", () => {
       const feed = await listMemberFeedEvents(db, { now });
       const feedIds = new Set(feed.items.map((row) => row.id));
       expect(feedIds.has(allDayToday.id)).toBe(true);
-      expect(feedIds.has(timedPast.id)).toBe(false);
+      // Browse shows date >= today: same-day past timed slots stay listed.
+      expect(feedIds.has(timedPast.id)).toBe(true);
 
       const day = await listMemberFeedEvents(db, {
         now,
@@ -194,7 +197,7 @@ describe("discovery integration", () => {
       });
       const dayIds = new Set(day.items.map((row) => row.id));
       expect(dayIds.has(allDayToday.id)).toBe(true);
-      expect(dayIds.has(timedPast.id)).toBe(false);
+      expect(dayIds.has(timedPast.id)).toBe(true);
     } finally {
       await deleteEvent(db, allDayToday.id, { skipBucket: true });
       await deleteEvent(db, timedPast.id, { skipBucket: true });
@@ -202,7 +205,7 @@ describe("discovery integration", () => {
     }
   });
 
-  test("period filter clamps past from to Berlin today and excludes past events", async () => {
+  test("period filter clamps past from to Berlin today and excludes past dates", async () => {
     if (!databaseUrl) {
       console.warn("DATABASE_URL not set — skipping integration test");
       return;
@@ -298,7 +301,7 @@ describe("discovery integration", () => {
       expect(pastOnly.items.map((row) => row.id)).not.toContain(past.id);
       expect(pastOnly.total).toBe(0);
 
-      // from before today clamped to today; still excludes already-started showtimes
+      // from before today clamped to today; same-day past slots stay listed (date >= today)
       const clamped = await listMemberFeedEvents(db, {
         now,
         from: "2026-07-07",
@@ -306,7 +309,7 @@ describe("discovery integration", () => {
       });
       const clampedIds = new Set(clamped.items.map((row) => row.id));
       expect(clampedIds.has(past.id)).toBe(false);
-      expect(clampedIds.has(todayPast.id)).toBe(false);
+      expect(clampedIds.has(todayPast.id)).toBe(true);
       expect(clampedIds.has(todayFuture.id)).toBe(true);
       expect(clampedIds.has(future.id)).toBe(false);
     } finally {
@@ -736,7 +739,8 @@ describe("discovery integration", () => {
       );
 
       const upcoming = await listSavedUpcomingEvents(db, userId, now);
-      expect(upcoming.map((row) => row.id)).toEqual([todayEvent.id, laterEvent.id]);
+      // Browse/saved show date >= today: same-day past slots stay listed, soonest-first.
+      expect(upcoming.map((row) => row.id)).toEqual([pastEvent.id, todayEvent.id, laterEvent.id]);
 
       await unsaveEvent(db, userId, todayEvent.id);
       await unsaveEvent(db, userId, todayEvent.id);
@@ -829,13 +833,102 @@ describe("discovery integration", () => {
         to: "2026-07-08",
         title: suffix,
       });
-      // Past occurrence on 08th is in range, but no upcoming occurrence within the clamped window
-      // (effectiveStart = now on 09th). Event stays out unless a future slot falls in-range.
+      // Past occurrence on 08th is in range, but the clamped window is empty
+      // (from 08th < today 09th clamps to 09th > to 08th). Event stays out
+      // unless a future slot falls in-range.
       expect(earlyRange.items.map((row) => row.id)).not.toContain(multi.id);
     } finally {
       await deleteEvent(db, multi.id, { skipBucket: true });
       await deleteEvent(db, allPast.id, { skipBucket: true });
       await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
+  test("opening-hours partners sort last in browse feed", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const now = new Date("2026-07-09T08:00:00.000Z");
+    const week = {
+      mon: { open: "09:00", close: "17:00" },
+      tue: { open: "09:00", close: "17:00" },
+      wed: { open: "09:00", close: "17:00" },
+      thu: { open: "09:00", close: "17:00" },
+      fri: { open: "09:00", close: "17:00" },
+      sat: { closed: true } as const,
+      sun: { closed: true } as const,
+    };
+
+    const regularPartner = await createPartner(db, {
+      name: `Discovery Regular ${suffix}`,
+      ...structuredLocationFromAddress("Regulärstraße 1, Berlin"),
+      contactEmail: `discovery-regular-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+    const hoursPartner = await createPartner(db, {
+      name: `Discovery Hours ${suffix}`,
+      ...structuredLocationFromAddress("Stundenstraße 1, Berlin"),
+      contactEmail: `discovery-hours-${suffix}@example.com`,
+      logoPrebuilt: await createTestImage(),
+      skipUpload: true,
+      hasOpeningHours: true,
+      openingHours: week,
+    });
+
+    // Opening-hours event is sooner but must still sort after the regular event.
+    const hoursEvent = await createPublishedEvent(db, {
+      partnerId: hoursPartner.id,
+      title: `Hours Soon ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Stundenstraße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "museum",
+      eventType: "exhibition_ongoing",
+      dateTimes: [new Date("2026-07-10T10:00:00.000Z")],
+      creditPrice: 1,
+      secretCode: `HRS${suffix.slice(0, 5)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+    const regularEvent = await createPublishedEvent(db, {
+      partnerId: regularPartner.id,
+      title: `Regular Later ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Regulärstraße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "theater",
+      eventType: "theater_play",
+      dateTimes: [new Date("2026-07-12T18:00:00.000Z")],
+      creditPrice: 1,
+      secretCode: `REG${suffix.slice(0, 5)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    try {
+      const feed = await listMemberFeedEvents(db, { now, title: suffix });
+      const ids = feed.items.map((row) => row.id);
+      expect(ids).toContain(regularEvent.id);
+      expect(ids).toContain(hoursEvent.id);
+      expect(ids.indexOf(regularEvent.id)).toBeLessThan(ids.indexOf(hoursEvent.id));
+
+      const mapFeed = await listMemberFeedMapEvents(db, { now, title: suffix });
+      const mapIds = mapFeed.items.map((row) => row.id);
+      expect(mapIds.indexOf(regularEvent.id)).toBeLessThan(mapIds.indexOf(hoursEvent.id));
+    } finally {
+      await deleteEvent(db, hoursEvent.id, { skipBucket: true });
+      await deleteEvent(db, regularEvent.id, { skipBucket: true });
+      await deletePartner(db, hoursPartner.id, { skipBucket: true });
+      await deletePartner(db, regularPartner.id, { skipBucket: true });
     }
   });
 });
