@@ -6,6 +6,7 @@ import { useClientMounted } from "./useClientMounted";
 
 type AccountMenuProps = {
   triggerLabel: string;
+  displayName: string;
   email: string;
   creditsLabel?: string;
   profileHref?: string;
@@ -20,6 +21,7 @@ const triggerClassName = "button button--secondary button--md site-account-menu_
 
 export default function AccountMenu({
   triggerLabel,
+  displayName,
   email,
   creditsLabel,
   profileHref,
@@ -68,11 +70,16 @@ export default function AccountMenu({
       </Button>
       <Dropdown.Popover className="site-account-menu__popover" placement="bottom end">
         <Surface className="site-account-menu__identity" variant="transparent">
-          <Paragraph className="site-account-menu__email" color="muted" size="xs">
-            {email}
+          <Paragraph className="site-account-menu__name" size="sm">
+            {displayName}
           </Paragraph>
+          {displayName !== email ? (
+            <Paragraph className="site-account-menu__email" color="muted" size="xs">
+              {email}
+            </Paragraph>
+          ) : null}
           {creditsLabel ? (
-            <Paragraph className="site-account-menu__credits" color="muted" size="xs">
+            <Paragraph className="site-account-menu__credits" size="sm">
               {creditsLabel}
             </Paragraph>
           ) : null}

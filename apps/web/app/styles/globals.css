@@ -441,6 +441,16 @@
     margin-bottom: 0.25rem;
   }
 
+  .site-account-menu__name {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+    line-height: 1.3;
+    text-transform: none;
+  }
+
   .site-account-menu__email {
     margin: 0;
     overflow: hidden;
@@ -452,8 +462,9 @@
   }
 
   .site-account-menu__credits {
-    margin: 0;
-    font-weight: 500;
+    margin: 0.25rem 0 0;
+    color: var(--foreground);
+    font-weight: 700;
     line-height: 1.3;
     text-transform: none;
   }
@@ -680,6 +691,30 @@
     text-transform: uppercase;
   }
 
+  .site-nav-drawer__identity {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .site-nav-drawer__identity-name {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+    line-height: 1.3;
+    text-transform: none;
+  }
+
+  .site-nav-drawer__identity-email {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+    line-height: 1.3;
+    text-transform: none;
+  }
+
   .link.drawer-link,
   .button.drawer-link {
     display: block;
@@ -714,6 +749,10 @@
     font-size: 0.875rem;
     font-weight: 700;
     text-transform: uppercase;
+  }
+
+  .site-nav-drawer__credits {
+    color: var(--foreground);
   }
 
   @media (hover: hover) {

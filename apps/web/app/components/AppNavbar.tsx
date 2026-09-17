@@ -8,6 +8,7 @@ import type { AppSession } from "../lib/auth";
 import { getCopy, NAV_ITEMS, NAV_SEGMENTS } from "../lib/copy";
 import type { Locale } from "../lib/locale";
 import { isActiveNavPath, isAuthPage, localizedPath, switchLocalePath } from "../lib/locale";
+import { memberDisplayName } from "./admin/member-display";
 import { NavLink } from "./NavLink";
 
 type AppNavbarProps = {
@@ -187,6 +188,7 @@ export function AppNavbar({
                 adminHref={isAdmin ? adminHref : undefined}
                 adminLabel={isAdmin ? adminCopy.navDashboard : undefined}
                 creditsLabel={creditsLabel}
+                displayName={memberDisplayName(session.user.profile, session.user.email)}
                 email={session.user.email}
                 logoutLabel={copy.logout}
                 profileHref={showProfileNav ? profileHref : undefined}
@@ -211,6 +213,10 @@ export function AppNavbar({
             bookingsIsActive={showBookingsNav ? bookingsIsActive : undefined}
             bookingsLabel={showBookingsNav ? copy.myBookings : undefined}
             creditsLabel={creditsLabel}
+            displayName={
+              session ? memberDisplayName(session.user.profile, session.user.email) : undefined
+            }
+            email={session?.user.email}
             isAuthenticated={Boolean(session)}
             locale={locale}
             localeDeHref={switchLocalePath(pathname, "de")}

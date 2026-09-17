@@ -20,6 +20,8 @@ type DrawerSections = {
 type AppNavbarMenuProps = {
   navLinks: MobileNavLink[];
   isAuthenticated: boolean;
+  displayName?: string;
+  email?: string;
   adminHref?: string;
   adminLabel?: string;
   showGuestAuthActions: boolean;
@@ -95,6 +97,8 @@ function DrawerTextLink({
 export default function AppNavbarMenu({
   navLinks,
   isAuthenticated,
+  displayName,
+  email,
   adminHref,
   adminLabel,
   showGuestAuthActions,
@@ -162,6 +166,28 @@ export default function AppNavbarMenu({
                 <Surface className="site-nav-drawer__section" variant="transparent">
                   <DrawerSectionLabel>{sections.account}</DrawerSectionLabel>
 
+                  {isAuthenticated && (displayName || email) ? (
+                    <Surface
+                      className="site-nav-drawer__identity flex flex-col gap-1"
+                      variant="transparent"
+                    >
+                      {displayName ? (
+                        <Paragraph className="site-nav-drawer__identity-name">
+                          {displayName}
+                        </Paragraph>
+                      ) : null}
+                      {email && email !== displayName ? (
+                        <Paragraph
+                          className="site-nav-drawer__identity-email"
+                          color="muted"
+                          size="xs"
+                        >
+                          {email}
+                        </Paragraph>
+                      ) : null}
+                    </Surface>
+                  ) : null}
+
                   {subscribeHref && subscribeLabel ? (
                     <Link className="button button--primary button--md" href={subscribeHref}>
                       {subscribeLabel}
@@ -190,7 +216,7 @@ export default function AppNavbarMenu({
                         <DrawerTextLink href={adminHref} label={adminLabel} />
                       ) : null}
                       {creditsLabel ? (
-                        <Paragraph className="drawer-link drawer-link--static" color="muted">
+                        <Paragraph className="drawer-link drawer-link--static site-nav-drawer__credits">
                           {creditsLabel}
                         </Paragraph>
                       ) : null}
