@@ -17,7 +17,7 @@ Binding context for the production MVP. Personas and partner scope follow [`CHAR
 
 - Venue / `partners` **records** remain: admins create venues and attach events; public UI may show venue name, address, and logo.
 - No partner login, `/partner/*` portal, portal-access provisioning UI, or check-in UI in MVP.
-- Credits do **not** roll over month to month.
+- Credits roll over month to month, up to 2 months' worth (max 34 credits) — excess above the cap is forfeited at renewal, and any remaining credits are forfeited when the subscription ends.
 
 **What makes this a real product:** the credit/subscription model and the atomic booking guarantee (never oversell a venue, never double-charge a member) are the non-negotiable core. Waitlist promotion, admin support tooling, and discovery filters are real MVP value on top of that core. Partner self-service and door check-in are **post-MVP**.
 

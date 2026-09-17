@@ -763,7 +763,7 @@ Handler: `packages/billing/src/webhooks.ts` via `POST /api/webhooks/stripe`.
 | Event | Purpose |
 |---|---|
 | `checkout.session.completed` | Activate membership + credits after Checkout (**required** for subscribe) |
-| `invoice.paid` | Split by `billing_reason`: `subscription_cycle` → credit refill on renewals; `subscription_create` → Unveiled invoice email with Stripe PDF (no second refill) |
+| `invoice.paid` | Split by `billing_reason`: `subscription_cycle` → credit refill stacked on renewals (rollover capped at 34); `subscription_create` → Unveiled invoice email with Stripe PDF (no second refill) |
 | `invoice.payment_failed` | Mark subscription `PAST_DUE` |
 | `customer.subscription.updated` | Sync status / cancel-at-period-end / period end |
 | `customer.subscription.deleted` | Tear down canceled subscription → `INACTIVE` + credit expiry |
@@ -791,7 +791,7 @@ In **both** the test-mode and live-mode Stripe Dashboards: Settings → Billing 
 ### Staging smoke checklist
 
 1. Sign up → complete onboarding → `/membership` shows checkout CTA.
-2. Start Checkout → pay with `4242…` → webhook sets `ACTIVE` and refills credits to 17.
+2. Start Checkout → pay with `4242…` → webhook sets `ACTIVE` and resets credits to 17 (first activation; monthly renewals stack +17 capped at 34).
 3. In Resend dashboard, confirm the subscription invoice email with a PDF named `invoice-*.pdf` and the five locale links (`/{locale}/events`, `/bookings`, `/profile/billing`, `/how-it-works`, `/faq`) (when `RESEND_*` set). Keep Stripe Dashboard customer invoice/receipt emails OFF in test + live.
 4. Resub check (after cancel expiry → `INACTIVE`): complete Checkout again → same neutral-active invoice mail with PDF, no welcome / welcome-back fork.
 5. Open a seeded upcoming event → **Tickets buchen** → confirm booking.

@@ -140,7 +140,7 @@ test.describe("credits-subscription.feature", () => {
     ).toBeVisible();
   });
 
-  test("Scenario: Monthly renewal resets credits (no rollover)", async () => {
+  test("Scenario: Monthly renewal rolls over credits (capped at 34)", async () => {
     test.skip(
       true,
       "Covered by @unveiled/billing package tests / staging webhook; no e2e renewal clock",

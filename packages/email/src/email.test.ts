@@ -241,6 +241,7 @@ describe("subscription invoice content", () => {
       expect(body).toContain("Basic Berlin");
       expect(body).toContain("29€/month");
       expect(body).toContain("17 per month");
+      expect(body).toContain("unused credits roll over, up to 34 credits");
       expect(body).toContain("Your invoice is attached as a PDF.");
       expect(body).toContain("support@unveiled.berlin");
       for (const link of EN_INVOICE_LINKS) {
@@ -265,6 +266,7 @@ describe("subscription invoice content", () => {
       expect(body).toContain("Basic Berlin");
       expect(body).toContain("29€/Monat");
       expect(body).toContain("17 pro Monat");
+      expect(body).toContain("ungenutzte Credits werden übertragen, bis zu 34 Credits");
       expect(body).toContain("Deine Rechnung ist als PDF angehängt.");
       expect(body).toContain("support@unveiled.berlin");
       for (const link of DE_INVOICE_LINKS) {

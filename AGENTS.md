@@ -222,7 +222,7 @@ Full permission matrix: [`docs/product/extras/authorization-matrix.md`](docs/pro
 - **Tailwind:** layout and spacing on HeroUI nodes only.
 - **Page background:** `brand-yellow` (`#FAFF86`) on every route.
 - **App shell / static copy:** [`docs/product/ui/app-shell.md`](docs/product/ui/app-shell.md), [`docs/product/ui/static-pages-content.md`](docs/product/ui/static-pages-content.md), [`docs/product/extras/content-i18n-inventory.md`](docs/product/extras/content-i18n-inventory.md).
-- **Credits do NOT roll over** — fix any "credits roll over" marketing copy (MVP Phase 8).
+- **Credits roll over up to 2 months' worth (max 34)** — unused credits stack on each renewal; excess above the cap and post-cancellation leftovers are forfeited (see `docs/product/features/credits-subscription.feature`).
 
 ---
 

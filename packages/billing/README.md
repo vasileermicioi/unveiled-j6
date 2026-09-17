@@ -10,7 +10,7 @@ Stripe Billing domain for Unveiled Berlin: Checkout, webhooks, credit lifecycle,
 | `createBillingPortalSession` | Stripe Customer Portal session (`customer` + `return_url`) |
 | `cancelSubscriptionAtPeriodEnd` | Stripe `cancel_at_period_end` + optional local `CANCELLED_PENDING` via `applySubscriptionUpdated` |
 | `applyStripeEvent` / `constructStripeEvent` | Verified webhook application |
-| `activateOrRenewCredits` | EXPIRY + refill +17 (sole renewal writer) |
+| `activateOrRenewCredits` | Activation resets to +17 (EXPIRY + refill); renewal stacks +17 capped at 34 (refill + cap-excess EXPIRY) |
 | `applySubscriptionUpdated` / `applySubscriptionDeleted` / `markPastDue` | Lifecycle status sync |
 
 ## Security
@@ -38,4 +38,10 @@ Do not attach a coupon via Checkout `discounts` — that would hide the input an
 
 ## Credits / EXPIRY
 
-Monthly renewal and period-end deletion already write `EXPIRY` ledger rows in `activateOrRenewCredits` and `applySubscriptionDeleted`. Do **not** add a second EXPIRY implementation.
+Unused credits roll over on every monthly renewal (`kind: "renewal"` in
+`activateOrRenewCredits`) up to `MAX_CREDIT_BALANCE` (34 = 2 months' worth):
+the refill stacks and any excess above the cap is forfeited via `EXPIRY`
+(amount 0 when under the cap). First activation and resubscription
+(`kind: "activation"`) still reset to exactly 17 via `EXPIRY`. Period-end
+deletion still forfeits via `EXPIRY` in `applySubscriptionDeleted`.
+Do **not** add a second EXPIRY implementation.

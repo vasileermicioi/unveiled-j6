@@ -159,7 +159,7 @@ Avoid skeleton screens unless spec requires — SSR should ship content in first
 
 ## Credits & membership copy
 
-- Credits **do not roll over** — never show rollover marketing
+- Credits **roll over up to 2 months' worth (max 34)** — unused credits stack on each renewal; marketing may say so
 - Perks: "17 Credits jeden Monat" / "17 fresh credits every month"
 - Support email: `support@unveiled.berlin` everywhere
 

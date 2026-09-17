@@ -1,6 +1,6 @@
 import { creditLedger, eq, type Subscription, subscriptions, type TxDb, users } from "@unveiled/db";
 
-import { BASIC_BERLIN_PLAN, MONTHLY_CREDIT_ALLOWANCE } from "./checkout";
+import { BASIC_BERLIN_PLAN, MAX_CREDIT_BALANCE, MONTHLY_CREDIT_ALLOWANCE } from "./checkout";
 
 export type ActivateOrRenewInput = {
   userId: string;
@@ -9,6 +9,13 @@ export type ActivateOrRenewInput = {
   periodEnd?: Date | null;
   /** Unique key suffix (session id, invoice id, or event id). */
   idempotencySuffix: string;
+  /**
+   * `"activation"` — first Checkout (or resubscription after `INACTIVE`): forfeit
+   * any prior balance via `EXPIRY` and reset to exactly `MONTHLY_CREDIT_ALLOWANCE`.
+   * `"renewal"` — monthly `subscription_cycle`: unused credits roll over up to
+   * `MAX_CREDIT_BALANCE`, so the refill stacks and any excess is forfeited via `EXPIRY`.
+   */
+  kind: "activation" | "renewal";
 };
 
 export type MarkPastDueInput = {
@@ -88,7 +95,9 @@ async function ledgerKeyExists(tx: TxDb, key: string): Promise<boolean> {
 }
 
 /**
- * Forfeit remaining credits (EXPIRY, amount 0 allowed), refill +17, set ACTIVE.
+ * Activation resets credits to the monthly allowance (EXPIRY + refill +17);
+ * renewal rolls unused credits over up to MAX_CREDIT_BALANCE (refill +17 stacked,
+ * any excess above the cap forfeited via EXPIRY).
  * Idempotent when the refill idempotency key already exists.
  * Does not change status when the member is admin-frozen (`UNPAID`).
  */
@@ -122,34 +131,71 @@ export async function activateOrRenewCredits(
 
     const currentCredits = user.credits;
     const now = new Date();
-    const expiryIdempotencyKey = expiryKey(input.idempotencySuffix);
 
-    if (!(await ledgerKeyExists(tx as unknown as TxDb, expiryIdempotencyKey))) {
+    if (input.kind === "renewal") {
+      // Capped rollover: stack the monthly allowance, forfeit any excess above
+      // MAX_CREDIT_BALANCE (2 months' worth) via EXPIRY (amount 0 when under cap).
+      const uncappedBalance = currentCredits + MONTHLY_CREDIT_ALLOWANCE;
+      const rolledBalance = Math.min(uncappedBalance, MAX_CREDIT_BALANCE);
+      const forfeited = uncappedBalance - rolledBalance;
+      const expiryIdempotencyKey = expiryKey(input.idempotencySuffix);
+
+      if (!(await ledgerKeyExists(tx as unknown as TxDb, expiryIdempotencyKey))) {
+        await tx.insert(creditLedger).values({
+          userId: input.userId,
+          amount: forfeited === 0 ? 0 : -forfeited,
+          balanceAfter: currentCredits - forfeited,
+          type: "EXPIRY",
+          description: "Credit expiry at period boundary (rollover capped at 34)",
+          idempotencyKey: expiryIdempotencyKey,
+          timestamp: now,
+        });
+      }
+
       await tx.insert(creditLedger).values({
         userId: input.userId,
-        amount: currentCredits === 0 ? 0 : -currentCredits,
-        balanceAfter: 0,
-        type: "EXPIRY",
-        description: "Credit expiry at period boundary",
-        idempotencyKey: expiryIdempotencyKey,
+        amount: MONTHLY_CREDIT_ALLOWANCE,
+        balanceAfter: rolledBalance,
+        type: "SUBSCRIPTION_REFILL",
+        description: "Subscription refill (unused credits roll over up to 34)",
+        idempotencyKey: refillIdempotencyKey,
         timestamp: now,
       });
+
+      await tx
+        .update(users)
+        .set({ credits: rolledBalance, updatedAt: now })
+        .where(eq(users.id, input.userId));
+    } else {
+      const expiryIdempotencyKey = expiryKey(input.idempotencySuffix);
+
+      if (!(await ledgerKeyExists(tx as unknown as TxDb, expiryIdempotencyKey))) {
+        await tx.insert(creditLedger).values({
+          userId: input.userId,
+          amount: currentCredits === 0 ? 0 : -currentCredits,
+          balanceAfter: 0,
+          type: "EXPIRY",
+          description: "Credit expiry at period boundary",
+          idempotencyKey: expiryIdempotencyKey,
+          timestamp: now,
+        });
+      }
+
+      await tx.insert(creditLedger).values({
+        userId: input.userId,
+        amount: MONTHLY_CREDIT_ALLOWANCE,
+        balanceAfter: MONTHLY_CREDIT_ALLOWANCE,
+        type: "SUBSCRIPTION_REFILL",
+        description: "Subscription refill",
+        idempotencyKey: refillIdempotencyKey,
+        timestamp: now,
+      });
+
+      await tx
+        .update(users)
+        .set({ credits: MONTHLY_CREDIT_ALLOWANCE, updatedAt: now })
+        .where(eq(users.id, input.userId));
     }
-
-    await tx.insert(creditLedger).values({
-      userId: input.userId,
-      amount: MONTHLY_CREDIT_ALLOWANCE,
-      balanceAfter: MONTHLY_CREDIT_ALLOWANCE,
-      type: "SUBSCRIPTION_REFILL",
-      description: "Subscription refill",
-      idempotencyKey: refillIdempotencyKey,
-      timestamp: now,
-    });
-
-    await tx
-      .update(users)
-      .set({ credits: MONTHLY_CREDIT_ALLOWANCE, updatedAt: now })
-      .where(eq(users.id, input.userId));
 
     // Admin freeze must not be cleared by Stripe activation/renewal webhooks.
     const nextStatus = subscription.status === "UNPAID" ? "UNPAID" : "ACTIVE";

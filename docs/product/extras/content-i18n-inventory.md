@@ -1,6 +1,6 @@
 # Content / i18n Inventory (MVP)
 
-Structured DE/EN catalog from the old `translations.ts`, plus pointers to marketing copy in `ui/static-pages-content.md`. **Partner** namespace strings are **post-MVP**. Credits do **not** roll over — correct any checkout perk copy that claims otherwise.
+Structured DE/EN catalog from the old `translations.ts`, plus pointers to marketing copy in `ui/static-pages-content.md`. **Partner** namespace strings are **post-MVP**. Unused credits roll over up to 2 months' worth (max 34) — checkout perk copy may say so.
 
 Full, exact DE/EN copy catalog from `translations.ts`, reproduced verbatim as a starting content inventory for the new app. The tone is consistently casual/bold/uppercase-heavy in German and English alike ("YOU'RE IN!", "DU BIST DABEI!") — worth preserving as a brand voice guideline alongside the visual design tokens.
 
@@ -106,7 +106,7 @@ This is a smaller catalog than the full app surface — many pages (Discover hom
 | `activeStatus` | Status: Aktiv | Status: Active |
 
 > ✅ **Resolved:** `secure: "SICHERE ZAHLUNG VIA STRIPE" / "SECURE PAYMENT VIA STRIPE"` referenced Stripe despite no integration existing in the old app. **Decided:** the rewrite implements real Stripe Billing (see `features/credits-subscription.feature`), so this copy is now accurate as-is and can be kept unchanged.
-> ✅ **Resolved:** `perks[2]` — app + inventory now use DE: "17 Credits jeden Monat" / EN: "17 fresh credits every month". Credits do **not** roll over (see `features/credits-subscription.feature`); the old "Credits roll over" / "Credits rollen mit" claim must not return.
+> ✅ **Resolved:** `perks[2]` — app + inventory now use DE: "17 Credits jeden Monat" / EN: "17 fresh credits every month". Unused credits roll over up to 2 months' worth (max 34, see `features/credits-subscription.feature`); perk copy may additionally mention the rollover.
 > ✅ **Resolved (membership card merge):** `subtitle` and `guarantee` are **not** rendered on checkout/guest membership UI (single-card layout). `subtitle` remains in the content module for SEO meta description (`membershipPageMeta`); `guarantee` may remain unused in the module.
 
 ## `redemption`
@@ -157,14 +157,14 @@ Impressum provider identity: `unveiled GmbH`; DE `Vertreten durch Pia Sonnekalb 
 
 ## Transactional emails — subscription invoice
 
-Not a `translations.ts` key table. Verbatim DE/EN copy lives in `packages/email/src/subscription-invoice.ts` (`buildSubscriptionInvoiceContent`). Sent via Resend after the first paid subscription invoice (`invoice.paid` + `billing_reason` `subscription_create` only). From-address is `DAILY_CODES_FROM_EMAIL`. `{SITE_URL}` is the public origin with no trailing slash; links are `{SITE_URL}/{locale}/…`. Credits do **not** roll over.
+Not a `translations.ts` key table. Verbatim DE/EN copy lives in `packages/email/src/subscription-invoice.ts` (`buildSubscriptionInvoiceContent`). Sent via Resend after the first paid subscription invoice (`invoice.paid` + `billing_reason` `subscription_create` only). From-address is `DAILY_CODES_FROM_EMAIL`. `{SITE_URL}` is the public origin with no trailing slash; links are `{SITE_URL}/{locale}/…`. Unused credits roll over up to 2 months' worth (max 34).
 
 | | DE | EN |
 |---|---|---|
 | Subject | Deine Unveiled Berlin Rechnung | Your Unveiled Berlin invoice |
 | Lead | Deine Unveiled Berlin Mitgliedschaft ist aktiv. | Your Unveiled Berlin membership is active. |
 | Plan | Abo: Basic Berlin — 29€/Monat | Plan: Basic Berlin — 29€/month |
-| Credits | Credits: 17 pro Monat (ungenutzte Credits verfallen) | Credits: 17 per month (unused credits do not roll over) |
+| Credits | Credits: 17 pro Monat (ungenutzte Credits werden übertragen, bis zu 34 Credits) | Credits: 17 per month (unused credits roll over, up to 34 credits) |
 | Attachment | Deine Rechnung ist als PDF angehängt. | Your invoice is attached as a PDF. |
 | Next steps heading | Nächste Schritte: | What to do next: |
 | 1. Events | Events entdecken: `{SITE_URL}/de/events` | Browse events: `{SITE_URL}/en/events` |

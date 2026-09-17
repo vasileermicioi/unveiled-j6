@@ -2,6 +2,8 @@ import type Stripe from "stripe";
 
 export const BASIC_BERLIN_PLAN = "Basic Berlin";
 export const MONTHLY_CREDIT_ALLOWANCE = 17;
+/** Rollover cap: members can save up to 2 months' worth of credits. */
+export const MAX_CREDIT_BALANCE = 34;
 
 export type CheckoutLocale = "de" | "en";
 

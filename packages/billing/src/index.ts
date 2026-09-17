@@ -27,8 +27,9 @@
  *
  * Webhooks remain the source of truth for portal-driven events
  * (`customer.subscription.updated` / `.deleted`, invoice paid/failed).
- * Do not add a second EXPIRY ledger writer — renewals and period-end expiry stay in
- * `activateOrRenewCredits` / `applySubscriptionDeleted`.
+ * Do not add a second EXPIRY ledger writer — activation expiry, renewal cap
+ * expiry, and period-end expiry stay in `activateOrRenewCredits` /
+ * `applySubscriptionDeleted`.
  */
 
 export type { CancelSubscriptionAtPeriodEndInput } from "./cancel-subscription";
@@ -37,6 +38,7 @@ export type { CheckoutLocale, CreateCheckoutSessionInput } from "./checkout";
 export {
   BASIC_BERLIN_PLAN,
   createCheckoutSession,
+  MAX_CREDIT_BALANCE,
   MONTHLY_CREDIT_ALLOWANCE,
 } from "./checkout";
 export type { FreezeMemberErrorCode, FreezeMemberInput } from "./freeze-member";

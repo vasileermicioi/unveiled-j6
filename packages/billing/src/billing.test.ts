@@ -11,6 +11,7 @@ import {
   constructStripeEvent,
   createBillingPortalSession,
   createStripeClient,
+  MAX_CREDIT_BALANCE,
   MONTHLY_CREDIT_ALLOWANCE,
   markPastDue,
   periodEndFromSubscription,
@@ -173,7 +174,18 @@ describe("applyStripeEvent invoice.paid credit rules", () => {
       const after = await httpDb.query.users.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
       });
-      expect(after?.credits).toBe(MONTHLY_CREDIT_ALLOWANCE);
+      // Capped rollover: 4 remaining + 17 refill (under the 34 cap, nothing forfeited).
+      expect(after?.credits).toBe(4 + MONTHLY_CREDIT_ALLOWANCE);
+      const refillRows = await httpDb.query.creditLedger.findMany({
+        where: (fields, { eq: eqOp }) => eqOp(fields.userId, userId),
+      });
+      expect(
+        refillRows.some(
+          (row) =>
+            row.type === "SUBSCRIPTION_REFILL" && row.balanceAfter === 4 + MONTHLY_CREDIT_ALLOWANCE,
+        ),
+      ).toBe(true);
+      expect(refillRows.some((row) => row.type === "EXPIRY" && row.amount === 0)).toBe(true);
     } finally {
       await httpDb.delete(creditLedger).where(eq(creditLedger.userId, userId));
       await httpDb.delete(subscriptions).where(eq(subscriptions.userId, userId));
@@ -325,6 +337,7 @@ describe("subscription lifecycle (integration)", () => {
         stripeSubscriptionId: `sub_${userId}`,
         periodEnd: new Date("2030-01-01T00:00:00.000Z"),
         idempotencySuffix: "session_1",
+        kind: "activation",
       });
       expect(first.applied).toBe(true);
       expect(first.status).toBe("ACTIVE");
@@ -345,6 +358,7 @@ describe("subscription lifecycle (integration)", () => {
         stripeCustomerId: `cus_${userId}`,
         stripeSubscriptionId: `sub_${userId}`,
         idempotencySuffix: "session_1",
+        kind: "activation",
       });
       expect(retry.applied).toBe(false);
 
@@ -355,20 +369,79 @@ describe("subscription lifecycle (integration)", () => {
         stripeCustomerId: `cus_${userId}`,
         stripeSubscriptionId: `sub_${userId}`,
         idempotencySuffix: "inv_cycle_1",
+        kind: "renewal",
       });
       expect(renewal.applied).toBe(true);
 
       const afterRenewal = await httpDb.query.users.findFirst({
         where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
       });
-      expect(afterRenewal?.credits).toBe(MONTHLY_CREDIT_ALLOWANCE);
+      // Capped rollover: 9 remaining + 17 refill (under the 34 cap).
+      expect(afterRenewal?.credits).toBe(9 + MONTHLY_CREDIT_ALLOWANCE);
 
       const ledgerAfterRenewal = await httpDb.query.creditLedger.findMany({
         where: (fields, { eq: eqOp }) => eqOp(fields.userId, userId),
       });
+      // Activation wrote a forfeiting EXPIRY; the under-cap renewal wrote EXPIRY 0.
       const expiryRows = ledgerAfterRenewal.filter((row) => row.type === "EXPIRY");
-      expect(expiryRows.length).toBeGreaterThanOrEqual(2);
+      expect(expiryRows.length).toBe(2);
       expect(ledgerAfterRenewal.filter((row) => row.type === "SUBSCRIPTION_REFILL").length).toBe(2);
+
+      // A renewal past the cap forfeits the excess: 26 + 17 = 43 → 34, forfeit 9.
+      const renewal2 = await activateOrRenewCredits(txDb, {
+        userId,
+        stripeCustomerId: `cus_${userId}`,
+        stripeSubscriptionId: `sub_${userId}`,
+        idempotencySuffix: "inv_cycle_2",
+        kind: "renewal",
+      });
+      expect(renewal2.applied).toBe(true);
+
+      const afterRenewal2 = await httpDb.query.users.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
+      });
+      expect(afterRenewal2?.credits).toBe(MAX_CREDIT_BALANCE);
+
+      const ledgerAfterRenewal2 = await httpDb.query.creditLedger.findMany({
+        where: (fields, { eq: eqOp }) => eqOp(fields.userId, userId),
+      });
+      expect(ledgerAfterRenewal2.filter((row) => row.type === "EXPIRY").length).toBe(3);
+      expect(ledgerAfterRenewal2.filter((row) => row.type === "SUBSCRIPTION_REFILL").length).toBe(
+        3,
+      );
+      expect(ledgerAfterRenewal2.some((row) => row.type === "EXPIRY" && row.amount === -9)).toBe(
+        true,
+      );
+
+      // At-cap boundary: 34 + 17 → stays 34, full refill forfeited.
+      await httpDb.update(users).set({ credits: MAX_CREDIT_BALANCE }).where(eq(users.id, userId));
+
+      const renewal3 = await activateOrRenewCredits(txDb, {
+        userId,
+        stripeCustomerId: `cus_${userId}`,
+        stripeSubscriptionId: `sub_${userId}`,
+        idempotencySuffix: "inv_cycle_3",
+        kind: "renewal",
+      });
+      expect(renewal3.applied).toBe(true);
+
+      const afterRenewal3 = await httpDb.query.users.findFirst({
+        where: (fields, { eq: eqOp }) => eqOp(fields.id, userId),
+      });
+      expect(afterRenewal3?.credits).toBe(MAX_CREDIT_BALANCE);
+
+      const ledgerAfterRenewal3 = await httpDb.query.creditLedger.findMany({
+        where: (fields, { eq: eqOp }) => eqOp(fields.userId, userId),
+      });
+      expect(ledgerAfterRenewal3.filter((row) => row.type === "EXPIRY").length).toBe(4);
+      expect(ledgerAfterRenewal3.filter((row) => row.type === "SUBSCRIPTION_REFILL").length).toBe(
+        4,
+      );
+      expect(
+        ledgerAfterRenewal3.some(
+          (row) => row.type === "EXPIRY" && row.amount === -MONTHLY_CREDIT_ALLOWANCE,
+        ),
+      ).toBe(true);
 
       const pastDue = await markPastDue(txDb, {
         stripeSubscriptionId: `sub_${userId}`,
@@ -420,6 +493,7 @@ describe("subscription lifecycle (integration)", () => {
         userId,
         stripeSubscriptionId: `sub_${userId}_frozen`,
         idempotencySuffix: "session_frozen",
+        kind: "activation",
       });
       expect(unpaidActivate.status).toBe("UNPAID");
 

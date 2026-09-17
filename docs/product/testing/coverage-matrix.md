@@ -198,7 +198,7 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `credits-subscription.feature` | Already-active member revisits checkout | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Already-active member revisits checkout` | `pass` |  |
 | `credits-subscription.feature` | Failed payment marks the account past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Failed payment marks the account past due` | `pass` | Seeds `PAST_DUE` + book gate; full Stripe fail = staging webhook |
 | `credits-subscription.feature` | Recovering from past due | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Recovering from past due` | `pass` | Asserts `/profile/billing` PAST_DUE + portal CTA; deep Portal = staging |
-| `credits-subscription.feature` | Monthly renewal resets credits (no rollover) | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Monthly renewal resets credits (no rollover)` | `skip` | Billing package / webhook tests |
+| `credits-subscription.feature` | Monthly renewal rolls over credits (capped at 34) | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Monthly renewal rolls over credits (capped at 34)` | `skip` | Billing package / webhook tests |
 | `credits-subscription.feature` | Cancelling a subscription | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancelling a subscription` | `pass` | Cancel confirm UI + seeded `CANCELLED_PENDING`; live Stripe cancel = package/staging |
 | `credits-subscription.feature` | Cancelling member is told access runs until period end | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancelling member is told access runs until period end` | `skip` | No inbox harness; staging Resend checklist (single unsubscribe mail, no second at expiry); unit tests in `apps/web/app/lib/subscription-cancellation-email.test.ts` |
 | `credits-subscription.feature` | Cancellation takes effect at period end | `e2e/specs/credits-subscription.spec.ts` · `Scenario: Cancellation takes effect at period end` | `pass` | `CANCELLED_PENDING` still bookable; no further mail at expiry (unit-tested) |
@@ -294,10 +294,10 @@ Single inventory of product Gherkin Scenarios → Playwright tests for Phase 5.5
 | `static-pages.feature` | How it works | `e2e/specs/static-pages.spec.ts` · `Scenario: How it works` | `pass` |  |
 | `static-pages.feature` | V3 landing rail shows login-gated teasers | `e2e/specs/static-pages.spec.ts` · `Scenario: V3 landing rail shows login-gated teasers` | `pass` | Live rail ≤3 teasers with credit figures and no `/events/:id` links in rail scope, live + locked CTAs → login; proximity selectors only |
 | `static-pages.feature` | /regular routes return 404 | `e2e/specs/static-pages.spec.ts` · `Scenario: /regular routes return 404` | `pass` | `/:locale/regular` and bare `/regular` both 404 (hard delete, no redirect) |
-| `static-pages.feature` | FAQ | `e2e/specs/static-pages.spec.ts` · `Scenario: FAQ` | `pass` | Refreshed 11 Q&As DE/EN; shape pinned by `app/lib/content/faq.test.ts` guard (count + non-empty copy + JSON-LD parity); rollover answer is the approved forward promise (`extras/gaps-and-decisions.md`) |
+| `static-pages.feature` | FAQ | `e2e/specs/static-pages.spec.ts` · `Scenario: FAQ` | `pass` | Refreshed 11 Q&As DE/EN; shape pinned by `app/lib/content/faq.test.ts` guard (count + non-empty copy + JSON-LD parity); rollover answer matches the capped engine (`extras/gaps-and-decisions.md`) |
 | `static-pages.feature` | Bare /discover redirects to localized Discover | `e2e/specs/static-pages.spec.ts` · `Scenario: Bare /discover redirects to localized Discover` | `pass` |  |
 | `static-pages.feature` | Bilingual content | `e2e/specs/static-pages.spec.ts` · `Scenario: Bilingual content` | `pass` |  |
-| `static-pages.feature` | Legal pages exist and are linked from the footer | `e2e/specs/static-pages.spec.ts` · `Scenario: Legal pages exist and are linked from the footer` | `pass` | Three footer LEGAL links; distinctive body (address / rights / credits no-rollover); foreground card copy |
+| `static-pages.feature` | Legal pages exist and are linked from the footer | `e2e/specs/static-pages.spec.ts` · `Scenario: Legal pages exist and are linked from the footer` | `pass` | Three footer LEGAL links; distinctive body (address / rights / credits rollover); foreground card copy |
 | `static-pages.feature` | Cookie consent banner on first visit | `e2e/specs/static-pages.spec.ts` · `Scenario: Cookie consent banner on first visit` | `pass` |  |
 | `static-pages.feature` | Declining consent disables the map embed | `e2e/specs/static-pages.spec.ts` · `Scenario: Declining consent disables the map embed` | `pass` |  |
 | `static-pages.feature` | Error tracking is not gated behind consent | `e2e/specs/static-pages.spec.ts` · `Scenario: Error tracking is not gated behind consent` | `pass` | Server-only Sentry (`SENTRY_DSN`); no `window.Sentry` — asserts tracking is not consent-gated |
@@ -361,7 +361,7 @@ All 11 top-level MVP `docs/product/features/*.feature` files are mapped above to
 | Stripe Checkout activation | `skip` | Opt-in `E2E_STRIPE_CHECKOUT=1`; staging smoke SoT |
 | Subscription invoice email after first successful payment | `skip` | No inbox harness; staging Resend (branded + resub reuse) |
 | Cancelling member is told access runs until period end | `skip` | No inbox harness; staging Resend (single unsubscribe, nothing at expiry) |
-| Monthly renewal / no rollover | `skip` | Billing package + webhook tests |
+| Monthly renewal / capped rollover (34) | `skip` | Billing package + webhook tests |
 | Booking confirmation email | `skip` | No inbox harness; staging Resend |
 | Idempotent retry / waitlist queue order | `skip` | Covered by package integration tests |
 | Onboarding auto-`returnTo` after finish | `deferred` | post-MVP polish — finish still → `/membership` |

@@ -82,7 +82,7 @@ Footer LEGAL column → three links. Component: `LegalPage.tsx`. Content module:
 - Impressum provider block (verbatim, both locales except the represented-by line): **unveiled GmbH**; DE `Vertreten durch Pia Sonnekalb & Sarah Michot` / EN `represented by Pia Sonnekalb & Sarah Michot`; **Greifswalder Straße 1**; **10405 Berlin**.
 - Sections use `title` + `body: string[]`. Single-open accordion; first section expanded by default.
 - Copy is **operational** MVP text; formal counsel review still recommended before production launch.
-- Terms currently state that unused **credits do not roll over**. The FAQ's 2-month rollover promise is the approved marketing forward copy pending credit-engine implementation — deliberate interim inconsistency; see the decision entry in `extras/gaps-and-decisions.md` (follow-up feature will align Terms/billing copy with the promise).
+- Terms state that unused credits roll over to the next billing period, up to 2 months' worth (max. 34 credits), and are otherwise forfeited only when the subscription ends — matching the FAQ rollover answer and the credit engine (`features/credits-subscription.feature`).
 - Full bilingual prose lives in `legal.ts`.
 
 ---
@@ -111,7 +111,6 @@ Footer LEGAL column → three links. Component: `LegalPage.tsx`. Content module:
 
   4. **DE:** "Was passiert mit ungenutzten Credits?" → "Keine Sorge, ungenutzte Credits verschwinden nicht am Ende des Monats. Sie werden in den nächsten Monat übertragen, sodass du dir bis zu 2 Monatskontingente ansparen kannst."
      **EN:** "What happens to unused Credits?" → "Don’t worry, unused Credits don’t disappear at the end of the month. They roll over to the next month, so you can save up to 2 months’ worth of Credits."
-     _(Deliberate forward promise — see the rollover decision in `extras/gaps-and-decisions.md`; support fulfills it manually until the credit-engine feature ships.)_
 
   5. **DE:** "Kann ich ein gebuchtes Erlebnis stornieren?" → "Da wir gerade erst starten, schreib uns einfach kurz eine E-Mail an support@unveiled.berlin — mindestens 12 h vor Beginn des Events. Wir finden immer eine gute Lösung für dich."
      **EN:** "Can I cancel an experience I booked?" → "Since we’re just getting started, just send us a quick email at support@unveiled.berlin at least 12h before the event starts. We’ll always do our best to find a good solution for you."

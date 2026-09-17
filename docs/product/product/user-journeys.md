@@ -36,7 +36,7 @@ Each step names the feature file it belongs to. Align routes with [`../sitemap/s
 6. **Browse & filter** — Lands on member `/events` (filters, pagination, map, saved). Guests never get a public full feed. *(→ `event-discovery.feature`)*
 7. **Book** — Opens `/events/:id/book`, books tickets. Atomic transaction: subscription + capacity + credits; `CONFIRMED` booking + redemption info. *(→ `booking.feature`)*
 8. **Pre-event** — Views `/bookings` (My Tickets), downloads `.ics`, copies redemption code; confirmation email received. *(→ `booking.feature`)*
-9. **Repeat** — Monthly renewal resets credits to 17 (no rollover). Cycle from step 6.
+9. **Repeat** — Monthly renewal stacks +17 credits on top of the remaining balance, capped at 34 (2 months' worth). Cycle from step 6.
 
 **Cross-domain risk:** booking must not succeed without an active (or `CANCELLED_PENDING`) subscription — enforced inside the booking transaction, not a stale page-load check.
 

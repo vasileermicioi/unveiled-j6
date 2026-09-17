@@ -9,17 +9,19 @@
 #     for renewal/past-due/cancellation state changes. This is not optional for a production product
 #     that charges real money.
 #   - "Cancel Subscription" existed in the UI with no handler. DECIDED: real handler, see below.
-#   - Marketing copy claimed "credits roll over" but no rollover logic existed. DECIDED: credits do
-#     NOT roll over — this is the simpler, more standard membership-credit model (matches how e.g.
-#     class-pass-style memberships work) and avoids unbounded credit accumulation. Unused credits are
-#     forfeited at each period boundary (recorded as an EXPIRY ledger entry, not silently dropped).
-#     Marketing copy must be corrected to match (see extras/content-i18n-inventory.md).
+#   - Marketing copy claimed "credits roll over" but no rollover logic existed. DECIDED: unused
+#     credits roll over up to 2 months' worth (max 34 credits) — every monthly renewal stacks +17
+#     on top of the remaining balance, and any excess above the cap is forfeited via EXPIRY.
+#     First activation / resubscription still resets to exactly 17 (starter balance forfeited via
+#     EXPIRY). Remaining credits are also forfeited when the subscription ends (cancellation at
+#     period end, recorded as an EXPIRY ledger entry).
+#     Marketing copy must match (see extras/content-i18n-inventory.md).
 #   - PAUSED subscription status: DECIDED cut — no feature ever needed a "paused" state distinct from
 #     cancellation-pending or freeze; keeping unused enum values invites bugs. CANCELLED_PENDING is kept
 #     because the new real-cancellation flow actually uses it.
 #   - Ledger types PURCHASE and REFERRAL_BONUS: DECIDED cut (see product/vision-and-domains.md non-goals
-#     — no à la carte credit purchases, no referral program). EXPIRY is now a real, used type (monthly
-#     forfeiture + cancellation forfeiture). REFUND is kept as a real, used type for (1) admin manual
+#     — no à la carte credit purchases, no referral program). EXPIRY is now a real, used type
+#     (activation reset + cancellation forfeiture). REFUND is kept as a real, used type for (1) admin manual
 #     goodwill refunds (decoupled from **single-booking** cancel) and (2) event-level cancel-all, which
 #     writes one REFUND per charged booking with idempotency key event-cancel-all:{bookingId}
 #     (see booking.feature / admin-event-bookings.feature). Single-booking admin cancel still MUST NOT
@@ -62,6 +64,7 @@ Feature: Credits and Subscription
     Then a Stripe webhook confirms the subscription
     And my subscription status becomes "ACTIVE"
     And a "SUBSCRIPTION_REFILL" ledger entry of +17 credits is recorded
+    And my credit balance becomes exactly 17 (any starter balance is forfeited via "EXPIRY")
     And I am routed to the events feed
 
   Scenario: Subscription invoice email after first successful payment
@@ -70,7 +73,7 @@ Feature: Credits and Subscription
     Then I receive an email with the Stripe invoice PDF attached
     And the email uses the branded Unveiled layout with membership summary and plain-text mirror
     And the email includes basic instructions and links to events, My Tickets, billing, how-it-works, FAQ, and support
-    And unused credits are described as not rolling over
+     And unused credits are described as rolling over to the next month
     And a resubscription after cancellation reuses the same neutral-active template with no welcome fork
 
   Scenario: Checkout blocked while frozen
@@ -96,12 +99,12 @@ Feature: Credits and Subscription
     Then a webhook flips my subscription status back to "ACTIVE"
     And normal monthly refills resume on my next billing cycle
 
-  Scenario: Monthly renewal resets credits (no rollover)
+  Scenario: Monthly renewal rolls over credits (capped at 34)
     Given my subscription renews successfully via Stripe webhook
-    Then any credits remaining from the previous period are forfeited
-    And an "EXPIRY" ledger entry records the forfeited amount (0 if nothing was left)
+    Then my remaining credits are kept up to the 34-credit cap (2 months' worth)
+    And any excess above the cap is forfeited via an "EXPIRY" ledger entry (0 if under the cap)
     And a "SUBSCRIPTION_REFILL" ledger entry of +17 credits is recorded
-    And my credit balance becomes exactly 17
+    And my credit balance becomes the previous balance plus 17, capped at 34
 
   Scenario: Cancelling a subscription
     Given my subscription status is "ACTIVE"

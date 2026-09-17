@@ -104,6 +104,7 @@ export async function applyStripeEvent(
         stripeSubscriptionId,
         periodEnd,
         idempotencySuffix: session.id,
+        kind: "activation",
       });
 
       return { handled: true, action: "checkout_activated" };
@@ -144,6 +145,7 @@ export async function applyStripeEvent(
         stripeSubscriptionId,
         periodEnd,
         idempotencySuffix: invoice.id ?? event.id,
+        kind: "renewal",
       });
 
       return { handled: true, action: "renewal_refilled" };
