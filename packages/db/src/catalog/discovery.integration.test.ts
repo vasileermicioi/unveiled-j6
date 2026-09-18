@@ -844,6 +844,63 @@ describe("discovery integration", () => {
     }
   });
 
+  test("stale denormalized date_time still lists multi-date events with future slots", async () => {
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL not set — skipping integration test");
+      return;
+    }
+
+    const db = createDb(databaseUrl);
+    const suffix = crypto.randomUUID().slice(0, 8);
+    // Write-time clock: primary becomes the first slot. Query-time clock is a
+    // day later without any re-save, so the stored `date_time` is stale (past)
+    // while `date_times` still holds future occurrences. The feed must use the
+    // array, not just the denormalized column (admin re-save used to be the
+    // only way back into the list, daily).
+    const createNow = new Date("2026-07-09T06:00:00.000Z");
+    const queryNow = new Date("2026-07-10T06:00:00.000Z");
+    const partnerImage = await createTestImage();
+    const partner = await createPartner(db, {
+      name: `Discovery StaleDT ${suffix}`,
+      ...structuredLocationFromAddress("Stale Straße 1, Berlin"),
+      contactEmail: `discovery-staledt-${suffix}@example.com`,
+      logoPrebuilt: partnerImage,
+      skipUpload: true,
+    });
+
+    const staleMulti = await createPublishedEvent(db, {
+      partnerId: partner.id,
+      title: `Stale Multi ${suffix}`,
+      description: "Description",
+      ...structuredLocationFromAddress("Stale Straße 1, Berlin"),
+      country: "DE",
+      city: "berlin",
+      zipCode: "10115",
+      category: "theater",
+      eventType: "theater_play",
+      dateTimes: [
+        new Date("2026-07-09T08:00:00.000Z"),
+        new Date("2026-07-10T08:00:00.000Z"),
+        new Date("2026-07-11T08:00:00.000Z"),
+      ],
+      now: createNow,
+      creditPrice: 1,
+      secretCode: `SM${suffix.slice(0, 6)}`,
+      imagePrebuilt: await createTestImage(),
+      skipUpload: true,
+    });
+
+    try {
+      expect(staleMulti.dateTime.toISOString()).toBe("2026-07-09T08:00:00.000Z");
+
+      const feed = await listMemberFeedEvents(db, { now: queryNow, title: suffix });
+      expect(feed.items.map((row) => row.id)).toContain(staleMulti.id);
+    } finally {
+      await deleteEvent(db, staleMulti.id, { skipBucket: true });
+      await deletePartner(db, partner.id, { skipBucket: true });
+    }
+  });
+
   test("opening-hours partners sort last in browse feed", async () => {
     if (!databaseUrl) {
       console.warn("DATABASE_URL not set — skipping integration test");

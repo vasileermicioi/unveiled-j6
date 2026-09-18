@@ -110,7 +110,19 @@ function normalizeFilterList(value?: string | string[]): string[] {
  * (`date_time >= Berlin midnight today`). Museum-style events (partner has
  * opening hours + spans >1 Berlin calendar day) are date-only: any occurrence
  * on/after Berlin today keeps them listed, regardless of clock time.
+ *
+ * `date_time` is denormalized at write time (next upcoming then, or earliest
+ * when all past) and goes stale as days pass — admin re-save recomputes it,
+ * which is why stale events reappear after save and vanish again the next
+ * day. The `date_times` array is the source of truth, so the feed also
+ * matches any future occurrence directly. This keeps multi-date events
+ * listed even when their denormalized `date_time` still points at a past
+ * slot (regular events had no fallback; opening-hours multi-date had one).
  */
+function anyFutureOccurrenceCondition(todayStart: Date): SQL {
+  return sql`EXISTS (SELECT 1 FROM unnest(${events.dateTimes}) AS occ_any(dt) WHERE occ_any.dt >= ${todayStart})` as SQL;
+}
+
 function openingHoursMultiDateUpcomingCondition(todayStart: Date): SQL {
   return and(
     sql`EXISTS (SELECT 1 FROM ${partners} WHERE ${partners.id} = ${events.partnerId} AND ${partners.hasOpeningHours} = TRUE)`,
@@ -131,6 +143,7 @@ function upcomingDateTimeCondition(now: Date): SQL {
   const todayStart = berlinTodayRange(now).start;
   return or(
     gte(events.dateTime, todayStart),
+    anyFutureOccurrenceCondition(todayStart),
     openingHoursMultiDateUpcomingCondition(todayStart),
   ) as SQL;
 }
