@@ -1,5 +1,5 @@
 import { Link, Paragraph, Surface } from "@heroui/react";
-import type { Event, EventSort } from "@unveiled/db";
+import { buildEventsExportQueryString, type Event, type EventSort } from "@unveiled/db";
 
 import { getAdminCopy } from "../../lib/admin-content";
 import {
@@ -60,12 +60,21 @@ export function AdminEventsListPage({
     query.sort && query.dir && !isDefaultEventListSort(query.sort, query.dir)
       ? { sort: query.sort, dir: query.dir }
       : undefined;
+  const exportHref = `/${locale}/admin/events/export${buildEventsExportQueryString({
+    title: query.title || undefined,
+    partner: query.partner || undefined,
+    language: query.language || undefined,
+    published: query.published,
+  })}`;
 
   return (
     <AdminPageShell
       eyebrow={copy.pageEyebrow}
       actions={
         <Surface className="flex flex-wrap gap-3" variant="transparent">
+          <Link className="button button--secondary button--md" href={exportHref}>
+            {copy.exportAction}
+          </Link>
           <Link
             className="button button--primary button--md"
             href={localizedPath(locale, "admin/events/new")}

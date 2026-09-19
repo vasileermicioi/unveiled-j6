@@ -102,6 +102,12 @@ export type AdminCopy = {
   salesExportEmpty: string;
   salesExportCsvDownload: string;
   salesExportPeriodError: string;
+  eventsExportTitle: string;
+  eventsExportSubtitle: string;
+  eventsExportSubmit: string;
+  eventsExportEmpty: string;
+  eventsExportCsvDownload: string;
+  eventsExportCount: (count: number) => string;
   emptyPartners: string;
   emptyEvents: string;
   emptyUsers: string;
@@ -650,6 +656,13 @@ const copy: Record<Locale, AdminCopy> = {
     salesExportEmpty: "Keine Events vorhanden.",
     salesExportCsvDownload: "CSV herunterladen",
     salesExportPeriodError: "Bitte einen gültigen Zeitraum wählen (Von ≤ Bis, Format JJJJ-MM-TT).",
+    eventsExportTitle: "Events-Export",
+    eventsExportSubtitle:
+      "Vollständige Events-Tabelle als CSV — gleiche Filter wie die Events-Liste.",
+    eventsExportSubmit: "Anzeigen",
+    eventsExportEmpty: "Keine Events für diese Filter vorhanden.",
+    eventsExportCsvDownload: "Events-CSV herunterladen",
+    eventsExportCount: (count) => (count === 1 ? "1 Event" : `${count} Events`),
     emptyPartners: "Noch keine Partner vorhanden.",
     emptyEvents: "Noch keine Events vorhanden.",
     emptyUsers: "Keine Mitglieder gefunden.",
@@ -1245,6 +1258,12 @@ const copy: Record<Locale, AdminCopy> = {
     salesExportEmpty: "No events yet.",
     salesExportCsvDownload: "Download CSV",
     salesExportPeriodError: "Choose a valid period (From ≤ To, YYYY-MM-DD).",
+    eventsExportTitle: "Events export",
+    eventsExportSubtitle: "Full events table as CSV — same filters as the events list.",
+    eventsExportSubmit: "Show",
+    eventsExportEmpty: "No events match these filters.",
+    eventsExportCsvDownload: "Download events CSV",
+    eventsExportCount: (count) => (count === 1 ? "1 event" : `${count} events`),
     emptyPartners: "No partners yet.",
     emptyEvents: "No events yet.",
     emptyUsers: "No members found.",

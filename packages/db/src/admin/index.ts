@@ -28,6 +28,17 @@ export {
   isAdminCapacityError,
   isAdminMemberError,
 } from "./errors";
+export {
+  buildEventsExportQueryString,
+  EVENTS_CSV_HEADER,
+  EVENTS_EXPORT_MAX_ROWS,
+  type EventsExportFilters,
+  type EventsExportPublishedFilter,
+  formatEventsCsv,
+  type ListEventsForExportOptions,
+  listEventsForExport,
+  parseEventsExportFilters,
+} from "./events-export";
 export { getMemberDetail, type MemberDetail } from "./get-member-detail";
 export {
   type EventBookingListItem,
